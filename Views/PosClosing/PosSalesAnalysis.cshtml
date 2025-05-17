@@ -1,0 +1,30 @@
+﻿
+@model IEnumerable<MyERP.Models.Pos_GetTotalSalesAndReturn_Result>
+
+@foreach (var item in Model)
+{
+<tr>
+
+    <td hidden>
+        <input hidden class="PaymentMethodId" value="@item.Id" />
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.ArName)
+    </td>
+    <td class="SalesAmount money ">
+        @Html.DisplayFor(modelItem => item.TotalSales, new { htmlAttributes = new { @class = "SalesAmount money ", type = "text", id = "SalesAmount" } })
+    </td>
+    <td class="ReturnAmount money ">
+        @Html.DisplayFor(modelItem => item.TotalReturn, new { htmlAttributes = new { @class = "ReturnAmount money ", type = "text", id = "ReturnAmount" } })
+    </td>
+    <td class="CashIssue money ">
+        @Html.DisplayFor(modelItem => item.TotalCashIssueVoucher, new { htmlAttributes = new { @class = "CashIssue money ", type = "text", id = "CashIssue" } })
+    </td>
+    <td class="NetSales money ">
+        @Html.DisplayFor(modelItem => item.NetSales, new { htmlAttributes = new { @class = "NetSales money ", type = "text", id = "NetSales" } })
+    </td>
+    <td class="ReservationAmount money ">
+        @Html.DisplayFor(modelItem => item.TotalReservations, new { htmlAttributes = new { @class = "ReservationAmount money ", type = "text", id = "ReservationAmount" } })
+    </td>
+</tr>
+}

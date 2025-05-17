@@ -1,0 +1,2087 @@
+﻿@using MyERP.Models.MyModels
+@model MyERP.Models.PropertyContract
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Contracts;
+}
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.Contracts :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                    @Html.HiddenFor(model => model.JournalEntryId)
+                                }
+                                else
+                                {
+                                    <input type="hidden" value="0"  id="Id"/>
+                                }
+                                @*<h5 class="header-title">
+                                        @MyERP.Properties.Resources.MainData
+                                    </h5>*@
+
+                                @* Panel 1 *@
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                                    @MyERP.Properties.Resources.MainData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse1">
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.DocNo</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                                    <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.UnifiedContractNumber/@MyERP.Properties.Resources.ElectronicContract</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.UnifiedContractNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.UnifiedContractNumber } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.VAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="radio" id="Applied" name="IsAddedValue" value="true" class="col-sm-2" checked="checked" />@MyERP.Properties.Resources.Applied
+                                                    <input type="radio" id="NotApplied" name="IsAddedValue" value="false" class="col-sm-2" />@MyERP.Properties.Resources.NotApplied
+                                                    @if (Model != null && Model.IsAddedValue != null)
+                                                    {
+                                                        <input id="IsAddedValue" hidden @Html.Raw(Model != null && Model.IsAddedValue == true ? "checked" : "") />
+                                                    }
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.ContractType</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.ContractTypeId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2"> </label>
+                                                <div class="col-sm-4">
+                                                    <input type="radio" id="GovernmentalContract" name="GovernmentalOrPrivateContract" value="1" class="col-sm-2" checked="checked" />@MyERP.Properties.Resources.GovernmentalContract
+                                                    <input type="radio" id="PrivateContract" name="GovernmentalOrPrivateContract" value="2" class="col-sm-2" />@MyERP.Properties.Resources.PrivateContract
+                                                    @if (Model != null && Model.GovernmentalOrPrivateContract != null)
+                                                    {
+                                                        <input id="GovernmentalOrPrivateContract" hidden type="text" value="@Model.GovernmentalOrPrivateContract" />
+                                                    }
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.DepartmentId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.ContractDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijryContractDate  </label>
+                                                <div class="col-sm-4">
+                                                    <input readonly type="text" id="HijryVoucherDate" class="form-control" />
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Renter</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.PropertyRenterId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Representative</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.RepId, null, null, htmlAttributes: new
+                                                    {
+                                                        @class = "form-control"@*, required = "required"*@})
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @* مكان الصورة *@
+                                            <div class="form-group row">
+                                                <div id="gallery" style="width: 100%;margin: 20px;">
+                                                    @{ if (Model != null && Model.PropertyContractImages != null)
+                                                        {
+                                                            foreach (MyERP.Models.PropertyContractImage img in Model.PropertyContractImages)
+                                                            {
+                                                                <img onclick="ShowModal(this)" data-toggle="modal" data-target="#ImageModal" src="@img.Image" alt="" class="img_@img.Id" style="max-width: 200px;max-height: 200px;" />
+                                                                <i class="fas fa-trash-alt img_@img.Id" style="cursor:pointer;" onclick="DeleteIMG('@img.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                            }
+                                                        }
+                                                    }
+                                                </div>
+                                                <input type="file" id="BrowseImage" onchange="previewFile()" value="Browse" multiple />
+                                                <div style="display:none;">
+                                                    @Html.ListBoxFor(i => i.PropertyContractImages, new SelectList(Model == null ? new List<MyERP.Models.PropertyContractImage>() : Model.PropertyContractImages, "Id", "Image", Model == null ? null : Model.PropertyContractImages), new { @class = "form-control1", placeholder = "Photos" })
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @* Panel 2 *@
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                                    @MyERP.Properties.Resources.PropertyData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse2">
+                                      
+                                       
+                                            <div class="form-group row ">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Property</label>
+                                                <div class="col-sm-4">
+                                                @{
+                                                    if ((Model?.Id ?? 0) > 0)
+                                                    {
+                                                        @Html.DropDownListFor(model => model.PropertyId, null, null, htmlAttributes: new { disabled = "disabled", @class = "form-control", required = "required" })
+                                                    }
+                                                    else
+                                                    {
+                                                        @Html.DropDownListFor(model => model.PropertyId, null, null, htmlAttributes: new {   @class = "form-control", required = "required" })
+                                                    }
+                                                }
+                                                  
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Owner</label>
+                                                <div class="col-sm-4">
+                                                    @{
+                                                        if ((Model?.Id ?? 0) > 0)
+                                                        {
+                                                            @Html.DropDownListFor(model => model.PropertyOwnerId, null, null, htmlAttributes: new { disabled = "disabled",@class = "form-control", required = "required" })
+                                                        }
+                                                        else
+                                                        {
+                                                            @Html.DropDownListFor(model => model.PropertyOwnerId, null, null, htmlAttributes: new {  @class = "form-control", required = "required" })
+                                                        }
+                                                    }
+
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.PropertyUnitType </label>
+                                                <div class="col-sm-4">
+                                                    @{
+                                                        if ((Model?.Id ?? 0) > 0)
+                                                        {
+                                                            @Html.DropDownListFor(model => model.PropertyUnitTypeId, null, null, htmlAttributes: new { disabled = "disabled",@class = "form-control", required = "required" })
+                                                        }
+                                                        else
+                                                        {
+                                                            @Html.DropDownListFor(model => model.PropertyUnitTypeId, null, null, htmlAttributes: new {  @class = "form-control", required = "required" })
+
+                                                    }
+                                                    }
+
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Unit</label>
+                                                <div class="col-sm-4">
+                                                    @{
+                                                        if ((Model?.Id ?? 0) > 0)
+                                                        {
+                                                            @Html.DropDownListFor(model => model.PropertyUnitId, null, null, htmlAttributes: new { disabled = "disabled", @class = "form-control", required = "required" })
+                                                        }
+                                                        else
+                                                        {
+                                                            @Html.DropDownListFor(model => model.PropertyUnitId, null, null, htmlAttributes: new {  @class = "form-control", required = "required" })
+                                                        }
+
+                                                    }
+
+
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @* Panel 3 *@
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                                    @MyERP.Properties.Resources.ContractData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse3">
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.RentValue </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.RentValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.RentValue } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeRentValueInVAT" @Html.Raw(Model != null && Model.IncludeRentValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Water </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.WaterValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Water } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeWaterValueInVAT" @Html.Raw(Model != null && Model.IncludeWaterValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Electricity </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.ElectricityValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Electricity } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeElectricityValueInVAT" @Html.Raw(Model != null && Model.IncludeElectricityValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Gas </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.GasValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Gas } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeGasValueInVAT" @Html.Raw(Model != null && Model.IncludeGasValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Services </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.ServicesValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Services } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeServicesValueInVAT" @Html.Raw(Model != null && Model.IncludeServicesValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.PropertyCommission </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.CommissionValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.PropertyCommission } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeCommissionValueInVAT" @Html.Raw(Model != null && Model.IncludeCommissionValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Insurance </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.InsuranceValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Insurance } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeInVAT</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IncludeInsuranceValueInVAT" @Html.Raw(Model != null && Model.IncludeInsuranceValueInVAT == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <div class="form-group col-sm-3">
+                                            <label class="control-label  col-sm-12">@MyERP.Properties.Resources.Net:</label>
+                                            <div class="col-sm-12">
+                                                @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", value = "0" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-sm-3">
+                                            <label class="control-label col-sm-12">@MyERP.Properties.Resources.VATPercentage % :</label>
+                                            <div class="col-sm-12">
+                                                @Html.EditorFor(model => model.VATPercentage, new { htmlAttributes = new { @class = "form-control", type = "text", @readonly = "readonly ", value = "0" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-sm-3">
+                                            <label class="control-label col-sm-12">@MyERP.Properties.Resources.VATValue:</label>
+                                            <div class="col-sm-12">
+                                                @Html.EditorFor(model => model.VATValue, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly ", value = "0" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-sm-3">
+                                            <label class="control-label  col-sm-12">@MyERP.Properties.Resources.TotalAfterTaxes:</label>
+                                            <div class="col-sm-12">
+                                                @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", value = "0" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.ContractStartDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ContractStartDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijryContractStartDate  </label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryContractStartDate" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.ContractEndDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ContractEndDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijryContractEndDate  </label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryContractEndDate" class="form-control" />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="ContractPeriodNum" class="control-label col-sm-2">@MyERP.Properties.Resources.ContractPeriod</label>
+                                        <div class="col-sm-1">
+                                            @Html.EditorFor(model => model.ContractPeriodNum, new { htmlAttributes = new { @class = "form-control", @required = "required", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            @Html.DropDownListFor(model => model.ContractPeriodTypeId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.GracePeriod</label>
+                                        <div class="col-sm-1">
+                                            @Html.EditorFor(model => model.GracePeriodDay, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <span class="font-20 col-sm-1">  @MyERP.Properties.Resources.Day  </span>
+
+                                        <div class="col-sm-1">
+                                            @Html.EditorFor(model => model.GracePeriodMonth, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <span class="font-20 col-sm-1">  @MyERP.Properties.Resources.Month  </span>
+                                    </div>
+                                </div>
+                                @* Panel 4 *@
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                                    @MyERP.Properties.Resources.Batches
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse4">
+                                            <h3 style="color:red;display:none;" id="BatchHeader">
+                                                @MyERP.Properties.Resources.CantEditBatchesBecauseItlinkedWithCashReceiptVoucher
+                                            </h3>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.NumberOfBatches </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.NumberOfBatches, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.NumberOfBatches, @type = "text" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label for="ContractPeriodNum" class="control-label col-sm-2">@MyERP.Properties.Resources.PeriodBetweenBatches</label>
+                                                <div class="col-sm-1">
+                                                    @Html.EditorFor(model => model.PeriodBetweenBatchesNum, new { htmlAttributes = new { @class = "form-control", @required = "required", @type = "text" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    @Html.DropDownListFor(model => model.PeriodBetweenBatchesTypeId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.FirstBatchDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.FirstBatchDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijryFirstBatchDate  </label>
+                                                <div class="col-sm-4">
+                                                    <input readonly type="text" id="HijryFirstBatchDate" class="form-control" />
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DivideWaterIntoBatches</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IsDivideWaterIntoBatches" @Html.Raw(Model != null && Model.IsDivideWaterIntoBatches == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DivideElectricityIntoBatches</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IsDivideElectricityIntoBatches" @Html.Raw(Model != null && Model.IsDivideElectricityIntoBatches == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DivideGasIntoBatches</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IsDivideGasIntoBatches" @Html.Raw(Model != null && Model.IsDivideGasIntoBatches == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DivideCommission </label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" id="IsDivideCommission" @Html.Raw(Model != null && Model.IsDivideCommission == true ? "checked" : "") />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Batch
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Date
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.HijriDate
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Rent
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Water
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Electricity
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Gas
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Services
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.PropertyCommission
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Insurance
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Total
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.IsDelivered
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.PaidBefor
+                                                            </td>
+                                                            @*<td>
+                                                                @MyERP.Properties.Resources.JournalEntrieNo
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.PrintJournalEntry
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.PrintInvoice
+                                                            </td>*@
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="PropertyContractBatches">
+                                                        @if (Model != null)
+                                                        {
+                                                            foreach (var item in Model.PropertyContractBatches)
+                                                            {
+                                                               
+                                                                    var Batchlst = (ViewBag.BathcesPaid as List<BatchPaidModel>) ?? new List<BatchPaidModel>();
+                                                               
+                                                                <tr>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="@item.BatchNo" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="@item.BatchDate.Value.ToString("yyyy-MM-dd")" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="HijryBatchDate control-label control-label"></label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="@item.BatchRentValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchRentValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="@item.BatchWaterValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchWaterValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="@item.BatchElectricityValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchElectricityValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchGasValue form-control tabledit-input form-control-sm" value="@item.BatchGasValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchGasValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchGasValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchServicesValue form-control tabledit-input form-control-sm" value="@item.BatchServicesValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchServicesValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchServicesValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="@item.BatchCommissionValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchCommissionValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchCommissionValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchInsuranceValue form-control tabledit-input form-control-sm" value="@item.BatchInsuranceValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchInsuranceValueTaxes form-control tabledit-input form-control-sm" value="@item.BatchInsuranceValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="@item.BatchTotal" disabled readonly />
+                                                                    </td>
+                                                                    <td>
+                                                                        <input type="checkbox" class="IsDelivered" disabled @Html.Raw(Model != null && item.IsDelivered == true ? "checked" : "") />
+                                                                        <input type="checkbox" hidden class="IsRegisteredAsDue" disabled @Html.Raw(Model != null && item.IsRegisteredAsDue == true ? "checked" : "") />
+                                                                        <input type="checkbox" hidden class="IsRegisteredAsRevenue" disabled @Html.Raw(Model != null && item.IsRegisteredAsRevenue == true ? "checked" : "") />
+                                                                    </td>
+
+                                                                    <td>
+                                                                        @{
+                                                                            var totalPaid = Batchlst.FirstOrDefault(t => t.Id == item.Id)?.Paid ?? 0;
+                                                                        }
+                                                                        <input type="number" step="any" class="totalpaid form-control tabledit-input form-control-sm" value="@totalPaid" readonly disabled />
+                                                                    </td>
+                                                                    @*<td class="tabledit-edit-mode">
+                        <input type="text" class="JournalEntryDocumentNumber form-control tabledit-input form-control-sm" value="@(item.JournalEntry != null ? item.JournalEntry.DocumentNumber : "")" disabled readonly />
+                    </td>
+                    <td class="tabledit-edit-mode">
+                        <a href="javascript:void(0);" onclick="PrintJournalEntry(@item.JournalEntryId)">
+                            <i class="remixicon-printer-fill"></i>
+                        </a>
+                    </td>
+                    <td class="tabledit-edit-mode">
+                        <a href="javascript:void(0);" onclick="PrintInvoice(@item.Id)">
+                            <i class="remixicon-printer-fill"></i>
+                        </a>
+                    </td>*@
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                @* Panel 5 *@
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                                    @MyERP.Properties.Resources.Representatives
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse5">
+                                            <div class="table-responsive">
+                                                <table class="table table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Representative
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Percentage %
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Delete
+                                                            </td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="PropertyContractReps">
+                                                        @if (Model != null)
+                                                        {
+                                                            foreach (var item in Model.PropertyContractReps)
+                                                            {
+                                                                <tr>
+                                                                    <td class="tabledit-edit-mode col-sm-4">
+                                                                        <select class="repId form-control tabledit-input form-control-sm">
+                                                                            <option value="@item.RepId">@item.Employee.ArName</option>
+                                                                        </select>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode col-sm-2">
+                                                                        <input type="number" step="any" class="RepPercentage form-control tabledit-input form-control-sm" value="@item.RepPercentage" />
+                                                                    </td>
+                                                                    <td>
+                                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                        <tr>
+                                                            <td class="tabledit-edit-mode col-sm-4">
+                                                                @Html.DropDownList("repId", null, htmlAttributes: new { @class = "repId form-control tabledit-input form-control-sm" })
+                                                            </td>
+                                                            <td class="tabledit-edit-mode col-sm-2">
+                                                                <input type="number" step="any" class="RepPercentage form-control tabledit-input form-control-sm" />
+                                                            </td>
+                                                            <td>
+                                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="form-group row">
+                                                        <label class="control-label col-sm-2" for="ContractSpecialTerms">@MyERP.Properties.Resources.ContractSpecialTerms</label>
+                                                        <div class="col-sm-4">
+                                                            <textarea id="ContractSpecialTerms" name="ContractSpecialTerms" class="form-control" rows="3" cols="5">@if (Model != null) { @Model.ContractSpecialTerms; }</textarea>
+                                                        </div>
+                                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                                        <div class="col-sm-4">
+                                                            <textarea id="Notes" name="Notes" class="form-control" rows="3" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group row">
+                                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.JournalEntrieNo</label>
+                                                        <div class="col-sm-4">
+                                                            @Html.EditorFor(model => model.JournalEntry.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @type = "text", @disabled = "disabled" } })
+                                                            <div class="invalid-feedback">
+                                                                @MyERP.Properties.Resources.Required
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-sm-offset-2">
+                                                            @if (Model != null)
+                                                            {
+                                                                <button id="CreateJournalEntry" onclick="CreateJournalEntry(@Model.Id);" class="btn btn-primary">
+                                                                    @MyERP.Properties.Resources.CreateJournalEntry
+                                                                </button>
+                                                                <button onclick="PrintJournalEntry(@Model.Id);" class="btn btn-primary JE">
+                                                                    @MyERP.Properties.Resources.PrintJournalEntry
+                                                                </button>
+                                                                <button onclick="DeleteJournalEntry(@Model.Id);" class="btn btn-danger JE">
+                                                                    @MyERP.Properties.Resources.DeleteJournalEntry
+                                                                </button>
+                                                                <a class="btn btn-secondary JE" href="@Url.Action("AddEdit","CashReceiptVoucher",new {id=0,cid=Model.Id})">
+                                                                    @MyERP.Properties.Resources.CashReceiptVoucher
+                                                                </a>
+                                                                @*<button onclick="PrintContract(@Model.Id);" class="btn btn-primary">
+                        @MyERP.Properties.Resources.PrintContract
+                    </button>*@
+                                                                @*<button onclick="Attachments();" class="btn btn-primary">
+                        @MyERP.Properties.Resources.Attachments
+                    </button>
+                    <button onclick="Renew();" class="btn btn-primary">
+                        @MyERP.Properties.Resources.Renew
+                    </button>
+                    <button onclick="Waiver();" class="btn btn-primary">
+                        @MyERP.Properties.Resources.Waiver
+                    </button>
+                    <button onclick="Evacuation();" class="btn btn-primary">
+                        @MyERP.Properties.Resources.Evacuation
+                    </button>*@
+                                                            }
+                                                        </div>
+                                                    </div>
+
+
+                                                    @if (Model != null && ViewBag.Journal != null)
+                                                    {
+                                                        <div class="card">
+                                                            <div class="card-body">
+                                                                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntry</h5>
+                                                                <div class="form-horizontal">
+                                                                    <div class="form-group row">
+                                                                        <label for="JournalDocNo" class="col-sm-1 control-label">@MyERP.Properties.Resources.JournalEntrieNo</label>
+                                                                        <div class="col-sm-5">
+                                                                            <input type="text" class="form-control" name="JournalDocNo" value="@ViewBag.JournalDocumentNumber" id="JournalDocNo" placeholder=@MyERP.Properties.Resources.JournalEntrieNo readonly>
+
+                                                                        </div>
+                                                                        <label for="JournalDate" class="col-sm-1 control-label">@MyERP.Properties.Resources.Date </label>
+                                                                        <div class="col-sm-5">
+                                                                            <input type="datetime-local" class="form-control" name="JournalDate" value="@ViewBag.VoucherDate" id="JournalDate" placeholder=@MyERP.Properties.Resources.Date readonly>
+
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group row">
+                                                                        <label for="JournalNotes" class="col-sm-1 control-label">@MyERP.Properties.Resources.Notes</label>
+                                                                        <div class="col-sm-5">
+                                                                            <textarea class="form-control" id="JournalNotes" value="@ViewBag.Journal.Notes" readonly name="JournalNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                                                                        </div>
+
+
+                                                                    </div>
+                                                                    <div class="card">
+                                                                        <div class="card-body">
+                                                                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                                                                            <div class="table-responsive">
+                                                                                <table class="table table-centered mb-0">
+                                                                                    <thead>
+                                                                                        <tr>
+                                                                                            <th>@MyERP.Properties.Resources.Debit</th>
+                                                                                            <th>@MyERP.Properties.Resources.Credit</th>
+                                                                                            <th>@MyERP.Properties.Resources.Account</th>
+                                                                                            <th> @MyERP.Properties.Resources.CostCenter</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody id="JournalEntryDetails-tbody">
+                                                                                        @foreach (var item in ViewBag.Journal.JournalEntryDetails)
+                                                                                        {
+                                                                                            if (item.Debit > 0 || item.Credit > 0)
+                                                                                            {
+                                                                                                <tr>
+                                                                                                    <td>@item.Debit</td>
+                                                                                                    <td>@item.Credit</td>
+                                                                                                    <td>
+                                                                                                        @Html.Raw(item.ChartOfAccount != null ? item.ChartOfAccount.ArName : null)
+                                                                                                        <input type="hidden" class="JournalAccountId" value="@item.AccountId" />
+                                                                                                    </td>
+                                                                                                    <td>
+                                                                                                        @Html.Raw(item.CostCenter != null ? item.CostCenter.ArName : null)
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            }
+                                                                                        }
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+
+                                                    @if (Model != null && ViewBag.CashRecipt != null)
+                                                    {
+                                                         
+                                                                    <div class="card">
+                                                                        <div class="card-body">
+                                                                            <h5 class="header-title"> @MyERP.Properties.Resources.CashReceiptVoucher</h5>
+                                                                            <div class="table-responsive">
+                                                                                <table class="table table-centered mb-0">
+                                                                                    <thead>
+                                                                                    <tr>
+                                                                                        <th>@MyERP.Properties.Resources.DocNo</th>
+                                                                                        <th>@MyERP.Properties.Resources.Amount</th>
+                                                                                        <th>@MyERP.Properties.Resources.Date</th>
+                                                                                        <th>@MyERP.Properties.Resources.Branch</th>
+                                                                                        <th>@MyERP.Properties.Resources.Edit</th>
+                                                                                        <th>@MyERP.Properties.Resources.Print</th>
+                                                                                    </tr>
+                                                                                    </thead>
+                                                                                    <tbody id="CashReceiptVoucher-tbody">
+                                                                                        @foreach (var item in ViewBag.CashRecipt)
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td>
+                                                                                                    @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    @item.MoneyAmount
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                   @item.Date
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                @item.Department.ArName
+                                                                                                </td>
+                                                                                               
+                                                                                                <td>
+                                                                                                    <a href="@Url.Action("AddEdit", "CashReceiptVoucher", new { id = item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                                                                                        <i class="fa fa-edit"></i>
+                                                                                                    </a>
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    <a href="@Url.Action("CashReceiptVoucherDetails","Report",new { id=item.Id})" target="_blank">
+                                                                                                        <i class="remixicon-printer-fill"></i>
+                                                                                                    </a>
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        }
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                         
+                                                    }
+
+
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!---------------------------------------------- Saves Buttons ----------------------------------------------------------->
+<div class="row">
+    <div class="col-sm-offset-2">
+        @if (Model == null)
+        {
+            <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                @MyERP.Properties.Resources.SaveAndNew
+            </button>
+            <button onclick="addEdit();" class="btn btn-success" id="save">
+                @MyERP.Properties.Resources.Save
+            </button>
+            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+        }
+        else if (Model.IsDeleted == false)
+        {
+            <button onclick="addEdit();" class="btn btn-success" id="save">
+                @MyERP.Properties.Resources.Save
+            </button>
+            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+        }
+    </div>
+</div>
+<!----------------------------------------------------------------------------------------------------------------------------------------->
+
+
+<script>
+//--------------- Variables Declarations -------------------//
+var taxPercentage = 0.14;
+var RepOptions = '';
+var OwnerOptions = '';
+var UnitOptions = "";
+var UnitTypeOptions = "";
+var IsLinkedWithCashReceiptVoucher = '@ViewBag.IsLinkedWithCashReceiptVoucher';
+var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
+//*********************************************************//
+//--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#VoucherDate').val('@ViewBag.VoucherDate');
+        $('#ContractStartDate').val('@ViewBag.ContractStartDate');
+        $('#ContractEndDate').val('@ViewBag.ContractEndDate');
+        $('#FirstBatchDate').val('@ViewBag.FirstBatchDate');
+        if (IsLinkedWithCashReceiptVoucher == 'True') {
+            $("#collapse4 :input").prop('disabled', true);
+            $("#BatchHeader").show();
+        }
+        $('.Gregorian').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        });
+
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#ContractStartDate,#ContractEndDate,#FirstBatchDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        GetContractReps();
+        if ($('#Id').val() > 0) {
+            $('.repId').not(':last').each(function () {
+                let selectedItem = $(this).val();
+                $(this).empty().append(RepOptions).val(selectedItem);
+            });
+            $("input[name=IsAddedValue][value=" + $('#IsAddedValue').prop('checked') + "]").prop('checked', true);
+            $("input[name=GovernmentalOrPrivateContract][value=" + $('#GovernmentalOrPrivateContract').val() + "]").prop('checked', true);
+            $('.BatchDate').each(function () {
+                var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+                $(this).closest('tr').find('.HijryBatchDate').text(Hijry);
+            });
+            @*$('#PropertyUnitId').val('@Model.PropertyUnitId')
+            $('#PropertyUnitId').select2()*@
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#VoucherDate").prop('disabled', true);
+            if (IsPrevious_JE == 'True') {
+                $("#CreateJournalEntry").prop('disabled', true);
+            }
+            else {
+                $('.JE').prop('disabled', true);
+            }
+            //GetCurrentTaxPercentage();
+            taxPercentage = $('#VATPercentage').val();
+        }
+        else {
+            if (!$('#Id').val()) {
+                SetDocNum();
+            }
+            GetCurrentTaxPercentage();
+            $('#PropertyId').trigger('change');
+            $('#PropertyUnitTypeId').trigger('change');
+        }
+    });
+//*********************************************************//
+
+//--------------- Event Functions -------------------//
+    $('.Gregorian').on('change', function () {
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+    });
+    $('#VoucherDate').on('change', function () {
+        GetCurrentTaxPercentage();
+        if (!$('#Id').val()) {
+            SetDocNum();
+        }
+      
+    });
+    $('#DepartmentId').on('change', function () {
+        GetCurrentTaxPercentage();
+        if (!$('#Id').val()) {
+            SetDocNum();
+        }
+    });
+    $('#RentValue').on('change', function () {
+                CalculateTotalsContractItems();
+            });
+    $('#IncludeRentValueInVAT').on('change', function () {
+                CalculateTotalsContractItems();
+            });
+    $('#WaterValue').on('change', function () {
+                CalculateTotalsContractItems();
+            });
+    $('#IncludeWaterValueInVAT').on('change', function () {
+                CalculateTotalsContractItems();
+            });
+    $('#ElectricityValue').on('change', function () {
+                CalculateTotalsContractItems();
+            });
+    $('#IncludeElectricityValueInVAT').on('change', function () {
+                CalculateTotalsContractItems();
+            });
+    $('#GasValue').on('change', function () {
+                CalculateTotalsContractItems();
+    });
+    $('#IncludeGasValueInVAT').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#ServicesValue').on('change', function () {
+                CalculateTotalsContractItems();
+    });
+    $('#IncludeServicesValueInVAT').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#CommissionValue').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#IncludeCommissionValueInVAT').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#InsuranceValue').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#IncludeInsuranceValueInVAT').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#PeriodBetweenBatchesTypeId').on('change', function () {
+                CalculateBatches();
+            });
+    $('#NumberOfBatches').on('change', function () {
+                CalculateBatches();
+            });
+    $('#PeriodBetweenBatchesNum').on('change', function () {
+        CalculateBatches();
+    });
+    $('#FirstBatchDate').on('change', function () {
+        CalculateBatches();
+    });
+    $(document).on('change , keyup', '.RepPercentage', function (e) {
+        if ($(this).closest('tr').find('.repId').val() > 0) {
+            AppendToPropertyContractReps();
+        }
+    });
+    $("input[name='IsAddedValue']").on('change', function () {
+        if ($("input[name='IsAddedValue']:checked").val() == false) {
+            $('#IsAddedValue').prop('checked',false)
+        }
+        else {
+            $('#IsAddedValue').prop('checked', true)
+        }
+    });
+    $("input[name='GovernmentalOrPrivateContract']").on('change', function () {
+        if ($("input[name='GovernmentalOrPrivateContract']").val() == 1) {
+            $("#GovernmentalOrPrivateContract").val(1);
+        }
+        else {
+            $("#GovernmentalOrPrivateContract").val(2);
+        }
+    });
+    $('#IsDivideCommission').on('change', function () {
+        console.log('fired');
+        CalculateTotalsContractItems();
+    });
+    $('#IsDivideElectricityIntoBatches').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#IsDivideGasIntoBatches').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+
+    $('#IsDivideWaterIntoBatches').on('change', function () {
+        CalculateTotalsContractItems();
+    });
+    $('#PropertyId').on('change', function () {
+        let mval = $("#PropertyUnitId").val();
+        console.log(mval);
+        GetPropertyOwner($(this).val()).then(function () {
+            $("#PropertyOwnerId").empty().append(OwnerOptions);
+            $("#PropertyUnitTypeId").empty().append(UnitTypeOptions);
+        }).then(function () {
+
+            GetUnitByUnitTypeId().then(function() {
+            
+
+                $("#PropertyUnitId").empty().append(UnitOptions);
+                $("#PropertyUnitId").val(mval);
+
+
+            });
+        });;
+    });
+    $('#PropertyUnitTypeId').on('change', function () {
+        GetUnitByUnitTypeId().then(function () {
+            $("#PropertyUnitId").empty().append(UnitOptions);
+        });
+    });
+    $('#ContractStartDate').on('change', function () {
+        CalculateContractPeriodNum();
+    });
+    $('#ContractEndDate').on('change', function () {
+        CalculateContractPeriodNum();
+    });
+    $('#GracePeriodDay').on('change', function () {
+        SetContractStartDate($(this).val(), null);
+    });
+    $('#GracePeriodMonth').on('change', function () {
+        SetContractStartDate(null, $(this).val());
+    });
+
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function SetDocNum() {
+        console.log('setdocno');
+        if ($('#DepartmentId').val())
+            var doc = $.get('/PropertyContract/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+                console.log(r);
+
+            });
+    }
+    function deleteElement(e) {
+                let tr = $(e).closest('tr');
+                if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+                    $(tr).find("input").val('');
+                    $(tr).find("label").text('');
+                    $(tr).find('input, select').removeAttr('required');
+                    $(tr).find('select').empty();
+                    $(tr).find('.Add-Button').prop('hidden', false);
+                    $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+                }
+                else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+                    e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+                else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+                    $(tr).find("input").val('');
+                    $(tr).find('input, select').removeAttr('required');
+                    $(tr).find('select').empty();
+                    $(tr).find("label").text('');
+                    $(tr).find('.Add-Button').prop('hidden', false);
+                    $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+                }
+            }
+    function GetCurrentTaxPercentage() {
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val()).done(function (r) {
+            taxPercentage = r / 100;
+            CalculateTotalsContractItems();
+        });
+    }
+    function CalculateTotalsContractItems() {
+                var RentValue = parseFloat($('#RentValue').inputmask('unmaskedvalue') > 0 ? $('#RentValue').inputmask('unmaskedvalue') : 0);
+                var RentValueWithTaxes = 0;
+                if ($('#IncludeRentValueInVAT').prop('checked') == true) {
+                    RentValueWithTaxes = (RentValue * taxPercentage);
+        }
+                var WaterValue = parseFloat($('#WaterValue').inputmask('unmaskedvalue') > 0 ? $('#WaterValue').inputmask('unmaskedvalue') : 0);
+                var WaterValueWithTaxes = 0;
+                if ($('#IncludeWaterValueInVAT').prop('checked') == true) {
+                    WaterValueWithTaxes = (WaterValue * taxPercentage);
+                }
+                var ElectricityValue = parseFloat($('#ElectricityValue').inputmask('unmaskedvalue') > 0 ? $('#ElectricityValue').inputmask('unmaskedvalue') : 0);
+                var ElectricityValueWithTaxes = 0;
+                if ($('#IncludeElectricityValueInVAT').prop('checked') == true) {
+                    ElectricityValueWithTaxes = (ElectricityValue * taxPercentage);
+        }
+        var GasValue = parseFloat($('#GasValue').inputmask('unmaskedvalue') > 0 ? $('#GasValue').inputmask('unmaskedvalue') : 0);
+        var GasValueWithTaxes = 0;
+                if ($('#IncludeGasValueInVAT').prop('checked') == true) {
+                    GasValueWithTaxes = (GasValue * taxPercentage);
+        }
+        var ServicesValue = parseFloat($('#ServicesValue').inputmask('unmaskedvalue') > 0 ? $('#ServicesValue').inputmask('unmaskedvalue') : 0);
+        var ServicesValueWithTaxes = 0;
+                if ($('#IncludeServicesValueInVAT').prop('checked') == true) {
+                    ServicesValueWithTaxes = (ServicesValue * taxPercentage);
+        }
+        var CommissionValue = parseFloat($('#CommissionValue').inputmask('unmaskedvalue') > 0 ? $('#CommissionValue').inputmask('unmaskedvalue') : 0);
+        var CommissionValueWithTaxes = 0;
+                if ($('#IncludeCommissionValueInVAT').prop('checked') == true) {
+                    CommissionValueWithTaxes = (CommissionValue * taxPercentage);
+        }
+        var InsuranceValue = parseFloat($('#InsuranceValue').inputmask('unmaskedvalue') > 0 ? $('#InsuranceValue').inputmask('unmaskedvalue') : 0);
+        var InsuranceValueWithTaxes = 0;
+                if ($('#IncludeInsuranceValueInVAT').prop('checked') == true) {
+                    InsuranceValueWithTaxes = (InsuranceValue * taxPercentage);
+                }
+                var GasValue = parseFloat($('#GasValue').inputmask('unmaskedvalue') > 0 ? $('#GasValue').inputmask('unmaskedvalue') : 0);
+                var ServicesValue = parseFloat($('#ServicesValue').inputmask('unmaskedvalue') > 0 ? $('#ServicesValue').inputmask('unmaskedvalue') : 0);
+                var CommissionValue = parseFloat($('#CommissionValue').inputmask('unmaskedvalue') > 0 ? $('#CommissionValue').inputmask('unmaskedvalue') : 0);
+                var InsuranceValue = parseFloat($('#InsuranceValue').inputmask('unmaskedvalue') > 0 ? $('#InsuranceValue').inputmask('unmaskedvalue') : 0);
+
+        var NetTotal = RentValue + WaterValue + ElectricityValue + GasValue + ServicesValue + CommissionValue + InsuranceValue;
+        var VATValue = RentValueWithTaxes + ElectricityValueWithTaxes + WaterValueWithTaxes + GasValueWithTaxes + ServicesValueWithTaxes
+            + CommissionValueWithTaxes + InsuranceValueWithTaxes;
+                var TotalAfterTaxes = NetTotal + VATValue;
+
+                $('#NetTotal').val(NetTotal);
+                $('#VATPercentage').val(taxPercentage);
+                $('#VATValue').val(VATValue);
+                $('#TotalAfterTaxes').val(TotalAfterTaxes);
+                CalculateBatches();
+            }
+    function convertToJavaScriptDate(value) {
+                if (value === null)
+                    return null;
+                var pattern = /Date\(([^)]+)\)/;
+                var results = pattern.exec(value);
+                var dt = new Date(parseFloat(results[1]));
+                return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+            }
+    function zeroPadded(val) {
+                if (val >= 10)
+                    return val;
+                else
+                    return '0' + val;
+    }
+    //function SetBatchDate(i) {
+    //    var _FirstBatchDate = new Date($('#FirstBatchDate').val());
+    //    var PeriodBetweenBatchesTypeId = $('#PeriodBetweenBatchesTypeId').val();
+    //    var PeriodBetweenBatchesNum = parseInput($('#PeriodBetweenBatchesNum').val());
+    //    var result;
+    //    var x = new Date($('#PropertyContractBatches tr:last').find('.BatchDate').val());
+
+    //    if (PeriodBetweenBatchesTypeId == 1) // يوم
+    //    {
+    //        _FirstBatchDate.setDate(_FirstBatchDate.getDate() + (i * PeriodBetweenBatchesNum));
+    //        result = (_FirstBatchDate.getFullYear()) + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1) + "-" + zeroPadded(_FirstBatchDate.getDate());
+    //    }
+    //    else if (PeriodBetweenBatchesTypeId == 2) // اسبوع
+    //    {
+    //        _FirstBatchDate.setDate(_FirstBatchDate.getDate() + (i * 7 * PeriodBetweenBatchesNum));
+    //        result = (_FirstBatchDate.getFullYear()) + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1) + "-" + zeroPadded(_FirstBatchDate.getDate());
+    //    }
+    //    else if (PeriodBetweenBatchesTypeId == 3) // شهر
+    //    {
+    //        _FirstBatchDate.setDate(_FirstBatchDate.getDate());
+    //        if (_FirstBatchDate.getMonth() + 1 + (i * PeriodBetweenBatchesNum) <= 12) {
+    //            result = _FirstBatchDate.getFullYear() + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1 + (i * PeriodBetweenBatchesNum)) + "-" + zeroPadded(_FirstBatchDate.getDate());
+    //        }
+    //        else {
+    //            if (zeroPadded(x.getMonth() + 1) == 1) {
+    //                result = x.getFullYear() + "-" + zeroPadded(x.getMonth() + 1 + parseInt(PeriodBetweenBatchesNum)) + "-" + zeroPadded(x.getDate());
+    //            }
+    //            else {
+    //                result = x.getFullYear() + 1 + "-" + zeroPadded(1) + "-" + zeroPadded(x.getDate());
+    //            }
+    //        }
+    //    }
+
+    //    else if (PeriodBetweenBatchesTypeId == 4) // سنة
+    //    {
+    //        _FirstBatchDate.setDate(_FirstBatchDate.getDate());
+    //        result = (_FirstBatchDate.getFullYear() + (i * PeriodBetweenBatchesNum)) + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1) + "-" + zeroPadded(_FirstBatchDate.getDate());
+    //    }
+    //    return result;
+    //}
+
+
+function parseInput(input) {
+    return input === "" ? 0 : Number(input);
+    }
+
+var lastdate;
+    function SetBatchDate(i) {
+        var PeriodBetweenBatchesTypeId = $('#PeriodBetweenBatchesTypeId').val();
+        var PeriodBetweenBatchesNum = parseInput($('#PeriodBetweenBatchesNum').val());
+        if (PeriodBetweenBatchesNum == 0) {
+            PeriodBetweenBatchesNum = 1;
+            $('#PeriodBetweenBatchesNum').val(1);
+        }
+
+        var result;
+        var _FirstBatchDate = new Date($('#FirstBatchDate').val());
+        if (!lastdate) {
+            lastdate = new Date($('#FirstBatchDate').val());
+            result = (lastdate.getFullYear()) + "-" + zeroPadded(lastdate.getMonth() + 1) + "-" + zeroPadded(lastdate.getDate());
+            return result;
+
+        }
+
+
+        var x = new Date($('#PropertyContractBatches tr:last').find('.BatchDate').val());
+        //console.log({
+        //    lastdate: lastdate,
+        //    PeriodBetweenBatchesNum: PeriodBetweenBatchesNum,
+        //    PeriodBetweenBatchesTypeId: PeriodBetweenBatchesTypeId
+
+        //});
+
+        if (PeriodBetweenBatchesTypeId == 1) // يوم
+        {
+          //  _FirstBatchDate.setDate(_FirstBatchDate.getDate() + (i * PeriodBetweenBatchesNum));
+          lastdate = addDays(lastdate,  PeriodBetweenBatchesNum);
+
+          //  result = (_FirstBatchDate.getFullYear()) + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1) + "-" + zeroPadded(_FirstBatchDate.getDate());
+        }
+        else if (PeriodBetweenBatchesTypeId == 2) // اسبوع
+        {
+           /// _FirstBatchDate.setDate(_FirstBatchDate.getDate() + (i * 7 * PeriodBetweenBatchesNum));
+          //  result = (_FirstBatchDate.getFullYear()) + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1) + "-" + zeroPadded(_FirstBatchDate.getDate());
+            lastdate = addWeeks(lastdate,  PeriodBetweenBatchesNum);
+        }
+        else if (PeriodBetweenBatchesTypeId == 3) // شهر
+        {
+            //_FirstBatchDate.setDate(_FirstBatchDate.getDate());
+            //if (_FirstBatchDate.getMonth() + 1 + (i * PeriodBetweenBatchesNum) <= 12) {
+            //    result = _FirstBatchDate.getFullYear() + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1 + (i * PeriodBetweenBatchesNum)) + "-" + zeroPadded(_FirstBatchDate.getDate());
+            //}
+            //else {
+            //    if (zeroPadded(x.getMonth() + 1) == 1) {
+            //        result = x.getFullYear() + "-" + zeroPadded(x.getMonth() + 1 + parseInt(PeriodBetweenBatchesNum)) + "-" + zeroPadded(x.getDate());
+            //    }
+            //    else {
+            //        result = x.getFullYear() + 1 + "-" + zeroPadded(1) + "-" + zeroPadded(x.getDate());
+            //    }
+            //}
+            
+            lastdate = addMonths(lastdate,  PeriodBetweenBatchesNum);
+        }
+
+        else if (PeriodBetweenBatchesTypeId == 4) // سنة
+        {
+            //_FirstBatchDate.setDate(_FirstBatchDate.getDate());
+            //result = (_FirstBatchDate.getFullYear() + (i * PeriodBetweenBatchesNum)) + "-" + zeroPadded(_FirstBatchDate.getMonth() + 1) + "-" + zeroPadded(_FirstBatchDate.getDate());
+            lastdate = addYears(lastdate,  PeriodBetweenBatchesNum);
+        }
+
+        result = (lastdate.getFullYear()) + "-" + zeroPadded(lastdate.getMonth() + 1) + "-" + zeroPadded(lastdate.getDate());
+        return result;
+    }
+
+
+    function CalculateBatches() {
+        $('#PropertyContractBatches').empty();
+        var NumberOfBatches = $('#NumberOfBatches').val() * 1;
+        var RentValue = $('#RentValue').inputmask('unmaskedvalue') * 1;
+        var WaterValue = $('#WaterValue').inputmask('unmaskedvalue') * 1;
+        var ElectricityValue = $('#ElectricityValue').inputmask('unmaskedvalue') * 1;
+        var CommissionValue = $('#CommissionValue').inputmask('unmaskedvalue') * 1;
+        var GasValue = $('#GasValue').inputmask('unmaskedvalue') * 1;
+        var ServicesValue = $('#ServicesValue').inputmask('unmaskedvalue') * 1;
+        var InsuranceValue = $('#InsuranceValue').inputmask('unmaskedvalue') * 1;
+
+        var IncludeRentValueInVAT = $('#IncludeRentValueInVAT').prop('checked');
+        var IncludeWaterValueInVAT = $('#IncludeWaterValueInVAT').prop('checked');
+        var IncludeElectricityValueInVAT = $('#IncludeElectricityValueInVAT').prop('checked');
+        var IncludeGasValueInVAT = $('#IncludeGasValueInVAT').prop('checked');
+        var IncludeServicesValueInVAT = $('#IncludeServicesValueInVAT').prop('checked');
+        var IncludeInsuranceValueInVAT = $('#IncludeInsuranceValueInVAT').prop('checked');
+        var IncludeCommissionValueInVAT = $('#IncludeCommissionValueInVAT').prop('checked');
+
+        var BatchRentValue = parseFloat(RentValue / NumberOfBatches).toFixed(2);
+        var BatchRentValueTaxes = 0;
+        if (IncludeRentValueInVAT == true) {
+            BatchRentValueTaxes = parseFloat(BatchRentValue * taxPercentage).toFixed(2);
+        }
+        var BatchWaterValue = parseFloat(WaterValue / NumberOfBatches).toFixed(2);
+ 
+        var BatchWaterValueTaxes = 0;
+        if (IncludeWaterValueInVAT == true) {
+            BatchWaterValueTaxes = parseFloat(BatchWaterValue * taxPercentage).toFixed(2);
+        }
+        var BatchElectricityValue = parseFloat(ElectricityValue / NumberOfBatches).toFixed(2);
+        var BatchElectricityValueTaxes = 0;
+        if (IncludeElectricityValueInVAT == true) {
+            BatchElectricityValueTaxes = parseFloat(BatchElectricityValue * taxPercentage).toFixed(2);
+        }
+        var BatchGasValue = parseFloat(GasValue / NumberOfBatches).toFixed(2);
+        var BatchGasValueTaxes = 0;
+        if (IncludeGasValueInVAT == true) {
+            BatchGasValueTaxes = parseFloat(BatchGasValue * taxPercentage).toFixed(2);
+        }
+        var BatchServicesValue = parseFloat(ServicesValue / NumberOfBatches).toFixed(2);
+        var BatchServicesValueTaxes = 0;
+        if (IncludeServicesValueInVAT == true) {
+            BatchServicesValueTaxes = parseFloat(BatchServicesValue * taxPercentage).toFixed(2);
+        }
+        var BatchInsuranceValue = parseFloat(InsuranceValue / NumberOfBatches).toFixed(2);
+        var BatchInsuranceValueTaxes = 0;
+        if (IncludeInsuranceValueInVAT == true) {
+            BatchInsuranceValueTaxes = parseFloat(BatchInsuranceValue * taxPercentage).toFixed(2);
+        }
+        var BatchCommissionValue = parseFloat(CommissionValue / NumberOfBatches).toFixed(2);
+        var BatchCommissionValueTaxes = 0;
+        if (IncludeCommissionValueInVAT == true) {
+            BatchCommissionValueTaxes = parseFloat(BatchCommissionValue * taxPercentage).toFixed(2);
+        }
+        var BatchTotal = parseFloat(BatchRentValue) + parseFloat(BatchRentValueTaxes)
+            + parseFloat(BatchWaterValue) + parseFloat(BatchWaterValueTaxes)
+            + parseFloat(BatchElectricityValue) + parseFloat(BatchElectricityValueTaxes)
+            + parseFloat(BatchGasValue) + parseFloat(BatchGasValueTaxes)
+            + parseFloat(BatchServicesValue) + parseFloat(BatchServicesValueTaxes)
+            + parseFloat(BatchInsuranceValue) + parseFloat(BatchInsuranceValueTaxes)
+            + parseFloat(BatchCommissionValue) + parseFloat(BatchCommissionValueTaxes);
+        lastdate = null;
+        for (var i = 0; i < NumberOfBatches; i++) {
+            BatchDate = SetBatchDate(i);
+            var HijryBatchDate = new Intl.DateTimeFormat('ar-sa').format(new Date(BatchDate)).toString();
+            let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="' +
+                (1 + i) + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="' +
+                BatchDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label" > ' +
+                HijryBatchDate + '</label ></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' +
+                BatchRentValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchRentValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchWaterValue form-control tabledit-input form-control-sm" value = "' +
+                BatchWaterValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchWaterValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="' +
+                BatchElectricityValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchElectricityValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchGasValue form-control tabledit-input form-control-sm" value = "' +
+                BatchGasValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchGasValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchGasValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValue form-control tabledit-input form-control-sm" value="' +
+                BatchServicesValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchServicesValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchCommissionValue form-control tabledit-input form-control-sm" value = "' +
+                BatchCommissionValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchCommissionValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchInsuranceValue form-control tabledit-input form-control-sm" value = "' +
+                BatchInsuranceValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchInsuranceValueTaxes form-control tabledit-input form-control-sm" value="' +
+                BatchInsuranceValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="' +
+                BatchTotal + '" disabled readonly /></td><td><input type="checkbox" class="IsDelivered" disabled /> <input hidden type="checkbox" class="IsRegisteredAsDue" disabled /><input hidden type="checkbox" class="IsRegisteredAsRevenue" disabled /></td><td><input type="number" step="any" class="totalpaid form-control tabledit-input form-control-sm" value="0" readonly disabled /></td></tr> ';
+            $('#PropertyContractBatches').append(tr);
+            if ($('#IsDivideWaterIntoBatches').prop('checked') != true) {
+                $('#PropertyContractBatches tr:first').find('.BatchWaterValue').val(parseFloat(WaterValue).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchWaterValue').val(0);
+                //**********************
+                let wtax = parseFloat(WaterValue * taxPercentage).toFixed(2);
+                $('#PropertyContractBatches tr:first').find('.BatchWaterValueTaxes').val(parseFloat(!IncludeWaterValueInVAT ? 0 :wtax).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchWaterValueTaxes').val(0);
+
+
+            }
+            if ($('#IsDivideElectricityIntoBatches').prop('checked') != true) {
+                $('#PropertyContractBatches tr:first').find('.BatchElectricityValue').val(parseFloat(ElectricityValue).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchElectricityValue').val(0);
+                //**********************
+                let etax = parseFloat(ElectricityValue * taxPercentage).toFixed(2);
+                $('#PropertyContractBatches tr:first').find('.BatchElectricityValueTaxes').val(parseFloat(!IncludeElectricityValueInVAT ? 0 :etax).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchElectricityValueTaxes').val(0);
+            }
+            if ($('#IsDivideGasIntoBatches').prop('checked') != true) {
+                $('#PropertyContractBatches tr:first').find('.BatchGasValue').val(parseFloat(GasValue).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchGasValue').val(0);
+                let gtax = parseFloat(GasValue * taxPercentage).toFixed(2);
+                $('#PropertyContractBatches tr:first').find('.BatchGasValueTaxes').val(parseFloat(!IncludeGasValueInVAT ? 0 :gtax).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchGasValueTaxes').val(0);
+            }
+
+            if ($('#IsDivideCommission').prop('checked') != true) {
+
+                $('#PropertyContractBatches tr:first').find('.BatchServicesValue').val(parseFloat(ServicesValue).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchServicesValue').val(0);
+                let stax = parseFloat(ServicesValue * taxPercentage).toFixed(2);
+                $('#PropertyContractBatches tr:first').find('.BatchServicesValueTaxes').val(parseFloat(!IncludeServicesValueInVAT ? 0:stax).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchServicesValueTaxes').val(0);
+
+                $('#PropertyContractBatches tr:first').find('.BatchCommissionValue').val(parseFloat(CommissionValue).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchCommissionValue').val(0);
+                let ctax = parseFloat(CommissionValue * taxPercentage).toFixed(2);
+                $('#PropertyContractBatches tr:first').find('.BatchCommissionValueTaxes').val(parseFloat(!IncludeInsuranceValueInVAT ? 0 :ctax).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchCommissionValueTaxes').val(0);
+
+
+                $('#PropertyContractBatches tr:first').find('.BatchInsuranceValue').val(parseFloat(InsuranceValue).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchInsuranceValue').val(0);
+
+                let itax = parseFloat(CommissionValue * taxPercentage).toFixed(2);
+                $('#PropertyContractBatches tr:first').find('.BatchInsuranceValueTaxes').val(parseFloat(!IncludeCommissionValueInVAT ? 0 :itax).toFixed(2));
+                $('#PropertyContractBatches tr').not(':first').find('.BatchInsuranceValueTaxes').val(0);
+            }
+            $('.BatchTotal').each(function () {
+                var Totals = parseFloat($(this).closest('tr').find('.BatchRentValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchRentValueTaxes').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchWaterValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchWaterValueTaxes').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchElectricityValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchElectricityValueTaxes').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchCommissionValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchCommissionValueTaxes').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchGasValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchGasValueTaxes').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchServicesValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchServicesValueTaxes').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchInsuranceValue').inputmask('unmaskedvalue'))
+                    + parseFloat($(this).closest('tr').find('.BatchInsuranceValueTaxes').inputmask('unmaskedvalue'));
+                $(this).val(Totals);
+            });
+        }
+    }
+    function GetContractReps() {
+        RepOptions = '';
+        $('.repId').last().find('option').each(function () {
+            RepOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+
+    }
+    function AppendToPropertyContractReps() {
+        if ($('#PropertyContractReps .form-control:invalid').length > 0) {
+            $('#PropertyContractReps').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#PropertyContractReps").find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        } else if ($('#PropertyContractReps .repId:last').val() && $('#PropertyContractReps .RepPercentage:last').val()) {
+            let tr = '<tr><td class="tabledit-edit-mode col-sm-4"><select class="repId form-control tabledit-input form-control-sm"></select></td><td class="tabledit-edit-mode col-sm-2"><input type="number" step="any" class="RepPercentage form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            if (!RepOptions.length) {
+                GetContractReps();
+            }
+            $('#PropertyContractReps').append(tr);
+            $('.repId').last().append(RepOptions).select2();
+            //$('#PropertyContractReps input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+            //    alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            //});
+        }
+        if ($('#PropertyContractReps .repId:last').val()) {
+            $('#PropertyContractReps').find('.repId, .RepPercentag').prop('required', 'required');
+        }
+        if (!$('#PropertyContractReps .repId:last').val() && $('#PropertyContractReps .RepPercentage:last').val() > 0) {
+            valid = false;
+            $('#PropertyContractReps').find('.repId, .RepPercentag').prop('required', false);
+
+        }
+    }
+    function PrintJournalEntry(id) {
+        requestData('/Helper/GetJournalEntryByTableName?TableName=PropertyContract&Id=' + id).done(function (r) {
+            window.open("/Report/JournalEntryDetails/" + r);
+        });
+    }
+    function PrintInvoice(Id) {
+        alert("PrintSalesInvoice")
+    }
+
+
+    function CreateJournalEntry(id) {
+         $.ajax({
+             type: "Get", contentType: "application/json",
+             url: "/PropertyContract/CreateJournalEntry",
+             data: {
+                 "Id": id,
+             },
+                        success: function (r) {
+                            if (r == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Created',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                //window.location.replace("/PropertyContract");
+                                $("#CreateJournalEntry").prop('disabled', true);
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotCreated !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $("#CreateJournalEntry").prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotCreated !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+
+                        }
+                    });
+    }
+    function DeleteJournalEntry(id) {
+        requestData('/Helper/GetJournalEntryByTableName?TableName=PropertyContract&Id=' + id).done(function (res) {
+             Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/JournalEntries/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": res,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.reload();
+                        }
+                        else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+        });
+    }
+    function PrintContract(id) {
+        alert("PrintContract")
+    }
+    function Attachments() {
+        alert("Attachments")
+    }
+    function Renew() {
+        alert("Renew")
+    }
+    function Waiver() {
+        alert("Waiver")
+    }
+    function Evacuation() {
+        alert("Evacuation")
+    }
+    function GetPropertyOwner(PropertyId) {
+        OwnerOptions = '';
+        UnitTypeOptions = '';
+
+        $('#PropertyOwnerId').empty();
+        $('#PropertyUnitTypeId').empty();
+        return requestData('/PropertyContract/GetPropertyOwner?PropertyId=' + PropertyId).done(function (r) {
+            for (var i = 0; i < r.Owners.length; i++) {
+                OwnerOptions += '<option value="' + r.Owners[i].Id + '">' + r.Owners[i].ArName + '</option>';
+            }
+            for (var i = 0; i < r.UnitType.length; i++) {
+                UnitTypeOptions += '<option value="' + r.UnitType[i].Id + '">' + r.UnitType[i].ArName + '</option>';
+            }
+          
+        })
+    }
+    function GetUnitByUnitTypeId() {
+        UnitOptions = '';
+
+        $('#PropertyUnitId').empty();
+        
+     return  requestData('/PropertyContract/GetUnitByUnitTypeId?UnitTypeId=' + $('#PropertyUnitTypeId').val() + '&PropertyId=' + $('#PropertyId').val() + '&contractId=' + $('#Id').val() ).done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                UnitOptions += '<option value="' + r[i].Id + '">' + r[i].PropertyUnitNo + '</option>';
+             }
+
+          
+
+         });
+    }
+    function CalculateContractPeriodNum() {
+        var ContractStartDate = new Date($('#ContractStartDate').val());
+        var ContractEndDate = new Date($('#ContractEndDate').val());
+        var ContractPeriodNum = Math.round((ContractEndDate - ContractStartDate) / (1000 * 60 * 60 * 24));
+        $('#ContractPeriodNum').val(ContractPeriodNum);
+    }
+    //---------------------------------------------------------------- images gallery  --------------------------------------------------------------//
+    function DeleteIMG(url) {
+        $("#PropertyContractImages option[value='" + url + "']").remove();
+    }
+    function previewFile() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /></a><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#PropertyContractImages").append("<option style='float: left;' selected=selected>" + reader.result + "</option>");
+        }, false);
+
+        for (var i = 0; i < $("#BrowseImage")[0].files.length; i++) {
+            if ($("#BrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#BrowseImage")[0].files[i]);
+            }
+        }
+    }
+    $("#PropertyContractImages option").attr('selected', 'selected');
+    $("#PropertyContractImages").hide();
+    $("#GetImage").click(function () {
+        $("#GetImage").fadeOut();
+        $('#UploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteIMG("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#PropertyContractImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+    function ShowModal(img) {
+        let ImageSelected = $(img);
+        let ImageSrc = ImageSelected[0].currentSrc;
+        $('#imagepreview').attr('src', ImageSrc);
+    }
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+    function SetContractStartDate(day, month) {
+        var ContractStartDate = new Date($('#ContractStartDate').val());
+        if (day != null && day > 0) {
+            ContractStartDate.setDate(ContractStartDate.getDate() + parseInt(day));
+        }
+        else if (month != null && month > 0) {
+            ContractStartDate.setMonth(ContractStartDate.getMonth() + parseInt(month));
+        }
+        var month = (ContractStartDate.getMonth() + 1) < 10 ? '0' + (ContractStartDate.getMonth() + 1) : (ContractStartDate.getMonth() + 1);
+        var day = ContractStartDate.getDate() < 10 ? '0' + ContractStartDate.getDate() : ContractStartDate.getDate();
+        var hours = ContractStartDate.getHours();
+        var minutes = ContractStartDate.getMinutes();
+        var seconds = ContractStartDate.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        var value = (ContractStartDate.getFullYear() + "-" + month + "-" + day) + "T" + strTime;
+        $('#ContractStartDate').val(value);
+    }
+
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        var PropertyContractImages = [];
+        if (valid) {
+            $('#PropertyContractImages option').each(function () {
+                var option = $(this);
+
+                var PropertyContractImage =
+                {
+                    MainDocId: $('#Id').val(),
+                    Image: option.text()
+                };
+                PropertyContractImages.push(PropertyContractImage);
+            });
+        }
+        var PropertyContractBatches = [];
+        if (valid) {
+            $('#PropertyContractBatches tr').each(function () {
+                var td = $(this);
+                var PropertyContractBatch = {
+                    BatchNo: td.find('.BatchNo').val(),
+                    BatchDate: td.find('.BatchDate').val(),
+                    BatchRentValue: td.find('.BatchRentValue').inputmask('unmaskedvalue'),
+                    BatchRentValueTaxes: td.find('.BatchRentValueTaxes').inputmask('unmaskedvalue'),
+                    BatchWaterValue: td.find('.BatchWaterValue').inputmask('unmaskedvalue'),
+                    BatchWaterValueTaxes: td.find('.BatchWaterValueTaxes').inputmask('unmaskedvalue'),
+                    BatchElectricityValue: td.find('.BatchElectricityValue').inputmask('unmaskedvalue'),
+                    BatchElectricityValueTaxes: td.find('.BatchElectricityValueTaxes').inputmask('unmaskedvalue'),
+                    BatchCommissionValue: td.find('.BatchCommissionValue').inputmask('unmaskedvalue'),
+                    BatchTotal: td.find('.BatchTotal').inputmask('unmaskedvalue'),
+                    IsDelivered: td.find('.IsDelivered').prop('checked'),
+                    JournalEntryId: td.find('.JournalEntryId').val(),
+                    IsDeleted: false,
+                    UserId: $('#UserId').val(),
+                    Notes: td.find('.Notes').val(),
+                    Image: td.find('.Image').val(),
+                    IsRegisteredAsDue: td.find('.IsRegisteredAsDue').prop('checked'),
+                    IsRegisteredAsRevenue: td.find('.IsRegisteredAsRevenue').prop('checked'),
+                    BatchCommissionValueTaxes: td.find('.BatchCommissionValueTaxes').inputmask('unmaskedvalue'),
+                    BatchGasValue: td.find('.BatchGasValue').inputmask('unmaskedvalue'),
+                    BatchGasValueTaxes: td.find('.BatchGasValueTaxes').inputmask('unmaskedvalue'),
+                    BatchServicesValue: td.find('.BatchServicesValue').inputmask('unmaskedvalue'),
+                    BatchServicesValueTaxes: td.find('.BatchServicesValueTaxes').inputmask('unmaskedvalue'),
+                    BatchInsuranceValue: td.find('.BatchInsuranceValue').inputmask('unmaskedvalue'),
+                    BatchInsuranceValueTaxes: td.find('.BatchInsuranceValueTaxes').inputmask('unmaskedvalue')
+                };
+                PropertyContractBatches.push(PropertyContractBatch);
+            });
+        }
+
+        var PropertyContractReps = [];
+        if (valid) {
+            $('#PropertyContractReps tr').each(function () {
+                var td = $(this);
+
+                var PropertyContractRep = {
+                    RepId: td.find('.repId').val(),
+                    RepPercentage: td.find('.RepPercentage').val(),
+                    IsDeleted: false,
+                    UserId: $('#UserId').val(),
+                    Notes: td.find('.Notes').val(),
+                    Image: td.find('.Image').val(),
+                };
+                if (td.find('.RepPercentage').val() > 0) {
+                    PropertyContractReps.push(PropertyContractRep);
+                }
+            });
+        }
+            var PropertyContract = {
+                Id: $('#Id').val(),
+                DocumentNumber: $('#DocumentNumber').val(),
+                VoucherDate: $('#VoucherDate').val(),
+                ContractTypeId: $('#ContractTypeId').val(),
+                PropertyId: $('#PropertyId').val(),
+                RentTypeId: $('#RentTypeId').val(),
+                PropertyOwnerId: $('#PropertyOwnerId').val(),
+                PropertyRenterId: $('#PropertyRenterId').val(),
+                DepartmentId: $('#DepartmentId').val(),
+                RepId: $('#RepId').val(),
+                RentValue: $('#RentValue').inputmask('unmaskedvalue'),
+                CommissionValue: $('#CommissionValue').inputmask('unmaskedvalue'),
+                ServicesValue: $('#ServicesValue').inputmask('unmaskedvalue'),
+                WaterValue: $('#WaterValue').inputmask('unmaskedvalue'),
+                NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                VATPercentage: $('#VATPercentage').val(),
+                VATValue: $('#VATValue').inputmask('unmaskedvalue'),
+                TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+                ContractStartDate: $('#ContractStartDate').val(),
+                ContractEndDate: $('#ContractEndDate').val(),
+                ContractPeriodNum: $('#ContractPeriodNum').val(),
+                ContractPeriodTypeId: $('#ContractPeriodTypeId').val(),
+                IsDeleted: $('#IsDeleted').val(),
+                UserId: $('#UserId').val(),
+                Notes: $('#Notes').val(),
+                Image: $('#Image').val(),
+                PropertyUnitTypeId: $('#PropertyUnitTypeId').val(),
+                PropertyUnitId: $('#PropertyUnitId').val(),
+                IncludeRentValueInVAT: $('#IncludeRentValueInVAT').prop('checked'),
+                IncludeWaterValueInVAT: $('#IncludeWaterValueInVAT').prop('checked'),
+                ElectricityValue: $('#ElectricityValue').inputmask('unmaskedvalue'),
+                IncludeElectricityValueInVAT: $('#IncludeElectricityValueInVAT').prop('checked'),
+                GasValue: $('#GasValue').inputmask('unmaskedvalue'),
+                GracePeriodDay: $('#GracePeriodDay').val(),
+                GracePeriodMonth: $('#GracePeriodMonth').val(),
+                NumberOfBatches: $('#NumberOfBatches').val() ,
+                FirstBatchDate: $('#FirstBatchDate').val() ,
+                PeriodBetweenBatchesNum: $('#PeriodBetweenBatchesNum').val(),
+                PeriodBetweenBatchesTypeId: $('#PeriodBetweenBatchesTypeId').val() ,
+                IsDivideWaterIntoBatches: $('#IsDivideWaterIntoBatches').prop('checked') ,
+                IsDivideElectricityIntoBatches: $('#IsDivideElectricityIntoBatches').prop('checked'),
+                IsDivideGasIntoBatches: $('#IsDivideGasIntoBatches').prop('checked'),
+                IsDivideCommission: $('#IsDivideCommission').prop('checked'),
+                UnifiedContractNumber: $('#UnifiedContractNumber').val(),
+                IsAddedValue: $("input[name='IsAddedValue']:checked").val(),
+                ContractSpecialTerms: $('#ContractSpecialTerms').val(),
+                JournalEntryId: $('#JournalEntryId').val(),
+                InsuranceValue: $('#InsuranceValue').inputmask('unmaskedvalue'),
+                IncludeInsuranceValueInVAT: $('#IncludeInsuranceValueInVAT').prop('checked'),
+                IncludeGasValueInVAT: $('#IncludeGasValueInVAT').prop('checked'),
+                IncludeCommissionValueInVAT: $('#IncludeCommissionValueInVAT').prop('checked'),
+                IncludeServicesValueInVAT: $('#IncludeServicesValueInVAT').prop('checked'),
+                GovernmentalOrPrivateContract: $("input[name='GovernmentalOrPrivateContract']:checked").val(),
+                PropertyContractBatches: PropertyContractBatches,
+                PropertyContractReps: PropertyContractReps,
+                PropertyContractImages: PropertyContractImages,
+            }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/PropertyContract/AddEdit",
+                        data: JSON.stringify(PropertyContract),
+                        success: function (r) {
+                            if (r.success == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); if (n == "new") {
+                                    window.location.replace("/PropertyContract/AddEdit");
+                                } else {
+                                    window.location.replace("/PropertyContract");
+                                }
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PropertyContract/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/PropertyContract');
+                        }
+                    }
+                });
+        }
+    }
+
+</script>
+@helper DisabledIf(int? id)
+{
+    
+    if ( (id??0)> 0 )
+    {
+        @:disabled="disabled"
+    }
+}

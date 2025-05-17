@@ -1,0 +1,199 @@
+﻿
+@model MyERP.Models.Branch
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Branch;
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="panel panel-widget forms-panel">
+        <div class="forms">
+            <div class=" form-grids form-grids-right">
+                <div class="widget-shadow " data-example-id="basic-forms">
+                    <div class="form-title">
+                        @if (Model.Id > 0)
+                        {
+                            if (Model.IsDeleted == false)
+                            {
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+                                if (ViewBag.Previous > 0)
+                                {
+                    <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                                    <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                                }
+                                if (ViewBag.Next > 0)
+                                {
+                                    <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                                    <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                                }
+                            }
+                        }
+                        else
+                        {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>}
+                    <div class="hed"> @MyERP.Properties.Resources.Branch :</div>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-horizontal">
+
+                            <input type="hidden" id="hdnobjID" value="@Model.Id" />
+                            @Html.HiddenFor(model => model.IsActive)
+
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Code</label>
+                                <div class="col-sm-9">
+                                    @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @required = "required", disabled = "disabled" } })
+                                    @*<input type="text" class="form-control" value="@Model.Code" name="Code" id="Code"  required disabled>*@
+                                    @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+
+
+                                    <span class="Asterisks">*</span>
+                                </div>
+
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.ArName</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="@Model.ArName" name="ArName" id="txtArName" placeholder=@MyERP.Properties.Resources.ArName required>
+                                    <span class="Asterisks">*</span>
+                                </div>
+
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.EnName</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" value="@Model.EnName" name="EnName" id="txtEnName" placeholder=@MyERP.Properties.Resources.EnName>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Company</label>
+                                <div class="col-sm-9">
+
+                                    @Html.DropDownList("CompanyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.CompanyId, "", new { @class = "text-danger" })
+                                </div>
+
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.CreationDate </label>
+                                <div class="col-sm-9">
+                                    <input type="datetime-local" class="form-control " value="@Model.CreationDate" name="CreationDate" id="CreationDate" placeholder=@MyERP.Properties.Resources.CreationDate>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Mobile</label>
+                                <div class="col-sm-9">
+                                    <input type="number" step="any" class="form-control" value="@Model.Mobile" name="Mobile" id="txtMobile" placeholder=@MyERP.Properties.Resources.Mobile>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Tel 1</label>
+                                <div class="col-sm-9">
+                                    <input type="number" step="any" class="form-control" value="@Model.Tel1" name="Tel1" id="txtTel1" placeholder=@MyERP.Properties.Resources.Tel>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Tel 2</label>
+                                <div class="col-sm-9">
+                                    <input type="number" step="any" class="form-control" value="@Model.Tel2" name="Tel2" id="txtTel2" placeholder=@MyERP.Properties.Resources.Tel>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Fax</label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" id="txtFax" value="@Model.Fax" name="Fax" placeholder=@MyERP.Properties.Resources.Fax>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label"> @MyERP.Properties.Resources.Email</label>
+                                <div class="col-sm-9">
+                                    <input type="email" class="form-control" id="txtEmail" value="@Model.Email" name="Email" placeholder=@MyERP.Properties.Resources.Email>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Address</label>
+                                <div class="col-sm-9">
+                                    @Html.TextAreaFor(model => model.Address, new { htmlAttributes = new { @class = "form-control", @placeholder = @MyERP.Properties.Resources.Address } })
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Notes</label>
+                                <div class="col-sm-9">
+                                    @Html.TextAreaFor(model => model.Notes, new { htmlAttributes = new { @class = "form-control", @placeholder = @MyERP.Properties.Resources.Notes } })
+                                </div>
+                            </div>
+
+                            <br />
+                            <br />
+
+                            <div class="col-sm-offset-2">
+                                @if (Model.Id == 0)
+                                {<input id="new" name="newBtn" hidden />
+
+                                 <button type="submit" id="newbtn" class="btn btn-success">
+                                     @MyERP.Properties.Resources.SaveAndNew
+                                 </button>
+                                 <button type="submit" class="btn btn-success">
+                                     @MyERP.Properties.Resources.Save
+                                 </button>
+                                 <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                }
+                                else
+                                {
+                                    if (Model.IsDeleted == false)
+                                    {
+                            <button type="submit" class="btn btn-success">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            <a class="btn btn-danger" onclick="Delete(@Model.Id, 'Branch')" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                    }
+                                }
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<script>
+     //date
+     function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+     if ($('#hdnobjID').val() != 0) {
+         $('#CreationDate').val('@ViewBag.CreationDate');
+
+
+    } else {
+        var d = new Date();
+        $('#CreationDate').val('@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")');
+        $('#CreationDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+    }
+     if ($('#hdnobjID').val() == 0) {
+         function setCodeNum() {
+             var doc = $.get('/Branch/SetCodeNum').done(function (r) {
+                 $('#Code').val(r);
+             });
+
+         }
+
+         setCodeNum();
+     }
+
+</script>

@@ -1,0 +1,71 @@
+﻿
+@{
+    ViewBag.Title = "ChangeItemType";
+}
+
+<h2>ChangeItemType</h2>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("ChangeItemType")" role="button" style="float:left; margin-right:4px"> ChangeItemType </a>
+            </div>
+            <h4 class="page-title"> ChangeItemType </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <a class="btn btn-info" href="@Url.Action("InsertIntoItemsFromItemInsertion")" role="button" style="float:right; margin-right:4px"> Insert Into Items From Item Insertion </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <button class="btn btn-info" onclick="ChangeSalaryItemTypeIntoDue()" style="float:right; margin-right:4px"> change Salary Item Type Into Due </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <a class="btn btn-info" href="@Url.Action("ChangeFinancialPeriodCloseStatus")" role="button" style="float:right; margin-right:4px"> Change Financial Period Close Status </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $.get('/Helper/GetSalesInvoiceDetails?id=31399').done(function (r) {
+            console.log("Result : ", r);
+        }); 
+    });
+
+    function ChangeSalaryItemTypeIntoDue() {
+        $.get('/SalaryItem/ChangeSalaryItemTypeIntoDue').done(function (r) {
+            if (r =="success")
+                alert("Done");
+            else
+                alert("Error Occure !" + r)
+        });
+    }
+</script>

@@ -1,0 +1,33 @@
+﻿@model  ServiceInvoice2_Report
+@{
+    Layout = null;
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ServiceInvoice;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>  @MyERP.Properties.Resources.ServiceInvoice </title>
+    @Html.DevExpress().GetStyleSheets(
+        new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Report }
+    )
+    @Html.DevExpress().GetScripts(
+        new Script { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+        new Script { ExtensionSuite = ExtensionSuite.Editors },
+        new Script { ExtensionSuite = ExtensionSuite.Report }
+    )
+</head>
+<body>
+
+    @Html.DevExpress().WebDocumentViewer(settings =>
+{
+    settings.Name = "WebDocumentViewer";
+}).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(new ServiceInvoice2_Report(ViewBag.id,ViewBag.domainName))).GetHtml()
+
+</body>
+</html>

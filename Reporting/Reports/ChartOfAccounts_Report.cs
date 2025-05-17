@@ -1,0 +1,776 @@
+﻿using System;
+using System.Drawing;
+using System.Collections;
+using System.ComponentModel;
+using DevExpress.XtraReports.UI;
+using System.Web;
+using System.Linq;
+using MyERP.Controllers;
+using MyERP.Models;
+
+/// <summary>
+/// Summary description for ChartOfAccounts_Report
+/// </summary>
+public class ChartOfAccounts_Report : DevExpress.XtraReports.UI.XtraReport
+{
+    private MySoftERPEntity db = new MySoftERPEntity();
+    private DevExpress.DataAccess.Sql.SqlDataSource sqlDataSource1;
+    private XRControlStyle Title;
+    private XRControlStyle DetailCaption1;
+    private XRControlStyle DetailData1;
+    private XRControlStyle DetailData3_Odd;
+    private XRControlStyle PageInfo;
+    private TopMarginBand TopMargin;
+    private BottomMarginBand BottomMargin;
+    private XRPageInfo pageInfo2;
+    private GroupHeaderBand GroupHeader1;
+    private XRTable table1;
+    private XRTableRow tableRow1;
+    private XRTableCell tableCell1;
+    private XRTableCell tableCell2;
+    private XRTableCell tableCell3;
+    private XRTableCell tableCell4;
+    private XRTableCell tableCell5;
+    private XRTableCell tableCell6;
+    private XRTableCell tableCell7;
+    private XRTableCell tableCell8;
+    private XRTableCell tableCell9;
+    private DetailBand Detail;
+    private XRTable table2;
+    private XRTableRow tableRow2;
+    private XRTableCell tableCell10;
+    private XRTableCell tableCell11;
+    private XRTableCell tableCell12;
+    private XRTableCell tableCell13;
+    private XRTableCell tableCell14;
+    private XRTableCell tableCell15;
+    private XRTableCell tableCell16;
+    private XRTableCell tableCell17;
+    private XRTableCell tableCell18;
+    private XRLabel xrLabel8;
+    private XRLabel xrLabel7;
+    private XRLabel xrLabel6;
+    private XRLabel xrLabel4;
+    private XRLabel Time;
+    private DevExpress.XtraReports.Parameters.Parameter TypeId;
+    private DevExpress.XtraReports.Parameters.Parameter ClassificationId;
+    private DevExpress.XtraReports.Parameters.Parameter CategoryId;
+    private DevExpress.XtraReports.Parameters.Parameter ParrentAccount;
+    private XRLabel User;
+    private XRPictureBox xrPictureBox1;
+    private XRLabel CompanyName;
+    private PageHeaderBand PageHeader;
+
+    /// <summary>
+    /// Required designer variable.
+    /// </summary>
+    private System.ComponentModel.IContainer components = null;
+
+    public ChartOfAccounts_Report(int? TypeId, int? ClassificationId, int? CategoryId, int? AccountId)
+    {
+        InitializeComponent();
+        User.Text = HttpContext.Current.User.Identity.Name;
+        //
+        // TODO: Add constructor logic here
+        //
+        this.TypeId.Value = TypeId;
+        this.ClassificationId.Value = ClassificationId;
+        this.CategoryId.Value = CategoryId;
+        this.ParrentAccount.Value = AccountId;
+    }
+
+    /// <summary> 
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && (components != null))
+        {
+            components.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    #region Designer generated code
+
+    /// <summary>
+    /// Required method for Designer support - do not modify
+    /// the contents of this method with the code editor.
+    /// </summary>
+    private void InitializeComponent()
+    {
+            this.components = new System.ComponentModel.Container();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.SelectQuery selectQuery1 = new DevExpress.DataAccess.Sql.SelectQuery();
+            DevExpress.DataAccess.Sql.Column column1 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression1 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.Table table3 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Column column2 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression2 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.SelectQuery selectQuery2 = new DevExpress.DataAccess.Sql.SelectQuery();
+            DevExpress.DataAccess.Sql.Column column3 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression3 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.Table table4 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Column column4 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression4 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.SelectQuery selectQuery3 = new DevExpress.DataAccess.Sql.SelectQuery();
+            DevExpress.DataAccess.Sql.Column column5 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression5 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.Table table5 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Column column6 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression6 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery1 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChartOfAccounts_Report));
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings1 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings2 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings3 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings4 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
+            this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.DetailCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.DetailData1 = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.DetailData3_Odd = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.PageInfo = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.TopMargin = new DevExpress.XtraReports.UI.TopMarginBand();
+            this.BottomMargin = new DevExpress.XtraReports.UI.BottomMarginBand();
+            this.pageInfo2 = new DevExpress.XtraReports.UI.XRPageInfo();
+            this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
+            this.User = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel8 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel7 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel6 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel4 = new DevExpress.XtraReports.UI.XRLabel();
+            this.Time = new DevExpress.XtraReports.UI.XRLabel();
+            this.GroupHeader1 = new DevExpress.XtraReports.UI.GroupHeaderBand();
+            this.table1 = new DevExpress.XtraReports.UI.XRTable();
+            this.tableRow1 = new DevExpress.XtraReports.UI.XRTableRow();
+            this.tableCell1 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell2 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell3 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell4 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell5 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell6 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell7 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell8 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell9 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.Detail = new DevExpress.XtraReports.UI.DetailBand();
+            this.table2 = new DevExpress.XtraReports.UI.XRTable();
+            this.tableRow2 = new DevExpress.XtraReports.UI.XRTableRow();
+            this.tableCell10 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell11 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell12 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell13 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell14 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell15 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell16 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell17 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.tableCell18 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.TypeId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.ClassificationId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.CategoryId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.ParrentAccount = new DevExpress.XtraReports.Parameters.Parameter();
+            this.CompanyName = new DevExpress.XtraReports.UI.XRLabel();
+            this.PageHeader = new DevExpress.XtraReports.UI.PageHeaderBand();
+            ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
+            // 
+            // sqlDataSource1
+            // 
+            this.sqlDataSource1.ConnectionName = "localhost_MySoftERP_Connection";
+            this.sqlDataSource1.Name = "sqlDataSource1";
+            storedProcQuery1.Name = "ChartOfAccount_Get";
+            queryParameter1.Name = "@TypeId";
+            queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter1.Value = new DevExpress.DataAccess.Expression("?TypeId", typeof(int));
+            queryParameter2.Name = "@ClassificationId";
+            queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter2.Value = new DevExpress.DataAccess.Expression("?ClassificationId", typeof(int));
+            queryParameter3.Name = "@CategoryId";
+            queryParameter3.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter3.Value = new DevExpress.DataAccess.Expression("?CategoryId", typeof(int));
+            queryParameter4.Name = "@ParrentAccountId";
+            queryParameter4.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter4.Value = new DevExpress.DataAccess.Expression("?ParrentAccount", typeof(int));
+            storedProcQuery1.Parameters.Add(queryParameter1);
+            storedProcQuery1.Parameters.Add(queryParameter2);
+            storedProcQuery1.Parameters.Add(queryParameter3);
+            storedProcQuery1.Parameters.Add(queryParameter4);
+            storedProcQuery1.StoredProcName = "ChartOfAccount_Get";
+            columnExpression1.ColumnName = "Id";
+            table3.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"115\" />";
+            table3.Name = "ChartOfAccountsCategory";
+            columnExpression1.Table = table3;
+            column1.Expression = columnExpression1;
+            columnExpression2.ColumnName = "ArCategory";
+            columnExpression2.Table = table3;
+            column2.Expression = columnExpression2;
+            selectQuery1.Columns.Add(column1);
+            selectQuery1.Columns.Add(column2);
+            selectQuery1.Name = "ChartOfAccountsCategory";
+            selectQuery1.Tables.Add(table3);
+            columnExpression3.ColumnName = "Id";
+            table4.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"115\" />";
+            table4.Name = "ChartOfAccountsClassification";
+            columnExpression3.Table = table4;
+            column3.Expression = columnExpression3;
+            columnExpression4.ColumnName = "ArClassification";
+            columnExpression4.Table = table4;
+            column4.Expression = columnExpression4;
+            selectQuery2.Columns.Add(column3);
+            selectQuery2.Columns.Add(column4);
+            selectQuery2.Name = "ChartOfAccountsClassification";
+            selectQuery2.Tables.Add(table4);
+            columnExpression5.ColumnName = "Id";
+            table5.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"115\" />";
+            table5.Name = "ChartOfAccountsType";
+            columnExpression5.Table = table5;
+            column5.Expression = columnExpression5;
+            columnExpression6.ColumnName = "ArType";
+            columnExpression6.Table = table5;
+            column6.Expression = columnExpression6;
+            selectQuery3.Columns.Add(column5);
+            selectQuery3.Columns.Add(column6);
+            selectQuery3.Name = "ChartOfAccountsType";
+            selectQuery3.Tables.Add(table5);
+            customSqlQuery1.Name = "ParentAccount";
+            customSqlQuery1.Sql = resources.GetString("customSqlQuery1.Sql");
+            this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
+            storedProcQuery1,
+            selectQuery1,
+            selectQuery2,
+            selectQuery3,
+            customSqlQuery1});
+            this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
+            // 
+            // Title
+            // 
+            this.Title.BackColor = System.Drawing.Color.Transparent;
+            this.Title.BorderColor = System.Drawing.Color.Black;
+            this.Title.Borders = DevExpress.XtraPrinting.BorderSide.None;
+            this.Title.BorderWidth = 1F;
+            this.Title.Font = new DevExpress.Drawing.DXFont("Arial", 14.25F);
+            this.Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(70)))), ((int)(((byte)(80)))));
+            this.Title.Name = "Title";
+            // 
+            // DetailCaption1
+            // 
+            this.DetailCaption1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(57)))), ((int)(((byte)(159)))), ((int)(((byte)(228)))));
+            this.DetailCaption1.BorderColor = System.Drawing.Color.White;
+            this.DetailCaption1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
+            this.DetailCaption1.BorderWidth = 2F;
+            this.DetailCaption1.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.DetailCaption1.ForeColor = System.Drawing.Color.White;
+            this.DetailCaption1.Name = "DetailCaption1";
+            this.DetailCaption1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.DetailCaption1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // DetailData1
+            // 
+            this.DetailData1.BorderColor = System.Drawing.Color.Transparent;
+            this.DetailData1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
+            this.DetailData1.BorderWidth = 2F;
+            this.DetailData1.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F);
+            this.DetailData1.ForeColor = System.Drawing.Color.Black;
+            this.DetailData1.Name = "DetailData1";
+            this.DetailData1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.DetailData1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // DetailData3_Odd
+            // 
+            this.DetailData3_Odd.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(243)))), ((int)(((byte)(245)))), ((int)(((byte)(248)))));
+            this.DetailData3_Odd.BorderColor = System.Drawing.Color.Transparent;
+            this.DetailData3_Odd.Borders = DevExpress.XtraPrinting.BorderSide.None;
+            this.DetailData3_Odd.BorderWidth = 1F;
+            this.DetailData3_Odd.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F);
+            this.DetailData3_Odd.ForeColor = System.Drawing.Color.Black;
+            this.DetailData3_Odd.Name = "DetailData3_Odd";
+            this.DetailData3_Odd.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.DetailData3_Odd.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // PageInfo
+            // 
+            this.PageInfo.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.PageInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(70)))), ((int)(((byte)(80)))));
+            this.PageInfo.Name = "PageInfo";
+            this.PageInfo.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            // 
+            // TopMargin
+            // 
+            this.TopMargin.HeightF = 50F;
+            this.TopMargin.Name = "TopMargin";
+            // 
+            // BottomMargin
+            // 
+            this.BottomMargin.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.Time,
+            this.xrLabel6,
+            this.User,
+            this.xrLabel4,
+            this.pageInfo2});
+            this.BottomMargin.HeightF = 59.91662F;
+            this.BottomMargin.Name = "BottomMargin";
+            // 
+            // pageInfo2
+            // 
+            this.pageInfo2.LocationFloat = new DevExpress.Utils.PointFloat(621.2499F, 36.91662F);
+            this.pageInfo2.Name = "pageInfo2";
+            this.pageInfo2.SizeF = new System.Drawing.SizeF(438F, 23F);
+            this.pageInfo2.StyleName = "PageInfo";
+            this.pageInfo2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.pageInfo2.TextFormatString = "Page {0} of {1}";
+            // 
+            // xrPictureBox1
+            // 
+            this.xrPictureBox1.ImageUrl = "assets\\images\\logo.png";
+            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(878.125F, 0F);
+            this.xrPictureBox1.Name = "xrPictureBox1";
+            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(190.875F, 95.95833F);
+            this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            // 
+            // User
+            // 
+            this.User.BackColor = System.Drawing.Color.White;
+            this.User.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.User.ForeColor = System.Drawing.Color.Black;
+            this.User.LocationFloat = new DevExpress.Utils.PointFloat(100.2501F, 0F);
+            this.User.Multiline = true;
+            this.User.Name = "User";
+            this.User.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.User.SizeF = new System.Drawing.SizeF(321.8751F, 23F);
+            this.User.StylePriority.UseBackColor = false;
+            this.User.StylePriority.UseFont = false;
+            this.User.StylePriority.UseForeColor = false;
+            this.User.StylePriority.UseTextAlignment = false;
+            this.User.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
+            // 
+            // xrLabel8
+            // 
+            this.xrLabel8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(128)))), ((int)(((byte)(192)))));
+            this.xrLabel8.Font = new DevExpress.Drawing.DXFont("Arial", 14F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.xrLabel8.ForeColor = System.Drawing.Color.White;
+            this.xrLabel8.LocationFloat = new DevExpress.Utils.PointFloat(350.9858F, 72.95831F);
+            this.xrLabel8.Multiline = true;
+            this.xrLabel8.Name = "xrLabel8";
+            this.xrLabel8.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel8.SizeF = new System.Drawing.SizeF(405.2085F, 23F);
+            this.xrLabel8.StylePriority.UseBackColor = false;
+            this.xrLabel8.StylePriority.UseFont = false;
+            this.xrLabel8.StylePriority.UseForeColor = false;
+            this.xrLabel8.StylePriority.UseTextAlignment = false;
+            this.xrLabel8.Text = "Chart Of Accounts";
+            this.xrLabel8.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            // 
+            // xrLabel7
+            // 
+            this.xrLabel7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrLabel7.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.xrLabel7.ForeColor = System.Drawing.Color.White;
+            this.xrLabel7.LocationFloat = new DevExpress.Utils.PointFloat(502.0273F, 49.95829F);
+            this.xrLabel7.Multiline = true;
+            this.xrLabel7.Name = "xrLabel7";
+            this.xrLabel7.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel7.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel7.StylePriority.UseBackColor = false;
+            this.xrLabel7.StylePriority.UseFont = false;
+            this.xrLabel7.StylePriority.UseForeColor = false;
+            this.xrLabel7.StylePriority.UseTextAlignment = false;
+            this.xrLabel7.Text = "دليل الحسابات";
+            this.xrLabel7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            // 
+            // xrLabel6
+            // 
+            this.xrLabel6.BackColor = System.Drawing.Color.White;
+            this.xrLabel6.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel6.ForeColor = System.Drawing.Color.Black;
+            this.xrLabel6.LocationFloat = new DevExpress.Utils.PointFloat(645.0417F, 0F);
+            this.xrLabel6.Multiline = true;
+            this.xrLabel6.Name = "xrLabel6";
+            this.xrLabel6.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel6.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel6.StylePriority.UseBackColor = false;
+            this.xrLabel6.StylePriority.UseFont = false;
+            this.xrLabel6.StylePriority.UseForeColor = false;
+            this.xrLabel6.Text = "الوقت";
+            // 
+            // xrLabel4
+            // 
+            this.xrLabel4.BackColor = System.Drawing.Color.White;
+            this.xrLabel4.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel4.ForeColor = System.Drawing.Color.Black;
+            this.xrLabel4.LocationFloat = new DevExpress.Utils.PointFloat(0.25F, 0F);
+            this.xrLabel4.Multiline = true;
+            this.xrLabel4.Name = "xrLabel4";
+            this.xrLabel4.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel4.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel4.StylePriority.UseBackColor = false;
+            this.xrLabel4.StylePriority.UseFont = false;
+            this.xrLabel4.StylePriority.UseForeColor = false;
+            this.xrLabel4.Text = "المستخدم";
+            // 
+            // Time
+            // 
+            this.Time.BackColor = System.Drawing.Color.White;
+            this.Time.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.Time.ForeColor = System.Drawing.Color.Black;
+            this.Time.LocationFloat = new DevExpress.Utils.PointFloat(745.0419F, 0F);
+            this.Time.Multiline = true;
+            this.Time.Name = "Time";
+            this.Time.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.Time.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.No;
+            this.Time.SizeF = new System.Drawing.SizeF(321.875F, 23F);
+            this.Time.StylePriority.UseBackColor = false;
+            this.Time.StylePriority.UseFont = false;
+            this.Time.StylePriority.UseForeColor = false;
+            this.Time.StylePriority.UseTextAlignment = false;
+            this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
+            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            // 
+            // GroupHeader1
+            // 
+            this.GroupHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.table1});
+            this.GroupHeader1.GroupUnion = DevExpress.XtraReports.UI.GroupUnion.WithFirstDetail;
+            this.GroupHeader1.HeightF = 28F;
+            this.GroupHeader1.Name = "GroupHeader1";
+            this.GroupHeader1.RepeatEveryPage = true;
+            // 
+            // table1
+            // 
+            this.table1.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.table1.Name = "table1";
+            this.table1.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
+            this.tableRow1});
+            this.table1.SizeF = new System.Drawing.SizeF(1069.25F, 28F);
+            // 
+            // tableRow1
+            // 
+            this.tableRow1.Cells.AddRange(new DevExpress.XtraReports.UI.XRTableCell[] {
+            this.tableCell1,
+            this.tableCell2,
+            this.tableCell3,
+            this.tableCell4,
+            this.tableCell5,
+            this.tableCell6,
+            this.tableCell7,
+            this.tableCell8,
+            this.tableCell9});
+            this.tableRow1.Name = "tableRow1";
+            this.tableRow1.Weight = 1D;
+            // 
+            // tableCell1
+            // 
+            this.tableCell1.Borders = DevExpress.XtraPrinting.BorderSide.None;
+            this.tableCell1.Name = "tableCell1";
+            this.tableCell1.StyleName = "DetailCaption1";
+            this.tableCell1.StylePriority.UseBorders = false;
+            this.tableCell1.Text = "الكود";
+            this.tableCell1.Weight = 0.059957682198958952D;
+            // 
+            // tableCell2
+            // 
+            this.tableCell2.Name = "tableCell2";
+            this.tableCell2.StyleName = "DetailCaption1";
+            this.tableCell2.Text = "الاسم بالعربية";
+            this.tableCell2.Weight = 0.16555535130212784D;
+            // 
+            // tableCell3
+            // 
+            this.tableCell3.Name = "tableCell3";
+            this.tableCell3.StyleName = "DetailCaption1";
+            this.tableCell3.Text = "الاسم بالانجليزية";
+            this.tableCell3.Weight = 0.13385138697711152D;
+            // 
+            // tableCell4
+            // 
+            this.tableCell4.Name = "tableCell4";
+            this.tableCell4.StyleName = "DetailCaption1";
+            this.tableCell4.Text = "الحساب الرئيسي";
+            this.tableCell4.Weight = 0.17188157757502123D;
+            // 
+            // tableCell5
+            // 
+            this.tableCell5.Name = "tableCell5";
+            this.tableCell5.StyleName = "DetailCaption1";
+            this.tableCell5.Text = "النوع";
+            this.tableCell5.Weight = 0.10454142317831128D;
+            // 
+            // tableCell6
+            // 
+            this.tableCell6.Name = "tableCell6";
+            this.tableCell6.StyleName = "DetailCaption1";
+            this.tableCell6.Text = "التصنيف";
+            this.tableCell6.Weight = 0.11338894098094905D;
+            // 
+            // tableCell7
+            // 
+            this.tableCell7.Name = "tableCell7";
+            this.tableCell7.StyleName = "DetailCaption1";
+            this.tableCell7.Text = "الفئة";
+            this.tableCell7.Weight = 0.091039597350511786D;
+            // 
+            // tableCell8
+            // 
+            this.tableCell8.Name = "tableCell8";
+            this.tableCell8.StyleName = "DetailCaption1";
+            this.tableCell8.StylePriority.UseTextAlignment = false;
+            this.tableCell8.Text = "رصيد افتتاحي مدين";
+            this.tableCell8.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            this.tableCell8.Weight = 0.16776092697445783D;
+            // 
+            // tableCell9
+            // 
+            this.tableCell9.Name = "tableCell9";
+            this.tableCell9.StyleName = "DetailCaption1";
+            this.tableCell9.StylePriority.UseTextAlignment = false;
+            this.tableCell9.Text = "رصيد افتتاحي دائن";
+            this.tableCell9.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            this.tableCell9.Weight = 0.180078643698371D;
+            // 
+            // Detail
+            // 
+            this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.table2});
+            this.Detail.HeightF = 25F;
+            this.Detail.Name = "Detail";
+            // 
+            // table2
+            // 
+            this.table2.LocationFloat = new DevExpress.Utils.PointFloat(0.25F, 0F);
+            this.table2.Name = "table2";
+            this.table2.OddStyleName = "DetailData3_Odd";
+            this.table2.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
+            this.tableRow2});
+            this.table2.SizeF = new System.Drawing.SizeF(1068.75F, 25F);
+            // 
+            // tableRow2
+            // 
+            this.tableRow2.Cells.AddRange(new DevExpress.XtraReports.UI.XRTableCell[] {
+            this.tableCell10,
+            this.tableCell11,
+            this.tableCell12,
+            this.tableCell13,
+            this.tableCell14,
+            this.tableCell15,
+            this.tableCell16,
+            this.tableCell17,
+            this.tableCell18});
+            this.tableRow2.Name = "tableRow2";
+            this.tableRow2.Weight = 11.5D;
+            // 
+            // tableCell10
+            // 
+            this.tableCell10.Borders = DevExpress.XtraPrinting.BorderSide.None;
+            this.tableCell10.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Code]")});
+            this.tableCell10.Name = "tableCell10";
+            this.tableCell10.StyleName = "DetailData1";
+            this.tableCell10.StylePriority.UseBorders = false;
+            this.tableCell10.Weight = 0.059957682579447447D;
+            // 
+            // tableCell11
+            // 
+            this.tableCell11.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ArName]")});
+            this.tableCell11.Name = "tableCell11";
+            this.tableCell11.StyleName = "DetailData1";
+            this.tableCell11.Weight = 0.16555532965335645D;
+            // 
+            // tableCell12
+            // 
+            this.tableCell12.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[EnName]")});
+            this.tableCell12.Name = "tableCell12";
+            this.tableCell12.StyleName = "DetailData1";
+            this.tableCell12.Weight = 0.13385136723419161D;
+            // 
+            // tableCell13
+            // 
+            this.tableCell13.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ParentAccount]")});
+            this.tableCell13.Name = "tableCell13";
+            this.tableCell13.StyleName = "DetailData1";
+            this.tableCell13.Weight = 0.17188149864614108D;
+            // 
+            // tableCell14
+            // 
+            this.tableCell14.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Type]")});
+            this.tableCell14.Name = "tableCell14";
+            this.tableCell14.StyleName = "DetailData1";
+            this.tableCell14.Weight = 0.10454161204954403D;
+            // 
+            // tableCell15
+            // 
+            this.tableCell15.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Classification]")});
+            this.tableCell15.Name = "tableCell15";
+            this.tableCell15.StyleName = "DetailData1";
+            this.tableCell15.Weight = 0.11338889823739659D;
+            // 
+            // tableCell16
+            // 
+            this.tableCell16.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Category]")});
+            this.tableCell16.Name = "tableCell16";
+            this.tableCell16.StyleName = "DetailData1";
+            this.tableCell16.Weight = 0.091039521390846409D;
+            // 
+            // tableCell17
+            // 
+            this.tableCell17.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ObDebit]")});
+            this.tableCell17.Name = "tableCell17";
+            this.tableCell17.StyleName = "DetailData1";
+            this.tableCell17.StylePriority.UseTextAlignment = false;
+            this.tableCell17.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
+            this.tableCell17.TextFormatString = "{0:0.00}";
+            this.tableCell17.Weight = 0.16776091375325605D;
+            // 
+            // tableCell18
+            // 
+            this.tableCell18.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ObCredit]")});
+            this.tableCell18.Name = "tableCell18";
+            this.tableCell18.StyleName = "DetailData1";
+            this.tableCell18.StylePriority.UseTextAlignment = false;
+            this.tableCell18.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleRight;
+            this.tableCell18.TextFormatString = "{0:0.00}";
+            this.tableCell18.Weight = 0.1800786205795625D;
+            // 
+            // TypeId
+            // 
+            this.TypeId.AllowNull = true;
+            this.TypeId.Description = "النوع";
+            this.TypeId.Name = "TypeId";
+            this.TypeId.Type = typeof(int);
+            dynamicListLookUpSettings1.DataMember = "ChartOfAccountsType";
+            dynamicListLookUpSettings1.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings1.DisplayMember = "ArType";
+            dynamicListLookUpSettings1.ValueMember = "Id";
+            this.TypeId.ValueSourceSettings = dynamicListLookUpSettings1;
+            // 
+            // ClassificationId
+            // 
+            this.ClassificationId.AllowNull = true;
+            this.ClassificationId.Description = "التصنيف";
+            this.ClassificationId.Name = "ClassificationId";
+            this.ClassificationId.Type = typeof(int);
+            dynamicListLookUpSettings2.DataMember = "ChartOfAccountsClassification";
+            dynamicListLookUpSettings2.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings2.DisplayMember = "ArClassification";
+            dynamicListLookUpSettings2.ValueMember = "Id";
+            this.ClassificationId.ValueSourceSettings = dynamicListLookUpSettings2;
+            // 
+            // CategoryId
+            // 
+            this.CategoryId.AllowNull = true;
+            this.CategoryId.Description = "الفئة";
+            this.CategoryId.Name = "CategoryId";
+            this.CategoryId.Type = typeof(int);
+            dynamicListLookUpSettings3.DataMember = "ChartOfAccountsCategory";
+            dynamicListLookUpSettings3.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings3.DisplayMember = "ArCategory";
+            dynamicListLookUpSettings3.ValueMember = "Id";
+            this.CategoryId.ValueSourceSettings = dynamicListLookUpSettings3;
+            // 
+            // ParrentAccount
+            // 
+            this.ParrentAccount.AllowNull = true;
+            this.ParrentAccount.Description = "الحساب الرئيسي";
+            this.ParrentAccount.Name = "ParrentAccount";
+            this.ParrentAccount.Type = typeof(int);
+            dynamicListLookUpSettings4.DataMember = "ParentAccount";
+            dynamicListLookUpSettings4.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings4.DisplayMember = "ArName";
+            dynamicListLookUpSettings4.ValueMember = "Id";
+            this.ParrentAccount.ValueSourceSettings = dynamicListLookUpSettings4;
+            // 
+            // CompanyName
+            // 
+            this.CompanyName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.CompanyName.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.CompanyName.ForeColor = System.Drawing.Color.White;
+            this.CompanyName.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.CompanyName.Multiline = true;
+            this.CompanyName.Name = "CompanyName";
+            this.CompanyName.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.CompanyName.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
+            this.CompanyName.StylePriority.UseBackColor = false;
+            this.CompanyName.StylePriority.UseFont = false;
+            this.CompanyName.StylePriority.UseForeColor = false;
+            this.CompanyName.StylePriority.UseTextAlignment = false;
+            this.CompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            // 
+            // PageHeader
+            // 
+            this.PageHeader.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrLabel7,
+            this.xrPictureBox1,
+            this.xrLabel8,
+            this.CompanyName});
+            this.PageHeader.Name = "PageHeader";
+            // 
+            // ChartOfAccounts_Report
+            // 
+            this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
+            this.TopMargin,
+            this.BottomMargin,
+            this.GroupHeader1,
+            this.Detail,
+            this.PageHeader});
+            this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
+            this.sqlDataSource1});
+            this.DataMember = "ChartOfAccount_Get";
+            this.DataSource = this.sqlDataSource1;
+            this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
+            this.Landscape = true;
+            this.Margins = new DevExpress.Drawing.DXMargins(50, 50, 50, 60);
+            this.PageHeight = 827;
+            this.PageWidth = 1169;
+            this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
+            this.Parameters.AddRange(new DevExpress.XtraReports.Parameters.Parameter[] {
+            this.TypeId,
+            this.ClassificationId,
+            this.CategoryId,
+            this.ParrentAccount});
+            this.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.Yes;
+            this.RightToLeftLayout = DevExpress.XtraReports.UI.RightToLeftLayout.Yes;
+            this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
+            this.Title,
+            this.DetailCaption1,
+            this.DetailData1,
+            this.DetailData3_Odd,
+            this.PageInfo});
+            this.Version = "20.1";
+            ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
+
+    }
+
+    #endregion
+
+    private void Time_BeforePrint(object sender, CancelEventArgs e)
+    {
+        DateTime utcNow = DateTime.UtcNow;
+        TimeZoneInfo info = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+        DateTime cTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, info);
+        ((XRLabel)sender).Text = cTime.ToString("d MMMM yyyy h:mm tt");
+
+    }
+
+    private void xrPictureBox1_BeforePrint(object sender, CancelEventArgs e)
+    {
+        int? DepartmentId = null;// (int?)this.DepartmentId.Value;
+        var logo = HelperController.GetActivityLogo(DepartmentId);
+        xrPictureBox1.ImageUrl = logo;
+        CompanyName.Text = db.SystemSettings.FirstOrDefault().CompanyArName;
+    }
+}

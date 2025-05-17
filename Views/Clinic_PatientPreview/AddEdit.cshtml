@@ -1,0 +1,647 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.PatientPreview;
+}
+
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.PatientPreview</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Clinic_PatientPreview/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @*@if (Model != null)
+            {
+                @Html.HiddenFor(Model => Model.Id)
+                @Html.HiddenFor(Model => Model.IsActive)
+                @Html.HiddenFor(Model => Model.IsDeleted)
+                @Html.HiddenFor(Model => Model.UserId)
+                @Html.HiddenFor(Model => Model.Image)
+
+            }*@
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.PatientData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <br />
+                                <div id="collapse1">
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="EnName"> @MyERP.Properties.Resources.FileNo</label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="C-9122" required />
+                                        </div>
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.PatientName
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="سامح" required />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Mobile
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="0123456789" required />
+                                        </div>
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Age
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="28" required />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Address
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="حدائق البساتين , القاهرة" required />
+                                        </div>
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Email
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="Sameh.gmail.com" required />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.NationalID
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="1114444555533" required />
+                                        </div>
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Type
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="ذكر" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                            @MyERP.Properties.Resources.CurrentDrData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <br />
+                                <div id="collapse2">
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.PatientDr
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="د.احمد مهدى" required />
+                                        </div>
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Mobile
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="01122233665" required />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.Date
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="15/3/2022" required />
+                                        </div>
+                                        <label class="col-sm-2 control-label" for="EnName">
+                                            @MyERP.Properties.Resources.PatientNum
+                                        </label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" value="3" required />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <br />
+
+                <div class="row">
+                    <div class="col-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                            @MyERP.Properties.Resources.AppliedTreatment
+                                        </a>
+                                    </h5>
+                                </div>
+                                <br />
+                                <div id="collapse3">
+                                    <div class="form-group row">
+                                        <div class="col-sm-3">
+                                            @Html.Partial("_FaceChart")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                            @MyERP.Properties.Resources.AppliedTreatment
+                                        </a>
+                                    </h5>
+                                </div>
+                                <br />
+                                <div id="collapse3">
+                                    <div class="form-group row">
+                                        <div class="col-sm-3">
+                                            @Html.Partial("_BodyChart")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @*<div class="col-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+
+                            <h5 class="header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                    @MyERP.Properties.Resources.PatientFollowUp
+                                </a>
+                            </h5>
+                        </div>
+                        <br />
+                        <div id="collapse4">
+
+                            <p>
+                                <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">
+                                    @MyERP.Properties.Resources.Prescription
+                                </a>
+
+                                <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample2" role="button" aria-expanded="false" aria-controls="multiCollapseExample2">
+                                    @MyERP.Properties.Resources.Processing
+                                </a>
+
+                                <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample3" role="button" aria-expanded="false" aria-controls="multiCollapseExample3">
+                                    @MyERP.Properties.Resources.DiagnosticAndTreatment
+                                </a>
+
+                                <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample4" role="button" aria-expanded="false" aria-controls="multiCollapseExample4">
+                                    @MyERP.Properties.Resources.PrimaryExaminationData
+                                </a>
+                                <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample5" role="button" aria-expanded="false" aria-controls="multiCollapseExample5">
+                                    @MyERP.Properties.Resources.PreviousVisitsLog
+                                </a>
+                            </p>
+
+                            <div class="row">
+
+                                <div class="col">
+                                    <div class="collapse multi-collapse" id="multiCollapseExample1">
+                                        <div class="card card-body">
+                                            <ul>
+                                                <li>
+                                                    Erythromycin 500MG TAB each 12 h
+                                                </li>
+                                                <li>
+                                                    SAPOFEN 400MG TAB each 12 h
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col">
+                                    <div class="collapse multi-collapse" id="multiCollapseExample2">
+                                        <div class="card card-body">
+                                            تم ارسال المقاسات للمعمل
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col">
+                                    <div class="collapse multi-collapse" id="multiCollapseExample3">
+                                        <div class="card card-body">
+                                            تسوس أدى إلى خلع الضرس
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col">
+                                    <div class="collapse multi-collapse" id="multiCollapseExample4">
+                                        <div class="card card-body">
+                                            يوجد فراغ بين السنة 26 - 28 وبالتالى يتم تركيب جسر
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col">
+                                    <div class="collapse multi-collapse" id="multiCollapseExample5">
+                                        <div class="card card-body">
+                                            <ul>
+                                                <li>
+                                                    15/1/2021 حشو عصب
+                                                </li>
+                                                <li>
+                                                    26/2/2021 تكملة حشو العصب
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>*@
+                </div>
+
+                <br />
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+                                            @MyERP.Properties.Resources.Image
+                                        </a>
+                                    </h5>
+                                </div>
+                                <br />
+                                <div id="collapse6">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-4 control-label">
+                                                    @MyERP.Properties.Resources.Before
+                                                </label>
+                                                <div class="col-sm-8">
+                                                    <img style='height:300px;width:300px;' id="Before" src="~/images/PatientImages/hair قبل.jpg" alt="" class="Before" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-4 control-label">
+                                                    @MyERP.Properties.Resources.After
+                                                </label>
+                                                <div class="col-sm-8">
+                                                    <img style='height:300px;width:300px;' id="After" src="~/images/PatientImages/hair بعد.jpg" alt="" class="After" />
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                            @MyERP.Properties.Resources.PatientFollowUp
+                                        </a>
+                                    </h5>
+                                </div>
+                                <br />
+                                <div id="collapse5">
+                                    <p>
+                                        <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">
+                                            @MyERP.Properties.Resources.RequestPharmaceuticals
+                                        </a>
+
+                                        <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample2" role="button" aria-expanded="false" aria-controls="multiCollapseExample2">
+                                            @MyERP.Properties.Resources.MaterialReceipt
+
+                                        </a>
+
+                                        <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample3" role="button" aria-expanded="false" aria-controls="multiCollapseExample3">
+                                            @MyERP.Properties.Resources.Devices
+                                        </a>
+
+                                        <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample4" role="button" aria-expanded="false" aria-controls="multiCollapseExample4">
+                                            @MyERP.Properties.Resources.DiagnosticAndTreatment
+
+                                        </a>
+                                        <a class="btn btn-light" data-toggle="collapse" href="#multiCollapseExample5" role="button" aria-expanded="false" aria-controls="multiCollapseExample5">
+                                            @MyERP.Properties.Resources.PreviousVisitsLog
+                                        </a>
+                                    </p>
+
+                                    <div class="row">
+
+                                        <div class="col">
+                                            <div class="collapse multi-collapse" id="multiCollapseExample1">
+                                                <div class="card card-body">
+                                                    <ul>
+                                                        <li>
+                                                            1 ml hair mix
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="collapse multi-collapse" id="multiCollapseExample2">
+                                                <div class="card card-body">
+                                                    Material Delivered
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="collapse multi-collapse" id="multiCollapseExample3">
+                                                <div class="card card-body">
+                                                    Grafts
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="collapse multi-collapse" id="multiCollapseExample4">
+                                                <div class="card card-body">
+                                                    Hair Transplant
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="collapse multi-collapse" id="multiCollapseExample5">
+                                                <div class="card card-body">
+                                                    <ul>
+                                                        <li>
+                                                            15/1/2022 تفتيت دهون
+                                                        </li>
+                                                        <li>
+                                                            26/2/2022 تكملة تفتيت الدهون
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                @*<div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-centered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @MyERP.Properties.Resources.TreatmentName
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.ToothNo
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.DeciduousAndPermanent
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.Count
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.Price
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.InsurancePercentage
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.PatientPercentage
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.Discount
+
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.Total
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.Notes
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.Edit
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>خلع ضرس</td>
+                                        <td>28</td>
+                                        <td>دائم</td>
+                                        <td>1</td>
+                                        <td>300</td>
+                                        <td>0</td>
+                                        <td>300</td>
+                                        <td>0</td>
+                                        <td>300</td>
+                                        <td> </td>
+                                        <td>
+                                            <button type="button" class="btn btn-bordered-primary">
+                                                @MyERP.Properties.Resources.Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>إلصاق جسر</td>
+                                        <td>26</td>
+                                        <td>دائم</td>
+                                        <td>1</td>
+                                        <td>200</td>
+                                        <td>0</td>
+                                        <td>200</td>
+                                        <td>0</td>
+                                        <td>200</td>
+                                        <td> </td>
+                                        <td>
+                                            <button type="button" class="btn btn-bordered-primary">
+                                                @MyERP.Properties.Resources.Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+
+                                <tbody>
+                                    <tr style="background-color:whitesmoke;">
+                                        <td> </td>
+                                        <td> </td>
+                                        <td> </td>
+                                        <td> </td>
+                                        <td>500</td>
+                                        <td>0</td>
+                                        <td>500</td>
+                                        <td>0</td>
+                                        <td>500</td>
+                                        <td> </td>
+                                        <td> </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <br />
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>*@
+                <br />
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <button type="submit" id="newbtn" class="btn btn-success">
+                                            @MyERP.Properties.Resources.SaveAndNew
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            @MyERP.Properties.Resources.Save
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                                        }
+                                    }
+                                    <input type="file" hidden id="BrowseFile" value="Browse" src="~/images/PatientImages/arabicConsentForSurgery.pdf" />
+                                    <button onclick="window.open($('#BrowseFile').attr('src'),'_blank')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.PrintOperationApproval
+                                    </button>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            var doc = $.get('/Clinic_PatientPreview/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Clinic_PatientPreview/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Clinic_PatientPreview');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+</script>

@@ -1,0 +1,35 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>تخصصات الفني</title>
+    @Html.DevExpress().GetStyleSheets(
+        new StyleSheet { ExtensionSuite = ExtensionSuite.TreeList }
+    )
+    @Html.DevExpress().GetScripts(
+        new Script { ExtensionSuite = ExtensionSuite.TreeList }
+    )
+
+</head>
+<body>
+    <div >
+        @using (Html.BeginForm())
+        {
+            <h3 dir="rtl">الفني: @Html.Raw(ViewBag.TechName)</h3>
+            @Html.Action("TreeListPartial", "Technician", new { id = ViewBag.id })
+        }
+        </div>
+   
+    <script>
+        window.onload = function () {
+            window.print();
+        }
+    </script>
+</body>
+</html>

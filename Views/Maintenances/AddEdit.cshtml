@@ -1,0 +1,417 @@
+﻿@model MyERP.Models.Maintenance
+
+@{
+    ViewBag.Title = " الصيانات";
+}
+@{
+    List<SelectListItem> MaintenanceTypeId = new List<SelectListItem>();
+    MaintenanceTypeId.Add(new SelectListItem
+    {
+        Text = "صيانة ضمان",
+        Value = "1"
+    });
+    MaintenanceTypeId.Add(new SelectListItem
+    {
+        Text = "صيانة",
+        Value = "2"
+
+    });
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+@using (Html.BeginForm("AddEdit", "Maintenances", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="panel panel-widget forms-panel">
+        <div class="forms">
+            <div class=" form-grids form-grids-right">
+                <div class="widget-shadow " data-example-id="basic-forms">
+                    <div class="form-title">
+                        @if (Model.Id > 0)
+                        {
+                            if (Model.IsDeleted == false)
+                            {
+                                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float: left;">رجوع</a>
+                                if (ViewBag.Previous > 0)
+                                {
+                                    <a href="@Url.Action("AddEdit", new {id = ViewBag.First})" class="btn btn-info" style="height: 33px; float: left; margin-left: 1%">الأول</a>
+                                    <a href="@Url.Action("AddEdit", new {id = ViewBag.Previous})" class=" btn btn-info" style="height: 33px; float: left; margin-left: 1%">&#8250;</a>
+                                }
+                                if (ViewBag.Next > 0)
+                                {
+                                    <a href="@Url.Action("AddEdit", new {id = ViewBag.Next})" class="btn btn-info" style="height: 33px; float: left; margin-left: 1%">&#8249;</a>
+                                    <a href="@Url.Action("AddEdit", new {id = ViewBag.Last})" class="btn btn-info" style="height: 33px; float: left; margin-left: 1%">الأخير</a>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float: left;">رجوع</a>
+                        }
+                        <div class="hed">بيانات استلام الصيانات :</div>
+                    </div>
+
+                    <div class="form-body">
+                        <div class="form-horizontal">
+                            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                            <input type="hidden" id="hdnobjID" value="@Model.Id" />
+
+                            @Html.HiddenFor(model => model.IsActive)
+                            @*@Html.HiddenFor(model => model.UserId)
+                                @Html.HiddenFor(model => model.Image)*@
+                            <hr />
+
+
+
+
+                            <div class="form-group">
+                                <label for="MaintenanceTypeID" class="control-label col-sm-1">نوع الصيانة</label>
+                                <div class="col-sm-5">
+                                    @Html.DropDownListFor(model => model.MaintenanceTypeID, MaintenanceTypeId, "-- اختر  النوع --", new { @class = "form-control", id = "type1", @required = "required" })
+                                    @Html.ValidationMessageFor(model => model.MaintenanceTypeID, "", new { @class = "text-danger" })
+
+
+                                    <span class="Asterisks">*</span>
+                                </div>
+                                <label class=" col-sm-1 control-label" for="SerialNumber">  السريال</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.SerialNumber, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control", placeholder = "السريال" , required = "required"}
+                                    })
+                                    <span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.SerialNumber, "", new { @class = "text-danger" })
+                                </div>
+
+                            </div>
+
+                            <div class="form-group">
+                                <label class=" col-sm-1 control-label" for="ServicelNumber">امر شغل</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.ServicelNumber, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control", placeholder = "امر شغل" @*, @readonly = "readonly", required = "required"*@}
+                                })
+
+                                    @Html.ValidationMessageFor(model => model.ServicelNumber, "", new { @class = "text-danger" })
+                                </div>
+                                <label for="CustomerId" class="control-label col-sm-1">العميل</label>
+
+                                <div class="col-sm-5">
+
+                                    @Html.DropDownList("CustomerId", null, "اختر العميل", htmlAttributes: new { @class = "form-control", required = "required" })
+
+                                    <span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.VendorId, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+
+
+                            <div class="form-group">
+                                <br />
+                                <label for="Date" class="control-label col-sm-1"> التاريخ</label>
+                                <div class="col-sm-5">
+
+                                    @Html.EditorFor(model => model.Date, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                    @Html.ValidationMessageFor(model => model.Date, "", new { @class = "text-danger" })
+                                </div>
+
+                            </div>
+                            <br />
+                            <hr />
+                            <div class="panel-widget forms-panel "> <h4>الضمانات</h4></div>
+                            <hr />
+
+                            <br />
+                            <div class="form-group">
+                                <label class=" col-sm-1 control-label" for="ClientProblem">شكوى العميل</label>
+                                @* <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.ClientProblem, new {htmlAttributes = new {@class = "form-control", @readonly = "readonly", required = "required"}
+                                                                    })*@
+                                <div class="col-sm-5">
+                                    <textarea id="ClientProblem" name="ClientProblem" class="form-control" rows="2" cols="2">@if (Model != null)
+                                                                                                     {
+                                                                                                         @Model.ClientProblem
+                                                                                                         ;
+                                                                                                     }</textarea>
+
+                                    @Html.ValidationMessageFor(model => model.ClientProblem, "", new { @class = "text-danger" })
+                                </div>
+
+                                <label class=" col-sm-1 control-label" for="Appearance">الفحص الظاهرى</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.Appearance, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control" @*, @readonly = "readonly", required = "required"*@}
+                                })
+
+                                    @Html.ValidationMessageFor(model => model.Appearance, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="DamagedItemsId" class="control-label col-sm-1">الصنف التالف</label>
+
+                                <div class="col-sm-5">
+
+                                    @Html.DropDownList("DamagedItemsId", null, "اختر الصنف التالف", htmlAttributes: new { @class = "form-control" })
+                                    @Html.ValidationMessageFor(model => model.DamagedItemsId, "", new { @class = "text-danger" })
+
+                                </div>
+
+                                <label for="SalesInvoiceId" class=" col-sm-1 control-label">رقم فاتورة المبيعات</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.SalesInvoiceId, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control" @*, @readonly = "readonly", required = "required"*@}
+                                })
+
+                                    @Html.ValidationMessageFor(model => model.Appearance, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class=" col-sm-1 control-label" for="SalesInvoiceDate">تاريخ فاتورة المبيعات</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.SalesInvoiceDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                    @Html.ValidationMessageFor(model => model.SalesInvoiceDate, "", new { @class = "text-danger" })
+                                </div>
+
+                                <label class=" col-sm-1 control-label" for="Barcode">الباركود</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.Barcode, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control" @*, @readonly = "readonly", required = "required"*@}
+                                })
+
+                                    @Html.ValidationMessageFor(model => model.Barcode, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class=" col-sm-1 control-label" for="SalesPrice">سعر البيع</label>
+                                <div class="col-sm-5">
+
+                                    <input type="text" class="money form-control" name="SalesPrice" id="txtSalesPrice" value="@Model.SalesInvoice" />
+                                    @Html.ValidationMessageFor(model => model.SalesPrice, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+
+                                <label for="VendorId" class="control-label col-sm-1">المورد</label>
+                                <div class="col-sm-5">
+
+                                    @Html.DropDownList("VendorId", null, "اختر المورد", htmlAttributes: new { @class = "form-control", required = "required" })
+                                    @Html.ValidationMessageFor(model => model.VendorId, "", new { @class = "text-danger" })
+                                    <span class="Asterisks">*</span>
+
+                                </div>
+
+
+                                <label class=" col-sm-1 control-label" for="PurchaseInvoiceId">رقم فاتورة المورد</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.PurchaseInvoiceId, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control" @*, @readonly = "readonly", required = "required"*@}
+                                })
+
+                                    @Html.ValidationMessageFor(model => model.PurchaseInvoiceId, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+
+
+                            <div class="form-group">
+                                <label class=" col-sm-1 control-label" for="PurchaseDate">تاريخ فاتورة المورد</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.PurchaseDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                    @Html.ValidationMessageFor(model => model.PurchaseDate, "", new { @class = "text-danger" })
+                                </div>
+                                <label class=" col-sm-1 control-label" for="InvoiceNumberOfVendor">مسلسل فاتورة المورد</label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.InvoiceNumberOfVendor, new
+                                    {
+                                        htmlAttributes = new {@class = "form-control" @*, @readonly = "readonly", required = "required"*@}
+                                })
+
+                                    @Html.ValidationMessageFor(model => model.InvoiceNumberOfVendor, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+
+                                <label class="control-label col-sm-1" for="Notes">ملاحظات</label>
+                                <div class="col-sm-5">
+                                    <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null)
+                                                                                     {
+                                                                                         @Model.Notes
+                                                                                         ;
+                                                                                     }</textarea>
+
+                                    @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                            <br />
+                            <div class="form-group">
+
+
+                                <input value="@Model.AttachedFiles" class="col-sm-11" name="AttachedFiles" hidden />
+
+
+                                <label class="control-label col-sm-3" for="file">إختر مرفق جديد</label>
+                                <div class="col-sm-9">
+                                    <input type="file" name="upload" class="col-sm-11" />
+                                    @Html.ValidationMessageFor(model => model.AttachedFiles, "", new { @class = "text-danger" })
+                                </div>
+                                @*<div class="col-sm-11">
+                                    <input id="AttachedFiles" name="attachment" class="col-sm-11" />*@
+
+
+                                @*@Html.ValidationMessageFor(model => model.AttachedFiles, "", new { @class = "text-danger" })
+                                    </div>*@
+                            </div>
+
+
+
+                            <input id="new" name="newBtn" hidden />
+                            <div class="col-sm-offset-2">
+                                @*<div class="col-sm-offset-2">*@
+                                @if (Model.Id == 0)
+                                {
+                                    <button type="submit" id="newbtn" class="btn btn-success">
+                                        حفظ و جديد
+                                    </button>
+                                    <button type="submit" id="save" class="btn btn-success">
+                                        حفظ
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                }
+                                else
+                                {
+                                    if (Model.IsDeleted == false)
+                                    {
+                                        <button type="submit" class="btn btn-success">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                        <a class="btn btn-danger" onclick="Delete(@Model.Id, 'Maintenances')" role="button">حذف</a>
+
+                                    }
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+<script>
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+
+
+
+    if ($('#hdnobjID').val() > 0) {
+        $('#Date').val('@ViewBag.Date');
+        $('#SalesInvoiceDate').val('@ViewBag.SalesInvoiceDate');
+        $('#PurchaseDate').val('@ViewBag.PurchaseDate');
+
+    } else {
+        var d = new Date();
+        $('#Date').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#SalesInvoiceDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#PurchaseDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+    }
+
+        $(document).on('change', '#SerialNumber', function () {
+            $('#preloader, #status').fadeIn();
+            $.get("/Maintenances/Serial?Num=" + $('#SerialNumber').val()).done(function (r) {
+                if (r == "error") {
+                    alert("هذا الرقم التسلسلى غير موجود");
+                }
+                $('#CustomerId').val(r.Customer).trigger('change'), $('#VendorId').val(r.Vendor).trigger('change'),
+                    $('#SalesInvoiceId').val(r.DocumentNumberSal), $('#PurchaseInvoiceId').val(r.DocumentNumberPur);
+                        //$('#SalesPrice').val(r.Price);
+                    $('#preloader, #status').fadeOut();
+
+
+
+
+
+        });
+
+        });
+
+
+    $(document).on('change', '#DamagedItemsId', function () {
+        $('#preloader, #status').fadeIn();
+        $.get("/Maintenances/item?Num=" + $('#DamagedItemsId').val()).done(function (r) {
+            if (r == "error") {
+
+            }
+
+
+            $('#SalesPrice').val(r.Price), $('#Barcode').val(r.Barcode);
+            $('#preloader, #status').fadeOut();
+
+
+
+
+
+        });
+
+    });
+    //$(function () {
+    //    $("#newbtn").click || $("#save").click(function () {
+
+    //        //Check if the input is Empty
+    //        //if ($("#JobImage").val() == "") {
+    //        //    $("#error-div").fadeIn();
+    //        //    $("#view-err").append("رجاء قم باختيار صورة");
+    //        //    return false;
+    //        //}
+
+    //        if ($("#myImage").val() != "") {
+    //            //Check if the Image extension is valid
+    //            var filename = document.getElementById("upload").value;
+    //            var extensionImg = filename.substr(filename.lastIndexOf('.') + 1);
+    //            var validExtensions = ['jpg', 'png', 'gif', 'bmp'];
+    //            if ($.inArray(extensionImg, validExtensions) == -1) {
+    //                $("#error-div").fadeIn();
+    //                $("#view-err").append("رجاء قم باختيار صورة بامتداد صحيح");
+    //                return false;
+    //            }
+
+    //            //Check if the Image Size is valid (2 mb)
+    //            var myFileSize = document.getElementById("myImage").files[0].size / 1024 / 1024;
+
+    //            if (myFileSize > 2) {
+    //                $("#error-div").fadeIn();
+    //                $("#view-err").append("رجاء قم باختيار صورة حجمها أقل من 2 ميغا بايت");
+    //                return false;
+    //            }
+    //        }
+    //    });
+    //});
+
+    //if (!$('#Id').val() > 0) {
+    //    function setCodeNum() {
+    //        var doc = $.get('/Employee/SetCodeNum').done(function (r) {
+    //            $('#Code').val(r);
+    //        });
+
+    //    }
+
+    //    setCodeNum();
+
+</script>

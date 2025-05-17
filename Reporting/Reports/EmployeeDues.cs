@@ -1,0 +1,2155 @@
+﻿using System;
+using System.Drawing;
+using System.Collections;
+using System.ComponentModel;
+using DevExpress.XtraReports.UI;
+using System.Web;
+using System.Security.Claims;
+using MyERP.Models;
+using System.Linq;
+using MyERP.Controllers;
+
+/// <summary>
+/// Summary description for PurchaseRequests_Report
+/// </summary>
+public class EmployeeDues_Report : DevExpress.XtraReports.UI.XtraReport
+{
+    private MySoftERPEntity db = new MySoftERPEntity();
+    private DevExpress.DataAccess.Sql.SqlDataSource sqlDataSource1;
+    private XRControlStyle Title;
+    private XRControlStyle DetailCaption1;
+    private XRControlStyle DetailData1;
+    private XRControlStyle DetailData3_Odd;
+    private XRControlStyle PageInfo;
+    private TopMarginBand TopMargin;
+    private BottomMarginBand BottomMargin;
+    private XRPageInfo pageInfo2;
+    private XRLabel label1;
+    private GroupHeaderBand GroupHeader1;
+    private DetailBand Detail;
+    private XRTable table2;
+    private XRTableRow tableRow2;
+    private XRLabel xrLabel7;
+    private DevExpress.XtraReports.Parameters.Parameter Department;
+    private XRTableCell tableCell7;
+    private XRTable xrTable1;
+    private XRTableRow xrTableRow1;
+    private XRTableCell xrTableCell10;
+    private DevExpress.XtraReports.Parameters.Parameter UserId;
+    private XRLabel xrLabel1;
+    private XRLabel xrLabel9;
+    private DevExpress.XtraReports.Parameters.Parameter Year;
+    private DevExpress.XtraReports.Parameters.Parameter Month;
+    private XRTableCell SalaryItem1;
+    private XRTableCell _SalaryItem1;
+    private XRTableCell SalaryItem2;
+    private XRTableCell SalaryItem3;
+    private XRTableCell SalaryItem4;
+    private XRTableCell SalaryItem5;
+    private XRTableCell SalaryItem6;
+    private XRTableCell SalaryItem7;
+    private XRTableCell SalaryItem8;
+    private XRTableCell SalaryItem9;
+    private XRTableCell SalaryItem10;
+    private XRTableCell SalaryItem11;
+    private XRTableCell SalaryItem12;
+    private XRTableCell SalaryItem13;
+    private XRTableCell SalaryItem14;
+    private XRTableCell SalaryItem15;
+    private XRTableCell SalaryItem16;
+    private XRTableCell SalaryItem17;
+    private XRTableCell SalaryItem18;
+    private XRTableCell SalaryItem19;
+    private XRTableCell SalaryItem20;
+    private XRTableCell SalaryItem21;
+    private XRTableCell SalaryItem22;
+    private XRTableCell SalaryItem23;
+    private XRTableCell SalaryItem24;
+    private XRTableCell SalaryItem25;
+    private XRTableCell SalaryItem26;
+    private XRTableCell SalaryItem27;
+    private XRTableCell SalaryItem28;
+    private XRTableCell SalaryItem29;
+    private XRTableCell SalaryItem30;
+    private XRTableCell SalaryItem31;
+    private XRTableCell SalaryItem32;
+    private XRTableCell SalaryItem33;
+    private XRTableCell xrTableCell16;
+    private XRTableCell xrTableCell17;
+    private XRTableCell xrTableCell18;
+    private XRTableCell xrTableCell19;
+    private XRTableCell xrTableCell20;
+    private XRTableCell xrTableCell21;
+    private XRTableCell xrTableCell22;
+    private XRTableCell _SalaryItem2;
+    private XRTableCell _SalaryItem3;
+    private XRTableCell _SalaryItem4;
+    private XRTableCell _SalaryItem5;
+    private XRTableCell _SalaryItem6;
+    private XRTableCell _SalaryItem7;
+    private XRTableCell _SalaryItem8;
+    private XRTableCell _SalaryItem9;
+    private XRTableCell _SalaryItem10;
+    private XRTableCell _SalaryItem11;
+    private XRTableCell _SalaryItem12;
+    private XRTableCell _SalaryItem13;
+    private XRTableCell _SalaryItem14;
+    private XRTableCell _SalaryItem15;
+    private XRTableCell _SalaryItem16;
+    private XRTableCell _SalaryItem17;
+    private XRTableCell _SalaryItem18;
+    private XRTableCell _SalaryItem19;
+    private XRTableCell _SalaryItem20;
+    private XRTableCell _SalaryItem21;
+    private XRTableCell _SalaryItem22;
+    private XRTableCell _SalaryItem23;
+    private XRTableCell _SalaryItem24;
+    private XRTableCell _SalaryItem25;
+    private XRTableCell _SalaryItem26;
+    private XRTableCell _SalaryItem27;
+    private XRTableCell _SalaryItem28;
+    private XRTableCell _SalaryItem29;
+    private XRTableCell _SalaryItem30;
+    private XRTableCell _SalaryItem31;
+    private XRTableCell _SalaryItem32;
+    private XRTableCell _SalaryItem33;
+    private XRTableCell xrTableCell23;
+    private XRTableCell xrTableCell24;
+    private XRTableCell xrTableCell25;
+    private XRTableCell xrTableCell26;
+    private XRTableCell xrTableCell27;
+    private XRTableCell xrTableCell28;
+    private XRTableCell xrTableCell29;
+    private XRLabel xrLabel4;
+    private XRLabel User;
+    private XRLabel xrLabel6;
+    private XRLabel Time;
+    private PageHeaderBand PageHeader;
+    private XRPictureBox xrPictureBox1;
+    private XRLabel CompanyName;
+    private DevExpress.XtraReports.Parameters.Parameter ActivityId;
+    private DevExpress.XtraReports.Parameters.Parameter CompanyId;
+
+    /// <summary>
+    /// Required designer variable.
+    /// </summary>
+    private System.ComponentModel.IContainer components = null;
+
+    public EmployeeDues_Report(int? DepartmentId, int? Year, int? Month, int? ActivityId, int? CompanyId)
+    {
+        InitializeComponent();
+       // DocType.Value = int.Parse(((ClaimsIdentity)HttpContext.Current.User.Identity).FindFirst("Id").Value);
+        UserId.Value = int.Parse(((ClaimsIdentity)HttpContext.Current.User.Identity).FindFirst("Id").Value);
+        User.Text = HttpContext.Current.User.Identity.Name;
+        //
+        // TODO: Add constructor logic here
+        //        
+        this.Department.Value = DepartmentId;
+        this.Month.Value = Month;
+        this.Year.Value = Year;
+        this.ActivityId.Value = ActivityId;
+        this.CompanyId.Value = CompanyId;
+    }
+
+    /// <summary> 
+    /// Clean up any resources being used.
+    /// </summary>
+    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing && (components != null))
+        {
+            components.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    #region Designer generated code
+
+    /// <summary>
+    /// Required method for Designer support - do not modify
+    /// the contents of this method with the code editor.
+    /// </summary>
+    private void InitializeComponent()
+    {
+            this.components = new System.ComponentModel.Container();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter5 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery2 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter6 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery1 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
+            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery2 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(EmployeeDues_Report));
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings1 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.StaticListLookUpSettings staticListLookUpSettings1 = new DevExpress.XtraReports.Parameters.StaticListLookUpSettings();
+            DevExpress.XtraReports.Parameters.StaticListLookUpSettings staticListLookUpSettings2 = new DevExpress.XtraReports.Parameters.StaticListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings2 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings3 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
+            this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.DetailCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.DetailData1 = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.DetailData3_Odd = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.PageInfo = new DevExpress.XtraReports.UI.XRControlStyle();
+            this.TopMargin = new DevExpress.XtraReports.UI.TopMarginBand();
+            this.BottomMargin = new DevExpress.XtraReports.UI.BottomMarginBand();
+            this.xrLabel4 = new DevExpress.XtraReports.UI.XRLabel();
+            this.User = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel6 = new DevExpress.XtraReports.UI.XRLabel();
+            this.Time = new DevExpress.XtraReports.UI.XRLabel();
+            this.pageInfo2 = new DevExpress.XtraReports.UI.XRPageInfo();
+            this.xrLabel1 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel9 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel7 = new DevExpress.XtraReports.UI.XRLabel();
+            this.GroupHeader1 = new DevExpress.XtraReports.UI.GroupHeaderBand();
+            this.xrTable1 = new DevExpress.XtraReports.UI.XRTable();
+            this.xrTableRow1 = new DevExpress.XtraReports.UI.XRTableRow();
+            this.xrTableCell10 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem1 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem2 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem3 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem4 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem5 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem6 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem7 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem8 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem9 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem10 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem11 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem12 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem13 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem14 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem15 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem16 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem17 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem18 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem19 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem20 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem21 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem22 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem23 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem24 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem25 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem26 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem27 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem28 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem29 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem30 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem31 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem32 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.SalaryItem33 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell16 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell17 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell18 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell19 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell20 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell21 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell22 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.Detail = new DevExpress.XtraReports.UI.DetailBand();
+            this.table2 = new DevExpress.XtraReports.UI.XRTable();
+            this.tableRow2 = new DevExpress.XtraReports.UI.XRTableRow();
+            this.tableCell7 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem1 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem2 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem3 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem4 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem5 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem6 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem7 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem8 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem9 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem10 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem11 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem12 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem13 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem14 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem15 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem16 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem17 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem18 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem19 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem20 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem21 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem22 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem23 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem24 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem25 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem26 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem27 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem28 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem29 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem30 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem31 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem32 = new DevExpress.XtraReports.UI.XRTableCell();
+            this._SalaryItem33 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell23 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell24 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell25 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell26 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell27 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell28 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrTableCell29 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.label1 = new DevExpress.XtraReports.UI.XRLabel();
+            this.Department = new DevExpress.XtraReports.Parameters.Parameter();
+            this.UserId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.Year = new DevExpress.XtraReports.Parameters.Parameter();
+            this.Month = new DevExpress.XtraReports.Parameters.Parameter();
+            this.PageHeader = new DevExpress.XtraReports.UI.PageHeaderBand();
+            this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
+            this.CompanyName = new DevExpress.XtraReports.UI.XRLabel();
+            this.ActivityId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.CompanyId = new DevExpress.XtraReports.Parameters.Parameter();
+            ((System.ComponentModel.ISupportInitialize)(this.xrTable1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
+            // 
+            // sqlDataSource1
+            // 
+            this.sqlDataSource1.ConnectionName = "localhost_MySoftERP_Connection";
+            this.sqlDataSource1.Name = "sqlDataSource1";
+            storedProcQuery1.Name = "GetEmployeeDues";
+            queryParameter1.Name = "@DepartmentId";
+            queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter1.Value = new DevExpress.DataAccess.Expression("?Department", typeof(int));
+            queryParameter2.Name = "@Year";
+            queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter2.Value = new DevExpress.DataAccess.Expression("?Year", typeof(int));
+            queryParameter3.Name = "@Month";
+            queryParameter3.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter3.Value = new DevExpress.DataAccess.Expression("?Month", typeof(int));
+            queryParameter4.Name = "@ActivityId";
+            queryParameter4.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter4.Value = new DevExpress.DataAccess.Expression("?ActivityId", typeof(int));
+            queryParameter5.Name = "@CompanyId";
+            queryParameter5.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter5.Value = new DevExpress.DataAccess.Expression("?CompanyId", typeof(int));
+            storedProcQuery1.Parameters.Add(queryParameter1);
+            storedProcQuery1.Parameters.Add(queryParameter2);
+            storedProcQuery1.Parameters.Add(queryParameter3);
+            storedProcQuery1.Parameters.Add(queryParameter4);
+            storedProcQuery1.Parameters.Add(queryParameter5);
+            storedProcQuery1.StoredProcName = "GetEmployeeDues";
+            storedProcQuery2.Name = "Department";
+            queryParameter6.Name = "@UserId";
+            queryParameter6.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter6.Value = new DevExpress.DataAccess.Expression("?UserId", typeof(int));
+            storedProcQuery2.Parameters.Add(queryParameter6);
+            storedProcQuery2.StoredProcName = "Department_ReportUserDepartments";
+            customSqlQuery1.Name = "ActivityId";
+            customSqlQuery1.Sql = "select Id,Code+N\' - \'+ArName ArName from Activity where IsActive=1 and IsDeleted=" +
+    "0";
+            customSqlQuery2.Name = "CompanyId";
+            customSqlQuery2.Sql = "select Id,Code+N\' - \'+ArName ArName from Company where IsActive=1 and IsDeleted=0" +
+    "";
+            this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
+            storedProcQuery1,
+            storedProcQuery2,
+            customSqlQuery1,
+            customSqlQuery2});
+            this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
+            // 
+            // Title
+            // 
+            this.Title.BackColor = System.Drawing.Color.Transparent;
+            this.Title.BorderColor = System.Drawing.Color.Black;
+            this.Title.Borders = DevExpress.XtraPrinting.BorderSide.None;
+            this.Title.BorderWidth = 1F;
+            this.Title.Font = new DevExpress.Drawing.DXFont("Arial", 14.25F);
+            this.Title.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(70)))), ((int)(((byte)(80)))));
+            this.Title.Name = "Title";
+            // 
+            // DetailCaption1
+            // 
+            this.DetailCaption1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(57)))), ((int)(((byte)(159)))), ((int)(((byte)(228)))));
+            this.DetailCaption1.BorderColor = System.Drawing.Color.White;
+            this.DetailCaption1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
+            this.DetailCaption1.BorderWidth = 2F;
+            this.DetailCaption1.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.DetailCaption1.ForeColor = System.Drawing.Color.White;
+            this.DetailCaption1.Name = "DetailCaption1";
+            this.DetailCaption1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.DetailCaption1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // DetailData1
+            // 
+            this.DetailData1.BorderColor = System.Drawing.Color.Transparent;
+            this.DetailData1.Borders = DevExpress.XtraPrinting.BorderSide.Left;
+            this.DetailData1.BorderWidth = 2F;
+            this.DetailData1.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F);
+            this.DetailData1.ForeColor = System.Drawing.Color.Black;
+            this.DetailData1.Name = "DetailData1";
+            this.DetailData1.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.DetailData1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // DetailData3_Odd
+            // 
+            this.DetailData3_Odd.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(243)))), ((int)(((byte)(245)))), ((int)(((byte)(248)))));
+            this.DetailData3_Odd.BorderColor = System.Drawing.Color.Transparent;
+            this.DetailData3_Odd.Borders = DevExpress.XtraPrinting.BorderSide.None;
+            this.DetailData3_Odd.BorderWidth = 1F;
+            this.DetailData3_Odd.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F);
+            this.DetailData3_Odd.ForeColor = System.Drawing.Color.Black;
+            this.DetailData3_Odd.Name = "DetailData3_Odd";
+            this.DetailData3_Odd.Padding = new DevExpress.XtraPrinting.PaddingInfo(6, 6, 0, 0, 100F);
+            this.DetailData3_Odd.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
+            // 
+            // PageInfo
+            // 
+            this.PageInfo.Font = new DevExpress.Drawing.DXFont("Arial", 8.25F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.PageInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(70)))), ((int)(((byte)(80)))));
+            this.PageInfo.Name = "PageInfo";
+            this.PageInfo.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            // 
+            // TopMargin
+            // 
+            this.TopMargin.HeightF = 40F;
+            this.TopMargin.Name = "TopMargin";
+            // 
+            // BottomMargin
+            // 
+            this.BottomMargin.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrLabel4,
+            this.User,
+            this.xrLabel6,
+            this.Time,
+            this.pageInfo2});
+            this.BottomMargin.HeightF = 60.37496F;
+            this.BottomMargin.Name = "BottomMargin";
+            // 
+            // xrLabel4
+            // 
+            this.xrLabel4.BackColor = System.Drawing.Color.White;
+            this.xrLabel4.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel4.ForeColor = System.Drawing.Color.Black;
+            this.xrLabel4.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
+            this.xrLabel4.Multiline = true;
+            this.xrLabel4.Name = "xrLabel4";
+            this.xrLabel4.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel4.SizeF = new System.Drawing.SizeF(72.83331F, 23F);
+            this.xrLabel4.StylePriority.UseBackColor = false;
+            this.xrLabel4.StylePriority.UseFont = false;
+            this.xrLabel4.StylePriority.UseForeColor = false;
+            this.xrLabel4.Text = "المستخدم";
+            // 
+            // User
+            // 
+            this.User.BackColor = System.Drawing.Color.White;
+            this.User.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.User.ForeColor = System.Drawing.Color.Black;
+            this.User.LocationFloat = new DevExpress.Utils.PointFloat(72.83325F, 0F);
+            this.User.Multiline = true;
+            this.User.Name = "User";
+            this.User.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.User.SizeF = new System.Drawing.SizeF(214.8987F, 23F);
+            this.User.StylePriority.UseBackColor = false;
+            this.User.StylePriority.UseFont = false;
+            this.User.StylePriority.UseForeColor = false;
+            this.User.StylePriority.UseTextAlignment = false;
+            this.User.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
+            // 
+            // xrLabel6
+            // 
+            this.xrLabel6.BackColor = System.Drawing.Color.White;
+            this.xrLabel6.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel6.ForeColor = System.Drawing.Color.Black;
+            this.xrLabel6.LocationFloat = new DevExpress.Utils.PointFloat(742.75F, 0F);
+            this.xrLabel6.Multiline = true;
+            this.xrLabel6.Name = "xrLabel6";
+            this.xrLabel6.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel6.SizeF = new System.Drawing.SizeF(72.83331F, 23F);
+            this.xrLabel6.StylePriority.UseBackColor = false;
+            this.xrLabel6.StylePriority.UseFont = false;
+            this.xrLabel6.StylePriority.UseForeColor = false;
+            this.xrLabel6.Text = "الوقت";
+            // 
+            // Time
+            // 
+            this.Time.BackColor = System.Drawing.Color.White;
+            this.Time.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.Time.ForeColor = System.Drawing.Color.Black;
+            this.Time.LocationFloat = new DevExpress.Utils.PointFloat(815.5833F, 0F);
+            this.Time.Multiline = true;
+            this.Time.Name = "Time";
+            this.Time.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.Time.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.No;
+            this.Time.SizeF = new System.Drawing.SizeF(276.6071F, 23F);
+            this.Time.StylePriority.UseBackColor = false;
+            this.Time.StylePriority.UseFont = false;
+            this.Time.StylePriority.UseForeColor = false;
+            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            // 
+            // pageInfo2
+            // 
+            this.pageInfo2.LocationFloat = new DevExpress.Utils.PointFloat(742.75F, 37.37494F);
+            this.pageInfo2.Name = "pageInfo2";
+            this.pageInfo2.SizeF = new System.Drawing.SizeF(351F, 23F);
+            this.pageInfo2.StyleName = "PageInfo";
+            this.pageInfo2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.pageInfo2.TextFormatString = "Page {0} of {1}";
+            // 
+            // xrLabel1
+            // 
+            this.xrLabel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrLabel1.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel1.ForeColor = System.Drawing.Color.White;
+            this.xrLabel1.LocationFloat = new DevExpress.Utils.PointFloat(10.25012F, 102.25F);
+            this.xrLabel1.Multiline = true;
+            this.xrLabel1.Name = "xrLabel1";
+            this.xrLabel1.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel1.SizeF = new System.Drawing.SizeF(83.16669F, 23F);
+            this.xrLabel1.StylePriority.UseBackColor = false;
+            this.xrLabel1.StylePriority.UseFont = false;
+            this.xrLabel1.StylePriority.UseForeColor = false;
+            this.xrLabel1.Text = "الفرع";
+            // 
+            // xrLabel9
+            // 
+            this.xrLabel9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrLabel9.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[DepartmentName]")});
+            this.xrLabel9.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel9.ForeColor = System.Drawing.Color.White;
+            this.xrLabel9.LocationFloat = new DevExpress.Utils.PointFloat(93.41656F, 102.25F);
+            this.xrLabel9.Multiline = true;
+            this.xrLabel9.Name = "xrLabel9";
+            this.xrLabel9.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel9.SizeF = new System.Drawing.SizeF(162.0392F, 23F);
+            this.xrLabel9.StylePriority.UseBackColor = false;
+            this.xrLabel9.StylePriority.UseFont = false;
+            this.xrLabel9.StylePriority.UseForeColor = false;
+            this.xrLabel9.Text = "الفرع";
+            // 
+            // xrLabel7
+            // 
+            this.xrLabel7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrLabel7.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.xrLabel7.ForeColor = System.Drawing.Color.White;
+            this.xrLabel7.LocationFloat = new DevExpress.Utils.PointFloat(394.2672F, 67.00001F);
+            this.xrLabel7.Multiline = true;
+            this.xrLabel7.Name = "xrLabel7";
+            this.xrLabel7.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel7.SizeF = new System.Drawing.SizeF(281.9584F, 23F);
+            this.xrLabel7.StylePriority.UseBackColor = false;
+            this.xrLabel7.StylePriority.UseFont = false;
+            this.xrLabel7.StylePriority.UseForeColor = false;
+            this.xrLabel7.StylePriority.UseTextAlignment = false;
+            this.xrLabel7.Text = "مستحقات الموظفين";
+            this.xrLabel7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            // 
+            // GroupHeader1
+            // 
+            this.GroupHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrTable1});
+            this.GroupHeader1.GroupFields.AddRange(new DevExpress.XtraReports.UI.GroupField[] {
+            new DevExpress.XtraReports.UI.GroupField("DocumentNumber", DevExpress.XtraReports.UI.XRColumnSortOrder.Ascending)});
+            this.GroupHeader1.GroupUnion = DevExpress.XtraReports.UI.GroupUnion.WithFirstDetail;
+            this.GroupHeader1.HeightF = 28.33337F;
+            this.GroupHeader1.Name = "GroupHeader1";
+            // 
+            // xrTable1
+            // 
+            this.xrTable1.LocationFloat = new DevExpress.Utils.PointFloat(0.5000318F, 0.3333727F);
+            this.xrTable1.Name = "xrTable1";
+            this.xrTable1.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
+            this.xrTableRow1});
+            this.xrTable1.SizeF = new System.Drawing.SizeF(1093.5F, 28F);
+            // 
+            // xrTableRow1
+            // 
+            this.xrTableRow1.Cells.AddRange(new DevExpress.XtraReports.UI.XRTableCell[] {
+            this.xrTableCell10,
+            this.SalaryItem1,
+            this.SalaryItem2,
+            this.SalaryItem3,
+            this.SalaryItem4,
+            this.SalaryItem5,
+            this.SalaryItem6,
+            this.SalaryItem7,
+            this.SalaryItem8,
+            this.SalaryItem9,
+            this.SalaryItem10,
+            this.SalaryItem11,
+            this.SalaryItem12,
+            this.SalaryItem13,
+            this.SalaryItem14,
+            this.SalaryItem15,
+            this.SalaryItem16,
+            this.SalaryItem17,
+            this.SalaryItem18,
+            this.SalaryItem19,
+            this.SalaryItem20,
+            this.SalaryItem21,
+            this.SalaryItem22,
+            this.SalaryItem23,
+            this.SalaryItem24,
+            this.SalaryItem25,
+            this.SalaryItem26,
+            this.SalaryItem27,
+            this.SalaryItem28,
+            this.SalaryItem29,
+            this.SalaryItem30,
+            this.SalaryItem31,
+            this.SalaryItem32,
+            this.SalaryItem33,
+            this.xrTableCell16,
+            this.xrTableCell17,
+            this.xrTableCell18,
+            this.xrTableCell19,
+            this.xrTableCell20,
+            this.xrTableCell21,
+            this.xrTableCell22});
+            this.xrTableRow1.Name = "xrTableRow1";
+            this.xrTableRow1.Weight = 1D;
+            // 
+            // xrTableCell10
+            // 
+            this.xrTableCell10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell10.Name = "xrTableCell10";
+            this.xrTableCell10.Padding = new DevExpress.XtraPrinting.PaddingInfo(0, 0, 0, 0, 100F);
+            this.xrTableCell10.StyleName = "DetailCaption1";
+            this.xrTableCell10.StylePriority.UseBackColor = false;
+            this.xrTableCell10.StylePriority.UsePadding = false;
+            this.xrTableCell10.StylePriority.UseTextAlignment = false;
+            this.xrTableCell10.Text = "الموظف";
+            this.xrTableCell10.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell10.Weight = 0.13762235066481957D;
+            // 
+            // SalaryItem1
+            // 
+            this.SalaryItem1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem1.Multiline = true;
+            this.SalaryItem1.Name = "SalaryItem1";
+            this.SalaryItem1.StyleName = "DetailCaption1";
+            this.SalaryItem1.StylePriority.UseBackColor = false;
+            this.SalaryItem1.StylePriority.UseTextAlignment = false;
+            this.SalaryItem1.Text = "SalaryItem1";
+            this.SalaryItem1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem1.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem2
+            // 
+            this.SalaryItem2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem2.Multiline = true;
+            this.SalaryItem2.Name = "SalaryItem2";
+            this.SalaryItem2.StyleName = "DetailCaption1";
+            this.SalaryItem2.StylePriority.UseBackColor = false;
+            this.SalaryItem2.StylePriority.UseTextAlignment = false;
+            this.SalaryItem2.Text = "SalaryItem2";
+            this.SalaryItem2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem2.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem3
+            // 
+            this.SalaryItem3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem3.Multiline = true;
+            this.SalaryItem3.Name = "SalaryItem3";
+            this.SalaryItem3.StyleName = "DetailCaption1";
+            this.SalaryItem3.StylePriority.UseBackColor = false;
+            this.SalaryItem3.StylePriority.UseTextAlignment = false;
+            this.SalaryItem3.Text = "SalaryItem3";
+            this.SalaryItem3.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem3.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem4
+            // 
+            this.SalaryItem4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem4.Multiline = true;
+            this.SalaryItem4.Name = "SalaryItem4";
+            this.SalaryItem4.StyleName = "DetailCaption1";
+            this.SalaryItem4.StylePriority.UseBackColor = false;
+            this.SalaryItem4.StylePriority.UseTextAlignment = false;
+            this.SalaryItem4.Text = "SalaryItem4";
+            this.SalaryItem4.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem4.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem5
+            // 
+            this.SalaryItem5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem5.Multiline = true;
+            this.SalaryItem5.Name = "SalaryItem5";
+            this.SalaryItem5.StyleName = "DetailCaption1";
+            this.SalaryItem5.StylePriority.UseBackColor = false;
+            this.SalaryItem5.StylePriority.UseTextAlignment = false;
+            this.SalaryItem5.Text = "SalaryItem5";
+            this.SalaryItem5.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem5.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem6
+            // 
+            this.SalaryItem6.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem6.Multiline = true;
+            this.SalaryItem6.Name = "SalaryItem6";
+            this.SalaryItem6.StyleName = "DetailCaption1";
+            this.SalaryItem6.StylePriority.UseBackColor = false;
+            this.SalaryItem6.StylePriority.UseTextAlignment = false;
+            this.SalaryItem6.Text = "SalaryItem6";
+            this.SalaryItem6.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem6.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem7
+            // 
+            this.SalaryItem7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem7.Multiline = true;
+            this.SalaryItem7.Name = "SalaryItem7";
+            this.SalaryItem7.StyleName = "DetailCaption1";
+            this.SalaryItem7.StylePriority.UseBackColor = false;
+            this.SalaryItem7.StylePriority.UseTextAlignment = false;
+            this.SalaryItem7.Text = "SalaryItem7";
+            this.SalaryItem7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem7.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem8
+            // 
+            this.SalaryItem8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem8.Multiline = true;
+            this.SalaryItem8.Name = "SalaryItem8";
+            this.SalaryItem8.StyleName = "DetailCaption1";
+            this.SalaryItem8.StylePriority.UseBackColor = false;
+            this.SalaryItem8.StylePriority.UseTextAlignment = false;
+            this.SalaryItem8.Text = "SalaryItem8";
+            this.SalaryItem8.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem8.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem9
+            // 
+            this.SalaryItem9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem9.Multiline = true;
+            this.SalaryItem9.Name = "SalaryItem9";
+            this.SalaryItem9.StyleName = "DetailCaption1";
+            this.SalaryItem9.StylePriority.UseBackColor = false;
+            this.SalaryItem9.StylePriority.UseTextAlignment = false;
+            this.SalaryItem9.Text = "SalaryItem9";
+            this.SalaryItem9.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem9.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem10
+            // 
+            this.SalaryItem10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem10.Multiline = true;
+            this.SalaryItem10.Name = "SalaryItem10";
+            this.SalaryItem10.StyleName = "DetailCaption1";
+            this.SalaryItem10.StylePriority.UseBackColor = false;
+            this.SalaryItem10.StylePriority.UseTextAlignment = false;
+            this.SalaryItem10.Text = "SalaryItem10";
+            this.SalaryItem10.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem10.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem11
+            // 
+            this.SalaryItem11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem11.Multiline = true;
+            this.SalaryItem11.Name = "SalaryItem11";
+            this.SalaryItem11.StyleName = "DetailCaption1";
+            this.SalaryItem11.StylePriority.UseBackColor = false;
+            this.SalaryItem11.StylePriority.UseTextAlignment = false;
+            this.SalaryItem11.Text = "SalaryItem11";
+            this.SalaryItem11.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem11.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem12
+            // 
+            this.SalaryItem12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem12.Multiline = true;
+            this.SalaryItem12.Name = "SalaryItem12";
+            this.SalaryItem12.StyleName = "DetailCaption1";
+            this.SalaryItem12.StylePriority.UseBackColor = false;
+            this.SalaryItem12.StylePriority.UseTextAlignment = false;
+            this.SalaryItem12.Text = "SalaryItem12";
+            this.SalaryItem12.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem12.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem13
+            // 
+            this.SalaryItem13.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem13.Multiline = true;
+            this.SalaryItem13.Name = "SalaryItem13";
+            this.SalaryItem13.StyleName = "DetailCaption1";
+            this.SalaryItem13.StylePriority.UseBackColor = false;
+            this.SalaryItem13.StylePriority.UseTextAlignment = false;
+            this.SalaryItem13.Text = "SalaryItem13";
+            this.SalaryItem13.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem13.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem14
+            // 
+            this.SalaryItem14.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem14.Multiline = true;
+            this.SalaryItem14.Name = "SalaryItem14";
+            this.SalaryItem14.StyleName = "DetailCaption1";
+            this.SalaryItem14.StylePriority.UseBackColor = false;
+            this.SalaryItem14.StylePriority.UseTextAlignment = false;
+            this.SalaryItem14.Text = "SalaryItem14";
+            this.SalaryItem14.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem14.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem15
+            // 
+            this.SalaryItem15.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem15.Multiline = true;
+            this.SalaryItem15.Name = "SalaryItem15";
+            this.SalaryItem15.StyleName = "DetailCaption1";
+            this.SalaryItem15.StylePriority.UseBackColor = false;
+            this.SalaryItem15.StylePriority.UseTextAlignment = false;
+            this.SalaryItem15.Text = "SalaryItem15";
+            this.SalaryItem15.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem15.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem16
+            // 
+            this.SalaryItem16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem16.Multiline = true;
+            this.SalaryItem16.Name = "SalaryItem16";
+            this.SalaryItem16.StyleName = "DetailCaption1";
+            this.SalaryItem16.StylePriority.UseBackColor = false;
+            this.SalaryItem16.StylePriority.UseTextAlignment = false;
+            this.SalaryItem16.Text = "SalaryItem16";
+            this.SalaryItem16.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem16.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem17
+            // 
+            this.SalaryItem17.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem17.Multiline = true;
+            this.SalaryItem17.Name = "SalaryItem17";
+            this.SalaryItem17.StyleName = "DetailCaption1";
+            this.SalaryItem17.StylePriority.UseBackColor = false;
+            this.SalaryItem17.StylePriority.UseTextAlignment = false;
+            this.SalaryItem17.Text = "SalaryItem17";
+            this.SalaryItem17.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem17.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem18
+            // 
+            this.SalaryItem18.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem18.Multiline = true;
+            this.SalaryItem18.Name = "SalaryItem18";
+            this.SalaryItem18.StyleName = "DetailCaption1";
+            this.SalaryItem18.StylePriority.UseBackColor = false;
+            this.SalaryItem18.StylePriority.UseTextAlignment = false;
+            this.SalaryItem18.Text = "SalaryItem18";
+            this.SalaryItem18.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem18.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem19
+            // 
+            this.SalaryItem19.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem19.Multiline = true;
+            this.SalaryItem19.Name = "SalaryItem19";
+            this.SalaryItem19.StyleName = "DetailCaption1";
+            this.SalaryItem19.StylePriority.UseBackColor = false;
+            this.SalaryItem19.StylePriority.UseTextAlignment = false;
+            this.SalaryItem19.Text = "SalaryItem19";
+            this.SalaryItem19.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem19.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem20
+            // 
+            this.SalaryItem20.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem20.Multiline = true;
+            this.SalaryItem20.Name = "SalaryItem20";
+            this.SalaryItem20.StyleName = "DetailCaption1";
+            this.SalaryItem20.StylePriority.UseBackColor = false;
+            this.SalaryItem20.StylePriority.UseTextAlignment = false;
+            this.SalaryItem20.Text = "SalaryItem20";
+            this.SalaryItem20.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem20.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem21
+            // 
+            this.SalaryItem21.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem21.Multiline = true;
+            this.SalaryItem21.Name = "SalaryItem21";
+            this.SalaryItem21.StyleName = "DetailCaption1";
+            this.SalaryItem21.StylePriority.UseBackColor = false;
+            this.SalaryItem21.StylePriority.UseTextAlignment = false;
+            this.SalaryItem21.Text = "SalaryItem21";
+            this.SalaryItem21.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem21.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem22
+            // 
+            this.SalaryItem22.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem22.Multiline = true;
+            this.SalaryItem22.Name = "SalaryItem22";
+            this.SalaryItem22.StyleName = "DetailCaption1";
+            this.SalaryItem22.StylePriority.UseBackColor = false;
+            this.SalaryItem22.StylePriority.UseTextAlignment = false;
+            this.SalaryItem22.Text = "SalaryItem22";
+            this.SalaryItem22.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem22.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem23
+            // 
+            this.SalaryItem23.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem23.Multiline = true;
+            this.SalaryItem23.Name = "SalaryItem23";
+            this.SalaryItem23.StyleName = "DetailCaption1";
+            this.SalaryItem23.StylePriority.UseBackColor = false;
+            this.SalaryItem23.StylePriority.UseTextAlignment = false;
+            this.SalaryItem23.Text = "SalaryItem23";
+            this.SalaryItem23.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem23.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem24
+            // 
+            this.SalaryItem24.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem24.Multiline = true;
+            this.SalaryItem24.Name = "SalaryItem24";
+            this.SalaryItem24.StyleName = "DetailCaption1";
+            this.SalaryItem24.StylePriority.UseBackColor = false;
+            this.SalaryItem24.StylePriority.UseTextAlignment = false;
+            this.SalaryItem24.Text = "SalaryItem24";
+            this.SalaryItem24.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem24.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem25
+            // 
+            this.SalaryItem25.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem25.Multiline = true;
+            this.SalaryItem25.Name = "SalaryItem25";
+            this.SalaryItem25.StyleName = "DetailCaption1";
+            this.SalaryItem25.StylePriority.UseBackColor = false;
+            this.SalaryItem25.StylePriority.UseTextAlignment = false;
+            this.SalaryItem25.Text = "SalaryItem25";
+            this.SalaryItem25.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem25.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem26
+            // 
+            this.SalaryItem26.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem26.Multiline = true;
+            this.SalaryItem26.Name = "SalaryItem26";
+            this.SalaryItem26.StyleName = "DetailCaption1";
+            this.SalaryItem26.StylePriority.UseBackColor = false;
+            this.SalaryItem26.StylePriority.UseTextAlignment = false;
+            this.SalaryItem26.Text = "SalaryItem26";
+            this.SalaryItem26.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem26.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem27
+            // 
+            this.SalaryItem27.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem27.Multiline = true;
+            this.SalaryItem27.Name = "SalaryItem27";
+            this.SalaryItem27.StyleName = "DetailCaption1";
+            this.SalaryItem27.StylePriority.UseBackColor = false;
+            this.SalaryItem27.StylePriority.UseTextAlignment = false;
+            this.SalaryItem27.Text = "SalaryItem27";
+            this.SalaryItem27.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem27.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem28
+            // 
+            this.SalaryItem28.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem28.Multiline = true;
+            this.SalaryItem28.Name = "SalaryItem28";
+            this.SalaryItem28.StyleName = "DetailCaption1";
+            this.SalaryItem28.StylePriority.UseBackColor = false;
+            this.SalaryItem28.StylePriority.UseTextAlignment = false;
+            this.SalaryItem28.Text = "SalaryItem28";
+            this.SalaryItem28.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem28.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem29
+            // 
+            this.SalaryItem29.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem29.Multiline = true;
+            this.SalaryItem29.Name = "SalaryItem29";
+            this.SalaryItem29.StyleName = "DetailCaption1";
+            this.SalaryItem29.StylePriority.UseBackColor = false;
+            this.SalaryItem29.StylePriority.UseTextAlignment = false;
+            this.SalaryItem29.Text = "SalaryItem29";
+            this.SalaryItem29.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem29.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem30
+            // 
+            this.SalaryItem30.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem30.Multiline = true;
+            this.SalaryItem30.Name = "SalaryItem30";
+            this.SalaryItem30.StyleName = "DetailCaption1";
+            this.SalaryItem30.StylePriority.UseBackColor = false;
+            this.SalaryItem30.StylePriority.UseTextAlignment = false;
+            this.SalaryItem30.Text = "SalaryItem30";
+            this.SalaryItem30.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem30.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem31
+            // 
+            this.SalaryItem31.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem31.Multiline = true;
+            this.SalaryItem31.Name = "SalaryItem31";
+            this.SalaryItem31.StyleName = "DetailCaption1";
+            this.SalaryItem31.StylePriority.UseBackColor = false;
+            this.SalaryItem31.StylePriority.UseTextAlignment = false;
+            this.SalaryItem31.Text = "SalaryItem31";
+            this.SalaryItem31.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem31.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem32
+            // 
+            this.SalaryItem32.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem32.Multiline = true;
+            this.SalaryItem32.Name = "SalaryItem32";
+            this.SalaryItem32.StyleName = "DetailCaption1";
+            this.SalaryItem32.StylePriority.UseBackColor = false;
+            this.SalaryItem32.StylePriority.UseTextAlignment = false;
+            this.SalaryItem32.Text = "SalaryItem32";
+            this.SalaryItem32.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem32.Weight = 0.0491418873722526D;
+            // 
+            // SalaryItem33
+            // 
+            this.SalaryItem33.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.SalaryItem33.Multiline = true;
+            this.SalaryItem33.Name = "SalaryItem33";
+            this.SalaryItem33.StyleName = "DetailCaption1";
+            this.SalaryItem33.StylePriority.UseBackColor = false;
+            this.SalaryItem33.StylePriority.UseTextAlignment = false;
+            this.SalaryItem33.Text = "SalaryItem33";
+            this.SalaryItem33.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.SalaryItem33.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell16
+            // 
+            this.xrTableCell16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell16.Multiline = true;
+            this.xrTableCell16.Name = "xrTableCell16";
+            this.xrTableCell16.StyleName = "DetailCaption1";
+            this.xrTableCell16.StylePriority.UseBackColor = false;
+            this.xrTableCell16.StylePriority.UseTextAlignment = false;
+            this.xrTableCell16.Text = "مصروفات مقدمة";
+            this.xrTableCell16.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell16.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell17
+            // 
+            this.xrTableCell17.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell17.Multiline = true;
+            this.xrTableCell17.Name = "xrTableCell17";
+            this.xrTableCell17.StyleName = "DetailCaption1";
+            this.xrTableCell17.StylePriority.UseBackColor = false;
+            this.xrTableCell17.StylePriority.UseTextAlignment = false;
+            this.xrTableCell17.Text = "الوقت الإضافى";
+            this.xrTableCell17.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell17.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell18
+            // 
+            this.xrTableCell18.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell18.Multiline = true;
+            this.xrTableCell18.Name = "xrTableCell18";
+            this.xrTableCell18.StyleName = "DetailCaption1";
+            this.xrTableCell18.StylePriority.UseBackColor = false;
+            this.xrTableCell18.StylePriority.UseTextAlignment = false;
+            this.xrTableCell18.Text = "المكافأت";
+            this.xrTableCell18.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell18.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell19
+            // 
+            this.xrTableCell19.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell19.Multiline = true;
+            this.xrTableCell19.Name = "xrTableCell19";
+            this.xrTableCell19.StyleName = "DetailCaption1";
+            this.xrTableCell19.StylePriority.UseBackColor = false;
+            this.xrTableCell19.StylePriority.UseTextAlignment = false;
+            this.xrTableCell19.Text = "الجزاءات";
+            this.xrTableCell19.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell19.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell20
+            // 
+            this.xrTableCell20.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell20.Multiline = true;
+            this.xrTableCell20.Name = "xrTableCell20";
+            this.xrTableCell20.StyleName = "DetailCaption1";
+            this.xrTableCell20.StylePriority.UseBackColor = false;
+            this.xrTableCell20.StylePriority.UseTextAlignment = false;
+            this.xrTableCell20.Text = "إجمالى المستحقات";
+            this.xrTableCell20.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell20.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell21
+            // 
+            this.xrTableCell21.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell21.Multiline = true;
+            this.xrTableCell21.Name = "xrTableCell21";
+            this.xrTableCell21.StyleName = "DetailCaption1";
+            this.xrTableCell21.StylePriority.UseBackColor = false;
+            this.xrTableCell21.StylePriority.UseTextAlignment = false;
+            this.xrTableCell21.Text = "إجمالى المستقطعات";
+            this.xrTableCell21.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell21.Weight = 0.0491418873722526D;
+            // 
+            // xrTableCell22
+            // 
+            this.xrTableCell22.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrTableCell22.Multiline = true;
+            this.xrTableCell22.Name = "xrTableCell22";
+            this.xrTableCell22.StyleName = "DetailCaption1";
+            this.xrTableCell22.StylePriority.UseBackColor = false;
+            this.xrTableCell22.StylePriority.UseTextAlignment = false;
+            this.xrTableCell22.Text = "الصافى";
+            this.xrTableCell22.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell22.Weight = 0.074394914141244065D;
+            // 
+            // Detail
+            // 
+            this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.table2});
+            this.Detail.HeightF = 25F;
+            this.Detail.Name = "Detail";
+            // 
+            // table2
+            // 
+            this.table2.LocationFloat = new DevExpress.Utils.PointFloat(0.749946F, 0F);
+            this.table2.Name = "table2";
+            this.table2.OddStyleName = "DetailData3_Odd";
+            this.table2.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
+            this.tableRow2});
+            this.table2.SizeF = new System.Drawing.SizeF(1092.75F, 25F);
+            this.table2.StylePriority.UseTextAlignment = false;
+            this.table2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // tableRow2
+            // 
+            this.tableRow2.Cells.AddRange(new DevExpress.XtraReports.UI.XRTableCell[] {
+            this.tableCell7,
+            this._SalaryItem1,
+            this._SalaryItem2,
+            this._SalaryItem3,
+            this._SalaryItem4,
+            this._SalaryItem5,
+            this._SalaryItem6,
+            this._SalaryItem7,
+            this._SalaryItem8,
+            this._SalaryItem9,
+            this._SalaryItem10,
+            this._SalaryItem11,
+            this._SalaryItem12,
+            this._SalaryItem13,
+            this._SalaryItem14,
+            this._SalaryItem15,
+            this._SalaryItem16,
+            this._SalaryItem17,
+            this._SalaryItem18,
+            this._SalaryItem19,
+            this._SalaryItem20,
+            this._SalaryItem21,
+            this._SalaryItem22,
+            this._SalaryItem23,
+            this._SalaryItem24,
+            this._SalaryItem25,
+            this._SalaryItem26,
+            this._SalaryItem27,
+            this._SalaryItem28,
+            this._SalaryItem29,
+            this._SalaryItem30,
+            this._SalaryItem31,
+            this._SalaryItem32,
+            this._SalaryItem33,
+            this.xrTableCell23,
+            this.xrTableCell24,
+            this.xrTableCell25,
+            this.xrTableCell26,
+            this.xrTableCell27,
+            this.xrTableCell28,
+            this.xrTableCell29});
+            this.tableRow2.Name = "tableRow2";
+            this.tableRow2.Weight = 11.5D;
+            // 
+            // tableCell7
+            // 
+            this.tableCell7.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[EmployeeName]")});
+            this.tableCell7.Name = "tableCell7";
+            this.tableCell7.StyleName = "DetailData1";
+            this.tableCell7.StylePriority.UseTextAlignment = false;
+            this.tableCell7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.tableCell7.Weight = 0.68782458474761787D;
+            // 
+            // _SalaryItem1
+            // 
+            this._SalaryItem1.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem1]")});
+            this._SalaryItem1.Multiline = true;
+            this._SalaryItem1.Name = "_SalaryItem1";
+            this._SalaryItem1.StyleName = "DetailData1";
+            this._SalaryItem1.StylePriority.UseTextAlignment = false;
+            this._SalaryItem1.Text = "_SalaryItem1";
+            this._SalaryItem1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem1.TextFormatString = "{0:#.00}";
+            this._SalaryItem1.Weight = 0.24789718360499372D;
+            // 
+            // _SalaryItem2
+            // 
+            this._SalaryItem2.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem2]")});
+            this._SalaryItem2.Multiline = true;
+            this._SalaryItem2.Name = "_SalaryItem2";
+            this._SalaryItem2.StyleName = "DetailData1";
+            this._SalaryItem2.StylePriority.UseTextAlignment = false;
+            this._SalaryItem2.Text = "_SalaryItem2";
+            this._SalaryItem2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem2.TextFormatString = "{0:#.00}";
+            this._SalaryItem2.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem3
+            // 
+            this._SalaryItem3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem3]")});
+            this._SalaryItem3.Multiline = true;
+            this._SalaryItem3.Name = "_SalaryItem3";
+            this._SalaryItem3.StyleName = "DetailData1";
+            this._SalaryItem3.StylePriority.UseTextAlignment = false;
+            this._SalaryItem3.Text = "_SalaryItem3";
+            this._SalaryItem3.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem3.TextFormatString = "{0:#.00}";
+            this._SalaryItem3.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem4
+            // 
+            this._SalaryItem4.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem4]")});
+            this._SalaryItem4.Multiline = true;
+            this._SalaryItem4.Name = "_SalaryItem4";
+            this._SalaryItem4.StyleName = "DetailData1";
+            this._SalaryItem4.StylePriority.UseTextAlignment = false;
+            this._SalaryItem4.Text = "_SalaryItem4";
+            this._SalaryItem4.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem4.TextFormatString = "{0:#.00}";
+            this._SalaryItem4.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem5
+            // 
+            this._SalaryItem5.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem5]")});
+            this._SalaryItem5.Multiline = true;
+            this._SalaryItem5.Name = "_SalaryItem5";
+            this._SalaryItem5.StyleName = "DetailData1";
+            this._SalaryItem5.StylePriority.UseTextAlignment = false;
+            this._SalaryItem5.Text = "_SalaryItem5";
+            this._SalaryItem5.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem5.TextFormatString = "{0:#.00}";
+            this._SalaryItem5.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem6
+            // 
+            this._SalaryItem6.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem6]")});
+            this._SalaryItem6.Multiline = true;
+            this._SalaryItem6.Name = "_SalaryItem6";
+            this._SalaryItem6.StyleName = "DetailData1";
+            this._SalaryItem6.StylePriority.UseTextAlignment = false;
+            this._SalaryItem6.Text = "_SalaryItem6";
+            this._SalaryItem6.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem6.TextFormatString = "{0:#.00}";
+            this._SalaryItem6.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem7
+            // 
+            this._SalaryItem7.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem7]")});
+            this._SalaryItem7.Multiline = true;
+            this._SalaryItem7.Name = "_SalaryItem7";
+            this._SalaryItem7.StyleName = "DetailData1";
+            this._SalaryItem7.StylePriority.UseTextAlignment = false;
+            this._SalaryItem7.Text = "_SalaryItem7";
+            this._SalaryItem7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem7.TextFormatString = "{0:#.00}";
+            this._SalaryItem7.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem8
+            // 
+            this._SalaryItem8.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem8]")});
+            this._SalaryItem8.Multiline = true;
+            this._SalaryItem8.Name = "_SalaryItem8";
+            this._SalaryItem8.StyleName = "DetailData1";
+            this._SalaryItem8.StylePriority.UseTextAlignment = false;
+            this._SalaryItem8.Text = "_SalaryItem8";
+            this._SalaryItem8.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem8.TextFormatString = "{0:#.00}";
+            this._SalaryItem8.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem9
+            // 
+            this._SalaryItem9.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem9]")});
+            this._SalaryItem9.Multiline = true;
+            this._SalaryItem9.Name = "_SalaryItem9";
+            this._SalaryItem9.StyleName = "DetailData1";
+            this._SalaryItem9.StylePriority.UseTextAlignment = false;
+            this._SalaryItem9.Text = "_SalaryItem9";
+            this._SalaryItem9.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem9.TextFormatString = "{0:#.00}";
+            this._SalaryItem9.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem10
+            // 
+            this._SalaryItem10.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem10]")});
+            this._SalaryItem10.Multiline = true;
+            this._SalaryItem10.Name = "_SalaryItem10";
+            this._SalaryItem10.StyleName = "DetailData1";
+            this._SalaryItem10.StylePriority.UseTextAlignment = false;
+            this._SalaryItem10.Text = "_SalaryItem10";
+            this._SalaryItem10.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem10.TextFormatString = "{0:#.00}";
+            this._SalaryItem10.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem11
+            // 
+            this._SalaryItem11.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem11]")});
+            this._SalaryItem11.Multiline = true;
+            this._SalaryItem11.Name = "_SalaryItem11";
+            this._SalaryItem11.StyleName = "DetailData1";
+            this._SalaryItem11.StylePriority.UseTextAlignment = false;
+            this._SalaryItem11.Text = "_SalaryItem11";
+            this._SalaryItem11.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem11.TextFormatString = "{0:#.00}";
+            this._SalaryItem11.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem12
+            // 
+            this._SalaryItem12.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem12]")});
+            this._SalaryItem12.Multiline = true;
+            this._SalaryItem12.Name = "_SalaryItem12";
+            this._SalaryItem12.StyleName = "DetailData1";
+            this._SalaryItem12.StylePriority.UseTextAlignment = false;
+            this._SalaryItem12.Text = "_SalaryItem12";
+            this._SalaryItem12.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem12.TextFormatString = "{0:#.00}";
+            this._SalaryItem12.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem13
+            // 
+            this._SalaryItem13.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem13]")});
+            this._SalaryItem13.Multiline = true;
+            this._SalaryItem13.Name = "_SalaryItem13";
+            this._SalaryItem13.StyleName = "DetailData1";
+            this._SalaryItem13.StylePriority.UseTextAlignment = false;
+            this._SalaryItem13.Text = "_SalaryItem13";
+            this._SalaryItem13.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem13.TextFormatString = "{0:#.00}";
+            this._SalaryItem13.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem14
+            // 
+            this._SalaryItem14.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem14]")});
+            this._SalaryItem14.Multiline = true;
+            this._SalaryItem14.Name = "_SalaryItem14";
+            this._SalaryItem14.StyleName = "DetailData1";
+            this._SalaryItem14.StylePriority.UseTextAlignment = false;
+            this._SalaryItem14.Text = "_SalaryItem14";
+            this._SalaryItem14.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem14.TextFormatString = "{0:#.00}";
+            this._SalaryItem14.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem15
+            // 
+            this._SalaryItem15.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem15]")});
+            this._SalaryItem15.Multiline = true;
+            this._SalaryItem15.Name = "_SalaryItem15";
+            this._SalaryItem15.StyleName = "DetailData1";
+            this._SalaryItem15.StylePriority.UseTextAlignment = false;
+            this._SalaryItem15.Text = "_SalaryItem15";
+            this._SalaryItem15.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem15.TextFormatString = "{0:#.00}";
+            this._SalaryItem15.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem16
+            // 
+            this._SalaryItem16.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem16]")});
+            this._SalaryItem16.Multiline = true;
+            this._SalaryItem16.Name = "_SalaryItem16";
+            this._SalaryItem16.StyleName = "DetailData1";
+            this._SalaryItem16.StylePriority.UseTextAlignment = false;
+            this._SalaryItem16.Text = "_SalaryItem16";
+            this._SalaryItem16.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem16.TextFormatString = "{0:#.00}";
+            this._SalaryItem16.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem17
+            // 
+            this._SalaryItem17.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem17]")});
+            this._SalaryItem17.Multiline = true;
+            this._SalaryItem17.Name = "_SalaryItem17";
+            this._SalaryItem17.StyleName = "DetailData1";
+            this._SalaryItem17.StylePriority.UseTextAlignment = false;
+            this._SalaryItem17.Text = "_SalaryItem17";
+            this._SalaryItem17.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem17.TextFormatString = "{0:#.00}";
+            this._SalaryItem17.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem18
+            // 
+            this._SalaryItem18.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem18]")});
+            this._SalaryItem18.Multiline = true;
+            this._SalaryItem18.Name = "_SalaryItem18";
+            this._SalaryItem18.StyleName = "DetailData1";
+            this._SalaryItem18.StylePriority.UseTextAlignment = false;
+            this._SalaryItem18.Text = "_SalaryItem18";
+            this._SalaryItem18.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem18.TextFormatString = "{0:#.00}";
+            this._SalaryItem18.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem19
+            // 
+            this._SalaryItem19.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem19]")});
+            this._SalaryItem19.Multiline = true;
+            this._SalaryItem19.Name = "_SalaryItem19";
+            this._SalaryItem19.StyleName = "DetailData1";
+            this._SalaryItem19.StylePriority.UseTextAlignment = false;
+            this._SalaryItem19.Text = "_SalaryItem19";
+            this._SalaryItem19.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem19.TextFormatString = "{0:#.00}";
+            this._SalaryItem19.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem20
+            // 
+            this._SalaryItem20.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem20]")});
+            this._SalaryItem20.Multiline = true;
+            this._SalaryItem20.Name = "_SalaryItem20";
+            this._SalaryItem20.StyleName = "DetailData1";
+            this._SalaryItem20.StylePriority.UseTextAlignment = false;
+            this._SalaryItem20.Text = "_SalaryItem20";
+            this._SalaryItem20.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem20.TextFormatString = "{0:#.00}";
+            this._SalaryItem20.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem21
+            // 
+            this._SalaryItem21.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem21]")});
+            this._SalaryItem21.Multiline = true;
+            this._SalaryItem21.Name = "_SalaryItem21";
+            this._SalaryItem21.StyleName = "DetailData1";
+            this._SalaryItem21.StylePriority.UseTextAlignment = false;
+            this._SalaryItem21.Text = "_SalaryItem21";
+            this._SalaryItem21.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem21.TextFormatString = "{0:#.00}";
+            this._SalaryItem21.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem22
+            // 
+            this._SalaryItem22.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem22]")});
+            this._SalaryItem22.Multiline = true;
+            this._SalaryItem22.Name = "_SalaryItem22";
+            this._SalaryItem22.StyleName = "DetailData1";
+            this._SalaryItem22.StylePriority.UseTextAlignment = false;
+            this._SalaryItem22.Text = "_SalaryItem22";
+            this._SalaryItem22.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem22.TextFormatString = "{0:#.00}";
+            this._SalaryItem22.Weight = 0.246853895641912D;
+            // 
+            // _SalaryItem23
+            // 
+            this._SalaryItem23.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem23]")});
+            this._SalaryItem23.Multiline = true;
+            this._SalaryItem23.Name = "_SalaryItem23";
+            this._SalaryItem23.StyleName = "DetailData1";
+            this._SalaryItem23.StylePriority.UseTextAlignment = false;
+            this._SalaryItem23.Text = "_SalaryItem23";
+            this._SalaryItem23.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem23.TextFormatString = "{0:#.00}";
+            this._SalaryItem23.Weight = 0.24605909106027746D;
+            // 
+            // _SalaryItem24
+            // 
+            this._SalaryItem24.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem24]")});
+            this._SalaryItem24.Multiline = true;
+            this._SalaryItem24.Name = "_SalaryItem24";
+            this._SalaryItem24.StyleName = "DetailData1";
+            this._SalaryItem24.StylePriority.UseTextAlignment = false;
+            this._SalaryItem24.Text = "_SalaryItem24";
+            this._SalaryItem24.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem24.TextFormatString = "{0:#.00}";
+            this._SalaryItem24.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem25
+            // 
+            this._SalaryItem25.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem25]")});
+            this._SalaryItem25.Multiline = true;
+            this._SalaryItem25.Name = "_SalaryItem25";
+            this._SalaryItem25.StyleName = "DetailData1";
+            this._SalaryItem25.StylePriority.UseTextAlignment = false;
+            this._SalaryItem25.Text = "_SalaryItem25";
+            this._SalaryItem25.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem25.TextFormatString = "{0:#.00}";
+            this._SalaryItem25.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem26
+            // 
+            this._SalaryItem26.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem26]")});
+            this._SalaryItem26.Multiline = true;
+            this._SalaryItem26.Name = "_SalaryItem26";
+            this._SalaryItem26.StyleName = "DetailData1";
+            this._SalaryItem26.StylePriority.UseTextAlignment = false;
+            this._SalaryItem26.Text = "_SalaryItem26";
+            this._SalaryItem26.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem26.TextFormatString = "{0:#.00}";
+            this._SalaryItem26.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem27
+            // 
+            this._SalaryItem27.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem27]")});
+            this._SalaryItem27.Multiline = true;
+            this._SalaryItem27.Name = "_SalaryItem27";
+            this._SalaryItem27.StyleName = "DetailData1";
+            this._SalaryItem27.StylePriority.UseTextAlignment = false;
+            this._SalaryItem27.Text = "_SalaryItem27";
+            this._SalaryItem27.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem27.TextFormatString = "{0:#.00}";
+            this._SalaryItem27.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem28
+            // 
+            this._SalaryItem28.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem28]")});
+            this._SalaryItem28.Multiline = true;
+            this._SalaryItem28.Name = "_SalaryItem28";
+            this._SalaryItem28.StyleName = "DetailData1";
+            this._SalaryItem28.StylePriority.UseTextAlignment = false;
+            this._SalaryItem28.Text = "_SalaryItem28";
+            this._SalaryItem28.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem28.TextFormatString = "{0:#.00}";
+            this._SalaryItem28.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem29
+            // 
+            this._SalaryItem29.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem29]")});
+            this._SalaryItem29.Multiline = true;
+            this._SalaryItem29.Name = "_SalaryItem29";
+            this._SalaryItem29.StyleName = "DetailData1";
+            this._SalaryItem29.StylePriority.UseTextAlignment = false;
+            this._SalaryItem29.Text = "_SalaryItem29";
+            this._SalaryItem29.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem29.TextFormatString = "{0:#.00}";
+            this._SalaryItem29.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem30
+            // 
+            this._SalaryItem30.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem30]")});
+            this._SalaryItem30.Multiline = true;
+            this._SalaryItem30.Name = "_SalaryItem30";
+            this._SalaryItem30.StyleName = "DetailData1";
+            this._SalaryItem30.StylePriority.UseTextAlignment = false;
+            this._SalaryItem30.Text = "_SalaryItem30";
+            this._SalaryItem30.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem30.TextFormatString = "{0:#.00}";
+            this._SalaryItem30.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem31
+            // 
+            this._SalaryItem31.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem31]")});
+            this._SalaryItem31.Multiline = true;
+            this._SalaryItem31.Name = "_SalaryItem31";
+            this._SalaryItem31.StyleName = "DetailData1";
+            this._SalaryItem31.StylePriority.UseTextAlignment = false;
+            this._SalaryItem31.Text = "_SalaryItem31";
+            this._SalaryItem31.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem31.TextFormatString = "{0:#.00}";
+            this._SalaryItem31.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem32
+            // 
+            this._SalaryItem32.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem32]")});
+            this._SalaryItem32.Multiline = true;
+            this._SalaryItem32.Name = "_SalaryItem32";
+            this._SalaryItem32.StyleName = "DetailData1";
+            this._SalaryItem32.StylePriority.UseTextAlignment = false;
+            this._SalaryItem32.Text = "_SalaryItem32";
+            this._SalaryItem32.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem32.TextFormatString = "{0:#.00}";
+            this._SalaryItem32.Weight = 0.24764870022354657D;
+            // 
+            // _SalaryItem33
+            // 
+            this._SalaryItem33.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[SalaryItem33]")});
+            this._SalaryItem33.Multiline = true;
+            this._SalaryItem33.Name = "_SalaryItem33";
+            this._SalaryItem33.StyleName = "DetailData1";
+            this._SalaryItem33.StylePriority.UseTextAlignment = false;
+            this._SalaryItem33.Text = "_SalaryItem33";
+            this._SalaryItem33.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this._SalaryItem33.TextFormatString = "{0:#.00}";
+            this._SalaryItem33.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell23
+            // 
+            this.xrTableCell23.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[AdvancedExpenses]")});
+            this.xrTableCell23.Multiline = true;
+            this.xrTableCell23.Name = "xrTableCell23";
+            this.xrTableCell23.StyleName = "DetailData1";
+            this.xrTableCell23.StylePriority.UseTextAlignment = false;
+            this.xrTableCell23.Text = "xrTableCell23";
+            this.xrTableCell23.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell23.TextFormatString = "{0:#.00}";
+            this.xrTableCell23.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell24
+            // 
+            this.xrTableCell24.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalOvertime]")});
+            this.xrTableCell24.Multiline = true;
+            this.xrTableCell24.Name = "xrTableCell24";
+            this.xrTableCell24.StyleName = "DetailData1";
+            this.xrTableCell24.StylePriority.UseTextAlignment = false;
+            this.xrTableCell24.Text = "xrTableCell24";
+            this.xrTableCell24.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell24.TextFormatString = "{0:#.00}";
+            this.xrTableCell24.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell25
+            // 
+            this.xrTableCell25.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalReward]")});
+            this.xrTableCell25.Multiline = true;
+            this.xrTableCell25.Name = "xrTableCell25";
+            this.xrTableCell25.StyleName = "DetailData1";
+            this.xrTableCell25.StylePriority.UseTextAlignment = false;
+            this.xrTableCell25.Text = "xrTableCell25";
+            this.xrTableCell25.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell25.TextFormatString = "{0:#.00}";
+            this.xrTableCell25.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell26
+            // 
+            this.xrTableCell26.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalPenalty]")});
+            this.xrTableCell26.Multiline = true;
+            this.xrTableCell26.Name = "xrTableCell26";
+            this.xrTableCell26.StyleName = "DetailData1";
+            this.xrTableCell26.StylePriority.UseTextAlignment = false;
+            this.xrTableCell26.Text = "xrTableCell26";
+            this.xrTableCell26.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell26.TextFormatString = "{0:#.00}";
+            this.xrTableCell26.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell27
+            // 
+            this.xrTableCell27.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalDueItems]")});
+            this.xrTableCell27.Multiline = true;
+            this.xrTableCell27.Name = "xrTableCell27";
+            this.xrTableCell27.StyleName = "DetailData1";
+            this.xrTableCell27.StylePriority.UseTextAlignment = false;
+            this.xrTableCell27.Text = "xrTableCell27";
+            this.xrTableCell27.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell27.TextFormatString = "{0:#.00}";
+            this.xrTableCell27.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell28
+            // 
+            this.xrTableCell28.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalDeductionItems]")});
+            this.xrTableCell28.Multiline = true;
+            this.xrTableCell28.Name = "xrTableCell28";
+            this.xrTableCell28.StyleName = "DetailData1";
+            this.xrTableCell28.StylePriority.UseTextAlignment = false;
+            this.xrTableCell28.Text = "xrTableCell28";
+            this.xrTableCell28.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell28.TextFormatString = "{0:#.00}";
+            this.xrTableCell28.Weight = 0.24764870022354657D;
+            // 
+            // xrTableCell29
+            // 
+            this.xrTableCell29.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[NetSalary]")});
+            this.xrTableCell29.Multiline = true;
+            this.xrTableCell29.Name = "xrTableCell29";
+            this.xrTableCell29.StyleName = "DetailData1";
+            this.xrTableCell29.StylePriority.UseTextAlignment = false;
+            this.xrTableCell29.Text = "xrTableCell29";
+            this.xrTableCell29.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrTableCell29.TextFormatString = "{0:#.00}";
+            this.xrTableCell29.Weight = 0.37462667862959725D;
+            // 
+            // label1
+            // 
+            this.label1.LocationFloat = new DevExpress.Utils.PointFloat(6F, 6F);
+            this.label1.Name = "label1";
+            this.label1.SizeF = new System.Drawing.SizeF(715F, 24.19433F);
+            this.label1.Text = "Report Title";
+            // 
+            // Department
+            // 
+            this.Department.AllowNull = true;
+            this.Department.Description = "الفرع";
+            this.Department.Name = "Department";
+            this.Department.Type = typeof(int);
+            dynamicListLookUpSettings1.DataMember = "Department";
+            dynamicListLookUpSettings1.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings1.DisplayMember = "ArName";
+            dynamicListLookUpSettings1.ValueMember = "Id";
+            this.Department.ValueSourceSettings = dynamicListLookUpSettings1;
+            // 
+            // UserId
+            // 
+            this.UserId.Description = "UserId";
+            this.UserId.Name = "UserId";
+            this.UserId.Type = typeof(int);
+            this.UserId.ValueInfo = "0";
+            this.UserId.Visible = false;
+            // 
+            // Year
+            // 
+            this.Year.AllowNull = true;
+            this.Year.Description = "السنة";
+            this.Year.Name = "Year";
+            this.Year.Type = typeof(int);
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2019, "2019"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2020, "2020"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2021, "2021"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2022, "2022"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2023, "2023"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2024, "2024"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2025, "2025"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2026, "2026"));
+            staticListLookUpSettings1.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2027, "2027"));
+            this.Year.ValueSourceSettings = staticListLookUpSettings1;
+            // 
+            // Month
+            // 
+            this.Month.AllowNull = true;
+            this.Month.Description = "الشهر";
+            this.Month.Name = "Month";
+            this.Month.Type = typeof(int);
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(1, "1"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(2, "2"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(3, "3"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(4, "4"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(5, "5"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(6, "6"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(7, "7"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(8, "8"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(9, "9"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(10, "10"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(11, "11"));
+            staticListLookUpSettings2.LookUpValues.Add(new DevExpress.XtraReports.Parameters.LookUpValue(12, "12"));
+            this.Month.ValueSourceSettings = staticListLookUpSettings2;
+            // 
+            // PageHeader
+            // 
+            this.PageHeader.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrPictureBox1,
+            this.CompanyName,
+            this.xrLabel7,
+            this.xrLabel9,
+            this.xrLabel1});
+            this.PageHeader.HeightF = 135.25F;
+            this.PageHeader.Name = "PageHeader";
+            // 
+            // xrPictureBox1
+            // 
+            this.xrPictureBox1.ImageUrl = "assets\\images\\logo.png";
+            this.xrPictureBox1.LocationFloat = new DevExpress.Utils.PointFloat(903.7903F, 10.00001F);
+            this.xrPictureBox1.Name = "xrPictureBox1";
+            this.xrPictureBox1.SizeF = new System.Drawing.SizeF(175.7612F, 99.79166F);
+            this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
+            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            // 
+            // CompanyName
+            // 
+            this.CompanyName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.CompanyName.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.CompanyName.ForeColor = System.Drawing.Color.White;
+            this.CompanyName.LocationFloat = new DevExpress.Utils.PointFloat(10.50012F, 33.91671F);
+            this.CompanyName.Multiline = true;
+            this.CompanyName.Name = "CompanyName";
+            this.CompanyName.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.CompanyName.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
+            this.CompanyName.StylePriority.UseBackColor = false;
+            this.CompanyName.StylePriority.UseFont = false;
+            this.CompanyName.StylePriority.UseForeColor = false;
+            this.CompanyName.StylePriority.UseTextAlignment = false;
+            this.CompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            // 
+            // ActivityId
+            // 
+            this.ActivityId.AllowNull = true;
+            this.ActivityId.Description = "النشاط";
+            this.ActivityId.Name = "ActivityId";
+            this.ActivityId.Type = typeof(int);
+            dynamicListLookUpSettings2.DataMember = "ActivityId";
+            dynamicListLookUpSettings2.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings2.DisplayMember = "ArName";
+            dynamicListLookUpSettings2.FilterString = null;
+            dynamicListLookUpSettings2.SortMember = "Id";
+            dynamicListLookUpSettings2.SortOrder = DevExpress.Data.ColumnSortOrder.Ascending;
+            dynamicListLookUpSettings2.ValueMember = "Id";
+            this.ActivityId.ValueSourceSettings = dynamicListLookUpSettings2;
+            // 
+            // CompanyId
+            // 
+            this.CompanyId.AllowNull = true;
+            this.CompanyId.Description = "الشركة";
+            this.CompanyId.Name = "CompanyId";
+            this.CompanyId.Type = typeof(int);
+            dynamicListLookUpSettings3.DataMember = "CompanyId";
+            dynamicListLookUpSettings3.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings3.DisplayMember = "ArName";
+            dynamicListLookUpSettings3.FilterString = null;
+            dynamicListLookUpSettings3.SortMember = "Id";
+            dynamicListLookUpSettings3.SortOrder = DevExpress.Data.ColumnSortOrder.Ascending;
+            dynamicListLookUpSettings3.ValueMember = "Id";
+            this.CompanyId.ValueSourceSettings = dynamicListLookUpSettings3;
+            // 
+            // EmployeeDues_Report
+            // 
+            this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
+            this.TopMargin,
+            this.BottomMargin,
+            this.GroupHeader1,
+            this.Detail,
+            this.PageHeader});
+            this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
+            this.sqlDataSource1});
+            this.DataMember = "GetEmployeeDues";
+            this.DataSource = this.sqlDataSource1;
+            this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
+            this.Landscape = true;
+            this.Margins = new DevExpress.Drawing.DXMargins(37, 38, 40, 60);
+            this.PageHeight = 827;
+            this.PageWidth = 1169;
+            this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
+            this.Parameters.AddRange(new DevExpress.XtraReports.Parameters.Parameter[] {
+            this.Department,
+            this.UserId,
+            this.Year,
+            this.Month,
+            this.ActivityId,
+            this.CompanyId});
+            this.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.Yes;
+            this.RightToLeftLayout = DevExpress.XtraReports.UI.RightToLeftLayout.Yes;
+            this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
+            this.Title,
+            this.DetailCaption1,
+            this.DetailData1,
+            this.DetailData3_Odd,
+            this.PageInfo});
+            this.Version = "20.1";
+            this.BeforePrint += new BeforePrintEventHandler(this.EmployeeDues_Report_BeforePrint);
+            ((System.ComponentModel.ISupportInitialize)(this.xrTable1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
+
+    }
+
+    #endregion
+
+    private void EmployeeDues_Report_BeforePrint(object sender, CancelEventArgs e)
+    {
+        var salaryItems = db.SalaryItems.Where(a => a.IsActive == true && a.IsDeleted == false).ToList();
+        //SalaryItem1
+        this.SalaryItem1.Visible= this._SalaryItem1.Visible = salaryItems.Where(a => a.Id == 1 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+       // this._SalaryItem1.Visible = this.SalaryItem1.Visible;
+        this.SalaryItem1.Text = this.SalaryItem1.Visible==true? salaryItems.Where(a => a.Id == 1 && a.AppearInPayroll == true).FirstOrDefault().ArName:"";
+        if (this.SalaryItem1.Visible == false)
+        {
+            this.SalaryItem1.Dispose();
+            this._SalaryItem1.Dispose();
+        }
+        //SalaryItem2
+        this.SalaryItem2.Visible = this._SalaryItem2.Visible = salaryItems.Where(a => a.Id == 2 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem2.Text = this.SalaryItem2.Visible == true ? salaryItems.Where(a => a.Id == 2 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem2.Visible == false)
+        {
+            this.SalaryItem2.Dispose();
+            this._SalaryItem2.Dispose();
+        }
+        //SalaryItem3
+        this.SalaryItem3.Visible = this._SalaryItem3.Visible = salaryItems.Where(a => a.Id == 3 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem3.Text = this.SalaryItem3.Visible == true ? salaryItems.Where(a => a.Id == 3 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem3.Visible == false)
+        {
+            this.SalaryItem3.Dispose();
+            this._SalaryItem3.Dispose();
+        }
+        //SalaryItem4
+        this.SalaryItem4.Visible = this._SalaryItem4.Visible = salaryItems.Where(a => a.Id == 4 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem4.Text = this.SalaryItem4.Visible == true ? salaryItems.Where(a => a.Id == 4 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem4.Visible == false)
+        {
+            this.SalaryItem4.Dispose();
+            this._SalaryItem4.Dispose();
+        }
+        //SalaryItem5
+        this.SalaryItem5.Visible = this._SalaryItem5.Visible = salaryItems.Where(a => a.Id == 5 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem5.Text = this.SalaryItem5.Visible == true ? salaryItems.Where(a => a.Id == 5 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem5.Visible == false)
+        {
+            this.SalaryItem5.Dispose();
+            this._SalaryItem5.Dispose();
+        }
+        //SalaryItem6
+        this.SalaryItem6.Visible = this._SalaryItem6.Visible = salaryItems.Where(a => a.Id == 6 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem6.Text = this.SalaryItem6.Visible == true ? salaryItems.Where(a => a.Id == 6 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem6.Visible == false)
+        {
+            this.SalaryItem6.Dispose();
+            this._SalaryItem6.Dispose();
+        }
+        //SalaryItem7
+        this.SalaryItem7.Visible = this._SalaryItem7.Visible = salaryItems.Where(a => a.Id == 7 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem7.Text = this.SalaryItem7.Visible == true ? salaryItems.Where(a => a.Id == 7 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem7.Visible == false)
+        {
+            this.SalaryItem7.Dispose();
+            this._SalaryItem7.Dispose();
+        }
+        //SalaryItem8
+        this.SalaryItem8.Visible = this._SalaryItem8.Visible = salaryItems.Where(a => a.Id == 8 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem8.Text = this.SalaryItem8.Visible == true ? salaryItems.Where(a => a.Id == 8 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem8.Visible == false)
+        {
+            this.SalaryItem8.Dispose();
+            this._SalaryItem8.Dispose();
+        }
+        //SalaryItem9
+        this.SalaryItem9.Visible = this._SalaryItem9.Visible = salaryItems.Where(a => a.Id == 9 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem9.Text = this.SalaryItem9.Visible == true ? salaryItems.Where(a => a.Id == 9 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem9.Visible == false)
+        {
+            this.SalaryItem9.Dispose();
+            this._SalaryItem9.Dispose();
+        }
+        //SalaryItem10
+        this.SalaryItem10.Visible = this._SalaryItem10.Visible = salaryItems.Where(a => a.Id == 10 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem10.Text = this.SalaryItem10.Visible == true ? salaryItems.Where(a => a.Id == 10 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem10.Visible == false)
+        {
+            this.SalaryItem10.Dispose();
+            this._SalaryItem10.Dispose();
+        }
+        //SalaryItem11
+        this.SalaryItem11.Visible = this._SalaryItem11.Visible = salaryItems.Where(a => a.Id == 11 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem11.Text = this.SalaryItem11.Visible == true ? salaryItems.Where(a => a.Id == 11 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem11.Visible == false)
+        {
+            this.SalaryItem11.Dispose();
+            this._SalaryItem11.Dispose();
+        }
+        //SalaryItem12
+        this.SalaryItem12.Visible = this._SalaryItem12.Visible = salaryItems.Where(a => a.Id == 12 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem12.Text = this.SalaryItem12.Visible == true ? salaryItems.Where(a => a.Id == 12 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem12.Visible == false)
+        {
+            this.SalaryItem12.Dispose();
+            this._SalaryItem12.Dispose();
+        }
+        //SalaryItem13
+        this.SalaryItem13.Visible = this._SalaryItem13.Visible = salaryItems.Where(a => a.Id == 13 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem13.Text = this.SalaryItem13.Visible == true ? salaryItems.Where(a => a.Id == 13 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem13.Visible == false)
+        {
+            this.SalaryItem13.Dispose();
+            this._SalaryItem13.Dispose();
+        }
+        //SalaryItem14
+        this.SalaryItem14.Visible = this._SalaryItem14.Visible = salaryItems.Where(a => a.Id == 14 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem14.Text = this.SalaryItem14.Visible == true ? salaryItems.Where(a => a.Id == 14 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem14.Visible == false)
+        {
+            this.SalaryItem14.Dispose();
+            this._SalaryItem14.Dispose();
+        }
+        //SalaryItem15
+        this.SalaryItem15.Visible = this._SalaryItem15.Visible = salaryItems.Where(a => a.Id == 15 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem15.Text = this.SalaryItem15.Visible == true ? salaryItems.Where(a => a.Id == 15 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem15.Visible == false)
+        {
+            this.SalaryItem15.Dispose();
+            this._SalaryItem15.Dispose();
+        }
+        //SalaryItem16
+        this.SalaryItem16.Visible = this._SalaryItem16.Visible = salaryItems.Where(a => a.Id == 16 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem16.Text = this.SalaryItem16.Visible == true ? salaryItems.Where(a => a.Id == 16 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem16.Visible == false)
+        {
+            this.SalaryItem16.Dispose();
+            this._SalaryItem16.Dispose();
+        }
+        //SalaryItem17
+        this.SalaryItem17.Visible = this._SalaryItem17.Visible = salaryItems.Where(a => a.Id == 17 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem17.Text = this.SalaryItem17.Visible == true ? salaryItems.Where(a => a.Id == 17 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem17.Visible == false)
+        {
+            this.SalaryItem17.Dispose();
+            this._SalaryItem17.Dispose();
+        }
+        //SalaryItem18
+        this.SalaryItem18.Visible = this._SalaryItem18.Visible = salaryItems.Where(a => a.Id == 18 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem18.Text = this.SalaryItem18.Visible == true ? salaryItems.Where(a => a.Id == 18 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem18.Visible == false)
+        {
+            this.SalaryItem18.Dispose();
+            this._SalaryItem18.Dispose();
+        }
+        //SalaryItem19
+        this.SalaryItem19.Visible = this._SalaryItem19.Visible = salaryItems.Where(a => a.Id == 19 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem19.Text = this.SalaryItem19.Visible == true ? salaryItems.Where(a => a.Id == 19 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem19.Visible == false)
+        {
+            this.SalaryItem19.Dispose();
+            this._SalaryItem19.Dispose();
+        }
+        //SalaryItem20
+        this.SalaryItem20.Visible = this._SalaryItem20.Visible = salaryItems.Where(a => a.Id == 20 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem20.Text = this.SalaryItem20.Visible == true ? salaryItems.Where(a => a.Id == 20 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem20.Visible == false)
+        {
+            this.SalaryItem20.Dispose();
+            this._SalaryItem20.Dispose();
+        }
+        //SalaryItem21
+        this.SalaryItem21.Visible = this._SalaryItem21.Visible = salaryItems.Where(a => a.Id == 21 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem21.Text = this.SalaryItem21.Visible == true ? salaryItems.Where(a => a.Id == 21 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem21.Visible == false)
+        {
+            this.SalaryItem21.Dispose();
+            this._SalaryItem21.Dispose();
+        }
+        //SalaryItem22
+        this.SalaryItem22.Visible = this._SalaryItem22.Visible = salaryItems.Where(a => a.Id == 22 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem22.Text = this.SalaryItem22.Visible == true ? salaryItems.Where(a => a.Id == 22 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem22.Visible == false)
+        {
+            this.SalaryItem22.Dispose();
+            this._SalaryItem22.Dispose();
+        }
+        //SalaryItem23
+        this.SalaryItem23.Visible = this._SalaryItem23.Visible = salaryItems.Where(a => a.Id == 23 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem23.Text = this.SalaryItem23.Visible == true ? salaryItems.Where(a => a.Id == 23 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem23.Visible == false)
+        {
+            this.SalaryItem23.Dispose();
+            this._SalaryItem23.Dispose();
+        }
+        //SalaryItem24
+        this.SalaryItem24.Visible = this._SalaryItem24.Visible = salaryItems.Where(a => a.Id == 24 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem24.Text = this.SalaryItem24.Visible == true ? salaryItems.Where(a => a.Id == 24 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem24.Visible == false)
+        {
+            this.SalaryItem24.Dispose();
+            this._SalaryItem24.Dispose();
+        }
+        //SalaryItem25
+        this.SalaryItem25.Visible = this._SalaryItem25.Visible = salaryItems.Where(a => a.Id == 25 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem25.Text = this.SalaryItem25.Visible == true ? salaryItems.Where(a => a.Id == 25 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem25.Visible == false)
+        {
+            this.SalaryItem25.Dispose();
+            this._SalaryItem25.Dispose();
+        }
+        //SalaryItem26
+        this.SalaryItem26.Visible = this._SalaryItem26.Visible = salaryItems.Where(a => a.Id == 26 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem26.Text = this.SalaryItem26.Visible == true ? salaryItems.Where(a => a.Id == 26 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem26.Visible == false)
+        {
+            this.SalaryItem26.Dispose();
+            this._SalaryItem26.Dispose();
+        }
+        //SalaryItem27
+        this.SalaryItem27.Visible = this._SalaryItem27.Visible = salaryItems.Where(a => a.Id == 27 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem27.Text = this.SalaryItem27.Visible == true ? salaryItems.Where(a => a.Id == 27 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem27.Visible == false)
+        {
+            this.SalaryItem27.Dispose();
+            this._SalaryItem27.Dispose();
+        }
+        //SalaryItem28
+        this.SalaryItem28.Visible = this._SalaryItem28.Visible = salaryItems.Where(a => a.Id == 28 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem28.Text = this.SalaryItem28.Visible == true ? salaryItems.Where(a => a.Id == 28 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem28.Visible == false)
+        {
+            this.SalaryItem28.Dispose();
+            this._SalaryItem28.Dispose();
+        }
+        //SalaryItem29
+        this.SalaryItem29.Visible = this._SalaryItem29.Visible = salaryItems.Where(a => a.Id == 29 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem29.Text = this.SalaryItem29.Visible == true ? salaryItems.Where(a => a.Id == 29 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem29.Visible == false)
+        {
+            this.SalaryItem29.Dispose();
+            this._SalaryItem29.Dispose();
+        }
+        //SalaryItem30
+        this.SalaryItem30.Visible = this._SalaryItem30.Visible = salaryItems.Where(a => a.Id == 30 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem30.Text = this.SalaryItem30.Visible == true ? salaryItems.Where(a => a.Id == 30 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem30.Visible == false)
+        {
+            this.SalaryItem30.Dispose();
+            this._SalaryItem30.Dispose();
+        }
+        //SalaryItem31
+        this.SalaryItem31.Visible = this._SalaryItem31.Visible = salaryItems.Where(a => a.Id == 31 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem31.Text = this.SalaryItem31.Visible == true ? salaryItems.Where(a => a.Id == 31 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem31.Visible == false)
+        {
+            this.SalaryItem31.Dispose();
+            this._SalaryItem31.Dispose();
+        }
+        //SalaryItem32
+        this.SalaryItem32.Visible = this._SalaryItem32.Visible = salaryItems.Where(a => a.Id == 32 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem32.Text = this.SalaryItem32.Visible == true ? salaryItems.Where(a => a.Id == 32 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem32.Visible == false)
+        {
+            this.SalaryItem32.Dispose();
+            this._SalaryItem32.Dispose();
+        }
+        //SalaryItem33
+        this.SalaryItem33.Visible = this._SalaryItem33.Visible = salaryItems.Where(a => a.Id == 33 && a.AppearInPayroll == true).FirstOrDefault() != null ? true : false;
+        this.SalaryItem33.Text = this.SalaryItem33.Visible == true ? salaryItems.Where(a => a.Id == 33 && a.AppearInPayroll == true).FirstOrDefault().ArName : "";
+        if (this.SalaryItem33.Visible == false)
+        {
+            this.SalaryItem33.Dispose();
+            this._SalaryItem33.Dispose();
+        }
+        
+    }
+
+    private void Time_BeforePrint(object sender, CancelEventArgs e)
+    {
+        DateTime utcNow = DateTime.UtcNow;
+        TimeZoneInfo info = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
+        DateTime cTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, info);
+        ((XRLabel)sender).Text = cTime.ToString("d MMMM yyyy h:mm tt");
+    }
+
+    private void xrPictureBox1_BeforePrint(object sender, CancelEventArgs e)
+    {
+        int? DepartmentId = (int?)this.Department.Value;
+        var logo = HelperController.GetActivityLogo(DepartmentId);
+        xrPictureBox1.ImageUrl = logo;
+        CompanyName.Text = db.SystemSettings.FirstOrDefault().CompanyArName;
+    }
+}

@@ -1,0 +1,51 @@
+﻿@model MyERP.Models.ChurchMeetingSetting
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.ChurchMeetingSettings;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.ChurchMeetingSettings:</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ChurchMeetingSetting/Index" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(model => model.Id)
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Message">@MyERP.Properties.Resources.Message</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Message" name="Message" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Message; }</textarea>
+                                    </div>
+                                    
+                                </div>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <div class="col-md-offset-2 col-md-10">
+                                                <button class="btn btn-success" type="submit">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,389 @@
+﻿@model MyERP.Models.EmployeeFollowUp
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeeFollowUp;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.EmployeeFollowUp :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.Image)
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.DepartmentId, null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input id="Date" name="Date" class="form-control" type="datetime-local" value="@ViewBag.Date" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="EmployeeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.EmployeeId, null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="FollowUpDate" class="control-label col-sm-2">@MyERP.Properties.Resources.FollowUpDate</label>
+                                    <div class="col-sm-4">
+                                        <input id="FollowUpDate" name="FollowUpDate" class="form-control" type="date" value="@ViewBag.FollowUpDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="1" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-8">
+                                        <label for="FollowUpTypeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.FollowUpType</label>
+                                        <input type="radio" id="NewEmployee" name="FollowUpTypeId" value="1" class="col-sm-2" checked="checked" />@MyERP.Properties.Resources.NewEmployee
+                                        <input type="radio" id="ReturnFromVacation" name="FollowUpTypeId" value="2" class="col-sm-2" />@MyERP.Properties.Resources.ReturnFromVacation
+                                        @if (Model != null && Model.FollowUpTypeId > 0)
+                                        {
+                                            <input id="FollowUpType" hidden value="@Model.FollowUpTypeId" />
+                                        }
+
+                                    </div>
+                                </div>
+                                <div class="form-group row" id="VacationDiv" style="display:none;">
+                                    <label for="VacationStartDate" class="control-label col-sm-2">@MyERP.Properties.Resources.VacationStartDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.VacationStartDate, new { htmlAttributes = new { @class = "form-control",@type="date" } })
+                                    </div>
+                                    <label for="VacationEndDate" class="control-label col-sm-2">@MyERP.Properties.Resources.VacationEndDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.VacationEndDate, new { htmlAttributes = new { @class = "form-control", @type = "date" } })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button type="button" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                            @MyERP.Properties.Resources.Delete
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    //----------------- Variable Declration ----------------//
+
+    //******************************************************//
+
+    //----------------- Ready Function ----------------//
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#FollowUpDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+
+        if ($('#Id').val() > 0) {
+            $('#VacationStartDate').val('@ViewBag.VacationStartDate');
+            $('#VacationEndDate').val('@ViewBag.VacationEndDate');
+            if ($('#FollowUpType').val() > 0) {
+                $("input[name=FollowUpTypeId][value=" + $('#FollowUpType').val() + "]").prop('checked', true);
+                $("input[name='FollowUpTypeId']").trigger('change');
+            }
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        }
+        else {
+            setDocNum();
+        }
+    });
+    //******************************************************//
+
+    //----------------- Event Functions ----------------//
+    $(document).on('change', '#DepartmentId', function () {
+        setDocNum();
+    });
+    $(document).on('change', '#Date', function () {
+        setDocNum();
+    });
+    $("input[name='FollowUpTypeId']").on('change', function () {
+        if ($("input[name='FollowUpTypeId']:checked").val() == 2)
+        {
+            $('#VacationDiv').show();
+        }
+        else
+        {
+            $('#VacationDiv').hide();
+        }
+    });
+    //******************************************************//
+
+    //----------------- Other Functions ----------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/EmployeeFollowUp/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    function ToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return dt.getFullYear() + "-" + zeroPadded((dt.getMonth() + 1)) + "-" + zeroPadded(dt.getDate());
+    }
+
+    //******************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+        if ($("input[name='FollowUpTypeId']:checked").val() == 1) {
+            $('#VacationStartDate').val(' ')
+            $('#VacationEndDate').val(' ')
+        }
+
+
+        var employeeFollowUp = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            Date: $('#Date').val(),
+            FollowUpDate: $('#FollowUpDate').val(),
+            DepartmentId: $('#DepartmentId').val(),
+            EmployeeId: $('#EmployeeId').val(),
+            FollowUpTypeId: $("input[name='FollowUpTypeId']:checked").val(),
+            VacationStartDate: $('#VacationStartDate').val(),
+            VacationEndDate: $('#VacationEndDate').val(),
+            IsDeleted: false,
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            UserId: $('#UserId').val(),
+        }
+        if (valid == true) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/EmployeeFollowUp/AddEdit",
+                        data:
+                            JSON.stringify(employeeFollowUp),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                                if (n == "new") {
+                                    window.location.replace("/EmployeeFollowUp/AddEdit");
+                                }
+                                else {
+                                    window.location.replace("/EmployeeFollowUp");
+                                }
+                            } else {
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/EmployeeFollowUp/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace("/EmployeeFollowUp");
+                        }
+                        else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+
+</script>

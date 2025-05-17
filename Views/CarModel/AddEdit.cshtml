@@ -1,0 +1,174 @@
+﻿<script src="~/Scripts/SaveAndNew.js"></script>
+@model MyERP.Models.CarModel
+
+@{
+    ViewBag.Title = "موديلات السيارات";
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">الأول</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">الأخير</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+            </div>
+            <h4 class="page-title"> موديلات السيارات :</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/CarModel/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                    }
+                                    <label for="Code" class="col-sm-2 control-label">الكود</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", required = "required", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            الكود مطلوب
+                                        </div>
+                                    </div>
+                                    <label for="inputtext3" class="col-sm-2 control-label">الاسم العربى</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الاسم العربى مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الاسم الانجليزى</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <label for="DepartmentId" class="col-sm-2 control-label">نوع السيارة</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CarTypeId", null, "إختر النوع", htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            اختر النوع
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:left;">
+                            @if (Model == null)
+                            {
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    حفظ و جديد
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    حفظ
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button type="submit" class="btn btn-success">
+                                        حفظ
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    <a class="btn btn-danger" onclick="Delete(@Model.Id,'CarModel')" role="button">حذف</a>
+
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+
+    if (!$('#Id').val()) {
+        function setCodeNum() {
+            $.get('/CarModel/SetCodeNum').done(function (r) {
+
+                $('#Code').val(r);
+            });
+
+        }
+        setCodeNum();
+    }
+
+    function Delete(id) {
+        if (confirm('هل تريد الحذف؟')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/CarModel/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/CarModel');
+                        } else
+                            alert('لم يتم الحذف!');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+
+</script>
+

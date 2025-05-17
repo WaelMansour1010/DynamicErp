@@ -1,0 +1,208 @@
+﻿@model IEnumerable<MyERP.Models.CustomModels.CashReceiptArrear>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ElderlyArrears;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="hed page-title">@MyERP.Properties.Resources.ElderlyArrears :</div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.ElderlyArrears
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="ArName">@MyERP.Properties.Resources.Year</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("Year", null, null , htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <label class=" col-sm-1 control-label" for="ArName">@MyERP.Properties.Resources.Month</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("Month", null, null, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    <button class="btn btn-success" onclick="ElderlyArrears()">
+                        <i class="fa fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!--------------------------------ShowData Table --------------------------------------->
+<div class="row" id="AllTable">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.ElderlyArrears
+                                </h5>
+
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        @*@if (Model != null && Model.Count() > 0)
+                                        {
+                                            foreach (var item in Model)
+                                            {
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Elder
+                                                        </th>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.SubscriptionStartDate
+                                                        </th>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.MonthlySubscription
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody style="background-color:lightcyan;">
+                                                    <tr>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.ArName)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.SubscriptionStartDate)
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.MonthlySubscription)
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                                <thead>
+                                                    <tr>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Month
+                                                        </th>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Year
+                                                        </th>
+
+                                                    </tr>
+
+                                                </thead>
+                                                foreach (var detail in item.cashReceiptArrearDetails)
+                                                {
+                                                    <tbody>
+                                                        <tr>
+
+                                                            <td>
+                                                                @Html.DisplayFor(modelItem => detail.Month)
+                                                            </td>
+                                                            <td>
+                                                                @Html.DisplayFor(modelItem => detail.Year)
+                                                            </td>
+
+                                                        </tr>
+                                                    </tbody>
+                                                }
+                                            }
+                                        }*@
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Elder
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.SubscriptionStartDate
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.MonthlySubscription
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.NoOfMonthsOverdue
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.TotalOverdue
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.NoOfLastCashReceiptVoucher
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.LastCashReceiptVoucherMoneyAmount
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model != null && Model.Count() > 0)
+                                            {
+                                                foreach (var item in Model)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.ArName)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.SubscriptionStartDate)
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.MonthlySubscription)
+                                                        </td>
+                                                        <td>
+                                                            @Html.Raw(item.NoOfMonthsOverdue)
+                                                        </td>
+                                                        <td>
+                                                            @Html.Raw(item.TotalOverdue != null ? item.TotalOverdue.Value.ToString("0.00") : "")
+                                                        </td>
+                                                        <td>
+                                                            @Html.Raw(item.DocumentNumber != null ? item.DocumentNumber.ToString().Replace("-", "") : "")
+                                                        </td>
+                                                        <td>
+                                                            @Html.Raw(item.MoneyAmount)
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--***********************************************************************************************-->
+
+<script>
+
+    function ElderlyArrears() {
+        var link = '/Elder/ElderlyArrears?Year=' + $('#Year').val() + '&Month=' + $('#Month').val();
+        window.location.replace(link);
+    }
+
+</script>

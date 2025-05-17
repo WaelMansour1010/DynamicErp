@@ -1,0 +1,599 @@
+﻿@model MyERP.Models.CarService
+
+@{
+    ViewBag.Title = "تعريف الخدمات";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">الأول</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">الأخير</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>}
+            </div>
+            <h4 class="page-title"> تعريف الخدمات :</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/CarService/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">*@
+            <div class="form-horizontal needs-validation" role="form">
+
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @Html.HiddenFor(model => model.UserId)
+                        @Html.HiddenFor(model => model.Image)
+
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    البيانات الاساسية
+                                </h5>
+                                <br />
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">الكود</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = "الكود", @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الكود مطلوب
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label" for="EnName">الاسم بالانجليزية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = "الاسم بالانجليزية" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="ArName">الاسم بالعربية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = "الاسم بالعربية", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الاسم بالعربية مطلوب
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="Price"> سعر البيع</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            سعر البيع مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="TypeId" class="control-label col-sm-2"> النوع </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("TypeId", null, htmlAttributes: new { @class = "form-control", @id = "TypeId" })
+                                    </div>
+
+                                    <label class="col-sm-2 control-label" for="StandardDuration"> المدة القياسية بالساعة</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.StandardDuration, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+
+                                        <div class="invalid-feedback">
+                                            المدة القياسية مطلوبة
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">التفاصيل</h5>
+                                    <div class="form-horizontal needs-validation" role="form">
+                                        <div class="table-responsive">
+                                            <table class="table table-centered mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>الباركود</th>
+                                                        <th>الصنف </th>
+                                                        <th>الكمية</th>
+                                                        <th class="UnitClass" style="display:none;">الوحدة</th>
+                                                        <th class="UnitEquivClass" style="display:none;">معامل التحويل</th>
+                                                        <th>سعر التكلفة</th>
+                                                        <th>الاجمالي</th>
+                                                        <th>حذف</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="ItemDetail">
+                                                    @if (Model != null)
+                                                    {
+                                                        foreach (var item in Model.CarServiceDetails)
+                                                        {
+                                                            <tr>
+                                                                <td class="tabledit-edit-mode">
+                                                                    <input class="barcode form-control tabledit-input form-control-sm" value="@Html.Raw(item.ItemPrice!=null?item.ItemPrice.Barcode:"")" />
+                                                                </td>
+                                                                <td class="tabledit-edit-mode">
+                                                                    <input type="hidden" class="item form-control tabledit-input form-control-sm" value="@item.ItemPriceId" required />
+                                                                    <input type="text" class="item-name form-control tabledit-input form-control-sm" value="@item.Item.ArName - @item.ItemPrice.Barcode" required />
+                                                                </td>
+                                                                <td class="tabledit-edit-mode">
+                                                                    <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Qty" required />
+                                                                </td>
+                                                                <td class="tabledit-edit-mode UnitClass" style="display:none;">
+
+                                                                    <select class="item-unit form-control tabledit-input form-control-sm" required disabled>
+                                                                        <option value="@item.ItemUnitId">@item.ItemUnit.ArName</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td class="tabledit-edit-mode UnitEquivClass" style="display:none;">
+                                                                    <input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" value="@item.UnitEquivalent" required />
+                                                                </td>
+                                                                <td class="tabledit-edit-mode">
+                                                                    <input type="text" class="money price form-control tabledit-input form-control-sm" value="@item.Price" required />
+                                                                </td>
+                                                                <td class="tabledit-edit-mode">
+                                                                    <input class="total money form-control tabledit-input form-control-sm" type="text" readonly value="@item.TotalPrice" />
+                                                                </td>
+                                                                <td>
+                                                                    <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                        <i class="fas fa-trash-alt"></i>
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="barcode form-control tabledit-input form-control-sm" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="item form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "required ") />
+                                                            <input type="text" class="item-name form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "required ") />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" @Html.Raw(Model != null ? "" : "required ") />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode UnitClass" style="display:none;">
+                                                            <select class="item-unit form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "required ") disabled></select>
+                                                        </td>
+                                                        <td class="tabledit-edit-mode UnitEquivClass" style="display:none;">
+                                                            <input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" @Html.Raw(Model != null ? "" : "required ") />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="money price form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "required ") />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="total money form-control tabledit-input form-control-sm" type="text" readonly />
+                                                        </td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:right;">
+                            <div class="row">
+                                <div class="col-sm-offset-2">
+                                    @if (Model == null)
+                                    {
+                                        <button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                                            حفظ و جديد
+                                        </button>
+                                        <button class="btn btn-success" onclick="addEdit()">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                    else if (Model.IsDeleted == false)
+                                    {
+
+                                        <button class="btn btn-success" onclick="addEdit()">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                @*</form>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let items = [];
+    let custIems = [];
+
+    $(document).ready(function () {
+        getItems();
+        if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+            $('.UnitClass').show();
+            $('.UnitEquivClass').show();
+        }
+
+    });
+
+    function getItems() {
+        return requestData('/Helper/GetAllItems').done(function (r) {
+            items = r;
+        });
+    }
+
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            var doc = $.get('/CarService/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    function DeleteFunc(id) {
+        if (confirm('هل تريد الحذف؟')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/CarService/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('لم يتم الحذف!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/CarService');
+                        } else
+                            alert('لم يتم الحذف!');
+                    }
+                });
+        }
+    }
+
+    $(document).on('change', '.price', function () {
+        if (!$(this).closest('tr').find('.item').val()) {
+            alert("اختر الصنف اولا");
+            $(this).closest('tr').find('.quantity').val(0);
+            $(this).closest('tr').find('.price').val(0);
+            $(this).closest('tr').find('.total').val(0);
+            $(this).closest('tr').find('.unit-equavalent').val(0);
+        }
+        else
+        $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+        addToItemDetail();
+    });
+
+    $(document).on('change', '.quantity', function () {
+        if (!$(this).closest('tr').find('.item').val()) {
+            alert("اختر الصنف اولا");
+            $(this).closest('tr').find('.quantity').val(0);
+            $(this).closest('tr').find('.price').val(0);
+            $(this).closest('tr').find('.total').val(0);
+            $(this).closest('tr').find('.unit-equavalent').val(0);
+        }
+        else if ($(this).val() * 1 == 0) {
+                $(this).val('');
+              }
+        else {
+                let itemPrice = $(this).closest('tr').find('.item');
+                let itemId = items.filter(function (i) { return i.ItemPriceId == itemPrice.val() * 1; })[0].Id;
+                let sum = 0;
+                items.filter(function (i) { return i.Id == itemId }).forEach(function (v, i) {
+                    $(".item[value=" + v.ItemPriceId + "]").not(itemPrice).each(function () {
+                        sum += $(this).closest('tr').find('.quantity').val() * $(this).closest('tr').find('.unit-equavalent').val();
+                    });
+                });
+                //    if (sum + $(this).val() * $(this).closest('tr').find('.unit-equavalent').val() > $(this).closest('tr').find('.quantityOnSystem').val() * 1) {
+                //      alert('الكمية المطلوبة اكبر من الكمية المتاحة !');
+                //    $(this).val(($(this).closest('tr').find('.quantityOnSystem').val() - sum) / $(this).closest('tr').find('.unit-equavalent').val());
+                // }
+        }
+        $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.price').val());
+
+    //    $(this).closest('tr').find('.price').trigger('change');
+        addToItemDetail();
+       // $('.table td, .table th').css("min-width", "0vh");  // To Adjust Style of Td
+
+    });
+
+    $(document).on('change', '.unit-equavalent', function () {
+        if ($(this).val() * 1 == 0) {
+            $(this).val('');
+        } else {
+            let itemPrice = $(this).closest('tr').find('.item');
+            let itemId = items.filter(function (i) { return i.ItemPriceId == itemPrice.val() * 1; })[0].Id;
+            let sum = 0;
+            items.filter(function (i) { return i.Id == itemId }).forEach(function (v, i) {
+                $(".item[value=" + v.ItemPriceId + "]").each(function () {
+                    sum += $(this).closest('tr').find('.quantity').val() * $(this).closest('tr').find('.unit-equavalent').val();
+                });
+            });
+            //  if (sum > $(this).closest('tr').find('.quantityOnSystem').val() * 1) {
+            //    alert('الكمية المطلوبة اكبر من الكمية المتاحة !');
+            //  $(this).closest('tr').find('.quantity').val(($(this).closest('tr').find('.quantityOnSystem').val() - sum) / $(this).closest('tr').find('.unit-equavalent').val());
+            // }
+        }
+        $(this).closest('tr').find('.price').trigger('change');
+    });
+
+    $(document).on('keyup', '.item-name', function () {
+        let itemNameInput = $(this);
+        if (!custIems.length)
+            custIems = $.map(items, function (n) {
+                return { label: n.ArName, value: n.ItemPriceId };
+            });
+        $(this).autocomplete({
+            source: custIems,
+            select: function (event, ui) {
+                event.preventDefault();
+                $(itemNameInput).val(ui.item.label);
+                $(itemNameInput).closest('td').find('.item').val(ui.item.value).trigger('change');
+            },
+            minLength: 0,
+            focus: function (event, ui) {
+                event.preventDefault();
+            }
+        })
+    });
+
+    $(document).on('change', '.item-name', function () {
+        let itemName = $(this).val();
+        if (!items.filter(function (i) { return i.ArName == itemName; }).length) {
+            $(this).closest('tr').find('.item-name').val('');
+            $(this).closest('tr').find('.item').val('').trigger('change');
+            $(this).closest('tr').find('.item-unit').empty();
+        }
+    });
+
+    $(document).on('change', '.item', function () {
+        let itemPrice = $(this);
+        if (itemPrice.val() && items.length) {
+            let item = items.filter(function (i) { return i.ItemPriceId == itemPrice.val(); })[0];
+            itemPrice.closest('tr').find('.barcode').val(item.Barcode);
+            $.get('/Helper/GetItemAvgPrice?itemId=' + item.Id + '&departmentId=' + @ViewBag.DepartmentId).done(function (r) {
+                if (r) {
+                    $(itemPrice).closest('tr').find('.price').val(r);
+                }
+                else {
+                    $(itemPrice).closest('tr').find('.price').val('');
+                }
+                $('#preloader, #status').fadeOut();
+            }).fail(function () {
+                $(itemPrice).closest('tr').find('.price').val('');
+                $('#preloader, #status').fadeOut();
+            });
+
+         //   itemPrice.closest('tr').find('.price').val(item.Price);
+
+            itemPrice.closest('tr').find('.item-unit').empty().append('<option value="' + item.ItemUnitId + '">' + item.ItemUnitArName + '</option>');
+            itemPrice.closest('tr').find('.unit-equavalent').val(item.Equivalent);
+        } else {
+            itemPrice.closest('tr').find('input[type="text"]').val('');
+            itemPrice.closest('tr').find('select').empty();
+        }
+        $(this).closest('tr').find('.quantity').trigger('change');
+        addToItemDetail();
+    });
+
+    $(document).on('change', '.item-unit', function () {
+        let itemUnitId = $(this).val();
+        let itemPrice = $(this).closest('tr').find('.item');
+        let itemId = items.filter(function (i) { return i.ItemPriceId == itemPrice.val(); })[0].Id;
+        getItemUnits(itemId).done(function (r) {
+            let equiv = r.filter(function (i) { return i.Id == itemUnitId })[0].Equivalent;
+            itemPrice.closest('tr').find('.unit-equavalent').val(equiv);
+        });
+    });
+
+    $(document).on('keydown', '.barcode', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            let elem = $(this);
+            if (items.length) {
+                let itemPrice = items.filter(function (i) { return i.Barcode === $(elem).val(); })[0];
+                if (itemPrice) {
+                    $(elem).closest('tr').find('.item-name').val(itemPrice.ArName);
+                    $(elem).closest('tr').find('.item').val(itemPrice.ItemPriceId).trigger('change');
+                } else {
+                    $(elem).closest('tr').find('.item-name').val('');
+                    $(elem).closest('tr').find('.item').val('').trigger('change');
+                }
+            } else {
+                $(elem).closest('tr').find('.item-name').val('');
+                $(elem).closest('tr').find('.item').val('').trigger('change');
+            }
+        }
+    });
+
+    $(document).on('change', '.barcode', function () {
+        let itemPrice = $(this).closest('tr').find('.item').val();
+        if (items.length && itemPrice) {
+            let itemPrice = $(this).closest('tr').find('.item').val();
+            let barcode = items.filter(function (i) { return i.ItemPriceId == itemPrice; })[0];
+            $(this).val(barcode ? barcode.Barcode : '');
+        } else
+            $(this).val('');
+    });
+
+    function addToItemDetail() {
+        if ($('.item-name').last().val())
+            $('#ItemDetail').find('.item, .item-name, .item-unit, .quantity, .unit-equavalent, .price').prop('required', 'required');
+
+        if ($('#ItemDetail .form-control:invalid').length > 0) {
+            $('#ItemDetail').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#ItemDetail").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        } else if ($('#ItemDetail .quantity:last').val() && $('#ItemDetail .item-name:last').val()) {
+            let tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="hidden" class="item form-control tabledit-input form-control-sm"  /><input type="text" class="item-name form-control tabledit-input form-control-sm"  /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" disabled></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent small-number form-control tabledit-input form-control-sm" type="number" step="any"/></td><td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+            $('#ItemDetail').append(tr);
+            if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+                $('.UnitClass').show();
+                $('.UnitEquivClass').show();
+            }
+
+            $('#ItemDetail .money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#ItemDetail input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#ItemDetail input.small-number').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#ItemDetail tr:last select').select2({
+                matcher: matchCustom
+            });
+        }
+      //  changePrice()
+    }
+
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1)
+            $(tr).find("input").val('');
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+        }
+      //  changePrice() 
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var CarServiceDetails = [];
+
+            $('#ItemDetail tr').each(function () {
+                var td = $(this);
+                if (td.find('.quantity').val() * 1 != 0 && td.find('.item').val() > 0) {
+                    let itemId = items.filter(function (i) { return i.ItemPriceId == td.find('.item').val(); })[0].Id;
+                    var CarServiceDetail = {
+                        CarServiceId: $('#Id').val(),
+                        ItemId: itemId,
+                        ItemPriceId: td.find('.item').val(),
+                        ItemUnitId: td.find('.item-unit').val(),
+                        UnitEquivalent: td.find('.unit-equavalent').val(),
+                        Price: td.find('.price').inputmask('unmaskedvalue'),
+                        Qty: td.find('.quantity').val(),
+                        TotalPrice: td.find('.total').inputmask('unmaskedvalue'),
+                        IsDeleted:false
+                    };
+                    CarServiceDetails.push(CarServiceDetail);
+                }
+            });
+
+            var CarService =
+            {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                ArName: $('#ArName').val(),
+                EnName: $('#EnName').val(),
+                Price: $('#Price').val(),
+                StandardDuration: $('#StandardDuration').val(),
+                TypeId: $('#TypeId').val(),
+                IsDeleted: false,
+                IsActive: true,
+                CarServiceDetails: CarServiceDetails
+            };
+            //   console.log(CarService, "CarService");
+            if (confirm('هل تريد الحفظ؟'))
+                $.ajax({
+                    type: "POST",
+                    url: "/CarService/AddEdit",
+                    data: CarService,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/CarService/AddEdit");
+                            } else {
+                                window.location.replace("/CarService");
+                            }
+                        }
+                        else
+                            alert('لم يتم الحفظ');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert(' لم يتم الحفظ');
+                    }
+                });
+        }
+    }
+
+
+   // function changePrice() {
+    //    var sum = 0;
+    //    $('#ItemDetail tr').each(function () {
+    //        var td = $(this);
+    //        var total = $('.total').val();
+    //        var total = td.find('.total').val()
+    //        if (total && typeof (total) != NaN) {
+    //            sum += parseFloat(total);
+    //            console.log(sum, "sum")
+    //            $('#Price').val(sum);
+    //        }
+    //        else {
+    //            console.log("00")
+    //        }
+    //    })
+    //}
+
+</script>
+
+

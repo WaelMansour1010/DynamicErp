@@ -1,0 +1,2097 @@
+﻿<!--
+Author: W3layouts
+Author URL: http://w3layouts.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE HTML>
+<html style="direction: rtl;">
+<head>
+    <title>MySoft</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="keywords" content="Baxster Responsive web template, Bootstrap Web Templates, Flat Web Templates, Android Compatible web template,
+     SmartPhone Compatible web template, free WebDesigns for Nokia, Samsung, LG, SonyEricsson, Motorola web design" />
+    <script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+    <!-- Bootstrap Core CSS -->
+    <link href="/css/bootstrap.css" rel='stylesheet' type='text/css' />
+
+    @Html.DevExpress().GetStyleSheets(
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Chart },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.CardView },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Dashboard }
+    )
+    @Html.DevExpress().GetScripts(
+        new Script { ExtensionSuite = ExtensionSuite.Chart },
+        new Script { ExtensionSuite = ExtensionSuite.CardView },
+        new Script { ExtensionSuite = ExtensionSuite.Dashboard }
+    )
+
+    <!-- Custom CSS -->
+    <link href="~/Content/Site.css" rel="stylesheet" />
+    <link href="/css/style.css" rel='stylesheet' type='text/css' />
+    <!-- font CSS -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- font-awesome icons -->
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <!-- //font-awesome icons -->
+    <!-- chart -->
+    <script src="/js/Chart.js"></script>
+    <!-- //chart -->
+    <!-- js-->
+    @*<script src="~/Scripts/jquery-1.10.2.min.js"></script>*@
+
+    @*<script src="~/js/jquery-ui.js"></script>*@
+    <script src="/js/modernizr.custom.js"></script>
+    <!--webfonts-->
+    <link href='//fonts.googleapis.com/css?family=Roboto+Condensed:400,200,200italic,400italic,700,700italic' rel='stylesheet' type='text/css'>
+    <!--//webfonts-->
+    <!--animate-->
+    <link href="/css/animate.css" rel="stylesheet" type="text/css" media="all">
+    <script src="/js/wow.min.js"></script>
+    <script>
+        new WOW().init();
+    </script>
+    <!--//end-animate-->
+    <!-- Metis Menu -->
+    <script src="/js/metisMenu.min.js"></script>
+    <script src="/js/custom.js"></script>
+    <link href="/css/custom.css" rel="stylesheet">
+    <!--//Metis Menu -->
+    <script src="~/Scripts/MainScript.js"></script>
+    <link href="~/css/jquery-ui.css" rel="stylesheet" />
+    @*<script src="~/Scripts/jquery.validate.js"></script>*@
+    <link href="~/css/select2.min.css" rel="stylesheet" />
+    <script src="~/Scripts/select2.min.js"></script>
+    <script src="~/js/jquery.mask.min.js"></script>
+    <script src="~/js/inputmask.min.js"></script>
+    <script src="~/js/jquery.inputmask.min.js"></script>
+    <script src="~/js/inputmask.numeric.extensions.min.js"></script>
+    <script src="~/Scripts/SaveAndNew.js"></script>
+    <script>
+
+        var MainDomain = "http://mysoftapi.medmostgroup.com/";
+
+
+        $(function () {
+            $('#preloader, #status').fadeOut();
+        });
+    </script>
+</head>
+<body class="cbp-spmenu-push" style="font-family: 'Zahra.Arabic', sans-serif!important">
+    <input type="hidden" id="userToken" value="@Session["MSERPtoken"]" />
+    <div id="pleasewait" style="z-index: 999999999;position: fixed;width: 100%;height: 100%;background-color: rgba(0,0,0,.5);
+    text-align: center;padding: 20%;">
+        <img src="~/images/loading.gif" style="max-height:100px;" />
+    </div>
+    <div class="main-content">
+        <!--left-fixed -navigation-->
+        <div class="sidebar" role="navigation">
+            <div class="navbar-collapse">
+                <nav class="cbp-spmenu cbp-spmenu-vertical cbp-spmenu-right dev-page-sidebar mCustomScrollbar _mCS_1 mCS-autoHide mCS_no_scrollbar" id="cbp-spmenu-s1">
+                    <div class="scrollbar scrollbar1" style="font-size:14px;">
+                        <ul class="nav" id="side-menu">
+                            <li>
+                                <a href="/"><i class="fa fa-home nav_icon"></i>الرئيسية</a>
+                            </li>
+                            <!-- الادارة المالية -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <i class="fa fa-dollar"></i>
+                                    الإدارة المالية
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+
+                                    <!-- الاصول الثابتة-->
+                                    <li>
+
+                                        <a href="javascript:void(0);">
+
+                                            <i class="fa fa-building-o"></i>
+                                            الأصول الثابتة<span class="fa arrow"></span>
+
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+
+
+                                            <li>
+                                                <a href="/FixedAssets/Index" pv="/FixedAssets/Index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الأصول الثابتة
+
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/FixedAssetsGroups/Index" pv="/FixedAssetsGroups/Index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    مجموعات الأصول الثابتة
+                                                </a>
+                                            </li>
+                                            <!--التقارير -->
+                                            <li>
+                                                <a href="javascript:void(0);">
+                                                    <i class="glyphicon glyphicon-list-alt">
+
+                                                    </i>
+                                                    التقارير<span class="fa arrow"></span>
+                                                </a>
+                                                <ul class="nav nav-third-level collapse">
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/FixedAssets" pv="/Report/FixedAssets">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            الأصول الثابتة
+                                                        </a>
+                                                    </li>
+
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <!--حسابات الموردين-->
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i class="fa fa-truck"></i>
+                                            حسابات الموردين<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/VendorsGroup/index" pv="/VendorsGroup/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    مجموعات الموردين
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Vendor/index" pv="/Vendor/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الموردين
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/VendorOB/index" pv="/VendorOB/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الأرصدة الإفتتاحية للمورديين
+                                                </a>
+                                            </li>
+
+                                        </ul>
+                                    </li>
+                                    <!--حسابات العملاء-->
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i class="fa fa-users"></i>
+                                            حسابات العملاء<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/CustomersGroups/index" pv="/CustomersGroups/index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    مجموعات العملاء
+
+
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Customers/index" pv="/Customers/index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    العملاء
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/CustomerOB/index" pv="/CustomerOB/index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الأرصدة الإفتتاحية للعملاء
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+
+                                    <!-- الحسابات العامة -->
+                                    <li style="margin-left:1px">
+                                        <a href="javascript:void(0);"><i><img src="~/images/icons/cal.png" height="16" width="16" /></i>الحسابات العامة<span class="fa arrow"></span></a>
+                                        <ul class="nav nav-third-level collapse">
+
+                                            @*<li>
+                                                    <a class="btnAjaxView" href="javascript:void(0);" pv="/CostCenter/index"><i class="fa fa-cogs nav_icon"></i>مراكز التكلفة</a>
+                                                </li>
+                                                <li>
+                                                    <a class="btnAjaxView" href="javascript:void(0);" pv="/CostCenterOB/index"><i class="fa fa-cogs nav_icon"></i>
+                                                        الأرصدة الإفتتاحية لمراكز التكلفة
+                                                    </a>
+                                                </li>*@
+
+                                            <li>
+                                                <a href="/ChartOfAccounts" pv="/ChartOfAccounts">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    دليل الحسابات
+                                                </a>
+                                            </li>
+
+                                            <li>
+                                                <a class="btnAjaxView" href="/JournalEntries/index" pv="/JournalEntries/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    القيود
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/BalanceReview" pv="/BalanceReview">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    ميزان المراجعة
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/AccountStatement" pv="/AccountStatement">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    كشف حساب
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/IncomeList" pv="/IncomeList">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    قائمة الدخل
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/CashBox" pv="/CashBox">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الصندوق
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/ChartOfAccountOB" pv="/ChartOfAccountOB">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الارصدة الإفتتاحية  للحسابات
+                                                </a>
+                                            </li>
+
+
+
+                                            <li>
+                                                <a href="/CashReceiptVoucher" pv="/CashReceiptVoucher">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    سند القبض
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/CashIssueVoucher" pv="/CashIssueVoucher">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    سند الدفع
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/DirectExpens" pv="/DirectExpens">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    المصروفات المباشرة
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/CashTransfers" pv="/CashTransfers">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    تحويل نقدية
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/ChequeReceipt" pv="/ChequeReceipt">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    استلام الشيكات
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/ChequeIssue" pv="/ChequeIssue">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    اصدار أوراق الدفع
+                                                </a>
+                                            </li>
+                                            <!--التقارير -->
+                                            <li>
+                                                <a href="javascript:void(0);">
+                                                    <i class="glyphicon glyphicon-list-alt">
+                                                    </i>
+                                                    التقارير<span class="fa arrow"></span>
+                                                </a>
+                                                <ul class="nav nav-third-level collapse">
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/ChartofAccounts" pv="/Report/ChartofAccounts">
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            دليل الحسابات
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/AccountStatement" pv="/Report/AccountStatement">
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            كشف حساب
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/AccountStatementDetails" pv="/Report/AccountStatementDetails">
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            كشف حساب مفصل
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/IncomeStatement" pv="/Report/IncomeStatement">
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            قائمة الدخل
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/FinancialStatement" pv="/Report/FinancialStatement">
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            قائمة المركز المالي
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/JournalEntry" pv="/Report/JournalEntry">
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            القيود
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/CashIssue" pv="/Report/CashIssue">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            سند الدفع
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/CashIssueVoucherDetails" pv="Report/CashIssueVoucherDetails">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            وصل سند الدفع
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/CashReceipt" pv="/Report/CashReceipt">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            سند القبض
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/CashReceiptVoucherDetails" pv="Report/CashReceiptVoucherDetails">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            وصل سند القبض
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/CashTransfer" pv="/Report/CashTransfer">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            سند تحويل
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/CashTransferDetails" pv="/Report/CashTransferDetails">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            وصل سند تحويل
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/ChequeIssue" pv="/Report/ChequeIssue">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            اصدار أوراق الدفع
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/ChequeIssueDetails" pv="/Report/ChequeIssueDetails">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            وصل اصدار أوراق الدفع
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/ChequeReceipt" pv="/Report/ChequeReceipt">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            استلام الشيكات
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="btnAjaxView" href="/Report/ChequeReceiptDetails" pv="/Report/ChequeReceiptDetails">
+
+                                                            <i class="fa  fa-caret-left"></i>
+                                                            وصل استلام الشيكات
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <!--المعاملات البنكية -->
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i>
+                                                <img src="~/images/icons/bank.png" height="20" width="20" />
+                                            </i>
+                                            المعاملات البنكية<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/Bank/index" pv="/Bank/index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    البنوك
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Currency/index" pv="/Currency/index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    العملات
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="~/BankAccount/index" pv="~/BankAccount/index">
+
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الحسابات البنكية
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+
+                                </ul>
+
+                            </li>
+
+                            <!--ادارة الموارد البشرية -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <i>
+                                        <img src="~/images/icons/hr.png" height="20" width="20" />
+                                    </i>إدارة الموارد البشرية
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+                                    <li>
+                                        <a class="btnAjaxView" href="javascript:void(0);" pv="/EmployeesGroup/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            مجموعات الموظفين
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="javascript:void(0);" pv="/JobTitle/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            المسميات الوظيفية
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="javascript:void(0);" pv="/IdentityType/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            انواع الهوية
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Employee/index" pv="/Employee/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الموظفين
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="javascript:void(0);" pv="/Nationality/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الجنسيات
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!--إدارة علاقات العملاء -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <i class="fa fa-users">
+                                    </i>إدارة علاقات العملاء
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+                                    <li>
+                                        <a class="btnAjaxView" href="/ServiceCategories/index" pv="/ServiceCategories/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            انواع الخدمات
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Service/index" pv="/Service/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الخدمات
+                                        </a>
+
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Technician/index" pv="/Technician/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الفنيين
+                                        </a>
+
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/TechnicianService/Index" pv="/TechnicianService/Index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            خدمات الفنيين
+                                        </a>
+
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/maintenances/index" pv="/maintenances/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الصيانات
+                                        </a>
+
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="#" pv="/Orders/Index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الطلبات
+                                        </a>
+
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/ServiceSetting/AddEdit" pv="/ServiceSetting/AddEdit">
+                                            <i class="fa  fa-caret-left"></i>
+                                            إعدادات الخدمات
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!--إعدادات عامة -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <i class="fa fa-cogs nav_icon">
+                                    </i>إعدادات عامة
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i class="fa fa-building-o"></i>
+                                            المستخدمين و الصلاحيات<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/ERPRoles/index" pv="/ERPRoles/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    مجموعات المستخدمين
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/UserReports/index" pv="/UserReports/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    صلاحيات التقارير للمستخدمين
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/ERPRoleReports/index" pv="/ERPRoleReports/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    صلاحيات التقارير للمجموعات
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/ERPUsers/index" pv="/ERPUsers/index">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    المستخدمين
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/RolePrivilege" pv="/RolePrivilege">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    صلاحيات المجموعات
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/UserPrivilege" pv="/UserPrivilege">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    صلاحيات المستخدمين
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/UserNotificationSetting" pv="/UserNotificationSetting">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    اشعارات المستخدمين
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        <a href="/Log/index" pv="/Log/index">
+                                            <i class="fa  fa-caret-left"></i>
+                                            السجل
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/SystemSetting/index" pv="/SystemSetting/index">
+                                            <i class="fa  fa-caret-left"></i>
+                                            إعدادات النظام
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Company/index" pv="/Company/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الشركات
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Branch/index" pv="/Branch/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الفروع
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Country/index" pv="/Country/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الدول
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/City/index" pv="/City/index">
+                                            <i class="fa  fa-caret-left"></i>
+                                            المدن
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Areas/index" pv="/Areas/index">
+                                            <i class="fa  fa-caret-left"></i>
+                                            المناطق
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/Departments/index" pv="/Departments/index">
+                                            <i class="fa  fa-caret-left"></i>
+                                            الفروع
+                                        </a>
+                                    </li>
+
+
+
+
+                                    <li>
+                                        <a class="btnAjaxView" href="/FinancialPeriods/index" pv="/FinancialPeriods/index">
+                                            <i class="fa  fa-caret-left"></i>
+                                            الفترات المحاسبية
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a href="/UpdatedTransaction" pv="/UpdatedTransaction">
+                                            <i class="fa  fa-caret-left"></i>
+                                            الحركات المعدلة
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/DeletedTransaction" pv="/DeletedTransaction">
+                                            <i class="fa  fa-caret-left"></i>
+                                            الحركات المحذوفة
+                                        </a>
+                                    </li>
+
+                                </ul>
+                                <!-- /nav-second-level -->
+                            </li>
+                            <!-- ادارة المخازن   -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <img src="~/images/icons/wh.png" height="20" width="20" />
+                                    إدارة المخازن
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+                                    <li>
+                                        <a href="/Item" pv="/Item">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            الأصناف
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/ItemGroups/index" pv="/ItemGroups/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            مجموعات الأصناف
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="btnAjaxView" href="/ItemUnits/index" pv="/ItemUnits/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            وحدات الأصناف
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/Warehouse" pv="/Warehouse">
+                                            <i class="fa  fa-caret-left"></i>
+                                            المخازن
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/WarehouseOB" pv="/WarehouseOB">
+                                            <i class="fa  fa-caret-left"></i>
+                                            الارصدة الافتتاحية للمخازن
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/StockReceiptVoucher" pv="/StockReceiptVoucher">
+                                            <i class="fa  fa-caret-left"></i>
+                                            سندات صرف المخازن
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/StockIssueVoucher" pv="/StockIssueVoucher">
+                                            <i class="fa  fa-caret-left"></i>
+                                            سندات توريد المخازن
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/StockTransferVoucher" pv="/StockTransferVoucher">
+                                            <i class="fa  fa-caret-left"></i>
+                                            سندات تحويل المخازن
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="/InventoryVoucher" pv="/InventoryVoucher">
+                                            <i class="fa  fa-caret-left"></i>
+                                            سندات الجرد
+                                        </a>
+                                    </li>
+                                    <!--التقارير -->
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i class="glyphicon glyphicon-list-alt">
+
+                                            </i>
+                                            التقارير<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/Items" pv="/Report/Items">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الأصناف
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/ItemProfit" pv="/Report/ItemProfit">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    ربحية الأصناف
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/EachItemQuantityWarehouses" pv="/Report/EachItemQuantityWarehouses">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    كميات الأصناف في المخازن
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/ItemQuantities" pv="/Report/ItemQuantities">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    كميات الأصناف
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/ItemTransaction" pv="/Report/ItemTransaction">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    حركات الأصناف
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/SlackItems" pv="/Report/SlackItems">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    الأصناف الراكدة
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/StockIssueVoucher" pv="/Report/StockIssueVoucher">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    سندات توريد المخازن
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/StockReceiptVoucher" pv="/Report/StockReceiptVoucher">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    سندات صرف المخازن
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/StockTransferVoucher" pv="/Report/StockTransferVoucher">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    سندات تحويل المخازن
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/InventoryVoucher" pv="/Report/InventoryVoucher">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    سندات الجرد
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+
+                            </li>
+                            <!-- ادارة المشتريات  -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <img src="~/images/icons/wh.png" height="20" width="20" />
+                                    إدارة المشتريات
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+
+                                    <li>
+                                        <a class="btnAjaxView" href="/PurchaseInvoice/index" pv="/PurchaseInvoice/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            فواتير الشراء
+                                        </a>
+                                    </li>
+                                    <!--التقارير -->
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i class="glyphicon glyphicon-list-alt">
+                                            </i>
+                                            التقارير<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/PurchaseInvoice" pv="/Report/PurchaseInvoice">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    فواتير الشراء
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/PurchaseTaxes" pv="/Report/PurchaseTaxes">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    ضريبة القيمة المضافة للمشتريات
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+
+                            </li>
+                            <!-- ادارة المبيعات  -->
+                            <li>
+                                <a href="javascript:void(0);">
+                                    <img src="~/images/icons/wh.png" height="20" width="20" />
+                                    إدارة المبيعات
+                                    <span class="fa arrow"></span>
+                                </a>
+                                <ul class="nav nav-second-level collapse">
+
+                                    <li>
+                                        <a class="btnAjaxView" href="/SalesInvoice/index" pv="/SalesInvoice/index">
+
+                                            <i class="fa  fa-caret-left"></i>
+                                            فواتير البيع
+                                        </a>
+                                    </li>
+                                    <!--التقارير -->
+                                    <li>
+                                        <a href="javascript:void(0);">
+                                            <i class="glyphicon glyphicon-list-alt">
+                                            </i>
+                                            التقارير<span class="fa arrow"></span>
+                                        </a>
+                                        <ul class="nav nav-third-level collapse">
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/SalesInvoice" pv="/Report/SalesInvoice">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    فواتير البيع
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="btnAjaxView" href="/Report/SalesTaxes" pv="/Report/SalesTaxes">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    ضريبة القيمة المضافة للمبيعات
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+
+                            </li>
+                            <!--خروج -->
+                            <li>
+                                <a href="/LogOut/index" pv="/LogOut/index">
+                                    <i class="fa  fa-sign-out"></i>
+                                    تسجيل خروج
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- //sidebar-collapse -->
+                </nav>
+            </div>
+        </div>
+        <!--left-fixed -navigation-->
+        <!-- header-starts -->
+        <div class="sticky-header header-section ">
+            <div class="header-left" style="width: 100%!important;">
+                <!--logo -->
+                <div class="logo">
+                    <a href="/" style="padding: 0px;">
+                        @*<img src="~/images/toplogo.png" style="width: 100%;" />*@
+                        @*<ul>
+                            <li><img src="/images/logo1.png" alt="" /></li>
+                            <li><h1>Baxster</h1></li>*@
+                        <div class="clearfix"> </div>
+                        @*</ul>*@
+                    </a>
+                </div>
+
+                <!--//logo-->
+                <div class="header-right" style="background-color: #3bafda;">
+
+                    <!--notification menu end -->
+                    <div class="profile_details">
+                        <ul>
+                            <li class="dropdown profile_details_drop">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                    <div class="profile_img">
+                                        <span class="prfil-img"><img src="/images/a.png" alt=""> </span>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu drp-mnu">
+                                    <li> <a href="#"><i class="fa fa-cog"></i> Settings</a> </li>
+                                    <li> <a href="#"><i class="fa fa-user"></i> Profile</a> </li>
+                                    <li> <a href="#"><i class="fa fa-sign-out"></i> Logout</a> </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <!--toggle button start-->
+                    <button id="showLeftPush" style="background-color: #3bafda;"><i class="fa fa-bars"></i></button>
+                    <!--toggle button end-->
+                    <div class="clearfix"> </div>
+                </div>
+                <div class="header-right header-right-grid" style="background-color: #3bafda;">
+                    <div class="profile_details_left">
+                        <!--notifications of menu start -->
+                        <ul class="nofitications-dropdown">
+                            <li class="dropdown head-dpdn">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-envelope"></i><span class="badge">3</span></a>
+                                <ul class="dropdown-menu anti-dropdown-menu">
+                                    <li>
+                                        <div class="notification_header">
+                                            <h3>You have 3 new messages</h3>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="user_img"><img src="/images/1.png" alt=""></div>
+                                            <div class="notification_desc">
+                                                <p>Lorem ipsum dolor amet</p>
+                                                <p><span>1 hour ago</span></p>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </a>
+                                    </li>
+                                    <li class="odd">
+                                        <a href="#">
+                                            <div class="user_img"><img src="/images/2.png" alt=""></div>
+                                            <div class="notification_desc">
+                                                <p>Lorem ipsum dolor amet </p>
+                                                <p><span>1 hour ago</span></p>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="user_img"><img src="/images/3.png" alt=""></div>
+                                            <div class="notification_desc">
+                                                <p>Lorem ipsum dolor amet </p>
+                                                <p><span>1 hour ago</span></p>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <div class="notification_bottom">
+                                            <a href="#">See all messages</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown head-dpdn">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-bell"></i><span class="badge blue">3</span></a>
+                                <ul class="dropdown-menu anti-dropdown-menu">
+                                    <li>
+                                        <div class="notification_header">
+                                            <h3>You have 3 new notification</h3>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="user_img"><img src="/images/2.png" alt=""></div>
+                                            <div class="notification_desc">
+                                                <p>Lorem ipsum dolor amet</p>
+                                                <p><span>1 hour ago</span></p>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </a>
+                                    </li>
+                                    <li class="odd">
+                                        <a href="#">
+                                            <div class="user_img"><img src="/images/1.png" alt=""></div>
+                                            <div class="notification_desc">
+                                                <p>Lorem ipsum dolor amet </p>
+                                                <p><span>1 hour ago</span></p>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="user_img"><img src="/images/3.png" alt=""></div>
+                                            <div class="notification_desc">
+                                                <p>Lorem ipsum dolor amet </p>
+                                                <p><span>1 hour ago</span></p>
+                                            </div>
+                                            <div class="clearfix"></div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <div class="notification_bottom">
+                                            <a href="#">See all notifications</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown head-dpdn">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-tasks"></i><span class="badge blue1">15</span></a>
+                                <ul class="dropdown-menu anti-dropdown-menu">
+                                    <li>
+                                        <div class="notification_header">
+                                            <h3>You have 8 pending task</h3>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="task-info">
+                                                <span class="task-desc">Database update</span><span class="percentage">40%</span>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="progress progress-striped active">
+                                                <div class="bar yellow" style="width:40%;"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="task-info">
+                                                <span class="task-desc">Dashboard done</span><span class="percentage">90%</span>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="progress progress-striped active">
+                                                <div class="bar green" style="width:90%;"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="task-info">
+                                                <span class="task-desc">Mobile App</span><span class="percentage">33%</span>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="progress progress-striped active">
+                                                <div class="bar red" style="width: 33%;"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="#">
+                                            <div class="task-info">
+                                                <span class="task-desc">Issues fixed</span><span class="percentage">80%</span>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="progress progress-striped active">
+                                                <div class="bar  blue" style="width: 80%;"></div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <div class="notification_bottom">
+                                            <a href="#">See all pending tasks</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <div class="clearfix"> </div>
+                    </div>
+                </div>
+           
+
+
+            <div class="clearfix" style="background-color: #3bafda;">
+                   
+            </div>
+          
+            </div> 
+            <!--search-box-->
+            @*<div class="search-box">
+                    <form class="input">
+                        <input class="sb-search-input input__field--madoka" placeholder="Search..." type="search" id="input-31" />
+                    </form>
+                </div>*@
+            <!--//end-search-box-->
+
+            <div class="clearfix" style="background-color: #3bafda;">   <div style="left: 2%; bottom: 6%; text-align:left">
+                <img style="width: 20%" src="/images/OstaLogin.png " />
+            </div></div>
+        </div>
+        <!-- //header-ends -->
+        <!-- main content start-->
+        <div id="page-wrapper">
+            <div class="main-page">
+                @RenderBody()
+            </div>
+        </div>
+        <!--footer-->
+        <div class="dev-page">
+
+            <!-- page footer -->
+            <!-- dev-page-footer-closed dev-page-footer-fixed -->
+            <div class="dev-page-footer dev-page-footer-fixed">
+                <!-- container -->
+                <div class="container">
+                    <div class="copyright">
+                        <p>© 2018 mySoft . All Rights Reserved . Design by <a href="http://w3layouts.com/">W3layouts</a></p>
+                    </div>
+                    <!-- page footer buttons -->
+                    <ul class="dev-page-footer-buttons">
+                        <li><a href="#footer_content_1" class="dev-page-footer-container-open"><span class="glyphicon glyphicon glyphicon-sort" aria-hidden="true"></span></a></li>
+                        <li><a href="#footer_content_2" class="dev-page-footer-container-open"><span class="glyphicon glyphicon glyphicon-signal" aria-hidden="true"></span></a></li>
+                        <li><a href="#footer_content_3" class="dev-page-footer-container-open"><span class="glyphicon glyphicon glyphicon glyphicon-file" aria-hidden="true"></span></a></li>
+                    </ul>
+                    <!-- //page footer buttons -->
+                    <!-- page footer container -->
+                    <div class="dev-page-footer-container">
+
+                        <!-- loader and close button -->
+                        <div class="dev-page-footer-container-layer">
+                            <a href="#" class="dev-page-footer-container-layer-button"></a>
+                        </div>
+                        <!-- //loader and close button -->
+                        <!-- informers -->
+                        <div class="dev-page-footer-container-content" id="footer_content_1">
+                            <div class="block-hdnews">
+                                <div class="list-wrpaaer" style="height:200px;">
+                                    <ul class="list-aggregate" id="marquee-horizontal">
+                                        <li class="fat-l" style="width:200px">
+                                            <a href="#">Lorem ipsum dolor</a>
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </p>
+                                        </li>
+
+                                        <li class="fat-l" style="width:200px">
+                                            <a href="#">Consectetur</a>
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </p>
+                                        </li>
+
+                                        <li class="fat-l" style="width:200px">
+                                            <a href="#">Adipiscing elit</a>
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </p>
+                                        </li>
+
+                                        <li class="fat-l" style="width:200px">
+                                            <a href="#">Lorem ipsum dolor</a>
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </p>
+                                        </li>
+                                        <li class="fat-l" style="width:200px">
+                                            <a href="#">Consectetur</a>
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </p>
+                                        </li>
+
+                                        <li class="fat-l" style="width:200px">
+                                            <a href="#">Adipiscing elit</a>
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                                            </p>
+                                        </li>
+
+                                    </ul>
+                                </div><!-- list-wrpaaer -->
+
+                            </div> <!-- block-hdnews -->
+
+                            <script type="text/javascript">
+
+                                $(function () {
+
+
+                                    $('#marquee-vertical').marquee();
+                                    $('#marquee-horizontal').marquee({ direction: 'horizontal', delay: 0, timing: 50 });
+
+                                });
+
+                            </script>
+                        </div>
+                        <!-- //informers -->
+                        <!-- informers -->
+                        <div class="dev-page-footer-container-content" id="footer_content_2">
+                            <div class="graphs">
+                                <div class="col-md-4 graph-points">
+                                    <div class="graph-left">
+                                        <script type="text/javascript">
+                                            // Generate data
+
+                                            var data = [];
+
+                                            var time = new Date('Dec 1, 2013 12:00').valueOf();
+
+                                            var h = Math.floor(Math.random() * 100);
+                                            var l = h - Math.floor(Math.random() * 20);
+                                            var o = h - Math.floor(Math.random() * (h - l));
+                                            var c = h - Math.floor(Math.random() * (h - l));
+
+                                            var v = Math.floor(Math.random() * 1000);
+
+                                            for (var i = 0; i < 20; i++) {
+                                                data.push([time, o, h, l, c, v]);
+                                                h += Math.floor(Math.random() * 10 - 5);
+                                                l = h - Math.floor(Math.random() * 20);
+                                                o = h - Math.floor(Math.random() * (h - l));
+                                                c = h - Math.floor(Math.random() * (h - l));
+                                                v += Math.floor(Math.random() * 100 - 50);
+                                                time += 20 * 60000; // Add 20 minutes
+                                            }
+                                        </script>
+                                        <div id="example-1"></div>
+                                        <script type="text/javascript">
+                                            $(function () {
+                                                $('#example-1').jqCandlestick({
+                                                    data: data,
+                                                    theme: 'light',
+                                                    series: [{
+                                                    }],
+                                                });
+                                            });
+                                        </script>
+                                    </div>
+                                    <div class="graph-right">
+                                        <h3>TODAY'S STATS</h3>
+                                        <p>Duis aute irure dolor in reprehenderit.</p>
+                                        <ul>
+                                            <li>Earning: $400 USD</li>
+                                            <li>Items Sold: 20 Items</li>
+                                            <li>Last Hour Sales: $34 USD</li>
+                                        </ul>
+                                    </div>
+                                    <div class="clearfix"> </div>
+                                </div>
+                                <div class="col-md-4 bar-grid">
+                                    <div class="graph-left">
+                                        <canvas id="line"></canvas>
+                                        <script>
+                                            var lineChartData = {
+                                                labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Mon"],
+                                                datasets: [
+                                                    {
+                                                        fillColor: "rgba(202, 202, 202, 0)",
+                                                        strokeColor: "#3E495A",
+                                                        pointColor: "#fbfbfb",
+                                                        pointStrokeColor: "#fbfbfb",
+                                                        data: [20, 35, 45, 20, 10, 65, 40]
+                                                    }
+                                                ]
+
+                                            };
+                                            new Chart(document.getElementById("line").getContext("2d")).Line(lineChartData);
+                                        </script>
+                                    </div>
+                                    <div class="graph-right">
+                                        <h3>TODAY'S STATS</h3>
+                                        <p>Duis aute irure dolor in reprehenderit.</p>
+                                        <ul>
+                                            <li>Earning: $400 USD</li>
+                                            <li>Items Sold: 20 Items</li>
+                                            <li>Last Hour Sales: $34 USD</li>
+                                        </ul>
+                                    </div>
+                                    <div class="clearfix"> </div>
+                                </div>
+                                <div class="col-md-4 switch-right">
+                                    <div class="graph-left">
+                                        <canvas id="bar"></canvas>
+                                        <script>
+                                            var barChartData = {
+                                                labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Mon", "Tue", "Wed", "Thu"],
+                                                datasets: [
+                                                    {
+                                                        fillColor: "#fbc02d",
+                                                        strokeColor: "#fbc02d",
+                                                        highlightFill: "rgba(220,220,220,0.75)",
+                                                        highlightStroke: "rgba(220,220,220,1)",
+                                                        data: [25, 40, 50, 65, 55, 20, 20, 10, 6, 4]
+                                                    },
+                                                    {
+                                                        fillColor: "#3E495A",
+                                                        strokeColor: "#3E495A",
+                                                        data: [20, 45, 55, 70, 40, 25, 15, 8, 5, 2]
+                                                    }
+                                                ]
+
+                                            };
+                                            new Chart(document.getElementById("bar").getContext("2d")).Bar(barChartData);
+                                        </script>
+                                    </div>
+                                    <div class="graph-right">
+                                        <h3>TODAY'S STATS</h3>
+                                        <p>Duis aute irure dolor in reprehenderit.</p>
+                                        <ul>
+                                            <li>Earning: $400 USD</li>
+                                            <li>Items Sold: 20 Items</li>
+                                            <li>Last Hour Sales: $34 USD</li>
+                                        </ul>
+                                    </div>
+                                    <div class="clearfix"> </div>
+                                </div>
+
+                                <div class="clearfix"> </div>
+                            </div>
+                        </div>
+                        <!-- //informers -->
+                        <!-- projects -->
+                        <div class="dev-page-footer-container-content" id="footer_content_3">
+                            <div class="social">
+                                <div class="col-md-3 top-comment-grid">
+                                    <div class="comments">
+                                        <div class="comments-icon">
+                                            <i class="fa fa-comments"></i>
+                                        </div>
+                                        <div class="comments-info">
+                                            <h3>
+                                                85</h5>
+                                                <a href="#">Comments</a>
+                                        </div>
+                                        <div class="clearfix"> </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 top-comment-grid">
+                                    <div class="comments likes">
+                                        <div class="comments-icon">
+                                            <i class="fa fa-facebook"></i>
+                                        </div>
+                                        <div class="comments-info likes-info">
+                                            <h3>
+                                                2150</h5>
+                                                <a href="#">Likes</a>
+                                        </div>
+                                        <div class="clearfix"> </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 top-comment-grid">
+                                    <div class="comments tweets">
+                                        <div class="comments-icon">
+                                            <i class="fa fa-twitter"></i>
+                                        </div>
+                                        <div class="comments-info tweets-info">
+                                            <h3>
+                                                325</h5>
+                                                <a href="#">Tweets</a>
+                                        </div>
+                                        <div class="clearfix"> </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 top-comment-grid">
+                                    <div class="comments views">
+                                        <div class="comments-icon">
+                                            <i class="fa fa-eye"></i>
+                                        </div>
+                                        <div class="comments-info views-info">
+                                            <h3>
+                                                471</h5>
+                                                <a href="#">Views</a>
+                                        </div>
+                                        <div class="clearfix"> </div>
+                                    </div>
+                                </div>
+                                <div class="clearfix"> </div>
+                            </div>
+                        </div>
+                        <!-- //projects -->
+                    </div>
+                    <!-- //page footer container -->
+
+                </div>
+                <!-- //container -->
+            </div>
+            <!-- /page footer -->
+        </div>
+        <!--//footer-->
+    </div>
+
+
+
+    <!-- Classie -->
+    <script src="/js/classie.js"></script>
+    <script>
+                                            var menuLeft = document.getElementById('cbp-spmenu-s1'),
+                                                showLeftPush = document.getElementById('showLeftPush'),
+                                                body = document.body;
+
+                                            showLeftPush.onclick = function () {
+                                                classie.toggle(this, 'active');
+                                                classie.toggle(body, 'cbp-spmenu-push-toright');
+                                                classie.toggle(menuLeft, 'cbp-spmenu-open');
+                                                disableOther('showLeftPush');
+                                            };
+
+
+                                            function disableOther(button) {
+                                                if (button !== 'showLeftPush') {
+                                                    classie.toggle(showLeftPush, 'disabled');
+                                                }
+                                            }
+    </script>
+    <!-- Bootstrap Core JavaScript -->
+    <script>
+                                            //global var
+                                            var userToken = $('#userToken').val();
+    </script>
+
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="/js/dev-loaders.js"></script>
+    <script type="text/javascript" src="/js/dev-layout-default.js"></script>
+    <script type="text/javascript" src="/js/jquery.marquee.js"></script>
+
+
+    <!-- candlestick -->
+    <script type="text/javascript" src="/js/jquery.jqcandlestick.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/jqcandlestick.css" />
+    <!-- //candlestick -->
+    <!--max-plugin-->
+    <script type="text/javascript" src="/js/plugins.js"></script>
+    <!--//max-plugin-->
+    <!--scrolling js-->
+    <script src="/js/jquery.nicescroll.js"></script>
+    <script src="/js/scripts.js"></script>
+    <!--//scrolling js-->
+    <!-- real-time-updates -->
+    <script language="javascript" type="text/javascript" src="/js/jquery.flot.js"></script>
+    <script type="text/javascript">
+                                            $(function () {
+
+                                                // We use an inline data source in the example, usually data would
+                                                // be fetched from a server
+
+                                                var data = [],
+                                                    totalPoints = 200;
+
+                                                function getRandomData() {
+
+                                                    if (data.length > 0)
+                                                        data = data.slice(1);
+
+                                                    // Do a random walk
+
+                                                    while (data.length < totalPoints) {
+
+                                                        var prev = data.length > 0 ? data[data.length - 1] : 50,
+                                                            y = prev + Math.random() * 10 - 5;
+
+                                                        if (y < 0) {
+                                                            y = 0;
+                                                        } else if (y > 100) {
+                                                            y = 100;
+                                                        }
+
+                                                        data.push(y);
+                                                    }
+
+                                                    // Zip the generated y values with the x values
+
+                                                    var res = [];
+                                                    for (var i = 0; i < data.length; ++i) {
+                                                        res.push([i, data[i]])
+                                                    }
+
+                                                    return res;
+                                                }
+
+                                                // Set up the control widget
+
+                                                var updateInterval = 20;
+                                                $("#updateInterval").val(updateInterval).change(function () {
+                                                    var v = $(this).val();
+                                                    if (v && !isNaN(+v)) {
+                                                        updateInterval = +v;
+                                                        if (updateInterval < 1) {
+                                                            updateInterval = 1;
+                                                        } else if (updateInterval > 2000) {
+                                                            updateInterval = 2000;
+                                                        }
+                                                        $(this).val("" + updateInterval);
+                                                    }
+                                                });
+
+                                                var plot = $.plot("#placeholder", [getRandomData()], {
+                                                    series: {
+                                                        shadowSize: 0	// Drawing is faster without shadows
+                                                    },
+                                                    yaxis: {
+                                                        min: 0,
+                                                        max: 100
+                                                    },
+                                                    xaxis: {
+                                                        show: false
+                                                    }
+                                                });
+
+                                                function update() {
+
+                                                    plot.setData([getRandomData()]);
+
+                                                    // Since the axes don't change, we don't need to call plot.setupGrid()
+
+                                                    plot.draw();
+                                                    setTimeout(update, updateInterval);
+                                                }
+
+                                                update();
+
+                                                // Add the Flot version string to the footer
+
+                                                $("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+                                            });
+
+    </script>
+    <!-- //real-time-updates -->
+    <!-- error-graph -->
+    <script language="javascript" type="text/javascript" src="/js/jquery.flot.errorbars.js"></script>
+    <script language="javascript" type="text/javascript" src="/js/jquery.flot.navigate.js"></script>
+    <script type="text/javascript">
+                                            $(function () {
+
+                                                function drawArrow(ctx, x, y, radius) {
+                                                    ctx.beginPath();
+                                                    ctx.moveTo(x + radius, y + radius);
+                                                    ctx.lineTo(x, y);
+                                                    ctx.lineTo(x - radius, y + radius);
+                                                    ctx.stroke();
+                                                }
+
+                                                function drawSemiCircle(ctx, x, y, radius) {
+                                                    ctx.beginPath();
+                                                    ctx.arc(x, y, radius, 0, Math.PI, false);
+                                                    ctx.moveTo(x - radius, y);
+                                                    ctx.lineTo(x + radius, y);
+                                                    ctx.stroke();
+                                                }
+
+                                                var data1 = [
+                                                    [1, 1, .5, .1, .3],
+                                                    [2, 2, .3, .5, .2],
+                                                    [3, 3, .9, .5, .2],
+                                                    [1.5, -.05, .5, .1, .3],
+                                                    [3.15, 1., .5, .1, .3],
+                                                    [2.5, -1., .5, .1, .3]
+                                                ];
+
+                                                var data1_points = {
+                                                    show: true,
+                                                    radius: 5,
+                                                    fillColor: "blue",
+                                                    errorbars: "xy",
+                                                    xerr: { show: true, asymmetric: true, upperCap: "-", lowerCap: "-" },
+                                                    yerr: { show: true, color: "red", upperCap: "-" }
+                                                };
+
+                                                var data2 = [
+                                                    [.7, 3, .2, .4],
+                                                    [1.5, 2.2, .3, .4],
+                                                    [2.3, 1, .5, .2]
+                                                ];
+
+                                                var data2_points = {
+                                                    show: true,
+                                                    radius: 5,
+                                                    errorbars: "y",
+                                                    yerr: { show: true, asymmetric: true, upperCap: drawArrow, lowerCap: drawSemiCircle }
+                                                };
+
+                                                var data3 = [
+                                                    [1, 2, .4],
+                                                    [2, 0.5, .3],
+                                                    [2.7, 2, .5]
+                                                ];
+
+                                                var data3_points = {
+                                                    //do not show points
+                                                    radius: 0,
+                                                    errorbars: "y",
+                                                    yerr: { show: true, upperCap: "-", lowerCap: "-", radius: 5 }
+                                                };
+
+                                                var data4 = [
+                                                    [1.3, 1],
+                                                    [1.75, 2.5],
+                                                    [2.5, 0.5]
+                                                ];
+
+                                                var data4_errors = [0.1, 0.4, 0.2];
+                                                for (var i = 0; i < data4.length; i++) {
+                                                    data4_errors[i] = data4[i].concat(data4_errors[i])
+                                                }
+
+                                                var data = [
+                                                    { color: "blue", points: data1_points, data: data1, label: "data1" },
+                                                    { color: "red", points: data2_points, data: data2, label: "data2" },
+                                                    { color: "green", lines: { show: true }, points: data3_points, data: data3, label: "data3" },
+                                                    // bars with errors
+                                                    { color: "orange", bars: { show: true, align: "center", barWidth: 0.25 }, data: data4, label: "data4" },
+                                                    { color: "orange", points: data3_points, data: data4_errors }
+                                                ];
+
+                                                $.plot($("#placeholder1"), data, {
+                                                    legend: {
+                                                        position: "sw",
+                                                        show: true
+                                                    },
+                                                    series: {
+                                                        lines: {
+                                                            show: false
+                                                        }
+                                                    },
+                                                    xaxis: {
+                                                        min: 0.6,
+                                                        max: 3.1
+                                                    },
+                                                    yaxis: {
+                                                        min: 0,
+                                                        max: 3.5
+                                                    },
+                                                    zoom: {
+                                                        interactive: true
+                                                    },
+                                                    pan: {
+                                                        interactive: true
+                                                    }
+                                                });
+
+                                                // Add the Flot version string to the footer
+
+                                                $("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+                                            });
+
+    </script>
+    <!-- //error-graph -->
+    <!-- Skills-graph -->
+    <script src="/js/Chart.Core.js"></script>
+    <script src="/js/Chart.Doughnut.js"></script>
+    <script>
+
+                                            var doughnutData = [
+                                                {
+                                                    value: 2,
+                                                    label: "One",
+                                                    color: "#99CC00"
+                                                },
+                                                {
+                                                    value: 3,
+                                                    label: "Two",
+                                                    color: "#FF3200"
+                                                },
+                                                {
+                                                    value: 3,
+                                                    label: "Three",
+                                                    color: "#944DDB"
+                                                },
+                                                {
+                                                    value: 4,
+                                                    label: "Four",
+                                                    color: "#3399FF"
+                                                },
+                                                {
+                                                    value: 5,
+                                                    label: "Five",
+                                                    color: "#FFC575"
+                                                }
+
+                                            ];
+
+                                            window.onload = function () {
+                                                var ctx = document.getElementById("chart-area").getContext("2d");
+                                                window.myDoughnut = new Chart(ctx).Doughnut(doughnutData, { responsive: true });
+                                            };
+
+    </script>
+    <!-- //Skills-graph -->
+    <!-- status -->
+    <script src="/js/jquery.fn.gantt.js"></script>
+    <script>
+
+                                            $(function () {
+
+                                                "use strict";
+
+                                                $(".gantt").gantt({
+                                                    source: [{
+                                                        name: "Sprint 0",
+                                                        desc: "Analysis",
+                                                        values: [{
+                                                            from: "/Date(1320192000000)/",
+                                                            to: "/Date(1322401600000)/",
+                                                            label: "Requirement Gathering",
+                                                            customClass: "ganttRed"
+                                                        }]
+                                                    }, {
+                                                        name: " ",
+                                                        desc: "Scoping",
+                                                        values: [{
+                                                            from: "/Date(1322611200000)/",
+                                                            to: "/Date(1323202400000)/",
+                                                            label: "Scoping",
+                                                            customClass: "ganttRed"
+                                                        }]
+                                                    }, {
+                                                        name: "Sprint 1",
+                                                        desc: "Development",
+                                                        values: [{
+                                                            from: "/Date(1323802400000)/",
+                                                            to: "/Date(1325685200000)/",
+                                                            label: "Development",
+                                                            customClass: "ganttGreen"
+                                                        }]
+                                                    }, {
+                                                        name: " ",
+                                                        desc: "Showcasing",
+                                                        values: [{
+                                                            from: "/Date(1325685200000)/",
+                                                            to: "/Date(1325695200000)/",
+                                                            label: "Showcasing",
+                                                            customClass: "ganttBlue"
+                                                        }]
+                                                    }, {
+                                                        name: "Sprint 2",
+                                                        desc: "Development",
+                                                        values: [{
+                                                            from: "/Date(1326785200000)/",
+                                                            to: "/Date(1325785200000)/",
+                                                            label: "Development",
+                                                            customClass: "ganttGreen"
+                                                        }]
+                                                    }, {
+                                                        name: " ",
+                                                        desc: "Showcasing",
+                                                        values: [{
+                                                            from: "/Date(1328785200000)/",
+                                                            to: "/Date(1328905200000)/",
+                                                            label: "Showcasing",
+                                                            customClass: "ganttBlue"
+                                                        }]
+                                                    }, {
+                                                        name: "Release Stage",
+                                                        desc: "Training",
+                                                        values: [{
+                                                            from: "/Date(1320011200000)/",
+                                                            to: "/Date(1336611200000)/",
+                                                            label: "Training",
+                                                            customClass: "ganttOrange"
+                                                        }]
+                                                    }, {
+                                                        name: " ",
+                                                        desc: "Deployment",
+                                                        values: [{
+                                                            from: "/Date(1336611200000)/",
+                                                            to: "/Date(1338711200000)/",
+                                                            label: "Deployment",
+                                                            customClass: "ganttOrange"
+                                                        }]
+                                                    }, {
+                                                        name: " ",
+                                                        desc: "Warranty Period",
+                                                        values: [{
+                                                            from: "/Date(1336611200000)/",
+                                                            to: "/Date(1349711200000)/",
+                                                            label: "Warranty Period",
+                                                            customClass: "ganttOrange"
+                                                        }]
+                                                    }],
+                                                    navigate: "scroll",
+                                                    scale: "weeks",
+                                                    maxScale: "months",
+                                                    minScale: "days",
+                                                    itemsPerPage: 10,
+                                                    onItemClick: function (data) {
+                                                        alert("Item clicked - show some details");
+                                                    },
+                                                    onAddClick: function (dt, rowId) {
+                                                        alert("Empty space clicked - add an item!");
+                                                    },
+                                                    onRender: function () {
+                                                        if (window.console && typeof console.log === "function") {
+                                                            console.log("chart rendered");
+                                                        }
+                                                    }
+                                                });
+
+                                                $(".gantt").popover({
+                                                    selector: ".bar",
+                                                    title: "I'm a popover",
+                                                    content: "And I'm the content of said popover.",
+                                                    trigger: "hover"
+                                                });
+
+                                                prettyPrint();
+
+                                            });
+
+    </script>
+    <!-- //status -->
+
+    <script src="~/Scripts/jquery.calendars.js"></script>
+    <script src="~/Scripts/jquery.calendars.plus.js"></script>
+    <script src="~/Scripts/jquery.calendars.ummalqura.js"></script>
+
+    <script>
+                                            (function ($) {
+                                                'use strict';
+                                                $.calendars.calendars.ummalqura.prototype.regionalOptions.ar = {
+                                                    name: 'UmmAlQura', // The calendar name
+                                                    epochs: ['BAM', 'AM'],
+                                                    monthNames: 'محرم_صفر_ربيع الأول_ربيع الثاني_جمادى الأول_جمادى الآخر_رجب_شعبان_رمضان_شوال_ذو القعدة_ذو الحجة'.split('_'),
+                                                    monthNamesShort: 'محرم_صفر_ربيع1_ربيع2_جمادى1_جمادى2_رجب_شعبان_رمضان_شوال_القعدة_الحجة'.split('_'),
+                                                    dayNames: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+                                                    dayNamesShort: 'أحد_إثنين_ثلاثاء_أربعاء_خميس_جمعة_سبت'.split('_'),
+                                                    dayNamesMin: 'ح_ن_ث_ر_خ_ج_س'.split('_'),
+                                                    digits: $.calendars.substituteDigits(['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩']),
+                                                    dateFormat: 'yyyy/mm/dd',
+                                                    firstDay: 1,
+                                                    isRTL: true
+                                                };
+                                            })(jQuery);
+
+                                            function CheckNullObject(obj) {
+                                                return (obj == null) ? "" : obj;
+                                            }
+
+                                            $("label.error").change(function () {
+                                                $("label.error").html('يرحى ادخال هذا الحقل');
+                                            });
+
+
+                                            function ToHijriDate(dt) {
+
+                                                try {
+
+                                                    var calendar = $.calendars.instance('gregorian');
+                                                    var date = calendar.parseDate("yyyy-mm-dd", dt[0].value);
+                                                    calendar = $.calendars.instance('ummalqura');
+                                                    date = calendar.fromJD(date.toJD());
+                                                    return calendar.formatDate('d MMM yyyy', date)
+                                                }
+                                                catch (e) {
+                                                    return "";
+                                                }
+                                            }
+
+                                            function GoToPage(PageNo) {
+
+                                                pageNo = PageNo;
+                                                LoadData();
+                                            }
+
+
+
+                                            $.widget("custom.combobox", {
+                                                _create: function () {
+                                                    this.wrapper = $("<span>")
+                                                        .addClass("custom-combobox")
+                                                        .insertAfter(this.element);
+
+                                                    this.element.hide();
+                                                    this._createAutocomplete();
+                                                    this._createShowAllButton();
+                                                },
+
+                                                _createAutocomplete: function () {
+                                                    var selected = this.element.children(":selected"),
+                                                        value = selected.val() ? selected.text() : "";
+
+                                                    this.input = $("<input>")
+                                                        .appendTo(this.wrapper)
+                                                        .val(value)
+                                                        .attr("title", "")
+                                                        .addClass("form-control")
+                                                        .autocomplete({
+                                                            delay: 0,
+                                                            minLength: 0,
+                                                            source: $.proxy(this, "_source")
+                                                        })
+                                                        .tooltip({
+                                                            classes: {
+                                                                "ui-tooltip": "ui-state-highlight"
+                                                            }
+                                                        });
+
+                                                    this._on(this.input, {
+                                                        autocompleteselect: function (event, ui) {
+                                                            ui.item.option.selected = true;
+                                                            this._trigger("select", event, {
+                                                                item: ui.item.option
+                                                            });
+                                                        },
+
+                                                        autocompletechange: "_removeIfInvalid"
+                                                    });
+                                                },
+
+                                                _createShowAllButton: function () {
+                                                    var input = this.input,
+                                                        wasOpen = false;
+
+                                                    $("<a>")
+                                                        .attr("tabIndex", -1)
+                                                        .attr("title", "عرض الكل")
+                                                        .tooltip()
+                                                        .appendTo(this.wrapper)
+                                                        .button({
+                                                            icons: {
+                                                                primary: "ui-icon-triangle-1-s"
+                                                            },
+                                                            text: false
+                                                        })
+                                                        .html('<i class="fa fa-chevron-circle-down" style="margin: 7px;"></i>')
+                                                        .removeClass("ui-corner-all")
+                                                        .addClass("custom-combobox-toggle ui-corner-right")
+                                                        .on("mousedown", function () {
+                                                            wasOpen = input.autocomplete("widget").is(":visible");
+                                                        })
+                                                        .on("click", function () {
+                                                            input.trigger("focus");
+
+                                                            // Close if already visible
+                                                            if (wasOpen) {
+                                                                return;
+                                                            }
+
+                                                            // Pass empty string as value to search for, displaying all results
+                                                            input.autocomplete("search", "");
+                                                        });
+                                                },
+
+                                                _source: function (request, response) {
+                                                    var matcher = new RegExp($.ui.autocomplete.escapeRegex(request.term), "i");
+                                                    response(this.element.children("option").map(function () {
+                                                        var text = $(this).text();
+                                                        if (this.value && (!request.term || matcher.test(text)))
+                                                            return {
+                                                                label: text,
+                                                                value: text,
+                                                                option: this
+                                                            };
+                                                    }));
+                                                },
+
+                                                _removeIfInvalid: function (event, ui) {
+
+                                                    // Selected an item, nothing to do
+                                                    if (ui.item) {
+                                                        return;
+                                                    }
+
+                                                    // Search for a match (case-insensitive)
+                                                    var value = this.input.val(),
+                                                        valueLowerCase = value.toLowerCase(),
+                                                        valid = false;
+                                                    this.element.children("option").each(function () {
+                                                        if ($(this).text().toLowerCase() === valueLowerCase) {
+                                                            this.selected = valid = true;
+                                                            return false;
+                                                        }
+                                                    });
+
+                                                    // Found a match, nothing to do
+                                                    if (valid) {
+                                                        return;
+                                                    }
+
+                                                    // Remove invalid value
+                                                    this.input
+                                                        .val("")
+                                                        .attr("title", value + " لايوجد نتيجة")
+                                                        .tooltip("open");
+                                                    this.element.val("");
+                                                    this._delay(function () {
+                                                        this.input.tooltip("close").attr("title", "");
+                                                    }, 2500);
+                                                    this.input.autocomplete("instance").term = "";
+                                                },
+
+                                                _destroy: function () {
+                                                    this.wrapper.remove();
+                                                    this.element.show();
+                                                }
+                                            });
+                                            $("select:not(#ShowByPage)").select2();
+                                            $('.select2').css("max-width", "280px");
+                                            $('.select2').css("width", "92%");
+
+                                            $('.money').inputmask({
+                                                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                                            });
+
+                                            $("button[type|='submit']:not(.search)").on('click', function () {
+                                                if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                                                    return true;
+                                                } else {
+                                                    return false;
+                                                }
+                                            });
+                                            $("form").submit(function () {
+                                                $('.money').each(function () {
+                                                    var val = $(this).inputmask('unmaskedvalue');
+                                                    $(this).inputmask('remove');
+                                                    $(this).val(val);
+                                                });
+                                                $('#preloader, #status').fadeIn();
+                                            });
+
+    </script>
+</body>
+</html>

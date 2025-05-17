@@ -1,0 +1,592 @@
+﻿@model MyERP.Models.CompanyJobRequest
+
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.CompanyJobRequest;
+}
+
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.CompanyJobRequest :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/CompanyJobRequest/AddEdit" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">*@
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+                        @* panal 1 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.EmployeeData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse1">
+                                    <div class="form-group row">
+                                        @if (Model != null)
+                                        {
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.HiddenFor(model => model.IsActive)
+                                            @Html.HiddenFor(model => model.UserId)
+                                            @Html.HiddenFor(model => model.Image)
+
+                                        }
+                                        <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.RequestNo</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.DocNo, @readonly = "readonly", required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.DocNo @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="CompanyId">@MyERP.Properties.Resources.Company</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.CompanyId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Company @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+                                    <div class="form-group row">
+                                        <label for="JobId" class="control-label col-sm-2"> @MyERP.Properties.Resources.Job</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => Model.JobId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Job  @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="JobStatusId" class="control-label col-sm-2"> @MyERP.Properties.Resources.RequestStatus </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => Model.JobStatusId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.JobStatus @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="ApplicationDate" class="control-label col-sm-2"> @MyERP.Properties.Resources.RequestDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.JobRequestDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.RequestDate @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <label for="RequiredNo" class="control-label col-sm-2"> @MyERP.Properties.Resources.RequiredNo</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.RequiredNo, new { htmlAttributes = new { @class = "form-control", @type = "text", @required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.RequiredNo @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- **** -->
+                                    <div class="form-group row">
+                                        <label for="Job" class="control-label col-sm-2"> @MyERP.Properties.Resources.Governorate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Governorate, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Governorate @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="CompanyLocation" class="control-label col-sm-2"> @MyERP.Properties.Resources.CompanyLocation</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.CompanyLocation, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.CompanyLocation @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="AdSource" class="control-label col-sm-2"> @MyERP.Properties.Resources.AdSource</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.AdSource, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.AdSource @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="ContactMethod" class="control-label col-sm-2"> @MyERP.Properties.Resources.ContactMethod</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ContactMethod, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.ContactMethod @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+
+                                        <label for="ResponsibleServant" class="control-label col-sm-2"> @MyERP.Properties.Resources.ResponsibleServant</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ResponsibleServant, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.ResponsibleServant @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="Job" class="control-label col-sm-2"> @MyERP.Properties.Resources.Salary</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Salary, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Salary @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="CompanyLocation" class="control-label col-sm-2"> @MyERP.Properties.Resources.Insurances</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Insurances, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Insurances @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="Job" class="control-label col-sm-2"> @MyERP.Properties.Resources.Transport</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Transport, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Transport @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="CompanyLocation" class="control-label col-sm-2"> @MyERP.Properties.Resources.Commission</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Commission, new { htmlAttributes = new { @class = "form-control", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Commission @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- **** -->
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="Requirements">@MyERP.Properties.Resources.Requirements</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="Requirements" name="Requirements" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Requirements; }</textarea>
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Requirements @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                        </div>
+                                    </div>
+                                    @if (Model != null)
+                                    {
+                                        <div class="form-group row">
+                                            <label for=" " class="control-label col-sm-2">  </label>
+
+                                            <div class="col-sm-4">
+                                                <a class="btn btn-primary" href="/CompanyJobRequest/CandidateInterviewFollowUp?companyId=@Model.CompanyId&companyJobRequestId=@Model.Id" target="_blank"> @MyERP.Properties.Resources.CandidateInterviewFollowUp </a>
+                                            </div>
+                                            <label for=" " class="control-label col-sm-2">  </label>
+                                            <div class="col-sm-4">
+                                                <a href="https://api.whatsapp.com/send?phone=@Model.Company.Mobile&text=@ViewBag.domainName/CompanyJobRequest/CandidateInterviewFollowUp?companyId=@Model.CompanyId%26companyJobRequestId=@Model.Id" target="_blank" class="btn btn-primary"> @MyERP.Properties.Resources.SendFollowUpLinkToCompany </a>
+
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 2 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                            @MyERP.Properties.Resources.Candidates
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse2">
+                                    <div class="col-12">
+                                        <div class="form-group row">
+                                            <button class="btn btn-success" data-toggle="modal" data-target="#JobCandidatesPopUp">
+                                                @MyERP.Properties.Resources.SelectAnEmployee
+                                            </button>
+                                        </div>
+                                        @*<div class="form-group row">
+            <label for="EmployeeId" class="col-sm-1 control-label">@MyERP.Properties.Resources.Employee</label>
+            <div class="col-sm-4">
+                <select class="form-control" id="EmployeeId"></select>
+                <div class="invalid-feedback">
+                    @MyERP.Properties.Resources.Select
+                </div>
+            </div>
+            <div class="col-sm-offset-2">
+                <button class="btn btn-success" onclick="addEmp()">
+                    @MyERP.Properties.Resources.Add
+                </button>
+            </div>
+        </div>*@
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Employee
+                                                    </th>
+                                                    <th>@MyERP.Properties.Resources.Attend</th>
+                                                    <th>@MyERP.Properties.Resources.Approve</th>
+                                                    <th>@MyERP.Properties.Resources.Reject</th>
+                                                    <th>@MyERP.Properties.Resources.Phone 1</th>
+                                                    <th>@MyERP.Properties.Resources.Phone 2</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="JobCandidates">
+                                                @if (Model != null)
+                                                {
+                                                    if (Model.JobCandidates.Count > 0)
+                                                    {
+                                                        foreach (var item in Model.JobCandidates)
+                                                        {
+                                                            <tr>
+                                                                <td hidden><input class="empId" value="@item.EmployeeId" /></td>
+                                                                <td>
+                                                                    <label>@item.Employee.ArName</label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" class="IsAttend" @Html.Raw(Model.JobCandidates != null && item.IsAttend == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" class="IsConfirm" @Html.Raw(Model.JobCandidates != null && item.IsConfirm == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" class="IsReject" @Html.Raw(Model.JobCandidates != null && item.IsReject == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    <a href="https://api.whatsapp.com/send?phone=@item.Employee.MobileNumber&text=تم ترشيحك لوظيفة: @item.Job.ArName, فى شركة: @item.CompanyJobRequest.Company.ArName, برجاء الإتصال بالمسئول: @Model.Company.Interviewer, على رقم: @Model.Company.Mobile وترتيب موعد مقابلة " target="_blank"> <i class="fab fa-whatsapp"></i> </a>
+                                                                </td>
+                                                                <td>
+                                                                    <a href="https://api.whatsapp.com/send?phone=@item.Employee.PhoneNumber&text=تم ترشيحك لوظيفة: @item.Job.ArName, فى شركة: @item.CompanyJobRequest.Company.ArName, برجاء الإتصال بالمسئول: @Model.Company.Interviewer, على رقم: @Model.Company.Mobile وترتيب موعد مقابلة " target="_blank"> <i class="fab fa-whatsapp"></i> </a>
+                                                                </td>
+                                                                <td>
+                                                                    <a href="/Employee/AddEdit2/@item.EmployeeId" target="_blank" class="btn btn-primary"> @MyERP.Properties.Resources.File @MyERP.Properties.Resources.Employee</a>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <div class="row">
+                            <div class="col-sm-offset-2">
+                                @if (Model == null)
+                                {
+                                    <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                }
+                                else if (Model.IsDeleted == false)
+                                {
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                                        @MyERP.Properties.Resources.Delete
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @*</form>*@
+        </div>
+    </div>
+</div>
+
+<!-- -- -- -- -- -- Job Candidates PopUp -- -- -- -- -- -->
+<div id="JobCandidatesPopUp" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg" role="form">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle"> @MyERP.Properties.Resources.Candidates</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="form-group row">
+                            <label class="control-label col-sm-2" for="FromDate"> @MyERP.Properties.Resources.FromDate</label>
+                            <div class="col-sm-3">
+                                <input id="FromDate" class="form-control" type="date" />
+                            </div>
+                            <label class="control-label col-sm-2" for="ToDate"> @MyERP.Properties.Resources.ToDate</label>
+                            <div class="col-sm-3">
+                                <input id="ToDate" class="form-control" type="date" />
+                            </div>
+                            <div class="col-sm-2">
+                                <button class="btn btn-primary" onclick="GetCandidates()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body" id="CandidatesDiv">
+
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    let employees = [];
+    let candidates = [];
+    let EmployeesOptions;
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            $('#JobRequestDate').val('@ViewBag.JobRequestDate');
+            if ($('#JobId').val() > 0 ) {
+                $('#JobId').trigger('change')
+            }
+        }
+        else {
+            var d = new Date();
+            $('#JobRequestDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()));
+                setDocNum();
+        }
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+
+    //$(document).on('change', '#JobId', function () {
+    //    GetCandidates();
+    //});
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function setDocNum() {
+        $.get('/CompanyJobRequest/SetDocNum/').done(function (r) {
+            $('#DocumentNumber').val(r);
+        });
+    }
+    function addEmp(id,name) {
+        @*if (!$('#EmployeeId').val()) {
+            alert(' @MyERP.Properties.Resources.SelectAnEmployee')
+        }
+        else {
+            let valid = true;
+            $('#JobCandidates tr').each(function () {
+                var td = $(this);
+                if ($('#EmployeeId').val() == td.find('.empId').val())
+                    valid = false;
+            });
+
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.ThisEmployeeWasPreviouslyAdded')
+            else {
+                let tr = '<tr><td hidden><input class="empId" value=' + $(' #EmployeeId').val() + ' ></td><td><label >' + $('#EmployeeId option:selected').text() + '</label ></td><td><input type="checkbox" class="IsAttend" /></td><td><input type="checkbox" class="IsConfirm" /></td><td><input type="checkbox" class="IsReject" /></td><td><button style="border: none;" disabled><i class="fab fa-whatsapp"></i></button></td><td><button type="button" style="border: none;" disabled><i class="fab fa-whatsapp"></i></button></td><td><a href="/Employee/AddEdit2/' + $(' #EmployeeId').val() + '" target="_blank" class="btn btn-primary"> @MyERP.Properties.Resources.File @MyERP.Properties.Resources.Employee</a></td></tr>';
+                $('#JobCandidates').append(tr);
+            }
+        }*@
+         if (id>0) {
+            let valid = true;
+            $('#JobCandidates tr').each(function () {
+                var td = $(this);
+                if (id == td.find('.empId').val())
+                    valid = false;
+            });
+
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.ThisEmployeeWasPreviouslyAdded')
+            else {
+                let tr = '<tr><td hidden><input class="empId" value=' + id + ' ></td><td><label >' + name + '</label ></td><td><input type="checkbox" class="IsAttend" /></td><td><input type="checkbox" class="IsConfirm" /></td><td><input type="checkbox" class="IsReject" /></td><td><button style="border: none;" disabled><i class="fab fa-whatsapp"></i></button></td><td><button type="button" style="border: none;" disabled><i class="fab fa-whatsapp"></i></button></td><td><a href="/Employee/AddEdit2/' + $(' #EmployeeId').val() + '" target="_blank" class="btn btn-primary"> @MyERP.Properties.Resources.File @MyERP.Properties.Resources.Employee</a></td></tr>';
+                $('#JobCandidates').append(tr);
+            }
+        }
+    }
+
+    function GetCandidates() {
+        if (!$('#JobId').val()) {
+            alert('@MyERP.Properties.Resources.SelectJobFirst')
+        }
+        else {
+            $.get('/CompanyJobRequest/GetCandidates?jobId=' + $('#JobId').val() + '&DateFrom=' + $('#FromDate').val() + '&DateTo=' + $('#ToDate').val()).done(function (r) {
+                employees = r;
+                $('#CandidatesDiv').empty();
+                let div;
+                // EmployeesOptions = '';
+                for (var i = 0; i < employees.length; i++) {
+                    // EmployeesOptions += '<option value="' + employees[i].Id + '">' + employees[i].ArName + '</option>';
+                    div = '<div class="form-group row"> <label class="control-label col-sm-6" for="Employee">' +
+                        employees[i].ArName + '</label><div class="col-sm-6" hidden><input class="form-control" value="' +
+                        employees[i].Id + '" type="text" disabled readonly /></div><div class="col-sm-2"><input class="btn btn-primary" type="button" onclick="addEmp(\'' + employees[i].Id + '\',\'' + employees[i].ArName + '\')" value="@MyERP.Properties.Resources.Add" /></div></div>';
+                    $('#CandidatesDiv').append(div);
+
+                }
+                // $('#EmployeeId').empty().append(EmployeesOptions);
+            });
+        }
+    }
+
+
+
+    //*********************************************************//
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/CompanyJobRequest/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            alert("@MyERP.Properties.Resources.Deleted");
+                            window.location.replace('/CompanyJobRequest');
+                        }
+                        else {
+                            alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                            $('#preloader, #status').fadeOut();
+                        }
+
+                    }
+                });
+        }
+    }
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var jobCandidates = [];
+            $('#JobCandidates tr').each(function () {
+                var td = $(this);
+                if (td.find('.empId').val()) {
+                    var jobCandidate = {
+                        JobId: $('#JobId').val(),
+                        EmployeeId: td.find('.empId').val(),
+                        IsConfirm: td.find('.IsConfirm').prop('checked'),
+                        IsAttend: td.find('.IsAttend').prop('checked'),
+                        IsReject: td.find('.IsReject').prop('checked'),
+                        CompanyJobRequestId: $('#Id').val()
+                    };
+                    jobCandidates.push(jobCandidate);
+                }
+            });
+
+            var companyJobRequest =
+            {
+                Id: $('#Id').val(),
+                DocumentNumber: $('#DocumentNumber').val(),
+                CompanyId: $('#CompanyId').val(),
+                JobId: $('#JobId').val(),
+                JobStatusId: $('#JobStatusId').val(),
+                Requirements: $('#Requirements').val(),
+                JobRequestDate: $('#JobRequestDate').val(),
+                Notes: $('#Notes').val(),
+                IsActive: true,
+                IsDeleted: false,
+                RequiredNo: $('#RequiredNo').val(),
+                JobCandidates: jobCandidates,
+                CompanyLocation : $('#CompanyLocation').val(),
+                Governorate : $('#Governorate').val(),
+                AdSource : $('#AdSource').val(),
+                ContactMethod : $('#ContactMethod').val(),
+                ResponsibleServant : $('#ResponsibleServant').val(),
+                Salary : $('#Salary').val(),
+                Insurances : $('#Insurances').val(),
+                Transport : $('#Transport').val(),
+                Commission : $('#Commission').val(),
+            };
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/CompanyJobRequest/AddEdit",
+                    data: companyJobRequest,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/CompanyJobRequest/AddEdit");
+                            } else {
+                            alert('@MyERP.Properties.Resources.Saved');
+                                window.location.replace("/CompanyJobRequest");
+                            }
+                        }
+                        else {
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                            $('#preloader, #status').fadeOut();
+                        }
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+            }
+        }
+    }
+
+</script>

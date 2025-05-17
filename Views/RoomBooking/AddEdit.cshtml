@@ -1,0 +1,1446 @@
+﻿@model MyERP.Models.RoomBooking
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.RoomBooking;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.RoomBooking </h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                    @Html.HiddenFor(model => model.IsReserved)
+                                    @Html.HiddenFor(model => model.CurrencyId)
+                                    @Html.HiddenFor(model => model.CurrencyEquivalent)
+                                    @Html.HiddenFor(model => model.OnlinePaymentId)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.RegistrationDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.DepartmentId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.CashBox</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.CashBoxId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12" style=" padding:1px;background-color: white;">
+
+                                    <div style="background-color:white;">
+                                        <div class="row form-group">
+                                            <label class="control-label col-sm-2 PosCustomerIdDiv">@MyERP.Properties.Resources.Customer </label>
+                                            <div class="col-sm-4 PosCustomerIdDiv">
+                                                <div class="row ">
+                                                    <div class="col-sm-10">
+                                                        <select class="form-control" id="CustomerId">
+                                                            @if (Model != null)
+                                                            {
+                                                                <option value="@Model.CustomerId"></option>
+                                                            }
+                                                        </select>
+
+                                                        <div class="invalid-feedback">
+                                                            @MyERP.Properties.Resources.Select
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-sm-2 pos-customer-model-btn" style="padding: 0;margin-right: -10px;">
+                                                        <button class="btn btn-success  btn-sm" id="posCustomerAddBtn" data-toggle="modal"><i class="remixicon-user-add-fill"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <label class="PosCustomerDetailsDiv col-sm-2 control-label" for="Address">@MyERP.Properties.Resources.CustomerAddress</label>
+                                            <div class="PosCustomerDetailsDiv col-sm-4">
+                                                <label type="text" class="label control-label" id="pos-customer-address" readonly> </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="row form-group">
+                                            <label class="PosCustomerDetailsDiv col-sm-2 control-label" for="Phone">@MyERP.Properties.Resources.CustomerTel</label>
+                                            <div class="PosCustomerDetailsDiv col-sm-4">
+                                                <input type="text" class="form-control" id="pos-customer-mobile" />
+                                            </div>
+                                            <label class="PosCustomerDetailsDiv col-sm-2 control-label" for="IdentityNumber">@MyERP.Properties.Resources.NationalID</label>
+                                            <div class="PosCustomerDetailsDiv col-sm-4">
+                                                <input type="text" class="form-control" id="IdentityNumber" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.BookingStartDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.BookingStartDate, new { htmlAttributes = new { @class = "form-control", @type = "date", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.BookingEndDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.BookingEndDate, new { htmlAttributes = new { @class = "form-control", @type = "date", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "FunTime")
+                                {
+                                    <div class="row form-group">
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.RoomType</label>
+                                        <div class="col-sm-4 ">
+                                            <div class="row ">
+                                                <div class="col-sm-10">
+                                                    @Html.DropDownListFor(model => model.RoomTypeId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Select
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-2" style="padding: 0;margin-right: -10px;">
+                                                    <button class="btn btn-success  btn-sm" data-toggle="modal" data-target="#Rooms-modal" onclick="ShowReservationDetails()"><i class="remixicon-find-replace-line"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.Building</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.BuildingId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.Room</label>
+                                        <div class="col-sm-4 ">
+                                            <div class="row ">
+                                                <div class="col-sm-10">
+                                                    @Html.DropDownListFor(model => model.RoomId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Select
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-2" style="padding: 0;margin-right: -10px;">
+                                                    <button class="btn btn-success  btn-sm" data-toggle="modal" data-target="#Rooms-modal" onclick="ShowReservationDetails()"><i class="remixicon-find-replace-line"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                }
+                                <div class="form-group row">
+                                    <label for="RoomPrice" class="control-label col-sm-2">@MyERP.Properties.Resources.RoomPrice:</label>
+                                    <div class="col-sm-4">
+                                        @*<input class="form-control money" type="text" id="RoomPrice" />*@
+                                        @Html.EditorFor(model => model.RoomPrice, new { htmlAttributes = new { @class = "form-control money", type = "text" } })
+                                    </div>
+                                    <label for="NightsNumber" class="control-label col-sm-2">@MyERP.Properties.Resources.NightsNumber:</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null && Model.NightsNumber != null)
+                                        {
+                                            <label id="NightsNumber" class="control-label">  @Model.NightsNumber  </label>
+                                        }
+                                        else
+                                        {
+                                            <label id="NightsNumber" class="control-label">    </label>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Total" class="control-label col-sm-2">@MyERP.Properties.Resources.Total:</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Total" class="control-label col-sm-2">@MyERP.Properties.Resources.Insurance:</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Insurance, new { htmlAttributes = new { @class = "form-control money", type = "text", Value = "200" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Discount" class="control-label col-sm-2">@MyERP.Properties.Resources.DiscountValue: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Discount, new { htmlAttributes = new { @class = "form-control money", type = "text", value = "0" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="TotalAfterDiscount" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalAfterDiscount: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TotalAfterDiscount, new { htmlAttributes = new { @class = "form-control money", value = "0", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Discount" class="control-label col-sm-2">@MyERP.Properties.Resources.TaxPercentage: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TaxPercentage, new { htmlAttributes = new { @class = "form-control", type = "text", value = "0", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="Discount" class="control-label col-sm-2">@MyERP.Properties.Resources.Tax: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Tax, new { htmlAttributes = new { @class = "form-control", type = "text", value = "0", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Discount" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalAfterTaxes: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control", type = "text", value = "0", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Discount" class="control-label col-sm-2">@MyERP.Properties.Resources.Required: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.RequiredAmount, new { htmlAttributes = new { @class = "form-control", type = "text", value = "0", @required = "required", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Total" class="control-label col-sm-2">@MyERP.Properties.Resources.Paid:</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Paid, new { htmlAttributes = new { @class = "form-control money", type = "text", value = "0", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="Discount" class="control-label col-sm-2">@MyERP.Properties.Resources.Remain: </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Remain, new { htmlAttributes = new { @class = "form-control", type = "text", value = "0", @required = "required", @readonly = "readonly" } })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.PaymentMethod</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.PaymentMethodId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.BookingStatus</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.BookingStatusId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.BookingEmployee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.BookingEmployeeId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        </div>
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                        </div>
+
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                </div>
+            </div>
+            <!-------------------------------------------------------------------------------------------------------->
+        </div>
+    </div>
+</div>
+<!---------------- Journal Entry ------------------------>
+@if (Model != null)
+{
+    if (ViewBag.JE != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntries</h5>
+                <div class="form-horizontal">
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.VoucherNo</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.VoucherNo disabled>
+
+                        </div>
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date </label>
+                        <div class="col-sm-4">
+                            <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.RegistrationDate" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                        <div class="col-sm-4">
+                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
+                        </div>
+
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>@MyERP.Properties.Resources.Debit</th>
+                                            <th>@MyERP.Properties.Resources.Credit</th>
+                                            <th>@MyERP.Properties.Resources.Account</th>
+                                            <th>@MyERP.Properties.Resources.CostCenter</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Id != 0)
+                                        {
+                                            foreach (var jED in ViewBag.JEDetails)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <label>@jED.Debit</label>
+                                                        <input type='text' class='txtDebit' value="@jED.Debit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Credit</label>
+                                                        <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        @if (jED.AccountId != null)
+                                                        {
+                                                            <label>@jED.ChartOfAccount.ArName</label>
+                                                            <input type='number' class='AccountId' value="@jED.AccountId" hidden>
+                                                        }
+
+                                                    </td>
+                                                    <td>
+                                                        @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<!-------------------------------------------------------------------------------------->
+<!-- Modal Section -->
+<div id="pos-customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <input hidden id="posCustomerIdInput" name="posCustomerIdInput" />
+                    <input hidden id="posCustomerCodeInput" name="posCustomerCodeInput" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="PosCustomerArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="PosCustomerEnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile 1</label>
+                                <input type="text" class="form-control" id="Mobile1" placeholder="@MyERP.Properties.Resources.Mobile 1">
+                            </div>
+                        </div>
+                        @*<div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="Mobile2" hidden class="control-label">@MyERP.Properties.Resources.Mobile 2</label>
+                                    <input hidden type="text" class="form-control" id="Mobile2" placeholder="@MyERP.Properties.Resources.Mobile 2">
+                                </div>
+                            </div>*@
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="GroupId" class="control-label">@MyERP.Properties.Resources.Group</label>
+                                @Html.DropDownList("GroupId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="IdentityNumber" class="control-label">@MyERP.Properties.Resources.NationalID</label>
+                                <input type="text" class="form-control" id="NationalId" placeholder="@MyERP.Properties.Resources.NationalID">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <input type="checkbox" id="IsBlocked">
+                                <label for="IsBlocked" class="control-label col-sm-8">@MyERP.Properties.Resources.Blocked</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class=" control-label" for="">@MyERP.Properties.Resources.Country</label>
+                                <select class="form-control" id="GovernorateId" name="GovernorateId"></select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="control-label" for="">@MyERP.Properties.Resources.City</label>
+                                <select class="form-control" id="CityId" name="CityId"></select>
+                            </div>
+                        </div>
+                    </div>
+                    @*<div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="control-label" for="">@MyERP.Properties.Resources.District</label>
+                                    <select class="form-control" id="AreaId" name="AreaId"></select>
+                                </div>
+                            </div>
+                        </div>*@
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="PosCustomerAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="PosCustomerNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addPosCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rooms & Chalets Type -->
+<div id="Rooms-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content" style="width: 40vw;max-width: 50vw;">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.Details</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <hr />
+                <div class=" table-responsive">
+                    <table class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @MyERP.Properties.Resources.BookingNo
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.BookingDate
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.BookingStartDate
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.BookingEndDate
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.Customer
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.CustomerTel
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="BookingDetails">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--------------- End Of Rooms & Chalets Type-------------------->
+<!------------------------------------------------------------------------------------------------------->
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    let posCustomers = [];
+    let RoomOptions = "";
+    var Room = '@ViewBag.Room';
+    var ProjectName = '@Html.Raw(System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"])';
+    var taxPercentage = 0.14;
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#RegistrationDate').val('@ViewBag.RegistrationDate');
+        $('#BookingStartDate').val('@ViewBag.BookingStartDate');
+        $('#BookingEndDate').val('@ViewBag.BookingEndDate');
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#BookingStartDate ,#BookingEndDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        if ($('#Id').val()) {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""));
+            $("#DepartmentId").prop('disabled', true);
+            $("#RegistrationDate").prop('disabled', true);
+
+            let CustomerId = $('#CustomerId').val();
+            appendPosCustomerOptions(true).then(function () { $('#CustomerId').val(CustomerId).trigger('change') });
+            //GetBuildingRooms().then(function () {
+            //    //$('#RoomId').empty().append(RoomOptions).val(Room);
+            //    $('#RoomId').trigger('change')
+            //});
+        }
+        else {
+            SetDocNum();
+            appendPosCustomerOptions(true);
+            $('#BuildingId').trigger('change');
+            $('#RoomTypeId').trigger('change');
+
+            cashBoxByDepartment();
+            CalculateDays();
+        }
+
+        getGovernorates();
+        getCities();
+        getAreas();
+      //  CalculateDays();
+        GetCurrentTaxPercentage();
+
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+
+    $('#CustomerId').on('change', function () {
+        let customer = posCustomers.filter(function (i) { return i.Id == $('#CustomerId').val() })[0];
+        if (customer) {
+            if (customer.IsBlocked == true) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.BlockedCustomerCantBeSelected',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                $('#CustomerId').prop('selectedIndex', 0)
+            }
+            else {
+                $('#pos-customer-address').text(customer.Address);
+                $('#pos-customer-mobile').val(customer.Mobile);
+                $("#IdentityNumber").val(customer.NationalId);
+                $("#IsBlocked").prop("checked", customer.IsBlocked);
+            //$("#GroupId").val(customer.CustomersGroupId);
+            //$("#GroupId").text(customer.CustomerGroupArName);
+            //$("#GovernorateId").val(customer.GovernorateId).trigger('change');
+            //$("#CityId").val(customer.CityId).trigger('change');
+            }
+        }
+    });
+            $(document).on('keydown', '#pos-customer-mobile', function (e) {
+                if (e.which == 13 || e.keyCode == 13) {
+                    let elem = $(this);
+                    let mobileNo = elem.val();
+                    GetCustomerByIdentityNumberOrMobileNumber(null, mobileNo);
+                }
+            });
+    $(document).on('keydown', '#IdentityNumber', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            let elem = $(this);
+            let IdentityNumber = elem.val();
+            GetCustomerByIdentityNumberOrMobileNumber(IdentityNumber,null);
+        }
+    });
+    $(document).on('click', '#posCustomerAddBtn', function () {
+        getGovernorates();
+        $('#pos-customer-modal').modal("show");
+    });
+    $(document).on('change', "#BookingStartDate", function () {
+        // $('#BuildingId').trigger('change');
+        CheckReservedRoomByRoomId_RoomTypeId();
+        CalculateDays();
+    });
+    $(document).on('change', "#BookingEndDate", function () {
+       // $('#BuildingId').trigger('change');
+        CheckReservedRoomByRoomId_RoomTypeId();
+        CalculateDays();
+    });
+    $(document).on('change', "#Discount", function () {
+        if ($('#Paid').val() > 0) {
+            $('#Paid').val(0)
+        }
+        CalculateTotals(null);
+    });
+    $(document).on('change', "#RoomId", function () {
+        GetRoomPrice();
+        CheckReservedRoomByRoomId_RoomTypeId();
+    });
+    $(document).on('change', '#BuildingId', function () {
+        GetBuildingRooms().then(function () {
+            $('#RoomId').empty().append(RoomOptions);
+        }).then(function () {
+            $('#RoomId').trigger('change');
+        });
+    });
+    $(document).on('change', "#DepartmentId", function () {
+        cashBoxByDepartment();
+        SetDocNum();
+    });
+    $(document).on('change', "#Paid", function () {
+        CalculateTotals(null);
+    });
+    $(document).on('change', "#RoomPrice", function () {
+        CalculateTotals($(this).inputmask('unmaskedvalue'));
+    });
+    $(document).on('change', "#Insurance", function () {
+        GetRoomPrice();
+    });
+    $(document).on('change', '#RegistrationDate', function () {
+        if (!$('#Id').val()) {
+            SetDocNum();
+        }
+        GetCurrentTaxPercentage();
+    });
+    $(document).on('change', '#RoomTypeId', function () {
+        GetBuildingRooms();
+        CheckReservedRoomByRoomId_RoomTypeId();
+        GetRoomPrice();
+    });
+
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function ShowReservationDetails() {
+        $('#BookingDetails').empty();
+        $.get('/RoomBooking/ShowReservationDetails?RoomId=' + $('#RoomId').val() + '&RoomTypeId=' + $('#RoomTypeId').val()).done(function (r) {
+            if (r.length) {
+                for (var i = 0; i < r.length; i++) {
+                    r[i].ReservationDate = r[i].ReservationDate != null ? convertToJavaScriptDate(r[i].ReservationDate) : '';
+                    r[i].BookingStartDate = r[i].BookingStartDate != null ? convertToJavaScriptDate(r[i].BookingStartDate) : '';
+                    r[i].BookingEndDate = r[i].BookingEndDate != null ? convertToJavaScriptDate(r[i].BookingEndDate) : '';
+                    r[i].BookingNo = r[i].BookingNo.replaceAll('-', '');
+                    r[i].CustomerTel = r[i].CustomerTel != null ? r[i].CustomerTel : '';
+
+                    let tr = ' <tr><td><label class="control-label BookingNo">' +
+                        r[i].BookingNo + '</label></td> <td><label class="control-label ReservationDate">' +
+                        r[i].ReservationDate + '</label></td><td><label class="control-label BookingStartDate">' +
+                        r[i].BookingStartDate + '</label></td><td><label class="control-label BookingEndDate">' +
+                        r[i].BookingEndDate + '</label></td><td><label class="control-label CustomerName">' +
+                        r[i].CustomerName + '</label></td><td><label class="control-label CustomerTel">' +
+                        r[i].CustomerTel + '</label></td></tr >';
+                    $('#BookingDetails').append(tr);
+                }
+            }
+        });
+    }
+
+    function GetCurrentTaxPercentage() {
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#RegistrationDate').val()).done(function (r) {
+            taxPercentage = r / 100;
+            $('#TaxPercentage').val(taxPercentage);
+        });
+
+    }
+     function cashBoxByDepartment() {
+        $.get('/Helper/CashBoxByDepartment/' + $('#DepartmentId').val()).done(function (r) {
+            $('#CashBoxId').empty();
+          //  $('#CashBoxId').append('<option value>'+'@MyERP.Properties.Resources.Select' +'</option>');
+            for (var i = 0; i < r.length; i++) {
+                $('#CashBoxId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+
+    function GetRoomPrice() {
+        //$('#Total').val(0);
+        //$('#Discount').val(0);
+        //$('#TotalAfterDiscount').val(0);
+        if ($('#RoomId').val() > 0 || $('#RoomTypeId').val() > 0) {
+            $.get('/RoomBooking/GetRoomPrice?RoomId=' + $('#RoomId').val() + '&RoomTypeId=' + $('#RoomTypeId').val()).done(function (r) {
+                $('#RoomPrice').val(r);
+                var NightsNumber = parseInt($('#NightsNumber').text()) > 0 ? parseInt($('#NightsNumber').text()) : 1;
+                var Insurance = $('#Insurance').inputmask('unmaskedvalue');
+                $('#Total').val((r * NightsNumber) /*+ parseFloat(Insurance)*/);
+                CalculateTotals();
+            });
+        }
+    }
+    function GetBuildingRooms() {
+        RoomOptions = '';
+        return requestData('/RoomBooking/GetBuildingRooms?BuildingId=' + $('#BuildingId').val() + '&BookingStartDate=' + $('#BookingStartDate').val() + '&BookingEndDate=' + $('#BookingEndDate').val() + '&RoomTypeId=' + $('#RoomTypeId').val())
+            .done(function (r) {
+                @*if (ProjectName == "FunTime") {
+                    if (r.length > 0) {
+                        var Start = r[0] != null ? convertToJavaScriptDate(r[0]) : null;
+                        var End = r[r.length - 1] != null ? convertToJavaScriptDate(r[r.length - 1]) : null;
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.ThisChaletReserved  '+'\n' + '@MyERP.Properties.Resources.From : ' + Start + ' \n,@MyERP.Properties.Resources.To : ' + End,
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#BookingStartDate').val('');
+                        $('#BookingEndDate').val('');
+                    }
+                }
+                else {*@
+                    for (var i = 0; i < r.length; i++) {
+                        RoomOptions += '<option value="' + r[i].RoomId + '">' + r[i].RoomCode + '</option>';
+                    }
+                //}
+            });
+    }
+    function CheckReservedRoomByRoomId_RoomTypeId() {
+        if (($('#RoomId').val() > 0 || $('#RoomTypeId').val() > 0) && $('#BookingStartDate').val() && $('#BookingEndDate').val()) {
+            $.get('/RoomBooking/CheckReservedRoomByRoomId_RoomTypeId?RoomId=' + $('#RoomId').val() + '&RoomTypeId=' + $('#RoomTypeId').val() + '&BookingStartDate=' + $('#BookingStartDate').val() + '&BookingEndDate=' + $('#BookingEndDate').val()).done(function (r) {
+                var newStartDate = new Date($('#BookingStartDate').val());
+                newStartDate = convertToJavaScriptDate2(newStartDate.setDate(newStartDate.getDate() + 1));
+
+                //if (ProjectName == "FunTime") {
+                    if (r.length > 0) {
+
+                        var Start = r[0] != null ? convertToJavaScriptDate(r[0]) : null;
+                        var End = r[r.length - 1] != null ? convertToJavaScriptDate(r[r.length - 1]) : null;
+                        var msgDate=[];
+                        var FullDate=[];
+                        for (var i = 0; i < r.length; i++) {
+                            if (($.inArray(newStartDate, convertToJavaScriptDate(r[i])) == -1 //newStartDate not in r
+                                && convertToJavaScriptDate2($('#BookingStartDate').val()) != convertToJavaScriptDate(r[i])) ||
+                                ($.inArray(convertToJavaScriptDate2($('#BookingEndDate').val()), convertToJavaScriptDate(r[i])) == -1 //EndDate not in r
+                                    && convertToJavaScriptDate2($('#BookingEndDate').val()) != convertToJavaScriptDate(r[i]))
+                            ) {
+                                FullDate.push(convertToJavaScriptDate(r[i]) /*+ '\n'*/);
+
+                                msgDate.push(convertToJavaScriptDate(r[i]) /*+ '\n'*/);
+                            }
+                        }
+                        if (msgDate.length > 0) {
+                            const index = msgDate.indexOf(convertToJavaScriptDate2($('#BookingEndDate').val()));
+                            if (index > -1) { // only splice array when item is found
+                                msgDate.splice(index, 1); // 2nd parameter means remove one item only
+                            }
+                            if ($.inArray(newStartDate, msgDate) != -1) {
+                                const indexStart = msgDate.indexOf(newStartDate);
+                                if (indexStart > -1) { // only splice array when item is found
+                                    if (msgDate.length > 1) {
+                                        msgDate.pop();
+                                    }
+                                    else {
+                                        msgDate.splice(indexStart, 1); // 2nd parameter means remove one item only
+                                        FullDate.splice(indexStart, 1); // 2nd parameter means remove one item only
+                                    }
+                                }
+                            }
+                            else {
+                                const indexStart0 = msgDate.indexOf(convertToJavaScriptDate2($('#BookingStartDate').val()));
+                                if (indexStart0 > -1) { // only splice array when item is found
+                                    msgDate.splice(indexStart0, 1); // 2nd parameter means remove one item only
+                                    FullDate.splice(indexStart0, 1); // 2nd parameter means remove one item only
+                                }
+                            }
+                        }
+
+                        if (/*msgDate*/FullDate.length > 0) {
+                            if (ProjectName == "FunTime") {
+                                var msg = '@MyERP.Properties.Resources.ThisChaletReserved ' + '\n' + FullDate/*msgDate*/
+                                Swal.fire({
+                                    title: msg,//'@MyERP.Properties.Resources.ThisChaletReserved  '+'\n' + '@MyERP.Properties.Resources.From : ' + Start + ' \n,@MyERP.Properties.Resources.To : ' + End,
+                                    text: " ",
+                                    icon: 'info',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            else {
+                                 var msg = '@MyERP.Properties.Resources.ThisRoomReserved ' + '\n' + FullDate/*msgDate*/
+                                Swal.fire({
+                                    title: msg,
+                                    text: " ",
+                                    icon: 'info',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                             $('#BookingStartDate').val('');
+                             $('#BookingEndDate').val('');
+                         }
+                    }
+                //}
+                 @*else {
+                      if (r.length > 0) {
+                        var Start = r[0] != null ? convertToJavaScriptDate(r[0]) : null;
+                        var End = r[r.length - 1] != null ? convertToJavaScriptDate(r[r.length - 1]) : null;
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.ThisRoomReserved  '+'\n' + '@MyERP.Properties.Resources.From : ' + Start + ' \n,@MyERP.Properties.Resources.To : ' + End,
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#BookingStartDate').val('');
+                        $('#BookingEndDate').val('');
+                    }
+                    //for (var i = 0; i < r.length; i++) {
+                    //    RoomOptions += '<option value="' + r[i].RoomId + '">' + r[i].RoomCode + '</option>';
+                    //}
+                }*@
+
+            });
+        }
+    }
+
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) /*+ "T" + strTime*/);
+
+        //2022 - 01 - 18T20: 23
+    }
+    function convertToJavaScriptDate2(value) {
+        if (value === null)
+            return null;
+        //var pattern = /Date\(([^)]+)\)/;
+        //var results = pattern.exec(value);
+        var dt = new Date(value);
+        //dt.setDate(dt.getDate() + 1);
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) /*+ "T" + strTime*/);
+
+        //2022 - 01 - 18T20: 23
+    }
+
+    function CalculateTotals(price) {
+        var Total;
+        if (price != null) {
+            var NightsNumber = parseInt($('#NightsNumber').text()) > 0 ? parseInt($('#NightsNumber').text()) : 1;
+            Total = (parseFloat(price) * NightsNumber) /*+ parseFloat(Insurance)*/;
+             $('#Total').val(Total);
+        }
+        else {
+            Total = $('#Total').inputmask('unmaskedvalue');
+        }
+        var Insurance = $('#Insurance').inputmask('unmaskedvalue');
+        var Discount = $('#Discount').inputmask('unmaskedvalue') > 0 ? $('#Discount').inputmask('unmaskedvalue') : 0;
+        var TotalAfterDiscount = Total - Discount;
+        $('#TotalAfterDiscount').val(TotalAfterDiscount);
+        var TotalAfterTaxes = (taxPercentage * TotalAfterDiscount) + TotalAfterDiscount;
+        $('#TotalAfterTaxes').val(TotalAfterTaxes);
+        var Paid = $('#Paid').inputmask('unmaskedvalue');
+        var Required = parseFloat(TotalAfterDiscount) + parseFloat(Insurance) + (taxPercentage * TotalAfterDiscount);
+        $('#RequiredAmount').val(Required);
+        var Remain = Required - Paid;
+        $('#Remain').val(Remain);
+        var Tax = taxPercentage * TotalAfterDiscount;
+        $('#Tax').val(Tax.toFixed(2));
+    }
+
+    function CalculateDays() {
+        if ($('#BookingStartDate').val() && $('#BookingEndDate').val()) {
+            $('#NightsNumber').text('')
+            let From = new Date($('#BookingStartDate').val());
+            let To = new Date($('#BookingEndDate').val());
+            let difference = To.getTime() - From.getTime();
+            let TotalDays = Math.ceil(difference / (1000 * 3600 * 24));
+            $('#NightsNumber').text(TotalDays);
+            GetRoomPrice();
+            return TotalDays;
+        }
+    }
+
+    function checkCustomerType() {
+        $(".PosCustomerIdDiv").hide();
+        $(".PosCustomerDetailsDiv").hide();
+    }
+    function addPosCustomer() {
+        let valid = true;
+        if ($("#PosCustomerArName").val() == "") {
+            $("#PosCustomerArName").prop('required', true);
+        }
+        if ($("#pos-customer-modal").find(".form-control:invalid").length > 0) {
+            $("#pos-customer-modal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        } else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Customers/AddEdit', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Id: $("#posCustomerIdInput").val() != "" ? $("#posCustomerIdInput").val() : 0,
+                        Code: $("#posCustomerCodeInput").val(),
+                        ArName: $("#PosCustomerArName").val(),
+                        EnName: $('#PosCustomerEnName').val(),
+                        Address: $('#PosCustomerAddress').val(),
+                        Mobile: $('#Mobile1').val(),
+                        //Mobile2: $('#Mobile2').val(),
+                        Notes: $('#PosCustomerNotes').val(),
+                        CountryId: $('#GovernorateId').val(),
+                        CityId: $('#CityId').val(),
+                        //AreaId: $('#AreaId').val(),
+                        NationalId: $('#NationalId').val(),
+                        IsBlocked: $('#IsBlocked').prop('checked'),
+                        CustomersGroupId: $('#GroupId').val(),
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        appendPosCustomerOptions(true).then(function () { $('#CustomerId').val(r.Id).trigger('change'); });
+                        $('#pos-customer-modal').modal('hide');
+                        $('#preloader, #status').fadeOut();
+
+                    }
+                });
+        }
+    }
+    function showPosCustomerModal(posCustomer, isNew, mobileNo, identityNo) {
+        if (posCustomer != null &&posCustomer.IsBlocked == true) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.BlockedCustomerCantBeSelected',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            $('#CustomerId').prop('selectedIndex', 0)
+            $('#CustomerId').trigger('change')
+        }
+        else {
+        if (posCustomer != null && isNew == false) {
+            $("#posCustomerIdInput").val(posCustomer.PosCustomerId);
+            $("#posCustomerCodeInput").val(posCustomer.PosCustomerCode);
+            $("#PosCustomerArName").val(posCustomer.ArName);
+            $("#PosCustomerEnName").val(posCustomer.EnName);
+            $("#PosCustomerAddress").val(posCustomer.Address);
+            $("#PosCustomerNotes").val(posCustomer.Notes);
+            $("#Mobile1").val(posCustomer.Mobile);
+            $("#Mobile2").val(posCustomer.Mobile2);
+            $("#NationalId").val(posCustomer.NationalId);
+            $("#IsBlocked").prop("checked", posCustomer.IsBlocked);
+            $("#GroupId").val(posCustomer.CustomersGroupId).select2();
+            $("#GovernorateId").val(posCustomer.GovernorateId).trigger('change');
+            $("#CityId").val(posCustomer.CityId).trigger('change');
+
+        }
+        else {
+            if (mobileNo != "" && mobileNo != null)
+                $("#Mobile1").val(mobileNo);
+            else
+                $("#Mobile1").val("");
+
+            if (identityNo != "" && identityNo != null)
+                $("#NationalId").val(identityNo);
+            else
+                $("#NationalId").val("");
+
+            $("#PosCustomerArName").val("");
+            $("#PosCustomerEnName").val("");
+            $("#PosCustomerAddress").val("");
+            $("#PosCustomerNotes").val("");
+        }
+            $('#pos-customer-modal').modal("show");
+        }
+    }
+    function appendPosCustomerOptions(refill) {
+        return getPosCustomers(refill).then(function () {
+            // let custumerType = $('#CustomerType').val();
+            let posCustomerOptions = '';
+
+            for (var i = 0; i < posCustomers.length; i++) {
+                posCustomerOptions += '<option value="' + posCustomers[i].Id + '">' + posCustomers[i].ArName + ' - ' + posCustomers[i].Code + '</option>';
+            }
+            $('#CustomerId').empty().append(posCustomerOptions);
+            $('#CustomerId').trigger('change');
+        });
+    }
+    function getPosCustomers(refill) {
+        if (refill == true)
+            requestCache['/Helper/GetCustomers'] = null;
+        return requestData('/Helper/GetCustomers').done(function (r) {
+            posCustomers = r;
+        });
+    }
+    function GetCustomerByIdentityNumberOrMobileNumber(IdentityNo, MobileNo) {
+        $.get('/Helper/GetCustomerByIdentityNumberOrMobileNumber?identityNo=' + IdentityNo + '&mobileNo=' + MobileNo).done(function (r) {
+            if (r.posCustomer != null) {
+                $("#CustomerId").val(r.posCustomer.PosCustomerId).trigger('change');
+                showPosCustomerModal(r.posCustomer, false, null,null);
+            }
+            else {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.ThereIsNoCustomerWithThisNoDoYouWantToAdd',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        showPosCustomerModal(null, true, MobileNo, IdentityNo);
+                    }
+                    else { result.dismiss; }
+                });
+            }
+        });
+
+    }
+
+    function getGovernorates() {
+        $.get('/Helper/GetGovernorates/').done(function (r) {
+            $('#GovernorateId').empty();
+            for (var i = 0; i < r.length; i++) {
+                $('#GovernorateId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+            $('#GovernorateId').trigger('change');
+        });
+    }
+    function getCities() {
+        $('#CityId').empty();
+        $.get('/Helper/getCities').done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                $('#CityId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+    function getAreas() {
+        $('#AreaId').empty();
+        $.get('/Helper/getAreas').done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                $('#AreaId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+
+    function SetDocNum() {
+        var doc = $.get('/RoomBooking/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#RegistrationDate').val()).done(function (r) {
+            $('#DocumentNumber').val(r);
+            $('#DocumentNumbers').val(r.replaceAll("-", ""));
+        });
+    }
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+           // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+            $(tr).find("label").text('');
+        }
+    }
+
+
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+
+        @*if ($('#Paid').inputmask('unmaskedvalue') != $('#TotalAfterDiscount').inputmask('unmaskedvalue')) {
+            valid = false;
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.PaidIsNotEqualToTotalAfterDiscount ',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }*@
+        var RoomBooking = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            RegistrationDate: $('#RegistrationDate').val(),
+            BuildingId: $('#BuildingId').val(),
+            RoomId: $('#RoomId').val(),
+            CustomerId: $('#CustomerId').val(),
+            BookingStartDate: $('#BookingStartDate').val(),
+            BookingEndDate: $('#BookingEndDate').val(),
+            UserId: $('#UserId').val(),
+            IsDeleted: $('#IsDeleted').val(),
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            Total: $('#Total').inputmask('unmaskedvalue'),
+            Discount: $('#Discount').inputmask('unmaskedvalue'),
+            TotalAfterDiscount: $('#TotalAfterDiscount').inputmask('unmaskedvalue'),
+            DepartmentId: $('#DepartmentId').val(),
+            CashBoxId: $('#CashBoxId').val(),
+            Paid: $('#Paid').inputmask('unmaskedvalue'),
+            Remain: $('#Remain').val(),
+            Insurance: $('#Insurance').inputmask('unmaskedvalue'),
+            IsReserved: $('#IsReserved').val(),
+            BookingStatusId: $('#BookingStatusId').val(),
+            CurrencyId: $('#CurrencyId').val(),
+            CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+            RequiredAmount: $('#RequiredAmount').inputmask('unmaskedvalue'),
+            RoomPrice: $('#RoomPrice').inputmask('unmaskedvalue'),
+            NightsNumber: $('#NightsNumber').text(),
+            RoomTypeId: $('#RoomTypeId').val(),
+            Tax: $('#Tax').val(),
+            TaxPercentage: $('#TaxPercentage').val(),
+            TotalAfterTaxes: $('#TotalAfterTaxes').val(),
+            PaymentMethodId: $('#PaymentMethodId').val(),
+            OnlinePaymentId: $('#OnlinePaymentId').val(),
+            BookingEmployeeId: $('#BookingEmployeeId').val()
+        }
+
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/RoomBooking/AddEdit",
+                        data: JSON.stringify(RoomBooking),
+                        success: function (r) {
+                            if (r.success == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); if (n == "new") {
+                                   // window.open("/Report/RoomBookingReceipt?print=true&id=" + r.id, "_blank");
+                                    EncodeId(r.id)
+                                    window.location.replace("/RoomBooking/AddEdit");
+                                } else {
+                                    //window.open("/Report/RoomBookingReceipt?print=true&id=" + r.id, "_blank");
+                                    EncodeId(r.id)
+                                    window.location.replace("/RoomBooking");
+                                }
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/RoomBooking/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/RoomBooking');
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+
+    }
+    function EncodeId(id, mobile) {
+        $.get('/Helper/EncodeId?id=' + id).done(function (r) {
+            var report = "/Report/RoomBookingReceipt?id=" + r + "&print=True";
+            window.open(report, "_blank");
+        });
+    }
+</script>

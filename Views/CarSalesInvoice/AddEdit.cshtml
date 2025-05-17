@@ -1,0 +1,1022 @@
+﻿@model MyERP.Models.CarSalesInvoice
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.CarSalesInvoice;
+    }
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.CarSalesInvoice :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.SystemPageId)
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title pb-2">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                @if (Model.SelectedId != null && Model.SystemPageId != null)
+                                {
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label">@MyERP.Properties.Resources.MainDoc</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="form-control" value="@Model.SystemPage.ArName" name="SourcePageId" id="SourcePageId" placeholder=@MyERP.Properties.Resources.MainDoc disabled>
+                                        </div>
+                                        <label class="col-sm-2 control-label">@MyERP.Properties.Resources.MainDocNo</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="form-control" name="SourceId" value="@ViewBag.SourceDocumentNumber" id="SourceId" placeholder=@MyERP.Properties.Resources.MainDocNo disabled>
+                                        </div>
+                                    </div>
+                                }
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VoucherDate" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VendorOrCustomerId" class="control-label col-sm-2"> @MyERP.Properties.Resources.Customer </label>
+                                    <div class="col-sm-3">
+                                        @Html.DropDownList("CustomerId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-1" style="padding: 0;margin-right: -10px;">
+                                        <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#customer-modal"><i class="remixicon-user-add-fill"></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label class=" col-sm-2 control-label" for="Address">@MyERP.Properties.Resources.CustomerAddress</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" id="customer-address" readonly />
+
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="Phone">@MyERP.Properties.Resources.CustomerTel</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" id="customer-mobile" readonly />
+
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="CarPlateNumber">@MyERP.Properties.Resources.CarPlateNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CarPlateNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CarPlateNumber, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="SerialNo">@MyERP.Properties.Resources.SerialNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CarSerialNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.SerialNo, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.CarType</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CarTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VendorOrCustomerId" class="control-label col-sm-2">@MyERP.Properties.Resources.CarModel</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CarModelId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.CarColor</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CarColorId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VendorOrCustomerId" class="control-label col-sm-2">@MyERP.Properties.Resources.CarServiceCategory</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CarServiceCategoryId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="CarInOdometer"> @MyERP.Properties.Resources.CarInOdometer</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CarInOdometer, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CarInOdometer, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="CarOutOdometer">@MyERP.Properties.Resources.CarOutOdometer</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CarOutOdometer, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CarOutOdometer, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                    <label for="OutDate" class="control-label col-sm-2"> @MyERP.Properties.Resources.OutDate </label>
+                                    <div class="col-sm-4">
+                                        <input id="OutDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.OutDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@*--------------------    add customer modal   ---------------------*@
+<div id="customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="ArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="EnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Mobile</label>
+                                <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Mobile>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="Address" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="Notes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="header-title">@MyERP.Properties.Resources.Details</h5>
+                <div class="form-horizontal needs-validation" role="form">
+
+                    <div class="table-responsive py-3">
+                        <table class="table table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    @*<th>كود الخدمة/الإضافة</th>*@
+                                    <th>@MyERP.Properties.Resources.ServiceAddition @MyERP.Properties.Resources.Name </th>
+                                    <th>@MyERP.Properties.Resources.Price</th>
+                                    <th>@MyERP.Properties.Resources.DiscountPercentage</th>
+                                    <th>@MyERP.Properties.Resources.DiscountValue</th>
+                                    <th>@MyERP.Properties.Resources.Net</th>
+                                    <th>@MyERP.Properties.Resources.Type</th>
+                                    <th>@MyERP.Properties.Resources.Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody id="CarEntranceDetails">
+                                @if (Model != null)
+                                {
+                                    foreach (var item in Model.CarSalesInvoiceDetails)
+                                    {
+                                        <tr>
+
+                                            <td class="tabledit-edit-mode">
+                                                <input type="hidden" class="serviceId form-control tabledit-input form-control-sm" value="@item.CarServiceId" />
+                                                <input type="text" class="service-name form-control tabledit-input form-control-sm" value="@item.CarService.ArName" />
+                                            </td>
+                                            <td class="tabledit-edit-mode"><input class="price form-control tabledit-input form-control-sm small-number" type="number" step="any" value="@item.CarService.Price" required /></td>
+                                            <td class="tabledit-edit-mode"><input type="number" step="any" class="DiscountPercentage money  form-control tabledit-input form-control-sm" value="@item.ServiceDiscountPercentage" /></td>
+                                            <td class="tabledit-edit-mode"><input class="DiscountValue money form-control tabledit-input form-control-sm" type="number" step="any" value="@item.ServiceDiscountValue" /></td>
+                                            <td class="tabledit-edit-mode"><input type="number" step="any" class="TotalAfterDiscount form-control tabledit-input form-control-sm" value="@item.ServiceNetTotal" readonly /></td>
+                                            @if (item.CarService.TypeId == 0)
+                                            {
+                                                <td class="tabledit-edit-mode"><label class="CarServiceTypeId">@MyERP.Properties.Resources.Service</label></td>
+                                            }
+                                            else
+                                            {
+                                                <td class="tabledit-edit-mode"><label class="CarServiceTypeId">@MyERP.Properties.Resources.Addition</label></td>
+                                            }
+
+
+                                            <td>
+                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                <tr>
+                                    <td class="tabledit-edit-mode">
+                                        <input type="hidden" class="serviceId form-control tabledit-input form-control-sm" />
+                                        <input type="text" class="service-name form-control tabledit-input form-control-sm" />
+                                    </td>
+                                    <td class="tabledit-edit-mode"><input type="number" step="any" class="price form-control tabledit-input form-control-sm small-number" readonly required /></td>
+                                    <td class="tabledit-edit-mode"><input type="number" step="any" class="DiscountPercentage money  form-control tabledit-input form-control-sm" /></td>
+                                    <td class="tabledit-edit-mode"><input type="number" step="any" class="DiscountValue money form-control tabledit-input form-control-sm" /></td>
+                                    <td class="tabledit-edit-mode"><input type="number" step="any" class="TotalAfterDiscount form-control tabledit-input form-control-sm" readonly /></td>
+
+                                    <td class="tabledit-edit-mode"><label class="CarServiceTypeId"></label></td>
+                                    <td>
+                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+
+
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="form-group row pt-3">
+                        <label for="Total" class="control-label col-sm-2">@MyERP.Properties.Resources.Total:</label>
+                        <div class="col-sm-2">
+                            @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control money", type = "text", id = "Total", @readonly = "readonly" } })
+
+                        </div>
+                        <label for="VoucherDiscountValue" class="control-label col-sm-1">@MyERP.Properties.Resources.DiscountValue: </label>
+                        <div class="col-sm-2">
+                            @Html.EditorFor(model => model.VoucherDiscountValue, new { htmlAttributes = new { @class = "form-control money", id = "DiscountValue", type = "text", value = "0" } })
+
+                        </div>
+                        <label for="VoucherDiscountPercentage" class="control-label col-sm-1">@MyERP.Properties.Resources.DiscountPercentage: </label>
+                        <div class="col-sm-2">
+                            @Html.EditorFor(model => model.VoucherDiscountPercentage, new { htmlAttributes = new { @class = "form-control", value = "0" } })
+
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="NetTotal" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalAfterDiscount:</label>
+                        <div class="col-sm-2">
+                            @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly", id = "NetTotal", value = "0" } })
+
+                        </div>
+
+
+                        @if (Model != null)
+                        {
+                    <div class="col-sm-4">
+                        <input type="checkbox" id="hasTaxes" @Html.Raw(Model != null && Model.SalesTaxes > 0 ? "checked" : "") />@MyERP.Properties.Resources.ApplySalesTaxesValue
+                    </div>
+                        }
+                        else
+                        {
+                    <div class="col-sm-4">
+                        <input type="checkbox" id="hasTaxes" />@MyERP.Properties.Resources.ApplySalesTaxesValue
+                    </div>
+                        }
+                    </div>
+
+                    <div class="form-group row taxes" style="display:none;">
+                        <label for="SalesTaxes" class="control-label  col-sm-2  taxes" style="display:none;">@MyERP.Properties.Resources.SalesTaxes:</label>
+                        <div class="col-sm-2 taxes" style="display:none;">
+                            @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money taxes", id = "SalesTaxes", type = "text", value = "0" } })
+                            @Html.ValidationMessageFor(model => model.SalesTaxes, "", new { @class = "text-danger" })
+                        </div>
+                        <label for="TotalAfterTaxes" class="control-label col-sm-2 taxes" style="display:none;">@MyERP.Properties.Resources.TotalAfterTaxes:</label>
+                        <div class="col-sm-2 taxes" style="display:none;">
+                            @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "TotalAfterTaxes", @readonly = "readonly ", value = "0" } })
+                            @Html.ValidationMessageFor(model => model.TotalAfterTaxes, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+
+                    <div class="row">
+                        <div class="col-sm-offset-2">
+                            @if (Model == null)
+                            {
+                                @*<button type="submit" onclick="addEdit('new')" class="btn btn-success">حفظ و جديد</button>
+                                    <button class="btn btn-success" onclick="addEdit()">حفظ</button>
+                                    <button class="btn btn-success" onclick="addCarWorkOrder()">انشاء أمر شغل</button>
+                                    <button class="btn btn-success" onclick="addCarSalesOrder()">انشاء فاتورة بيع</button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>*@
+                            }
+                            else if (Model.IsDeleted == false)
+                            {
+                            <a id="printReport" class="btn btn-success" target="_blank" href="/Report/CarEntrance?print=true&id=@ViewBag.CarEntranceId" role="button">@MyERP.Properties.Resources.PrintSalesInvoice</a>
+
+                                <!--<button class="btn btn-success" onclick="addEdit()"--> @*@Html.Raw(ViewBag.CanAccessInsallmentPlan == false && Model.IsInstallmentPlan == true ? "disabled" : "")*@
+                                <!--حفظ
+                                </button>-->
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                            @MyERP.Properties.Resources.Delete
+                        </button>
+                                <label>@ViewBag.PurchaseInvoicesAlert</label>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@if (Model != null && ViewBag.Journal != null)
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="header-title">@MyERP.Properties.Resources.JournalEntry</h5>
+            <div class="form-horizontal">
+                <div class="form-group row">
+                    <label for="JournalDocNo" class="col-sm-1 control-label">@MyERP.Properties.Resources.JournalEntrieNo</label>
+                    <div class="col-sm-5">
+                        <input type="text" class="form-control" name="JournalDocNo" value="@ViewBag.Journal.DocumentNumber" id="JournalDocNo" placeholder=@MyERP.Properties.Resources.JournalEntrieNo readonly>
+
+                    </div>
+                    <label for="JournalDate" class="col-sm-1 control-label">@MyERP.Properties.Resources.Date </label>
+                    <div class="col-sm-5">
+                        <input type="datetime-local" class="form-control" name="JournalDate" value="@ViewBag.VoucherDate" id="JournalDate" placeholder=@MyERP.Properties.Resources.Date readonly>
+
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="JournalNotes" class="col-sm-1 control-label">@MyERP.Properties.Resources.Notes</label>
+                    <div class="col-sm-5">
+                        <textarea class="form-control" id="JournalNotes" value="@ViewBag.Journal.Notes" readonly name="JournalNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                    </div>
+
+                    <label for="JournalIsPosted" class="col-sm-1 control-label">@MyERP.Properties.Resources.Posted</label>
+                    <div class="col-sm-5">
+                        <input type="checkbox" id="JournalIsPosted" name="JournalIsPosted" disabled @Html.Raw(Model.IsPosted == true ? "checked" : null)>
+
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                        <div class="table-responsive">
+                            <table class="table table-centered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@MyERP.Properties.Resources.Debit</th>
+                                        <th>@MyERP.Properties.Resources.Credit</th>
+                                        <th>@MyERP.Properties.Resources.Account</th>
+                                        <th> @MyERP.Properties.Resources.CostCenter</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="JournalEntryDetails-tbody">
+                                    @foreach (var item in ViewBag.Journal.JournalEntryDetails)
+                                    {
+                                        if (item.Debit > 0 || item.Credit > 0)
+                                        {
+                                            <tr>
+                                                <td>@item.Debit</td>
+                                                <td>@item.Credit</td>
+                                                <td>
+                                                    @Html.Raw(item.ChartOfAccount != null ? item.ChartOfAccount.ArName : null)
+                                                    <input type="hidden" class="JournalAccountId" value="@item.AccountId" />
+                                                </td>
+                                                <td>
+                                                    @Html.Raw(item.CostCenter != null ? item.CostCenter.ArName : null)
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<script>
+
+    let CarServices = [];
+    let Services = [];
+    var customers = [];
+    var models = [];
+    var taxPercentage = 0.14;
+
+
+    $('#DepartmentId').on('change', function () {
+        setDocNum();
+    });
+
+    $('#VoucherDate').on('change', function () {
+        GetCurrentTaxPercentage();
+        setDocNum();
+    });
+
+
+    function getCustomers() {
+        //if (refill == true)
+        //    requestCache['/Helper/GetCustomers'] = null;
+        return requestData('/Helper/GetCustomers').done(function (r) {
+            customers = r;
+        });
+    }
+
+
+    function getServices() {
+        return requestData('/CarEntrance/GetService').done(function (r) {
+            Services = r;
+        });
+    }
+
+    $('#CustomerId').on('change', function () {
+        getCustomers();
+        let customer = customers.filter(function (i) { return i.Id == $('#CustomerId').val() })[0];
+        if (customer) {
+            $('#customer-address').val(customer.Address);
+            $('#customer-mobile').val(customer.Mobile);
+        }
+    });
+
+    $('#CarTypeId').on('change', function () {
+        let id = $('#CarTypeId').val();
+        requestData('/CarModel/GetModels/' + id).done(function (r) {
+            models = r;
+        });
+        $('#CarModelId').empty();
+        if (models.length > 0) {
+            for (var i = 0; i < models.length; i++) {
+                $("#CarModelId").append(`<option value="` + models[i].Id + `">` + models[i].ArName + `</option>`);
+            }
+        }
+        else {
+            $("#CarModelId").append(`<option>@MyERP.Properties.Resources.NoModelsForThisType</option>`);
+        }
+    });
+
+    $(document).on('change', '.DiscountPercentage', function () {
+
+        let DisountPercentageInput = $(this);
+        let price = DisountPercentageInput.closest('tr').find('.price').val();
+        let discountValue;
+        if (DisountPercentageInput.val() > 0)
+            discountValue = DisountPercentageInput.val() * DisountPercentageInput.closest('tr').find('.price').val() / 100;
+        else
+            discountValue = DisountPercentageInput.val() * DisountPercentageInput.closest('tr').find('.price').val();
+        DisountPercentageInput.closest('tr').find('.DiscountValue').val(discountValue);
+        let totalAfterDiscount = price - discountValue;
+        DisountPercentageInput.closest('tr').find('.TotalAfterDiscount').val(totalAfterDiscount);
+
+        CalculateTotals();
+    });
+
+    $(document).on('change', '.DiscountValue', function () {
+
+        let DisountValueInput = $(this);
+        let price = DisountValueInput.closest('tr').find('.price').val();
+        let discountPercentage;
+        discountPercentage = DisountValueInput.val() / price * 100;
+        DisountValueInput.closest('tr').find('.DiscountPercentage').val(discountPercentage);
+        let totalAfterDiscount = price - DisountValueInput.val();
+        DisountValueInput.closest('tr').find('.TotalAfterDiscount').val(totalAfterDiscount);
+
+        CalculateTotals();
+    });
+
+
+    $(document).on('change', '#VoucherDiscountPercentage', function () {
+        let VoucherDiscountPercentageInput = $(this);
+        let total = $('#Total').val();
+        $('#DiscountValue').val(total * VoucherDiscountPercentageInput.val() / 100);
+        CalculateTotals();
+    });
+
+    $(document).on('change', '#DiscountValue', function () {
+        let VoucherDiscountValueInput = $(this);
+        let total = $('#Total').val();
+        let result = Math.round(VoucherDiscountValueInput.val() / total * 100);
+        $('#VoucherDiscountPercentage').val(result);
+        CalculateTotals();
+    });
+
+    $(document).on('change', '#SalesTaxes', function () {
+        CalculateTotals();
+    });
+
+    $('#hasTaxes').on('click', function () {
+        if ($('#hasTaxes').prop('checked')) {
+            $('.taxes').show();
+        }
+        else {
+            $('.taxes').hide();
+            $('#SalesTaxes').val(0);
+            $('#TotalAfterTaxes').val(0);
+        }
+        CalculateTotals();
+    });
+
+
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/CarSalesInvoice/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+
+    function GetCurrentTaxPercentage() {
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val()).done(function (r) {
+            taxPercentage = r / 100;
+            CalculateTotals();
+        });
+
+    }
+
+    $(document).on('keyup', '.service-name', function () {
+        let ServiceNameInput = $(this);
+        if (!CarServices.length)
+            CarServices = $.map(Services, function (n) {
+                return { label: n.ArName, value: n.Price, type: n.TypeId, id: n.Id };
+            });
+        $(this).autocomplete({
+            source: CarServices,
+            select: function (event, ui) {
+                event.preventDefault();
+                $(ServiceNameInput).val(ui.item.label);
+
+                $(ServiceNameInput).closest('tr').find('.price').val(ui.item.value).trigger('change');
+                $(ServiceNameInput).closest('tr').find('.TotalAfterDiscount').val($(ServiceNameInput).closest('tr').find('.price').val());
+                if (ui.item.type == 0)
+                    $(ServiceNameInput).closest('tr').find('.CarServiceTypeId').text("خدمة").trigger('change');
+                else
+                    $(ServiceNameInput).closest('tr').find('.CarServiceTypeId').text("إضافة").trigger('change');
+
+
+                $(ServiceNameInput).closest('tr').find('.serviceId').val(ui.item.id).trigger('change');
+                addToCarEntranceDetails();
+                CalculateTotals();
+            },
+            minLength: 0,
+            focus: function (event, ui) {
+                event.preventDefault();
+            }
+
+
+        })
+    });
+
+    function addToCarEntranceDetails() {
+
+        //if ($('.service-name').last().val())
+        //    $('#CarEntranceDetails').find('.service-name, .price, .DiscountPercentage, .DiscountValue').prop('required', 'required');
+
+        //if ($('#CarEntranceDetails .DiscountPercentage:last').val())
+        // {
+
+        let tr = '<tr><td class="tabledit-edit-mode"><input type="hidden" class="serviceId form-control tabledit-input form-control-sm"/><input type="text" class="service-name form-control tabledit-input form-control-sm"/></td ><td class="tabledit-edit-mode"><input type="number" step="any" class="price form-control tabledit-input form-control-sm small-number" readonly required /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="DiscountPercentage money form-control tabledit-input form-control-sm"  /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="DiscountValue money form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="TotalAfterDiscount form-control tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode"><label class="CarServiceTypeId"></label></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+
+        $('#CarEntranceDetails').append(tr);
+        $('#CarEntranceDetails .money').inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $('#CarEntranceDetails input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $('#CarEntranceDetails input.small-number').removeProp('oninput').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+
+        // }
+    }
+
+
+    function CalculateTotals() {
+        var total = 0;
+        $('.TotalAfterDiscount').each(function () {
+            total += $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#Total').val(total);
+        if ($('#DiscountValue').val()) {
+            total -= $('#DiscountValue').inputmask('unmaskedvalue');
+        }
+        $('#NetTotal').val(total);
+
+        if ($('#hasTaxes').prop('checked')) {
+            $('#SalesTaxes').val(total * taxPercentage);
+            total += $('#SalesTaxes').inputmask('unmaskedvalue') * 1;
+        }
+        $('#TotalAfterTaxes').val(total);
+    }
+
+
+
+    function addCustomer() {
+        if ($("#customer-modal").find(".form-control:invalid").length > 0) {
+            $("#customer-modal").find('.form-horizontal').addClass('was-validated');
+        } else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Customers/addedit', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        ArName: $("#ArName").val(),
+                        EnName: $('#EnName').val(),
+                        Address: $('#Address').val(),
+                        Mobile: $('#Mobile').val(),
+                        Notes: $('#Notes').val(),
+                        IsBranch: false,
+                        IncludeFees: false
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        //appendCustomerOptions(true).then(function () { $('#CustomerId').val(r.Id).trigger('change'); });
+                        $('#customer-modal').modal('hide');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1)
+            $(tr).find("input").val('');
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+        }
+        //CalculateTotals();
+        //addToSalesInvoiceDetails();
+    }
+
+    $(document).ready(function () {
+        $('#VoucherDiscountPercentage').inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 5, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+
+        getServices();
+        if ($('#Id').val()) {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#VoucherDate").prop('disabled', true);
+
+            if ($('#hasTaxes').prop('checked')) {
+                $('.taxes').show();
+            }
+            $('#DepartmentId').prop('disabled', 'disabled');
+
+            if ($('#SalesTaxes').val() * 1 > 0)
+                taxPercentage = ($('#TotalAfterTaxes').val() * 1 - $('#NetTotal').val() * 1) / 100;
+        }
+        else {
+
+            $('#hasTaxes').trigger('change');
+            setDocNum();
+            GetCurrentTaxPercentage();
+        }
+        //calculateTotalForEachService();
+        $('#img').on('change', function () {
+
+            $('#oImg').val($('#img').val());
+        });
+
+
+        //getCustomers();
+        //let customer = customers.filter(function (i) { return i.Id == $('#CustomerId').val() })[0];
+        //if (customer)
+        //{
+        //    $('#customer-address').val(customer.Address);
+        //    $('#customer-mobile').val(customer.Mobile);
+        //}
+
+    });
+
+
+
+
+
+
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+
+        var CarEntranceDetails = [];
+        if (valid) {
+            $('#CarEntranceDetails tr').each(function () {
+                var tr = $(this);
+                if (tr.find('.serviceId').val() > 0) {
+                    let serviceId = Services.filter(function (i) { return i.Id == tr.find('.serviceId').val(); })[0].Id;
+                    let serviceTypeId;
+                    if (tr.find('CarServiceTypeId').text() == "خدمة")
+                        serviceTypeId = 0;
+                    else
+                        serviceTypeId = 1;
+
+                    var carEntranceDetail =
+                    {
+                        CarServiceId: serviceId,
+                        MainDocId: $('#Id').val(),
+                        ServiceDiscountValue: tr.find('.DiscountValue').val(),
+                        ServiceDiscountPercentage: tr.find('.DiscountPercentage').val(),
+                        Price: tr.find('.price').val(),
+                        ServiceNetTotal: tr.find('.TotalAfterDiscount').val(),
+                        ServiceTypeId: serviceTypeId,
+                        IsDeleted: false,
+                    };
+
+                    CarEntranceDetails.push(carEntranceDetail);
+                }
+            });
+            valid = CarEntranceDetails.length > 0 ? true : false;
+            valid == false ? Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            }) : null;
+        }
+
+
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/CarEntrance/AddEdit",
+                        data:
+                            JSON.stringify({
+                                Id: $('#Id').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                VoucherDate: $('#VoucherDate').val(),
+                                OutDate: $('#OutDate').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                CustomerId: $('#CustomerId').val(),
+                                CarPlateNumber: $('#CarPlateNumber').val(),
+                                CarSerialNumber: $('#CarSerialNumber').val(),
+                                CarTypeId: $('#CarTypeId').val(),
+                                CarColorId: $('#CarColorId').val(),
+                                CarModelId: $('#CarModelId').val(),
+                                CarServiceCategoryId: $('#CarServiceCategoryId').val(),
+                                Notes: $('#Notes').val(),
+                                Total: $('#Total').inputmask('unmaskedvalue'),
+                                SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+                                TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+                                VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+                                VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+                                NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                                CarEntranceDetails: CarEntranceDetails,
+                                IsActive: true,
+                                IsDeleted: false,
+                                CarInOdometer: $('#CarInOdometer').val(),
+                                CarOutOdometer: $('#CarOutOdometer').val()
+                            }),
+                        success: function (r) {
+                            if (r.success == "true") {
+
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); 
+                                $('#preloader, #status').fadeOut();
+                                if (n == "new") {
+                                    window.location.replace("/CarSalesInvoice/AddEdit");
+                                }
+                                else {
+                                    if (n == "report") {
+                                        window.open("/Report/CarEntrance/" + r.id);
+                                        window.location.replace("/CarEntrance");
+                                    }
+                                    else {
+                                        window.location.replace("/CarSalesInvoice");
+                                    }
+                                }
+
+                            }
+                            else {
+                                $('#preloader, #status').fadeOut();
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/CarSalesInvoice/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/CarEntrance');
+                            } else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+
+</script>

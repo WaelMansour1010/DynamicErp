@@ -1,0 +1,136 @@
+﻿@model IEnumerable<MyERP.Models.CustomerSourceType>
+
+@{
+    ViewBag.Title = "مصادر العملاء";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("AddEdit")" role="button" style="float:left;">إضافة جديد</a>
+            </div>
+            <h4 class="page-title"> مصادر العملاء</h4>
+        </div>
+    </div>
+</div>
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                الاسم باللغة العربية
+                            </th>
+
+                            <th>
+                                الاسم باللغة الإنجليزية
+                            </th>
+                            <th>
+                                نشط
+                            </th>
+                            <th>
+                                تعديل
+                            </th>
+                            <th>
+                                حذف
+                            </th>
+                        </tr>
+                    </thead>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ArName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.EnName)
+                            </td>
+                            <td>
+
+                                <input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateAndDeactivate(@item.Id)" />
+
+                                @*<label class="switch">
+            @if (item.IsActive == true)
+            {
+                <input class="switch-input" type="checkbox" checked="checked" onclick="ActivateAndDeactivate(@item.Id)" />
+            }
+            else
+            {
+                <input class="switch-input" type="checkbox" onclick="ActivateAndDeactivate(@item.Id)" />
+            }
+
+            <span class="switch-label" data-on="نشط" data-off="غير نشط"></span>
+            <span class="switch-handle"></span>
+        </label>*@
+
+                            </td>
+                            <td>
+                                <a href="@Url.Action("AddEdit","CustomerSourceType",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0);" onclick="Delete(@item.Id)">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+
+                            </td>
+                        </tr>
+                    }
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+
+        function Delete(id) {
+            if (confirm('هل تريد الحذف؟')) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+
+                        url: '/CustomerSourceType/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            
+                        },
+                        success: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            if (r == 'true') {
+                                window.location.reload();
+                            }
+                        }
+                    });
+            }
+        }
+
+        function ActivateAndDeactivate(id) {
+            $('#preloader, #status').fadeIn();
+            $.ajax({
+                url: '/CustomerSourceType/ActivateDeactivate',
+                type: 'POST',
+                data: {
+                    "Id": id,
+                },
+                error: function (e) {
+                    $('#preloader, #status').fadeOut();
+                    
+                },
+                success: function (r) {
+                    if (r == 'true') {
+                        $('#preloader, #status').fadeOut();
+                        alert('تم تغير حالة التنشيط!')
+                    }
+                }
+            });
+        }
+    </script>

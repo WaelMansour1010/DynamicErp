@@ -1,0 +1,579 @@
+﻿@model MyERP.Models.FixedAssetScraping
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.FixedAssetScraping;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.FixedAssetScraping :</h4>
+        </div>
+    </div>
+</div>
+
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+@if (Model != null)
+{
+    @Html.HiddenFor(model => model.Id)
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.UserId)
+}
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-5">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                        @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="Date" class="control-label col-sm-1">@MyERP.Properties.Resources.VoucherDate</label>
+                                    <div class="col-sm-5">
+                                        <input id="Date" class="form-control" type="datetime-local" value="@ViewBag.Date" required/>
+                                        @Html.ValidationMessageFor(model => model.Date, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-1 control-label">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required="required" })
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-1" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-5">
+                                        <textarea id="Notes" name="Notes" class="form-control">@Html.Raw(Model!=null?Model.Notes:null)</textarea>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.Details</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Asset</th>
+                                                <th>@MyERP.Properties.Resources.AssetValue</th>
+                                                <th>@MyERP.Properties.Resources.CurrentAssetValue</th>
+                                                <th>@MyERP.Properties.Resources.LastDepreciationDate</th>
+                                                <th>@MyERP.Properties.Resources.Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="FixedAssetScrapingDetails">
+                                            @if (Model != null && Model.Id > 0)
+                                            {
+                                                foreach (var item in Model.FixedAssetScrapingDetails)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <select class="form-control tabledit-input form-control-sm fixed-asset"><option selected value="@item.FixedAssetId"></option></select>
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="form-control money fixed-asset-value tabledit-input form-control-sm" value="@item.FixedAssetValue" readonly />
+                                                            <input class="HistoricalValueOfAsset" type="hidden" value="@item.HistoricalValueOfAsset" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode"><input class="form-control money current-fixed-asset-value tabledit-input form-control-sm" value="@item.CurrentFixedAssetValue" readonly /></td>
+                                                        <td class="tabledit-edit-mode"><input type="datetime-local" class="form-control money last-depreciation-date tabledit-input form-control-sm" value="@Html.Raw(item.LastDepreciationDate.HasValue?item.LastDepreciationDate.Value.ToString("yyyy-MM-ddTHH:mm"):"")" readonly /></td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteRow(this);">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                          
+                                                <tr>
+                                                    <td class="tabledit-edit-mode">
+                                                        <select class="form-control tabledit-input form-control-sm fixed-asset"></select>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input class="form-control money fixed-asset-value tabledit-input form-control-sm" readonly />
+                                                        <input class="HistoricalValueOfAsset" type="hidden" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode"><input class="form-control money current-fixed-asset-value tabledit-input form-control-sm" readonly /></td>
+                                                    <td class="tabledit-edit-mode"><input type="datetime-local" class="form-control money last-depreciation-date tabledit-input form-control-sm" readonly /></td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="deleteRow(this);">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="form-group row">
+                                <label class=" col-sm-1 control-label" for="Total">
+                                    @MyERP.Properties.Resources.TotalScrapingValue
+                                </label>
+                                <div class="col-sm-5">
+                                    @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control money", @readonly = "readonly" } })
+                                    @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row"></div>
+                    <div class="col-sm-offset-2">
+                        @if (Model == null)
+                        {
+                        <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else
+                        {
+                            if (Model.IsDeleted == false)
+                            {
+                    <button class="btn btn-success" id="save" onclick="addEdit()" @Html.Raw(ViewBag.Editable ? "" : "disabled")>
+                        @MyERP.Properties.Resources.Save
+                    </button>
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    <button class="btn btn-danger" onclick="Delete(@Model.Id)" @Html.Raw(ViewBag.Editable ? "" : "disabled")>
+                        @MyERP.Properties.Resources.Delete
+                    </button>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model != null && ViewBag.Journal != null)
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="header-title">@MyERP.Properties.Resources.JournalEntryDetails</h5>
+            <div class="form-horizontal">
+                <div class="form-group row">
+                    <label for="JournalDocNo" class="col-sm-1 control-label">@MyERP.Properties.Resources.JournalEntrieNo</label>
+                    <div class="col-sm-5">
+                        <input type="text" class="form-control" name="JournalDocNo" value="@ViewBag.Journal.DocumentNumber" id="JournalDocNo" placeholder=@MyERP.Properties.Resources.JournalEntrieNo readonly>
+
+                    </div>
+                    <label for="JournalDate" class="col-sm-1 control-label">@MyERP.Properties.Resources.Date </label>
+                    <div class="col-sm-5">
+                        <input type="datetime-local" class="form-control" name="JournalDate" value="@ViewBag.Journal.Date.ToString("yyyy-MM-ddTHH:mm")" id="JournalDate" placeholder=@MyERP.Properties.Resources.Date readonly>
+
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="JournalNotes" class="col-sm-1 control-label">@MyERP.Properties.Resources.Notes</label>
+                    <div class="col-sm-5">
+                        <textarea class="form-control" id="JournalNotes" value="@ViewBag.Journal.Notes" readonly name="JournalNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                    </div>
+
+                    <label for="JournalIsPosted" class="col-sm-1 control-label">@MyERP.Properties.Resources.Posted</label>
+                    <div class="col-sm-5">
+                        <input type="checkbox" id="JournalIsPosted" name="JournalIsPosted" disabled @Html.Raw(Model.IsPosted == true ? "checked" : null)>
+
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails </h5>
+                        <div class="table-responsive">
+                            <table class="table table-centered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>@MyERP.Properties.Resources.Debit</th>
+                                        <th>@MyERP.Properties.Resources.Credit</th>
+                                        <th>@MyERP.Properties.Resources.Account</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="JournalEntryDetails-tbody">
+                                    @foreach (var item in ViewBag.Journal.JournalEntryDetails)
+                                    {
+                                        if (item.Debit > 0 || item.Credit > 0)
+                                        {
+                                            <tr>
+                                                <td>@item.Debit</td>
+                                                <td>@item.Credit</td>
+                                                <td>
+                                                    @Html.Raw(item.ChartOfAccount != null ? item.ChartOfAccount.ArName : null)
+                                                    <input type="hidden" class="JournalAccountId" value="@item.AccountId" />
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    var fixedAssets;
+    let editMode = false;
+
+    function getFixedAssetsByDepartment() {
+        return $.get('/FixedAssetScraping/FixedAssetsByDepartment/' + $('#DepartmentId').val()+'?fixedAssetScrapingId='+$('#Id').val()).done(function (r) {
+            var options = '<option value>@MyERP.Properties.Resources.Select</option>';
+            for (var i = 0; i < r.length; i++) {
+                options += ('<option value="' + r[i].Id + '">' + r[i].ArName + '</option>');
+            }
+            fixedAssets = options;
+            $('#preloader, #status').fadeOut();
+        }).fail(function () { $('#preloader, #status').fadeOut(); fixedAssets = ''; });
+    }
+
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd).prop("oninput", "validity.valid||(value='');");
+        });
+        if ($('#Id').val()) {
+            editMode = true;
+            getFixedAssetsByDepartment().then(function () { fillFixedAssets(); editMode = false; });
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        } else {
+            setDocNum();
+            if ($('#DepartmentId').val()) {
+                $('#preloader, #status').fadeIn();
+                getFixedAssetsByDepartment().then(function () { $('.fixed-asset').append(fixedAssets); });
+            }
+        }
+    });
+
+    function fillFixedAssets() {
+        $('.fixed-asset').each(function () {
+            let selectedItem = $(this).val();
+            $(this).empty().append(fixedAssets);
+            if (selectedItem)
+                $(this).val(selectedItem).trigger('change');
+        });
+    }
+
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/FixedAssetScraping/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+    $('#Date').on('change', function () {
+        setDocNum();
+    });
+
+    $('#DepartmentId').on('change', function () {
+        setDocNum();
+        $('#preloader, #status').fadeIn();
+        getFixedAssetsByDepartment().then(function () {
+            $('#FixedAssetScrapingDetails').find('tr').remove();
+            appendToFixedAssetDepreciationDetails();
+        });
+        calculateTotal();
+    });
+
+    function getFixedAssetDepreciationValues(fixedAssetId = null, fixedAssetSelect) {
+        $('#preloader, #status').fadeIn();
+        $.get('/FixedAssetScraping/_FixedAssetscrapingValues?fixedAssetId=' + fixedAssetId + '&departmentId=' + $('#DepartmentId').val() + '&date=' + $('#Date').val()).done(function (r) {
+            let trIndex = $(fixedAssetSelect).closest('tr').index();
+            if ($('#FixedAssetScrapingDetails').find('tr').length > trIndex + 1)
+                $(fixedAssetSelect).closest('tr').replaceWith(r);
+            else
+                $(r).insertBefore($('#FixedAssetScrapingDetails').find('tr').last());
+
+            $('#FixedAssetScrapingDetails').find('tr').eq(trIndex).each(function () {
+                $(this).find('td').eq(0).html('<select class="form-control fixed-asset"></select>');
+                if (fixedAssets)
+                    $(this).find('.fixed-asset').append(fixedAssets);
+                else {
+                    $('#preloader, #status').fadeIn();
+                    getFixedAssetsByDepartment.then(function () {
+                        $(this).find('.fixed-asset').append(fixedAssets);
+                    });
+                }
+                $('.fixed-asset').last()[0].selectedIndex = 0;
+                $('.fixed-asset').last().trigger('change');
+                $(this).find('.fixed-asset').val(fixedAssetId);//.trigger('change');
+
+            });
+            $('#FixedAssetScrapingDetails').find('select').select2();
+            $('.money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': true, 'placeholder': '0'
+            });
+            calculateTotal();
+            $('#preloader, #status').fadeOut();
+        }).fail(function () {
+            $(fixedAssetSelect).closest('tr').find('input').val('');
+            $('#preloader, #status').fadeOut();
+        });
+    }
+
+    $(document).on('change', '.fixed-asset', function () {
+        if (!editMode) {
+            let fixedAssets = [];
+            $('.fixed-asset').not(this).each(function () {
+                if ($(this).val())
+                    fixedAssets.push($(this).val());
+            });
+            if ($(this).val()) {
+                if (fixedAssets.includes($(this).val())) {
+                    Swal.fire({
+        title: '@MyERP.Properties.Resources.TheSameAssetCannotBeSelectedMoreThanOnce',
+        text: " ",
+        icon: 'info',
+        showCancelButton: false,
+        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+        confirmButtonColor: '#3085d6'
+    });
+                    $(this)[0].selectedIndex = 0;
+                    $(this).trigger('change');
+                    $(this).closest('tr').find('input').val('');
+                } else //if ($('.fixed-asset').last().val())
+                    getFixedAssetDepreciationValues($(this).val(), $(this));
+            } else
+                $(this).closest('tr').find('input').val('');
+            calculateTotal();
+        }
+    });
+
+    function appendToFixedAssetDepreciationDetails() {
+        $('#FixedAssetScrapingDetails').append('<tr><td class="tabledit-edit-mode"><select class="form-control tabledit-input form-control-sm fixed-asset"></select></td><td class="tabledit-edit-mode"><input class="form-control money fixed-asset-value tabledit-input form-control-sm" readonly /><input class="HistoricalValueOfAsset" type="hidden" /></td><td class="tabledit-edit-mode"><input class="form-control money current-fixed-asset-value tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="form-control money last-depreciation-date tabledit-input form-control-sm" readonly /></td><td><a href="javascript:void(0);" onclick="deleteRow(this);"><i class="fas fa-trash-alt"></i></a></td></tr>');
+        $('.fixed-asset').append(fixedAssets);
+        $('.fixed-asset').select2();
+    }
+
+    function deleteRow(e) {
+        if ($('#FixedAssetScrapingDetails').find('tr').length > $(e).closest('tr').index() + 1) {
+            $(e).closest('tr').remove();
+            calculateTotal()
+        }
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        $('#FixedAssetScrapingDetails').find('tr').each(function () {
+            total += $(this).find('.fixed-asset-value').inputmask('unmaskedvalue') * 1 - $(this).find('.current-fixed-asset-value').inputmask('unmaskedvalue') * 1;
+        });
+        $('#Total').val(total);
+    }
+
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        let FixedAssetScrapingDetails = [];
+        $('#FixedAssetScrapingDetails').find('tr').each(function () {
+            if ($(this).find('.fixed-asset').val())
+                FixedAssetScrapingDetails.push({
+                    FixedAssetId: $(this).find('.fixed-asset').val(),
+                    FixedAssetValue: $(this).find('.fixed-asset-value').inputmask('unmaskedvalue') * 1,
+                    HistoricalValueOfAsset: $(this).find('.HistoricalValueOfAsset').inputmask('unmaskedvalue') * 1,
+                    CurrentFixedAssetValue: $(this).find('.current-fixed-asset-value').inputmask('unmaskedvalue') * 1,
+                    LastDepreciationDate: $(this).find('.last-depreciation-date').val()
+                });
+        });
+        if (valid && !FixedAssetScrapingDetails.length) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            valid = false;
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: 'POST', url: '/FixedAssetScraping/AddEdit',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            Id: $('#Id').val(),
+                            DocumentNumber: $('#DocumentNumber').val(),
+                            BranchId: $('#BranchId').val(),
+                            DepartmentId: $('#DepartmentId').val(),
+                            Date: $('#Date').val(),
+                            Total: $('#Total').inputmask('unmaskedvalue') * 1,
+                            IsActive: $('#IsActive').val(),
+                            IsDeleted: $('#IsDeleted').val(),
+                            Notes: $('#Notes').val(),
+                            FixedAssetScrapingDetails: FixedAssetScrapingDetails
+                        }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); if (n == "new")
+                                    window.location.replace("/FixedAssetScraping/AddEdit");
+                                else
+                                    window.location.replace("/FixedAssetScraping");
+                            } else {
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/FixedAssetScraping/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/FixedAssetScraping');
+                        } else if (r == 'false') {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.OnlyLastScrapingDocumentCanBeDeleted',
+                                text: " ",
+                                icon: 'info',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        } else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+</script>

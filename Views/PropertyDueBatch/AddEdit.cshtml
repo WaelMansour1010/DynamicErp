@@ -1,0 +1,659 @@
+﻿@model MyERP.Models.PropertyDueBatch
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.DueBatches;
+}
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.DueBatches :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+                                @*<h5 class="header-title">
+                                @MyERP.Properties.Resources.MainData
+                            </h5>*@
+
+                                @* Panel 1 *@
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                                    @MyERP.Properties.Resources.MainData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse1">
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.TransactionNo</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                                    <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources._TransactionDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.FromDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.FromDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.ToDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.ToDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Select
+                                                    </div>
+                                                </div>
+                                                @if (Model == null)
+                                                {
+                                                    <div class="col-sm-6">
+                                                        <button type="button" class="btn btn-success" onclick="GetPropertyDueBatchDetails()">
+                                                            <i class="fa fa-search"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <!-------------- PropertyDueBatchDetails Table ---------------->
+                                            <div class="table-responsive">
+                                                <table class="table table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.ContractNo
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.BatchNo
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Renter
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Owner
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Property
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.PropertyUnitType
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.UnitNo
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Date
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.HijriDate
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.RentalValue
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Electricity
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Water
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.VAT
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.CommissionValue
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Total
+                                                            </td>
+                                                            <td>
+                                                                @MyERP.Properties.Resources.Choose
+                                                            </td>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="PropertyDueBatchDetails">
+                                                        @if (Model != null)
+                                                        {
+                                                            foreach (var item in Model.PropertyDueBatchDetails)
+                                                            {
+                                                                <tr>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="text" class="ContractId form-control tabledit-input form-control-sm" value="@item.PropertyContractId" hidden />
+                                                                        <input type="text" class="BatchId form-control tabledit-input form-control-sm" value="@item.PropertyContractBatchId" hidden /><label class="ContractNo control-label control-label">
+                                                                            @item.PropertyContract.DocumentNumber
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="BatchNo control-label control-label">
+                                                                            @item.PropertyContractBatch.BatchNo
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="Renter control-label control-label">
+                                                                            @item.PropertyContract.PropertyRenter.ArName
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="Owner control-label control-label">
+                                                                            @item.PropertyContract.PropertyOwner.ArName
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="Property control-label control-label">
+                                                                            @item.PropertyContract.Property.ArName
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="UnitType control-label control-label">
+                                                                            @item.PropertyContract.PropertyUnitType.ArName
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="UnitNo control-label control-label">
+                                                                            @(item.PropertyContract.PropertyUnit!=null?item.PropertyContract.PropertyUnit.Code:"")
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchDate.Value.ToString("yyyy-MM-dd")" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="HijryBatchDate control-label control-label">
+                                                                        </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchRentValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchRentValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchElectricityValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchElectricityValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchWaterValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchWaterValueTaxes" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchCommissionValue" disabled readonly />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchTotal" disabled readonly />
+                                                                    </td>
+                                                                    <td><input type="checkbox" class="IsSelected" @Html.Raw(item.IsSelected == true ? "checked disabled" : "") /></td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <!------------------------------------------------------------------------------------>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!---------------------------------------------- Saves Buttons ----------------------------------------------------------->
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                </div>
+            </div>
+            <!----------------------------------------------------------------------------------------------------------------------------------------->
+            <!-------- journal entry --------->
+            @if (Model != null && ViewBag.Journal != null)
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="header-title">
+                            @MyERP.Properties.Resources.JournalEntry
+
+                        </h5>
+                        <div class="form-horizontal">
+                            <div class="form-group row">
+                                <label for="JournalDocNo" class="col-sm-2 control-label">
+                                    @MyERP.Properties.Resources.JournalEntrieNo
+                                </label>
+                                <div class="col-sm-4">
+                                    <input type="text" class="form-control" name="JournalDocNo" value="@ViewBag.Journal.DocumentNumber" id="JournalDocNo" placeholder="@MyERP.Properties.Resources.JournalEntrieNo" readonly>
+
+                                </div>
+                                <label for="JournalDate" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date </label>
+                                <div class="col-sm-4">
+                                    <input type="datetime-local" class="form-control" name="JournalDate" value="@ViewBag.VoucherDate" id="JournalDate" placeholder="@MyERP.Properties.Resources.ReleaseDate" readonly>
+
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="JournalNotes" class="col-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                <div class="col-sm-4">
+                                    <textarea class="form-control" id="JournalNotes" value="@ViewBag.Journal.Notes" readonly name="JournalNotes" placeholder="@MyERP.Properties.Resources.Notes"></textarea>
+                                </div>
+
+                                @*<label for="JournalIsPosted" class="col-sm-2 control-label">@MyERP.Properties.Resources.CarriedOver</label>
+                            <div class="col-sm-4">
+                                <input type="checkbox" id="JournalIsPosted" name="JournalIsPosted" disabled @Html.Raw(Model.IsPosted == true ? "checked" : null)>
+
+                            </div>*@
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>@MyERP.Properties.Resources.Debit</th>
+                                                    <th>@MyERP.Properties.Resources.Credit</th>
+                                                    <th>@MyERP.Properties.Resources.Account</th>
+                                                    <th>@MyERP.Properties.Resources.Explanation</th>
+                                                    <th>@MyERP.Properties.Resources.CostCenter</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="JournalEntryDetails-tbody">
+                                                @foreach (var item in ViewBag.Journal.JournalEntryDetails)
+                                                {
+                                                    if (item.Debit > 0 || item.Credit > 0)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Debit</td>
+                                                            <td>@item.Credit</td>
+                                                            <td>
+                                                                @Html.Raw(item.ChartOfAccount != null ? item.ChartOfAccount.ArName : null)
+                                                                <input type="hidden" class="JournalAccountId" value="@item.AccountId" />
+                                                            </td>
+                                                            <td>@item.Notes</td>
+                                                            <td>
+                                                                @Html.Raw(item.CostCenter != null ? item.CostCenter.ArName : null)
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!----------------------------------------------------------------------------------------------->
+        </div>
+    </div>
+</div>
+
+<script>
+//--------------- Variables Declarations -------------------//
+var taxPercentage = 0.14;
+
+//*********************************************************//
+//--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#VoucherDate').val('@ViewBag.VoucherDate');
+        $('#FromDate').val('@ViewBag.FromDate');
+        $('#ToDate').val('@ViewBag.ToDate');
+
+        $('.Gregorian').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        });
+
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#FromDate,#ToDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        if ($('#Id').val() > 0) {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#VoucherDate").prop('disabled', true);
+            $('.BatchDate').each(function () {
+                var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+                $(this).closest('tr').find('.HijryBatchDate').text(Hijry);
+            });
+        }
+        else {
+            setDocNum();
+            GetCurrentTaxPercentage();
+        }
+    });
+//*********************************************************//
+
+//--------------- Event Functions -------------------//
+    $('.Gregorian').on('change', function () {
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+    });
+    $('#VoucherDate').on('change', function () {
+        GetCurrentTaxPercentage();
+    });
+
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/PropertyDueBatch/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find('.Add-Button').prop('hidden', false);
+            $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find("label").text('');
+            $(tr).find('.Add-Button').prop('hidden', false);
+            $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+        }
+    }
+    function GetCurrentTaxPercentage() {
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val()).done(function (r) {
+            taxPercentage = r / 100;
+        });
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) /*+ "T" + strTime*/);
+            }
+    function zeroPadded(val) {
+                if (val >= 10)
+                    return val;
+                else
+                    return '0' + val;
+    }
+    function GetPropertyDueBatchDetails() {
+        $('#PropertyDueBatchDetails').empty();
+        $.get('/PropertyDueBatch/GetPropertyDueBatchDetails?FromDate=' + $('#FromDate').val() + '&ToDate=' + $('#ToDate').val()).done(function (r) {
+            if (r.length) {
+                for (var i = 0; i < r.length; i++) {
+                    r[i].BatchDate = r[i].BatchDate != null ? convertToJavaScriptDate(r[i].BatchDate) : "";
+                    r[i].UnitNo = r[i].UnitNo != null ? r[i].UnitNo : "";
+                    [i].IsSelected = [i].IsSelected == true ? "checked" : "";
+                    var HijryBatchDate =new Intl.DateTimeFormat('ar-sa').format(new Date(r[i].BatchDate)).toString();
+
+                    let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="ContractId form-control tabledit-input form-control-sm" value="'+
+                        r[i].ContractId + '" hidden /><input type="text" class="BatchId form-control tabledit-input form-control-sm" value="' +
+                        r[i].BatchId + '" hidden /><label class="ContractNo control-label control-label">' +
+                        r[i].ContractNo + '</label></td><td class="tabledit-edit-mode"><label class="BatchNo control-label control-label">' +
+                        r[i].BatchNo + '</label></td><td class="tabledit-edit-mode"><label class="Renter control-label control-label"> ' +
+                        r[i].Renter + '</label></td><td class="tabledit-edit-mode"><label class="Owner control-label control-label">' +
+                        r[i].Owner + '</label></td><td class="tabledit-edit-mode"><label class="Property control-label control-label">' +
+                        r[i].Property + '</label></td><td class="tabledit-edit-mode"><label class="UnitType control-label control-label">' +
+                        r[i].UnitType + '</label></td><td class="tabledit-edit-mode"><label class="UnitNo control-label control-label">' +
+                        r[i].UnitNo + '</label></td><td class="tabledit-edit-mode"><input type = "date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value = "'+
+                        r[i].BatchDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label">' +
+                        HijryBatchDate + '</label></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' +
+                        r[i].BatchRentValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value = "'+
+                        r[i].BatchRentValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchElectricityValue form-control tabledit-input form-control-sm" value = "'+
+                        r[i].BatchElectricityValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value = "'+
+                        r[i].BatchElectricityValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="' +
+                        r[i].BatchWaterValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' +
+                        r[i].BatchWaterValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="' +
+                        r[i].BatchCommissionValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="' +
+                        r[i].BatchTotal + '" disabled readonly /></td><td><input type="checkbox" class="IsSelected" '+r[i].IsSelected+' /></td></tr> ';
+                    $('#PropertyDueBatchDetails').append(tr);
+                }
+            }
+        });
+    }
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        if($('#PropertyDueBatchDetails tr').length == 0)
+        {
+            valid = false;
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                text: " ",
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        var PropertyDueBatchDetails = [];
+        if (valid) {
+            $('#PropertyDueBatchDetails tr').each(function () {
+                var td = $(this);
+                var PropertyDueBatchDetail = {
+                    PropertyContractId: td.find('.ContractId').val(),
+                    PropertyContractBatchId: td.find('.BatchId').val(),
+                    IsDeleted: false,
+                    UserId: $('#UserId').val(),
+                    Notes: td.find('.Notes').val(),
+                    Image: td.find('.Image').val(),
+                    IsSelected: td.find('.IsSelected').prop('checked'),
+                };
+                if (td.find('.IsSelected').prop('checked') == true) {
+                    PropertyDueBatchDetails.push(PropertyDueBatchDetail);
+                }
+            });
+            if (PropertyDueBatchDetails.length == 0) {
+                valid = false;
+                 Swal.fire({
+                title: '@MyERP.Properties.Resources.YouMustChooseOneBatchAtLeast',
+                text: " ",
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            }
+        }
+
+        var PropertyDueBatch = {
+                Id: $('#Id').val(),
+                DocumentNumber: $('#DocumentNumber').val(),
+                DepartmentId: $('#DepartmentId').val(),
+                VoucherDate: $('#VoucherDate').val(),
+                FromDate: $('#FromDate').val(),
+                ToDate: $('#ToDate').val(),
+                IsDeleted: $('#IsDeleted').val(),
+                UserId: $('#UserId').val(),
+                Notes: $('#Notes').val(),
+                Image: $('#Image').val(),
+            PropertyDueBatchDetails: PropertyDueBatchDetails,
+            }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/PropertyDueBatch/AddEdit",
+                        data: JSON.stringify(PropertyDueBatch),
+                        success: function (r) {
+                            if (r.success == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                if (n == "new") {
+                                    window.location.replace("/PropertyDueBatch/AddEdit");
+                                } else {
+                                    window.location.replace("/PropertyDueBatch");
+                                }
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PropertyDueBatch/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/PropertyDueBatch');
+                        }
+                    }
+                });
+        }
+    }
+
+</script>

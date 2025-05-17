@@ -1,0 +1,190 @@
+﻿@model IEnumerable<MyERP.Models.ItemGroup>
+@{
+    bool isECommerce = System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true" ? true : false;
+    string AmazonS3Server = string.IsNullOrEmpty(System.Web.Configuration.WebConfigurationManager.AppSettings["AmazonS3Server"]) ? "" : System.Web.Configuration.WebConfigurationManager.AppSettings["AmazonS3Server"];
+}
+<div class="card m-1 p-1">
+    <div class="row">
+        <ul style="padding-left:10% ;padding-right:1%" class="pagination pagination-rounded justify-content-center" id="groupPaging">
+
+            <li class="btn btn-info" onclick="next()" style="margin-left:2px">&#8249;</li>
+            <li class="btn btn-info" onclick="previous()">&#8250;</li>
+        </ul>
+        <ul class="pagination pagination-rounded justify-content-center" id="itemPaging"></ul>
+    </div>
+    <div class="row">
+
+
+        <div class="col-sm-2">
+
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                @if (ViewBag.MiniPos == true)
+                {
+                    foreach (var item in Model)
+                    {
+                        <a class="nav-link mb-2" id="@item.Id-tab" data-toggle="pill" onclick="refreshItems('@item.Id')" href="#v-@item.Id" role="tab" aria-controls="v-@item.Id" aria-selected="false">@item.ArName</a>
+                    }
+                }
+                else if (ViewBag.ShowItemImageInsteadOfItemName != true)
+                {
+                    foreach (var item in Model)
+                    {
+                        <a class="nav-link mb-2" id="@item.Id-tab" data-toggle="pill" onclick="refreshItems('@item.Id')" href="#v-@item.Id" role="tab" aria-controls="v-@item.Id" aria-selected="false">@item.ArName</a>
+                    }
+                }
+                else
+                {
+                    if (isECommerce == true)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <img width="80" height="80" class="nav-link pr-2 pb-2" id="@item.Id-tab" data-toggle="pill" onclick="refreshItems('@item.Id')" href="#v-@item.Id" role="tab" aria-controls="v-@item.Id" aria-selected="false" src="https://mysoftecom.s3.us-east-2.amazonaws.com/Groups/@item.Image" />
+                        }
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <img width="80" height="80" class="nav-link pr-2 pb-2" id="@item.Id-tab" data-toggle="pill" onclick="refreshItems('@item.Id')" href="#v-@item.Id" role="tab" aria-controls="v-@item.Id" aria-selected="false" src="@item.Image" />
+                        }
+                    }
+
+                }
+            </div>
+        </div>
+
+        <div class="col-sm-10">
+
+            <div class="tab-content pt-0">
+
+                @*@foreach (var itemGroup in Model)
+                    {*@
+                @*<div class="tab-pane fade" id="v-@itemGroup.Id" role="tabpanel" aria-labelledby="@itemGroup.Id-tab">*@
+                <div class="row" id="itemsPanel" style="overflow-y:scroll;">
+                    <!-- Plans -->
+                    @*@foreach (var item in itemGroup.Items.Where(x=>x.IsDeleted==false && x.IsActive==true).OrderBy(x => x.Id).Skip(0).Take(5).ToList())
+                        {
+                            <div class="col-xl-4 col-md-6 mb-1">
+                                <input type="hidden" class="item-id" value="@item.Id" />
+                                <button class="btn btn-outline-primary waves-effect waves-light col-sm-12" onclick="addItem(this)">@item.ArName</button>
+                            </div>
+                        }*@
+                </div>
+                @*</div>*@
+                @*}*@
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    var itemIndex = 1;
+    var itemsCount = 0;
+    var groupId = 0;
+
+    //$(document).ready(function () {
+    //    refreshItems();
+    //});
+
+
+    function getItemGroups() {
+        $('#item-groups').empty();
+        $.get('/Helper/ItemGroups?pageIndex=' + itemGroupIndex + '&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+            $('#item-groups').append(r);
+            $('.nav-link.mb-2').first().trigger('click');
+        });
+    }
+    @*function setPages() {
+        var count = '@ViewBag.ItemGroupCount';
+        for (var i = 0; i < Math.ceil(count / '@ViewBag.NoOfGroups'); i++)
+            $('#groupPaging').append('<li  class="pageNo page-item" id="pg' + (i + 1) + '"><a style="    background-color: steelblue" class="page-link" href="javascript:void(0);" onclick="itemGroupIndex=' + (i + 1) + '; getItemGroups();">' + (i + 1) + '</a></li>');
+    }*@
+    // setPages();
+
+    function next() {
+        itemGroupIndex = itemGroupIndex + 1;
+        getItemGroups();
+    }
+    function previous() {
+        itemGroupIndex = itemGroupIndex - 1;
+        getItemGroups();
+    }
+    function setItemPages() {
+        $('#itemPaging').empty();
+          var count = itemsCount;
+        for (var i = 0; i < Math.ceil(count / '@ViewBag.NoOfItems'); i++)
+            $('#itemPaging').append('<li  class="pageNo page-item" id="item' + (i + 1) + '"><a style="    background-color: lightsteelblue" class="page-link" href="javascript:void(0);" onclick="itemIndex=' + (i + 1) + '; refreshItems(groupId);">' + (i + 1) + '</a></li>');
+    }
+
+    function refreshItems(id) {
+        if (groupId != id) {//group changed
+            groupId = id;
+            itemIndex = 1;//reset itemIndex
+        }
+
+        $.get('/Helper/GetItemsByGroupAndPaging?groupId=' + groupId + '&index=' + itemIndex).done(function (r) {
+            $('#itemsPanel').empty();
+
+              itemsCount = r.itemsCount;
+              var path;
+              var image = "";
+    if('@ViewBag.MiniPos' == 'True'){
+    for (var i = 0; i < r.items.length; i++) {
+                      $('#itemsPanel').append('<div class="col-xl-4 col-md-6 mb-1"><input type="hidden" class="item-id" value=' + r.items[i].Id + '><button class="AddedItem btn btn-outline-primary waves-effect waves-light col-sm-12" item-has-accessory = ' + r.items[i].HasAccessory + ' is-accessory = ' + r.items[i].IsAccessory +  ' onclick="addItem(this)">' + r.items[i].ArName + '</button></div>');
+                      //$('.AddedItem').css('width', '13vh');
+                      //$('.AddedItem').css('height', '13vh');
+                  }
+    }
+              else if ('@ViewBag.ShowItemImageInsteadOfItemName' == 'True')
+              {
+
+                  for (var i = 0; i < r.items.length; i++)
+                  {
+
+                      if ('@isECommerce' == "True")
+                      {
+                          path = "https://mysoftecom.s3.us-east-2.amazonaws.com/items/" + r.items[i].Image;
+
+                      }
+                      else
+                      {
+                          path = r.items[i].Image;
+                      }
+
+                      if ('@ViewBag.WidthOfImage' == '0' || '@ViewBag.HeightOfImage' == '0' )
+                      {//class="col-xl-2 col-md-2 mb-1"
+                          //$('#itemsPanel').append('<div style="width:18vh;height:18vh;"><input type="hidden" class="item-id" value=' + r.items[i].Id + '><button class="AddedItem btn btn-outline-primary waves-effect waves-light col-sm-12" item-has-accessory = ' + r.items[i].HasAccessory + ' is-accessory = ' + r.items[i].IsAccessory + ' onclick="addItem(this)"><label>' + r.items[i].ArName + '</label><img class="AddedItemImg waves-effect waves-light col-sm-12"  width="80" height="80" style="padding:0;width: 10vh;height: 10vh;"  src="' + path + '" />' + '</button></div>');
+                          $('#itemsPanel').append('<div style="width:18vh;height:18vh;"><input type="hidden" class="item-id" value=' + r.items[i].Id + '><button class="AddedItem btn btn-outline-primary waves-effect waves-light col-sm-12" item-has-accessory = ' + r.items[i].HasAccessory + ' is-accessory = ' + r.items[i].IsAccessory + ' onclick="addItem(this)"><img class="AddedItemImg waves-effect waves-light col-sm-12"  width="80" height="80" style="padding:0;width: 10vh;height: 10vh;"  src="' + path + '" /><label>' + r.items[i].ArName + '</label></button></div>');
+
+                      }
+                      else
+                      {//class="col-xl-2 col-md-2 mb-1"
+                          @*$('#itemsPanel').append('<div style="width:18vh;height:18vh;"><input type="hidden" class="item-id" value=' + r.items[i].Id + '><button class="AddedItem btn btn-outline-primary waves-effect waves-light col-sm-12" item-has-accessory = ' + r.items[i].HasAccessory + ' is-accessory = ' + r.items[i].IsAccessory + ' onclick="addItem(this)"><label>' + r.items[i].ArName + '</label><img class="AddedItemImg waves-effect waves-light col-sm-12"  width="' + '@ViewBag.WidthOfImage' + '" height="' + '@ViewBag.HeightOfImage' + '" style="padding:0;width: 10vh;height: 10vh;"  src="' + path + '" />' + '</button></div>');*@
+                                                    $('#itemsPanel').append('<div style="width:18vh;height:18vh;"><input type="hidden" class="item-id" value=' + r.items[i].Id + '><button class="AddedItem btn btn-outline-primary waves-effect waves-light col-sm-12" item-has-accessory = ' + r.items[i].HasAccessory + ' is-accessory = ' + r.items[i].IsAccessory + ' onclick="addItem(this)"><img class="AddedItemImg waves-effect waves-light col-sm-12"  width="' + '@ViewBag.WidthOfImage' + '" height="' + '@ViewBag.HeightOfImage' + '" style="padding:0;width: 10vh;height: 10vh;"  src="' + path + '" /><label>' + r.items[i].ArName + '</label></button></div>');
+                      }
+                      $('.AddedItem').css('width', '18vh');
+                      $('.AddedItem').css('height', '18vh');
+                      $('.AddedItem').css('border-width', '0.5px');
+                    //  $('.AddedItemImg').css('width', '7vh');
+                    //  $('.AddedItemImg').css('height', '7vh');
+                  }
+
+              }
+              else
+              {
+                  for (var i = 0; i < r.items.length; i++) {
+                      $('#itemsPanel').append('<div class="col-xl-4 col-md-6 mb-1"><input type="hidden" class="item-id" value=' + r.items[i].Id + '><button class="AddedItem btn btn-outline-primary waves-effect waves-light col-sm-12" item-has-accessory = ' + r.items[i].HasAccessory + ' is-accessory = ' + r.items[i].IsAccessory +  ' onclick="addItem(this)">' + r.items[i].ArName + '</button></div>');
+                      //$('.AddedItem').css('width', '13vh');
+                      //$('.AddedItem').css('height', '13vh');
+                  }
+              }
+              setItemPages();
+          });
+
+
+
+      }
+
+</script>

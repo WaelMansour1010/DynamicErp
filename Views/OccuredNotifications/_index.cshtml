@@ -1,0 +1,23 @@
+﻿@model IEnumerable<MyERP.Models.OccuredNotification>
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @if (@item.PageAction.Action == "ActivateDeactivate" || @item.PageAction.Action == "Delete")
+            {
+                <a href="@Url.Action("AddEdit",item.SystemPage.ControllerName,new { id=item.SelectedItem})" target="_blank">
+                    <i class="fe-bell noti-icon"></i>
+                    @Html.DisplayFor(modelItem => item.Notification)
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action(item.PageAction.Action,item.SystemPage.ControllerName,new { id=item.SelectedItem})" target="_blank">
+                    <i class="fe-bell noti-icon"></i>
+                    @Html.DisplayFor(modelItem => item.Notification)
+                </a>
+            }
+
+        </td>
+    </tr>
+}

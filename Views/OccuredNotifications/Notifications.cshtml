@@ -1,0 +1,15 @@
+﻿@model IEnumerable<MyERP.Models.OccuredNotification>
+
+
+@foreach (var item in Model)
+{
+    <a href="@Url.Action(item.PageAction.Action,item.SystemPage.ControllerName,new { id=item.SelectedItem})" class="dropdown-item notify-item @Html.Raw(item.IsRead!=true?"active":"")" onclick="notificationRead(@item.Id)" target="_blank">
+        <div class="notify-icon bg-soft-primary text-primary">
+            <i class="mdi mdi-comment-account-outline"></i>
+        </div>
+        <p class="notify-details">
+            @item.Notification
+            <small class="text-muted">@item.DateTime.ToString("yyyy-MM-dd HH:mm")</small>
+        </p>
+    </a>
+}

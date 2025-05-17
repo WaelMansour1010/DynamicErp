@@ -1,0 +1,14 @@
+﻿@model IEnumerable<MyERP.Models.UserNotificationSetting_Get_Result>
+
+@foreach (var item in Model) {
+    <tr>
+        <td >
+            @Html.DisplayFor(modelItem => item.ArName)
+        </td>
+        <td>
+            <input type="checkbox" value="@item.ActionId" class="access" @Html.Raw(item.Access==1?"checked":"")/>
+        </td>
+
+    </tr>
+}
+

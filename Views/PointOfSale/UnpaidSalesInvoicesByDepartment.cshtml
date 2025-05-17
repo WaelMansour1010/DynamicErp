@@ -1,0 +1,185 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoice>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+<div class="table-responsive">
+    <table class="table table-centered table-sm mb-0">
+        <thead>
+            <tr>
+                <th>@MyERP.Properties.Resources.InvoiceNo</th>
+                <th>@MyERP.Properties.Resources.Date</th>
+                <th>@MyERP.Properties.Resources.Customer</th>
+                <th>@MyERP.Properties.Resources.Mobile</th>
+                @*<th>@MyERP.Properties.Resources.Driver</th>*@
+                <th>@MyERP.Properties.Resources.CarVehicle</th>
+                <th>@MyERP.Properties.Resources.Address</th>
+                <th>@MyERP.Properties.Resources.Total</th>
+                <th>@MyERP.Properties.Resources.DeliveryDate</th>
+                <th>@MyERP.Properties.Resources.DeliveryStartDate</th>
+                <th>@MyERP.Properties.Resources.DeliveryEndDate</th>
+                <th>@MyERP.Properties.Resources.Driver</th>
+                <th>@MyERP.Properties.Resources.Paid</th>
+                <th>@MyERP.Properties.Resources.Remain</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+            <tr>
+                <td>
+                    @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                    @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.VoucherDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.PosCustomer.ArName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.PosCustomer.Mobile1)
+                </td>
+
+                @*<td>
+            @Html.DisplayFor(modelItem => item.Employee1.ArName)
+        </td>*@
+                <td>
+                    @Html.DisplayFor(modelItem => item.FixedAsset.ArName)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.PosCustomer.Country.ArName) - @Html.DisplayFor(modelItem => item.PosCustomer.City.ArName) - @Html.DisplayFor(modelItem => item.PosCustomer.Area.ArName)
+                </td>
+
+                <td>
+                    @if (item.IsInstallmentPlan == true)
+                    {
+                        @Html.DisplayFor(modelItem => item.TotalAfterTotalInstallment, new { @class = "money" })
+                    }
+                    else
+                    {
+                        @Html.DisplayFor(modelItem => item.TotalAfterTaxes, new { @class = "money" })
+                    }
+                </td>
+                <td>
+                    <input class="form-control DeliveryDate" name="DeliveryDate" value="@Html.Raw(item.DeliveryDate!= null ?item.DeliveryDate.Value.ToString("yyyy-MM-ddTHH:mm"):"")" type="datetime-local" />
+
+                </td>
+                <td>
+                    <input name="DeliveryStartDate" value="@Html.Raw(item.DeliveryStartDate != null ? item.DeliveryStartDate.Value.ToString("HH:mm"):"")" class="form-control DeliveryStartDate" type="time" />
+
+                </td>
+                <td>
+                    <input value="@Html.Raw(item.DeliveryEndDate!=null?item.DeliveryEndDate.Value.ToString("HH:mm"):"")" name="DeliveryEndDate" class="form-control DeliveryEndDate" type="time" />
+
+                </td>
+                <td>
+                    <select @*id="DriverId"*@ @*name="DriverId"*@ class="form-control DriverId" style="width:auto;"></select>
+                    @Html.HiddenFor(modelItem => item.Id, new { @class = "invoiceId" })
+
+                    @Html.HiddenFor(modelItem => item.CarId)
+                    @Html.HiddenFor(modelItem => item.DriverId, new { @class = "hiddenDriverId" })
+
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Paid)
+                </td>
+
+                <td>
+                        @ViewBag.Remain
+                </td>
+
+                <td>
+                    <button class="btn btn-success saveDeliveryData">@MyERP.Properties.Resources.Save</button>
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="getSalesInvoiceDetails(@item.Id)">@MyERP.Properties.Resources.Pay</button>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    $(document).ready(function () {
+        getDrivers().done(function (r) {
+
+            console.log("جوة الفواتير الغير مسددة", r)
+            var driversIds = [];
+            r.forEach(function (e) {
+                driversIds.push(e["Id"]);
+            });
+
+            $(".hiddenDriverId").each(function () {
+                var td = $(this).closest("td");
+                var driverDDL = td.find(".DriverId");
+
+                if ($(this).val() != '' && driversIds.includes(parseInt($(this).val())) ) {
+                    driverDDL.val($(this).val()).trigger('change');
+                }
+            });
+        });
+
+        $(document).on('click', '.saveDeliveryData', function () {
+            var saveBtn = $(this);
+            var tr = saveBtn.closest("tr");
+            var deliveryDate = tr.find(".DeliveryDate").val();
+            var deliveryStartDate = tr.find(".DeliveryStartDate").val();
+            var deliveryEndDate = tr.find(".DeliveryEndDate").val();
+            var carId = tr.find(".CarId").val();
+            var driverId = tr.find(".DriverId").val();
+            var invoiceId = tr.find(".invoiceId").val();
+
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/Helper/SaveDeliveryData",
+                data:
+                    JSON.stringify({
+                        invoiceId: invoiceId,
+                        DeliveryDate: deliveryDate,
+                        DeliveryStartDate: deliveryStartDate,
+                        DeliveryEndDate: deliveryEndDate,
+
+                        CarId: carId,
+                        DriverId: driverId
+                    }),
+                success: function (r) {
+                   // alert("@MyERP.Properties.Resources.Saved");
+                    Swal.fire(
+                        {
+                            title: '@MyERP.Properties.Resources.Saved',
+                            text: " ",
+                            icon: 'success',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                            $('#preloader, #status').fadeOut();
+                },
+                error: function (r) {
+                  //  alert("@MyERP.Properties.Resources.NotSaved" + "!");
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotSaved !',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+        });
+
+        $(document).on('change', ".DriverId", function () {
+            var driverId = $(this);
+            var carId = driverId.closest("tr").find(".CarId")
+            $.get('/Helper/GetDriverCar?driverId=' + driverId.val()).done(function (r) {
+                carId.val(r);
+            });
+        });
+    });
+</script>

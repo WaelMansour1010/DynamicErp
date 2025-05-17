@@ -1,0 +1,282 @@
+﻿@model MyERP.Models.EmployeeOpenningBalance
+@{
+        UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+        ViewBag.Title = @MyERP.Properties.Resources.EmployeeOB;
+    }
+    @Html.AntiForgeryToken()
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            @*<div class="page-title-right">
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>
+                </div>*@
+            <div class="hed page-title">@MyERP.Properties.Resources.EmployeeOB:</div>
+        </div>
+    </div>
+</div>
+
+<hr />
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+@if (Model != null)
+{
+    @Html.HiddenFor(model => model.Id)
+
+
+}
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="form-horizontal" role="form">
+
+                <div class="panel-group" id="accordion">
+                    <div class="form-group row">
+                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Department </label>
+                        <div class="col-sm-4">
+                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                            @*<span class="Asterisks">*</span>*@
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>@MyERP.Properties.Resources.Code</th>
+                            <th>@MyERP.Properties.Resources.ArName</th>
+                            <th>@MyERP.Properties.Resources.PaidAllowancesAccumulated</th>
+                            <th>@MyERP.Properties.Resources.EmpVacationAccumulated
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.TravelingTicketsAccumulated
+
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.EndOfServiceAccumulated
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.EmployeeReceivableValue
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.DueSalariesValue 
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="EmployeeOB"></tbody>
+                </table>
+            </div>
+            <hr />
+            <div class="table-responsive">
+                <table class="table-centered mb-0">
+                    <tbody>
+                        <tr>
+                            <td style="padding:50px;">
+                            </td>
+                            <td style="padding:10px;">
+                                <label for="inputtext3" class="col-sm-6 control-label">@MyERP.Properties.Resources.Total</label>
+                            </td>
+                            <td style="padding:10px;">
+                                <input type='text' class='TotalPaidAllowancesAccumulated' value="" disabled>
+                            </td>
+                            <td style="padding:10px;">
+                                <input type='text' class='TotalEmpVacationAccumulated' value="" disabled>
+                            </td>
+                            <td style="padding:10px;">
+                                <input type='text' class='TotalTravelingTicketsAccumulated' value="" disabled>
+                            </td>
+                            <td style="padding:10px;">
+                                <input type='text' class='TotalEndOfServiceAccumulated' value="" disabled>
+                            </td>
+                            <td style="padding:10px;">
+                                <input type='text' class='TotalEmployeeReceivableValue' value="" disabled>
+                            </td>
+                            <td style="padding:10px;">
+                                <input type='text' class='TotalDueSalariesValue' value="" disabled>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            @*<div class="form-group row">
+                    <div class="col-sm-3">
+                        <label for="inputtext3" class="col-sm-6 control-label">المجموع</label>
+                        <input type='text' class='TotalDebit col-sm-6' value="" disabled>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="inputtext3" class="col-sm-6 control-label">المجموع</label>
+                        <input type='text' class='TotalDebit col-sm-6' value="" disabled>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="inputtext3" class="col-sm-6 control-label">المجموع</label>
+                        <input type='text' class='TotalDebit col-sm-6' value="" disabled>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="inputtext3" class="col-sm-6 control-label">المجموع</label>
+                        <input type='text' class='TotalDebit col-sm-6' value="" disabled>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="inputtext3" class="col-sm-6 control-label">المجموع</label>
+                        <input type='text' class='TotalCredit col-sm-6' value="" disabled>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="inputtext3" class="col-sm-6 control-label">المجموع</label>
+                        <input type='text' class='money difference col-sm-6' value="" disabled>
+                    </div>
+                </div>*@
+            <hr />
+            <div class="col-sm-offset-2">
+                <button class="btn btn-success" onclick="addEdit()">
+                    @MyERP.Properties.Resources.Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addEdit() {
+
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            var EmployeeOBList = [];
+            $('#EmployeeOB tr').each(function () {
+                var td = $(this);
+                var ObEmployee = {
+                    EmployeeId: td.find('.id').val(),
+                    DepartmentId: $('#DepartmentId').val(),
+                    PaidAllowancesAccumulated: td.find('.PaidAllowancesAccumulated').inputmask('unmaskedvalue'),
+                    EmpVacationAccumulated: td.find('.EmpVacationAccumulated').inputmask('unmaskedvalue'),
+                    TravelingTicketsAccumulated: td.find('.TravelingTicketsAccumulated').inputmask('unmaskedvalue'),
+                    EndOfServiceAccumulated: td.find('.EndOfServiceAccumulated').inputmask('unmaskedvalue'),
+                    EmployeeReceivableValue: td.find('.EmployeeReceivableValue').inputmask('unmaskedvalue'),
+                    DueSalariesValue: td.find('.DueSalariesValue').inputmask('unmaskedvalue')
+                };
+                EmployeeOBList.push(ObEmployee);
+            });
+            var data = {
+
+                EmployeeOBList: EmployeeOBList
+
+            }
+            console.log(data)
+
+            $.ajax({
+                type: "POST",
+                url: "/EmployeeOB/Save",
+                data:
+                    data
+                ,
+                success: function (r) {
+                    if (r == 'true') {
+                        alert('@MyERP.Properties.Resources.Saved');
+                    } else if (r.split('-')[0] == 'nullAccount') {
+                        alert('@MyERP.Properties.Resources.Account ' + r.split('-')[1] + '@MyERP.Properties.Resources.NotFound');
+                    }
+                    $('#preloader, #status').fadeOut();
+                },
+                error: function (r) {
+                    alert('@MyERP.Properties.Resources.NotSaved');
+
+                    $('#preloader, #status').fadeOut();
+                }
+            })
+        }
+    }
+
+    $(document).on('change', '#DepartmentId', function () {
+        //$('#DepartmentId').val() ? $('#preloader, #status').fadeIn() : null;
+
+        if ($('#DepartmentId').val()) {
+            $('#preloader, #status').fadeIn();
+            $.get('/EmployeeOB/_GetAllEmployees/' + $('#DepartmentId').val()).done(function (r) {
+                $('#EmployeeOB').empty();
+                $('#EmployeeOB').append(r);
+                $('#preloader, #status').fadeOut();
+                $('.PaidAllowancesAccumulated, .EmpVacationAccumulated, .TravelingTicketsAccumulated, .EndOfServiceAccumulated, .EmployeeReceivableValue, .DueSalariesValue').trigger('change');
+                $(".money").inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+            });
+        }
+        else {
+            $('#EmployeeOB').empty();
+            $('.TotalPaidAllowancesAccumulated, .TotalEmpVacationAccumulated, .TotalTravelingTicketsAccumulated, .TotalEndOfServiceAccumulated, .TotalEmployeeReceivableValue, .TotalDueSalariesValue').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+        }
+    });
+    $(document).on("change", ".PaidAllowancesAccumulated, .EmpVacationAccumulated, .TravelingTicketsAccumulated, .EndOfServiceAccumulated, .EmployeeReceivableValue, .DueSalariesValue", function () {
+
+        var OBType = $(this).attr('OBType');
+        //$(this).closest("tr")
+        //    .find(".OBCredit").val(0).inputmask({
+        //        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        //    });
+        calculateTotal(OBType);
+        //calculateTotalCredit();
+        //calculateDifference();
+    });
+    //$(document).on("change", ".OBCredit", function () {
+    //    //$(this).closest("tr")
+    //    //    .find(".OBDebit").val(0).inputmask({
+    //    //        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+    //    //    });
+    //    calculateTotalDebit();
+    //    //calculateTotalCredit();
+    //    //calculateDifference();
+
+    //});
+
+    function calculateTotal(OBType) {
+        var sum = 0;
+
+        $("#EmployeeOB tr ." + OBType).each(function () {
+
+            sum += $(this).inputmask('unmaskedvalue') * 1;
+
+        });
+
+        $(".Total" + OBType).val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+    //function calculateTotalCredit() {
+    //    var sum = 0;
+
+
+    //    $("#EmployeeOB tr .OBCredit").each(function () {
+
+    //        sum += $(this).inputmask('unmaskedvalue') * 1;
+
+    //    });
+
+    //    $(".TotalCredit").val(sum).inputmask({
+    //        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+    //    });
+
+
+    //}
+    //function calculateDifference() {
+
+
+    //    $(".difference").val($(".TotalDebit").inputmask('unmaskedvalue') - $(".TotalCredit").inputmask('unmaskedvalue')).inputmask({
+    //        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+    //    });
+
+
+
+    //}
+    $(document).ready(function () {
+
+        $('.money').inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    })
+
+</script>

@@ -1,0 +1,2857 @@
+﻿@model MyERP.Models.CashIssueVoucher
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.CashIssueVoucher;
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.CashIssueVoucher :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+
+                @*<form action="/CashIssueVoucher/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.IsLinked)
+                                        @Html.HiddenFor(model => model.IsPosted)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                        @Html.HiddenFor(model => model.IsSynced)
+                                        @Html.HiddenFor(model => model.IsUpdateSynced)
+                                    }
+                                    @Html.HiddenFor(model => model.BorrowRequestId)
+
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.VoucherNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.VoucherNo, hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                    </div>
+
+                                    <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownList("DepartmentId", null, null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label " for="MoneyAmount">@MyERP.Properties.Resources.Amount</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.MoneyAmount, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Amount, @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label " for="Date">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input type="datetime-local" name="Date" id="Date" class="form-control" value="@ViewBag.Date" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label " for="SourceTypeId">@MyERP.Properties.Resources.Source</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SourceTypeId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="CustomerId" class="CustomerId control-label col-sm-2">@MyERP.Properties.Resources.Customer</label>
+                                    <div class="CustomerId col-sm-4">
+                                        @Html.DropDownList("CustomerId", null, htmlAttributes: new { @class = "CustomerId form-control" })
+                                    </div>
+
+                                    <label for="PropertyOwnerId" class="PropertyOwnerId control-label col-sm-2">@MyERP.Properties.Resources.Owner</label>
+                                    <div class="PropertyOwnerId col-sm-4">
+                                        @Html.DropDownList("PropertyOwnerId", null, htmlAttributes: new { @class = "PropertyOwnerId form-control" })
+                                    </div>
+
+                                    <label for="PropertyId" class="PropertyId control-label col-sm-2">@MyERP.Properties.Resources.Property</label>
+                                    <div class="PropertyId col-sm-4">
+                                        @Html.DropDownList("PropertyId", null, htmlAttributes: new { @class = "PropertyId form-control" })
+                                    </div>
+
+
+
+
+                                    <label class="col-sm-2 control-label AccountId" for="AccountId">@MyERP.Properties.Resources.Account</label>
+                                    <div class="col-sm-4 AccountId">
+                                        @Html.DropDownList("AccountId", null, htmlAttributes: new { @class = " AccountId form-control" })
+                                    </div>
+
+                                    <label for="TechnicianId" class="TechnicianId control-label col-sm-2">@MyERP.Properties.Resources.Technician</label>
+                                    <div class="TechnicianId col-sm-4">
+                                        @Html.DropDownList("TechnicianId", null, htmlAttributes: new { @class = "TechnicianId form-control" })
+                                    </div>
+
+                                    <label for="VendorId" class="VendorId control-label col-sm-2">@MyERP.Properties.Resources.Supplier</label>
+                                    <div class="VendorId col-sm-4">
+                                        @Html.DropDownList("VendorId", null, htmlAttributes: new { @class = "VendorId form-control" })
+                                    </div>
+
+                                    <label for="ShareholderId" class="ShareholderId control-label col-sm-2">@MyERP.Properties.Resources.Contributor</label>
+                                    <div class="ShareholderId col-sm-4">
+                                        @Html.DropDownList("ShareholderId", null, htmlAttributes: new { @class = "ShareholderId form-control" })
+                                    </div>
+
+                                    <label for="EmployeeId" class="EmployeeId control-label col-sm-2">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="EmployeeId col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, htmlAttributes: new { @class = "EmployeeId form-control" })
+                                    </div>
+
+                                    <label for="DirectExpensesId" class="DirectExpensesId control-label col-sm-2">@MyERP.Properties.Resources.DirectExpenses</label>
+                                    <div class="DirectExpensesId col-sm-4">
+                                        @Html.DropDownList("DirectExpensesId", null, htmlAttributes: new { @class = "DirectExpensesId form-control" })
+                                    </div>
+
+                                    <label for="DoctorId" class="DoctorId control-label col-sm-2">@MyERP.Properties.Resources.Doctor</label>
+                                    <div class="DoctorId col-sm-4">
+                                        @Html.DropDownList("DoctorId", null, htmlAttributes: new { @class = "DoctorId form-control" })
+                                    </div>
+                                    <label for="PrepaidExpenseDetailId" class="PrepaidExpenseDetailId control-label col-sm-2">@MyERP.Properties.Resources.PrepaidExpense</label>
+                                    <div class="PrepaidExpenseDetailId col-sm-4">
+                                        @Html.DropDownList("PrepaidExpenseDetailId", null, htmlAttributes: new { @class = "PrepaidExpenseDetailId form-control" })
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CashIssuePaymentMethodId" class="CashIssuePaymentMethodId control-label col-sm-2">@MyERP.Properties.Resources.PaymentMethod</label>
+                                    <div class="CashIssuePaymentMethodId col-sm-4">
+                                        @Html.DropDownList("CashIssuePaymentMethodId", null, htmlAttributes: new { @class = "CashBoxId form-control" })
+                                    </div>
+
+                                    <label for="CashBoxId" class="CashBoxId CashBoxDiv control-label col-sm-2">@MyERP.Properties.Resources.CashBox</label>
+                                    <div class="CashBoxId CashBoxDiv col-sm-4">
+                                        @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control" })
+                                    </div>
+                                    <label for="ChartOfAccountId" class="ChartOfAccountId ChartOfAccountDiv control-label col-sm-2">@MyERP.Properties.Resources.Account</label>
+                                    <div class="ChartOfAccountId ChartOfAccountDiv col-sm-4">
+                                        @Html.DropDownList("ChartOfAccountId", null, htmlAttributes: new { @class = "ChartOfAccountId form-control" })
+                                    </div>
+                                    <label for="BankAccountId" class="BankAccountId BankAccountDiv control-label col-sm-2">@MyERP.Properties.Resources.BankAccount</label>
+                                    <div class="BankAccountId BankAccountDiv col-sm-4">
+                                        @Html.DropDownList("BankAccountId", null, htmlAttributes: new { @class = "BankAccountId form-control" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" id="TransactionDiv" style="display:none;">
+                                    <label class="col-sm-2 control-label " id="TransactionNoLabel" for="TransactionNo">@MyERP.Properties.Resources.TransactionNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TransactionNo, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <label class="col-sm-2 control-label " id="TransactionDateLabel" for="TransactionDate">@MyERP.Properties.Resources.TransactionDate </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            <input type="datetime-local" name="TransactionDate" id="TransactionDate" class="form-control" value="@Model.TransactionDate" />
+                                        }
+                                        else
+                                        {
+                                            <input type="datetime-local" name="TransactionDate" id="TransactionDate" class="form-control" />
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-group row Fees" style="display:none;">
+                                    <label class="col-sm-2 control-label " for="FeesAmount">@MyERP.Properties.Resources.Fees</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.FeesAmount, new { htmlAttributes = new { @class = "form-control money" } })
+                                    </div>
+
+                                    <label class="col-sm-2 control-label " for="IncludeValueAddedTax">@MyERP.Properties.Resources.IncludeValueAddedTax</label>
+                                    <div class="col-sm-4">
+                                        <input type="checkbox" id="IncludeValueAddedTax" style="width:15px;">
+                                    </div>
+                                </div>
+
+                                <div class="form-group row Fees" style="display:none;">
+                                    <label class="col-sm-2 control-label " for="ValueAddedTaxesAmount">@MyERP.Properties.Resources.ValueAddedTax</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ValueAddedTaxesAmount, new { htmlAttributes = new { @class = "form-control money" } })
+                                    </div>
+
+                                    <label for="CostCenterId" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalServiceFeesAndTaxes : </label>
+                                    <div class="col-sm-4">
+                                        <label for="TotalFeesPaid" id="TotalFeesPaid" class="control-label col-sm-2"> </label>
+                                    </div>
+                                </div>
+
+                                @*<div class="AccountId form-group row"></div>
+                                    <div class="TechnicianId form-group row"></div>
+                                    <div class="VendorId form-group row"></div>
+                                    <div class="ShareholderId form-group row"></div>
+                                    <div class="EmployeeId form-group row"></div>
+                                    <div class="DirectExpensesId form-group row"></div>*@
+
+                                @if (ViewBag.UseCostCenter == true)
+                                {
+                                    <div class="form-group row">
+                                        <label for="CostCenterId" class="control-label col-sm-2">@MyERP.Properties.Resources.CostCenter </label>
+
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("CostCenterId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="form-group row" id="SalaryDiv" style="display:none;">
+                                    <label class=" col-sm-2 control-label" for="Year">@MyERP.Properties.Resources.Year</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("Year", null, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="Month">@MyERP.Properties.Resources.Month</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("Month", null, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+                                <div class="form-group row" id="SelectEmployeesBtn" style="display:none;">
+                                    <button class="btn btn-primary" onclick="GetDepartmentEmployeeSalary()"> @MyERP.Properties.Resources.SelectAnEmployee</button>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                        @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                    </div>
+                                    <div class="col-sm-6 BorrowReceipt" style="display:none;">
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" name="BorrowReceipt" @Html.Raw(Model != null && Model.BorrowReceipt == true ? "checked" : "") @Html.Raw(Model != null ? "disabled" : "") id="BorrowReceipt" />
+                                            <label class="col-sm-10 control-label" for="BorrowReceipt">
+                                                @MyERP.Properties.Resources.BorrowReceipt
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row" id="CashIssueVoucherEmployeePayrollIssuesTable" style="display:none;">
+                            <div class="col-12">
+                                <div class="card-box">
+                                    <div class=" table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Employee
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.EmployeeSalary
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Month
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Year
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="CashIssueVoucherEmployeePayrollIssues">
+
+                                                @if (Model != null && Model.CashIssueVoucherEmployeePayrollIssues.Count() > 0)
+                                                {
+                                                    foreach (var item in Model.CashIssueVoucherEmployeePayrollIssues)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <input hidden class="employeeId" value="@item.EmployeeId" />
+                                                                <label class="control-label">
+                                                                    @item.Employee.ArName
+                                                                </label>
+                                                            </td>
+                                                            <td>
+                                                                <input class="form-control NetSalary" disabled value="@item.NetSalary">
+                                                            </td>
+                                                            <td>
+                                                                <input class="form-control month" disabled value="@item.Month">
+                                                            </td>
+                                                            <td>
+                                                                <input class="form-control year" disabled value="@item.Year">
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Actual Payment-->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.InvoiceSelected</label>
+                                    <div class="col-sm-4">
+                                        <input type="checkbox" id="IsInvoiceSelected" @Html.Raw(Model != null && Model.IsInvoiceSelected == true ? "checked" : "") style="width:15px;">
+                                    </div>
+                                </div>
+                                <div class="row" id="PurchaseInvoiceActualPayment" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="card-box">
+                                            <div class=" table-responsive">
+                                                <table class="table table-striped table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.InvoiceNo
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.VoucherDate
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.DueDate
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Department
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Total
+                                                                @*إجمالى الفاتورة*@
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Paid
+                                                                @*مسدد سابقا*@
+                                                            </th>
+                                                            <th>
+                                                                @*متبقى*@
+                                                                @MyERP.Properties.Resources.Remain
+                                                            </th>
+                                                            <th>
+                                                                <i class="fe-check-circle"></i>
+                                                            </th>
+                                                            <th>
+                                                                @*مسدد الحركة*@
+                                                                @MyERP.Properties.Resources.PaidAmount
+                                                            </th>
+                                                            <th>@MyERP.Properties.Resources.NetRequired</th>
+                                                            @*الصافى المستحق*@
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="PurchaseInvoiceActualPaymentTable">
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--**********************************************************************-->
+                        <!--------------------------------- IssueAnalysis --------------------------------->
+
+
+                        <div class="card" id="IssueAnalysisTable" style="display:none;">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.IssueAnalysis
+                                    </h5>
+                                </div>
+                                <div>
+                                    <div class="col-12">
+                                        <div class="card-box">
+                                            <div class="table-responsive">
+                                                <table class="table table-striped table-centered FixedCells mb-0">
+                                                    <thead>
+                                                        <tr style="text-align: center;">
+                                                            <th style="width:10%;">
+                                                                @MyERP.Properties.Resources.Reasons
+                                                            </th>
+                                                            <th class="adjustWidth">
+                                                                @MyERP.Properties.Resources.Account
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.TotalPrice
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Value
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.VATPercentage
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.VATValue
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Vendor
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Notes
+                                                            </th>
+                                                            <th>
+                                                                @MyERP.Properties.Resources.Delete
+                                                            </th>
+                                                            <th>
+                                                                
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="IssueAnalysis">
+                                                        @if (Model != null && Model.SourceTypeId == 10 && Model.IssueAnalysis.Count() > 0)
+                                                        {
+                                                            foreach (var item in Model.IssueAnalysis)
+                                                            {
+                                                                <tr class="issueAnalysisId_@item.Id" style="border: 1px solid; color: darkgray">
+                                                                    <td colspan="10" style="text-align: center;">
+                                                                        @Html.Partial("_IssueAnalysis", item)
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                        <tr class="issueAnalysisId_-1" style="border: 1px solid; color: darkgray">
+                                                            <td colspan="10" style="text-align: center;">
+                                                                @{ 
+                                                                    var emptyIssueAnalysis = new MyERP.Models.IssueAnalysis() { Id = -1 };
+                                                                }
+                                                                @Html.Partial("_IssueAnalysis", emptyIssueAnalysis)
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!------------------------------------------------------------------>
+                        <!--**********************************************************************-->
+                        <!--------------------------------- Batches --------------------------------->
+
+                        <div class="card PropertyId">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                            @MyERP.Properties.Resources.Batches
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse5">
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <td>
+                                                        @MyERP.Properties.Resources.Batch
+                                                    </td>
+                                                    <td>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </td>
+
+                                                    <td>
+                                                        @MyERP.Properties.Resources.BatchValueBeforeDiscount
+                                                    </td>
+                                                    @*
+                                                        <td>
+                                                            @MyERP.Properties.Resources.BatchValueBeforeTax
+                                                        </td>*@
+                                                    <td>
+                                                        @MyERP.Properties.Resources.TaxValue
+                                                    </td>
+                                                    <td>
+                                                        @MyERP.Properties.Resources.Discount
+                                                    </td>
+                                                    <td>
+                                                        @MyERP.Properties.Resources.BatchValueAfterDiscountAndTax
+                                                    </td>
+                                                    @*
+                                                        <td>
+                                                            @MyERP.Properties.Resources.TaxPercentage
+                                                        </td>*@
+                                                    <td>
+                                                        @MyERP.Properties.Resources.IsDelivered
+                                                    </td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="PropertyBatches">
+                                                @*@if (Model != null)
+                                                    {
+                                                    foreach (var item in Model.PropertyBatches)
+                                                    {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="@item.BatchNo" disabled readonly />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="@item.BatchDate.Value.ToString(" yyyy-MM-dd")" disabled readonly />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <label class="HijryBatchDate control-label control-label"></label>
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="BatchValueBeforeDiscount form-control tabledit-input form-control-sm" value="@item.BatchValueBeforeDiscount" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm" value="@item.BatchValueBeforeTax" disabled readonly />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="Discount form-control tabledit-input form-control-sm" value="@item.Discount" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="BatchValueAfterDiscount form-control tabledit-input form-control-sm" value="@item.BatchValueAfterDiscount" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="BatchTaxPercentage form-control tabledit-input form-control-sm" value="@item.BatchTaxPercentage" disabled readonly />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="BatchTaxValue form-control tabledit-input form-control-sm" value="@item.BatchTaxValue" disabled readonly />
+                                                        </td>
+                                                    </tr>
+                                                    }
+                                                    }*@
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!------------------------------------------------------------------>
+
+
+                        <div class="row">
+                            <input id="new" name="newBtn" hidden />
+                            <div style="float:right;">
+                                @if (Model != null)
+                                {
+                                    if (Model.IsDeleted == true)
+                                    {
+                                        <a class="btn btn-danger" href="@Url.Action(" Index","DeletedTransaction", new { table="CashIssueVoucher" })" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else if (Model.IsDeleted == false)
+                                    {
+                                        @*<div>
+                                                <label for="inputtext3">تحديد الفواتير</label>
+                                                <input type="checkbox" checked id="ChooseInvoice" style="width:15px;">
+                                            </div>*@
+                                        <button type="button" onclick="addEdit('report')" id="SaveAndPrint" class="btn btn-success" @Html.Raw(Model.IsClosed == true ? "disabled" : "")>
+                                            @MyERP.Properties.Resources.SaveAndPrint
+                                        </button>
+                                        <button type="button" id="Save" onclick="addEdit()" class="btn btn-success" @Html.Raw(Model.IsClosed == true ? "disabled" : "")>
+                                            @MyERP.Properties.Resources.Save
+                                        </button>
+                                        <a class="btn btn-success" target="_blank" href="@Url.Action("CashIssueVoucherDetails","Report",new { id=Model.Id})" role="button">@MyERP.Properties.Resources.Print</a>
+
+                                        <a class="btn btn-danger" href="@Url.Action(" Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                        if (Model.IsClosed == false)
+                                        {
+                                            <a class="btn btn-danger" onclick="Delete(@Model.Id)" role="button" href="javascript:void(0);">@MyERP.Properties.Resources.Delete</a>
+                                        }
+                                        <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
+                                        if (Model.IsActive == false)
+                                        {
+                                            <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
+                                                @MyERP.Properties.Resources.Approval
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
+                                                @MyERP.Properties.Resources.CancelApproval
+                                            </button>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    @*<div>
+                                            <label for="inputtext3">تحديد الفواتير</label>
+                                            <input type="checkbox" checked id="ChooseInvoice" style="width:15px;">
+                                        </div>*@
+                                    <button type="button" onclick="addEdit('report')" id="SaveAndPrint" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndPrint
+                                    </button>
+                                    <button type="button" onclick="addEdit('new')" id="SaveAndNew" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button type="button" onclick="addEdit()" id="Save" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
+
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*
+                    </form>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*<div class="row">
+        <div class="col-12">
+            <div class="card-box">
+                <div class=" table-responsive">
+                    <table id="showInvoice" class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>
+                                    رقم الفاتورة
+                                </th>
+                                <th>
+                                    تاريخ الفاتورة
+                                </th>
+                                <th>
+                                    تاريخ الاستحقاق
+                                </th>
+                                <th>
+                                    الفرع
+                                </th>
+                                <th>
+                                    إجمالى الفاتورة
+                                </th>
+                                <th>
+                                    مسدد سابقا
+                                </th>
+                                <th>متبقى</th>
+                                <th>مسدد الحركة</th>
+                                <th>الصافى المستحق</th>
+
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>*@
+
+
+@*<div class="row">
+        <div class="col-12">
+            <div class="card-box">
+                <div class=" table-responsive">
+                    <table id="balanceTable" class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @MyERP.Properties.Resources.Department
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.DebitBalance
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.CreditBalance
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>*@
+
+
+@if (Model != null)
+{
+    if (ViewBag.JE != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntries</h5>
+                <div class="form-horizontal">
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.VoucherNo</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.VoucherNo disabled>
+
+                        </div>
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date </label>
+                        <div class="col-sm-4">
+                            <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.Date" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                        <div class="col-sm-4">
+                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                        <div class="col-sm-4">
+                            <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
+                        </div>
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Deported</label>
+                        <div class="col-sm-4">
+                            @if (Model.IsPosted == true)
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" checked disabled>
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" disabled>
+                            }
+
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>@MyERP.Properties.Resources.Debit</th>
+                                            <th>@MyERP.Properties.Resources.Credit</th>
+                                            <th>@MyERP.Properties.Resources.Account</th>
+                                            <th>@MyERP.Properties.Resources.Explanation</th>
+                                            <th>@MyERP.Properties.Resources.CostCenter</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Id != 0)
+                                        {
+
+                                            foreach (var jED in ViewBag.JEDetails)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <label>@jED.Debit</label>
+                                                        <input type='text' class='txtDebit' value="@jED.Debit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Credit</label>
+                                                        <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        @if (jED.AccountId != null)
+                                                        {
+                                                            <label>@jED.ChartOfAccount.ArName</label>
+                                                            <input type='number' class='AccountId' value="@jED.AccountId" hidden>
+                                                        }
+
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Notes</label>
+                                                    </td>
+                                                    <td>
+                                                        @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<div id="BalanceDetails" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                @*<h4 class="modal-title" id="myModalLabel">تفاصيل الصنف</h4>*@
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class=" table-responsive">
+                                <table id="balanceTable" class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.Department
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.DebitBalance
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.CreditBalance
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+    <!--<div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="row">
+                    <div class="col-md-1">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>-->
+    @*<div class="col-md-11">
+            <input class="form-control" id="search-items" placeholder="بحث" type="text" />
+        </div>*@
+    <!--<div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
+    </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="row">-->
+    @*<table class="table table-condensed">
+            <thead>
+                <tr>
+                    <th class="col-sm-2">الباركود</th>
+                    <th class="col-md-5">اسم الصنف</th>
+                    <th class="col-md-2">السعر</th>
+                    <th class="col-md-2">الكمية</th>
+                    <th class="col-md-1">إضافة</th>
+                </tr>
+            </thead>
+            <tbody id="items-prices-quantities"></tbody>
+        </table>*@
+    <!--</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
+            </div>
+        </div>
+
+    </div>-->
+</div>
+
+<div id="BorrowReceiptPopUp" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel"> @MyERP.Properties.Resources.BorrowRequest </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class=" table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.DocNo
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.BorrowValue
+                                            </th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="BorrowRequest">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+
+
+</div>
+
+<div id="EmployeeSalaryPopUp" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel"> @MyERP.Properties.Resources.EmployeeSalaryItems </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class=" table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.Employee
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.EmployeeSalary
+                                            </th>
+                                            <th>
+                                                <button class="btn btn-success" onclick="SelectAllEmployees()">  @MyERP.Properties.Resources.SelectAll </button>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="EmployeeSalaryTable">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+<!-- Modal Section -->
+<div id="Vendor-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.VendorData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="col-12">
+                <div class="card-box">
+                    <div class="form-group row">
+                        @*<label for="FollowUpTypeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.FollowUpType</label>*@
+                        <div class="col-sm-6">
+                            <input type="radio" id="UnregisteredVendor" name="VendorType" value="1" checked="checked" />@MyERP.Properties.Resources.UnregisteredVendor
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="radio" id="RegisteredVendor" name="VendorType" value="2" />@MyERP.Properties.Resources.RegisteredVendor
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body p-4">
+
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="form-group row CurrentVendor" style="display:none;">
+                            <label for="ArName" class="control-label col-sm-4">@MyERP.Properties.Resources.Vendor</label>
+                            <div class="col-sm-8">
+                                @Html.DropDownList("VendorId", null, MyERP.Properties.Resources.SelectFromVendorList, htmlAttributes: new
+                                {
+                                @class = "PopUpVendorId form-control tabledit-input form-control-sm AccTotals"@*, required = "required"*@})
+                                <div class="invalid-feedback">
+                                    @MyERP.Properties.Resources.Required
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row NewVendor" style="display:none;">
+                            <label for="ArName" class="control-label col-sm-4">@MyERP.Properties.Resources.ArName</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control ModelVendorId" id="ModelVendorId" hidden>
+                                <input type="text" class="form-control VendorArName" id="VendorArName" placeholder=@MyERP.Properties.Resources.ArName>
+                                <div class="invalid-feedback">
+                                    @MyERP.Properties.Resources.Required
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="TaxNumber" class="control-label col-sm-4">@MyERP.Properties.Resources.CommercialRegistrationNo</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control TaxNumber" id="TaxNumber" placeholder=@MyERP.Properties.Resources.CommercialRegistrationNo>
+                                <div class="invalid-feedback">
+                                    @MyERP.Properties.Resources.Required
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="VATNumber" class="control-label col-sm-4">@MyERP.Properties.Resources.VATNO</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control VATNumber" id="VATNumber" placeholder=@MyERP.Properties.Resources.VATNO>
+                                <div class="invalid-feedback">
+                                    @MyERP.Properties.Resources.Required
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="InvoiceNo" class="control-label col-sm-4">@MyERP.Properties.Resources.InvoiceNo</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control InvoiceNo" id="InvoiceNo" placeholder=@MyERP.Properties.Resources.InvoiceNo>
+                                <div class="invalid-feedback">
+                                    @MyERP.Properties.Resources.Required
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                    <button type="button" class="btn btn-info waves-effect waves-light" onclick="addVendor();">@MyERP.Properties.Resources.Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!------------------------------------------------------------------------------------------------------->
+
+
+<script>
+    //---------------------- Variable Declaration -----------------------//
+        var EditAmount = 0;
+        var sum = 0;
+        var EmployeeSalary = [];
+    let IssueAnalysisAccountOptions = '';
+    //let IssueAnalysisVendorOptions = '';
+    var taxPercentage = 0.14;
+
+    //********************************************************************//
+
+    //----------------------  Ready Finction -----------------------//
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#TransactionDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+            $('#Date').val('@ViewBag.Date');
+            $('#TransactionDate').val('@ViewBag.TransactionDate');
+            if ($('#Id').val() > 0) {
+                $('#dtDate').val($('#Date').val());
+            }
+        });
+        if (!$('#Id').val()) {
+            setDocNum();
+            GetCurrentTaxPercentage();
+            GetIssueAnalysisAccountDetails();
+            cashBoxByDepartment();
+        }
+        else {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+
+            if ($('#SourceTypeId').val() == 3) {
+                $('.BorrowReceipt').show();
+            }
+            else {
+                $('.BorrowReceipt').hide();
+                $('#BorrowRequestId').val(0);
+            }
+            //if ($('#BorrowReceipt').prop('checked') == true) {
+            //    $('#DepartmentId').attr('disabled', true);
+            //    $('#EmployeeId').attr('disabled', true);
+            //    $('#SourceTypeId').attr('disabled', true);
+            //    $('#MoneyAmount').attr('disabled', true);
+            //}
+            if ($('#CashIssuePaymentMethodId').val() == 2) {
+                var FeesAmount = parseFloat($('#FeesAmount').val() > 0 ? $('#FeesAmount').val() : 0.00);
+                var MoneyAmount = parseFloat($('#MoneyAmount').inputmask('unmaskedvalue'));
+                var ValueAddedTaxesAmount = parseFloat($('#ValueAddedTaxesAmount').val() > 0 ? $('#ValueAddedTaxesAmount').val() : 0.00);
+                var total = MoneyAmount - (FeesAmount + ValueAddedTaxesAmount);
+                $('#MoneyAmount').val(total);
+                //GetPurchaseInvoiceActualPayment();
+                $('#MoneyAmount').trigger('change');
+
+            }
+        }
+
+        if ($('#IsInvoiceSelected').prop("checked") == true && $('#SourceTypeId').val() == 2) {
+            $('#IsInvoiceSelected').prop('disabled', false);
+            $('#IsInvoiceSelected').prop('readonly', false);
+            $('#PurchaseInvoiceActualPayment').show();
+        }
+        else {
+            $('#PurchaseInvoiceActualPayment').hide();
+        }
+        sourceTypeChange();
+        GetPurchaseInvoiceActualPayment();
+        CalculateFees();
+        $('#CashIssuePaymentMethodId').trigger('change');
+
+        initiatePropertyUnitsForDetailsTable();
+        syncWidthChange();
+    });
+    //********************************************************************//
+
+    //----------------------  Event Functions -----------------------//
+    $('#SourceTypeId').on('change', function () {
+        if ($(this).val() == 3) {
+            $('.BorrowReceipt').show();
+        }
+        else {
+            $('.BorrowReceipt').hide();
+            $('#BorrowReceipt').prop('checked',false);
+            $('#BorrowRequestId').val(0);
+            $('#MoneyAmount').val(0);
+            $('#MoneyAmount').trigger('change');
+
+        }
+        sourceTypeChange();
+    });
+    $(document).on('change', '#EmployeeId', function () {
+        GetEmployeeBorrowRequest();
+
+    });
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+            cashBoxByDepartment();
+            GetPurchaseInvoiceActualPayment();
+        }
+    });
+    $(document).on('click', '#IsInvoiceSelected', function () {
+        if ($('#IsInvoiceSelected').prop("checked") == true && $('#SourceTypeId').val() == 2) {
+            GetPurchaseInvoiceActualPayment();
+            if ($('#MoneyAmount').val() > 0) {
+                $('#MoneyAmount').val(0)
+            }
+            $('#PurchaseInvoiceActualPayment').show();
+            $('#MoneyAmount').prop('disabled', true).prop('readonly', true).attr('placeholder', '0.00');
+        }
+        else {
+            $('#PurchaseInvoiceActualPayment').hide();
+            $('#MoneyAmount').prop('disabled', false).prop('readonly', false).attr('placeholder','@MyERP.Properties.Resources.Amount');
+        }
+    });
+    $(document).on('change', '.ActualPaymentPaidAmount', function () {
+        if ($(this).val() > 0) {
+            EditAmount = 0;
+            ReCalculateMoneyAmount();
+            var remain = $(this).closest('tr').find('.ActualPaymentRemain').text();
+            var paidAmount = $(this).val();
+            var NetRequired = parseFloat(remain) - parseFloat(paidAmount);
+            $(this).closest('tr').find('.ActualPaymentNetRequired').text(NetRequired.toFixed(2));
+        }
+
+    });
+    $('#MoneyAmount').on('change', function () {
+        var money = $(this).val();
+        $('#PurchaseInvoiceActualPaymentTable tr').each(function () {
+            var td = $(this);
+            var NetRequired;// td.find('.ActualPaymentNetRequired').text();
+            var Amount = td.find('.ActualPaymentPaidAmount').val();
+            var TotalRemain = parseFloat(td.find('.ActualPaymentRemain').text());
+            if (money > 0) {
+                if (money > TotalRemain) {
+                    money -= TotalRemain;
+                    money = money.toFixed(2);
+                    td.find('.ActualPaymentPaidAmount').val(TotalRemain);
+                    Amount = td.find('.ActualPaymentPaidAmount').val();
+                    NetRequired = (Amount - TotalRemain).toFixed(2);
+                    td.find('.ActualPaymentNetRequired').text(NetRequired);
+                }
+                else if (money <= TotalRemain) {
+                    td.find('.ActualPaymentPaidAmount').val(money);
+                    NetRequired = Math.abs(TotalRemain - money).toFixed(2);
+                    td.find('.ActualPaymentNetRequired').text(NetRequired);
+                    money -= TotalRemain;
+                    money = money.toFixed(2);
+                }
+            }
+
+        })
+
+        if ($('#IncludeValueAddedTax').prop('checked') == true) {
+            //$('#IncludeValueAddedTax').trigger('click');
+           // if ($('#MoneyAmount').inputmask('unmaskedvalue') > 0) {
+                CalculateTaxesPercentage();
+           // }
+        }
+        //else {
+        //    $('#ValueAddedTaxesAmount').val('0');
+        //    $('#TotalFeesPaid').empty($('#FeesAmount').val());
+        //}
+
+    });
+
+        $('#CustomerId').on('change', function () {
+            getCustomerBalanceInEachDept();
+        });
+
+        $('#PropertyId').on('change', function () {
+        getPropertyBatches();
+    });
+
+
+
+    $('#VendorId').on('change', function () {
+        getVendorBalanceInEachDept();
+        GetPurchaseInvoiceActualPayment();
+    });
+    $(document).on('change', '#CashIssuePaymentMethodId', function () {
+        if ($('#CashIssuePaymentMethodId').val() == 1) { //نقدى
+            $('.CashBoxDiv').show();
+            $('.ChartOfAccountDiv').hide();
+            $('.BankAccountDiv').hide();
+            $('#TransactionDiv').hide();
+            $('.Fees').hide();
+            $('#TransactionNo').attr('required', false);
+            $('#TransactionDate').attr('required', false);
+            $('#FeesAmount').attr('required', false);
+            $('#ValueAddedTaxesAmount').attr('required', false);
+        }
+        else if ($('#CashIssuePaymentMethodId').val() == 2) { //حوالة بنكية
+            $('.CashBoxDiv').hide();
+            $('.ChartOfAccountDiv').hide();
+            $('.BankAccountDiv').show();
+            $('#TransactionDiv').show();
+            $('#TransactionNoLabel').text('@MyERP.Properties.Resources.TransactionNumber');
+            $('#TransactionDateLabel').text('@MyERP.Properties.Resources.TransactionDate');
+            $('.Fees').show();
+            if (!$('#TransactionNo').val()) {
+                $('#TransactionNo').attr('required', true);
+                $('#TransactionDate').attr('required', true);
+                $('#FeesAmount').attr('required', true);
+                $('#ValueAddedTaxesAmount').attr('required', true);
+            }
+        }
+        else if ($('#CashIssuePaymentMethodId').val() == 3) { // شيك مصدق
+            $('.CashBoxDiv').hide();
+            $('.ChartOfAccountDiv').hide();
+            $('.BankAccountDiv').show();
+            $('#TransactionDiv').show();
+            $('#TransactionNoLabel').text('@MyERP.Properties.Resources.ChequeNo');
+            $('#TransactionDateLabel').text('@MyERP.Properties.Resources.ChequeDate');
+            $('.Fees').hide();
+            if (!$('#TransactionNo').val()) {
+                $('#TransactionNo').attr('required', true);
+                $('#TransactionDate').attr('required', true);
+                $('#FeesAmount').attr('required', false);
+                $('#ValueAddedTaxesAmount').attr('required', false);
+            }
+        }
+        else if ($('#CashIssuePaymentMethodId').val() == 4) { //الحساب
+            $('.CashBoxDiv').hide();
+            $('.ChartOfAccountDiv').show();
+            $('.BankAccountDiv').hide();
+            $('#TransactionDiv').hide();
+            $('.Fees').hide();
+            $('#TransactionNo').attr('required', false);
+            $('#TransactionDate').attr('required', false);
+            $('#FeesAmount').attr('required', false);
+            $('#ValueAddedTaxesAmount').attr('required', false);
+        }
+    });
+    $('#FeesAmount').on('change', function () {
+            CalculateFees();
+            if ($('#IncludeValueAddedTax').prop('checked') == true) {
+                CalculateTaxesPercentage();
+            }
+            else {
+                $('#ValueAddedTaxesAmount').val('0');
+                $('#TotalFeesPaid').empty($('#FeesAmount').val());
+            }
+        });
+    $('#ValueAddedTaxesAmount').on('change', function () {
+            CalculateFees();
+        });
+    $('#IncludeValueAddedTax').on('click', function () {
+        if ($('#IncludeValueAddedTax').prop('checked') == true) {
+            $('#ValueAddedTaxesAmount').attr('disabled', true);
+            $('#ValueAddedTaxesAmount').attr('readonly', true);
+            //if ($('#MoneyAmount').inputmask('unmaskedvalue') > 0) {
+            CalculateTaxesPercentage();
+            // }
+        }
+        else {
+            $('#ValueAddedTaxesAmount').attr('disabled', false);
+            $('#ValueAddedTaxesAmount').attr('readonly', false);
+            $('#ValueAddedTaxesAmount').val('0');
+            $('#TotalFeesPaid').empty($('#FeesAmount').val());
+        }
+    });
+    $('#BorrowReceipt').on('change', function () {
+            if ($(this).prop('checked') == true) {
+                $('#BorrowReceiptPopUp').modal('show');
+                GetEmployeeBorrowRequest();
+            }
+            else {
+                $('#BorrowReceiptPopUp').modal('hide');
+            }
+        });
+    $('#Month,#Year').on('change', function () {
+            if ($('#CashIssueVoucherEmployeePayrollIssues tr').length > 0) {
+                let month = $('#Month').val();
+                let year = $('#Year').val();
+                $('#CashIssueVoucherEmployeePayrollIssues tr').each(function () {
+                    $(this).find('.month').val(month);
+                    $(this).find('.year').val(year);
+                });
+            }
+    });
+    $(document).on('change', '#Date', function () {
+        if (!$('#Id').val()) {
+            setDocNum();
+            GetCurrentTaxPercentage();
+           // ReCalculateIssueAnalysisTotals();
+        }
+    });
+    $(document).on('change', '.IssueAnalysisAccountId:last, .Reason:last, .Value:last, .Total:last', function (e) {
+            AddToIssueAnalysisTable();
+        });
+    $(document).on('change', '.Total', function (e) {
+        CalculateIssueAnalysisTotals(this);
+        var _value = $(this).closest('tr').find('.Value');
+        CalculateValue(_value);
+        if (/*$('#IssueAnalysis .IssueAnalysisVendorArName:last').val()&&*/ $('#IssueAnalysis .Value:last').val()&& $('#IssueAnalysis .IssueAnalysisAccountId:last').val()&& $('#IssueAnalysis .Reason:last').val()&& $('#IssueAnalysis .Total:last').val()) {
+            AddToIssueAnalysisTable();
+        }
+    });
+    $(document).on('change', '.Taxes', function (e) {
+        if ($(this).closest('tr').find('.Total').val()) {
+            var _taxes = $(this).inputmask('unmaskedvalue');
+            var _total = $(this).closest('tr').find('.Total').inputmask('unmaskedvalue');
+            var _per = (_taxes / _total).toFixed(2)
+            $(this).closest('tr').find('.TaxesPrecentage').val(_per);
+        }
+        CalculateIssueAnalysisTotals(this);
+    });
+    $(document).on('change', '.TaxesPrecentage', function (e) {
+        if ($(this).closest('tr').find('.Total').val()) {
+            var _per  = $(this).val();
+            var _total = $(this).closest('tr').find('.Total').inputmask('unmaskedvalue');
+            var _taxes = _total * _per;
+            $(this).closest('tr').find('.Taxes').val(_taxes);
+        }
+        CalculateIssueAnalysisTotals(this);
+    });
+    $(document).on('change', '.Value', function (e) {
+            var _netTotal = $(this).val();
+            var _per = $(this).closest('tr').find('.TaxesPrecentage').val();
+        var _total = parseFloat(_netTotal * _per) + parseFloat(_netTotal);
+            $(this).closest('tr').find('.Total').val(_total);
+            var _taxes = _netTotal * _per;
+            $(this).closest('tr').find('.Taxes').val(_taxes);
+        //CalculateIssueAnalysisTotals(this);
+        CalculateValue();
+        });
+    $(document).on('focus', '.IssueAnalysisVendorArName', function () {
+            $('.VendorArName').val('');
+            $('.ModelVendorId').val('');
+            $('.TaxNumber').val('');
+            $('.VATNumber').val('');
+            $('.InvoiceNo').val('');
+        $('#Vendor-modal').modal("show");
+        VendorTypeChange();
+    });
+    $(document).on('change', '.PopUpVendorId', function () {
+            GetVendorData($(this));
+        });
+    function GetVendorData(e) {
+            $('#pleasewait').fadeIn();
+            $.get('/CashIssueVoucher/GetVendorData?VendorId=' + e.val()).done(function (r) {
+                if (r != null) {
+                    $('.ModelVendorId').val(r.Id);
+                    $('.VendorArName').val(r.ArName);
+                    $('.TaxNumber').val(r.TaxNumber);
+                    $('.VATNumber').val(r.VATNumber);
+                }
+            });
+            $('#pleasewait').fadeOut();
+        }
+    function VendorTypeChange() {
+            if ($("input[name='VendorType']:checked").val() == 1) {
+                $('.NewVendor').show();
+                $('.CurrentVendor').hide();
+            }
+            else {
+                $('.NewVendor').hide();
+                $('.CurrentVendor').show();
+            }
+        }
+    $("input[name='VendorType']").on('change', function () {
+            VendorTypeChange()
+        });
+    function addVendor() {
+            var ArName = $('.VendorArName').val();
+            var Id = $('.ModelVendorId').val();
+            var TaxNumber = $('.TaxNumber').val();
+            var VATNumber = $('.VATNumber').val();
+            var InvoiceNo = $('.InvoiceNo').val();
+            $('#IssueAnalysis .IssueAnalysisVendorArName:last').val(ArName);
+            $('#IssueAnalysis .IssueAnalysisVendorId:last').val(Id);
+            $('#IssueAnalysis .IssueAnalysisVendorTaxNumber:last').val(TaxNumber);
+            $('#IssueAnalysis .IssueAnalysisVendorVATNumber:last').val(VATNumber);
+            $('#IssueAnalysis .IssueAnalysisVendorInvoiceNo:last').val(InvoiceNo);
+            $('#Vendor-modal').modal("hide");
+            if (/*$('#IssueAnalysis .IssueAnalysisVendorArName:last').val() &&*/ $('#IssueAnalysis .Value:last').val() && $('#IssueAnalysis .IssueAnalysisAccountId:last').val() && $('#IssueAnalysis .Reason:last').val() && $('#IssueAnalysis .Total:last').val()) {
+                AddToIssueAnalysisTable();
+            }
+        }
+    function GetIssueAnalysisAccountDetails(e) {
+        $.get('/CashIssueVoucher/GetIssueAnalysisAccountDetails?IssueAnalysisAccountId=' + $(e).val()).done(function (r) {
+            //console.log('r: ' + r.val())
+                if (r.IncludeValueAddedTax == true) {
+                    $('.AccTotals').prop('disabled', false);
+                    $(e).closest('tr').find('.Total').prop('required', true);
+                    $(e).closest('tr').find('.TaxesPrecentage').val(taxPercentage);
+                    $(e).closest('tr').find('.IssueAnalysisIncludeValueAddedTax').prop('checked', true);
+                  //  $(e).closest('tr').find('.IssueAnalysisVendorArName').prop('required', true);
+
+                }
+                else {
+                    $(e).closest('tr').find('.AccTotals').prop('disabled', true);
+                    $(e).closest('tr').find('.AccTotals').val('');
+                    $(e).closest('tr').find('.IssueAnalysisIncludeValueAddedTax').prop('checked', false);
+                   // $(e).closest('tr').find('.IssueAnalysisVendorArName').prop('required', false);
+            }
+            //sync width Changes
+            syncWidthChange();
+        });
+    }
+
+    function syncWidthChange() {
+        // Get all cells with the 'adjustWidth' class
+        const cells = document.querySelectorAll('.adjustWidth');
+
+        // Find the maximum width among all 'adjustWidth' cells
+        const maxWidth = Math.max(...Array.from(cells).map(cell => cell.offsetWidth));
+
+        // Apply the maximum width to all 'adjustWidth' cells
+        cells.forEach(cell => {
+            cell.style.width = `${maxWidth}px`;
+        });
+    }
+
+    function GetCurrentTaxPercentage() {
+            $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#Date').val()).done(function (r) {
+                taxPercentage = r / 100;
+                if ($('#IssueAnalysis tr').length > 0 && !$('#Id').val()) {
+                    ReCalculateIssueAnalysisTotals();
+                }
+            });
+        }
+    function CalculateIssueAnalysisTotals(e) {
+            var Totals = $(e).closest('tr').find('.Total').inputmask('unmaskedvalue');
+            var TaxesPrecentage = $(e).closest('tr').find('.TaxesPrecentage').val();
+            var Taxes = Totals * TaxesPrecentage;
+            $(e).closest('tr').find('.Taxes').val(Taxes);
+            var NetTotal = Totals - Taxes;
+            $(e).closest('tr').find('.Value').val(NetTotal);
+
+        }
+    function ReCalculateIssueAnalysisTotals() {
+          //  GetCurrentTaxPercentage();
+            $('#IssueAnalysis tr').each(function () {
+                var td = $(this);
+                if (td.find('.IssueAnalysisIncludeValueAddedTax').prop('checked') == true) {
+                    td.find('.TaxesPrecentage').val(taxPercentage);
+                    var Totals = td.find('.Total').inputmask('unmaskedvalue');
+                    var TaxesPrecentage = td.find('.TaxesPrecentage').val();
+                    var Taxes = Totals * TaxesPrecentage;
+                    td.find('.Taxes').val(Taxes);
+                    var NetTotal = Totals - Taxes;
+                    td.find('.Value').val(NetTotal);
+                }
+            });
+        }
+        $(document).on('changge', '#PrepaidExpenseDetailId', function () {
+            GetPrepaidExpenseDetailValue();
+        });
+        function GetPrepaidExpenseDetailValue() {
+            $.get('/CashIssueVoucher/GetPrepaidExpenseDetailValue?PrepaidExpenseDetailId=' + $('#PrepaidExpenseDetailId').val()).done(function (r) {
+                $('#MoneyAmount').val(r);
+            });
+        }
+    //********************************************************************//
+
+     //----------------------  Other Functions -----------------------//
+    function AddToMoneyAmount(id, val) {
+        $('#MoneyAmount').val(val);
+        $('#MoneyAmount').trigger('change');
+        $('#BorrowRequestId').val(id);
+        $('#BorrowReceiptPopUp').modal('hide');
+    }
+    function GetDepartmentEmployeeSalary() {
+        $('#EmployeeSalaryPopUp').modal('show');
+        $('#EmployeeSalaryTable').empty();
+        $('#pleasewait').fadeIn();
+        $.get('/Helper/GetDepartmentEmployeeSalary?DepartmentId=' + $('#DepartmentId').val() + '&Month=' + $('#Month').val() + '&Year=' + $('#Year').val()).done(function (r) {
+            EmployeeSalary = r;
+            for (var i = 0; i < EmployeeSalary.length; i++) {
+                let tr = '<tr><td><input hidden class="employeeId" value="' +
+                    EmployeeSalary[i].Id + '" /><label class="control-label">' +
+                    EmployeeSalary[i].ArName + '</label></td><td><label class="control-label">' +
+                    EmployeeSalary[i].ItemValue + '</label></td><td><button class="btn btn-primary" onclick="SelectEmployee(\'' + EmployeeSalary[i].Id + '\')">@MyERP.Properties.Resources.Add</button></td></tr>';
+                $('#EmployeeSalaryTable').append(tr);
+            }
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function SelectAllEmployees() {
+            $('#EmployeeSalaryPopUp').modal('hide');
+            let month = $('#Month').val();
+            let year = $('#Year').val();
+            let sum = 0.00;
+            $('#CashIssueVoucherEmployeePayrollIssues').empty();
+            for (var i = 0; i < EmployeeSalary.length; i++) {
+                let tr = '<tr><td><input hidden class="employeeId" value="' +
+                    EmployeeSalary[i].Id + '" /><label class="control-label">' +
+                    EmployeeSalary[i].ArName + '</label></td><td><input class="form-control NetSalary" disabled value="' +
+                    EmployeeSalary[i].ItemValue + '"></td><td><input class="form-control month" disabled value="' +
+                    month + '"></td><td><input class="form-control year" disabled value="' +
+                    year + '"></td></tr > ';
+
+                $('#CashIssueVoucherEmployeePayrollIssues').append(tr);
+                sum += EmployeeSalary[i].ItemValue;
+            }
+            $('#MoneyAmount').val(sum);
+            $('#MoneyAmount').trigger('change');
+        }
+    function SelectEmployee(id) {
+            let month = $('#Month').val();
+            let year = $('#Year').val();
+            let valid = true;
+            $('#CashIssueVoucherEmployeePayrollIssues tr').each(function () {
+                var td = $(this);
+                if (id == td.find('.employeeId').val()) {
+                    valid = false;
+                }
+            });
+            if (valid == false)
+                Swal.fire({
+        title: '@MyERP.Properties.Resources.ThisEmployeeWasPreviouslyAdded',
+        text: " ",
+        icon: 'info',
+        showCancelButton: false,
+        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+        confirmButtonColor: '#3085d6'
+    });
+            else {
+                let Emp = EmployeeSalary.filter(function (i) { return i.Id == id; })[0];
+                let tr = '<tr><td><input hidden class="employeeId" value="' +
+                    Emp.Id + '" /><label class="control-label">' +
+                    Emp.ArName + '</label></td><td><input class="form-control NetSalary" disabled value="' +
+                    Emp.ItemValue + '"></td><td><input class="form-control month" disabled value="' +
+                    month + '"></td><td><input class="form-control year" disabled value="' +
+                    year + '"></td></tr > ';
+                $('#CashIssueVoucherEmployeePayrollIssues').append(tr);
+                sum += Emp.ItemValue;
+                $('#MoneyAmount').val(sum);
+                $('#MoneyAmount').trigger('change');
+            }
+        }
+    function GetEmployeeBorrowRequest() {
+        $('#BorrowRequest').empty();
+        $('#pleasewait').fadeIn();
+        $.get('/CashIssueVoucher/GetEmployeeBorrowRequest?EmployeeId=' + $('#EmployeeId').val()).done(function (r) {
+            for(var i = 0; i < r.length; i++) {
+                let tr = '<tr><td><input hidden class="BorrowRequestId" value="' +
+                    r[i].BorrowRequestId + '" /><label class="control-label">' +
+                    r[i].DocumentNumber + '</label></td><td><label class="control-label">' +
+                    r[i].BorrowValue + '</label></td><td><button class="btn btn-primary BorrowValue" onclick="AddToMoneyAmount(\'' + r[i].BorrowRequestId + '\',\'' + r[i].BorrowValue + '\')">@MyERP.Properties.Resources.Add</button></td></tr>';
+                $('#BorrowRequest').append(tr);
+            }
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function sourceTypeChange() {
+            if ($('#SourceTypeId').val() == 1) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('#balanceTable').show();
+                $('.CustomerId').show();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                getCustomerBalanceInEachDept();
+                $('.balance-details-btn').show()
+                $('.balance-details-btn').text('@MyERP.Properties.Resources.CustomerBalance');
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+            }
+            else if ($('#SourceTypeId').val() == 2) {
+                $('.AccountId').hide();
+                $('#balanceTable').show();
+                $('.VendorId').show();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                getVendorBalanceInEachDept();
+                $('.balance-details-btn').show()
+                $('.balance-details-btn').text('@MyERP.Properties.Resources.VendorBalance');
+                $('#IsInvoiceSelected').prop('disabled', false);
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IsInvoiceSelected').prop('readonly', false);
+                if ($('#IsInvoiceSelected').prop("checked") == true) {
+                    $('#PurchaseInvoiceActualPayment').show();
+                }
+                $('#IssueAnalysisTable').hide();
+            }
+            else if ($('#SourceTypeId').val() == 3) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').show();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 4) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').show();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 5) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 6) {
+                $('.AccountId').show();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 7) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').show();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#IssueAnalysisTable').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 8) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.TechnicianId').show();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 9) {
+                $('#SalaryDiv').show();
+                $('#SelectEmployeesBtn').show();
+                $('#CashIssueVoucherEmployeePayrollIssuesTable').show();
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('#IssueAnalysisTable').hide();
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 10) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('#DoctorId').val('');
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#IssueAnalysisTable').show();
+                $('#MoneyAmount').attr('disabled', true);
+                $('.balance-details-btn').hide();
+                getIssueAnalysisAccount();
+                //
+                $('.IssueAnalysisAccountId').each(function () {
+                    let selectedItem = $(this).val();
+                    $(this).empty().append(IssueAnalysisAccountOptions).val(selectedItem).select2();
+                });
+                //
+            }
+            else if ($('#SourceTypeId').val() == 11) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').show();
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#IssueAnalysisTable').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 12) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('.PrepaidExpenseDetailId').show();
+                GetPrepaidExpenseDetailValue();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').hide();
+                $('.PropertyId').hide();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#IssueAnalysisTable').hide();
+                $('#MoneyAmount').attr('disabled', false)
+                $('.balance-details-btn').hide()
+            }
+            else if ($('#SourceTypeId').val() == 13) {
+                $('.AccountId').hide();
+                $('.VendorId').hide();
+                $('.DoctorId').hide();
+                $('.PrepaidExpenseDetailId').hide();
+                $('.CustomerId').hide();
+                $('.PropertyOwnerId').show();
+                $('.PropertyId').show();
+                getPropertyBatches();
+                $('.EmployeeId').hide();
+                $('.DirectExpensesId').hide();
+                $('.ShareholderId').hide();
+                $('.TechnicianId').hide();
+                $('#balanceTable').hide();
+                $('#PurchaseInvoiceActualPayment').hide();
+                $('#IsInvoiceSelected').prop('disabled', true);
+                $('#IsInvoiceSelected').prop('readonly', true);
+                $('#IsInvoiceSelected').prop("checked", false);
+                $('#IssueAnalysisTable').hide();
+                $('#MoneyAmount').attr('disabled', false);
+                $('.balance-details-btn').hide();
+            }
+            else {
+                $('#SalaryDiv').hide();
+                $('#SelectEmployeesBtn').hide();
+                $('#CashIssueVoucherEmployeePayrollIssuesTable').hide();
+            }
+        }
+    function GetPurchaseInvoiceActualPayment() { //getCustomerPurchaseInvoices
+        $('#pleasewait').fadeIn();
+        $.get('/Helper/GetPurchaseInvoiceActualPayment?VendorId=' + $('#VendorId').val() + '&CashIssueVoucherId=' + $('#Id').val() + '&DepartmentId=' + $('#DepartmentId').val()).done(function (r) {
+            $('.invoice').remove();
+            var DueDate;
+            let tr;
+            var Remain;
+            for (var i = 0; i < r.length; i++) {
+                if (r[i].Paid == null) {
+                    r[i].Paid = 0;
+                }
+                if (r[i].PaidAmount == null) {
+                    r[i].PaidAmount = 0;
+                }
+                if (r[i].RemainAmount == null && r[i].PaidInTransaction == 0 && (r[i].PaidAmount == 0 || r[i].PaidAmount ==null)) {
+                    r[i].RemainAmount = r[i].TotalAfterTaxes;
+                }
+                if (r[i].DueDate == null) {
+                    DueDate = "";
+                }
+                else {
+                    DueDate = convertToJavaScriptDate(r[i].DueDate);
+                }
+                if ($('#Id').val() > 0) {
+                    Remain = (parseFloat(r[i].PaidInTransaction) + parseFloat(r[i].RemainAmount)).toFixed(2);
+                    var TotalRequiredAmount = (parseFloat(Remain) - parseFloat(r[i].PaidAmount)).toFixed(2);
+
+                    tr = '<tr class="invoice"><td><input hidden class="PurchaseInvoiceId" value="' +
+                        r[i].Id + '"/><label class="ActualPaymentDocNo control-label">' +
+                        r[i].DocumentNumber + '</label></td ><td><label class="control-label ActualPaymentPurchaseInvoiceDate">  ' +
+                        convertToJavaScriptDate(r[i].VoucherDate) + '</label></td><td><label class="control-label ActualPaymentDate"> ' +
+                        DueDate + '</label></td><td><input hidden class="ActualPaymentDepartmentId" value="' +
+                        r[i].DepartmentId + '" /><lable class="control-label ActualPaymentDepartmentArName">' +
+                        r[i].DepartmentArName + '</lable></td><td><lable class="control-label ActualPaymentTotal"> ' +
+                        r[i].TotalAfterTaxes + '</lable></td><td><label class="control-label ActualPaymentPaid">' +
+                        r[i].Paid + '</label></td><td><label class="control-label ActualPaymentRemain">' +
+                        Remain + '</label></td><td><input type="checkbox" onclick="PaidAllAmount(this)" class="IsAllPaid form-control" style="width:15px;" /></td><td><input type="text" class="ActualPaymentPaidAmount form-control money" value="' +
+                        r[i].PaidAmount + '" /></td><td><label class="control-label ActualPaymentNetRequired">' +
+                        TotalRequiredAmount + '</label></td></tr>';
+                }
+                else {
+                    Remain = (parseFloat(r[i].TotalAfterTaxes) - parseFloat(r[i].Paid)).toFixed(2);
+                    tr = '<tr class="invoice"><td><input hidden class="PurchaseInvoiceId" value="' +
+                        r[i].Id + '"/><label class="ActualPaymentDocNo control-label">' +
+                        r[i].DocumentNumber + '</label></td ><td><label class="control-label ActualPaymentPurchaseInvoiceDate">  ' +
+                        convertToJavaScriptDate(r[i].VoucherDate) + '</label></td><td><label class="control-label ActualPaymentDate"> ' +
+                        DueDate + '</label></td><td><input hidden class="ActualPaymentDepartmentId" value="' +
+                        r[i].DepartmentId + '" /><lable class="control-label ActualPaymentDepartmentArName">' +
+                        r[i].DepartmentArName + '</lable></td><td><lable class="control-label ActualPaymentTotal"> ' +
+                        r[i].TotalAfterTaxes + '</lable></td><td><label class="control-label ActualPaymentPaid"></label>' +
+                        r[i].Paid + '</td><td><label class="control-label ActualPaymentRemain">' +
+                        Remain + '</label></td><td><input type="checkbox" onclick="PaidAllAmount(this)" class="IsAllPaid form-control" style="width:15px;" /></td><td><input type="text" class="ActualPaymentPaidAmount form-control money" /></td><td><label class="control-label ActualPaymentNetRequired"></label></td></tr>';
+                }
+                $('#PurchaseInvoiceActualPaymentTable').append(tr);
+                //if (parseFloat(r[i].PaidInTransaction) == parseFloat(Remain)) {
+                //    $('.IsAllPaid').prop('checked', true);
+                //}
+                if ($('#MoneyAmount').val() > 0 && $('#IsInvoiceSelected').prop("checked") == false) {
+                    $('#MoneyAmount').trigger('change');
+                }
+            }
+        });
+        $('#pleasewait').fadeOut();
+
+
+
+    }
+    function PaidAllAmount(e) {
+        var TotalAmount = $(e).closest('tr').find('.ActualPaymentRemain').text();
+        if ($(e).prop('checked') == true) {
+
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').val(TotalAmount);
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').prop('disabled', true);
+            $(e).closest('tr').find('.ActualPaymentNetRequired').text('0');
+        }
+        else {
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').val(0);
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').prop('disabled', false);
+            $(e).closest('tr').find('.ActualPaymentNetRequired').text(TotalAmount);
+        }
+        EditAmount = 0;
+        ReCalculateMoneyAmount();
+    }
+    function ReCalculateMoneyAmount() {
+        if ($('#SourceTypeId').val() == 2) {
+            $('#PurchaseInvoiceActualPaymentTable tr').each(function () {
+                let td = $(this);
+                if (td.find('.ActualPaymentPaidAmount').val() > 0) {
+                    EditAmount += parseFloat(td.find('.ActualPaymentPaidAmount').val());
+                }
+            });
+            $('#MoneyAmount').val(EditAmount.toFixed(2));
+        }
+
+        }
+    function CalculateTaxesPercentage() {
+            // if ($('#MoneyAmount').inputmask('unmaskedvalue') > 0) {
+            //var percent = parseFloat($('#MoneyAmount').inputmask('unmaskedvalue')) * 0.15;
+            //var feesAmount = parseFloat($('#FeesAmount').inputmask('unmaskedvalue')) - percent;
+            //$('#ValueAddedTaxesAmount').val(percent);
+            //$('#FeesAmount').val(feesAmount);
+            var percent = parseFloat($('#FeesAmount').inputmask('unmaskedvalue')) * 0.15;
+            // var feesAmount = parseFloat($('#FeesAmount').inputmask('unmaskedvalue')) - percent;
+            $('#ValueAddedTaxesAmount').val(percent);
+            // $('#FeesAmount').val(feesAmount);
+            CalculateFees();
+            // }
+        }
+
+        function setDocNum() {
+            $.get('/CashIssueVoucher/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+                $('#DocumentNumber').val(r);
+            });
+        }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+    }
+        function getPropertyBatches() {
+            let property = $('#PropertyId').val();
+            $.get('/CashIssueVoucher/geOwnerBatchest?id=' + property).done(function (r) {
+                $('#PropertyBatches').empty();
+              /*  console.log(r);*/
+                if (r) {
+                    for (let i = 0; i < r.length; i++) {
+                        //let BatchDate = "";
+                        //if (r[i].BatchDate == null) {
+                        //    BatchDate = "";
+                        //}
+                        //else {
+                        //    BatchDate = convertToJavaScriptDate(r[i].BatchDate);
+                        //}
+                        /*  console.log(BatchDate);*/
+                        let clsIsDelivered = r[i].IsDelivered == true ? "checked disabled" : "";
+                        let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="' +
+                            (i + 1) +
+                            '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "date" class="BatchDate Gregorian  form-control tabledit-input form-control-sm" value = "' +
+                            r[i].BatchDate +
+                            '" disabled readonly /></td>' +
+                            /*  <td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label">' +*/
+                            //   r[i].HijryBatchDate + '</label>
+                            '</td ><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchValueBeforeDiscount form-control tabledit-input form-control-sm" value="' +
+                            r[i].BatchValueBeforeDiscount +
+                            '" disabled readonly /></td>' +
+                            //'<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm" value="' +
+                            //r[i].BatchValueBeforeTax +
+                            //'" disabled readonly /></td>' +
+                            '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTaxValue form-control tabledit-input form-control-sm" value="' +
+                            r[i].BatchTaxValue + '" disabled readonly /></td>'+
+                            '<td class="tabledit-edit-mode"><input type="number" step="any" class="Discount form-control tabledit-input form-control-sm" value="' +
+                            (r[i].Discount) +
+                            '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchValueAfterDiscount form-control tabledit-input form-control-sm" value="' +
+                            (r[i].BatchValueBeforeTax - ((r[i].Discount ?? 0) + (r[i].BatchTaxValue??0))) +
+                            '" disabled readonly/></td><td><input type="checkbox" class="IsDelivered" ' +
+                            clsIsDelivered + ' /> <input type="hidden" class="batchId"   value="'+r[i].Id+'"></td></tr>';
+                           //'<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTaxPercentage form-control tabledit-input form-control-sm" value="' +
+                        //  r[i].TaxPercentage + '" disabled readonly /></td>' +
+                           //    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTaxValue form-control tabledit-input form-control-sm" value="' +
+                           //r[i].TaxValue + '" disabled readonly /></td></tr>';
+                       $('#PropertyBatches').append(tr);
+                   }
+                }
+            });
+    }
+    $(document).on('change', '.IsDelivered', function (e) {
+        //if ($(this).prop('checked') == true) {
+        //    $(this).closest('tr').find('.Paid').val($(this).closest('tr').find('.BatchTotal').inputmask('unmaskedvalue'))
+        //    $(this).closest('tr').find('.Remain').val(0)
+        //}
+        //else {
+        //    $(this).closest('tr').find('.Paid').val(0)
+        //    $(this).closest('tr').find('.Remain').val(0)
+        //}
+
+        var sum = 0;
+        $('.BatchValueAfterDiscount').each(function () {
+            if ($(this).closest('tr').find('.IsDelivered').prop('checked') == true) {
+                sum += parseFloat($(this).val());
+            }
+            //else {
+            //    if ($(this).closest('tr').find('.Paid').val()>0)
+            //        sum += parseFloat($(this).closest('tr').find('.Paid').val());
+            //}
+        });
+        $('#MoneyAmount').val(sum.toFixed(2));
+    });
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+        // return (dt)
+    }
+    function cashBoxByDepartment() {
+        $.get('/Helper/CashBoxByDepartment/' + $('#DepartmentId').val()).done(function (r) {
+            $('#CashBoxId').empty();
+            for (var i = 0; i < r.length; i++) {
+                $('#CashBoxId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+    function getCustomerBalanceInEachDept() {
+        $('#pleasewait').fadeIn();
+        GetPurchaseInvoiceActualPayment();
+        $.get('/Helper/GetCustomerBalanceInEachDept/' + $('#CustomerId').val()).done(function (r) {
+            $('.balance').remove()
+            for (var i = 0; i < r.length; i++) {
+                let tr = '<tr class="balance"><td>' + r[i].DepartmentArName + '</td><td>' + r[i].Debit + '</td><td>' + r[i].Credit + '</td></tr >'
+                $('#balanceTable').append(tr);
+            }
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function getVendorBalanceInEachDept() {
+        $('#pleasewait').fadeIn();
+        $.get('/Helper/GetVendorBalanceInEachDept/' + $('#VendorId').val()).done(function (r) {
+            $('.balance').remove()
+            for (var i = 0; i < r.length; i++) {
+                let tr = '<tr class="balance"><td>' + r[i].DepartmentArName + '</td><td>' + r[i].Debit + '</td><td>' + r[i].Credit + '</td></tr >'
+                $('#balanceTable').append(tr);
+            }
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function CalculateFees() {
+            var FeesAmount = $('#FeesAmount').val() > 0 ? $('#FeesAmount').val() : 0;
+            var ValueAddedTaxesAmount = $('#ValueAddedTaxesAmount').val() > 0 ? $('#ValueAddedTaxesAmount').val() : 0;
+            // var MoneyAmount = $('#MoneyAmount').val()>0 ? $('#MoneyAmount').val():0;
+            var totalFees = parseFloat(FeesAmount) + parseFloat(ValueAddedTaxesAmount); //+ parseFloat(MoneyAmount);
+            $('#TotalFeesPaid').text(totalFees);
+        }
+
+    function getIssueAnalysisAccount() {
+        IssueAnalysisAccountOptions = '';
+        $('.IssueAnalysisAccountId').last().find('option').each(function (r) {
+            IssueAnalysisAccountOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+        if (!$('#Id').val()) {
+            GetIssueAnalysisAccountDetails($('.IssueAnalysisAccountId'))
+        }
+    }
+
+//------------------------------------------------------------------------------------------//
+    function Delete(id) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+                text: " ",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $.ajax({
+                        url: '/CashIssueVoucher/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/CashIssueVoucher');
+                            } else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    function ApproveNotApprove(id) {
+        $.ajax({
+            url: '/CashIssueVoucher/ApproveNotApprove',
+            type: 'POST',
+            data: {
+                "Id": id,
+            },
+            error: function (e) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.TheApprovalStateNotChanged',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            },
+            success: function (r) {
+                if (r == 'true') {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.TheApprovalStateHasChanged',
+                        text: " ",
+                        icon: 'success',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    window.location.replace('/CashIssueVoucher');
+                }
+            }
+        });
+    }
+    function addEdit(n) {
+            let valid = true;
+            var sum = 0;
+            if ($(".form-control:invalid").length > 0) {
+                $('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+                }, 500);
+                console.log($(".form-control:invalid"));
+                valid = false;
+            }
+
+            if ($('#CashIssuePaymentMethodId').val() == 1) { //نقدى
+                $('#TransactionNo').val('').attr('required', false);
+                $('#TransactionDate').val('').attr('required', false);
+                $('#FeesAmount').val('').attr('required', false);
+                $('#ValueAddedTaxesAmount').val('').attr('required', false);
+            }
+            else if ($('#CashIssuePaymentMethodId').val() == 2) { //حوالة بنكية
+                if (!$('#TransactionNo').val()) {
+                    $('#TransactionNo').attr('required', true);
+                    $('#TransactionDate').attr('required', true);
+                    $('#FeesAmount').attr('required', true);
+                    $('#ValueAddedTaxesAmount').attr('required', true);
+                    valid = false;
+                }
+
+            }
+            else if ($('#CashIssuePaymentMethodId').val() == 3) { // شيك مصدق
+                if (!$('#TransactionNo').val()) {
+                    $('#TransactionNo').attr('required', true);
+                    $('#TransactionDate').attr('required', true);
+                    $('#FeesAmount').val('').attr('required', false);
+                    $('#ValueAddedTaxesAmount').val('').attr('required', false);
+                    valid = false;
+                }
+            }
+            else if ($('#CashIssuePaymentMethodId').val() == 4) { //الحساب
+                $('#TransactionNo').val('').attr('required', false);
+                $('#TransactionDate').val('').attr('required', false);
+                $('#FeesAmount').val('').attr('required', false);
+                $('#ValueAddedTaxesAmount').val('').attr('required', false);
+            }
+
+            if ($('#SourceTypeId').val() != 3 && $('#BorrowReceipt').prop('checked') == false) {
+                $('#BorrowReceipt').prop('checked', false);
+                $('#BorrowRequestId').val(0);
+            }
+
+            if ($('#Id').val() > 0 && $('#BorrowReceipt').prop('checked') == true) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.CantEditBecauseIsIssued',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                valid = false;
+            }
+
+            if ($('#SourceTypeId').val() != 9) {
+                $('#Month').val(0);
+                $('#Year').val(0);
+                $('#CashIssueVoucherEmployeePayrollIssues').empty();
+            }
+
+
+            var CashIssueVoucherEmployeePayrollIssues = [];
+
+            if (valid && $('#SourceTypeId').val() == 9) {
+                $('#CashIssueVoucherEmployeePayrollIssues tr').each(function () {
+                    var td = $(this);
+                    var CashIssueVoucherEmployeePayrollIssue = {
+                        CashIssueVoucherId: $('#Id').val(),
+                        EmployeeId: td.find('.employeeId').val(),
+                        NetSalary: td.find('.NetSalary').val(),
+                        Month: $('#Month').val(),
+                        Year: $('#Year').val(),
+                    };
+                    CashIssueVoucherEmployeePayrollIssues.push(CashIssueVoucherEmployeePayrollIssue);
+                });
+        }
+        var IssueAnalysis = [];
+        var IssueAnalysisDetails = [];
+        if ($('#SourceTypeId').val() == 10) {
+            $('#IssueAnalysis tr [id^="IssueAnalysis_"]').each(function () {
+                var td = $(this);
+                var issueAnalysisId = td.find('.issueAnalysisId').val();
+                
+                var panel = td.closest('.panel.panel-default'); // Limit to the current panel
+                var tableBody = panel.find('[id^="IssueAnalysisDetailsTableBody_"]'); // Find the element starting with that ID
+
+                IssueAnalysisDetails = [];
+                
+                let totalCalculated = 0;
+                let totalPrice = parseFloat(td.find('.Total').inputmask('unmaskedvalue'));
+                //fill all details
+                tableBody.find('tr').each(function (index, row) {
+                    var $tdDetail = $(row);
+                    var _IssueAnalysisDetails = {
+                        Id: $tdDetail.find(".IssueAnalysisDetailsId").val(),
+                        IssueAnalysisId: issueAnalysisId,
+                        PropertyDetailId: $tdDetail.find(".PropertyUnitList").val(),
+                        Price: $tdDetail.find(".price-input").inputmask('unmaskedvalue') > 0 ? $tdDetail.find('.price-input').inputmask('unmaskedvalue') : 0
+                    };
+                    if ($tdDetail.find('.price-input').inputmask('unmaskedvalue') > 0) {
+                        IssueAnalysisDetails.push(_IssueAnalysisDetails);
+                    }
+                    totalCalculated += parseFloat($tdDetail.find(".price-input").inputmask('unmaskedvalue')) || 0;
+                });
+                
+                var _IssueAnalysis = {
+                    CashIssueVoucherId: $('#Id').val(),
+                    Value: td.find('.Value').inputmask('unmaskedvalue') > 0 ? td.find('.Value').inputmask('unmaskedvalue') : 0,
+                    Reason: td.find('.Reason').val(),
+                    AccountId: td.find('.IssueAnalysisAccountId').val(),
+                    Notes: td.find('.Notes').val(),
+                    IsDeleted: false,
+                    Total: td.find('.Total').inputmask('unmaskedvalue') > 0 ? td.find('.Total').inputmask('unmaskedvalue') : 0,
+                    Taxes: td.find('.Taxes').inputmask('unmaskedvalue') > 0 ? td.find('.Taxes').inputmask('unmaskedvalue') : 0,
+                    TaxesPrecentage: td.find('.TaxesPrecentage').val(),
+                    NetTotal: td.find('.NetTotal').inputmask('unmaskedvalue') > 0 ? td.find('.NetTotal').inputmask('unmaskedvalue') : 0,
+                    VendorId: td.find('.IssueAnalysisVendorId').val(),
+                    VendorArName: td.find('.IssueAnalysisVendorArName').val(),
+                    TaxNumber: td.find('.IssueAnalysisVendorTaxNumber').val(),
+                    VATNumber: td.find('.IssueAnalysisVendorVATNumber').val(),
+                    InvoiceNo: td.find('.IssueAnalysisVendorInvoiceNo').val(),
+                    id: td.find('.issueAnalysisId').val(),
+                    IssueAnalysisDetails: IssueAnalysisDetails
+                };
+                if (td.find('.Value').inputmask('unmaskedvalue') > 0) {
+                    IssueAnalysis.push(_IssueAnalysis);
+                     //Validation message, fire when there is at least one detail for this issueAnalysis
+                    if (IssueAnalysisDetails.length > 0) {
+                        if (totalCalculated !== totalPrice) {
+                            let reason = td.find('.Reason').val();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain',
+                                text: 'The total price (' + totalPrice + ') does not match the sum of all prices (' + totalCalculated + ') for reason (' + reason + ').',
+                                icon: 'error',
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            valid = false;
+                        }
+                    }
+                }
+            });
+        }
+
+        if (valid == true) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#preloader, #status').fadeIn();
+                        $('#SaveAndNew').prop('disabled', true);
+                        $('#Save').prop('disabled', true);
+                        $('#SaveAndPrint').prop('disabled', true);
+                        if ($('#CashIssuePaymentMethodId').val() == 2) {
+                            var FeesAmount = parseFloat($('#FeesAmount').val() > 0 ? $('#FeesAmount').val() : 0.00);
+                            var MoneyAmount = parseFloat($('#MoneyAmount').inputmask('unmaskedvalue'));
+                            var ValueAddedTaxesAmount = parseFloat($('#ValueAddedTaxesAmount').val() > 0 ? $('#ValueAddedTaxesAmount').val() : 0.00);
+                            var total = FeesAmount + MoneyAmount + ValueAddedTaxesAmount;
+                            $('#MoneyAmount').val(total);
+                            //GetPurchaseInvoiceActualPayment();
+                            $('#MoneyAmount').trigger('change');
+
+                        }
+                        var PurchaseInvoiceActualPayments = [];
+                        if ($('#SourceTypeId').val() == 2) {
+                            $('#PurchaseInvoiceActualPaymentTable tr').each(function () {
+                                var td = $(this);
+                                var PurchaseInvoiceActualPayment = {
+                                    CashIssueVoucherId: $('#Id').val(),
+                                    PurchaseInvoiceId: td.find('.PurchaseInvoiceId').val(),
+                                    PurchaseInvoiceDate: td.find('.ActualPaymentPurchaseInvoiceDate').text(),
+                                    PurchaseInvoiceDocNumber: td.find('.ActualPaymentDocNo').text(),
+                                    Amount: td.find('.ActualPaymentPaidAmount').inputmask('unmaskedvalue') > 0 ? td.find('.ActualPaymentPaidAmount').inputmask('unmaskedvalue') : 0,
+                                    ChequeIssueId: td.find('.ChequeIssueId').val(),
+                                    PaymentDate: $('#Date').val(),// td.find('.ActualPaymentPurchaseInvoiceDate').text(),
+                                    NetAmountRemain: td.find('.ActualPaymentNetRequired').text(),
+                                    IsActive: true,
+                                    IsDeleted: false,
+                                    Notes: td.find('.Notes').val(),
+                                };
+                                if ($('#IsInvoiceSelected').prop('checked') == true && td.find('.ActualPaymentPaidAmount').val() > 0) {
+                                    sum += parseFloat(td.find('.ActualPaymentPaidAmount').val());
+                                }
+                                PurchaseInvoiceActualPayments.push(PurchaseInvoiceActualPayment);
+                            });
+                            //if ($('#IsInvoiceSelected').prop('checked') == true && sum.toFixed(2) != parseFloat($('#MoneyAmount').val())) {
+                            if ($('#IsInvoiceSelected').prop('checked') == true && sum != parseFloat($('#MoneyAmount').inputmask('unmaskedvalue'))) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.AmountMustBeEqualToSumOfAllPaidAmount',
+                                    text: " ",
+                                    icon: 'info',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                valid = false;
+                            }
+                        }
+
+                        var PropertyBatches = [];
+                        if ($('#SourceTypeId').val() == 13) {
+                            $('#PropertyBatches tr').each(function () {
+                                var td = $(this);
+                                var _PropertyBatches = {
+                                    id: td.find('.batchId').val(),
+                                    Paid: td.find('.BatchValueAfterDiscount').val()
+                                };
+                                if (td.find('.IsDelivered').is(':checked')) {
+                                    PropertyBatches.push(_PropertyBatches);
+                                }
+                                //else {
+                                //    td.find('.Value, .IssueAnalysisAccountId, .Reason').prop('required', false);
+                                //}
+                            });
+                        }
+
+                        var cashIssueVoucher = {
+                            Id: $('#Id').val(),
+                            DocumentNumber: $('#DocumentNumber').val(),
+                            BranchId: $('#BranchId').val(),
+                            MoneyAmount: $('#MoneyAmount').inputmask('unmaskedvalue'),
+                            SourceTypeId: $('#SourceTypeId').val(),
+                            OtherSourceName: $('#OtherSourceName').val(),
+                            DirectExpensesId: $('#DirectExpensesId').val(),
+                            Date: $('#Date').val(),
+                            CurrencyId: $('#CurrencyId').val(),
+                            AccountId: $('#AccountId').val(),
+                            IsLinked: $('#IsLinked').prop('checked'),
+                            IsPosted: $('#IsPosted').prop('checked'),
+                            IsActive: $('#IsActive').val(),
+                            IsDeleted: $('#IsDeleted').val(),
+                            Notes: $('#Notes').val(),
+                            Image: $('#Image').val(),
+                            CustomerId: $('#CustomerId').val(),
+                            VendorId: $('#VendorId').val(),
+                            EmployeeId: $('#EmployeeId').val(),
+                            CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                            DepartmentId: $('#DepartmentId').val(),
+                            CashBoxId: $('#CashBoxId').val(),
+                            ShareholderId: $('#ShareholderId').val(),
+                            TechnicianId: $('#TechnicianId').val(),
+                            CostCenterId: $('#CostCenterId').val(),
+                            //PosId: $('#PosId').val(),
+                            //CashierUserId: $('#CashierUserId').val(),
+                            //ShiftId: $('#ShiftId').val(),
+                            //IsCollected: $('#IsCollected').prop('checked'),
+                            //IsClosed: $('#IsClosed').prop('checked'),
+                            IsInvoiceSelected: $('#IsInvoiceSelected').prop('checked'),
+                            BankAccountId: $('#BankAccountId').val(),
+                            TransactionNo: $('#TransactionNo').val(),
+                            TransactionDate: $('#TransactionDate').val(),
+                            ChartOfAccountId: $('#ChartOfAccountId').val(),
+                            CashIssuePaymentMethodId: $('#CashIssuePaymentMethodId').val(),
+                            FeesAmount: $('#FeesAmount').inputmask('unmaskedvalue'),
+                            ValueAddedTaxesAmount: $('#ValueAddedTaxesAmount').inputmask('unmaskedvalue'),
+                            PurchaseInvoiceActualPayments: PurchaseInvoiceActualPayments,
+                            IsSynced: $('#IsSynced').val(),
+                            IsUpdateSynced: $('#IsUpdateSynced').val(),
+                            BorrowReceipt: $('#BorrowReceipt').prop('checked'),
+                            BorrowRequestId: $('#BorrowRequestId').val(),
+                            Month: $('#Month').val(),
+                            Year: $('#Year').val(),
+                            DoctorId: $('#DoctorId').val(),
+                            PrepaidExpenseDetailId: $('#PrepaidExpenseDetailId').val(),
+                            CashIssueVoucherEmployeePayrollIssues: CashIssueVoucherEmployeePayrollIssues,
+                            IssueAnalysis: IssueAnalysis,
+                            PropertyId : $('#PropertyId').val(),
+                            PropertyOwnerId : $('#PropertyOwnerId').val(),
+                            PropertyBatches: PropertyBatches
+                        }
+
+                        $.ajax({
+                            type: "POST", contentType: "application/json",
+                            url: "/CashIssueVoucher/AddEdit",
+                            data:
+                                JSON.stringify({ cashIssueVoucher }),
+                            success: function (r) {
+                                if (r.success == "true") {
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                    
+                                    $('#preloader, #status').fadeOut();
+                                    if (n == "new") {
+                                        window.location.replace("/CashIssueVoucher/AddEdit");
+                                    }
+                                    else {
+                                        if (n == "report") {
+                                            window.open("/Report/CashIssueVoucherDetails/" + r.id);
+                                            window.location.replace("/CashIssueVoucher");
+                                        }
+                                        else {
+                                            window.location.replace("/CashIssueVoucher");
+                                        }
+                                    }
+                                } else {
+                                    $('#preloader, #status').fadeOut();
+                                    $('#SaveAndNew').prop('disabled', false);
+                                    $('#Save').prop('disabled', false);
+                                    $('#SaveAndPrint').prop('disabled', false);
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.NotSaved !',
+                                        text: " ",
+                                        icon: 'error',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                }
+                            },
+                            error: function (r) {
+                                $('#preloader, #status').fadeOut();
+                                $('#SaveAndNew').prop('disabled', false);
+                                $('#Save').prop('disabled', false);
+                                $('#SaveAndPrint').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        });
+                    }
+                    else { result.dismiss; }
+                });
+            }
+    }
+
+    //---------------------IssueAnalysis Functions--------------------------//
+
+    function CalculateValue(e) {
+        var Valuesum = 0;
+        //$('#IssueAnalysis tr').each(function () {
+        //    var td = $(this);
+        //    if (td.find('.Value').inputmask('unmaskedvalue') > 0) {
+        //        Valuesum += parseFloat(td.find('.Total').inputmask('unmaskedvalue'));
+        //    }
+        //});
+        //
+        $('#IssueAnalysis tr [id^="IssueAnalysis_"]').each(function () {
+            var td = $(this);
+            if (td.find('.Value').inputmask('unmaskedvalue') > 0) {
+                Valuesum += parseFloat(td.find('.Total').inputmask('unmaskedvalue'));
+            }
+        });
+        //
+        $('#MoneyAmount').val(Valuesum);
+    }
+
+    function CheckIssueAnalysisIsValid(issAnalNode) {
+        return true;
+    }
+
+    // Function to load the IssueAnalysis partial view and append new line in IssueAnalysis table
+    function loadIssueAnalysisPartialView() {
+        //draw new tr to table IssueAnalysis
+        let tr = `
+        <tr class="issueAnalysisId_-1" style="border: 1px solid; color: black">
+            <td colspan="10" style="text-align: center;">
+            </td>
+        </tr>`;
+        $('#IssueAnalysis').append(tr);
+        var $lastRow = $('tr.issueAnalysisId_-1').last();
+        // Find the <td> inside that row
+        var $targetTd = $lastRow.find('td');
+        $.ajax({
+            url: '/CashIssueVoucher/LoadEmptyIssueAnalysisPartial',
+            type: 'GET',
+            success: function (data) {
+                $targetTd.html(data); // Inject the partial view into the div
+                getIssueAnalysisAccount();
+                // getIssueAnalysisVendor();
+                $('.IssueAnalysisAccountId').each(function () {
+                    let selectedItem = $(this).val();
+                    $(this).empty().append(IssueAnalysisAccountOptions).val(selectedItem).select2();
+                });
+                    //$('.IssueAnalysisAccountId').last().append(IssueAnalysisAccountOptions).select2();
+
+                $('#IssueAnalysis input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                    alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+                GetIssueAnalysisAccountDetails($('#IssueAnalysis .IssueAnalysisAccountId:last'));
+                
+                syncWidthChange();
+
+            },
+            error: function (xhr, status, error) {
+                console.error("Error loading IssueAnalysis view:", error);
+            }
+        });
+    }
+
+    function AddToIssueAnalysisTable() {
+        let valid = true;
+        if ($('#IssueAnalysis .Value:last').val() || $('#IssueAnalysis .IssueAnalysisAccountId:last').val() || $('#IssueAnalysis .Reason:last').val() || $('#IssueAnalysis .Total:last').val()) {
+            $('#IssueAnalysis').find('.Value, .IssueAnalysisAccountId, .Reason').prop('required', true);
+        }
+        if ($('#IssueAnalysis .form-control:invalid').length > 0) {
+            $('#IssueAnalysis').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#IssueAnalysis").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            valid = false;
+        }
+        else {
+            if (valid == true) {
+                if (!IssueAnalysisAccountOptions.length) {
+                    getIssueAnalysisAccount();
+                }
+                loadIssueAnalysisPartialView();
+                //$('.IssueAnalysisAccountId').last().append(IssueAnalysisAccountOptions).select2();
+
+                $('#IssueAnalysis input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                   alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+                //GetIssueAnalysisAccountDetails($('#IssueAnalysis .IssueAnalysisAccountId:last'));
+                syncWidthChange();
+            }
+
+        }
+    }
+
+    function addIssueAnalysisDetailRow(button) {
+        // Get the parent element containing the button (the panel div)
+        var panel = $(button).closest('.panel-body');
+
+        // Find the corresponding <tbody> inside this panel
+        var tableBody = panel.find('tbody');
+
+        // Define a new row to be added
+        var newRow = `
+            <tr>
+                <td>
+                    <input type="text" class="form-control IssueAnalysisDetailsId" hidden value="-1" />
+                    <select class="form-control PropertyList" onchange="onChangePropertyList(this);">
+
+                    </select>
+                </td>
+                <td>
+                    <select class="PropertyUnitList form-control">
+
+                    </select>
+                </td>
+                <td>
+                    <input type="number" step="any" class="form-control tabledit-input price-input" value="" placeholder="--@MyERP.Properties.Resources.Price--" />
+                </td>
+                <td>
+                    <a href="javascript:void(0);" onclick="removeIssueAnalysisDetailRow(this)"><i class="fas fa-trash-alt"></i></a>
+                </td>
+            </tr>`;
+
+
+        // Append the new row to the table body
+        tableBody.append(newRow);
+        var newPropertyList = tableBody.find('.PropertyList:last');
+        loadProperties(newPropertyList);
+    }
+
+    function removeIssueAnalysisDetailRow(button) {
+        // Remove the current row
+        const row = button.closest('tr');
+        const tableBody = row.parentElement;
+        row.remove();
+    }
+
+    function deleteIssueAnalysisRow(e) {
+        // Find the parent <td> of the clicked element
+        var tdElement = $(e).closest('td')[0];
+
+        // Find the hidden input within the same <td>
+        var hiddenInput = tdElement.querySelector('.issueAnalysisId');
+
+        // Get the value of the hidden input
+        var issueAnalysisId = hiddenInput.value;
+        let tr = tdElement.closest('tr');
+        if (issueAnalysisId > 0) {
+            tr = $(".issueAnalysisId_" + issueAnalysisId);
+            tr.remove();
+        }
+        else {
+            // Find the closest <tr> with a class that starts with "issueAnalysisId_"
+            //tr = tdElement.closest('tr'); // Start from the closest <tr>
+            //while (tr && !Array.from(tr.classList).some(cls => cls.startsWith("issueAnalysisId_"))) {
+            //    tr = tr.parentElement.closest('tr'); // Move to the next closest <tr>
+            //}
+            let $tr = $(tr);
+            let isLastRow = $tr.index() === $tr.closest('tbody').children('tr').length - 1;
+
+            if (!isLastRow) {
+                $tr.remove();
+            } else {
+                $tr.find("input").val('');
+                $tr.find('input, select').removeAttr('required');
+                $tr.find('select').prop('selectedIndex', 0).select();
+                $tr.find("label").text('');
+            }
+        }
+        
+        CalculateValue();
+    }
+
+    function initiatePropertyUnitsForDetailsTable() {
+        const elements = document.querySelectorAll('[id^="IssueAnalysisDetailsTableBody"]');
+        elements.forEach(element => {
+            const rows = element.querySelectorAll('tr'); // Select all rows inside the tbody
+
+            rows.forEach(row => {
+                const $row = $(row);
+
+                let $property = $row.find(".PropertyList");
+                let $propUnit = $row.find(".PropertyUnitList");
+                let propUnitVal = $propUnit.val();
+
+                // Trigger change event on Property
+                $property.trigger('change');
+
+                // Wait for the options to update before setting the value back
+                setTimeout(() => {
+                    if ($propUnit.find(`option[value="${propUnitVal}"]`).length > 0) {
+                        // Set the value back if it exists in the options
+                        $propUnit.val(propUnitVal).select();
+                        $propUnit.val(propUnitVal).trigger('change');
+                    } else {
+                        console.warn(`Value ${propUnitVal} not found in dropdown options`);
+                    }
+                }, 5000); // Adjust the delay as needed to match the time for options to load
+            });
+        });
+
+
+        //// Select all elements with id starting with "IssueAnalysisDetailsTableBody"
+        //const elements = document.querySelectorAll('[id^="IssueAnalysisDetailsTableBody"]');
+
+        //// Loop through the selected elements
+        //elements.forEach(element => {
+        //    const rows = element.querySelectorAll('tr'); // Select all rows inside the tbody
+
+        //    rows.forEach(row => {
+        //        // Wrap the plain DOM element with jQuery
+        //        const $row = $(row);
+
+        //        // Use jQuery to find elements and manipulate them
+        //        let $property = $row.find(".PropertyList");
+        //        let $propUnit = $row.find(".PropertyUnitList");
+        //        let propUnitVal = $propUnit.val();
+        //        console.log(`selected unit: ${propUnitVal}`);
+        //        // Trigger change event on Property
+        //        $property.trigger('change');
+
+        //        // Set it back to the selected propUnits
+        //        $propUnit.val(propUnitVal);
+        //    });
+        //});
+    }
+
+    function loadProperties(propList) {
+        $.getJSON("/CashIssueVoucher/GetProperties", function (data) {
+            var items = "";
+            $.each(data, function (i, TL_Properties) {
+                items += "<option value='" + TL_Properties.Value + "'>" + TL_Properties.Text + "</option>";
+            });
+            $(propList).empty().append(items).select();
+        });
+    }
+
+    function onChangePropertyList(e) {
+
+        $.getJSON("/CashIssueVoucher/GetPropertyUnits?PropertyId=" + $(e).val() /*$("#PropertyList > option:selected").attr("value")*/, function (data) {
+            var items = "";
+            $.each(data, function (i, TL_Units) {
+                items += "<option value='" + TL_Units.Value + "'>" + TL_Units.Text + "</option>";
+            });
+            //$("#PropertyUnitList").html(items);
+            $(e).closest('tr').find('.PropertyUnitList').empty().append(items).select();
+        });
+    }
+    
+</script>
+

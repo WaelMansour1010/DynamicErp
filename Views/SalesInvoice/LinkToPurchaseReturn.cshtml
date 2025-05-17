@@ -1,0 +1,111 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseReturn>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+
+
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.DocumentNumber)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.VoucherDate)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Department.ArName)
+        </td>
+        <td>
+            <a href="@Url.Action("AddEdit","PurchaseReturn",new { id=item.Id })" target="_blank">
+                <i class="fa fa-edit"></i>
+            </a>
+        </td>
+        <td>
+            <button class="btn btn-primary PurchaseReturnId" value="@item.Id" doc-num="@item.DocumentNumber" onclick="PurchaseReturnDetails(this)">
+                @MyERP.Properties.Resources.Link
+            </button>
+        </td>
+    </tr>
+
+}
+
+<script>
+
+
+    function PurchaseReturnDetails(id) {
+                $('#LinkWithOtherDocModal').modal('hide');
+        $('#preloader, #status').fadeIn();
+        var Path = window.location.pathname;
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "/SalesInvoice/PurchaseReturnDetails?id=" + $(id).val(),
+                    success: function (r) {
+                        if (Path.search('SalesOrder') > -1) { //Exist
+                            $('#SalesOrderDetails').empty().append(r.view);
+                            $('#SalesOrderDetails select').select2({
+                                matcher: matchCustom
+                            });
+                            $('#SalesOrderDetails .money').inputmask({
+                                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                            });
+                        }
+                        else if (Path.search('StockIssueVoucher') > -1) { //Exist
+                            $('#StockIssueVoucherDetails').empty().append(r.view);
+                            $('#StockIssueVoucherDetails select').select2({
+                                matcher: matchCustom
+                            });
+                            $('#StockIssueVoucherDetails .money').inputmask({
+                                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                            });
+                        }
+                        else {
+                            $('#SalesInvoiceDetails').empty().append(r.view);
+                            $('#SalesInvoiceDetails select').select2({
+                                matcher: matchCustom
+                            });
+                            $('#SalesInvoiceDetails .money').inputmask({
+                                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                            });
+                        }
+
+                        let docNum = $(id).attr('doc-num');
+                        $('#PurchaseRequestDocNum').text('@MyERP.Properties.Resources.PurchaseReturnNo' + ': ' + docNum);
+    $('#DocName').val('PurchaseReturn');
+                        $('#DocId').val($(id).val());
+                        $('#cancelPurchaseRequest').show();
+
+                        if (Path.search('SalesOrder') > -1 || Path.search('StockIssueVoucher') > -1) { //Exist
+                            $('.price').each(function () {
+                                $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+                            });
+                        }
+                        else {
+                            $('.price').each(function () {
+                                $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+                                AddToSerialNumberTable($(this).closest('tr'));
+                            });
+                        }
+                        $('#VoucherDiscountValue').val(r.purchaseReturn[0].VoucherDiscountValue);
+                        $('#VoucherDiscountPercentage').val(r.purchaseReturn[0].VoucherDiscountPercentage);
+                        $('#SalesTaxes').val(r.purchaseReturn[0].SalesTaxes);
+                        CalculateTotals();
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function () {
+                        $('#preloader, #status').fadeOut();
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.NotLinked' + '!',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                });
+            }
+
+</script>

@@ -1,0 +1,148 @@
+﻿@model MyERP.Models.PropertyNotificationType
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.PropertyNotificationType;
+}
+
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.PropertyNotificationType :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/PropertyNotificationType/AddEdit" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+
+                                    }
+                                    <label for="Code" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="ArName">  @MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:left;">
+                            @if (Model == null)
+                            {
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button type="submit" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <a class="btn btn-danger" onclick="Delete(@Model.Id,'PropertyNotificationType')" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+
+        if ($('#Id').val() > 0) {
+
+        }
+        else {
+            setCodeNum();
+        }
+    });
+
+
+    function setCodeNum() {
+        var doc = $.get('/PropertyNotificationType/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+
+   
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PropertyNotificationType/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/PropertyNotificationType');
+                        }
+                    }
+                });
+        }
+    }
+
+
+</script>

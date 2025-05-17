@@ -1,0 +1,734 @@
+﻿@model MyERP.Models.EmployeeVacationOpeningBalance
+
+@{
+    string AmazonS3Server = string.IsNullOrEmpty(System.Web.Configuration.WebConfigurationManager.AppSettings["AmazonS3Server"]) ? "" : System.Web.Configuration.WebConfigurationManager.AppSettings["AmazonS3Server"];
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeeVacationOpeningBalance;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.EmployeeVacationOpeningBalance :</h4>
+        </div>
+    </div>
+</div>
+
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.IsPosted)
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new
+                                        {
+                                            htmlAttributes = new
+                                            {
+                                                @class = "form-control",
+                                                @readonly = "readonly",
+                                                @placeholder = @MyERP.Properties.Resources.DocNo,
+                                                required = "required"
+                                            ,
+                                                hidden = "hidden"
+                                            }
+                                        })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input id="Date" name="Date" class="form-control Gregorian" type="datetime-local" value="@ViewBag.Date" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriDate </label>
+                                    <div class="col-sm-4">
+                                        <input readonly type="text" id="HijryDate" class="form-control" />
+                                        @*@Html.ValidationMessageFor(model => model.Birthdate, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="InputMethods" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.InputMethod
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @*@if (Model == null)
+                                            {*@
+                                        @Html.DropDownList("InputMethods", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        @*}
+                                            else
+                                            {
+                                                @Html.DropDownList("InputMethods", null, htmlAttributes: new { @class = "form-control" })
+                                            }*@
+
+                                    </div>
+
+                                    <label hidden class="Department control-label col-sm-2">
+                                        @MyERP.Properties.Resources.EmployeeDepartment
+                                    </label>
+                                    <div hidden class="Department col-sm-4">
+                                        @Html.DropDownList("EmployeeDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                    <label hidden class="AdministrativeDepartment control-label col-sm-2">
+                                        @MyERP.Properties.Resources.EmployeeAdministrativeDepartment
+                                        
+                                    </label>
+                                    <div hidden class="AdministrativeDepartment col-sm-4">
+                                        @Html.DropDownList("AdministrativeDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="table-responsive py-3">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Employee
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.WorkingFirstDate
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.WorkingFirstDateHijri
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.WorkingLastDate
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.WorkingLastDateHijri
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.VacationBalance
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.WithoutSalary
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Absence
+                                                    
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Delete
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="EmployeeVacationOpeningBalanceDetails">
+                                            @if (Model != null)
+                                            {
+
+
+                                                foreach (var item in Model.EmployeeVacationOpeningBalanceDetails)
+                                                {
+                                                    <tr>
+                                                        <td class="p-0 tabledit-edit-mode">
+                                                            <input type="hidden" class="EmployeeId form-control tabledit-input form-control-sm" value="@item.Employee.Id" />
+                                                            <select class="form-control"><option value="@item.EmployeeId">@item.Employee.Code - @item.Employee.ArName</option></select>
+                                                        </td>
+                                                        <td class="p-0 tabledit-edit-mode">
+                                                            <input style="width:85%" id="StartDate" type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm " value="@item.StartDate.Value.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                        </td>
+                                                        <td class="p-0 tabledit-edit-mode">
+                                                            <label class="StartDateHijri control-label">@item.StartDateHijri</label>
+                                                        </td>
+                                                        <td class="p-0 tabledit-edit-mode">
+                                                            <input style="width:85%" id="EndDate" type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm " value="@item.EndDate.Value.ToString("yyyy-MM-ddTHH:mm")" required />
+                                                        </td>
+                                                        <td class="p-0 tabledit-edit-mode">
+                                                            <label class="EndDateHijri control-label">@item.EndDateHijri</label>
+                                                        </td>
+                                                        <td style="width:8%" class="p-0 tabledit-edit-mode">
+                                                            <input type="number" step="any" class="VacationBalance money  form-control tabledit-input form-control-sm" value="@item.VacationBalance" />
+                                                        </td>
+                                                        <td style="width:8%" class="p-0 tabledit-edit-mode">
+                                                            <input type="number" step="any" class="VacationWithoutSalary  form-control tabledit-input form-control-sm" value="@item.VacationWithoutSalary" />
+                                                        </td>
+                                                        <td style="width:8%" class="p-0 tabledit-edit-mode">
+                                                            <input type="number" step="any" class="Absence form-control tabledit-input form-control-sm" value="@item.Absence" />
+                                                        </td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                <tr>
+                                                    <td style="width:15%" class="p-0 tabledit-edit-mode">
+                                                        <input type="hidden" class="EmployeeId form-control tabledit-input form-control-sm" />
+                                                        @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @style = "height:30px", @class = "form-control p-0 EmployeeName" })
+                                                    </td>
+                                                    <td class="p-0  tabledit-edit-mode">
+                                                        <input style="width:85%" id="StartDate" type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm " />
+                                                    </td>
+                                                    <td class="p-0 tabledit-edit-mode">
+                                                        <label class="StartDateHijri control-label"></label>
+                                                    </td>
+                                                    <td class="p-0  tabledit-edit-mode">
+                                                        <input style="width:85%" id="EndDate" type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm " />
+                                                    </td>
+                                                    <td class="p-0 tabledit-edit-mode">
+                                                        <label class="EndDateHijri control-label"></label>
+                                                    </td>
+                                                    <td style="width:8%" class="p-0 tabledit-edit-mode">
+                                                        <input type="number" step="any" class="VacationBalance   form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td style="width:8%" class="p-0 tabledit-edit-mode">
+                                                        <input type="number" step="any" class="VacationWithoutSalary  form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td style="width:8%" class="p-0 tabledit-edit-mode">
+                                                        <input type="number" step="any" class="Absence form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-body">
+                                    <input id="new" name="newBtn" hidden />
+                                    <div style="float:right;">
+                                        <div class="row">
+                                            <div class="col-sm-offset-2">
+                                                @if (Model == null)
+                                                {
+                                                <button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                                                    @MyERP.Properties.Resources.SaveAndNew
+                                                </button>
+                                                <button class="btn btn-success" onclick="addEdit()">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                                }
+                                                else if (Model.IsDeleted == false)
+                                                {
+                                            <button class="btn btn-success" onclick="addEdit()">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                                                @MyERP.Properties.Resources.Delete
+                                            </button>   
+                                            }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    let Employees = [];
+    let AdminstrativeDepartmentEmployees = [];
+    let DepartmentEmployees = []
+
+
+
+    function zeroPadded(val)
+    {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    function getEmployees()
+    {
+        $.get('/Helper/GetAllEmployees').done(function (r) {
+            Employees = r;
+        });
+    }
+
+    function setDocNum()
+    {
+        if ($('#DepartmentId').val())
+        {
+            $.get('/EmployeeVacationOpeningBalance/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+        }
+    }
+
+    if ($('#Id').val() > 0)
+    {
+        $('#Date').val('@ViewBag.Date');
+        var code = $('#DocumentNumber').val();
+        $('#DocumentNumbers').val(code.replaceAll("-", ""))
+        $("#DepartmentId").prop('disabled', true);
+        $("#Date").prop('disabled', true);
+    }
+    else
+    {
+        var d = new Date();
+        $('#Date').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        setDocNum();
+    }
+
+
+    $('#InputMethods').on('change', function () {
+        if ($('#InputMethods').val() == 1)
+        {
+            $('.Department').attr('hidden', true);
+            $('.AdministrativeDepartment').attr('hidden', true);
+            $('#EmployeeVacationOpeningBalanceDetails').empty();
+
+            let tr = '<tr><td style="width:15%" class="p-0 tabledit-edit-mode"><input type="hidden"  class="EmployeeId form-control tabledit-input form-control-sm" /><select required style="height:30px" class="p-0 EmployeeName form-control" id="EmployeeId"></select></td><td  class="p-0 tabledit-edit-mode"><input style="width:85%"  id="StartDate"  type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm "  required /></td><td class="p-0 tabledit-edit-mode"><label  class="StartDateHijri control-label"></label></td><td  class="p-0 tabledit-edit-mode"><input style="width:85%" id="EndDate"  type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm "  required /></td><td class="tabledit-edit-mode"><label class="EndDateHijri"></label></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationBalance money  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationWithoutSalary  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="Absence form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+            $('#EmployeeVacationOpeningBalanceDetails').append(tr);
+            let EmployeesDropdown = $('#EmployeeVacationOpeningBalanceDetails tr:last').find('#EmployeeId');
+            EmployeesDropdown.append(new Option('@MyERP.Properties.Resources.Select', '0'));
+            for (var i = 0; i < Employees.length; i++)
+            {
+                var option = $('<option></option>').attr("value", Employees[i].Id).text(Employees[i].ArName);
+                EmployeesDropdown.append(option);
+            }
+            EmployeesDropdown.select2();
+
+        }
+        else
+        {
+            if ($('#InputMethods').val() == 2)
+            {
+                $('.Department').attr('hidden', false);
+                $('#EmployeeVacationOpeningBalanceDetails').empty();
+                $('.AdministrativeDepartment').attr('hidden', true);
+            }
+            else
+            {
+                if ($('#InputMethods').val() == 3)
+                {
+                    $('#EmployeeVacationOpeningBalanceDetails').empty();
+                    $('.AdministrativeDepartment').attr('hidden', false);
+                    $('.Department').attr('hidden', true);
+
+                }
+                else
+                {
+                    $('.Department').attr('hidden', true);
+                    $('.AdministrativeDepartment').attr('hidden', true);
+                    $('#EmployeeVacationOpeningBalanceDetails').empty();
+                    for (var i = 0; i < Employees.length; i++)
+                    {
+                        let tr = '<tr><td style="width:15%" class=" p-0 tabledit-edit-mode"><input type="hidden"  value="' + Employees[i].Id + '" class="EmployeeId form-control tabledit-input form-control-sm" /><select style="height:30px" class="p-0 form-control" id="EmployeeId" required="required"><option value="' + Employees[i].Id + '">' + Employees[i].ArName + '</option></select></td><td  class="p-0 tabledit-edit-mode"><input style="width:85%"  id="StartDate"  type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm "  required /></td><td class="tabledit-edit-mode"><label class="StartDateHijri"></label></td><td class="p-0 tabledit-edit-mode"><input style="width:85%" id="EndDate"  type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm "  required /></td><td class="tabledit-edit-mode"><label class="EndDateHijri"></label></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationBalance money  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input   required type="number" step="any" class="VacationWithoutSalary money form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="Absence form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+                        $('#EmployeeVacationOpeningBalanceDetails').append(tr);
+
+                    }
+                }
+            }
+        }
+    });
+
+
+    $('#EmployeeDepartmentId').on('change', function () {
+        let Selected_Dept = $('#EmployeeDepartmentId option:selected').val();
+        if (Employees.length != 0) {
+            DepartmentEmployees.length = 0;
+            for (var i = 0; i < Employees.length; i++) {
+                if (Employees[i].DepartmentId == Selected_Dept)
+                {
+                    DepartmentEmployees.push(Employees[i]);
+                }
+            }
+        }
+        $('#EmployeeVacationOpeningBalanceDetails').empty();
+        for (var i = 0; i < DepartmentEmployees.length; i++)
+        {
+            let tr = '<tr><td style="width:15%" class="p-0 tabledit-edit-mode"><input type="hidden"  value="' + DepartmentEmployees[i].Id + '" class="EmployeeId form-control tabledit-input form-control-sm" /><select style="height:30px" class="p-0 form-control" id="EmployeeId" required="required"><option value="' + DepartmentEmployees[i].Id + '">' + DepartmentEmployees[i].ArName + '</option></select></td><td class="p-0 tabledit-edit-mode"><input style="width:85%"  id="StartDate"  type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm "  required /></td><td class="p-0 tabledit-edit-mode"><label class="StartDateHijri"></label></td><td  class="p-0 tabledit-edit-mode"><input style="width:85%" id="EndDate"  type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm "  required /></td><td class="p-0 tabledit-edit-mode"><label class="EndDateHijri"></label></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationBalance money  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationWithoutSalary money form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="Absence form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+            $('#EmployeeVacationOpeningBalanceDetails').append(tr);
+
+        }
+    });
+
+    $('#AdministrativeDepartmentId').on('change', function () {
+        let Selected_AD = $('#AdministrativeDepartmentId option:selected').val();
+        if (Employees.length != 0)
+        {
+            AdminstrativeDepartmentEmployees.length = 0;
+            for (var i = 0; i < Employees.length; i++)
+            {
+                if (Employees[i].AdministrativeDepartmentId == Selected_AD)
+                {
+                    AdminstrativeDepartmentEmployees.push(Employees[i]);
+                }
+            }
+        }
+        $('#EmployeeVacationOpeningBalanceDetails').empty();
+        for (var i = 0; i < AdminstrativeDepartmentEmployees.length; i++)
+        {
+            let tr = '<tr><td style="width:15%" class="p-0 tabledit-edit-mode"><input type="hidden"  value="' + AdminstrativeDepartmentEmployees[i].Id + '" class="EmployeeId form-control tabledit-input form-control-sm" /><select style="height:30px" class="p-0 form-control" id="EmployeeId" required="required"><option value="' + AdminstrativeDepartmentEmployees[i].Id + '">' + AdminstrativeDepartmentEmployees[i].ArName + '</option></select></td><td class="p-0 tabledit-edit-mode"><input style="width:85%"  id="StartDate"  type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm "  required /></td><td  class="p-0 tabledit-edit-mode"><label class="StartDateHijri"></label></td><td style="padding:0px !important" class="p-0 tabledit-edit-mode"><input style="width:85%" id="EndDate"  type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm "  required /></td><td class="p-0 tabledit-edit-mode"><label class="EndDateHijri"></label></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationBalance money  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="VacationWithoutSalary money form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input required type="number" step="any" class="Absence form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+            $('#EmployeeVacationOpeningBalanceDetails').append(tr);
+            //$('#StartDate').trigger('change');
+
+        }
+    });
+
+    $('.Gregorian').on('change', function () {
+
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+
+    });
+
+
+    $(document).on('change','.Gregorian_start', function ()
+    {
+        let input = $(this);
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        input.closest('tr').find('.StartDateHijri').text(Hijry)
+    });
+
+    $(document).on('change', '.Gregorian_end', function ()
+    {
+        let input = $(this);
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        input.closest('tr').find('.EndDateHijri').text(Hijry)
+    });
+
+
+    $(document).on('change','#EmployeeId', function () {
+        let Employee = $(this);
+        let EmployeeName = $(this).find('option:selected').text();
+        let EmployeeId = $(this).find('option:selected').val();
+        if (EmployeeName != "@MyERP.Properties.Resources.Select")
+        {
+            Employee.closest('tr').find('.EmployeeId').val(EmployeeId);
+            //Employee.closest('tr').find("input").val('');
+            Employee.closest('tr').find('input, select').attr('required',true);
+            addNewEmployee();
+        }
+
+    });
+
+    $('#DepartmentId').on('change', function (){
+        setDocNum();
+    });
+    $('#Date').on('change', function () {
+        setDocNum();
+    });
+
+    $(document).ready(function ()
+    {
+        getEmployees();
+
+        $('.Gregorian').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        });
+
+        if ($('#Id').val())
+        {
+            $('#InputMethods').attr('disabled', true);
+        }
+
+    });
+
+
+    function addNewEmployee()
+    {
+
+        if ($('#EmployeeVacationOpeningBalanceDetails .EmployeeName:last').val() != 0)
+        {
+
+            let tr = '<tr><td style="width:15%" class="p-0 tabledit-edit-mode"><input type="hidden"  class="EmployeeId form-control tabledit-input form-control-sm" /><select style="height:30px" class="p-0 EmployeeName form-control" id="EmployeeId"></select></td><td  class="p-0  tabledit-edit-mode"><input style="width:85%"  id="StartDate"  type="datetime-local" class="Gregorian_start StartDate form-control tabledit-input form-control-sm "/></td><td class="p-0 tabledit-edit-mode"><label  class="StartDateHijri control-label"></label></td><td  class="p-0 tabledit-edit-mode"><input style="width:85%" id="EndDate"  type="datetime-local" class="Gregorian_end EndDate form-control tabledit-input form-control-sm "/></td><td class="tabledit-edit-mode"><label class="EndDateHijri"></label></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input  type="number" step="any" class="VacationBalance money  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input  type="number" step="any" class="VacationWithoutSalary  form-control tabledit-input form-control-sm" /></td><td style="width:8%" class="p-0 tabledit-edit-mode"><input  type="number" step="any" class="Absence form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+            $('#EmployeeVacationOpeningBalanceDetails').append(tr);
+            let EmployeesDropdown = $('#EmployeeVacationOpeningBalanceDetails tr:last').find('#EmployeeId');
+            EmployeesDropdown.append(new Option('@MyERP.Properties.Resources.Select', '0'));
+            for (var i = 0; i < Employees.length; i++)
+            {
+                var option = $('<option></option>').attr("value", Employees[i].Id).text(Employees[i].ArName);
+                EmployeesDropdown.append(option);
+            }
+            EmployeesDropdown.select2();
+            EmployeesDropdown.trigger('change');
+
+            //servicesDropdown.trigger('change');
+            //$('#CarEntranceDetails .money').inputmask({
+            //    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            //});
+            //$('#CarEntranceDetails input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+            //    alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            //});
+            //$('#CarEntranceDetails input.small-number').removeProp('oninput').prop('type', 'text').inputmask({
+            //    alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            //});
+        }
+    }
+
+
+    function deleteElement(e)
+    {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1)
+            $(tr).find("input").val('');
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1)
+        {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            //$(tr).find('select').empty();
+        }
+        //CalculateTotals();
+        //addToSalesInvoiceDetails();
+    }
+
+    //-------------------------------------------------------------- add/edit ------------------------------------------//
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+
+        var EmployeeVacationOpeningBalanceDetails = [];
+        if (valid) {
+            $('#EmployeeVacationOpeningBalanceDetails tr').each(function () {
+                var tr = $(this);
+                if (tr.find('.EmployeeId').val() > 0) {
+                    var EmployeeVacationOpeningBalanceDetail =
+                    {
+                        EmployeeId: tr.find('.EmployeeId').val(),
+                        MainDocId: $('#Id').val(),
+                        StartDate: tr.find('.StartDate').val(),
+                        EndDate: tr.find('.EndDate').val(),
+                        StartDateHijri: tr.find('.StartDateHijri').text(),
+                        EndDateHijri: tr.find('.EndDateHijri').text(),
+                        VacationBalance: tr.find('.VacationBalance').val(),
+                        VacationWithoutSalary: tr.find('.VacationWithoutSalary').val(),
+                        Absence: tr.find('.Absence').val(),
+                        IsDeleted: false,
+                    };
+                    EmployeeVacationOpeningBalanceDetails.push(EmployeeVacationOpeningBalanceDetail);
+                }
+            });
+            valid = EmployeeVacationOpeningBalanceDetails.length > 0 ? true : false;
+            valid == false ? Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            }) : null;
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/EmployeeVacationOpeningBalance/AddEdit",
+                        data:
+                            JSON.stringify({
+                                Id: $('#Id').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                Date: $('#Date').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                InputMethodId: $('#InputMethods option:selected').val(),
+                                Notes: $('#Notes').val(),
+                                EmployeeVacationOpeningBalanceDetails: EmployeeVacationOpeningBalanceDetails,
+                                IsActive: true,
+                                IsDeleted: false,
+                            }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                                if (n == "new") {
+                                    window.location.replace("/EmployeeVacationOpeningBalance/AddEdit");
+                                }
+                                else {
+                                    if (n == "report") {
+                                        window.open("/Report/EmployeeVacationOpeningBalance/" + r.id);
+                                        window.location.replace("/EmployeeVacationOpeningBalance");
+                                    }
+                                    else {
+                                        window.location.replace("/EmployeeVacationOpeningBalance");
+                                    }
+                                }
+                            }
+                            else {
+                                $('#preloader, #status').fadeOut();
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/EmployeeVacationOpeningBalance/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/EmployeeVacationOpeningBalance');
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+</script>

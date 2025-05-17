@@ -1,0 +1,268 @@
+﻿@model MyERP.Models.EmployeeAbsence
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeeAbsence;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.EmployeeAbsence:</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" readonly id="DocumentNumber" value="@ViewBag.DocumentNumber" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EmployeeId">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Date">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input type="date" class="form-control" value="@Html.Raw(ViewBag.Date)" id="Date" required>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    //--------------- Variables Declarations -------------------//
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {});
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+
+
+    //*********************************************************//
+    //--------------- Other Functions -------------------//
+
+    //*********************************************************//
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/EmployeeAbsence/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        }); $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/EmployeeAbsence');
+                        }
+                        else
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/EmployeeAbsence/AddEdit",
+                        data: JSON.stringify({
+                            Id: $('#Id').val(),
+                            DocumentNumber: $('#DocumentNumber').val(),
+                            Date: $('#Date').val(),
+                            Notes: $('#Notes').val(),
+                            Image: $('#Image').val(),
+                            EmployeeId: $('#EmployeeId').val(),
+                            IsActive: true,
+                            IsDeleted: false
+                        }),
+                        success: function (r) {
+                            if (r.success == true) {
+                                if (n == "new") {
+                                    window.location.replace("/EmployeeAbsence/AddEdit");
+                                } else {
+                                    window.location.replace("/EmployeeAbsence");
+                                }
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+</script>
