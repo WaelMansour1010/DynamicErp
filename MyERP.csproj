@@ -2722,6 +2722,9 @@
     <Compile Include="Reporting\Reports\GroupsProfits.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Reporting\Reports\PropertyContractsExpiredReport.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Reporting\Reports\PropertyProp.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -2752,9 +2755,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Reporting\Reports\PropertyRenter_Report.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reporting\Reports\Property_Report.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Reporting\Reports\CompetitionResult_Report.cs">
@@ -4883,6 +4883,9 @@
     <EmbeddedResource Include="Reporting\Reports\GroupsProfits.resx">
       <DependentUpon>GroupsProfits.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\PropertyContractsExpiredReport.resx">
+      <DependentUpon>PropertyContractsExpiredReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\PropertyProp.resx">
       <DependentUpon>PropertyProp.cs</DependentUpon>
     </EmbeddedResource>
@@ -4903,9 +4906,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\PropertyRenter_Report.resx">
       <DependentUpon>PropertyRenter_Report.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reporting\Reports\Property_Report.resx">
-      <DependentUpon>Property_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\CompetitionResult_Report.resx">
       <DependentUpon>CompetitionResult_Report.cs</DependentUpon>

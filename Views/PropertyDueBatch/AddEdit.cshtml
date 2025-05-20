@@ -157,7 +157,7 @@
                                                                 @MyERP.Properties.Resources.Total
                                                             </td>
                                                             <td>
-                                                                @MyERP.Properties.Resources.Choose
+                                                                <input type="checkbox" id="selectAllCheckbox" />
                                                             </td>
                                                         </tr>
                                                     </thead>
@@ -655,5 +655,16 @@ var taxPercentage = 0.14;
                 });
         }
     }
+
+
+    // عند الضغط على Checkbox التحديد الكلي
+    $('#selectAllCheckbox').on('change', function () {
+        var isChecked = $(this).is(':checked');
+        $('#PropertyDueBatchDetails .IsSelected').each(function () {
+            if (!$(this).is(':disabled')) {
+                $(this).prop('checked', isChecked);
+            }
+        });
+    });
 
 </script>

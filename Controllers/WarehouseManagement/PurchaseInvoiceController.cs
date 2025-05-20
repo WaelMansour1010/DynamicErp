@@ -12,6 +12,7 @@ using System.Data.Entity.Core.Objects;
 using System.Threading.Tasks;
 using MyERP.Repository;
 using Newtonsoft.Json;
+using System.Xml.Linq;
 
 namespace MyERP.Controllers
 {
@@ -380,6 +381,13 @@ namespace MyERP.Controllers
                     MyXML.xPathName = "AlteredPrices";
                     var AlteredPricesXML = MyXML.GetXML(AlteredPrices);
                     var idResult = new ObjectParameter("Id", typeof(Int32));
+                    // تحقق من أن كل الحسابات المستخدمة موجودة فعلاً
+                    // بناء على XML
+
+                 
+
+
+
                     db.PurchaseInvoice_Insert(idResult, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, false, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
 
                     ////-------------------- Notification-------------------------////
