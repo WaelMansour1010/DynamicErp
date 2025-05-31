@@ -3031,6 +3031,10 @@
 
                                                 <a href="@Url.Action( "PropertyProp_Report","Report")"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.PropertyProp_Report</a>
                                             </div>
+                                            <div class="col-sm-3">
+
+                                                <a href="@Url.Action( "PropertyContractsExpiredReport","Report")"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.PropertyContractsExpiredReport</a>
+                                            </div>
                                         </div>
                                         <div class="form-group row">
                                             <div class="col-sm-3">
@@ -3243,6 +3247,15 @@
                                                 <i class="fa  fa-caret-left"></i>
                                                 @MyERP.Properties.Resources.PropertyProp_Report
                                             </a>
+
+                                        </li>
+
+                                        <li>
+                                            <a href="@Url.Action("PropertyContractsExpiredReport","Report")">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.PropertyContractsExpiredReport
+                                            </a>
+
                                         </li>
                                         <li>
                                             <a href="@Url.Action("UnderDevolop","Home")">
@@ -3274,7 +3287,7 @@
                                                 @MyERP.Properties.Resources.ReceiptsReport
                                             </a>
                                         </li>
-                                        
+
 
                                         <li>
                                             <a href="@Url.Action("UnitesStatus","Report")">
@@ -3282,8 +3295,8 @@
                                                 @MyERP.Properties.Resources.UnitsStatusReport
                                             </a>
                                         </li>
-                                        
-                                        
+
+
                                         <li>
                                             <a href="@Url.Action("PropertyProphet","Report")">
                                                 <i class="fa  fa-caret-left"></i>

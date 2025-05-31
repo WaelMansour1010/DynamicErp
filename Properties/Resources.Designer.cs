@@ -14662,6 +14662,15 @@ namespace MyERP.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Expired Property Contracts Report.
+        /// </summary>
+        public static string PropertyContractsExpiredReport {
+            get {
+                return ResourceManager.GetString("PropertyContractsExpiredReport", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Contract Termination.
         /// </summary>
         public static string PropertyContractTermination {

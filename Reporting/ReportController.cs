@@ -35,7 +35,7 @@ namespace MyERP.Reporting
                 RequestMethod = "GET"
             });
             Notification.GetNotification("Report", "View", "Index", null, null, "التقارير");
-
+            
             //2116--> Report
             //10270 --> Manufacturing Managment Report
             //10271 --> CarService Report
@@ -141,6 +141,11 @@ namespace MyERP.Reporting
             return View();
         }
         public ActionResult PropertyProp_Report()
+        {
+            return View();
+        }
+
+        public ActionResult PropertyContractsExpiredReport()
         {
             return View();
         }

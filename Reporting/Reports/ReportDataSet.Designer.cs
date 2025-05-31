@@ -32,6 +32,8 @@ namespace MyERP.Reporting.Reports {
         
         private PropertyRenterDataTable tablePropertyRenter;
         
+        private GetExpiredPropertyContractsDataTable tableGetExpiredPropertyContracts;
+        
         private global::System.Data.SchemaSerializationMode _schemaSerializationMode = global::System.Data.SchemaSerializationMode.IncludeSchema;
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -71,6 +73,9 @@ namespace MyERP.Reporting.Reports {
                 }
                 if ((ds.Tables["PropertyRenter"] != null)) {
                     base.Tables.Add(new PropertyRenterDataTable(ds.Tables["PropertyRenter"]));
+                }
+                if ((ds.Tables["GetExpiredPropertyContracts"] != null)) {
+                    base.Tables.Add(new GetExpiredPropertyContractsDataTable(ds.Tables["GetExpiredPropertyContracts"]));
                 }
                 this.DataSetName = ds.DataSetName;
                 this.Prefix = ds.Prefix;
@@ -127,6 +132,16 @@ namespace MyERP.Reporting.Reports {
         public PropertyRenterDataTable PropertyRenter {
             get {
                 return this.tablePropertyRenter;
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        [global::System.ComponentModel.Browsable(false)]
+        [global::System.ComponentModel.DesignerSerializationVisibility(global::System.ComponentModel.DesignerSerializationVisibility.Content)]
+        public GetExpiredPropertyContractsDataTable GetExpiredPropertyContracts {
+            get {
+                return this.tableGetExpiredPropertyContracts;
             }
         }
         
@@ -209,6 +224,9 @@ namespace MyERP.Reporting.Reports {
                 if ((ds.Tables["PropertyRenter"] != null)) {
                     base.Tables.Add(new PropertyRenterDataTable(ds.Tables["PropertyRenter"]));
                 }
+                if ((ds.Tables["GetExpiredPropertyContracts"] != null)) {
+                    base.Tables.Add(new GetExpiredPropertyContractsDataTable(ds.Tables["GetExpiredPropertyContracts"]));
+                }
                 this.DataSetName = ds.DataSetName;
                 this.Prefix = ds.Prefix;
                 this.Namespace = ds.Namespace;
@@ -266,6 +284,12 @@ namespace MyERP.Reporting.Reports {
                     this.tablePropertyRenter.InitVars();
                 }
             }
+            this.tableGetExpiredPropertyContracts = ((GetExpiredPropertyContractsDataTable)(base.Tables["GetExpiredPropertyContracts"]));
+            if ((initTable == true)) {
+                if ((this.tableGetExpiredPropertyContracts != null)) {
+                    this.tableGetExpiredPropertyContracts.InitVars();
+                }
+            }
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -274,7 +298,7 @@ namespace MyERP.Reporting.Reports {
             this.DataSetName = "ReportDataSet";
             this.Prefix = "";
             this.Namespace = "http://tempuri.org/ReportDataSet.xsd";
-            this.EnforceConstraints = true;
+            this.EnforceConstraints = false;
             this.SchemaSerializationMode = global::System.Data.SchemaSerializationMode.IncludeSchema;
             this.tablesp_GetPropertyReport = new sp_GetPropertyReportDataTable();
             base.Tables.Add(this.tablesp_GetPropertyReport);
@@ -284,6 +308,8 @@ namespace MyERP.Reporting.Reports {
             base.Tables.Add(this.tableProperty);
             this.tablePropertyRenter = new PropertyRenterDataTable();
             base.Tables.Add(this.tablePropertyRenter);
+            this.tableGetExpiredPropertyContracts = new GetExpiredPropertyContractsDataTable();
+            base.Tables.Add(this.tableGetExpiredPropertyContracts);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -307,6 +333,12 @@ namespace MyERP.Reporting.Reports {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         private bool ShouldSerializePropertyRenter() {
+            return false;
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        private bool ShouldSerializeGetExpiredPropertyContracts() {
             return false;
         }
         
@@ -376,6 +408,9 @@ namespace MyERP.Reporting.Reports {
         
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         public delegate void PropertyRenterRowChangeEventHandler(object sender, PropertyRenterRowChangeEvent e);
+        
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        public delegate void GetExpiredPropertyContractsRowChangeEventHandler(object sender, GetExpiredPropertyContractsRowChangeEvent e);
         
         /// <summary>
         ///Represents the strongly named DataTable class.
@@ -694,8 +729,8 @@ namespace MyERP.Reporting.Reports {
                 base.Columns.Add(this.columnGroupRentValue);
                 this.columnGroupProfitLossPercentage = new global::System.Data.DataColumn("GroupProfitLossPercentage", typeof(decimal), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnGroupProfitLossPercentage);
-                this.columnBuilding.AllowDBNull = false;
-                this.columnBuilding.MaxLength = 2147483647;
+                this.columnBuilding.AutoIncrementSeed = -1;
+                this.columnBuilding.AutoIncrementStep = -1;
                 this.columnRegisteredIncome.ReadOnly = true;
                 this.columnTotalRent.ReadOnly = true;
                 this.columnRentValue.ReadOnly = true;
@@ -992,7 +1027,6 @@ namespace MyERP.Reporting.Reports {
                 base.Columns.Add(this.columnId);
                 this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint1", new global::System.Data.DataColumn[] {
                                 this.columnId}, true));
-                this.columnArName.AllowDBNull = false;
                 this.columnArName.MaxLength = 500;
                 this.columnEnName.MaxLength = 500;
                 this.columnId.AutoIncrement = true;
@@ -1291,7 +1325,6 @@ namespace MyERP.Reporting.Reports {
                 this.columnid.AllowDBNull = false;
                 this.columnid.ReadOnly = true;
                 this.columnid.Unique = true;
-                this.columnArName.AllowDBNull = false;
                 this.columnArName.MaxLength = 2147483647;
                 this.columnEnName.MaxLength = 2147483647;
             }
@@ -1570,7 +1603,6 @@ namespace MyERP.Reporting.Reports {
                 this.columnid.AllowDBNull = false;
                 this.columnid.ReadOnly = true;
                 this.columnid.Unique = true;
-                this.columnArName.AllowDBNull = false;
                 this.columnArName.MaxLength = 2147483647;
             }
             
@@ -1699,6 +1731,448 @@ namespace MyERP.Reporting.Reports {
         }
         
         /// <summary>
+        ///Represents the strongly named DataTable class.
+        ///</summary>
+        [global::System.Serializable()]
+        [global::System.Xml.Serialization.XmlSchemaProviderAttribute("GetTypedTableSchema")]
+        public partial class GetExpiredPropertyContractsDataTable : global::System.Data.TypedTableBase<GetExpiredPropertyContractsRow> {
+            
+            private global::System.Data.DataColumn columnRenter;
+            
+            private global::System.Data.DataColumn columnPropertyId;
+            
+            private global::System.Data.DataColumn columnDocumentNumber;
+            
+            private global::System.Data.DataColumn columnDetailID;
+            
+            private global::System.Data.DataColumn columnUnit;
+            
+            private global::System.Data.DataColumn columnUnitStatus;
+            
+            private global::System.Data.DataColumn columnContractEndDate;
+            
+            private global::System.Data.DataColumn columnRentValue;
+            
+            private global::System.Data.DataColumn columnCommissionValue;
+            
+            private global::System.Data.DataColumn columnServicesValue;
+            
+            private global::System.Data.DataColumn columnInsuranceValue;
+            
+            private global::System.Data.DataColumn columnWaterValue;
+            
+            private global::System.Data.DataColumn columnElectricityValue;
+            
+            private global::System.Data.DataColumn columnNotes;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public GetExpiredPropertyContractsDataTable() {
+                this.TableName = "GetExpiredPropertyContracts";
+                this.BeginInit();
+                this.InitClass();
+                this.EndInit();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            internal GetExpiredPropertyContractsDataTable(global::System.Data.DataTable table) {
+                this.TableName = table.TableName;
+                if ((table.CaseSensitive != table.DataSet.CaseSensitive)) {
+                    this.CaseSensitive = table.CaseSensitive;
+                }
+                if ((table.Locale.ToString() != table.DataSet.Locale.ToString())) {
+                    this.Locale = table.Locale;
+                }
+                if ((table.Namespace != table.DataSet.Namespace)) {
+                    this.Namespace = table.Namespace;
+                }
+                this.Prefix = table.Prefix;
+                this.MinimumCapacity = table.MinimumCapacity;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected GetExpiredPropertyContractsDataTable(global::System.Runtime.Serialization.SerializationInfo info, global::System.Runtime.Serialization.StreamingContext context) : 
+                    base(info, context) {
+                this.InitVars();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn RenterColumn {
+                get {
+                    return this.columnRenter;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn PropertyIdColumn {
+                get {
+                    return this.columnPropertyId;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn DocumentNumberColumn {
+                get {
+                    return this.columnDocumentNumber;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn DetailIDColumn {
+                get {
+                    return this.columnDetailID;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn UnitColumn {
+                get {
+                    return this.columnUnit;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn UnitStatusColumn {
+                get {
+                    return this.columnUnitStatus;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn ContractEndDateColumn {
+                get {
+                    return this.columnContractEndDate;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn RentValueColumn {
+                get {
+                    return this.columnRentValue;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn CommissionValueColumn {
+                get {
+                    return this.columnCommissionValue;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn ServicesValueColumn {
+                get {
+                    return this.columnServicesValue;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn InsuranceValueColumn {
+                get {
+                    return this.columnInsuranceValue;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn WaterValueColumn {
+                get {
+                    return this.columnWaterValue;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn ElectricityValueColumn {
+                get {
+                    return this.columnElectricityValue;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataColumn NotesColumn {
+                get {
+                    return this.columnNotes;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            [global::System.ComponentModel.Browsable(false)]
+            public int Count {
+                get {
+                    return this.Rows.Count;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public GetExpiredPropertyContractsRow this[int index] {
+                get {
+                    return ((GetExpiredPropertyContractsRow)(this.Rows[index]));
+                }
+            }
+            
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public event GetExpiredPropertyContractsRowChangeEventHandler GetExpiredPropertyContractsRowChanging;
+            
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public event GetExpiredPropertyContractsRowChangeEventHandler GetExpiredPropertyContractsRowChanged;
+            
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public event GetExpiredPropertyContractsRowChangeEventHandler GetExpiredPropertyContractsRowDeleting;
+            
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public event GetExpiredPropertyContractsRowChangeEventHandler GetExpiredPropertyContractsRowDeleted;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void AddGetExpiredPropertyContractsRow(GetExpiredPropertyContractsRow row) {
+                this.Rows.Add(row);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public GetExpiredPropertyContractsRow AddGetExpiredPropertyContractsRow(string Renter, int PropertyId, string DocumentNumber, int DetailID, string Unit, string UnitStatus, System.DateTime ContractEndDate, decimal RentValue, decimal CommissionValue, decimal ServicesValue, decimal InsuranceValue, decimal WaterValue, decimal ElectricityValue, string Notes) {
+                GetExpiredPropertyContractsRow rowGetExpiredPropertyContractsRow = ((GetExpiredPropertyContractsRow)(this.NewRow()));
+                object[] columnValuesArray = new object[] {
+                        Renter,
+                        PropertyId,
+                        DocumentNumber,
+                        DetailID,
+                        Unit,
+                        UnitStatus,
+                        ContractEndDate,
+                        RentValue,
+                        CommissionValue,
+                        ServicesValue,
+                        InsuranceValue,
+                        WaterValue,
+                        ElectricityValue,
+                        Notes};
+                rowGetExpiredPropertyContractsRow.ItemArray = columnValuesArray;
+                this.Rows.Add(rowGetExpiredPropertyContractsRow);
+                return rowGetExpiredPropertyContractsRow;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public override global::System.Data.DataTable Clone() {
+                GetExpiredPropertyContractsDataTable cln = ((GetExpiredPropertyContractsDataTable)(base.Clone()));
+                cln.InitVars();
+                return cln;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override global::System.Data.DataTable CreateInstance() {
+                return new GetExpiredPropertyContractsDataTable();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            internal void InitVars() {
+                this.columnRenter = base.Columns["Renter"];
+                this.columnPropertyId = base.Columns["PropertyId"];
+                this.columnDocumentNumber = base.Columns["DocumentNumber"];
+                this.columnDetailID = base.Columns["DetailID"];
+                this.columnUnit = base.Columns["Unit"];
+                this.columnUnitStatus = base.Columns["UnitStatus"];
+                this.columnContractEndDate = base.Columns["ContractEndDate"];
+                this.columnRentValue = base.Columns["RentValue"];
+                this.columnCommissionValue = base.Columns["CommissionValue"];
+                this.columnServicesValue = base.Columns["ServicesValue"];
+                this.columnInsuranceValue = base.Columns["InsuranceValue"];
+                this.columnWaterValue = base.Columns["WaterValue"];
+                this.columnElectricityValue = base.Columns["ElectricityValue"];
+                this.columnNotes = base.Columns["Notes"];
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            private void InitClass() {
+                this.columnRenter = new global::System.Data.DataColumn("Renter", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnRenter);
+                this.columnPropertyId = new global::System.Data.DataColumn("PropertyId", typeof(int), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnPropertyId);
+                this.columnDocumentNumber = new global::System.Data.DataColumn("DocumentNumber", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnDocumentNumber);
+                this.columnDetailID = new global::System.Data.DataColumn("DetailID", typeof(int), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnDetailID);
+                this.columnUnit = new global::System.Data.DataColumn("Unit", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnUnit);
+                this.columnUnitStatus = new global::System.Data.DataColumn("UnitStatus", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnUnitStatus);
+                this.columnContractEndDate = new global::System.Data.DataColumn("ContractEndDate", typeof(global::System.DateTime), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnContractEndDate);
+                this.columnRentValue = new global::System.Data.DataColumn("RentValue", typeof(decimal), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnRentValue);
+                this.columnCommissionValue = new global::System.Data.DataColumn("CommissionValue", typeof(decimal), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnCommissionValue);
+                this.columnServicesValue = new global::System.Data.DataColumn("ServicesValue", typeof(decimal), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnServicesValue);
+                this.columnInsuranceValue = new global::System.Data.DataColumn("InsuranceValue", typeof(decimal), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnInsuranceValue);
+                this.columnWaterValue = new global::System.Data.DataColumn("WaterValue", typeof(decimal), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnWaterValue);
+                this.columnElectricityValue = new global::System.Data.DataColumn("ElectricityValue", typeof(decimal), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnElectricityValue);
+                this.columnNotes = new global::System.Data.DataColumn("Notes", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnNotes);
+                this.columnRenter.MaxLength = 2147483647;
+                this.columnDocumentNumber.MaxLength = 2147483647;
+                this.columnUnit.MaxLength = 255;
+                this.columnUnitStatus.ReadOnly = true;
+                this.columnUnitStatus.MaxLength = 4;
+                this.columnRentValue.ReadOnly = true;
+                this.columnCommissionValue.ReadOnly = true;
+                this.columnServicesValue.ReadOnly = true;
+                this.columnInsuranceValue.ReadOnly = true;
+                this.columnWaterValue.ReadOnly = true;
+                this.columnElectricityValue.ReadOnly = true;
+                this.columnNotes.DefaultValue = ((string)("\'\'"));
+                this.columnNotes.MaxLength = 2147483647;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public GetExpiredPropertyContractsRow NewGetExpiredPropertyContractsRow() {
+                return ((GetExpiredPropertyContractsRow)(this.NewRow()));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override global::System.Data.DataRow NewRowFromBuilder(global::System.Data.DataRowBuilder builder) {
+                return new GetExpiredPropertyContractsRow(builder);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override global::System.Type GetRowType() {
+                return typeof(GetExpiredPropertyContractsRow);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override void OnRowChanged(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowChanged(e);
+                if ((this.GetExpiredPropertyContractsRowChanged != null)) {
+                    this.GetExpiredPropertyContractsRowChanged(this, new GetExpiredPropertyContractsRowChangeEvent(((GetExpiredPropertyContractsRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override void OnRowChanging(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowChanging(e);
+                if ((this.GetExpiredPropertyContractsRowChanging != null)) {
+                    this.GetExpiredPropertyContractsRowChanging(this, new GetExpiredPropertyContractsRowChangeEvent(((GetExpiredPropertyContractsRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override void OnRowDeleted(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowDeleted(e);
+                if ((this.GetExpiredPropertyContractsRowDeleted != null)) {
+                    this.GetExpiredPropertyContractsRowDeleted(this, new GetExpiredPropertyContractsRowChangeEvent(((GetExpiredPropertyContractsRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            protected override void OnRowDeleting(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowDeleting(e);
+                if ((this.GetExpiredPropertyContractsRowDeleting != null)) {
+                    this.GetExpiredPropertyContractsRowDeleting(this, new GetExpiredPropertyContractsRowChangeEvent(((GetExpiredPropertyContractsRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void RemoveGetExpiredPropertyContractsRow(GetExpiredPropertyContractsRow row) {
+                this.Rows.Remove(row);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public static global::System.Xml.Schema.XmlSchemaComplexType GetTypedTableSchema(global::System.Xml.Schema.XmlSchemaSet xs) {
+                global::System.Xml.Schema.XmlSchemaComplexType type = new global::System.Xml.Schema.XmlSchemaComplexType();
+                global::System.Xml.Schema.XmlSchemaSequence sequence = new global::System.Xml.Schema.XmlSchemaSequence();
+                ReportDataSet ds = new ReportDataSet();
+                global::System.Xml.Schema.XmlSchemaAny any1 = new global::System.Xml.Schema.XmlSchemaAny();
+                any1.Namespace = "http://www.w3.org/2001/XMLSchema";
+                any1.MinOccurs = new decimal(0);
+                any1.MaxOccurs = decimal.MaxValue;
+                any1.ProcessContents = global::System.Xml.Schema.XmlSchemaContentProcessing.Lax;
+                sequence.Items.Add(any1);
+                global::System.Xml.Schema.XmlSchemaAny any2 = new global::System.Xml.Schema.XmlSchemaAny();
+                any2.Namespace = "urn:schemas-microsoft-com:xml-diffgram-v1";
+                any2.MinOccurs = new decimal(1);
+                any2.ProcessContents = global::System.Xml.Schema.XmlSchemaContentProcessing.Lax;
+                sequence.Items.Add(any2);
+                global::System.Xml.Schema.XmlSchemaAttribute attribute1 = new global::System.Xml.Schema.XmlSchemaAttribute();
+                attribute1.Name = "namespace";
+                attribute1.FixedValue = ds.Namespace;
+                type.Attributes.Add(attribute1);
+                global::System.Xml.Schema.XmlSchemaAttribute attribute2 = new global::System.Xml.Schema.XmlSchemaAttribute();
+                attribute2.Name = "tableTypeName";
+                attribute2.FixedValue = "GetExpiredPropertyContractsDataTable";
+                type.Attributes.Add(attribute2);
+                type.Particle = sequence;
+                global::System.Xml.Schema.XmlSchema dsSchema = ds.GetSchemaSerializable();
+                if (xs.Contains(dsSchema.TargetNamespace)) {
+                    global::System.IO.MemoryStream s1 = new global::System.IO.MemoryStream();
+                    global::System.IO.MemoryStream s2 = new global::System.IO.MemoryStream();
+                    try {
+                        global::System.Xml.Schema.XmlSchema schema = null;
+                        dsSchema.Write(s1);
+                        for (global::System.Collections.IEnumerator schemas = xs.Schemas(dsSchema.TargetNamespace).GetEnumerator(); schemas.MoveNext(); ) {
+                            schema = ((global::System.Xml.Schema.XmlSchema)(schemas.Current));
+                            s2.SetLength(0);
+                            schema.Write(s2);
+                            if ((s1.Length == s2.Length)) {
+                                s1.Position = 0;
+                                s2.Position = 0;
+                                for (; ((s1.Position != s1.Length) 
+                                            && (s1.ReadByte() == s2.ReadByte())); ) {
+                                    ;
+                                }
+                                if ((s1.Position == s1.Length)) {
+                                    return type;
+                                }
+                            }
+                        }
+                    }
+                    finally {
+                        if ((s1 != null)) {
+                            s1.Close();
+                        }
+                        if ((s2 != null)) {
+                            s2.Close();
+                        }
+                    }
+                }
+                xs.Add(dsSchema);
+                return type;
+            }
+        }
+        
+        /// <summary>
         ///Represents strongly named DataRow class.
         ///</summary>
         public partial class sp_GetPropertyReportRow : global::System.Data.DataRow {
@@ -1716,7 +2190,12 @@ namespace MyERP.Reporting.Reports {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public string Building {
                 get {
-                    return ((string)(this[this.tablesp_GetPropertyReport.BuildingColumn]));
+                    try {
+                        return ((string)(this[this.tablesp_GetPropertyReport.BuildingColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Building\' in table \'sp_GetPropertyReport\' is DBNull.", e);
+                    }
                 }
                 set {
                     this[this.tablesp_GetPropertyReport.BuildingColumn] = value;
@@ -1956,6 +2435,18 @@ namespace MyERP.Reporting.Reports {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsBuildingNull() {
+                return this.IsNull(this.tablesp_GetPropertyReport.BuildingColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetBuildingNull() {
+                this[this.tablesp_GetPropertyReport.BuildingColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public bool IsRegisteredIncomeNull() {
                 return this.IsNull(this.tablesp_GetPropertyReport.RegisteredIncomeColumn);
             }
@@ -2141,7 +2632,12 @@ namespace MyERP.Reporting.Reports {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public string ArName {
                 get {
-                    return ((string)(this[this.tableDepartment.ArNameColumn]));
+                    try {
+                        return ((string)(this[this.tableDepartment.ArNameColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'ArName\' in table \'Department\' is DBNull.", e);
+                    }
                 }
                 set {
                     this[this.tableDepartment.ArNameColumn] = value;
@@ -2173,6 +2669,18 @@ namespace MyERP.Reporting.Reports {
                 set {
                     this[this.tableDepartment.IdColumn] = value;
                 }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsArNameNull() {
+                return this.IsNull(this.tableDepartment.ArNameColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetArNameNull() {
+                this[this.tableDepartment.ArNameColumn] = global::System.Convert.DBNull;
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -2217,7 +2725,12 @@ namespace MyERP.Reporting.Reports {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public string ArName {
                 get {
-                    return ((string)(this[this.tableProperty.ArNameColumn]));
+                    try {
+                        return ((string)(this[this.tableProperty.ArNameColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'ArName\' in table \'Property\' is DBNull.", e);
+                    }
                 }
                 set {
                     this[this.tableProperty.ArNameColumn] = value;
@@ -2238,6 +2751,18 @@ namespace MyERP.Reporting.Reports {
                 set {
                     this[this.tableProperty.EnNameColumn] = value;
                 }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsArNameNull() {
+                return this.IsNull(this.tableProperty.ArNameColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetArNameNull() {
+                this[this.tableProperty.ArNameColumn] = global::System.Convert.DBNull;
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -2282,11 +2807,446 @@ namespace MyERP.Reporting.Reports {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public string ArName {
                 get {
-                    return ((string)(this[this.tablePropertyRenter.ArNameColumn]));
+                    try {
+                        return ((string)(this[this.tablePropertyRenter.ArNameColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'ArName\' in table \'PropertyRenter\' is DBNull.", e);
+                    }
                 }
                 set {
                     this[this.tablePropertyRenter.ArNameColumn] = value;
                 }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsArNameNull() {
+                return this.IsNull(this.tablePropertyRenter.ArNameColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetArNameNull() {
+                this[this.tablePropertyRenter.ArNameColumn] = global::System.Convert.DBNull;
+            }
+        }
+        
+        /// <summary>
+        ///Represents strongly named DataRow class.
+        ///</summary>
+        public partial class GetExpiredPropertyContractsRow : global::System.Data.DataRow {
+            
+            private GetExpiredPropertyContractsDataTable tableGetExpiredPropertyContracts;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            internal GetExpiredPropertyContractsRow(global::System.Data.DataRowBuilder rb) : 
+                    base(rb) {
+                this.tableGetExpiredPropertyContracts = ((GetExpiredPropertyContractsDataTable)(this.Table));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string Renter {
+                get {
+                    try {
+                        return ((string)(this[this.tableGetExpiredPropertyContracts.RenterColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Renter\' in table \'GetExpiredPropertyContracts\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.RenterColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public int PropertyId {
+                get {
+                    try {
+                        return ((int)(this[this.tableGetExpiredPropertyContracts.PropertyIdColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'PropertyId\' in table \'GetExpiredPropertyContracts\' is DBNul" +
+                                "l.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.PropertyIdColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string DocumentNumber {
+                get {
+                    try {
+                        return ((string)(this[this.tableGetExpiredPropertyContracts.DocumentNumberColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'DocumentNumber\' in table \'GetExpiredPropertyContracts\' is D" +
+                                "BNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.DocumentNumberColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public int DetailID {
+                get {
+                    try {
+                        return ((int)(this[this.tableGetExpiredPropertyContracts.DetailIDColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'DetailID\' in table \'GetExpiredPropertyContracts\' is DBNull." +
+                                "", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.DetailIDColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string Unit {
+                get {
+                    try {
+                        return ((string)(this[this.tableGetExpiredPropertyContracts.UnitColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Unit\' in table \'GetExpiredPropertyContracts\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.UnitColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string UnitStatus {
+                get {
+                    try {
+                        return ((string)(this[this.tableGetExpiredPropertyContracts.UnitStatusColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'UnitStatus\' in table \'GetExpiredPropertyContracts\' is DBNul" +
+                                "l.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.UnitStatusColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public System.DateTime ContractEndDate {
+                get {
+                    try {
+                        return ((global::System.DateTime)(this[this.tableGetExpiredPropertyContracts.ContractEndDateColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'ContractEndDate\' in table \'GetExpiredPropertyContracts\' is " +
+                                "DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.ContractEndDateColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public decimal RentValue {
+                get {
+                    try {
+                        return ((decimal)(this[this.tableGetExpiredPropertyContracts.RentValueColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'RentValue\' in table \'GetExpiredPropertyContracts\' is DBNull" +
+                                ".", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.RentValueColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public decimal CommissionValue {
+                get {
+                    try {
+                        return ((decimal)(this[this.tableGetExpiredPropertyContracts.CommissionValueColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'CommissionValue\' in table \'GetExpiredPropertyContracts\' is " +
+                                "DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.CommissionValueColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public decimal ServicesValue {
+                get {
+                    try {
+                        return ((decimal)(this[this.tableGetExpiredPropertyContracts.ServicesValueColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'ServicesValue\' in table \'GetExpiredPropertyContracts\' is DB" +
+                                "Null.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.ServicesValueColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public decimal InsuranceValue {
+                get {
+                    try {
+                        return ((decimal)(this[this.tableGetExpiredPropertyContracts.InsuranceValueColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'InsuranceValue\' in table \'GetExpiredPropertyContracts\' is D" +
+                                "BNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.InsuranceValueColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public decimal WaterValue {
+                get {
+                    try {
+                        return ((decimal)(this[this.tableGetExpiredPropertyContracts.WaterValueColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'WaterValue\' in table \'GetExpiredPropertyContracts\' is DBNul" +
+                                "l.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.WaterValueColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public decimal ElectricityValue {
+                get {
+                    try {
+                        return ((decimal)(this[this.tableGetExpiredPropertyContracts.ElectricityValueColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'ElectricityValue\' in table \'GetExpiredPropertyContracts\' is" +
+                                " DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.ElectricityValueColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public string Notes {
+                get {
+                    try {
+                        return ((string)(this[this.tableGetExpiredPropertyContracts.NotesColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Notes\' in table \'GetExpiredPropertyContracts\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGetExpiredPropertyContracts.NotesColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsRenterNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.RenterColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetRenterNull() {
+                this[this.tableGetExpiredPropertyContracts.RenterColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsPropertyIdNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.PropertyIdColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetPropertyIdNull() {
+                this[this.tableGetExpiredPropertyContracts.PropertyIdColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsDocumentNumberNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.DocumentNumberColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetDocumentNumberNull() {
+                this[this.tableGetExpiredPropertyContracts.DocumentNumberColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsDetailIDNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.DetailIDColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetDetailIDNull() {
+                this[this.tableGetExpiredPropertyContracts.DetailIDColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsUnitNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.UnitColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetUnitNull() {
+                this[this.tableGetExpiredPropertyContracts.UnitColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsUnitStatusNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.UnitStatusColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetUnitStatusNull() {
+                this[this.tableGetExpiredPropertyContracts.UnitStatusColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsContractEndDateNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.ContractEndDateColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetContractEndDateNull() {
+                this[this.tableGetExpiredPropertyContracts.ContractEndDateColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsRentValueNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.RentValueColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetRentValueNull() {
+                this[this.tableGetExpiredPropertyContracts.RentValueColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsCommissionValueNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.CommissionValueColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetCommissionValueNull() {
+                this[this.tableGetExpiredPropertyContracts.CommissionValueColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsServicesValueNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.ServicesValueColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetServicesValueNull() {
+                this[this.tableGetExpiredPropertyContracts.ServicesValueColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsInsuranceValueNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.InsuranceValueColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetInsuranceValueNull() {
+                this[this.tableGetExpiredPropertyContracts.InsuranceValueColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsWaterValueNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.WaterValueColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetWaterValueNull() {
+                this[this.tableGetExpiredPropertyContracts.WaterValueColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsElectricityValueNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.ElectricityValueColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetElectricityValueNull() {
+                this[this.tableGetExpiredPropertyContracts.ElectricityValueColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public bool IsNotesNull() {
+                return this.IsNull(this.tableGetExpiredPropertyContracts.NotesColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public void SetNotesNull() {
+                this[this.tableGetExpiredPropertyContracts.NotesColumn] = global::System.Convert.DBNull;
             }
         }
         
@@ -2412,6 +3372,40 @@ namespace MyERP.Reporting.Reports {
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
             public PropertyRenterRow Row {
+                get {
+                    return this.eventRow;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public global::System.Data.DataRowAction Action {
+                get {
+                    return this.eventAction;
+                }
+            }
+        }
+        
+        /// <summary>
+        ///Row event argument class
+        ///</summary>
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        public class GetExpiredPropertyContractsRowChangeEvent : global::System.EventArgs {
+            
+            private GetExpiredPropertyContractsRow eventRow;
+            
+            private global::System.Data.DataRowAction eventAction;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public GetExpiredPropertyContractsRowChangeEvent(GetExpiredPropertyContractsRow row, global::System.Data.DataRowAction action) {
+                this.eventRow = row;
+                this.eventAction = action;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+            public GetExpiredPropertyContractsRow Row {
                 get {
                     return this.eventRow;
                 }
@@ -2898,8 +3892,13 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Delete, true)]
-        public virtual int Delete(int Original_Id) {
-            this.Adapter.DeleteCommand.Parameters[0].Value = ((int)(Original_Id));
+        public virtual int Delete(global::System.Nullable<int> Original_Id) {
+            if ((Original_Id.HasValue == true)) {
+                this.Adapter.DeleteCommand.Parameters[0].Value = ((int)(Original_Id.Value));
+            }
+            else {
+                this.Adapter.DeleteCommand.Parameters[0].Value = global::System.DBNull.Value;
+            }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.DeleteCommand.Connection.State;
             if (((this.Adapter.DeleteCommand.Connection.State & global::System.Data.ConnectionState.Open) 
                         != global::System.Data.ConnectionState.Open)) {
@@ -2922,7 +3921,7 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Insert, true)]
         public virtual int Insert(string ArName, string EnName) {
             if ((ArName == null)) {
-                throw new global::System.ArgumentNullException("ArName");
+                this.Adapter.InsertCommand.Parameters[0].Value = global::System.DBNull.Value;
             }
             else {
                 this.Adapter.InsertCommand.Parameters[0].Value = ((string)(ArName));
@@ -2953,9 +3952,9 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Update, true)]
-        public virtual int Update(string ArName, string EnName, int Original_Id) {
+        public virtual int Update(string ArName, string EnName, global::System.Nullable<int> Original_Id) {
             if ((ArName == null)) {
-                throw new global::System.ArgumentNullException("ArName");
+                this.Adapter.UpdateCommand.Parameters[0].Value = global::System.DBNull.Value;
             }
             else {
                 this.Adapter.UpdateCommand.Parameters[0].Value = ((string)(ArName));
@@ -2966,7 +3965,12 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
             else {
                 this.Adapter.UpdateCommand.Parameters[1].Value = ((string)(EnName));
             }
-            this.Adapter.UpdateCommand.Parameters[2].Value = ((int)(Original_Id));
+            if ((Original_Id.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[2].Value = ((int)(Original_Id.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[2].Value = global::System.DBNull.Value;
+            }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.UpdateCommand.Connection.State;
             if (((this.Adapter.UpdateCommand.Connection.State & global::System.Data.ConnectionState.Open) 
                         != global::System.Data.ConnectionState.Open)) {
@@ -3199,8 +4203,13 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Delete, true)]
-        public virtual int Delete(int Original_id) {
-            this.Adapter.DeleteCommand.Parameters[0].Value = ((int)(Original_id));
+        public virtual int Delete(global::System.Nullable<int> Original_id) {
+            if ((Original_id.HasValue == true)) {
+                this.Adapter.DeleteCommand.Parameters[0].Value = ((int)(Original_id.Value));
+            }
+            else {
+                this.Adapter.DeleteCommand.Parameters[0].Value = global::System.DBNull.Value;
+            }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.DeleteCommand.Connection.State;
             if (((this.Adapter.DeleteCommand.Connection.State & global::System.Data.ConnectionState.Open) 
                         != global::System.Data.ConnectionState.Open)) {
@@ -3221,9 +4230,9 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Update, true)]
-        public virtual int Update(string ArName, string EnName, int Original_id) {
+        public virtual int Update(string ArName, string EnName, global::System.Nullable<int> Original_id) {
             if ((ArName == null)) {
-                throw new global::System.ArgumentNullException("ArName");
+                this.Adapter.UpdateCommand.Parameters[0].Value = global::System.DBNull.Value;
             }
             else {
                 this.Adapter.UpdateCommand.Parameters[0].Value = ((string)(ArName));
@@ -3234,7 +4243,12 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
             else {
                 this.Adapter.UpdateCommand.Parameters[1].Value = ((string)(EnName));
             }
-            this.Adapter.UpdateCommand.Parameters[2].Value = ((int)(Original_id));
+            if ((Original_id.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[2].Value = ((int)(Original_id.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[2].Value = global::System.DBNull.Value;
+            }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.UpdateCommand.Connection.State;
             if (((this.Adapter.UpdateCommand.Connection.State & global::System.Data.ConnectionState.Open) 
                         != global::System.Data.ConnectionState.Open)) {
@@ -3469,8 +4483,13 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Delete, true)]
-        public virtual int Delete(int Original_id) {
-            this.Adapter.DeleteCommand.Parameters[0].Value = ((int)(Original_id));
+        public virtual int Delete(global::System.Nullable<int> Original_id) {
+            if ((Original_id.HasValue == true)) {
+                this.Adapter.DeleteCommand.Parameters[0].Value = ((int)(Original_id.Value));
+            }
+            else {
+                this.Adapter.DeleteCommand.Parameters[0].Value = global::System.DBNull.Value;
+            }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.DeleteCommand.Connection.State;
             if (((this.Adapter.DeleteCommand.Connection.State & global::System.Data.ConnectionState.Open) 
                         != global::System.Data.ConnectionState.Open)) {
@@ -3493,7 +4512,7 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Insert, true)]
         public virtual int Insert(string ArName) {
             if ((ArName == null)) {
-                throw new global::System.ArgumentNullException("ArName");
+                this.Adapter.InsertCommand.Parameters[0].Value = global::System.DBNull.Value;
             }
             else {
                 this.Adapter.InsertCommand.Parameters[0].Value = ((string)(ArName));
@@ -3518,14 +4537,19 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Update, true)]
-        public virtual int Update(string ArName, int Original_id) {
+        public virtual int Update(string ArName, global::System.Nullable<int> Original_id) {
             if ((ArName == null)) {
-                throw new global::System.ArgumentNullException("ArName");
+                this.Adapter.UpdateCommand.Parameters[0].Value = global::System.DBNull.Value;
             }
             else {
                 this.Adapter.UpdateCommand.Parameters[0].Value = ((string)(ArName));
             }
-            this.Adapter.UpdateCommand.Parameters[1].Value = ((int)(Original_id));
+            if ((Original_id.HasValue == true)) {
+                this.Adapter.UpdateCommand.Parameters[1].Value = ((int)(Original_id.Value));
+            }
+            else {
+                this.Adapter.UpdateCommand.Parameters[1].Value = global::System.DBNull.Value;
+            }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.UpdateCommand.Connection.State;
             if (((this.Adapter.UpdateCommand.Connection.State & global::System.Data.ConnectionState.Open) 
                         != global::System.Data.ConnectionState.Open)) {
@@ -3540,6 +4564,188 @@ namespace MyERP.Reporting.Reports.ReportDataSetTableAdapters {
                     this.Adapter.UpdateCommand.Connection.Close();
                 }
             }
+        }
+    }
+    
+    /// <summary>
+    ///Represents the connection and commands used to retrieve and save data.
+    ///</summary>
+    [global::System.ComponentModel.DesignerCategoryAttribute("code")]
+    [global::System.ComponentModel.ToolboxItem(true)]
+    [global::System.ComponentModel.DataObjectAttribute(true)]
+    [global::System.ComponentModel.DesignerAttribute("Microsoft.VSDesigner.DataSource.Design.TableAdapterDesigner, Microsoft.VSDesigner" +
+        ", Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
+    [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
+    public partial class GetExpiredPropertyContractsTableAdapter : global::System.ComponentModel.Component {
+        
+        private global::System.Data.SqlClient.SqlDataAdapter _adapter;
+        
+        private global::System.Data.SqlClient.SqlConnection _connection;
+        
+        private global::System.Data.SqlClient.SqlTransaction _transaction;
+        
+        private global::System.Data.SqlClient.SqlCommand[] _commandCollection;
+        
+        private bool _clearBeforeFill;
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        public GetExpiredPropertyContractsTableAdapter() {
+            this.ClearBeforeFill = true;
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        protected internal global::System.Data.SqlClient.SqlDataAdapter Adapter {
+            get {
+                if ((this._adapter == null)) {
+                    this.InitAdapter();
+                }
+                return this._adapter;
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        internal global::System.Data.SqlClient.SqlConnection Connection {
+            get {
+                if ((this._connection == null)) {
+                    this.InitConnection();
+                }
+                return this._connection;
+            }
+            set {
+                this._connection = value;
+                if ((this.Adapter.InsertCommand != null)) {
+                    this.Adapter.InsertCommand.Connection = value;
+                }
+                if ((this.Adapter.DeleteCommand != null)) {
+                    this.Adapter.DeleteCommand.Connection = value;
+                }
+                if ((this.Adapter.UpdateCommand != null)) {
+                    this.Adapter.UpdateCommand.Connection = value;
+                }
+                for (int i = 0; (i < this.CommandCollection.Length); i = (i + 1)) {
+                    if ((this.CommandCollection[i] != null)) {
+                        ((global::System.Data.SqlClient.SqlCommand)(this.CommandCollection[i])).Connection = value;
+                    }
+                }
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        internal global::System.Data.SqlClient.SqlTransaction Transaction {
+            get {
+                return this._transaction;
+            }
+            set {
+                this._transaction = value;
+                for (int i = 0; (i < this.CommandCollection.Length); i = (i + 1)) {
+                    this.CommandCollection[i].Transaction = this._transaction;
+                }
+                if (((this.Adapter != null) 
+                            && (this.Adapter.DeleteCommand != null))) {
+                    this.Adapter.DeleteCommand.Transaction = this._transaction;
+                }
+                if (((this.Adapter != null) 
+                            && (this.Adapter.InsertCommand != null))) {
+                    this.Adapter.InsertCommand.Transaction = this._transaction;
+                }
+                if (((this.Adapter != null) 
+                            && (this.Adapter.UpdateCommand != null))) {
+                    this.Adapter.UpdateCommand.Transaction = this._transaction;
+                }
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        protected global::System.Data.SqlClient.SqlCommand[] CommandCollection {
+            get {
+                if ((this._commandCollection == null)) {
+                    this.InitCommandCollection();
+                }
+                return this._commandCollection;
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        public bool ClearBeforeFill {
+            get {
+                return this._clearBeforeFill;
+            }
+            set {
+                this._clearBeforeFill = value;
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        private void InitAdapter() {
+            this._adapter = new global::System.Data.SqlClient.SqlDataAdapter();
+            global::System.Data.Common.DataTableMapping tableMapping = new global::System.Data.Common.DataTableMapping();
+            tableMapping.SourceTable = "Table";
+            tableMapping.DataSetTable = "GetExpiredPropertyContracts";
+            tableMapping.ColumnMappings.Add("Renter", "Renter");
+            tableMapping.ColumnMappings.Add("PropertyId", "PropertyId");
+            tableMapping.ColumnMappings.Add("DocumentNumber", "DocumentNumber");
+            tableMapping.ColumnMappings.Add("DetailID", "DetailID");
+            tableMapping.ColumnMappings.Add("Unit", "Unit");
+            tableMapping.ColumnMappings.Add("UnitStatus", "UnitStatus");
+            tableMapping.ColumnMappings.Add("ContractEndDate", "ContractEndDate");
+            tableMapping.ColumnMappings.Add("RentValue", "RentValue");
+            tableMapping.ColumnMappings.Add("CommissionValue", "CommissionValue");
+            tableMapping.ColumnMappings.Add("ServicesValue", "ServicesValue");
+            tableMapping.ColumnMappings.Add("InsuranceValue", "InsuranceValue");
+            tableMapping.ColumnMappings.Add("WaterValue", "WaterValue");
+            tableMapping.ColumnMappings.Add("ElectricityValue", "ElectricityValue");
+            tableMapping.ColumnMappings.Add("Notes", "Notes");
+            this._adapter.TableMappings.Add(tableMapping);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        private void InitConnection() {
+            this._connection = new global::System.Data.SqlClient.SqlConnection();
+            this._connection.ConnectionString = "Data Source=Pc2\\Sql2019;Initial Catalog=MyErp;User ID=sa;Password=Admin@123;Multi" +
+                "pleActiveResultSets=True;Application Name=EntityFramework";
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        private void InitCommandCollection() {
+            this._commandCollection = new global::System.Data.SqlClient.SqlCommand[1];
+            this._commandCollection[0] = new global::System.Data.SqlClient.SqlCommand();
+            this._commandCollection[0].Connection = this.Connection;
+            this._commandCollection[0].CommandText = "dbo.GetExpiredPropertyContracts";
+            this._commandCollection[0].CommandType = global::System.Data.CommandType.StoredProcedure;
+            this._commandCollection[0].Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@RETURN_VALUE", global::System.Data.SqlDbType.Int, 4, global::System.Data.ParameterDirection.ReturnValue, 10, 0, null, global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
+        [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Fill, true)]
+        public virtual int Fill(ReportDataSet.GetExpiredPropertyContractsDataTable dataTable) {
+            this.Adapter.SelectCommand = this.CommandCollection[0];
+            if ((this.ClearBeforeFill == true)) {
+                dataTable.Clear();
+            }
+            int returnValue = this.Adapter.Fill(dataTable);
+            return returnValue;
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "17.0.0.0")]
+        [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
+        [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Select, true)]
+        public virtual ReportDataSet.GetExpiredPropertyContractsDataTable GetData() {
+            this.Adapter.SelectCommand = this.CommandCollection[0];
+            ReportDataSet.GetExpiredPropertyContractsDataTable dataTable = new ReportDataSet.GetExpiredPropertyContractsDataTable();
+            this.Adapter.Fill(dataTable);
+            return dataTable;
         }
     }
     

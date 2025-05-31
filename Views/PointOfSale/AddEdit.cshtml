@@ -20,6 +20,17 @@
         /*padding: 8px;*/
         border-radius: 5px
     }
+
+    #save,
+    #getSalesOrdersBtn,
+    #invoiceTypeBtn,
+    #btndrivers,
+    #btndeliveryInvoices,
+    #btnPaymentMethods,
+    #btnSendToKitchen,
+    #btnChangeLaguage {
+        display: none !important;
+    }
 </style>
 <script src="~/Scripts/numpad.js"></script>
 <script src="~/assets/js/easy-numpad.js"></script>
@@ -269,7 +280,7 @@
         </div>
 
         <!-- Invoice Div -->
-        <div id="InvoiceDiv" style="min-height: 69%;
+        <div id="InvoiceDiv" style="min-height: 20%;
         max-height: 70%;
         overflow-y: scroll;
         border-style: solid;
@@ -286,25 +297,25 @@
                         <!-- Is Cashier Buttons -->
                         <!--*********************************************-->
                         <!--<div class="row ml-1 mr-1">
-                        if (ViewBag.IsCashier == true)
-                        {
-                            <a class="btn btn-success ml-1 mr-1" href="Url.Action("AddEdit")" target="_blank" role="button">@MyERP.Properties.Resources.NewInvoice <i class="fa fa-receipt"></i></a>-->
+                    if (ViewBag.IsCashier == true)
+                    {
+                        <a class="btn btn-success ml-1 mr-1" href="Url.Action("AddEdit")" target="_blank" role="button">@MyERP.Properties.Resources.NewInvoice <i class="fa fa-receipt"></i></a>-->
                         @*<a class="btn btn-success" href="@Url.Action("AddEdit")" target="_blank" role="button">@MyERP.Properties.Resources.NewInvoice <i class="fa fa-receipt"></i></a>*@
                         <!--if (ViewBag.AllowSalesOrderInPos == true)
-                                {
-                                    <a class="btn btn-success  ml-1 mr-1" href="@Url.Action("Panel","SalesOrder")" target="_blank" role="button">@MyERP.Properties.Resources.NewReservationVoucher <i class="fa fa-file-invoice"></i></a>
-                                }
-                                <a class="btn btn-danger ml-1 mr-1" href="@Url.Action("AddEdit", "PosClosing")" role="button">@MyERP.Properties.Resources.ShiftClosing <i class="fa fa-window-close"></i></a>
-
+                            {
+                                <a class="btn btn-success  ml-1 mr-1" href="@Url.Action("Panel","SalesOrder")" target="_blank" role="button">@MyERP.Properties.Resources.NewReservationVoucher <i class="fa fa-file-invoice"></i></a>
                             }
-                        </div>-->
+                            <a class="btn btn-danger ml-1 mr-1" href="@Url.Action("AddEdit", "PosClosing")" role="button">@MyERP.Properties.Resources.ShiftClosing <i class="fa fa-window-close"></i></a>
+
+                        }
+                    </div>-->
                         @*</div>*@
 
                         <!--<canvas id="canvas" class="col-3" style="max-width: 20vh; max-height: 20vh;" width="75" height="75">
-                        </canvas>
+                    </canvas>
 
 
-                        <img id="Logo" src="@ViewBag.Logo" class="card-img col-3" alt="Logo" style="background-color: #2494be;max-width: 20vh;max-height: 20vh;">-->
+                    <img id="Logo" src="@ViewBag.Logo" class="card-img col-3" alt="Logo" style="background-color: #2494be;max-width: 20vh;max-height: 20vh;">-->
                         @*<img id="Logo" src="~/assets/images/EUU6kHiUMAAcOZs.png" class="card-img col-3" alt="Logo" style="        background-color: #2494be;max-width: 20vh;max-height: 20vh;">*@
 
                     </div>
@@ -316,22 +327,22 @@
                     <div class="table-responsive">
                         <table class="table table-centered table-sm mb-0">
                             <thead>
-                            <tr style="background-color: #37cde6; color: white">
-                                <th>@MyERP.Properties.Resources.Details</th>
-                                <th>@MyERP.Properties.Resources.AlternativeItems</th>
-                                <th style="width: 40%">@MyERP.Properties.Resources.Item </th>
-                                <th class="text-center">@MyERP.Properties.Resources.Qty</th>
-                                <th class="text-center UnitClass" style="display: none;">@MyERP.Properties.Resources.Unit</th>
-                                <th class="text-center price-th">@MyERP.Properties.Resources.Price</th>
-                                <th class="text-center price-th">@MyERP.Properties.Resources.Total</th>
-                                <th class="ItemTax" style="display: none;">@MyERP.Properties.Resources.TaxPercentage</th>
-                                <th class="ItemTax" style="display: none;">@MyERP.Properties.Resources.TaxValue</th>
-                                <th>@MyERP.Properties.Resources.Notes</th>
-                                <th><i class="fas fa-trash-alt"></i></th>
-                                <th class="EnableAdditionalItemsOnPos"><i class="fa fa-plus" aria-hidden="true"></i></th>
+                                <tr style="background-color: #37cde6; color: white">
+                                    <th>@MyERP.Properties.Resources.Details</th>
+                                    <th>@MyERP.Properties.Resources.AlternativeItems</th>
+                                    <th style="width: 40%">@MyERP.Properties.Resources.Item </th>
+                                    <th class="text-center">@MyERP.Properties.Resources.Qty</th>
+                                    <th class="text-center UnitClass" style="display: none;">@MyERP.Properties.Resources.Unit</th>
+                                    <th class="text-center price-th">@MyERP.Properties.Resources.Price</th>
+                                    <th class="text-center price-th">@MyERP.Properties.Resources.Total</th>
+                                    <th class="ItemTax" style="display: none;">@MyERP.Properties.Resources.TaxPercentage</th>
+                                    <th class="ItemTax" style="display: none;">@MyERP.Properties.Resources.TaxValue</th>
+                                    <th>@MyERP.Properties.Resources.Notes</th>
+                                    <th><i class="fas fa-trash-alt"></i></th>
+                                    <th class="EnableAdditionalItemsOnPos"><i class="fa fa-plus" aria-hidden="true"></i></th>
 
 
-                            </tr>
+                                </tr>
                             </thead>
                         </table>
                     </div>
@@ -427,1173 +438,1056 @@
                                             <tr><td class="tabledit-edit-mode"><label class="ItemNotes control-label form-control-sm">@item.Notes</label></td></tr>
                                         }
 
-                                 
+
+                                    }
                                 }
-                            }
-                                </tbody>
-                            </table>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
 
 
 
-                        @*@Html.DropDownList("DriverId", (SelectList)ViewBag.DriverId, htmlAttributes: new { @class = "form-control" })*@
-                        <!--<select id="DriverId" name="DriverId" class="form-control"></select>
-                                            </div>
-                                            Html.Hidden("CarId")
-                                        </div>
+                    @*@Html.DropDownList("DriverId", (SelectList)ViewBag.DriverId, htmlAttributes: new { @class = "form-control" })*@
+                    <!--<select id="DriverId" name="DriverId" class="form-control"></select>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">MyERP.Properties.Resources.Close</button>
-                                    </div>
+                                    Html.Hidden("CarId")
                                 </div>
                             </div>
-                        </div>-->
-                    </div>
-
-
-                    @*<div class="row form-group m-1">
-                            <label class="control-label">طريقة الدفع</label>
-                            <div class="col-sm-3">
-                                @Html.DropDownList("PaymentMethodId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">MyERP.Properties.Resources.Close</button>
                             </div>
-                            <div class="col-sm-8">
-                                @if (Model != null &&ViewBag.CanPrintInvoice==true)
-                                {
-                                    <a class="btn btn-success" href="@Url.Action("CashierInvoice","Report",new { id=Model.Id, print=true})" role="button" target="_blank">طباعة</a>
-                                }
-                                <button class="btn btn-success" id="save" onclick="addEdit()">
-                                    حفظ
-                                </button>
-                            </div>
-                        </div>*@
-                </div>
-            </div><!-- End Of InvoiceDiv -->
-            <!-- Totals Paid  -->
-            <div style="background-color: azure;
-        border-style: solid;
-        border-color: #e7eaed;
-        border-width: 1px;
-        border-radius: 5px;
-       /* position: absolute;*/
-        bottom: 0;
-        margin-bottom: 3%;">
-                @*<div id="strech" class="form-group row m-auto pt-2 totals" style="margin-top: 315px !important; margin-bottom: 0px !important;">*@
-                <div id="strech" class="form-group row m-auto pt-2 totals" style="margin-bottom: 10px !important;">
-                    <label for="VoucherDiscountValue" class="control-label col-sm-1">@MyERP.Properties.Resources.TotalWithoutTax: </label>
-                    <div class="col-sm-3">
-                        <input class="form-control money" id="TotalWithoutTax" type="text" />
-                    </div>
-
-                </div>
-                <div id="strech" class="form-group row m-auto pt-2 totals" style="margin-bottom: 10px !important;">
-
-                    <label for="VoucherDiscountValue" class="control-label col-sm-1">@MyERP.Properties.Resources.DiscountValue: </label>
-                    <div class="col-sm-3">
-                        @*<input class="form-control money" id="DiscountValue" type="text" />*@
-                        @Html.EditorFor(model => model.VoucherDiscountValue, new { htmlAttributes = new { @class = "form-control money", id = "DiscountValue", type = "text" } })
-                        <input class="form-control" type="hidden" id="Total" required />
-                    </div>
-                    <label for="VoucherDiscountValue" class="control-label col-sm-1">@MyERP.Properties.Resources.DiscountPercentage: </label>
-                    <div class="col-sm-3">
-                        <input id="VoucherDiscountPercentage" class="form-control" />
-                        @*@Html.HiddenFor(x => x.VoucherDiscountPercentage)*@
-                    </div>
-                    <label for="NetTotal" class="control-label col-sm-1"> @MyERP.Properties.Resources.AfterDiscount:</label>
-                    <div class="col-sm-3">
-                        @*<input class="form-control money" type="text" readonly id="NetTotal" />*@
-                        @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
-                    </div>
-
-                </div>
-                <div class="form-group row m-auto totals">
-                    <label for="DeliveryCost" class="control-label col-sm-1">@MyERP.Properties.Resources.DeliveryCost:</label>
-                    <div class="col-sm-3">
-                        @Html.EditorFor(model => model.DeliveryCost, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled" } })
-                        @*<input type="hidden" id="ServiceFeesPercentage" value="@ViewBag.ServiceFeesPercentage" />*@
-                    </div>
-                    <label for="ServiceFees" hidden class="control-label col-sm-1">@MyERP.Properties.Resources.ServiceFees:</label>
-                    <div class="col-sm-3">
-                        @Html.EditorFor(model => model.ServiceFees, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly", @hidden = "hidden" } })
-                        <input type="hidden" id="ServiceFeesPercentage" value="@ViewBag.ServiceFeesPercentage" />
-                    </div>
-
-                    <label class="control-label col-sm-1">@MyERP.Properties.Resources.IncludeTheTax</label>
-                    @if (Model != null)
-                    {
-                        <div class="col-sm-3">
-                            <input type="checkbox" id="hasTaxes" disabled @Html.Raw(Model != null && Model.SalesTaxes > 0 ? "checked" : "") />
                         </div>
-                    }
-                    else
-                    {
-                        <div class="col-sm-3">
-                            <input type="checkbox" id="hasTaxes" disabled @Html.Raw(ViewBag.ApplyTaxes == true ? "checked" : "") />
-                        </div>
-                    }
+                    </div>
+                </div>-->
                 </div>
-                <div class="form-group row m-auto">
-                    <label for="SalesTaxes" class="control-label col-sm-1">@MyERP.Properties.Resources.Tax:</label>
+
+
+                @*<div class="row form-group m-1">
+                    <label class="control-label">طريقة الدفع</label>
                     <div class="col-sm-3">
-                        @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
-                        @*<input type="hidden" id="SalesTaxes" value="@ViewBag.SalesTaxes" />*@
+                        @Html.DropDownList("PaymentMethodId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
                     </div>
-                    <label for="RefundableInsurance" class="control-label col-sm-1">@MyERP.Properties.Resources.RefundableInsurance:</label>
-                    <div class="col-sm-3">
-                        @Html.EditorFor(model => model.RefundableInsurance, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                    <div class="col-sm-8">
+                        @if (Model != null &&ViewBag.CanPrintInvoice==true)
+                        {
+                            <a class="btn btn-success" href="@Url.Action("CashierInvoice","Report",new { id=Model.Id, print=true})" role="button" target="_blank">طباعة</a>
+                        }
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            حفظ
+                        </button>
                     </div>
+                </div>*@
+            </div>
+        </div><!-- End Of InvoiceDiv -->
+        <!-- Totals Paid  -->
+        <div style="background-color: azure; border: 1px solid #e7eaed; border-radius: 5px; margin-bottom: 3%;">
+            <div class="row m-0">
+                <!-- col1 -->
+                <div class="col-md-6">
+                    <div class="form-group row pt-2 totals">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.TotalWithoutTax:</label>
+                        <div class="col-sm-8">
+                            <input class="form-control money" id="TotalWithoutTax" type="text" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2 totals">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.DiscountValue:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.VoucherDiscountValue, new { htmlAttributes = new { @class = "form-control money", id = "DiscountValue", type = "text" } })
+                            <input class="form-control" type="hidden" id="Total" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2 totals">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.DeliveryCost:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.DeliveryCost, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled" } })
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.Tax:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.Total:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- col2 -->
+                <div class="col-md-6">
+                    <div class="form-group row pt-2 totals">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.DiscountPercentage:</label>
+                        <div class="col-sm-8">
+                            <input id="VoucherDiscountPercentage" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2 totals">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.AfterDiscount:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2 totals">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.ServiceFees:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.ServiceFees, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly", @hidden = "hidden" } })
+                            <input type="hidden" id="ServiceFeesPercentage" value="@ViewBag.ServiceFeesPercentage" />
+                        </div>
+                    </div>
+
+                    <div class="form-group row pt-2">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.RefundableInsurance:</label>
+                        <div class="col-sm-8">
+                            @Html.EditorFor(model => model.RefundableInsurance, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                        </div>
+                    </div>
+
                     @if (ViewBag.ApplySmokingTax == true)
                     {
-                        <label for="SmokingTax" class="control-label col-sm-1 SmokingTax">@MyERP.Properties.Resources.SmokingTax:</label>
-                        <div class="col-sm-3">
-                            @Html.EditorFor(model => model.SmokingTax, new { htmlAttributes = new { @class = "form-control money SmokingTax", type = "text", @readonly = "readonly" } })
+                        <div class="form-group row pt-2">
+                            <label class="control-label col-sm-4">@MyERP.Properties.Resources.SmokingTax:</label>
+                            <div class="col-sm-8">
+                                @Html.EditorFor(model => model.SmokingTax, new { htmlAttributes = new { @class = "form-control money SmokingTax", type = "text", @readonly = "readonly" } })
+                            </div>
                         </div>
                     }
+
+                    <div class="form-group row pt-2">
+                        <label class="control-label col-sm-4">@MyERP.Properties.Resources.IncludeTheTax:</label>
+                        <div class="col-sm-8">
+                            <input type="checkbox" id="hasTaxes" disabled @Html.Raw(Model != null && Model.SalesTaxes > 0 ? "checked" : "") />
+                        </div>
+                    </div>
                 </div>
-
-                <div class="form-group row m-auto">
-                    <label for="TotalAfterTaxes" class="control-label col-sm-1">@MyERP.Properties.Resources.Total:</label>
-                    <div class="col-sm-3">
-                        @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
-                    </div>
-                    <label for="Paid" class="totals control-label col-sm-1">@MyERP.Properties.Resources.Paid:</label>
-                    <div class="col-sm-3 totals ">
-                        @Html.EditorFor(model => model.Paid, new { htmlAttributes = new { @class = "form-control money ", @readonly = "readonly", type = "text" } })
-                    </div>
-
-                    <label for="Remaining" class=" totals control-label col-sm-1"> @MyERP.Properties.Resources.Remain:</label>
-                    <div class="col-sm-3 totals">
-                        <input class="form-control" type="text" id="Remaining" readonly />
-                    </div>
-                    <div class="col-sm-4">
-
-                    </div>
-
-                </div>
-
             </div>
-            <!--**************************************-->
+
+            <!-- btns-->
+            <div class="form-group row mt-3 mb-2">
+                <div class="col-12">
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <button class="btn btn-success" onclick="addEdit(null,'Save')">@MyERP.Properties.Resources.Save <i class="fa fa-save"></i></button>
+                        <button class="btn btn-success" onclick="addEdit('report','SaveAndPrint')">@MyERP.Properties.Resources.SaveAndPrint</button>
+                        <button class="btn btn-success" onclick="showPaymentMethodsModal()">@MyERP.Properties.Resources.PaymentMethods <i class="fa fa-money-bill-alt"></i></button>
+                        <button class="btn btn-success" onclick="showInvoiceTypeModal()">@MyERP.Properties.Resources.InvoiceType <i class="fa fa-money-check-alt"></i></button>
+                        <button class="btn btn-success" id="btndrivers">@MyERP.Properties.Resources.Drivers <i class="fa fa-car"></i></button>
+                        <button class="btn btn-success" onclick="SendToKitchen()">@MyERP.Properties.Resources.SendToKitchen</button>
+                        <button class="btn btn-success" onclick="Payinvoice()">@MyERP.Properties.Resources.PayInvoice</button>
+                        <a class="btn btn-danger" href="@Url.Action("Index", "LogOut")">@MyERP.Properties.Resources.LogOut <i class="fa fa-sign-out-alt"></i></a>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- end row -->
+
+        <!--**************************************-->
     </div>
-    @*<div class="row">
-            <div class="col-12">
-                <div class="table-responsive">
-                    <table class="table table-striped table-centered mb-0">
-                        <thead>
-                            <tr>
-                                <th>
-                                    رقم الفاتورة
-                                </th>
-                                <th>
-                                    العميل
-                                </th>
 
-                                <th>
-                                    التاريخ
-                                </th>
 
-                                <th>
-                                    الفرع
-                                </th>
-                                <th>
-                                    المخزن
-                                </th>
-                                <th>
-                                    الإجمالى
-                                </th>
-                                <th>
-                                    تعديل
-                                </th>
-                                <th>
-                                    حذف
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="sales-invoice"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>*@
-
-    @*</div>*@
     <!-- end row -->
-    <!--</div>--> <!-- container -->
-    <!-- Save Buttons -->
-    <div class="row" style="background-color: aliceblue;float: right;position: fixed;bottom: 8px;">
-        @*position:absolute;bottom:0;*@
+</div>
+@*<div class="row">
         <div class="col-12">
-            <div class="page-title-box" id="page-title-box" @Html.Raw(ViewBag.IsCashier == true ? "style=margin-bottom:0" : "")>
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                رقم الفاتورة
+                            </th>
+                            <th>
+                                العميل
+                            </th>
+
+                            <th>
+                                التاريخ
+                            </th>
+
+                            <th>
+                                الفرع
+                            </th>
+                            <th>
+                                المخزن
+                            </th>
+                            <th>
+                                الإجمالى
+                            </th>
+                            <th>
+                                تعديل
+                            </th>
+                            <th>
+                                حذف
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-invoice"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>*@
+
+@*</div>*@
+<!-- end row -->
+<!--</div>--> <!-- container -->
+<!-- Save Buttons float: right;position: fixed;bottom: 8px;-->
+
+@*<div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
                 <div class="page-title-right">
-                    @if (ViewBag.IsWaiter == true)
-                    {
-                        <div class="clock btn btn-primary" id="clock"> </div>
-                        @*<button class="btn btn-success" id="save" onclick="addEdit('Waiter')">
-                                @MyERP.Properties.Resources.Save <i class="fa fa-save"></i>
-                            </button>
-                            <button class="btn btn-success" onclick="showPaymentMethodsModal()">
-                                @MyERP.Properties.Resources.PaymentMethods <i class="fa fa-money-bill-alt"></i>
-                            </button>*@
-                        <button onclick="SendToKitchen()" class="btn btn-success"> @MyERP.Properties.Resources.SendToKitchen </button>
-                        <button class="btn btn-success" id="invoiceTypeBtn" onclick="showInvoiceTypeModal()">
-                            @MyERP.Properties.Resources.InvoiceType <i class="fa fa-money-check-alt"></i>
-                        </button>
-                        if (Session["lang"] == null || Session["lang"].ToString() == "ar")
-                        {
-                            <button onclick="changeLaguage()" class="btn btn-primary">  English </button>
-                        }
-                        else
-                        {
-                            <button onclick="changeLaguage()" class="btn btn-primary"> عربى </button>
-                        }
-                    }
-                    else
-                    {
-                        @* if (Model != null && ViewBag.CanPrintInvoice == true)
-                            {
-                                <a class="btn btn-success" href="@Url.Action("CashierInvoice","Report",new { id=Model.Id, print=true})" role="button" target="_blank">@MyERP.Properties.Resources.Print</a>
-                            }*@
-
-                        @*@if (ViewBag.IsCashier == true)
-                            {
-                                <a class="btn btn-success" href="@Url.Action("AddEdit", "PosSalesReturn",new { accessoryReturn =true})" target="_blank" role="button">@MyERP.Properties.Resources.AccessoriesReturn <i class="fa fa-undo"></i></a>
-                                <a class="btn btn-success" href="@Url.Action("AddEdit", "PosSalesReturn")" target="_blank" role="button">@MyERP.Properties.Resources.Return <i class="fa fa-undo-alt"></i></a>
-                                <a class="btn btn-success" href="@Url.Action("AddEdit")" target="_blank" role="button">@MyERP.Properties.Resources.NewInvoice <i class="fa fa-receipt"></i></a>
-                                if (ViewBag.AllowSalesOrderInPos == true)
-                                {
-                                    <a class="btn btn-success" href="@Url.Action("Panel","SalesOrder")" target="_blank" role="button">@MyERP.Properties.Resources.NewReservationVoucher</a>
-                                }
-                                <a class="btn btn-danger" href="@Url.Action("AddEdit", "PosClosing")" role="button">@MyERP.Properties.Resources.ShiftClosing <i class="fa fa-window-close"></i></a>
-                                <a class="btn btn-danger" href="@Url.Action("Index", "LogOut")" role="button">@MyERP.Properties.Resources.LogOut <i class="fa fa-sign-out-alt"></i></a>
-                            }*@
-                        <div class="clock btn btn-primary" id="clock"> </div>
-                        <a class="btn btn-danger ml-1 mr-1" href="@Url.Action("Index", "LogOut")" role="button">@MyERP.Properties.Resources.LogOut <i class="fa fa-sign-out-alt"></i></a>
-                        <button class="btn btn-success" id="save" onclick="addEdit(null,'Save')">
-                            @MyERP.Properties.Resources.Save <i class="fa fa-save"></i>
-                        </button>
-                        @*if (ViewBag.IsCashier == true&&ViewBag.UseThermalPrinterToPrintInvoices==true)
-                            {
-                                <button type="submit" onclick="addEdit('Cashier')" class="btn btn-success" id="SaveAndPrint">
-                                    @MyERP.Properties.Resources.SaveAndPrint
-                                </button>
-                            }
-                            else
-                            {*@
-                        <button type="submit" onclick="addEdit('report','SaveAndPrint')" class="btn btn-success" id="SaveAndPrint">
-                            @MyERP.Properties.Resources.SaveAndPrint
-                        </button>
-                        @*}*@
-
-                        if (ViewBag.AllowSalesOrderInPos == true)
-                        {
-                            <button id="getSalesOrdersBtn" onclick="getSalesOrders();" type="button" class="btn btn-success" style="display:none;">@MyERP.Properties.Resources.LinkToReservationVoucher <i class="fa fa-link"></i></button>
-                            <label id="SalesOrderDocNum"></label>
-                            <button id="cancelSalesOrder" onclick="cancelSalesOrder()" class="btn btn-icon waves-effect waves-light btn-danger btn-xs" style="display:none;"> <i class="fas fa-times"></i> </button>
-                        }
-                        <button class="btn btn-success" id="invoiceTypeBtn" onclick="showInvoiceTypeModal()">
-                            @MyERP.Properties.Resources.InvoiceType <i class="fa fa-money-check-alt"></i>
-                        </button>
-                        @*<button class="btn btn-success deliveryData" id="deliveryData" hidden onclick="showDeliveryDataModal()">
-                                @MyERP.Properties.Resources.DeliveryData <i class="fa fa-info"></i>
-                            </button>*@
-                        <button class="btn btn-success drivers">
-                            @MyERP.Properties.Resources.Drivers <i class="fa fa-car"></i>
-                        </button>
-
-                        <button class="btn btn-success" onclick="showPaymentMethodsModal()">
-                            @MyERP.Properties.Resources.PaymentMethods <i class="fa fa-money-bill-alt"></i>
-                        </button>
-                        <button class="btn btn-success deliveryInvoicesBtn" onclick="showUnpaidInvoicesModal()">
-                            @MyERP.Properties.Resources.DeliveryInvoices <i class="fa fa-file-invoice-dollar"></i>
-                        </button>
-                        @*@if (ViewBag.IsCashier == true)
-                            {*@
-                        @*<a class="btn btn-success" href="@Url.Action("AddEdit", "PosSalesReturn",new { accessoryReturn =true})" target="_blank" role="button">@MyERP.Properties.Resources.AccessoriesReturn <i class="fa fa-undo"></i></a>
-                            <a class="btn btn-success" href="@Url.Action("AddEdit", "PosSalesReturn")" target="_blank" role="button">@MyERP.Properties.Resources.Return <i class="fa fa-undo-alt"></i></a>*@
-                        @*<a class="btn btn-success" href="@Url.Action("AddEdit")" target="_blank" role="button">@MyERP.Properties.Resources.NewInvoice <i class="fa fa-receipt"></i></a>
-                            if (ViewBag.AllowSalesOrderInPos == true)
-                            {
-                                <a class="btn btn-success" href="@Url.Action("Panel","SalesOrder")" target="_blank" role="button">@MyERP.Properties.Resources.NewReservationVoucher</a>
-                            }
-                            <a class="btn btn-danger" href="@Url.Action("AddEdit", "PosClosing")" role="button">@MyERP.Properties.Resources.ShiftClosing <i class="fa fa-window-close"></i></a>
-                            <a class="btn btn-danger" href="@Url.Action("Index", "LogOut")" role="button">@MyERP.Properties.Resources.LogOut <i class="fa fa-sign-out-alt"></i></a>*@
-                        @*}*@
-                        @*<div class="page-title-right">
-
-                            </div>*@
-                        <button id="getPurchaseRequestsBtn" onclick="getPurchaseRequests();" type="button" class="btn btn-success" style="display:none;">@MyERP.Properties.Resources.LinkToPurchaseRequests <i class="fa fa-link"></i></button>
-                        <label id="PurchaseRequestDocNum"></label>
-                        <button id="cancelPurchaseRequest" onclick="cancelPurchaseRequest()" class="btn btn-icon waves-effect waves-light btn-danger btn-xs" style="display:none;"> <i class="fas fa-times"></i> </button>
-                        <button onclick="SendToKitchen()" class="btn btn-success"> @MyERP.Properties.Resources.SendToKitchen </button>
-                        <button onclick="Payinvoice()" class="btn btn-success"> @MyERP.Properties.Resources.PayInvoice </button>
-
-                        @*<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back <i class="fa fa-arrow-alt-circle-left"></i></a>*@
-                        if (Model != null && Model.IsDeleted == false)
-                        {
-                            <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
-                        }
-                        if (Session["lang"] == null || Session["lang"].ToString() == "ar")
-                        {
-                            <button onclick="changeLaguage()" class="btn btn-primary">  English </button>
-                        }
-                        else
-                        {
-                            <button onclick="changeLaguage()" class="btn btn-primary"> عربى </button>
-                        }
-                    }
-                </div>
-
-            </div>
-        </div>
-    </div>
-    @*<div class="row">
-            <div class="col-12">
-                <div class="page-title-box">
-                    <div class="page-title-right">
-                        <div class="clock btn btn-primary" id="clock"> </div>
-                        <button class="btn btn-success" id="deliveryData" onclick="showDeliveryDataModal()">
-                            @MyERP.Properties.Resources.DeliveryData <i class="fa fa-info"></i>
-                        </button>
-                        <button class="btn btn-success" id="save" onclick="addEdit()">
-                            @MyERP.Properties.Resources.Save <i class="fa fa-save"></i>
-                        </button>
-                        <button class="btn btn-success drivers">
-                            @MyERP.Properties.Resources.Drivers <i class="fa fa-car"></i>
-                        </button>
-                        <button class="btn btn-success getForm" customerType="3">
-                            @MyERP.Properties.Resources.Delivery <i class="fa fa-truck"></i>
-                        </button>
-                        <button class="btn btn-success getForm" customerType="1">
-                            @MyERP.Properties.Resources.TakeAway <i class="fa fa-hamburger"></i>
-                        </button>
-                        <button class="btn btn-success" id="tables" onclick="showTablesModal()">
-                            @MyERP.Properties.Resources.Tables <i class="fa fa-utensils"></i>
-                        </button>
-                        <button class="btn btn-success" onclick="showPaymentMethodsModal()">
-                            @MyERP.Properties.Resources.PaymentMethods <i class="fa fa-money-bill-alt"></i>
-                        </button>
-                        <button class="btn btn-success" onclick="showUnpaidInvoicesModal()">
-                            @MyERP.Properties.Resources.UnpaidInvoices <i class="fa fa-file-invoice-dollar"></i>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </div>*@
-    <!--**************************************-->
-    <!--- \\ Modal Section // --->
-    <div class="modal fade" id="salesOrdersModal" tabindex="-1" role="dialog"
-         aria-labelledby="salesOrdersModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="salesOrdersModalTitle">@MyERP.Properties.Resources.ReservationVouchers</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                    <div class="clock btn btn-primary" id="clock"> </div>
+                    <button class="btn btn-success" id="deliveryData" onclick="showDeliveryDataModal()">
+                        @MyERP.Properties.Resources.DeliveryData <i class="fa fa-info"></i>
+                    </button>
+                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                        @MyERP.Properties.Resources.Save <i class="fa fa-save"></i>
+                    </button>
+                    <button class="btn btn-success drivers">
+                        @MyERP.Properties.Resources.Drivers <i class="fa fa-car"></i>
+                    </button>
+                    <button class="btn btn-success getForm" customerType="3">
+                        @MyERP.Properties.Resources.Delivery <i class="fa fa-truck"></i>
+                    </button>
+                    <button class="btn btn-success getForm" customerType="1">
+                        @MyERP.Properties.Resources.TakeAway <i class="fa fa-hamburger"></i>
+                    </button>
+                    <button class="btn btn-success" id="tables" onclick="showTablesModal()">
+                        @MyERP.Properties.Resources.Tables <i class="fa fa-utensils"></i>
+                    </button>
+                    <button class="btn btn-success" onclick="showPaymentMethodsModal()">
+                        @MyERP.Properties.Resources.PaymentMethods <i class="fa fa-money-bill-alt"></i>
+                    </button>
+                    <button class="btn btn-success" onclick="showUnpaidInvoicesModal()">
+                        @MyERP.Properties.Resources.UnpaidInvoices <i class="fa fa-file-invoice-dollar"></i>
                     </button>
                 </div>
-                <div class="modal-body">
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                    <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="getSalesOrderDetails()">@MyERP.Properties.Resources.Link</button>
-                </div>
             </div>
+
         </div>
-    </div>
-    <div class="modal fade" id="purchaseRequestModal" tabindex="-1" role="dialog"
-         aria-labelledby="purchaseRequestModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="purchaseRequestModalTitle">@MyERP.Properties.Resources.PurchaseRequests</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                    <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="getPurchaseRqeustsDetails()">@MyERP.Properties.Resources.Link</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="form-horizontal needs-validation" role="form">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
-                                    <input type="text" class="form-control" id="ArName" placeholder=@MyERP.Properties.Resources.ArName>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
-                                    <input type="text" class="form-control" id="EnName" placeholder=@MyERP.Properties.Resources.EnName>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-
-                                    @* Old code
-                                        <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Tel</label>
-                                        <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Tel>*@
-
-                                    <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile</label>
-                                    <input type="text" class="form-control" id="Mobile" placeholder="@MyERP.Properties.Resources.Mobile">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
-                                    <input type="text" class="form-control" id="Address" placeholder=@MyERP.Properties.Resources.Address>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group no-margin">
-                                    <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
-                                    <textarea class="form-control" id="Notes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                    <button type="button" class="btn btn-info waves-effect waves-light" onclick="addCustomer();">@MyERP.Properties.Resources.Save</button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <div id="pos-customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                </div>
-                <div class="modal-body p-4">
-                    <div class="form-horizontal needs-validation" role="form">
-                        <input hidden id="posCustomerIdInput" name="posCustomerIdInput" />
-                        <input hidden id="posCustomerCodeInput" name="posCustomerCodeInput" />
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
-                                    <input type="text" class="form-control" id="PosCustomerArName" placeholder=@MyERP.Properties.Resources.ArName>
-                                </div>
-                                <div class="invalid-feedback">
-                                    @MyERP.Properties.Resources.Required
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
-                                    <input type="text" class="form-control" id="PosCustomerEnName" placeholder=@MyERP.Properties.Resources.EnName>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="EnName" class="control-label">@MyERP.Properties.Resources.LinkWith</label>
-                                    @Html.DropDownList("PosLinkedCustomerId", null, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-
-                                    @* Old code
-                                        <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Tel</label>
-                                        <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Tel>*@
-
-                                    <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile 1</label>
-                                    <input type="text" class="form-control" id="Mobile1" placeholder="@MyERP.Properties.Resources.Mobile 1">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="Mobile2" hidden class="control-label">@MyERP.Properties.Resources.Mobile 2</label>
-                                    <input hidden type="text" class="form-control" id="Mobile2" placeholder="@MyERP.Properties.Resources.Mobile 2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class=" control-label" for="">@MyERP.Properties.Resources.Country</label>
-
-                                    @*@Html.DropDownList("GovernorateId", null, htmlAttributes: new { @class = "form-control" })*@
-                                    <select class="form-control" id="GovernorateId" name="GovernorateId"></select>
-
-
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-
-                                <div class="form-group">
-                                    <label class="control-label" for="">@MyERP.Properties.Resources.City</label>
-
-                                    <select class="form-control" id="CityId" name="CityId"></select>
-
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label class="control-label" for="">@MyERP.Properties.Resources.District</label>
-                                    <select class="form-control" id="AreaId" name="AreaId"></select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
-                                    <input type="text" class="form-control" id="PosCustomerAddress" placeholder=@MyERP.Properties.Resources.Address>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group no-margin">
-                                    <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
-                                    <textarea class="form-control" id="PosCustomerNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                    <button type="button" class="btn btn-info waves-effect waves-light" onclick="addPosCustomer();">@MyERP.Properties.Resources.Save</button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <!--Delivery Data-->
-    <!--<div class="modal fade bs-example-modal-lg" id="deliveryDataModal" tabindex="-1" role="dialog"
-     aria-labelledby="deliveryDataModal" aria-hidden="true">
-    <div class="modal-dialog modal-xl" style="width:fit-content">
+    </div>*@
+<!--**************************************-->
+<!--- \\ Modal Section // --->
+<div class="modal fade" id="salesOrdersModal" tabindex="-1" role="dialog"
+     aria-labelledby="salesOrdersModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="deliveryDataModalTitle">MyERP.Properties.Resources.DeliveryData</h4>
+                <h4 class="modal-title" id="salesOrdersModalTitle">@MyERP.Properties.Resources.ReservationVouchers</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="getSalesOrderDetails()">@MyERP.Properties.Resources.Link</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="purchaseRequestModal" tabindex="-1" role="dialog"
+     aria-labelledby="purchaseRequestModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="purchaseRequestModalTitle">@MyERP.Properties.Resources.PurchaseRequests</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="getPurchaseRqeustsDetails()">@MyERP.Properties.Resources.Link</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="ArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="EnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+
+                                @* Old code
+                                    <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Tel</label>
+                                    <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Tel>*@
+
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile</label>
+                                <input type="text" class="form-control" id="Mobile" placeholder="@MyERP.Properties.Resources.Mobile">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="Address" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="Notes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div id="pos-customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <input hidden id="posCustomerIdInput" name="posCustomerIdInput" />
+                    <input hidden id="posCustomerCodeInput" name="posCustomerCodeInput" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="PosCustomerArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="PosCustomerEnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.LinkWith</label>
+                                @Html.DropDownList("PosLinkedCustomerId", null, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+
+                                @* Old code
+                                    <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Tel</label>
+                                    <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Tel>*@
+
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile 1</label>
+                                <input type="text" class="form-control" id="Mobile1" placeholder="@MyERP.Properties.Resources.Mobile 1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Mobile2" hidden class="control-label">@MyERP.Properties.Resources.Mobile 2</label>
+                                <input hidden type="text" class="form-control" id="Mobile2" placeholder="@MyERP.Properties.Resources.Mobile 2">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class=" control-label" for="">@MyERP.Properties.Resources.Country</label>
+
+                                @*@Html.DropDownList("GovernorateId", null, htmlAttributes: new { @class = "form-control" })*@
+                                <select class="form-control" id="GovernorateId" name="GovernorateId"></select>
+
+
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+
+                            <div class="form-group">
+                                <label class="control-label" for="">@MyERP.Properties.Resources.City</label>
+
+                                <select class="form-control" id="CityId" name="CityId"></select>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="control-label" for="">@MyERP.Properties.Resources.District</label>
+                                <select class="form-control" id="AreaId" name="AreaId"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="PosCustomerAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="PosCustomerNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addPosCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!--Delivery Data-->
+<!--<div class="modal fade bs-example-modal-lg" id="deliveryDataModal" tabindex="-1" role="dialog"
+ aria-labelledby="deliveryDataModal" aria-hidden="true">
+<div class="modal-dialog modal-xl" style="width:fit-content">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4 class="modal-title" id="deliveryDataModalTitle">MyERP.Properties.Resources.DeliveryData</h4>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group form-row">
+                <label class=" col-sm-4 control-label">MyERP.Properties.Resources.DeliveryDate</label>
+                <div class="col-sm-8">
+                    <input class="form-control" id="DeliveryDate" name="DeliveryDate" value="ViewBag.DeliveryDate" type="datetime-local" />
+                </div>
+            </div>
+            <div class="form-group form-row">
+                <label class=" col-sm-4 control-label">MyERP.Properties.Resources.DeliveryStartDate</label>
+                <div class="col-sm-8">
+                    <input id="DeliveryStartDate" name="DeliveryStartDate" value="ViewBag.DeliveryStartDate" class="form-control" type="datetime-local" />
+                </div>
+            </div>
+            <div class="form-group form-row">
+                <label class=" col-sm-4 control-label">MyERP.Properties.Resources.DeliveryEndDate</label>
+                <div class="col-sm-8">
+                    <input id="DeliveryEndDate" value="ViewBag.DeliveryEndDate" name="DeliveryEndDate" class="form-control" type="datetime-local" />
+                </div>
+            </div>
+            <div class="form-group form-row">
+                <label class=" col-sm-4 control-label">MyERP.Properties.Resources.Driver</label>
+                <div class="col-sm-8">-->
+<!--Invoice Info-->
+<div class="modal fade bs-example-modal-lg" id="invoiceInfoModal" tabindex="-1" role="dialog"
+     aria-labelledby="invoiceInfoModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="width:fit-content">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="invoiceInfoModalTitle">@MyERP.Properties.Resources.MainData</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="form-group form-row">
-                    <label class=" col-sm-4 control-label">MyERP.Properties.Resources.DeliveryDate</label>
+                    <label class=" col-sm-4 control-label" for="DocumentNumber">@MyERP.Properties.Resources.InvoiceNo</label>
                     <div class="col-sm-8">
-                        <input class="form-control" id="DeliveryDate" name="DeliveryDate" value="ViewBag.DeliveryDate" type="datetime-local" />
+                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
                     </div>
                 </div>
                 <div class="form-group form-row">
-                    <label class=" col-sm-4 control-label">MyERP.Properties.Resources.DeliveryStartDate</label>
+                    <label for="VoucherDate" class=" col-sm-4 control-label">@MyERP.Properties.Resources.InvoiceDate</label>
                     <div class="col-sm-8">
-                        <input id="DeliveryStartDate" name="DeliveryStartDate" value="ViewBag.DeliveryStartDate" class="form-control" type="datetime-local" />
+                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required readonly />
                     </div>
                 </div>
                 <div class="form-group form-row">
-                    <label class=" col-sm-4 control-label">MyERP.Properties.Resources.DeliveryEndDate</label>
+                    <label class=" col-sm-4 control-label" for="CustomerType">@MyERP.Properties.Resources.InvoiceType</label>
                     <div class="col-sm-8">
-                        <input id="DeliveryEndDate" value="ViewBag.DeliveryEndDate" name="DeliveryEndDate" class="form-control" type="datetime-local" />
+                        @Html.DropDownList("CustomerType", null, htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
                     </div>
                 </div>
                 <div class="form-group form-row">
-                    <label class=" col-sm-4 control-label">MyERP.Properties.Resources.Driver</label>
-                    <div class="col-sm-8">-->
-    <!--Invoice Info-->
-    <div class="modal fade bs-example-modal-lg" id="invoiceInfoModal" tabindex="-1" role="dialog"
-         aria-labelledby="invoiceInfoModal" aria-hidden="true">
-        <div class="modal-dialog modal-lg" style="width:fit-content">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="invoiceInfoModalTitle">@MyERP.Properties.Resources.MainData</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <label class=" col-sm-4 control-label" for="DepartmentId">@MyERP.Properties.Resources.Branch</label>
+                    <div class="col-sm-8">
+                        @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group form-row">
-                        <label class=" col-sm-4 control-label" for="DocumentNumber">@MyERP.Properties.Resources.InvoiceNo</label>
-                        <div class="col-sm-8">
-                            @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
-                            <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
-                        </div>
+                <div class="form-group form-row">
+                    <label class=" col-sm-4 control-label" for="WarehouseId"> @MyERP.Properties.Resources.WareHouse</label>
+                    <div class="col-sm-8">
+                        @Html.DropDownList("WarehouseId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
                     </div>
-                    <div class="form-group form-row">
-                        <label for="VoucherDate" class=" col-sm-4 control-label">@MyERP.Properties.Resources.InvoiceDate</label>
-                        <div class="col-sm-8">
-                            <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required readonly />
-                        </div>
-                    </div>
-                    <div class="form-group form-row">
-                        <label class=" col-sm-4 control-label" for="CustomerType">@MyERP.Properties.Resources.InvoiceType</label>
-                        <div class="col-sm-8">
-                            @Html.DropDownList("CustomerType", null, htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
-                        </div>
-                    </div>
-                    <div class="form-group form-row">
-                        <label class=" col-sm-4 control-label" for="DepartmentId">@MyERP.Properties.Resources.Branch</label>
-                        <div class="col-sm-8">
-                            @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
-                        </div>
-                    </div>
-                    <div class="form-group form-row">
-                        <label class=" col-sm-4 control-label" for="WarehouseId"> @MyERP.Properties.Resources.WareHouse</label>
-                        <div class="col-sm-8">
-                            @Html.DropDownList("WarehouseId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
-                        </div>
-                    </div>
+                </div>
 
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
             </div>
         </div>
     </div>
-    <!--Invoice Type-->
-    <div class="modal fade bs-example-modal-lg" id="invoiceTypeModal" tabindex="-1" role="dialog"
-         aria-labelledby="invoiceTypeModal" aria-hidden="true">
-        <div class="modal-dialog modal-lg" style="width:fit-content">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="invoiceTypeModalTitle">@MyERP.Properties.Resources.InvoiceType</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+</div>
+<!--Invoice Type-->
+<div class="modal fade bs-example-modal-lg" id="invoiceTypeModal" tabindex="-1" role="dialog"
+     aria-labelledby="invoiceTypeModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="width:fit-content">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="invoiceTypeModalTitle">@MyERP.Properties.Resources.InvoiceType</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group form-row">
+                    <button class="btn btn-success m-1 getForm" customerType="3">
+                        @MyERP.Properties.Resources.Delivery <i class="fa fa-truck"></i>
+                    </button>
+                    <button class="btn btn-success m-1 getForm" customerType="1">
+                        @MyERP.Properties.Resources.TakeAway <i class="fa fa-hamburger"></i>
+                    </button>
+                    <button class="btn btn-success m-1" id="tables" onclick="showTablesModal()" customerType="2">
+                        @MyERP.Properties.Resources.Tables <i class="fa fa-utensils"></i>
+                    </button>
+
+                    <button class="btn btn-success m-1 getForm" customerType="4" id="ShowDepartmentBtn" style="display:none;">
+                        @MyERP.Properties.Resources.Department <i class="fa fa-file-invoice"></i>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group form-row">
-                        <button class="btn btn-success m-1 getForm" customerType="3">
-                            @MyERP.Properties.Resources.Delivery <i class="fa fa-truck"></i>
-                        </button>
-                        <button class="btn btn-success m-1 getForm" customerType="1">
-                            @MyERP.Properties.Resources.TakeAway <i class="fa fa-hamburger"></i>
-                        </button>
-                        <button class="btn btn-success m-1" id="tables" onclick="showTablesModal()" customerType="2">
-                            @MyERP.Properties.Resources.Tables <i class="fa fa-utensils"></i>
-                        </button>
-
-                        <button class="btn btn-success m-1 getForm" customerType="4" id="ShowDepartmentBtn" style="display:none;">
-                            @MyERP.Properties.Resources.Department <i class="fa fa-file-invoice"></i>
-                        </button>
-                    </div>
 
 
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
             </div>
         </div>
     </div>
-    @*modal of extras*@
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title" id="exampleModalLabel">@MyERP.Properties.Resources.AdditionalItems</h3>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+</div>
+@*modal of extras*@
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="exampleModalLabel">@MyERP.Properties.Resources.AdditionalItems</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-centered table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>@MyERP.Properties.Resources.Item </th>
+                                <th>@MyERP.Properties.Resources.Unit</th>
+                                <th>@MyERP.Properties.Resources.Increase</th>
+                                <th>@MyERP.Properties.Resources.Double</th>
+                                <th>@MyERP.Properties.Resources.Without</th>
+                            </tr>
+                        </thead>
+                        <tbody id="AdditionalItems">
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                @*<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>*@
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Tables Modal -->
+<div id="tablesModal" class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myHugeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="container">
+                <div class="form-group row">
+                    <label for="DepartmentHallsId" class="control-label col-sm-2">@MyERP.Properties.Resources.Hall:</label>
+                    <div class="col-sm-2">
+                        <select id="DepartmentHallsId" class="form-control"></select>
+                    </div>
+                </div>
+
+                <div id="TablesDiv" class="form-group row" style="overflow-y:scroll;padding-right:5%;height:50vh;max-height:100vh;">
+
+                    <!--<div class="col-sm-2" style="text-align:center">
+                        <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                        <div style="text-align:center; font-size:large;">@MyERP.Properties.Resources.Table 1</div>
+                        <div style="text-align:center;">
+                            <button class="btn btn-info printReceiptBtn col-sm-3" tableId=" " invoiceId=" " data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.PrintReceipt">-->
+                    @*@MyERP.Properties.Resources.PrintReceipt*@
+                    <!--<i class="remixicon-printer-fill"></i>
+
+                    </button>
+                    <button class="btn btn-success addOrderBtn col-sm-3" payInvoice=false tableId=" " invoiceId=" " data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.AddOrder">-->
+                    @*@MyERP.Properties.Resources.AddOrder*@
+                    <!--<i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn btn-primary payTableInvoice col-sm-3" payInvoice=true tableId=" " invoiceId=" " data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.PayInvoice">-->
+                    @*@MyERP.Properties.Resources.PayInvoice*@
+                    <!--<i class="fas fa-money-bill"></i>
+                            </button>
+                        </div>
+                        <div style="text-align:center;"> @MyERP.Properties.Resources.OccupancyTime </div>
+                        <div style="text-align:center;"> @MyERP.Properties.Resources.Total </div>
+                    </div>-->
+
+                </div>
+
+
+                <!--<table id="TablesTable" class="col">
+                <tr>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center; font-size:large;">@MyERP.Properties.Resources.Table 1</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 2</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 3</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 4</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 5</div>
+                        </div>
+                    </td>
+                </tr>-->
+                <!--<tr>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 6</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 7</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 8</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 9</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 10</div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 11</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 12</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 13</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 14</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-group" style="text-align:center">
+                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
+                            <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 15</div>
+                        </div>
+                    </td>
+                </tr>-->
+                <!--</table>-->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!--Unpaid Invoices-->
+<div class="modal fade bd-example-modal-xl" id="UnpaidInvoicesModal" tabindex="-1" role="dialog"
+     aria-labelledby="UnpaidInvoicesModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document" style="max-width:100%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="UnpaidInvoicesModalTitle">@MyERP.Properties.Resources.UnpaidInvoices</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="UnpaidInvoicesModalTable">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Drivers Modal-->
+<div class="modal fade bs-example-modal-lg" id="DriversModal" tabindex="-1" role="dialog"
+     aria-labelledby="DriversModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="DriversModalTitle">@MyERP.Properties.Resources.Drivers</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="DriversModalTable">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="paymentMethodsModal" class="paymentMethodsModal modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="form-group form-row">
+
+
+                <div class="easy-numpad-number-container m-2" style="width:45%">
+                    <table>
+                        <tr>
+                            <td><a href="7" onclick="easynum()">7</a></td>
+                            <td><a href="8" onclick="easynum()">8</a></td>
+                            <td><a href="9" onclick="easynum()">9</a></td>
+                            <td><a href="Del" class="del" id="del" onclick="easy_numpad_del()">Del</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="4" onclick="easynum()">4</a></td>
+                            <td><a href="5" onclick="easynum()">5</a></td>
+                            <td><a href="6" onclick="easynum()">6</a></td>
+                            <td><a href="Clear" class="clear" id="clear" onclick="easy_numpad_clear()">Clear</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="1" onclick="easynum()">1</a></td>
+                            <td><a href="2" onclick="easynum()">2</a></td>
+                            <td><a href="3" onclick="easynum()">3</a></td>
+                            <td><a href="Cancel" class="cancel" id="cancel" onclick="easy_numpad_cancel()">Cancel</a></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" onclick="easynum()"><a href="0">0</a></td>
+                            <td onclick="easynum()"><a href=".">.</a></td>
+                            <td><a href="Done" class="done" id="done" onclick="easy_numpad_done()">Done</a></td>
+                        </tr>
+                    </table>
+                </div>
+
+
+                <div class="form-horizontal needs-validation ml-4 mt-3" role="form" style="width: 49%;">
                     <div class="table-responsive">
-                        <table class="table table-centered table-sm mb-0">
+                        <table class="table table-centered mb-0">
                             <thead>
                                 <tr>
-                                    <th>@MyERP.Properties.Resources.Item </th>
-                                    <th>@MyERP.Properties.Resources.Unit</th>
-                                    <th>@MyERP.Properties.Resources.Increase</th>
-                                    <th>@MyERP.Properties.Resources.Double</th>
-                                    <th>@MyERP.Properties.Resources.Without</th>
+                                    <th>@MyERP.Properties.Resources.PaymentMethod</th>
+                                    <th>@MyERP.Properties.Resources.Amount</th>
+                                    <th>@MyERP.Properties.Resources.CashBox</th>
+                                    @*<th>الحساب البنكى</th>*@
                                 </tr>
                             </thead>
-                            <tbody id="AdditionalItems">
+                            <tbody id="SalesInvoicePaymentMethods">
+                                @if (Model != null && Model.Id > 0)
+                                {
+                                    foreach (var method in Model.SalesInvoicePaymentMethods)
+                                    {
+                                        <tr>
+                                            <td class="tabledit-edit-mode">
+                                                <input value="@method.PaymentMethod.Id" class="PaymentMethodId" type="hidden" />
+                                                @*@if(ViewBag.AllowSalesOrderInPos == true && method.PaymentMethod.Id != 3)*@
+                                                <label class="PaymentMethodName">
+                                                    @method.PaymentMethod.ArName
+                                                </label>
+                                            </td>
+                                            @if (method.PaymentMethod.Id == 1)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" value="@method.Amount" id="@("PayMethod"+method.PaymentMethod.Id)" /></td>
+                                                <td class="tabledit-edit-mode">
+                                                    @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control tabledit-input form-control-sm" })
+                                                </td>
+                                                <td></td>
+                                            }
+                                            else if (method.PaymentMethod.Id == 3 && ViewBag.AllowSalesOrderInPos == true)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" id="@("PayMethod"+method.PaymentMethod.Id)" type="text" value="@method.Amount" readonly="readonly" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                            else /*if (method.PaymentMethod.Id == 2)*/
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" id="@("PayMethod"+method.PaymentMethod.Id)" type="text" value="@method.Amount" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+
+
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+
+                                    foreach (var method in (List<MyERP.Models.PaymentMethod>)ViewBag.PaymentMethods)
+                                    {
+                                        <tr>
+                                            <td class="tabledit-edit-mode">
+                                                <input value="@method.Id" class="PaymentMethodId" type="hidden" />
+                                                @if ((Session["lang"] != null ? Session["lang"].ToString() : "ar") == "en" && method.EnName != null)
+                                                {
+                                                    <label class="PaymentMethodName">@method.EnName</label>
+                                                }
+                                                else
+                                                {
+                                                    <label class="PaymentMethodName">@method.ArName</label>
+                                                }
+                                            </td>
+                                            @if (method.Id == 1)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" id="@("PayMethod"+method.Id)" /></td>
+                                                <td class="tabledit-edit-mode">
+                                                    @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control tabledit-input form-control-sm" })
+                                                </td>
+                                                <td></td>
+                                            }
+                                            else if (method.Id == 3)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" readonly="readonly" id="@("PayMethod"+method.Id)" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                            else /*if (method.PaymentMethod.Id == 2)*/
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" id="@("PayMethod"+method.Id)" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+
+                                        </tr>
+                                    }
+
+                                }
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    @*<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button>*@
-                </div>
+
             </div>
         </div>
     </div>
-    <!-- Tables Modal -->
-    <div id="tablesModal" class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myHugeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="container">
-                    <div class="form-group row">
-                        <label for="DepartmentHallsId" class="control-label col-sm-2">@MyERP.Properties.Resources.Hall:</label>
-                        <div class="col-sm-2">
-                            <select id="DepartmentHallsId" class="form-control"></select>
-                        </div>
+</div>
+
+<!-- DiscountModal -->
+<div class="modal fade" id="DiscountModal" tabindex="-1" role="dialog" aria-labelledby="DiscountModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="DiscountModalTitle">@MyERP.Properties.Resources.ConfirmPassword</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.ManagerPassword </label>
+                    <div class="col-sm-6">
+                        <input type="password" class="form-control" id="PosManagerPassword" />
                     </div>
-
-                    <div id="TablesDiv" class="form-group row" style="overflow-y:scroll;padding-right:5%;height:50vh;max-height:100vh;">
-
-                        <!--<div class="col-sm-2" style="text-align:center">
-                            <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                            <div style="text-align:center; font-size:large;">@MyERP.Properties.Resources.Table 1</div>
-                            <div style="text-align:center;">
-                                <button class="btn btn-info printReceiptBtn col-sm-3" tableId=" " invoiceId=" " data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.PrintReceipt">-->
-                        @*@MyERP.Properties.Resources.PrintReceipt*@
-                        <!--<i class="remixicon-printer-fill"></i>
-
-                        </button>
-                        <button class="btn btn-success addOrderBtn col-sm-3" payInvoice=false tableId=" " invoiceId=" " data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.AddOrder">-->
-                        @*@MyERP.Properties.Resources.AddOrder*@
-                        <!--<i class="fas fa-plus"></i>
-                        </button>
-                        <button class="btn btn-primary payTableInvoice col-sm-3" payInvoice=true tableId=" " invoiceId=" " data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.PayInvoice">-->
-                        @*@MyERP.Properties.Resources.PayInvoice*@
-                        <!--<i class="fas fa-money-bill"></i>
-                                </button>
-                            </div>
-                            <div style="text-align:center;"> @MyERP.Properties.Resources.OccupancyTime </div>
-                            <div style="text-align:center;"> @MyERP.Properties.Resources.Total </div>
-                        </div>-->
-
-                    </div>
-
-
-                    <!--<table id="TablesTable" class="col">
-                    <tr>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center; font-size:large;">@MyERP.Properties.Resources.Table 1</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 2</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 3</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 4</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 5</div>
-                            </div>
-                        </td>
-                    </tr>-->
-                    <!--<tr>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 6</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 7</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 8</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 9</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-red.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 10</div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 11</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 12</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 13</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 14</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="form-group" style="text-align:center">
-                                <img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/dinning-table-blue.svg" />
-                                <div style="text-align:center;font-size:large;">@MyERP.Properties.Resources.Table 15</div>
-                            </div>
-                        </td>
-                    </tr>-->
-                    <!--</table>-->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
                 </div>
             </div>
-
-        </div>
-    </div>
-    <!--Unpaid Invoices-->
-    <div class="modal fade bd-example-modal-xl" id="UnpaidInvoicesModal" tabindex="-1" role="dialog"
-         aria-labelledby="UnpaidInvoicesModal" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document" style="max-width:100%">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="UnpaidInvoicesModalTitle">@MyERP.Properties.Resources.UnpaidInvoices</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row" id="UnpaidInvoicesModalTable">
-
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="ResetDiscountValue()">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="CheckManagerPassWord()">@MyERP.Properties.Resources.Send</button>
             </div>
         </div>
     </div>
-    <!--Drivers Modal-->
-    <div class="modal fade bs-example-modal-lg" id="DriversModal" tabindex="-1" role="dialog"
-         aria-labelledby="DriversModal" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="DriversModalTitle">@MyERP.Properties.Resources.Drivers</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row" id="DriversModalTable">
-
+</div>
+<!-- AddNotesModal -->
+<div class="modal fade" id="AddNotesModal" tabindex="-1" role="dialog" aria-labelledby="AddNotesModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="AddNotesModalTitle">@MyERP.Properties.Resources.Notes</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.Notes </label>
+                    <div class="col-sm-6">
+                        <input type="text" class="form-control" id="AddItemNotes" />
+                        <input type="text" hidden class="form-control" id="AddItemNotesRowId" />
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="AddNotesToTable(this)">@MyERP.Properties.Resources.Add</button>
             </div>
         </div>
     </div>
-    <div id="paymentMethodsModal" class="paymentMethodsModal modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="form-group form-row">
+</div>
+<!--***********************************************************************************-->
+<!--------------------- Thermal Printer ------------------------------------->
+@*<form onsubmit='return false;' id="form">*@
+<div class="container" hidden>
+    <div class="wrapper">
+        <div id="canvasBlock">
+            <div id='canvasFrame'>
+                <canvas id='canvasPaper' width='500' height='1000' @*height='640'*@ @*style="width: 700px;"*@>
+                    Your browser does not support Canvas!
+                    <qrcode id="qrcode" model='model2' level='level_l' cell='3'>http://www.starmicronics.com/</qrcode>
+                </canvas>
+                @*<div id="qrcode"></div>*@
+                <div id="img_preview"> </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+</div>
+@*</form>*@
+<!----------------------------------- End Of Thermal Printer ------------------------------>
 
 
-                    <div class="easy-numpad-number-container m-2" style="width:45%">
-                        <table>
-                            <tr>
-                                <td><a href="7" onclick="easynum()">7</a></td>
-                                <td><a href="8" onclick="easynum()">8</a></td>
-                                <td><a href="9" onclick="easynum()">9</a></td>
-                                <td><a href="Del" class="del" id="del" onclick="easy_numpad_del()">Del</a></td>
-                            </tr>
-                            <tr>
-                                <td><a href="4" onclick="easynum()">4</a></td>
-                                <td><a href="5" onclick="easynum()">5</a></td>
-                                <td><a href="6" onclick="easynum()">6</a></td>
-                                <td><a href="Clear" class="clear" id="clear" onclick="easy_numpad_clear()">Clear</a></td>
-                            </tr>
-                            <tr>
-                                <td><a href="1" onclick="easynum()">1</a></td>
-                                <td><a href="2" onclick="easynum()">2</a></td>
-                                <td><a href="3" onclick="easynum()">3</a></td>
-                                <td><a href="Cancel" class="cancel" id="cancel" onclick="easy_numpad_cancel()">Cancel</a></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" onclick="easynum()"><a href="0">0</a></td>
-                                <td onclick="easynum()"><a href=".">.</a></td>
-                                <td><a href="Done" class="done" id="done" onclick="easy_numpad_done()">Done</a></td>
-                            </tr>
+<input hidden id="IsWait" type="checkbox" />
+<input hidden id="OldTableId" />
+<input hidden id="OldInvoiceId" />
+
+<!-- Alternative Items Modal -->
+<div id="AlternativeItemsModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">@MyERP.Properties.Resources.AlternativeItems</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <h4>@MyERP.Properties.Resources.AlternativeItems</h4>
+                <hr />
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>@MyERP.Properties.Resources.Barcode</th>
+                                    <th>@MyERP.Properties.Resources.ItemName</th>
+                                    <th>@MyERP.Properties.Resources.Price</th>
+                                    <th>@MyERP.Properties.Resources.Qty</th>
+                                    <th>@MyERP.Properties.Resources.Replace</th>
+                                </tr>
+                            </thead>
+                            <tbody id="AlternativeItemsTr">
+                                <tr>
+                                </tr>
+
+
+                            </tbody>
                         </table>
                     </div>
-
-
-                    <div class="form-horizontal needs-validation ml-4 mt-3" role="form" style="width: 49%;">
-                        <div class="table-responsive">
-                            <table class="table table-centered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>@MyERP.Properties.Resources.PaymentMethod</th>
-                                        <th>@MyERP.Properties.Resources.Amount</th>
-                                        <th>@MyERP.Properties.Resources.CashBox</th>
-                                        @*<th>الحساب البنكى</th>*@
-                                    </tr>
-                                </thead>
-                                <tbody id="SalesInvoicePaymentMethods">
-                                    @if (Model != null && Model.Id > 0)
-                                    {
-                                        foreach (var method in Model.SalesInvoicePaymentMethods)
-                                        {
-                                            <tr>
-                                                <td class="tabledit-edit-mode">
-                                                    <input value="@method.PaymentMethod.Id" class="PaymentMethodId" type="hidden" />
-                                                    @*@if(ViewBag.AllowSalesOrderInPos == true && method.PaymentMethod.Id != 3)*@
-                                                    <label class="PaymentMethodName">
-                                                        @method.PaymentMethod.ArName
-                                                    </label>
-                                                </td>
-                                                @if (method.PaymentMethod.Id == 1)
-                                                {
-                                                    <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" value="@method.Amount" id="@("PayMethod"+method.PaymentMethod.Id)" /></td>
-                                                    <td class="tabledit-edit-mode">
-                                                        @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control tabledit-input form-control-sm" })
-                                                    </td>
-                                                    <td></td>
-                                                }
-                                                else if (method.PaymentMethod.Id == 3 && ViewBag.AllowSalesOrderInPos == true)
-                                                {
-                                                    <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" id="@("PayMethod"+method.PaymentMethod.Id)" type="text" value="@method.Amount" readonly="readonly" /></td>
-                                                    <td></td>
-                                                    <td></td>
-                                                }
-                                                else /*if (method.PaymentMethod.Id == 2)*/
-                                                {
-                                                    <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" id="@("PayMethod"+method.PaymentMethod.Id)" type="text" value="@method.Amount" /></td>
-                                                    <td></td>
-                                                    <td></td>
-                                                }
-
-
-                                            </tr>
-                                        }
-                                    }
-                                    else
-                                    {
-
-                                        foreach (var method in (List<MyERP.Models.PaymentMethod>)ViewBag.PaymentMethods)
-                                        {
-                                            <tr>
-                                                <td class="tabledit-edit-mode">
-                                                    <input value="@method.Id" class="PaymentMethodId" type="hidden" />
-                                                    @if ((Session["lang"] != null ? Session["lang"].ToString() : "ar") == "en" && method.EnName != null)
-                                                    {
-                                                        <label class="PaymentMethodName">@method.EnName</label>
-                                                    }
-                                                    else
-                                                    {
-                                                        <label class="PaymentMethodName">@method.ArName</label>
-                                                    }
-                                                </td>
-                                                @if (method.Id == 1)
-                                                {
-                                                    <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" id="@("PayMethod"+method.Id)" /></td>
-                                                    <td class="tabledit-edit-mode">
-                                                        @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control tabledit-input form-control-sm" })
-                                                    </td>
-                                                    <td></td>
-                                                }
-                                                else if (method.Id == 3)
-                                                {
-                                                    <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" readonly="readonly" id="@("PayMethod"+method.Id)" /></td>
-                                                    <td></td>
-                                                    <td></td>
-                                                }
-                                                else /*if (method.PaymentMethod.Id == 2)*/
-                                                {
-                                                    <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" id="@("PayMethod"+method.Id)" /></td>
-                                                    <td></td>
-                                                    <td></td>
-                                                }
-
-                                            </tr>
-                                        }
-
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- DiscountModal -->
-    <div class="modal fade" id="DiscountModal" tabindex="-1" role="dialog" aria-labelledby="DiscountModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="DiscountModalTitle">@MyERP.Properties.Resources.ConfirmPassword</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group row">
-                        <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.ManagerPassword </label>
-                        <div class="col-sm-6">
-                            <input type="password" class="form-control" id="PosManagerPassword" />
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="ResetDiscountValue()">@MyERP.Properties.Resources.Close</button>
-                    <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="CheckManagerPassWord()">@MyERP.Properties.Resources.Send</button>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
             </div>
-        </div>
-    </div>
-    <!-- AddNotesModal -->
-    <div class="modal fade" id="AddNotesModal" tabindex="-1" role="dialog" aria-labelledby="AddNotesModalTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="AddNotesModalTitle">@MyERP.Properties.Resources.Notes</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group row">
-                        <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.Notes </label>
-                        <div class="col-sm-6">
-                            <input type="text" class="form-control" id="AddItemNotes" />
-                            <input type="text" hidden class="form-control" id="AddItemNotesRowId" />
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                    <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="AddNotesToTable(this)">@MyERP.Properties.Resources.Add</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!--***********************************************************************************-->
-    <!--------------------- Thermal Printer ------------------------------------->
-    @*<form onsubmit='return false;' id="form">*@
-    <div class="container" hidden>
-        <div class="wrapper">
-            <div id="canvasBlock">
-                <div id='canvasFrame'>
-                    <canvas id='canvasPaper' width='500' height='1000' @*height='640'*@ @*style="width: 700px;"*@>
-                        Your browser does not support Canvas!
-                        <qrcode id="qrcode" model='model2' level='level_l' cell='3'>http://www.starmicronics.com/</qrcode>
-                    </canvas>
-                    @*<div id="qrcode"></div>*@
-                    <div id="img_preview"> </div>
-                </div>
-            </div>
-        </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
 
-        <hr>
-
-    </div>
-    @*</form>*@
-    <!----------------------------------- End Of Thermal Printer ------------------------------>
-
-
-    <input hidden id="IsWait" type="checkbox" />
-    <input hidden id="OldTableId" />
-    <input hidden id="OldInvoiceId" />
-
-    <!-- Alternative Items Modal -->
-    <div id="AlternativeItemsModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="myModalLabel">@MyERP.Properties.Resources.AlternativeItems</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-                </div>
-                <div class="modal-body">
-                    <h4>@MyERP.Properties.Resources.AlternativeItems</h4>
-                    <hr />
-                    <div class="row">
-                        <div class="col-sm-12">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>@MyERP.Properties.Resources.Barcode</th>
-                                        <th>@MyERP.Properties.Resources.ItemName</th>
-                                        <th>@MyERP.Properties.Resources.Price</th>
-                                        <th>@MyERP.Properties.Resources.Qty</th>
-                                        <th>@MyERP.Properties.Resources.Replace</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="AlternativeItemsTr">
-                                    <tr>
-                                    </tr>
-
-
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-                </div>
-            </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-    </div>
-
-    <!-- End Of Alternative Items Modal -->
-    @*<input hidden id="selectedTableWaitersName" value="@ViewBag.WaitersName" />*@
+<!-- End Of Alternative Items Modal -->
+@*<input hidden id="selectedTableWaitersName" value="@ViewBag.WaitersName" />*@
 <div id="itemDetails" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1611,11 +1505,11 @@
 </div>
 <script>
     function showItemDetials(e) {
-      
+
         let itemPrice = $(e).closest('tr').find('.item');
         var itemId = itemPrice.val();
 
-      
+
         console.log(itemPrice);
         $('#itemDetailsBody').empty();
         if (itemId) {
@@ -1659,19 +1553,19 @@
     function ReplaceItem(ItemId,oid) {
          if (items.length) {
              let itemPrice = items.filter(function (i) { return i.Id === ItemId; })[0];
-            
+
              let itmId = itemPrice.Id;
              let barcode = itemPrice.barcode;
              if (itemPrice) {
                  let itmId = itemPrice.Id;
-              
+
                 // Item Has Expire Date
              //   let ItemHasExpiry = isItemHasExpireDate(itmId);
                  $('#PointOfSaleDetails tr').each(function () {
                      let td = $(this);
                      let ritem = td.closest('tr').find('.itemId').val();
                      console.log(`${oid}-${ritem}`);
-                   
+
                      if (ritem == oid) {
                          let quantity = td.closest('tr').find('.quantity').val();
                          var ItemTaxPercentage = itemPrice.ItemTaxPercentage;
@@ -1685,11 +1579,11 @@
                          td.closest('tr').find('.ItemTaxValue').val(TaxValue);
                          /*   td.closest('tr').find('.name').text(itemPrice.itemPrice.ArName);*/
                          td.closest('tr').find('.IsAltItem').prop('checked', false);
-                   
+
                          td.closest('tr').find('.item').val(itemPrice.ItemPriceId).trigger('change');
                          // }
                      }
-                  
+
                 });
             }
          }
@@ -5477,5 +5371,21 @@
     }
 
     // ------ Analog clock --------
+// تحسينات بسيطة للموبايل
+$(document).ready(function() {
+    // جعل الجداول قابلة للتمرير أفقياً على الموبايل
+    $('.table-responsive').css('overflow-x', 'auto');
+
+    // تحسين أزرار الأرقام للموبايل
+    if (window.innerWidth <= 768) {
+        $('.easy-numpad-number').css({
+            'min-height': '50px',
+            'font-size': '18px'
+        });
+    }
+
+    ///////////////////////////////
+
+});
 
 </script>

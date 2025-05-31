@@ -7339,10 +7339,13 @@
   <data name="AreYouSureYouWantToOpenCashReceipt" xml:space="preserve">
     <value>هل تريد التحويل إلى سند القبض؟</value>
   </data>
+  <data name="PropertyProphet" xml:space="preserve">
+    <value>العوائد</value>
+  </data>
   <data name="ShareHolderAccount1" xml:space="preserve">
     <value>حساب حقوق الملكية</value>
   </data>
-  <data name="PropertyProphet" xml:space="preserve">
-    <value>العوائد</value>
+  <data name="PropertyContractsExpiredReport" xml:space="preserve">
+    <value>تقرير العقود المنتهية</value>
   </data>
 </root>
