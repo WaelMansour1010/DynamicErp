@@ -7296,10 +7296,9 @@ Distinguished chalets with private pools and green spaces with indoor and outdoo
   <data name="PropertyProp_Report" xml:space="preserve">
     <value>Building Profits Report</value>
   </data>
-	<data name="PropertyContractsExpiredReport" xml:space="preserve">
-    <value>Expired Contracts Report</value>
+  <data name="PropertyContractsExpiredReport" xml:space="preserve">
+    <value>Expired Property Contracts Report</value>
   </data>
-		
   <data name="DueOwnersPaymentsReport" xml:space="preserve">
     <value>Due Owners' Payments Report</value>
   </data>
@@ -7351,7 +7350,13 @@ Distinguished chalets with private pools and green spaces with indoor and outdoo
   <data name="PropertyProphet" xml:space="preserve">
     <value>ارباح العقارات</value>
   </data>
-  <data name="PropertyContractsExpiredReport" xml:space="preserve">
-    <value>Expired Property Contracts Report</value>
+  <data name="MergeUnits" xml:space="preserve">
+    <value>Merge Units</value>
+  </data>
+  <data name="MergedUnits" xml:space="preserve">
+    <value>Merged Units</value>
+  </data>
+  <data name="ContractRenewal" xml:space="preserve">
+    <value>Contract Renewal</value>
   </data>
 </root>

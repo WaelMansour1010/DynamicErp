@@ -3886,6 +3886,15 @@ namespace MyERP.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Contract Renewal.
+        /// </summary>
+        public static string ContractRenewal {
+            get {
+                return ResourceManager.GetString("ContractRenewal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Contracts.
         /// </summary>
         public static string Contracts {
@@ -11679,6 +11688,24 @@ namespace MyERP.Properties {
         public static string Menu {
             get {
                 return ResourceManager.GetString("Menu", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Merged Units.
+        /// </summary>
+        public static string MergedUnits {
+            get {
+                return ResourceManager.GetString("MergedUnits", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Merge Units.
+        /// </summary>
+        public static string MergeUnits {
+            get {
+                return ResourceManager.GetString("MergeUnits", resourceCulture);
             }
         }
         

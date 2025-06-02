@@ -112,6 +112,12 @@ namespace MyERP.Controllers.PropertyManagement
                     Id = b.Id,
                     ArName = b.Code + " - " + b.ArName
                 }).ToList(), "Id", "ArName");
+
+                ViewBag.MergedUnitsIds = new MultiSelectList(db.PropertyUnits.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
+                {
+                    Id = b.Id,
+                    ArName = b.Code + " - " + b.ArName
+                }).ToList(), "Id", "ArName");
                 ViewBag.PropertyOwnerId = new SelectList(db.PropertyOwners.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
                 {
                     Id = b.Id,
