@@ -18,6 +18,7 @@ namespace MyERP.Models
         public User()
         {
             this.FixedAssetsTypes = new HashSet<FixedAssetsType>();
+            this.PropertyPaymentHistory = new HashSet<PropertyPaymentHistory>();
         }
     
         public int Id { get; set; }
@@ -31,5 +32,7 @@ namespace MyERP.Models
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<FixedAssetsType> FixedAssetsTypes { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
     }
 }

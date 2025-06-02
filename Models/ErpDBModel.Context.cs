@@ -456,6 +456,8 @@ namespace MyERP.Models
         public virtual DbSet<sysdiagram> sysdiagrams { get; set; }
         public virtual DbSet<PropertyBillRegisteration> PropertyBillRegisterations { get; set; }
         public virtual DbSet<DelMe> DelMes { get; set; }
+        public virtual DbSet<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
+        public virtual DbSet<PropertySummaryNew> PropertySummaryNew { get; set; }
     
         public virtual ObjectResult<CashBox_Balances_Result> CashBox_Balances(Nullable<int> cashBoxId)
         {
@@ -18762,6 +18764,103 @@ namespace MyERP.Models
                 new ObjectParameter("CompanyId", typeof(int));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetBalanceReview2_Result>("GetBalanceReview2", fromDateParameter, toDateParameter, departmentIdParameter, activityIdParameter, companyIdParameter);
+        }
+    
+        public virtual ObjectResult<GetBalanceReview21_Result> GetBalanceReview21(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> departmentId, Nullable<int> activityId, Nullable<int> companyId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("fromDate", fromDate) :
+                new ObjectParameter("fromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("toDate", toDate) :
+                new ObjectParameter("toDate", typeof(System.DateTime));
+    
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("departmentId", departmentId) :
+                new ObjectParameter("departmentId", typeof(int));
+    
+            var activityIdParameter = activityId.HasValue ?
+                new ObjectParameter("ActivityId", activityId) :
+                new ObjectParameter("ActivityId", typeof(int));
+    
+            var companyIdParameter = companyId.HasValue ?
+                new ObjectParameter("CompanyId", companyId) :
+                new ObjectParameter("CompanyId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetBalanceReview21_Result>("GetBalanceReview21", fromDateParameter, toDateParameter, departmentIdParameter, activityIdParameter, companyIdParameter);
+        }
+    
+        public virtual ObjectResult<GetExpiredPropertyContracts_Result> GetExpiredPropertyContracts()
+        {
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetExpiredPropertyContracts_Result>("GetExpiredPropertyContracts");
+        }
+    
+        public virtual ObjectResult<sp_GetPropertyPaymentSummary_Result> sp_GetPropertyPaymentSummary(Nullable<int> propertyId)
+        {
+            var propertyIdParameter = propertyId.HasValue ?
+                new ObjectParameter("PropertyId", propertyId) :
+                new ObjectParameter("PropertyId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_GetPropertyPaymentSummary_Result>("sp_GetPropertyPaymentSummary", propertyIdParameter);
+        }
+    
+        public virtual ObjectResult<sp_GetPropertyReport_Result> sp_GetPropertyReport(Nullable<int> renterId, Nullable<int> ownerId, Nullable<int> propertyId, Nullable<System.DateTime> startDate, Nullable<bool> onlyUnterminated)
+        {
+            var renterIdParameter = renterId.HasValue ?
+                new ObjectParameter("RenterId", renterId) :
+                new ObjectParameter("RenterId", typeof(int));
+    
+            var ownerIdParameter = ownerId.HasValue ?
+                new ObjectParameter("OwnerId", ownerId) :
+                new ObjectParameter("OwnerId", typeof(int));
+    
+            var propertyIdParameter = propertyId.HasValue ?
+                new ObjectParameter("PropertyId", propertyId) :
+                new ObjectParameter("PropertyId", typeof(int));
+    
+            var startDateParameter = startDate.HasValue ?
+                new ObjectParameter("StartDate", startDate) :
+                new ObjectParameter("StartDate", typeof(System.DateTime));
+    
+            var onlyUnterminatedParameter = onlyUnterminated.HasValue ?
+                new ObjectParameter("OnlyUnterminated", onlyUnterminated) :
+                new ObjectParameter("OnlyUnterminated", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_GetPropertyReport_Result>("sp_GetPropertyReport", renterIdParameter, ownerIdParameter, propertyIdParameter, startDateParameter, onlyUnterminatedParameter);
+        }
+    
+        public virtual ObjectResult<sp_SaveBatchPayment_Result> sp_SaveBatchPayment(Nullable<int> batchId, Nullable<decimal> paidAmount, Nullable<System.DateTime> paymentDate, string paymentMethod, string paymentReference, string paymentNotes, Nullable<int> userId)
+        {
+            var batchIdParameter = batchId.HasValue ?
+                new ObjectParameter("BatchId", batchId) :
+                new ObjectParameter("BatchId", typeof(int));
+    
+            var paidAmountParameter = paidAmount.HasValue ?
+                new ObjectParameter("PaidAmount", paidAmount) :
+                new ObjectParameter("PaidAmount", typeof(decimal));
+    
+            var paymentDateParameter = paymentDate.HasValue ?
+                new ObjectParameter("PaymentDate", paymentDate) :
+                new ObjectParameter("PaymentDate", typeof(System.DateTime));
+    
+            var paymentMethodParameter = paymentMethod != null ?
+                new ObjectParameter("PaymentMethod", paymentMethod) :
+                new ObjectParameter("PaymentMethod", typeof(string));
+    
+            var paymentReferenceParameter = paymentReference != null ?
+                new ObjectParameter("PaymentReference", paymentReference) :
+                new ObjectParameter("PaymentReference", typeof(string));
+    
+            var paymentNotesParameter = paymentNotes != null ?
+                new ObjectParameter("PaymentNotes", paymentNotes) :
+                new ObjectParameter("PaymentNotes", typeof(string));
+    
+            var userIdParameter = userId.HasValue ?
+                new ObjectParameter("UserId", userId) :
+                new ObjectParameter("UserId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_SaveBatchPayment_Result>("sp_SaveBatchPayment", batchIdParameter, paidAmountParameter, paymentDateParameter, paymentMethodParameter, paymentReferenceParameter, paymentNotesParameter, userIdParameter);
         }
     }
 }

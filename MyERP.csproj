@@ -174,9 +174,7 @@
       <HintPath>packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.0\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Data.SqlClient, Version=6.0.0.0, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Data.SqlClient.6.0.2\lib\net462\Microsoft.Data.SqlClient.dll</HintPath>
-    </Reference>
+    <Reference Include="Microsoft.Data.SqlClient, Version=6.0.0.0, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Extensions.Caching.Abstractions, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Extensions.Caching.Abstractions.8.0.0\lib\net462\Microsoft.Extensions.Caching.Abstractions.dll</HintPath>
     </Reference>
@@ -1451,6 +1449,9 @@
     <Compile Include="Models\GetAttendAndLeaveApprovalData_Result2.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\GetBalanceReview21_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\GetBalanceReview2_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -1587,6 +1588,9 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\GetExpensesInPeriod_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\GetExpiredPropertyContracts_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\GetFinancialStatement_Result.cs">
@@ -2279,6 +2283,9 @@
     <Compile Include="Models\PropertyOwner.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PropertyPaymentHistory.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\PropertyRenter.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2292,6 +2299,9 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\PropertyStatu.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PropertySummaryNew.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\PropertyType.cs">
@@ -2574,6 +2584,15 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\SpiritualNote.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GetPropertyPaymentSummary_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_GetPropertyReport_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\sp_SaveBatchPayment_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\StockIssueType.cs">

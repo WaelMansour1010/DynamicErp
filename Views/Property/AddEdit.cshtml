@@ -635,7 +635,7 @@
                                         </div>
                                         <div id="collapse6">
                                             <div class="form-group row">
-                                                <label class="col-sm-2 control-label" for="PropertyUnitNo">@MyERP.Properties.Resources.UnitNo</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.UnitNo</label>
                                                 <div class="col-sm-4">
                                                     @Html.Editor("PropertyUnitNo", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.UnitNo, @type = "text" } })
                                                     <div class="invalid-feedback">
@@ -651,7 +651,7 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <label class="col-sm-2 control-label" for="Floor">@MyERP.Properties.Resources.Floor</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.Floor</label>
                                                 <div class="col-sm-4">
                                                     @Html.Editor("Floor", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Floor } })
                                                     <div class="invalid-feedback">
@@ -667,7 +667,7 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <label class="col-sm-2 control-label" for="RoomsNo">@MyERP.Properties.Resources.RoomsNo</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.RoomsNo</label>
                                                 <div class="col-sm-4">
                                                     @Html.Editor("RoomsNo", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.RoomsNo, @type = "text" } })
                                                     <div class="invalid-feedback">
@@ -683,7 +683,7 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <label class="col-sm-2 control-label" for="StatusId">@MyERP.Properties.Resources.Status</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.Status</label>
                                                 <div class="col-sm-4">
                                                     @Html.DropDownList("StatusId", null, null, htmlAttributes: new { @class = "form-control" })
                                                     <div class="invalid-feedback">
@@ -699,7 +699,7 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <label class="col-sm-2 control-label" for="UnitSequenceFrom">@MyERP.Properties.Resources.UnitSequenceFrom</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.UnitSequenceFrom</label>
                                                 <div class="col-sm-4">
                                                     @Html.Editor("UnitSequenceFrom", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.UnitSequenceFrom } })
                                                     <div class="invalid-feedback">
@@ -715,14 +715,14 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <label class="col-sm-2 control-label" for="IsFurnishing">@MyERP.Properties.Resources.Furnishing</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.Furnishing</label>
                                                 <div class="col-sm-4">
                                                     <input type="checkbox" id="IsFurnishing" />
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
                                                 </div>
-                                                <label class="col-sm-2 control-label" for="IsApplyTax">@MyERP.Properties.Resources.ApplyTax</label>
+                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.ApplyTax</label>
                                                 <div class="col-sm-4">
                                                     <input type="checkbox" id="IsApplyTax" />
                                                     <div class="invalid-feedback">
@@ -731,7 +731,7 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <button class="btn btn-success" onclick="AppendIntoPropertyDetails()">@MyERP.Properties.Resources.Add</button>
+                                                <button class="btn btn-success" onclick="AppendIntoPropertyDetails()"> @MyERP.Properties.Resources.Add </button>
                                             </div>
                                             <div class="table-responsive">
                                                 <table class="table table-centered mb-0">

@@ -13,7 +13,7 @@ using System.Linq;
 using MyERP.Controllers;
 using Amazon.S3.Model;
 using MyERP.Utils;
-using MyERP.Reporting.Reports.ReportDataSetTableAdapters;
+
 using MyERP.Reporting.Reports;
 using System.Drawing.Printing;
 using DevExpress.DataAccess.Native.EntityFramework;
@@ -43,18 +43,18 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
     private XRLabel User;
     private XRLabel Time;
     private XRLabel xrLabel6;
-    private MyERP.Reporting.Reports.ReportDataSet reportDataSet1;
-    private MyERP.Reporting.Reports.ReportDataSetTableAdapters.sp_GetPropertyReportTableAdapter sp_GetPropertyReportTableAdapter;
-    private XRLabel xrLabel9;
-    private XRLabel xrLabel3;
-    private XRLabel xrLabel1;
+    
     private XRLabel xrSerial;
     private XRLabel xrLabel2;
     private XRLabel xrLabel12;
     private XRLabel xrLabel11;
     private XRLabel xrLabel10;
-    private XRLabel xrLabel13;
-    private GetExpiredPropertyContractsTableAdapter getExpiredPropertyContractsTableAdapter;
+    
+    private DevExpress.DataAccess.Sql.SqlDataSource sqlDataSource1;
+    private XRLabel xrLabel3;
+    private XRLabel xrLabel9;
+    private XRLabel xrLabel4;
+    private XRLabel xrLabel1;
 
     /// <summary>
     /// Required designer variable.
@@ -65,17 +65,17 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
     {
         InitializeComponent();
 
-        this.Detail.BeforePrint += Detail_BeforePrint;
+        //this.Detail.BeforePrint += Detail_BeforePrint;
 
-        this.GroupHeader1.BeforePrint += groupHeaderBand1_BeforePrint;
+        //this.GroupHeader1.BeforePrint += groupHeaderBand1_BeforePrint;
 
-        this.xrPictureBox1.BeforePrint += xrPictureBox1_BeforePrint;
+        //this.xrPictureBox1.BeforePrint += xrPictureBox1_BeforePrint;
 
-        // تحميل القيم الديناميكية للباراميترز
-        this.ParametersRequestBeforeShow += PropertyContractsExpiredReport_ParametersRequestBeforeShow;
-        this.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.PropertyContractsExpiredReport_BeforePrint);
-        // عرض اسم المستخدم
-        User.Text = HttpContext.Current.User.Identity.Name;
+        //// تحميل القيم الديناميكية للباراميترز
+        //this.ParametersRequestBeforeShow += PropertyContractsExpiredReport_ParametersRequestBeforeShow;
+        //this.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.PropertyContractsExpiredReport_BeforePrint);
+        //// عرض اسم المستخدم
+        //User.Text = HttpContext.Current.User.Identity.Name;
 
     }
 
@@ -100,7 +100,9 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
     /// </summary>
     private void InitializeComponent()
     {
-            this.reportDataSet1 = new MyERP.Reporting.Reports.ReportDataSet();
+            this.components = new System.ComponentModel.Container();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PropertyContractsExpiredReport));
             this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
             this.DetailCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
             this.DetailData1 = new DevExpress.XtraReports.UI.XRControlStyle();
@@ -122,24 +124,16 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.xrLabel11 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel10 = new DevExpress.XtraReports.UI.XRLabel();
             this.Detail = new DevExpress.XtraReports.UI.DetailBand();
-            this.xrLabel13 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrSerial = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel3 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel1 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel9 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel4 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel1 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrSerial = new DevExpress.XtraReports.UI.XRLabel();
             this.ReportFooter = new DevExpress.XtraReports.UI.ReportFooterBand();
             this.PageHeader = new DevExpress.XtraReports.UI.PageHeaderBand();
             this.CompanyName = new DevExpress.XtraReports.UI.XRLabel();
-            this.sp_GetPropertyReportTableAdapter = new MyERP.Reporting.Reports.ReportDataSetTableAdapters.sp_GetPropertyReportTableAdapter();
-            this.getExpiredPropertyContractsTableAdapter = new MyERP.Reporting.Reports.ReportDataSetTableAdapters.GetExpiredPropertyContractsTableAdapter();
-            ((System.ComponentModel.ISupportInitialize)(this.reportDataSet1)).BeginInit();
+            this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
-            // 
-            // reportDataSet1
-            // 
-            this.reportDataSet1.DataSetName = "ReportDataSet";
-            this.reportDataSet1.EnforceConstraints = false;
-            this.reportDataSet1.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
             // 
             // Title
             // 
@@ -343,7 +337,7 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.xrLabel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
             this.xrLabel2.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
             this.xrLabel2.ForeColor = System.Drawing.Color.White;
-            this.xrLabel2.LocationFloat = new DevExpress.Utils.PointFloat(297.3751F, 5.000019F);
+            this.xrLabel2.LocationFloat = new DevExpress.Utils.PointFloat(359.3554F, 5.000019F);
             this.xrLabel2.Multiline = true;
             this.xrLabel2.Name = "xrLabel2";
             this.xrLabel2.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
@@ -360,11 +354,11 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.xrLabel12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
             this.xrLabel12.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
             this.xrLabel12.ForeColor = System.Drawing.Color.White;
-            this.xrLabel12.LocationFloat = new DevExpress.Utils.PointFloat(177.0641F, 5.000019F);
+            this.xrLabel12.LocationFloat = new DevExpress.Utils.PointFloat(197.439F, 5.000019F);
             this.xrLabel12.Multiline = true;
             this.xrLabel12.Name = "xrLabel12";
             this.xrLabel12.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel12.SizeF = new System.Drawing.SizeF(115.7108F, 23F);
+            this.xrLabel12.SizeF = new System.Drawing.SizeF(146.8111F, 23F);
             this.xrLabel12.StylePriority.UseBackColor = false;
             this.xrLabel12.StylePriority.UseFont = false;
             this.xrLabel12.StylePriority.UseForeColor = false;
@@ -409,28 +403,62 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             // Detail
             // 
             this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.xrLabel13,
-            this.xrSerial,
             this.xrLabel3,
+            this.xrLabel9,
+            this.xrLabel4,
             this.xrLabel1,
-            this.xrLabel9});
+            this.xrSerial});
             this.Detail.HeightF = 57.6251F;
             this.Detail.Name = "Detail";
             this.Detail.SortFields.AddRange(new DevExpress.XtraReports.UI.GroupField[] {
             new DevExpress.XtraReports.UI.GroupField("PropertyId", DevExpress.XtraReports.UI.XRColumnSortOrder.Ascending),
             new DevExpress.XtraReports.UI.GroupField("PropertyId", DevExpress.XtraReports.UI.XRColumnSortOrder.Ascending)});
-            this.Detail.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Detail_BeforePrint);
+
             // 
-            // xrLabel13
+            // xrLabel3
             // 
-            this.xrLabel13.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            this.xrLabel3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ContractEndDate]")});
+            this.xrLabel3.LocationFloat = new DevExpress.Utils.PointFloat(393.5768F, 0F);
+            this.xrLabel3.Multiline = true;
+            this.xrLabel3.Name = "xrLabel3";
+            this.xrLabel3.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel3.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel3.Text = "xrLabel3";
+            this.xrLabel3.TextFormatString = "{0:d}";
+            // 
+            // xrLabel9
+            // 
+            this.xrLabel9.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[DocumentNumber]")});
-            this.xrLabel13.LocationFloat = new DevExpress.Utils.PointFloat(177.064F, 0F);
-            this.xrLabel13.Multiline = true;
-            this.xrLabel13.Name = "xrLabel13";
-            this.xrLabel13.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel13.SizeF = new System.Drawing.SizeF(115.7109F, 23F);
-            this.xrLabel13.Text = "xrLabel13";
+            this.xrLabel9.LocationFloat = new DevExpress.Utils.PointFloat(202.1454F, 0F);
+            this.xrLabel9.Multiline = true;
+            this.xrLabel9.Name = "xrLabel9";
+            this.xrLabel9.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel9.SizeF = new System.Drawing.SizeF(142.1048F, 23F);
+            this.xrLabel9.Text = "xrLabel9";
+            // 
+            // xrLabel4
+            // 
+            this.xrLabel4.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Unit]")});
+            this.xrLabel4.LocationFloat = new DevExpress.Utils.PointFloat(102.1453F, 0F);
+            this.xrLabel4.Multiline = true;
+            this.xrLabel4.Name = "xrLabel4";
+            this.xrLabel4.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel4.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel4.Text = "xrLabel4";
+            // 
+            // xrLabel1
+            // 
+            this.xrLabel1.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Renter]")});
+            this.xrLabel1.LocationFloat = new DevExpress.Utils.PointFloat(2.145142F, 0F);
+            this.xrLabel1.Multiline = true;
+            this.xrLabel1.Name = "xrLabel1";
+            this.xrLabel1.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel1.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel1.Text = "xrLabel1";
             // 
             // xrSerial
             // 
@@ -440,40 +468,6 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.xrSerial.Name = "xrSerial";
             this.xrSerial.SizeF = new System.Drawing.SizeF(47.99988F, 23F);
             this.xrSerial.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            // 
-            // xrLabel3
-            // 
-            this.xrLabel3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[ContractEndDate]")});
-            this.xrLabel3.LocationFloat = new DevExpress.Utils.PointFloat(297.375F, 0F);
-            this.xrLabel3.Multiline = true;
-            this.xrLabel3.Name = "xrLabel3";
-            this.xrLabel3.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel3.SizeF = new System.Drawing.SizeF(134.2213F, 23F);
-            this.xrLabel3.Text = "xrLabel3";
-            this.xrLabel3.TextFormatString = "{0:d}";
-            // 
-            // xrLabel1
-            // 
-            this.xrLabel1.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Unit]")});
-            this.xrLabel1.LocationFloat = new DevExpress.Utils.PointFloat(109.8338F, 0F);
-            this.xrLabel1.Multiline = true;
-            this.xrLabel1.Name = "xrLabel1";
-            this.xrLabel1.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel1.SizeF = new System.Drawing.SizeF(67.23004F, 23F);
-            this.xrLabel1.Text = "xrLabel1";
-            // 
-            // xrLabel9
-            // 
-            this.xrLabel9.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Renter]")});
-            this.xrLabel9.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.xrLabel9.Multiline = true;
-            this.xrLabel9.Name = "xrLabel9";
-            this.xrLabel9.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel9.SizeF = new System.Drawing.SizeF(102.1451F, 23F);
-            this.xrLabel9.Text = "xrLabel9";
             // 
             // ReportFooter
             // 
@@ -506,13 +500,15 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.CompanyName.StylePriority.UseTextAlignment = false;
             this.CompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
             // 
-            // sp_GetPropertyReportTableAdapter
+            // sqlDataSource1
             // 
-            this.sp_GetPropertyReportTableAdapter.ClearBeforeFill = true;
-            // 
-            // getExpiredPropertyContractsTableAdapter
-            // 
-            this.getExpiredPropertyContractsTableAdapter.ClearBeforeFill = true;
+            this.sqlDataSource1.ConnectionName = "localhost_MySoftERP_Connection";
+            this.sqlDataSource1.Name = "sqlDataSource1";
+            storedProcQuery1.Name = "GetExpiredPropertyContracts";
+            storedProcQuery1.StoredProcName = "GetExpiredPropertyContracts";
+            this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
+            storedProcQuery1});
+            this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
             // 
             // PropertyContractsExpiredReport
             // 
@@ -524,10 +520,9 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.ReportFooter,
             this.PageHeader});
             this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
-            this.reportDataSet1});
-            this.DataAdapter = this.getExpiredPropertyContractsTableAdapter;
+            this.sqlDataSource1});
             this.DataMember = "GetExpiredPropertyContracts";
-            this.DataSource = this.reportDataSet1;
+            this.DataSource = this.sqlDataSource1;
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
             this.Margins = new DevExpress.Drawing.DXMargins(40F, 40F, 40F, 78.79156F);
             this.PageHeight = 1169;
@@ -542,8 +537,7 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
             this.DetailData3_Odd,
             this.PageInfo});
             this.Version = "23.1";
-            this.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.PropertyContractsExpiredReport_BeforePrint);
-            ((System.ComponentModel.ISupportInitialize)(this.reportDataSet1)).EndInit();
+            
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
     }
@@ -568,45 +562,5 @@ public class PropertyContractsExpiredReport : DevExpress.XtraReports.UI.XtraRepo
     }
 
 
-    private void PropertyContractsExpiredReport_ParametersRequestBeforeShow(object sender, DevExpress.XtraReports.Parameters.ParametersRequestEventArgs e)
-    {
-        var ds = new ReportDataSet();
-        AdapterConnector.ConnectAllAdapters(ds);
-
-       
-    }
-
-    private void PropertyContractsExpiredReport_BeforePrint(object sender, CancelEventArgs e)
-    {
-
-
-        var adapter = AdapterConnector.GetExpiredContractsReportAdapter();
-
-        // جلب البيانات بدون بارامترات
-        var data = adapter.GetReport();
-        //data.EnforceConstraints = false;
-        if (data.DataSet != null)
-            data.DataSet.EnforceConstraints = false;
-
-
-        this.DataSource = data;
-        this.DataMember = data.TableName;
-    }
-
-
-
-    int serialCounter = 0;
-
     
-
-    private void groupHeaderBand1_BeforePrint(object sender, EventArgs e)
-    {
-        serialCounter = 0;
-    }
-
-    private void Detail_BeforePrint(object sender, CancelEventArgs e)
-    {
-        serialCounter++;
-        xrSerial.Text = serialCounter.ToString();  // غيّر xrSerial لاسم اللابل اللي يعرض رقم التسلسل
-    }
 }

@@ -1800,6 +1800,11 @@
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsDueRevenueId" />
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsRevenueId" />
         <EntityTypeShape EntityType="MyERPModel.DelMe" Width="1.5" PointX="15.375" PointY="21.75" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyPaymentHistory" Width="1.5" PointX="0.99386463360575239" PointY="6.0869795708390786" />
+        <EntityTypeShape EntityType="MyERPModel.PropertySummaryNew" Width="1.5" PointX="6.6338752054767092" PointY="8.6300222019804753" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_Property" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_PropertyBatch" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_User" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

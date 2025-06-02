@@ -2,11 +2,13 @@
 <xs:schema id="ReportDataSet" targetNamespace="http://tempuri.org/ReportDataSet.xsd" xmlns:mstns="http://tempuri.org/ReportDataSet.xsd" xmlns="http://tempuri.org/ReportDataSet.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:msprop="urn:schemas-microsoft-com:xml-msprop" attributeFormDefault="qualified" elementFormDefault="qualified">
   <xs:annotation>
     <xs:appinfo source="urn:schemas-microsoft-com:xml-msdatasource">
-      <DataSource DefaultConnectionIndex="2" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
+      <DataSource DefaultConnectionIndex="4" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
         <Connections>
           <Connection AppSettingsObjectName="Web.config" AppSettingsPropertyName="MyErpConnectionString" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="MyErpConnectionString (Web.config)" ParameterPrefix="@" PropertyReference="AppConfig.System.Configuration.ConfigurationManager.0.ConnectionStrings.MyErpConnectionString.ConnectionString" Provider="System.Data.SqlClient" />
-          <Connection ConnectionStringObject="Data Source=Pc2\Sql2019;Initial Catalog=MyErp;User ID=sa;Password=Admin@123;MultipleActiveResultSets=True;Application Name=EntityFramework" IsAppSettingsProperty="false" Modifier="Assembly" Name="MyErpConnectionString (MyERP)" ParameterPrefix="@" Provider="System.Data.SqlClient" />
-          <Connection AppSettingsObjectName="Web.config" AppSettingsPropertyName="MyERP_ConnectionString" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="MyERP_ConnectionString (Web.config)" ParameterPrefix="@" PropertyReference="AppConfig.System.Configuration.ConfigurationManager.0.ConnectionStrings.MyERP_ConnectionString.ConnectionString" Provider="Microsoft.Data.SqlClient" />
+          <Connection AppSettingsObjectName="Web.config" AppSettingsPropertyName="MyErpConnectionString1" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="MyErpConnectionString1 (Web.config)" ParameterPrefix="@" PropertyReference="AppConfig.System.Configuration.ConfigurationManager.0.ConnectionStrings.MyErpConnectionString1.ConnectionString" Provider="System.Data.SqlClient" />
+          <Connection AppSettingsObjectName="Web.config" AppSettingsPropertyName="MyERP_ConnectionString" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="MyERP_ConnectionString (Web.config)" ParameterPrefix="@" PropertyReference="AppConfig.System.Configuration.ConfigurationManager.0.ConnectionStrings.MyERP_ConnectionString.ConnectionString" Provider="System.Data.SqlClient" />
+          <Connection AppSettingsObjectName="Web.config" AppSettingsPropertyName="MyErpConnectionString2" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="MyErpConnectionString2 (Web.config)" ParameterPrefix="@" PropertyReference="AppConfig.System.Configuration.ConfigurationManager.0.ConnectionStrings.MyErpConnectionString2.ConnectionString" Provider="System.Data.SqlClient" />
+          <Connection ConnectionStringObject="Data Source=Pc2\Sql2019;Initial Catalog=MyErp;User ID=sa;Password=Admin@123;TrustServerCertificate=True" IsAppSettingsProperty="false" Modifier="Assembly" Name="MyErpConnectionString2 (MyERP)" ParameterPrefix="@" Provider="System.Data.SqlClient" />
         </Connections>
         <Tables>
           <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="sp_GetPropertyReportTableAdapter" GeneratorDataComponentClassName="sp_GetPropertyReportTableAdapter" Name="sp_GetPropertyReport" UserDataComponentName="sp_GetPropertyReportTableAdapter">
@@ -46,60 +48,14 @@
             </Mappings>
             <Sources />
           </TableAdapter>
-          <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="DepartmentTableAdapter" GeneratorDataComponentClassName="DepartmentTableAdapter" Name="Department" UserDataComponentName="DepartmentTableAdapter">
-            <MainSource>
-              <DbSource ConnectionRef="MyErpConnectionString (MyERP)" DbObjectName="MyErp.dbo.Department" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
-                <DeleteCommand>
-                  <DbCommand CommandType="Text" ModifiedByUser="false">
-                    <CommandText>DELETE FROM [Department] WHERE (([Id] = @Original_Id))</CommandText>
-                    <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_Id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="Id" SourceColumnNullMapping="false" SourceVersion="Original" />
-                    </Parameters>
-                  </DbCommand>
-                </DeleteCommand>
-                <InsertCommand>
-                  <DbCommand CommandType="Text" ModifiedByUser="false">
-                    <CommandText>INSERT INTO [Department] ([ArName], [EnName]) VALUES (@ArName, @EnName)</CommandText>
-                    <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
-                    </Parameters>
-                  </DbCommand>
-                </InsertCommand>
-                <SelectCommand>
-                  <DbCommand CommandType="Text" ModifiedByUser="true">
-                    <CommandText>SELECT        ArName, EnName, Id
-FROM            Department</CommandText>
-                    <Parameters />
-                  </DbCommand>
-                </SelectCommand>
-                <UpdateCommand>
-                  <DbCommand CommandType="Text" ModifiedByUser="false">
-                    <CommandText>UPDATE [Department] SET [ArName] = @ArName, [EnName] = @EnName WHERE (([Id] = @Original_Id))</CommandText>
-                    <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_Id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="Id" SourceColumnNullMapping="false" SourceVersion="Original" />
-                    </Parameters>
-                  </DbCommand>
-                </UpdateCommand>
-              </DbSource>
-            </MainSource>
-            <Mappings>
-              <Mapping SourceColumn="ArName" DataSetColumn="ArName" />
-              <Mapping SourceColumn="EnName" DataSetColumn="EnName" />
-              <Mapping SourceColumn="Id" DataSetColumn="Id" />
-            </Mappings>
-            <Sources />
-          </TableAdapter>
           <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="PropertyTableAdapter" GeneratorDataComponentClassName="PropertyTableAdapter" Name="Property" UserDataComponentName="PropertyTableAdapter">
             <MainSource>
-              <DbSource ConnectionRef="MyErpConnectionString (MyERP)" DbObjectName="MyErp.dbo.Property" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
+              <DbSource ConnectionRef="MyERP_ConnectionString (Web.config)" DbObjectName="MyErp.dbo.Property" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
                 <DeleteCommand>
                   <DbCommand CommandType="Text" ModifiedByUser="false">
                     <CommandText>DELETE FROM [Property] WHERE (([id] = @Original_id))</CommandText>
                     <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
                     </Parameters>
                   </DbCommand>
                 </DeleteCommand>
@@ -113,9 +69,9 @@ FROM            Department</CommandText>
                   <DbCommand CommandType="Text" ModifiedByUser="false">
                     <CommandText>UPDATE [Property] SET [ArName] = @ArName, [EnName] = @EnName WHERE (([id] = @Original_id))</CommandText>
                     <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
                       <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
                     </Parameters>
                   </DbCommand>
                 </UpdateCommand>
@@ -130,35 +86,37 @@ FROM            Department</CommandText>
           </TableAdapter>
           <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="PropertyRenterTableAdapter" GeneratorDataComponentClassName="PropertyRenterTableAdapter" Name="PropertyRenter" UserDataComponentName="PropertyRenterTableAdapter">
             <MainSource>
-              <DbSource ConnectionRef="MyErpConnectionString (MyERP)" DbObjectName="MyErp.dbo.PropertyRenter" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
+              <DbSource ConnectionRef="MyERP_ConnectionString (Web.config)" DbObjectName="MyErp.dbo.PropertyRenter" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
                 <DeleteCommand>
                   <DbCommand CommandType="Text" ModifiedByUser="false">
                     <CommandText>DELETE FROM [PropertyRenter] WHERE (([id] = @Original_id))</CommandText>
                     <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
                     </Parameters>
                   </DbCommand>
                 </DeleteCommand>
                 <InsertCommand>
                   <DbCommand CommandType="Text" ModifiedByUser="false">
-                    <CommandText>INSERT INTO [PropertyRenter] ([ArName]) VALUES (@ArName)</CommandText>
+                    <CommandText>INSERT INTO [PropertyRenter] ([ArName], [EnName]) VALUES (@ArName, @EnName)</CommandText>
                     <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
                     </Parameters>
                   </DbCommand>
                 </InsertCommand>
                 <SelectCommand>
                   <DbCommand CommandType="Text" ModifiedByUser="true">
-                    <CommandText>Select id,ArName from PropertyRenter</CommandText>
+                    <CommandText>Select id,ArName,EnName from PropertyRenter</CommandText>
                     <Parameters />
                   </DbCommand>
                 </SelectCommand>
                 <UpdateCommand>
                   <DbCommand CommandType="Text" ModifiedByUser="false">
-                    <CommandText>UPDATE [PropertyRenter] SET [ArName] = @ArName WHERE (([id] = @Original_id))</CommandText>
+                    <CommandText>UPDATE [PropertyRenter] SET [ArName] = @ArName, [EnName] = @EnName WHERE (([id] = @Original_id))</CommandText>
                     <Parameters>
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
-                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
                     </Parameters>
                   </DbCommand>
                 </UpdateCommand>
@@ -167,12 +125,58 @@ FROM            Department</CommandText>
             <Mappings>
               <Mapping SourceColumn="id" DataSetColumn="id" />
               <Mapping SourceColumn="ArName" DataSetColumn="ArName" />
+              <Mapping SourceColumn="EnName" DataSetColumn="EnName" />
+            </Mappings>
+            <Sources />
+          </TableAdapter>
+          <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="DepartmentTableAdapter" GeneratorDataComponentClassName="DepartmentTableAdapter" Name="Department" UserDataComponentName="DepartmentTableAdapter">
+            <MainSource>
+              <DbSource ConnectionRef="MyERP_ConnectionString (Web.config)" DbObjectName="MyErp.dbo.Department" DbObjectType="Table" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
+                <DeleteCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="false">
+                    <CommandText>DELETE FROM [Department] WHERE (([id] = @Original_id))</CommandText>
+                    <Parameters>
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
+                    </Parameters>
+                  </DbCommand>
+                </DeleteCommand>
+                <InsertCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="false">
+                    <CommandText>INSERT INTO [Department] ([ArName], [EnName]) VALUES (@ArName, @EnName)</CommandText>
+                    <Parameters>
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                    </Parameters>
+                  </DbCommand>
+                </InsertCommand>
+                <SelectCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="true">
+                    <CommandText>Select id,ArName,EnName from Department</CommandText>
+                    <Parameters />
+                  </DbCommand>
+                </SelectCommand>
+                <UpdateCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="false">
+                    <CommandText>UPDATE [Department] SET [ArName] = @ArName, [EnName] = @EnName WHERE (([id] = @Original_id))</CommandText>
+                    <Parameters>
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@ArName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="ArName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="true" AutogeneratedName="" DataSourceName="" DbType="String" Direction="Input" ParameterName="@EnName" Precision="0" ProviderType="NVarChar" Scale="0" Size="0" SourceColumn="EnName" SourceColumnNullMapping="false" SourceVersion="Current" />
+                      <Parameter AllowDbNull="false" AutogeneratedName="" DataSourceName="" DbType="Int32" Direction="Input" ParameterName="@Original_id" Precision="0" ProviderType="Int" Scale="0" Size="0" SourceColumn="id" SourceColumnNullMapping="false" SourceVersion="Original" />
+                    </Parameters>
+                  </DbCommand>
+                </UpdateCommand>
+              </DbSource>
+            </MainSource>
+            <Mappings>
+              <Mapping SourceColumn="id" DataSetColumn="id" />
+              <Mapping SourceColumn="ArName" DataSetColumn="ArName" />
+              <Mapping SourceColumn="EnName" DataSetColumn="EnName" />
             </Mappings>
             <Sources />
           </TableAdapter>
           <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="GetExpiredPropertyContractsTableAdapter" GeneratorDataComponentClassName="GetExpiredPropertyContractsTableAdapter" Name="GetExpiredPropertyContracts" UserDataComponentName="GetExpiredPropertyContractsTableAdapter">
             <MainSource>
-              <DbSource ConnectionRef="MyErpConnectionString (MyERP)" DbObjectName="MyErp.dbo.GetExpiredPropertyContracts" DbObjectType="StoredProcedure" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="true" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="true" UserGetMethodName="GetData" UserSourceName="Fill">
+              <DbSource ConnectionRef="MyERP_ConnectionString (Web.config)" DbObjectName="MyErp.dbo.GetExpiredPropertyContracts" DbObjectType="StoredProcedure" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="false" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="false" UserGetMethodName="GetData" UserSourceName="Fill">
                 <SelectCommand>
                   <DbCommand CommandType="StoredProcedure" ModifiedByUser="false">
                     <CommandText>dbo.GetExpiredPropertyContracts</CommandText>
@@ -230,39 +234,18 @@ FROM            Department</CommandText>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-        <xs:element name="Department" msprop:Generator_RowEvHandlerName="DepartmentRowChangeEventHandler" msprop:Generator_RowDeletedName="DepartmentRowDeleted" msprop:Generator_RowDeletingName="DepartmentRowDeleting" msprop:Generator_RowEvArgName="DepartmentRowChangeEvent" msprop:Generator_TablePropName="Department" msprop:Generator_RowChangedName="DepartmentRowChanged" msprop:Generator_UserTableName="Department" msprop:Generator_RowChangingName="DepartmentRowChanging" msprop:Generator_RowClassName="DepartmentRow" msprop:Generator_TableClassName="DepartmentDataTable" msprop:Generator_TableVarName="tableDepartment">
+        <xs:element name="Property" msprop:Generator_RowClassName="PropertyRow" msprop:Generator_RowEvHandlerName="PropertyRowChangeEventHandler" msprop:Generator_RowDeletedName="PropertyRowDeleted" msprop:Generator_RowDeletingName="PropertyRowDeleting" msprop:Generator_RowEvArgName="PropertyRowChangeEvent" msprop:Generator_TablePropName="Property" msprop:Generator_RowChangedName="PropertyRowChanged" msprop:Generator_UserTableName="Property" msprop:Generator_RowChangingName="PropertyRowChanging" msprop:Generator_TableClassName="PropertyDataTable" msprop:Generator_TableVarName="tableProperty">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="ArName" msprop:Generator_ColumnPropNameInTable="ArNameColumn" msprop:Generator_ColumnPropNameInRow="ArName" msprop:Generator_UserColumnName="ArName" msprop:Generator_ColumnVarNameInTable="columnArName" minOccurs="0">
-                <xs:simpleType>
-                  <xs:restriction base="xs:string">
-                    <xs:maxLength value="500" />
-                  </xs:restriction>
-                </xs:simpleType>
-              </xs:element>
-              <xs:element name="EnName" msprop:Generator_ColumnPropNameInTable="EnNameColumn" msprop:Generator_ColumnPropNameInRow="EnName" msprop:Generator_UserColumnName="EnName" msprop:Generator_ColumnVarNameInTable="columnEnName" minOccurs="0">
-                <xs:simpleType>
-                  <xs:restriction base="xs:string">
-                    <xs:maxLength value="500" />
-                  </xs:restriction>
-                </xs:simpleType>
-              </xs:element>
-              <xs:element name="Id" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_ColumnPropNameInTable="IdColumn" msprop:Generator_ColumnPropNameInRow="Id" msprop:Generator_UserColumnName="Id" msprop:Generator_ColumnVarNameInTable="columnId" type="xs:int" minOccurs="0" />
-            </xs:sequence>
-          </xs:complexType>
-        </xs:element>
-        <xs:element name="Property" msprop:Generator_RowEvHandlerName="PropertyRowChangeEventHandler" msprop:Generator_RowDeletedName="PropertyRowDeleted" msprop:Generator_RowDeletingName="PropertyRowDeleting" msprop:Generator_RowEvArgName="PropertyRowChangeEvent" msprop:Generator_TablePropName="Property" msprop:Generator_RowChangedName="PropertyRowChanged" msprop:Generator_UserTableName="Property" msprop:Generator_RowChangingName="PropertyRowChanging" msprop:Generator_RowClassName="PropertyRow" msprop:Generator_TableClassName="PropertyDataTable" msprop:Generator_TableVarName="tableProperty">
-          <xs:complexType>
-            <xs:sequence>
-              <xs:element name="id" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_ColumnPropNameInTable="idColumn" msprop:Generator_ColumnPropNameInRow="id" msprop:Generator_UserColumnName="id" msprop:Generator_ColumnVarNameInTable="columnid" type="xs:int" minOccurs="0" />
-              <xs:element name="ArName" msprop:Generator_ColumnPropNameInTable="ArNameColumn" msprop:Generator_ColumnPropNameInRow="ArName" msprop:Generator_UserColumnName="ArName" msprop:Generator_ColumnVarNameInTable="columnArName" minOccurs="0">
+              <xs:element name="id" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_UserColumnName="id" msprop:Generator_ColumnPropNameInTable="idColumn" msprop:Generator_ColumnPropNameInRow="id" msprop:Generator_ColumnVarNameInTable="columnid" type="xs:int" />
+              <xs:element name="ArName" msprop:Generator_UserColumnName="ArName" msprop:Generator_ColumnPropNameInTable="ArNameColumn" msprop:Generator_ColumnPropNameInRow="ArName" msprop:Generator_ColumnVarNameInTable="columnArName">
                 <xs:simpleType>
                   <xs:restriction base="xs:string">
                     <xs:maxLength value="2147483647" />
                   </xs:restriction>
                 </xs:simpleType>
               </xs:element>
-              <xs:element name="EnName" msprop:Generator_ColumnPropNameInTable="EnNameColumn" msprop:Generator_ColumnPropNameInRow="EnName" msprop:Generator_UserColumnName="EnName" msprop:Generator_ColumnVarNameInTable="columnEnName" minOccurs="0">
+              <xs:element name="EnName" msprop:Generator_UserColumnName="EnName" msprop:Generator_ColumnPropNameInTable="EnNameColumn" msprop:Generator_ColumnPropNameInRow="EnName" msprop:Generator_ColumnVarNameInTable="columnEnName" minOccurs="0">
                 <xs:simpleType>
                   <xs:restriction base="xs:string">
                     <xs:maxLength value="2147483647" />
@@ -272,14 +255,42 @@ FROM            Department</CommandText>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
-        <xs:element name="PropertyRenter" msprop:Generator_RowEvHandlerName="PropertyRenterRowChangeEventHandler" msprop:Generator_RowDeletedName="PropertyRenterRowDeleted" msprop:Generator_RowDeletingName="PropertyRenterRowDeleting" msprop:Generator_RowEvArgName="PropertyRenterRowChangeEvent" msprop:Generator_TablePropName="PropertyRenter" msprop:Generator_RowChangedName="PropertyRenterRowChanged" msprop:Generator_UserTableName="PropertyRenter" msprop:Generator_RowChangingName="PropertyRenterRowChanging" msprop:Generator_RowClassName="PropertyRenterRow" msprop:Generator_TableClassName="PropertyRenterDataTable" msprop:Generator_TableVarName="tablePropertyRenter">
+        <xs:element name="PropertyRenter" msprop:Generator_RowClassName="PropertyRenterRow" msprop:Generator_RowEvHandlerName="PropertyRenterRowChangeEventHandler" msprop:Generator_RowDeletedName="PropertyRenterRowDeleted" msprop:Generator_RowDeletingName="PropertyRenterRowDeleting" msprop:Generator_RowEvArgName="PropertyRenterRowChangeEvent" msprop:Generator_TablePropName="PropertyRenter" msprop:Generator_RowChangedName="PropertyRenterRowChanged" msprop:Generator_UserTableName="PropertyRenter" msprop:Generator_RowChangingName="PropertyRenterRowChanging" msprop:Generator_TableClassName="PropertyRenterDataTable" msprop:Generator_TableVarName="tablePropertyRenter">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="id" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_ColumnPropNameInTable="idColumn" msprop:Generator_ColumnPropNameInRow="id" msprop:Generator_UserColumnName="id" msprop:Generator_ColumnVarNameInTable="columnid" type="xs:int" minOccurs="0" />
-              <xs:element name="ArName" msprop:Generator_ColumnPropNameInTable="ArNameColumn" msprop:Generator_ColumnPropNameInRow="ArName" msprop:Generator_UserColumnName="ArName" msprop:Generator_ColumnVarNameInTable="columnArName" minOccurs="0">
+              <xs:element name="id" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_UserColumnName="id" msprop:Generator_ColumnPropNameInTable="idColumn" msprop:Generator_ColumnPropNameInRow="id" msprop:Generator_ColumnVarNameInTable="columnid" type="xs:int" />
+              <xs:element name="ArName" msprop:Generator_UserColumnName="ArName" msprop:Generator_ColumnPropNameInTable="ArNameColumn" msprop:Generator_ColumnPropNameInRow="ArName" msprop:Generator_ColumnVarNameInTable="columnArName">
                 <xs:simpleType>
                   <xs:restriction base="xs:string">
                     <xs:maxLength value="2147483647" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="EnName" msprop:Generator_UserColumnName="EnName" msprop:Generator_ColumnPropNameInTable="EnNameColumn" msprop:Generator_ColumnPropNameInRow="EnName" msprop:Generator_ColumnVarNameInTable="columnEnName" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="2147483647" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Department" msprop:Generator_RowClassName="DepartmentRow" msprop:Generator_RowEvHandlerName="DepartmentRowChangeEventHandler" msprop:Generator_RowDeletedName="DepartmentRowDeleted" msprop:Generator_RowDeletingName="DepartmentRowDeleting" msprop:Generator_RowEvArgName="DepartmentRowChangeEvent" msprop:Generator_TablePropName="Department" msprop:Generator_RowChangedName="DepartmentRowChanged" msprop:Generator_UserTableName="Department" msprop:Generator_RowChangingName="DepartmentRowChanging" msprop:Generator_TableClassName="DepartmentDataTable" msprop:Generator_TableVarName="tableDepartment">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="id" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_UserColumnName="id" msprop:Generator_ColumnPropNameInTable="idColumn" msprop:Generator_ColumnPropNameInRow="id" msprop:Generator_ColumnVarNameInTable="columnid" type="xs:int" />
+              <xs:element name="ArName" msprop:Generator_UserColumnName="ArName" msprop:Generator_ColumnPropNameInTable="ArNameColumn" msprop:Generator_ColumnPropNameInRow="ArName" msprop:Generator_ColumnVarNameInTable="columnArName">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="500" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="EnName" msprop:Generator_UserColumnName="EnName" msprop:Generator_ColumnPropNameInTable="EnNameColumn" msprop:Generator_ColumnPropNameInRow="EnName" msprop:Generator_ColumnVarNameInTable="columnEnName" minOccurs="0">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="500" />
                   </xs:restriction>
                 </xs:simpleType>
               </xs:element>
@@ -289,7 +300,7 @@ FROM            Department</CommandText>
         <xs:element name="GetExpiredPropertyContracts" msprop:Generator_RowClassName="GetExpiredPropertyContractsRow" msprop:Generator_RowEvHandlerName="GetExpiredPropertyContractsRowChangeEventHandler" msprop:Generator_RowDeletedName="GetExpiredPropertyContractsRowDeleted" msprop:Generator_RowDeletingName="GetExpiredPropertyContractsRowDeleting" msprop:Generator_RowEvArgName="GetExpiredPropertyContractsRowChangeEvent" msprop:Generator_TablePropName="GetExpiredPropertyContracts" msprop:Generator_RowChangedName="GetExpiredPropertyContractsRowChanged" msprop:Generator_UserTableName="GetExpiredPropertyContracts" msprop:Generator_RowChangingName="GetExpiredPropertyContractsRowChanging" msprop:Generator_TableClassName="GetExpiredPropertyContractsDataTable" msprop:Generator_TableVarName="tableGetExpiredPropertyContracts">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="Renter" msprop:Generator_UserColumnName="Renter" msprop:Generator_ColumnPropNameInTable="RenterColumn" msprop:Generator_ColumnPropNameInRow="Renter" msprop:Generator_ColumnVarNameInTable="columnRenter" minOccurs="0">
+              <xs:element name="Renter" msprop:Generator_UserColumnName="Renter" msprop:Generator_ColumnPropNameInTable="RenterColumn" msprop:Generator_ColumnPropNameInRow="Renter" msprop:Generator_ColumnVarNameInTable="columnRenter">
                 <xs:simpleType>
                   <xs:restriction base="xs:string">
                     <xs:maxLength value="2147483647" />
@@ -304,7 +315,7 @@ FROM            Department</CommandText>
                   </xs:restriction>
                 </xs:simpleType>
               </xs:element>
-              <xs:element name="DetailID" msprop:Generator_UserColumnName="DetailID" msprop:Generator_ColumnPropNameInTable="DetailIDColumn" msprop:Generator_ColumnPropNameInRow="DetailID" msprop:Generator_ColumnVarNameInTable="columnDetailID" type="xs:int" minOccurs="0" />
+              <xs:element name="DetailID" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_UserColumnName="DetailID" msprop:Generator_ColumnPropNameInTable="DetailIDColumn" msprop:Generator_ColumnPropNameInRow="DetailID" msprop:Generator_ColumnVarNameInTable="columnDetailID" type="xs:int" />
               <xs:element name="Unit" msprop:Generator_UserColumnName="Unit" msprop:Generator_ColumnPropNameInTable="UnitColumn" msprop:Generator_ColumnPropNameInRow="Unit" msprop:Generator_ColumnVarNameInTable="columnUnit" minOccurs="0">
                 <xs:simpleType>
                   <xs:restriction base="xs:string">
@@ -326,7 +337,7 @@ FROM            Department</CommandText>
               <xs:element name="InsuranceValue" msdata:ReadOnly="true" msprop:Generator_UserColumnName="InsuranceValue" msprop:Generator_ColumnPropNameInTable="InsuranceValueColumn" msprop:Generator_ColumnPropNameInRow="InsuranceValue" msprop:Generator_ColumnVarNameInTable="columnInsuranceValue" type="xs:decimal" minOccurs="0" />
               <xs:element name="WaterValue" msdata:ReadOnly="true" msprop:Generator_UserColumnName="WaterValue" msprop:Generator_ColumnPropNameInTable="WaterValueColumn" msprop:Generator_ColumnPropNameInRow="WaterValue" msprop:Generator_ColumnVarNameInTable="columnWaterValue" type="xs:decimal" minOccurs="0" />
               <xs:element name="ElectricityValue" msdata:ReadOnly="true" msprop:Generator_UserColumnName="ElectricityValue" msprop:Generator_ColumnPropNameInTable="ElectricityValueColumn" msprop:Generator_ColumnPropNameInRow="ElectricityValue" msprop:Generator_ColumnVarNameInTable="columnElectricityValue" type="xs:decimal" minOccurs="0" />
-              <xs:element name="Notes" msprop:Generator_UserColumnName="Notes" msprop:Generator_ColumnPropNameInTable="NotesColumn" msprop:Generator_ColumnPropNameInRow="Notes" msprop:Generator_ColumnVarNameInTable="columnNotes" default="''" minOccurs="0">
+              <xs:element name="Notes" msprop:Generator_UserColumnName="Notes" msprop:Generator_ColumnPropNameInTable="NotesColumn" msprop:Generator_ColumnPropNameInRow="Notes" msprop:Generator_ColumnVarNameInTable="columnNotes" minOccurs="0">
                 <xs:simpleType>
                   <xs:restriction base="xs:string">
                     <xs:maxLength value="2147483647" />
@@ -339,16 +350,20 @@ FROM            Department</CommandText>
       </xs:choice>
     </xs:complexType>
     <xs:unique name="Constraint1" msdata:PrimaryKey="true">
-      <xs:selector xpath=".//mstns:Department" />
-      <xs:field xpath="mstns:Id" />
-    </xs:unique>
-    <xs:unique name="Property_Constraint1" msdata:ConstraintName="Constraint1" msdata:PrimaryKey="true">
       <xs:selector xpath=".//mstns:Property" />
       <xs:field xpath="mstns:id" />
     </xs:unique>
     <xs:unique name="PropertyRenter_Constraint1" msdata:ConstraintName="Constraint1" msdata:PrimaryKey="true">
       <xs:selector xpath=".//mstns:PropertyRenter" />
       <xs:field xpath="mstns:id" />
+    </xs:unique>
+    <xs:unique name="Department_Constraint1" msdata:ConstraintName="Constraint1" msdata:PrimaryKey="true">
+      <xs:selector xpath=".//mstns:Department" />
+      <xs:field xpath="mstns:id" />
+    </xs:unique>
+    <xs:unique name="GetExpiredPropertyContracts_Constraint1" msdata:ConstraintName="Constraint1" msdata:PrimaryKey="true">
+      <xs:selector xpath=".//mstns:GetExpiredPropertyContracts" />
+      <xs:field xpath="mstns:DetailID" />
     </xs:unique>
   </xs:element>
 </xs:schema>

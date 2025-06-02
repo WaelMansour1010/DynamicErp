@@ -21,6 +21,7 @@ namespace MyERP.Models
             this.PropertyContracts = new HashSet<PropertyContract>();
             this.PropertyDetails = new HashSet<PropertyDetail>();
             this.PropertyContractTerminations = new HashSet<PropertyContractTermination>();
+            this.PropertyPaymentHistory = new HashSet<PropertyPaymentHistory>();
         }
     
         public int Id { get; set; }
@@ -97,5 +98,7 @@ namespace MyERP.Models
         public virtual ICollection<PropertyDetail> PropertyDetails { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<PropertyContractTermination> PropertyContractTerminations { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
     }
 }

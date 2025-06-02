@@ -14,6 +14,12 @@ namespace MyERP.Models
     
     public partial class PropertyBatch
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public PropertyBatch()
+        {
+            this.PropertyPaymentHistory = new HashSet<PropertyPaymentHistory>();
+        }
+    
         public int Id { get; set; }
         public int MainDocId { get; set; }
         public Nullable<int> BatchNo { get; set; }
@@ -34,8 +40,13 @@ namespace MyERP.Models
         public Nullable<int> PeriodBetweenBatchesTypeId { get; set; }
         public Nullable<bool> IsDelivered { get; set; }
         public Nullable<decimal> Paid { get; set; }
+        public Nullable<System.DateTime> CreatedDate { get; set; }
+        public Nullable<System.DateTime> ModifiedDate { get; set; }
+        public Nullable<System.DateTime> PaymentDate { get; set; }
     
         public virtual ERPUser ERPUser { get; set; }
         public virtual Property Property { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
     }
 }
