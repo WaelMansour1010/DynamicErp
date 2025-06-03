@@ -540,6 +540,7 @@
                                                             <td>@MyERP.Properties.Resources.HijriDate</td>
                                                             <td>@MyERP.Properties.Resources.BatchValueBeforeDiscount</td>
                                                             <td>@MyERP.Properties.Resources.BatchValueBeforeTax</td>
+                                                            <td>@MyERP.Properties.Resources.Add</td>
                                                             <td>@MyERP.Properties.Resources.Discount</td>
                                                             <td>@MyERP.Properties.Resources.BatchValueAfterDiscount</td>
                                                             <td>@MyERP.Properties.Resources.TaxPercentage</td>
@@ -579,6 +580,11 @@
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm"
                                                                                value="@(item.BatchValueBeforeTax ?? 0)" disabled readonly />
+                                                                    </td>
+                                                                    <!--to be adjusted to added value-->
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="BatchAddedValue form-control tabledit-input form-control-sm"
+                                                                               value="@(item.Discount ?? 0)" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="number" step="any" class="Discount form-control tabledit-input form-control-sm"
@@ -763,7 +769,7 @@
                                                                         <input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="@item.PropertyUnitNo" disabled readonly />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="text" class="PropertyUnitTypeName form-control tabledit-input form-control-sm" value="@item.PropertyUnitType?.ArName" disabled readonly />
+                                                                        <input type="text" class="PropertyUnitTypeName form-control tabledit-input form-control-sm" value="@item.PropertyUnitType.ArName" disabled readonly />
                                                                         <input type="text" hidden class="PropDetailId" value="@item.Id" disabled readonly />
                                                                         <input type="text" hidden class="PropertyUnitTypeId form-control tabledit-input form-control-sm" value="@item.PropertyUnitTypeId" disabled readonly />
                                                                     </td>
@@ -1292,6 +1298,9 @@ function CalculateBatches() {
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
                     '<input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm" value="' + BatchValueBeforeTax.toFixed(2) + '" disabled readonly />' +
+                '</td>' +
+                '<td class="tabledit-edit-mode">' +
+                    '<input type="number" step="any" class="BatchAddedValue form-control tabledit-input form-control-sm" value="0" />' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
                     '<input type="number" step="any" class="Discount form-control tabledit-input form-control-sm" value="0" />' +
