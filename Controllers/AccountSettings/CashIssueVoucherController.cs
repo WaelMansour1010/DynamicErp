@@ -122,7 +122,11 @@ namespace MyERP.Controllers.AccountSettings
                     PeriodBetweenBatchesTypeId = t.PeriodBetweenBatchesTypeId,
                     UserId = t.UserId,
                     IsDelivered = t.IsDelivered??false , 
-                    Paid = t.Paid??0
+                    Paid = t.Paid??0,
+                    //to be adjusted, now its zero for design purpose
+                    Remain = 0,
+                    TotalPaid = 0,
+                    AddedValue = 0
                 }
           ).ToList();
             return Json(data, JsonRequestBehavior.AllowGet);
