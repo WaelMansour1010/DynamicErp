@@ -871,6 +871,56 @@ namespace MyERP.Controllers.AccountSettings
                         }
                     }
                     db.SaveChanges();
+                    //-------------------------------//
+                    //this is a temporary action to fix the issue of not updating the IssueAnalysis in the JournalEntryDetails table
+                    
+                    if (cashIssueVoucher.IssueAnalysis.Count() > 0)
+                    {
+                        //this will update them and delete other instances that are not in XML
+
+                        cashIssueVoucher.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+
+                        //first send IssueAnalysisWithoutDetails and IssueAnalysisDetail for the updated instances
+                        //to CashIssueVoucher_Update
+                        //this will update them and delete other instances that are not in XML
+                        List<IssueAnalysis> updatedIssueAnalysis = db.IssueAnalysis.Where(a => a.CashIssueVoucherId == id && a.IsDeleted == false).ToList();
+
+                        MyXML.xPathName = "IssueAnalysis";
+                        var IssueAnalysisWithoutDetails2 = updatedIssueAnalysis.Select(o => new
+                        { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
+                        var IssueAnalysis2 = MyXML.GetXML(IssueAnalysisWithoutDetails2);
+                        //convert all records of IssueAnalysisDetails to xml
+                        MyXML.xPathName = "IssueAnalysisDetails";
+                        var IssueAnalysisDetailRecords = updatedIssueAnalysis
+                            .SelectMany(o => o.IssueAnalysisDetails.Select(d => new
+                            {
+                                d.Id,
+                                d.IssueAnalysisId,
+                                d.PropertyDetailId,
+                                d.Price
+                            }))
+                            .ToList();
+                        var IssueAnalysisDetail = MyXML.GetXML(IssueAnalysisDetailRecords);
+                        db.CashIssueVoucher_Update(id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.BranchId,
+                            cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId,
+                            cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked,
+                            cashIssueVoucher.IsPosted, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
+                            cashIssueVoucher.Notes, cashIssueVoucher.Image, cashIssueVoucher.CustomerId, cashIssueVoucher.VendorId,
+                            cashIssueVoucher.TechnicianId, cashIssueVoucher.EmployeeId, cashIssueVoucher.CurrencyEquivalent,
+                            cashIssueVoucher.DepartmentId, cashIssueVoucher.CashBoxId, cashIssueVoucher.ShareholderId,
+                            cashIssueVoucher.CostCenterId, cashIssueVoucher.PosId, cashIssueVoucher.CashierUserId, cashIssueVoucher.ShiftId,
+                            cashIssueVoucher.IsCollected, cashIssueVoucher.IsClosed, cashIssueVoucher.IsInvoiceSelected,
+                            PurchaseInvoiceActualPaymentsXml, cashIssueVoucher.BankAccountId, cashIssueVoucher.TransactionNo,
+                            cashIssueVoucher.TransactionDate, cashIssueVoucher.ChartOfAccountId,
+                            cashIssueVoucher.CashIssuePaymentMethodId, cashIssueVoucher.FeesAmount,
+                            cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, cashIssueVoucher.IsUpdateSynced,
+                            cashIssueVoucher.BorrowReceipt, BorrowRequestId, cashIssueVoucher.Month, cashIssueVoucher.Year,
+                            CashIssueVoucherEmployeePayrollIssue, IssueAnalysis2, IssueAnalysisDetail,
+                            cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId);
+
+                        db.SaveChanges();
+                    }
+                    //-------------------------------//
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashIssueVoucher", "Add", "AddEdit", id, null, "سند الدفع");
                 }
