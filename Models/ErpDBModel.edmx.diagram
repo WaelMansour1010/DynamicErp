@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>sp_GetPropertyReport
-      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="62">
+      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="54">
         <EntityTypeShape EntityType="MyERPModel.AdvertisingCompaign" Width="1.5" PointX="2.75" PointY="0.75" />
         <EntityTypeShape EntityType="MyERPModel.Area" Width="1.5" PointX="26.25" PointY="264.875" />
         <EntityTypeShape EntityType="MyERPModel.Bank" Width="1.5" PointX="24" PointY="256.25" />
@@ -1801,7 +1801,6 @@
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsRevenueId" />
         <EntityTypeShape EntityType="MyERPModel.DelMe" Width="1.5" PointX="15.375" PointY="21.75" />
         <EntityTypeShape EntityType="MyERPModel.PropertyPaymentHistory" Width="1.5" PointX="0.99386463360575239" PointY="6.0869795708390786" />
-        <EntityTypeShape EntityType="MyERPModel.PropertySummaryNew" Width="1.5" PointX="6.6338752054767092" PointY="8.6300222019804753" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_Property" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_PropertyBatch" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_User" />

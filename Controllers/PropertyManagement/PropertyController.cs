@@ -307,11 +307,12 @@ namespace MyERP.Controllers.PropertyManagement
                             existingBatch.MainDocId = propBatch.MainDocId; // Replace with actual properties
                             existingBatch.BatchNo = propBatch.BatchNo;
                             existingBatch.BatchDate = propBatch.BatchDate;
-                            existingBatch.BatchValueBeforeDiscount = propBatch.BatchValueBeforeDiscount;
-                            existingBatch.BatchValueBeforeTax = propBatch.BatchValueBeforeTax;
+                            existingBatch.BatchValueBeforeDiscountAddtionAndTax = propBatch.BatchValueBeforeDiscountAddtionAndTax;
+                            //existingBatch.BatchValueBeforeTax = propBatch.BatchValueBeforeTax;
                             existingBatch.Discount = propBatch.Discount;
-                            existingBatch.BatchValueAfterDiscount = propBatch.BatchValueAfterDiscount;
-                            existingBatch.BatchTaxValue = propBatch.BatchTaxValue;
+                            existingBatch.AddValue = propBatch.AddValue;
+                            //existingBatch.TotalBatchValue = propBatch.TotalBatchValue;
+                            //existingBatch.BatchTaxValue = propBatch.BatchTaxValue;
                             existingBatch.BatchTaxPercentage = propBatch.BatchTaxPercentage;
                             existingBatch.IsDeleted = propBatch.IsDeleted;
                             existingBatch.UserId = propBatch.UserId;

@@ -24,11 +24,7 @@ namespace MyERP.Models
         public int MainDocId { get; set; }
         public Nullable<int> BatchNo { get; set; }
         public Nullable<System.DateTime> BatchDate { get; set; }
-        public Nullable<decimal> BatchValueBeforeDiscount { get; set; }
-        public Nullable<decimal> BatchValueBeforeTax { get; set; }
         public Nullable<decimal> Discount { get; set; }
-        public Nullable<decimal> BatchValueAfterDiscount { get; set; }
-        public Nullable<decimal> BatchTaxValue { get; set; }
         public Nullable<double> BatchTaxPercentage { get; set; }
         public bool IsDeleted { get; set; }
         public Nullable<int> UserId { get; set; }
@@ -39,10 +35,12 @@ namespace MyERP.Models
         public Nullable<int> PeriodBetweenBatchesNum { get; set; }
         public Nullable<int> PeriodBetweenBatchesTypeId { get; set; }
         public Nullable<bool> IsDelivered { get; set; }
-        public Nullable<decimal> Paid { get; set; }
         public Nullable<System.DateTime> CreatedDate { get; set; }
         public Nullable<System.DateTime> ModifiedDate { get; set; }
         public Nullable<System.DateTime> PaymentDate { get; set; }
+        public Nullable<decimal> AddValue { get; set; }
+        public Nullable<decimal> BatchValueBeforeDiscountAddtionAndTax { get; set; }
+        public Nullable<decimal> TotalPaid { get; set; }
     
         public virtual ERPUser ERPUser { get; set; }
         public virtual Property Property { get; set; }

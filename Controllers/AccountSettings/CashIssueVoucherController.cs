@@ -106,11 +106,10 @@ namespace MyERP.Controllers.AccountSettings
                     BatchDate = t.BatchDate.Value.ToString("yyyy-MM-dd"),
                     BatchNo = t.BatchNo,
                     BatchTaxPercentage = t.BatchTaxPercentage??0d,
-                    BatchTaxValue = t.BatchTaxValue ?? 0m,
-                    BatchValueAfterDiscount = t.BatchValueAfterDiscount??0m,
-                    BatchValueBeforeDiscount = t.BatchValueBeforeDiscount ?? 0m,
-                    BatchValueBeforeTax = t.BatchValueBeforeTax ?? 0m,
+                    BatchTaxValue = t.BatchTaxValue,
+                    BatchValueBeforeDiscountAddtionAndTax = t.BatchValueBeforeDiscountAddtionAndTax ?? 0m,
                     Discount = t.Discount??0m,
+                    TotalBatchValue = t.TotalBatchValue,
                     FirstBatchDate = t.FirstBatchDate,
                     Id = t.Id,
                     Image = t.Image,
@@ -121,12 +120,10 @@ namespace MyERP.Controllers.AccountSettings
                     PeriodBetweenBatchesNum = t.PeriodBetweenBatchesNum,
                     PeriodBetweenBatchesTypeId = t.PeriodBetweenBatchesTypeId,
                     UserId = t.UserId,
-                    IsDelivered = t.IsDelivered??false , 
-                    Paid = t.Paid??0,
-                    //to be adjusted, now its zero for design purpose
-                    Remain = 0,
-                    TotalPaid = 0,
-                    AddedValue = 0
+                    IsDelivered = t.IsDelivered??false ,
+                    TotalPaid = t.TotalPaid??0,
+                    Remain = t.Remain,
+                    AddValue = t.AddValue
                 }
           ).ToList();
             return Json(data, JsonRequestBehavior.AllowGet);
@@ -664,8 +661,11 @@ namespace MyERP.Controllers.AccountSettings
                             var btch = db.PropertyBatches.FirstOrDefault(t => t.Id == batch.Id);
                             if (btch != null)
                             {
-                                btch.IsDelivered = true;
-                                btch.Paid = batch.Paid;
+                                btch.AddValue = batch.AddValue;
+                                btch.Discount = batch.Discount;
+                                btch.TotalPaid = batch.TotalPaid;
+                                btch.IsDelivered = batch.IsDelivered;
+                                db.Entry(btch).State = EntityState.Modified;
                             }
                         }
                     }
@@ -755,7 +755,7 @@ namespace MyERP.Controllers.AccountSettings
                         cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, cashIssueVoucher.IsUpdateSynced,
                         cashIssueVoucher.BorrowReceipt, BorrowRequestId, cashIssueVoucher.Month, cashIssueVoucher.Year,
                         CashIssueVoucherEmployeePayrollIssue, IssueAnalysis, IssueAnalysisDetail,
-                        cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId);
+                        cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId, cashIssueVoucher.PropertyId);
 
                     //then loop for IssueAnalysis that has id =-1 
                     //call IssueAnalysis_Update SP to insert those new records
@@ -817,7 +817,7 @@ namespace MyERP.Controllers.AccountSettings
                         cashIssueVoucher.FeesAmount, cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, 
                         cashIssueVoucher.IsUpdateSynced, cashIssueVoucher.BorrowReceipt, BorrowRequestId, cashIssueVoucher.Month,
                         cashIssueVoucher.Year, CashIssueVoucherEmployeePayrollIssue,null,cashIssueVoucher.DoctorId,
-                        cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId);
+                        cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId,cashIssueVoucher.PropertyId);
 
                     id = (int)idResult.Value;
                     //then loop for IssueAnalysis that has id =-1 
@@ -867,7 +867,7 @@ namespace MyERP.Controllers.AccountSettings
                                 payrollissue.IsIssued = true;
                                 db.Entry(payrollissue).State = EntityState.Modified;
                             }
-                           
+
                         }
                     }
                     db.SaveChanges();
@@ -916,7 +916,7 @@ namespace MyERP.Controllers.AccountSettings
                             cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, cashIssueVoucher.IsUpdateSynced,
                             cashIssueVoucher.BorrowReceipt, BorrowRequestId, cashIssueVoucher.Month, cashIssueVoucher.Year,
                             CashIssueVoucherEmployeePayrollIssue, IssueAnalysis2, IssueAnalysisDetail,
-                            cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId);
+                            cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId, cashIssueVoucher.PropertyId);
 
                         db.SaveChanges();
                     }
@@ -924,6 +924,7 @@ namespace MyERP.Controllers.AccountSettings
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashIssueVoucher", "Add", "AddEdit", id, null, "سند الدفع");
                 }
+                db.SaveChanges();
                 QueryHelper.AddLog(new MyLog()
                 {
                     ArAction = id > 0 ? "تعديل سند الدفع" : "اضافة سند الدفع",

@@ -7,16 +7,30 @@ namespace MyERP.Models
     public partial class PropertyBatch
     {
         /// <summary>
-        /// إجمالي قيمة الدفعة شامل الضريبة
+        /// إجمالي قيمة الدفعة شامل الضريبة والخصم والاضافة
         /// </summary>
         [NotMapped]
         public decimal TotalBatchValue
         {
             get
             {
-                var valueAfterDiscount = BatchValueAfterDiscount ?? 0;
-                var taxValue = BatchTaxValue ?? 0;
-                return valueAfterDiscount + taxValue;
+                var valueAfterDiscount = (BatchValueBeforeDiscountAddtionAndTax ?? 0) - (Discount ?? 0);
+                var valueAfterDiscountAndAddvalue = valueAfterDiscount + (AddValue ?? 0) ;
+                
+                return valueAfterDiscountAndAddvalue + (decimal)BatchTaxValue;
+            }
+        }
+
+        [NotMapped]
+        public double BatchTaxValue
+        {
+            get
+            {
+                var valueAfterDiscount = (BatchValueBeforeDiscountAddtionAndTax ?? 0) - (Discount ?? 0);
+                var valueAfterDiscountAndAddvalue = valueAfterDiscount + (AddValue ?? 0);
+
+
+                return (double)(valueAfterDiscountAndAddvalue) * (BatchTaxPercentage ?? 0) / 100;
             }
         }
 
@@ -28,17 +42,9 @@ namespace MyERP.Models
         {
             get
             {
-                var totalValue = TotalBatchValue;
-                var paidAmount = Paid ?? 0;
-                return totalValue - paidAmount;
+                return TotalBatchValue - (TotalPaid ?? 0);
             }
         }
-
-        /// <summary>
-        /// المسدد من قبل (إجمالي السداد السابق لكل الدفعات قبل هذه الدفعة)
-        /// </summary>
-        [NotMapped]
-        public decimal TotalPaidBefore { get; set; }
 
         /// <summary>
         /// نسبة السداد للدفعة الحالية
@@ -49,7 +55,7 @@ namespace MyERP.Models
             get
             {
                 if (TotalBatchValue == 0) return 0;
-                var paidAmount = Paid ?? 0;
+                var paidAmount = TotalPaid ?? 0;
                 return Math.Round((paidAmount / TotalBatchValue) * 100, 2);
             }
         }
@@ -62,7 +68,7 @@ namespace MyERP.Models
         {
             get
             {
-                var paidAmount = Paid ?? 0;
+                var paidAmount = TotalPaid ?? 0;
                 var totalValue = TotalBatchValue;
 
                 if (paidAmount == 0)
@@ -82,7 +88,7 @@ namespace MyERP.Models
         {
             get
             {
-                var paidAmount = Paid ?? 0;
+                var paidAmount = TotalPaid ?? 0;
                 return paidAmount >= TotalBatchValue;
             }
         }

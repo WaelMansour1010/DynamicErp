@@ -2014,11 +2014,11 @@ namespace MyERP.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Batch Value After Discount And Tax.
+        ///   Looks up a localized string similar to Batch Value After Discount, Addition And Tax.
         /// </summary>
-        public static string BatchValueAfterDiscountAndTax {
+        public static string BatchValueAfterDiscountAndAddAndTax {
             get {
-                return ResourceManager.GetString("BatchValueAfterDiscountAndTax", resourceCulture);
+                return ResourceManager.GetString("BatchValueAfterDiscountAndAddAndTax", resourceCulture);
             }
         }
         
@@ -2028,6 +2028,15 @@ namespace MyERP.Properties {
         public static string BatchValueBeforeDiscount {
             get {
                 return ResourceManager.GetString("BatchValueBeforeDiscount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Batch Value Before Discount, Addition and Tax.
+        /// </summary>
+        public static string BatchValueBeforeDiscountAddtionAndTax {
+            get {
+                return ResourceManager.GetString("BatchValueBeforeDiscountAddtionAndTax", resourceCulture);
             }
         }
         
@@ -13240,11 +13249,11 @@ namespace MyERP.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Total paid befor.
+        ///   Looks up a localized string similar to Total paid before.
         /// </summary>
-        public static string PaidBefor {
+        public static string PaidBefore {
             get {
-                return ResourceManager.GetString("PaidBefor", resourceCulture);
+                return ResourceManager.GetString("PaidBefore", resourceCulture);
             }
         }
         

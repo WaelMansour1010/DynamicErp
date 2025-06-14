@@ -7276,8 +7276,8 @@
   <data name="DivideGasIntoBatches" xml:space="preserve">
     <value>تقسيم الغاز على دفعات</value>
   </data>
-  <data name="BatchValueAfterDiscountAndTax" xml:space="preserve">
-    <value>قيمه الدفعه بعد الخصم والضريبه</value>
+  <data name="BatchValueAfterDiscountAndAddAndTax" xml:space="preserve">
+    <value>قيمة الدفعة بعد الخصم والإضافة والضريبة</value>
   </data>
   <data name="GasDueRevenue" xml:space="preserve">
     <value>إيراد مستحق الغاز</value>
@@ -7285,7 +7285,7 @@
   <data name="GasRevenue" xml:space="preserve">
     <value>إيراد الغاز</value>
   </data>
-  <data name="PaidBefor" xml:space="preserve">
+  <data name="PaidBefore" xml:space="preserve">
     <value> إجمالى المدفوع مسبقا</value>
   </data>
   <data name="DivideCommission" xml:space="preserve">
@@ -7351,10 +7351,13 @@
   <data name="MergedUnits" xml:space="preserve">
     <value>الوحدات المدمجة</value>
   </data>
-  <data name="ShareHolderAccount1" xml:space="preserve">
-    <value>حساب حقوق الملكية</value>
-  </data>
   <data name="ContractRenewal" xml:space="preserve">
     <value>تجديد العقد</value>
+  </data>
+  <data name="BatchValueBeforeDiscountAddtionAndTax" xml:space="preserve">
+    <value>قيمة الدفعة قبل الخصم والإضافة والضريبة</value>
+  </data>
+  <data name="ShareHolderAccount1" xml:space="preserve">
+    <value>حساب حقوق الملكية</value>
   </data>
 </root>

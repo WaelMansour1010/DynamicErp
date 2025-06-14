@@ -7278,8 +7278,8 @@ Distinguished chalets with private pools and green spaces with indoor and outdoo
   <data name="DivideGasIntoBatches" xml:space="preserve">
     <value>Divide Gas Into Batches</value>
   </data>
-  <data name="BatchValueAfterDiscountAndTax" xml:space="preserve">
-    <value>Batch Value After Discount And Tax</value>
+  <data name="BatchValueAfterDiscountAndAddAndTax" xml:space="preserve">
+    <value>Batch Value After Discount, Addition And Tax</value>
   </data>
   <data name="GasDueRevenue" xml:space="preserve">
     <value>Gas Due Revenue</value>
@@ -7287,8 +7287,8 @@ Distinguished chalets with private pools and green spaces with indoor and outdoo
   <data name="GasRevenue" xml:space="preserve">
     <value>Gas Revenue</value>
   </data>
-  <data name="PaidBefor" xml:space="preserve">
-    <value>Total paid befor</value>
+  <data name="PaidBefore" xml:space="preserve">
+    <value>Total paid before</value>
   </data>
   <data name="DivideCommission" xml:space="preserve">
     <value>Divide Services/Commission/Insurance</value>
@@ -7358,5 +7358,8 @@ Distinguished chalets with private pools and green spaces with indoor and outdoo
   </data>
   <data name="ContractRenewal" xml:space="preserve">
     <value>Contract Renewal</value>
+  </data>
+  <data name="BatchValueBeforeDiscountAddtionAndTax" xml:space="preserve">
+    <value>Batch Value Before Discount, Addition and Tax</value>
   </data>
 </root>
