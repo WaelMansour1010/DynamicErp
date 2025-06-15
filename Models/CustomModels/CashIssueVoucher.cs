@@ -16,5 +16,9 @@ namespace MyERP.Models
     {
         public int Id { get; set; }
         public decimal Paid { get; set; }
+        public decimal AddValue { get; set; }
+        public decimal Discount { get; set; }
+        public decimal TotalPaid { get; set; }
+        public bool IsDelivered { get; set; }
     }
 }
