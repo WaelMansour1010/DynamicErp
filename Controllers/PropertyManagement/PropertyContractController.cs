@@ -113,11 +113,12 @@ namespace MyERP.Controllers.PropertyManagement
                     ArName = b.Code + " - " + b.ArName
                 }).ToList(), "Id", "ArName");
 
-                ViewBag.MergedUnitsIds = new MultiSelectList(db.PropertyUnits.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
+                ViewBag.PropertyContractMergedUnit = new MultiSelectList(db.PropertyUnits.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
                 {
                     Id = b.Id,
                     ArName = b.Code + " - " + b.ArName
                 }).ToList(), "Id", "ArName");
+                
                 ViewBag.PropertyOwnerId = new SelectList(db.PropertyOwners.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
                 {
                     Id = b.Id,
@@ -215,26 +216,32 @@ namespace MyERP.Controllers.PropertyManagement
             //    ArName = b.Code + " - " + b.ArName
             //}), "Id", "ArName", contract.PropertyUnitTypeId);
             ViewBag.PropertyUnitTypeId = new SelectList(UnitType, "Id", "ArName", contract.PropertyUnitTypeId);
-            /*SELECT d.Id,
-       d.PropertyUnitNo
-FROM PropertyDetail d
-WHERE d.PropertyUnitTypeId = @PropertyUnitTypeId
-      AND d.MainDocId = @PropertyId*/
-            var items =( from d in db.PropertyDetails
+            
+            var allUnits =( from d in db.PropertyDetails
                 where d.Id == contract.PropertyUnitId
                       && d.MainDocId == contract.PropertyId
                 select d).ToList();
 
+            ViewBag.PropertyUnitId = new SelectList(allUnits, "Id", "PropertyUnitNo", contract.PropertyUnitId);
 
+            var mergedUnitIds = contract.PropertyContractMergedUnit.Select(mu => mu.PropertyUnitId).ToList();
 
-                   //db.GetPropertyUnitsByPropertyAndUnitTypeId(contract.PropertyId, contract.PropertyUnitTypeId, contract.Id)
-                   //.Select(b => new
-                   //{
-                   //    Id = b.Id,
-                   //    PropertyUnitNo = b.PropertyUnitNo
-                   //}).ToList();
+            var selectedMergedUnits = new MultiSelectList(db.PropertyDetails
+                .Where(pd => mergedUnitIds.Contains(pd.Id))
+                .Select(b => new
+                {
+                    Id = b.Id,
+                    ArName = b.PropertyUnitNo
+                }).ToList(), "Id", "ArName");
+            
+            // Pass as MultiSelectList
+            ViewBag.PropertyContractMergedUnit = new MultiSelectList(db.PropertyDetails.Where(a => a.MainDocId == contract.PropertyId && a.StatusId == PropertyDetailsStatus.Available).Select(b => new
+            {
+                Id = b.Id,
+                ArName = b.PropertyUnitNo
+            }).ToList(), "Id", "ArName", selectedMergedUnits);
 
-            ViewBag.PropertyUnitId = new SelectList(items, "Id", "PropertyUnitNo", contract.PropertyUnitId);
+            ViewBag.selectedMergedUnits = (MultiSelectList)selectedMergedUnits;
 
             ViewBag.PropertyOwnerId = new SelectList(db.PropertyOwners.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
             {
@@ -461,8 +468,13 @@ WHERE d.PropertyUnitTypeId = @PropertyUnitTypeId
 
                     //MyXML.xPathName = "Batches";
                     //var PropertyContractBatches = MyXML.GetXML(contract.PropertyContractBatches);
+                    //-------------------------------MergedUnit-----------------------------------//
+                    var MergedUnits = contract.PropertyContractMergedUnit;
+                    MyXML.xPathName = "MergedUnits";
+                    var PropertyContractMergedUnits = MyXML.GetXML(MergedUnits);
+                    //---------------------------------------------------------------------------//
 
-                    db.PropertyContract_Update(contract.Id, contract.DocumentNumber, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, PropertyContractBatches, PropertyContractReps, PropertyContractImages);
+                    db.PropertyContract_Update(contract.Id, contract.DocumentNumber, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, PropertyContractBatches, PropertyContractReps, PropertyContractImages, PropertyContractMergedUnits);
                     ////-------------------- Notification-------------------------////
                    
                     Notification.GetNotification("PropertyContract", "Edit", "AddEdit", contract.Id, null, "العقود");
@@ -596,9 +608,13 @@ WHERE d.PropertyUnitTypeId = @PropertyUnitTypeId
 
                     //MyXML.xPathName = "Batches";
                     //var PropertyContractBatches = MyXML.GetXML(contract.PropertyContractBatches);
-
+                    //-------------------------------MergedUnit-----------------------------------//
+                    var MergedUnits = contract.PropertyContractMergedUnit;
+                    MyXML.xPathName = "MergedUnits";
+                    var PropertyContractMergedUnits = MyXML.GetXML(MergedUnits);
+                    //----------------------------------------------------------------------------//
                     var idResult = new ObjectParameter("Id", typeof(Int32));
-                    db.PropertyContract_Insert(idResult, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, PropertyContractBatches, PropertyContractReps, PropertyContractImages);
+                    db.PropertyContract_Insert(idResult, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, PropertyContractBatches, PropertyContractReps, PropertyContractImages, PropertyContractMergedUnits);
                    //set sttus to not avalable
                     var unit = db.PropertyDetails.Where(t => t.MainDocId == contract.PropertyId &&
                                                              t.Id ==

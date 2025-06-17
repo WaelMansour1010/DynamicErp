@@ -2253,6 +2253,9 @@
     <Compile Include="Models\PropertyContractImage.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PropertyContractMergedUnit.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\PropertyContractRep.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>

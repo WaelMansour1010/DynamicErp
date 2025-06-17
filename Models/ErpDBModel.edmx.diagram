@@ -1804,6 +1804,8 @@
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_Property" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_PropertyBatch" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_User" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractMergedUnit" Width="1.5" PointX="11.254591745908648" PointY="9.4832540496640156" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractMergedUnit_PropertyContract" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

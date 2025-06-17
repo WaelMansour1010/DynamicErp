@@ -138,8 +138,8 @@
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.Representative</label>
                                                 <div class="col-sm-4">
                                                     @Html.DropDownListFor(model => model.RepId, null, null, htmlAttributes: new
-                                                    {
-                                                        @class = "form-control"@*, required = "required"*@})
+                                               {
+                                                   @class = "form-control"@*, required = "required"*@})
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
@@ -255,7 +255,17 @@
                                             <div class="form-group row">
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.MergeUnits </label>
                                                 <div class="col-sm-4">
-                                                    <input type="checkbox" id="MergeUnits" @*@Html.Raw(Model != null && Model.MergeUnits == true ? "checked" : ""*@) />
+                                                    @{
+                                                        if ((Model?.Id ?? 0) > 0)
+                                                        {
+                                                            <input type="checkbox" id="HasMergedUnits" @Html.Raw(Model != null && Model.PropertyContractMergedUnit?.Count() > 0 ? "checked" : "") disabled="disabled"/>
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="checkbox" id="HasMergedUnits" @Html.Raw(Model != null && Model.PropertyContractMergedUnit?.Count() > 0 ? "checked" : "") />
+
+                                                        }
+                                                    }
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
@@ -266,16 +276,11 @@
                                                     @{
                                                         if ((Model?.Id ?? 0) > 0)
                                                         {
-                                                            @*@Html.ListBox("MergedUnitsIds", null, new { @class = "form-control", size = 6, style = "width: 200px;" })*@
-
-
+                                                            @Html.ListBox("PropertyContractMergedUnit", (MultiSelectList)ViewBag.selectedMergedUnits, new { @class = "form-control", size = 6, style = "width: 200px;" })
                                                         }
                                                         else
                                                         {
-                                                            @Html.ListBox("MergedUnitsIds", null, new { @class = "form-control", size = 6, style = "width: 200px;" })
-
-                                                            <!--@Html.ListBoxFor(model => model.PropertyUnitId,null, new { size = 6, style = "width: 200px;" })-->
-
+                                                            @Html.ListBox("PropertyContractMergedUnit", null, new { @class = "form-control", size = 6, style = "width: 200px;" }) 
                                                         }
                                                     }
                                                     <div class="invalid-feedback">
@@ -650,7 +655,7 @@
                                                                 @MyERP.Properties.Resources.IsDelivered
                                                             </td>
                                                             <td>
-                                                                @MyERP.Properties.Resources.PaidBefor
+                                                                @MyERP.Properties.Resources.PaidBefore
                                                             </td>
                                                             @*<td>
                                                                 @MyERP.Properties.Resources.JournalEntrieNo
@@ -1082,6 +1087,14 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
                 let selectedItem = $(this).val();
                 $(this).empty().append(RepOptions).val(selectedItem);
             });
+
+            //set all items in PropertyContractMergedUnit to be selected and disabled
+            //note that the list in edit view only contains the merged units
+            var allValues = $('#PropertyContractMergedUnit option').map(function () { return this.value; }).get();
+            $('#PropertyContractMergedUnit').val(allValues).trigger('change');
+            // Disable the select and update Select2 UI
+            $('#PropertyContractMergedUnit').prop('disabled', true).trigger('change.select2');
+
             $("input[name=IsAddedValue][value=" + $('#IsAddedValue').prop('checked') + "]").prop('checked', true);
             $("input[name=GovernmentalOrPrivateContract][value=" + $('#GovernmentalOrPrivateContract').val() + "]").prop('checked', true);
             $('.BatchDate').each(function () {
@@ -1127,7 +1140,7 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
         if (!$('#Id').val()) {
             SetDocNum();
         }
-      
+
     });
     $('#DepartmentId').on('change', function () {
         GetCurrentTaxPercentage();
@@ -1227,41 +1240,31 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
     $('#PropertyId').on('change', function () {
         let mval = $("#PropertyUnitId").val();
         console.log(mval);
-        ///to be adjusted
-        let mergedUnitsId = $("#MergedUnitsIds").val();
-        console.log("MergedUnitsIds: " + mergedUnitsId);
         GetPropertyOwner($(this).val()).then(function () {
             $("#PropertyOwnerId").empty().append(OwnerOptions);
             $("#PropertyUnitTypeId").empty().append(UnitTypeOptions);
         }).then(function () {
 
             GetUnitByUnitTypeId().then(function() {
-            
+
 
                 $("#PropertyUnitId").empty().append(UnitOptions);
                 $("#PropertyUnitId").val(mval);
 
-                ///
-                $("#MergedUnitsIds").empty().append(UnitOptions);
-                //$("#MergedUnitsIds").val(mergedUnitsId);
+                $("#PropertyContractMergedUnit").empty().append(UnitOptions);
             });
         });;
     });
     $('#PropertyUnitTypeId').on('change', function () {
         GetUnitByUnitTypeId().then(function () {
             $("#PropertyUnitId").empty().append(UnitOptions);
-            //
-            $("#MergedUnitsIds").empty().append(UnitOptions);
+            
+            $("#PropertyContractMergedUnit").empty().append(UnitOptions);
         });
     });
-    $('#MergeUnits').on('change', function () {
-        if ($('#MergeUnits').prop('checked') == true) {
+    $('#HasMergedUnits').on('change', function () {
+        if ($('#HasMergedUnits').prop('checked') == true) {
             $(".MergedUnitsDiv").show();
-
-            //GetUnitByUnitTypeId().then(function () {
-            //    //$("#MergedUnitsIds").empty().append(UnitOptions);
-            //    $("#MergedUnitsIds").show();
-            //})
         }
         else {
             $(".MergedUnitsDiv").hide();
@@ -1485,7 +1488,7 @@ var lastdate;
             //        result = x.getFullYear() + 1 + "-" + zeroPadded(1) + "-" + zeroPadded(x.getDate());
             //    }
             //}
-            
+
             lastdate = addMonths(lastdate,  PeriodBetweenBatchesNum);
         }
 
@@ -1526,7 +1529,7 @@ var lastdate;
             BatchRentValueTaxes = parseFloat(BatchRentValue * taxPercentage).toFixed(2);
         }
         var BatchWaterValue = parseFloat(WaterValue / NumberOfBatches).toFixed(2);
- 
+
         var BatchWaterValueTaxes = 0;
         if (IncludeWaterValueInVAT == true) {
             BatchWaterValueTaxes = parseFloat(BatchWaterValue * taxPercentage).toFixed(2);
@@ -1826,23 +1829,20 @@ var lastdate;
             for (var i = 0; i < r.UnitType.length; i++) {
                 UnitTypeOptions += '<option value="' + r.UnitType[i].Id + '">' + r.UnitType[i].ArName + '</option>';
             }
-          
+
         })
     }
     function GetUnitByUnitTypeId() {
         UnitOptions = '';
 
         $('#PropertyUnitId').empty();
-        $("#MergedUnitsIds").empty();
-        
-     return  requestData('/PropertyContract/GetUnitByUnitTypeId?UnitTypeId=' + $('#PropertyUnitTypeId').val() + '&PropertyId=' + $('#PropertyId').val() + '&contractId=' + $('#Id').val() ).done(function (r) {
+        $("#PropertyContractMergedUnit").empty();
+
+        return requestData('/PropertyContract/GetUnitByUnitTypeId?UnitTypeId=' + $('#PropertyUnitTypeId').val() + '&PropertyId=' + $('#PropertyId').val() + '&contractId=' + $('#Id').val()).done(function (r) {
             for (var i = 0; i < r.length; i++) {
                 UnitOptions += '<option value="' + r[i].Id + '">' + r[i].PropertyUnitNo + '</option>';
-             }
-
-          
-
-         });
+            }
+        });
     }
     function CalculateContractPeriodNum() {
         var ContractStartDate = new Date($('#ContractStartDate').val());
@@ -1984,67 +1984,76 @@ var lastdate;
                 }
             });
         }
-            var PropertyContract = {
-                Id: $('#Id').val(),
-                DocumentNumber: $('#DocumentNumber').val(),
-                VoucherDate: $('#VoucherDate').val(),
-                ContractTypeId: $('#ContractTypeId').val(),
-                PropertyId: $('#PropertyId').val(),
-                RentTypeId: $('#RentTypeId').val(),
-                PropertyOwnerId: $('#PropertyOwnerId').val(),
-                PropertyRenterId: $('#PropertyRenterId').val(),
-                DepartmentId: $('#DepartmentId').val(),
-                RepId: $('#RepId').val(),
-                RentValue: $('#RentValue').inputmask('unmaskedvalue'),
-                CommissionValue: $('#CommissionValue').inputmask('unmaskedvalue'),
-                ServicesValue: $('#ServicesValue').inputmask('unmaskedvalue'),
-                WaterValue: $('#WaterValue').inputmask('unmaskedvalue'),
-                NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
-                VATPercentage: $('#VATPercentage').val(),
-                VATValue: $('#VATValue').inputmask('unmaskedvalue'),
-                TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
-                ContractStartDate: $('#ContractStartDate').val(),
-                ContractEndDate: $('#ContractEndDate').val(),
-                ContractPeriodNum: $('#ContractPeriodNum').val(),
-                ContractPeriodTypeId: $('#ContractPeriodTypeId').val(),
-                IsDeleted: $('#IsDeleted').val(),
-                UserId: $('#UserId').val(),
-                Notes: $('#Notes').val(),
-                Image: $('#Image').val(),
-                PropertyUnitTypeId: $('#PropertyUnitTypeId').val(),
-                PropertyUnitId: $('#PropertyUnitId').val(),
-                ///to be adjusted
-                MergeUnits: $('#MergeUnits').prop('checked'),
-                MergedUnitsIds: $("#PropertyUnitId").val(),
-                IncludeRentValueInVAT: $('#IncludeRentValueInVAT').prop('checked'),
-                IncludeWaterValueInVAT: $('#IncludeWaterValueInVAT').prop('checked'),
-                ElectricityValue: $('#ElectricityValue').inputmask('unmaskedvalue'),
-                IncludeElectricityValueInVAT: $('#IncludeElectricityValueInVAT').prop('checked'),
-                GasValue: $('#GasValue').inputmask('unmaskedvalue'),
-                GracePeriodDay: $('#GracePeriodDay').val(),
-                GracePeriodMonth: $('#GracePeriodMonth').val(),
-                NumberOfBatches: $('#NumberOfBatches').val() ,
-                FirstBatchDate: $('#FirstBatchDate').val() ,
-                PeriodBetweenBatchesNum: $('#PeriodBetweenBatchesNum').val(),
-                PeriodBetweenBatchesTypeId: $('#PeriodBetweenBatchesTypeId').val() ,
-                IsDivideWaterIntoBatches: $('#IsDivideWaterIntoBatches').prop('checked') ,
-                IsDivideElectricityIntoBatches: $('#IsDivideElectricityIntoBatches').prop('checked'),
-                IsDivideGasIntoBatches: $('#IsDivideGasIntoBatches').prop('checked'),
-                IsDivideCommission: $('#IsDivideCommission').prop('checked'),
-                UnifiedContractNumber: $('#UnifiedContractNumber').val(),
-                IsAddedValue: $("input[name='IsAddedValue']:checked").val(),
-                ContractSpecialTerms: $('#ContractSpecialTerms').val(),
-                JournalEntryId: $('#JournalEntryId').val(),
-                InsuranceValue: $('#InsuranceValue').inputmask('unmaskedvalue'),
-                IncludeInsuranceValueInVAT: $('#IncludeInsuranceValueInVAT').prop('checked'),
-                IncludeGasValueInVAT: $('#IncludeGasValueInVAT').prop('checked'),
-                IncludeCommissionValueInVAT: $('#IncludeCommissionValueInVAT').prop('checked'),
-                IncludeServicesValueInVAT: $('#IncludeServicesValueInVAT').prop('checked'),
-                GovernmentalOrPrivateContract: $("input[name='GovernmentalOrPrivateContract']:checked").val(),
-                PropertyContractBatches: PropertyContractBatches,
-                PropertyContractReps: PropertyContractReps,
-                PropertyContractImages: PropertyContractImages,
-            }
+        
+        var PropertyContractMergedUnits = [];
+        if (valid) {
+            $('#PropertyContractMergedUnit option:selected').each(function () {
+                var MergedUnit = {
+                    PropertyUnitId: $(this).val()
+                };
+                PropertyContractMergedUnits.push(MergedUnit);
+            });
+        }
+
+        var PropertyContract = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            VoucherDate: $('#VoucherDate').val(),
+            ContractTypeId: $('#ContractTypeId').val(),
+            PropertyId: $('#PropertyId').val(),
+            RentTypeId: $('#RentTypeId').val(),
+            PropertyOwnerId: $('#PropertyOwnerId').val(),
+            PropertyRenterId: $('#PropertyRenterId').val(),
+            DepartmentId: $('#DepartmentId').val(),
+            RepId: $('#RepId').val(),
+            RentValue: $('#RentValue').inputmask('unmaskedvalue'),
+            CommissionValue: $('#CommissionValue').inputmask('unmaskedvalue'),
+            ServicesValue: $('#ServicesValue').inputmask('unmaskedvalue'),
+            WaterValue: $('#WaterValue').inputmask('unmaskedvalue'),
+            NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+            VATPercentage: $('#VATPercentage').val(),
+            VATValue: $('#VATValue').inputmask('unmaskedvalue'),
+            TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+            ContractStartDate: $('#ContractStartDate').val(),
+            ContractEndDate: $('#ContractEndDate').val(),
+            ContractPeriodNum: $('#ContractPeriodNum').val(),
+            ContractPeriodTypeId: $('#ContractPeriodTypeId').val(),
+            IsDeleted: $('#IsDeleted').val(),
+            UserId: $('#UserId').val(),
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            PropertyUnitTypeId: $('#PropertyUnitTypeId').val(),
+            PropertyUnitId: $('#PropertyUnitId').val(),
+            IncludeRentValueInVAT: $('#IncludeRentValueInVAT').prop('checked'),
+            IncludeWaterValueInVAT: $('#IncludeWaterValueInVAT').prop('checked'),
+            ElectricityValue: $('#ElectricityValue').inputmask('unmaskedvalue'),
+            IncludeElectricityValueInVAT: $('#IncludeElectricityValueInVAT').prop('checked'),
+            GasValue: $('#GasValue').inputmask('unmaskedvalue'),
+            GracePeriodDay: $('#GracePeriodDay').val(),
+            GracePeriodMonth: $('#GracePeriodMonth').val(),
+            NumberOfBatches: $('#NumberOfBatches').val() ,
+            FirstBatchDate: $('#FirstBatchDate').val() ,
+            PeriodBetweenBatchesNum: $('#PeriodBetweenBatchesNum').val(),
+            PeriodBetweenBatchesTypeId: $('#PeriodBetweenBatchesTypeId').val() ,
+            IsDivideWaterIntoBatches: $('#IsDivideWaterIntoBatches').prop('checked') ,
+            IsDivideElectricityIntoBatches: $('#IsDivideElectricityIntoBatches').prop('checked'),
+            IsDivideGasIntoBatches: $('#IsDivideGasIntoBatches').prop('checked'),
+            IsDivideCommission: $('#IsDivideCommission').prop('checked'),
+            UnifiedContractNumber: $('#UnifiedContractNumber').val(),
+            IsAddedValue: $("input[name='IsAddedValue']:checked").val(),
+            ContractSpecialTerms: $('#ContractSpecialTerms').val(),
+            JournalEntryId: $('#JournalEntryId').val(),
+            InsuranceValue: $('#InsuranceValue').inputmask('unmaskedvalue'),
+            IncludeInsuranceValueInVAT: $('#IncludeInsuranceValueInVAT').prop('checked'),
+            IncludeGasValueInVAT: $('#IncludeGasValueInVAT').prop('checked'),
+            IncludeCommissionValueInVAT: $('#IncludeCommissionValueInVAT').prop('checked'),
+            IncludeServicesValueInVAT: $('#IncludeServicesValueInVAT').prop('checked'),
+            GovernmentalOrPrivateContract: $("input[name='GovernmentalOrPrivateContract']:checked").val(),
+            PropertyContractBatches: PropertyContractBatches,
+            PropertyContractReps: PropertyContractReps,
+            PropertyContractImages: PropertyContractImages,
+            PropertyContractMergedUnit: PropertyContractMergedUnits
+        }
         if (valid) {
             Swal.fire({
                 title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',

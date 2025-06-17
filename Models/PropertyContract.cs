@@ -27,6 +27,7 @@ namespace MyERP.Models
             this.PropertyContractTerminationDetails = new HashSet<PropertyContractTerminationDetail>();
             this.Orders = new HashSet<Order>();
             this.PropertyBillRegisterations = new HashSet<PropertyBillRegisteration>();
+            this.PropertyContractMergedUnit = new HashSet<PropertyContractMergedUnit>();
         }
     
         public int Id { get; set; }
@@ -112,5 +113,7 @@ namespace MyERP.Models
         public virtual ICollection<Order> Orders { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<PropertyBillRegisteration> PropertyBillRegisterations { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PropertyContractMergedUnit> PropertyContractMergedUnit { get; set; }
     }
 }
