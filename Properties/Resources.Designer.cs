@@ -15607,6 +15607,15 @@ namespace MyERP.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Renewd Contract.
+        /// </summary>
+        public static string RenewdContract {
+            get {
+                return ResourceManager.GetString("RenewdContract", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Rent.
         /// </summary>
         public static string Rent {

@@ -7360,4 +7360,7 @@
   <data name="ShareHolderAccount1" xml:space="preserve">
     <value>حساب حقوق الملكية</value>
   </data>
+  <data name="RenewdContract" xml:space="preserve">
+    <value>عقد مجدد</value>
+  </data>
 </root>
