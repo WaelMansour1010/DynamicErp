@@ -7362,4 +7362,7 @@ Distinguished chalets with private pools and green spaces with indoor and outdoo
   <data name="BatchValueBeforeDiscountAddtionAndTax" xml:space="preserve">
     <value>Batch Value Before Discount, Addition and Tax</value>
   </data>
+  <data name="RenewdContract" xml:space="preserve">
+    <value>Renewd Contract</value>
+  </data>
 </root>

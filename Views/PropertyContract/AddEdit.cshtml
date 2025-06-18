@@ -146,6 +146,16 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.RenewdContract</label>
+                                                <div class="col-sm-4">
+                                                    <input type="checkbox" class="IsRenewed" @Html.Raw(Model != null && Model.IsRenewed ? "checked" : "") disabled="disabled" />
+
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
                                             @* مكان الصورة *@
                                             <div class="form-group row">
                                                 <div id="gallery" style="width: 100%;margin: 20px;">
@@ -2166,8 +2176,30 @@ var lastdate;
         });
     }
 
+    //function SetRenewalContractStartDate() {
+    //    var ContractStartDate = new Date();
+    //    var month = (ContractStartDate.getMonth() + 1) < 10 ? '0' + (ContractStartDate.getMonth() + 1) : (ContractStartDate.getMonth() + 1);
+    //    var day = ContractStartDate.getDate() < 10 ? '0' + ContractStartDate.getDate() : ContractStartDate.getDate();
+    //    var hours = ContractStartDate.getHours();
+    //    var minutes = ContractStartDate.getMinutes();
+    //    hours = hours % 12;
+    //    hours = hours ? hours : 12; // the hour '0' should be '12'
+    //    hours = hours < 10 ? '0' + hours : hours;
+    //    minutes = minutes < 10 ? '0' + minutes : minutes;
+    //    var strTime = hours + ':' + minutes;
+    //    var value = ContractStartDate.getFullYear() + "-" + month + "-" + day + "T" + strTime;
+    //    $('#ContractStartDate').val(value);
+
+    //    $('#ContractStartDate').focus();
+    //}
+
     function SetRenewalContractStartDate() {
-        var ContractStartDate = new Date();
+        var endDateVal = $('#ContractEndDate').val();
+        if (!endDateVal) return;
+
+        var ContractStartDate = new Date(endDateVal);
+        ContractStartDate.setDate(ContractStartDate.getDate() + 1);
+
         var month = (ContractStartDate.getMonth() + 1) < 10 ? '0' + (ContractStartDate.getMonth() + 1) : (ContractStartDate.getMonth() + 1);
         var day = ContractStartDate.getDate() < 10 ? '0' + ContractStartDate.getDate() : ContractStartDate.getDate();
         var hours = ContractStartDate.getHours();
