@@ -35,14 +35,15 @@
                                     @Html.HiddenFor(model => model.IsDeleted)
                                     @Html.HiddenFor(model => model.Image)
                                     @Html.HiddenFor(model => model.JournalEntryId)
+                                    @Html.HiddenFor(model => model.IsRenewed)
                                 }
                                 else
                                 {
                                     <input type="hidden" value="0"  id="Id"/>
                                 }
                                 @*<h5 class="header-title">
-                                        @MyERP.Properties.Resources.MainData
-                                    </h5>*@
+            @MyERP.Properties.Resources.MainData
+        </h5>*@
 
                                 @* Panel 1 *@
                                 <div class="card">
@@ -270,7 +271,7 @@
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
                                                 </div>
-                                                
+
                                                 <label class="control-label col-sm-2 MergedUnitsDiv">@MyERP.Properties.Resources.MergedUnits</label>
                                                 <div class="col-sm-4 MergedUnitsDiv">
                                                     @{
@@ -280,7 +281,7 @@
                                                         }
                                                         else
                                                         {
-                                                            @Html.ListBox("PropertyContractMergedUnit", null, new { @class = "form-control", size = 6, style = "width: 200px;" }) 
+                                                            @Html.ListBox("PropertyContractMergedUnit", null, new { @class = "form-control", size = 6, style = "width: 200px;" })
                                                         }
                                                     }
                                                     <div class="invalid-feedback">
@@ -577,7 +578,7 @@
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
                                                 </div>
-                                                
+
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.DivideGasIntoBatches</label>
                                                 <div class="col-sm-4">
                                                     <input type="checkbox" id="IsDivideGasIntoBatches" @Html.Raw(Model != null && Model.IsDivideGasIntoBatches == true ? "checked" : "") />
@@ -658,14 +659,14 @@
                                                                 @MyERP.Properties.Resources.PaidBefore
                                                             </td>
                                                             @*<td>
-                                                                @MyERP.Properties.Resources.JournalEntrieNo
-                                                            </td>
-                                                            <td>
-                                                                @MyERP.Properties.Resources.PrintJournalEntry
-                                                            </td>
-                                                            <td>
-                                                                @MyERP.Properties.Resources.PrintInvoice
-                                                            </td>*@
+                                        @MyERP.Properties.Resources.JournalEntrieNo
+                                    </td>
+                                    <td>
+                                        @MyERP.Properties.Resources.PrintJournalEntry
+                                    </td>
+                                    <td>
+                                        @MyERP.Properties.Resources.PrintInvoice
+                                    </td>*@
                                                         </tr>
                                                     </thead>
                                                     <tbody id="PropertyContractBatches">
@@ -673,9 +674,9 @@
                                                         {
                                                             foreach (var item in Model.PropertyContractBatches)
                                                             {
-                                                               
-                                                                    var Batchlst = (ViewBag.BathcesPaid as List<BatchPaidModel>) ?? new List<BatchPaidModel>();
-                                                               
+
+                                                                var Batchlst = (ViewBag.BathcesPaid as List<BatchPaidModel>) ?? new List<BatchPaidModel>();
+
                                                                 <tr>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="@item.BatchNo" disabled readonly />
@@ -744,18 +745,18 @@
                                                                         <input type="number" step="any" class="totalpaid form-control tabledit-input form-control-sm" value="@totalPaid" readonly disabled />
                                                                     </td>
                                                                     @*<td class="tabledit-edit-mode">
-                        <input type="text" class="JournalEntryDocumentNumber form-control tabledit-input form-control-sm" value="@(item.JournalEntry != null ? item.JournalEntry.DocumentNumber : "")" disabled readonly />
-                    </td>
-                    <td class="tabledit-edit-mode">
-                        <a href="javascript:void(0);" onclick="PrintJournalEntry(@item.JournalEntryId)">
-                            <i class="remixicon-printer-fill"></i>
-                        </a>
-                    </td>
-                    <td class="tabledit-edit-mode">
-                        <a href="javascript:void(0);" onclick="PrintInvoice(@item.Id)">
-                            <i class="remixicon-printer-fill"></i>
-                        </a>
-                    </td>*@
+                                                <input type="text" class="JournalEntryDocumentNumber form-control tabledit-input form-control-sm" value="@(item.JournalEntry != null ? item.JournalEntry.DocumentNumber : "")" disabled readonly />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <a href="javascript:void(0);" onclick="PrintJournalEntry(@item.JournalEntryId)">
+                                                    <i class="remixicon-printer-fill"></i>
+                                                </a>
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <a href="javascript:void(0);" onclick="PrintInvoice(@item.Id)">
+                                                    <i class="remixicon-printer-fill"></i>
+                                                </a>
+                                            </td>*@
                                                                 </tr>
                                                             }
                                                         }
@@ -868,20 +869,20 @@
                                                                     @MyERP.Properties.Resources.CashReceiptVoucher
                                                                 </a>
                                                                 @*<button onclick="PrintContract(@Model.Id);" class="btn btn-primary">
-                        @MyERP.Properties.Resources.PrintContract
-                    </button>*@
+                                            @MyERP.Properties.Resources.PrintContract
+                                        </button>*@
                                                                 @*<button onclick="Attachments();" class="btn btn-primary">
-                        @MyERP.Properties.Resources.Attachments
-                    </button>
-                    <button onclick="Renew();" class="btn btn-primary">
-                        @MyERP.Properties.Resources.Renew
-                    </button>
-                    <button onclick="Waiver();" class="btn btn-primary">
-                        @MyERP.Properties.Resources.Waiver
-                    </button>
-                    <button onclick="Evacuation();" class="btn btn-primary">
-                        @MyERP.Properties.Resources.Evacuation
-                    </button>*@
+                                            @MyERP.Properties.Resources.Attachments
+                                        </button>
+                                        <button onclick="Renew();" class="btn btn-primary">
+                                            @MyERP.Properties.Resources.Renew
+                                        </button>
+                                        <button onclick="Waiver();" class="btn btn-primary">
+                                            @MyERP.Properties.Resources.Waiver
+                                        </button>
+                                        <button onclick="Evacuation();" class="btn btn-primary">
+                                            @MyERP.Properties.Resources.Evacuation
+                                        </button>*@
                                                             }
                                                         </div>
                                                     </div>
@@ -956,57 +957,57 @@
 
                                                     @if (Model != null && ViewBag.CashRecipt != null)
                                                     {
-                                                         
-                                                                    <div class="card">
-                                                                        <div class="card-body">
-                                                                            <h5 class="header-title"> @MyERP.Properties.Resources.CashReceiptVoucher</h5>
-                                                                            <div class="table-responsive">
-                                                                                <table class="table table-centered mb-0">
-                                                                                    <thead>
-                                                                                    <tr>
-                                                                                        <th>@MyERP.Properties.Resources.DocNo</th>
-                                                                                        <th>@MyERP.Properties.Resources.Amount</th>
-                                                                                        <th>@MyERP.Properties.Resources.Date</th>
-                                                                                        <th>@MyERP.Properties.Resources.Branch</th>
-                                                                                        <th>@MyERP.Properties.Resources.Edit</th>
-                                                                                        <th>@MyERP.Properties.Resources.Print</th>
-                                                                                    </tr>
-                                                                                    </thead>
-                                                                                    <tbody id="CashReceiptVoucher-tbody">
-                                                                                        @foreach (var item in ViewBag.CashRecipt)
-                                                                                        {
-                                                                                            <tr>
-                                                                                                <td>
-                                                                                                    @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
-                                                                                                </td>
-                                                                                                <td>
-                                                                                                    @item.MoneyAmount
-                                                                                                </td>
-                                                                                                <td>
-                                                                                                   @item.Date
-                                                                                                </td>
-                                                                                                <td>
-                                                                                                @item.Department.ArName
-                                                                                                </td>
-                                                                                               
-                                                                                                <td>
-                                                                                                    <a href="@Url.Action("AddEdit", "CashReceiptVoucher", new { id = item.Id })" onclick="$('#preloader, #status').fadeIn();">
-                                                                                                        <i class="fa fa-edit"></i>
-                                                                                                    </a>
-                                                                                                </td>
-                                                                                                <td>
-                                                                                                    <a href="@Url.Action("CashReceiptVoucherDetails","Report",new { id=item.Id})" target="_blank">
-                                                                                                        <i class="remixicon-printer-fill"></i>
-                                                                                                    </a>
-                                                                                                </td>
-                                                                                            </tr>
-                                                                                        }
-                                                                                    </tbody>
-                                                                                </table>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                         
+
+                                                        <div class="card">
+                                                            <div class="card-body">
+                                                                <h5 class="header-title"> @MyERP.Properties.Resources.CashReceiptVoucher</h5>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-centered mb-0">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>@MyERP.Properties.Resources.DocNo</th>
+                                                                                <th>@MyERP.Properties.Resources.Amount</th>
+                                                                                <th>@MyERP.Properties.Resources.Date</th>
+                                                                                <th>@MyERP.Properties.Resources.Branch</th>
+                                                                                <th>@MyERP.Properties.Resources.Edit</th>
+                                                                                <th>@MyERP.Properties.Resources.Print</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody id="CashReceiptVoucher-tbody">
+                                                                            @foreach (var item in ViewBag.CashRecipt)
+                                                                            {
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @item.MoneyAmount
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @item.Date
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @item.Department.ArName
+                                                                                    </td>
+
+                                                                                    <td>
+                                                                                        <a href="@Url.Action("AddEdit", "CashReceiptVoucher", new { id = item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                                                                            <i class="fa fa-edit"></i>
+                                                                                        </a>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <a href="@Url.Action("CashReceiptVoucherDetails","Report",new { id=item.Id})" target="_blank">
+                                                                                            <i class="remixicon-printer-fill"></i>
+                                                                                        </a>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
                                                     }
 
 
@@ -1035,15 +1036,15 @@
             <button onclick="addEdit();" class="btn btn-success" id="save">
                 @MyERP.Properties.Resources.Save
             </button>
-            <button onclick="contractRenewal();" class="btn btn-warning" id="ContractRenewal">
-                @MyERP.Properties.Resources.ContractRenewal
-            </button>
             <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
         }
         else if (Model.IsDeleted == false)
         {
             <button onclick="addEdit();" class="btn btn-success" id="save">
                 @MyERP.Properties.Resources.Save
+            </button>
+            <button onclick="contractRenewal();" class="btn btn-warning" id="ContractRenewal">
+                @MyERP.Properties.Resources.ContractRenewal
             </button>
             <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
             <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
@@ -1258,7 +1259,7 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
     $('#PropertyUnitTypeId').on('change', function () {
         GetUnitByUnitTypeId().then(function () {
             $("#PropertyUnitId").empty().append(UnitOptions);
-            
+
             $("#PropertyContractMergedUnit").empty().append(UnitOptions);
         });
     });
@@ -1984,7 +1985,7 @@ var lastdate;
                 }
             });
         }
-        
+
         var PropertyContractMergedUnits = [];
         if (valid) {
             $('#PropertyContractMergedUnit option:selected').each(function () {
@@ -2052,7 +2053,8 @@ var lastdate;
             PropertyContractBatches: PropertyContractBatches,
             PropertyContractReps: PropertyContractReps,
             PropertyContractImages: PropertyContractImages,
-            PropertyContractMergedUnit: PropertyContractMergedUnits
+            PropertyContractMergedUnit: PropertyContractMergedUnits,
+            IsRenewed: $('#IsRenewed').val()
         }
         if (valid) {
             Swal.fire({
@@ -2142,6 +2144,67 @@ var lastdate;
                     }
                 });
         }
+    }
+
+    //--------------------------Renewal Contract Functions----------------------------------------//
+    function contractRenewal() {
+        //change Id to be zero to set as new PropertyContract, and set IsREnewal =true
+        $('#Id').val(0);
+        $('#IsRenewed').val(true);
+        //change ContractStartDate, ContractEndDateth
+        SetRenewalContractStartDate();
+        SetRenewalContractEndDateOneYearAfterStart();
+
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.ContractRenewal !',
+
+            text: " تم إعداد نسخة تجديد للعقد الرجاء مراجعة البيانات ثم الحفظ ",
+            icon: 'info',
+            showCancelButton: false,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+
+    function SetRenewalContractStartDate() {
+        var ContractStartDate = new Date();
+        var month = (ContractStartDate.getMonth() + 1) < 10 ? '0' + (ContractStartDate.getMonth() + 1) : (ContractStartDate.getMonth() + 1);
+        var day = ContractStartDate.getDate() < 10 ? '0' + ContractStartDate.getDate() : ContractStartDate.getDate();
+        var hours = ContractStartDate.getHours();
+        var minutes = ContractStartDate.getMinutes();
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var strTime = hours + ':' + minutes;
+        var value = ContractStartDate.getFullYear() + "-" + month + "-" + day + "T" + strTime;
+        $('#ContractStartDate').val(value);
+
+        $('#ContractStartDate').focus();
+    }
+
+    function SetRenewalContractEndDateOneYearAfterStart() {
+        var startDateVal = $('#ContractStartDate').val();
+        if (!startDateVal) return;
+
+        var startDate = new Date(startDateVal);
+
+        // Add one year
+        startDate.setFullYear(startDate.getFullYear() + 1);
+
+        // Format as yyyy-MM-ddTHH:mm (same as your other functions)
+        var month = (startDate.getMonth() + 1) < 10 ? '0' + (startDate.getMonth() + 1) : (startDate.getMonth() + 1);
+        var day = startDate.getDate() < 10 ? '0' + startDate.getDate() : startDate.getDate();
+        var hours = startDate.getHours();
+        var minutes = startDate.getMinutes();
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var strTime = hours + ':' + minutes;
+        var value = startDate.getFullYear() + "-" + month + "-" + day + "T" + strTime;
+
+        $('#ContractEndDate').val(value);
     }
 
 </script>

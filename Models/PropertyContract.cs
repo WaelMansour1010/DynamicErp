@@ -83,6 +83,7 @@ namespace MyERP.Models
         public Nullable<int> GovernmentalOrPrivateContract { get; set; }
         public Nullable<bool> IsDivideGasIntoBatches { get; set; }
         public Nullable<bool> IsDivideCommission { get; set; }
+        public bool IsRenewed { get; set; }
     
         public virtual Employee Employee { get; set; }
         public virtual ERPUser ERPUser { get; set; }
