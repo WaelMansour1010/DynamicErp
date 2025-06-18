@@ -538,13 +538,12 @@
                                                             <td>@MyERP.Properties.Resources.Batch</td>
                                                             <td>@MyERP.Properties.Resources.Date</td>
                                                             <td>@MyERP.Properties.Resources.HijriDate</td>
-                                                            <td>@MyERP.Properties.Resources.BatchValueBeforeDiscount</td>
-                                                            <td>@MyERP.Properties.Resources.BatchValueBeforeTax</td>
+                                                            <td>@MyERP.Properties.Resources.BatchValueBeforeDiscountAddtionAndTax</td>
                                                             <td>@MyERP.Properties.Resources.Add</td>
                                                             <td>@MyERP.Properties.Resources.Discount</td>
-                                                            <td>@MyERP.Properties.Resources.BatchValueAfterDiscount</td>
                                                             <td>@MyERP.Properties.Resources.TaxPercentage</td>
                                                             <td>@MyERP.Properties.Resources.TaxValue</td>
+                                                            <td>@MyERP.Properties.Resources.BatchValueAfterDiscountAndAddAndTax</td>
                                                             <td>@MyERP.Properties.Resources.IsDelivered</td>
                                                             <th>@MyERP.Properties.Resources.PaidBefore</th>
                                                             <th>@MyERP.Properties.Resources.Paid</th>
@@ -555,7 +554,6 @@
                                                     <tbody id="PropertyBatches">
                                                         @if (Model != null && Model.PropertyBatches != null)
                                                         {
-                                                            decimal totalPreviousPaid = 0;
                                                             foreach (var item in Model.PropertyBatches)
                                                             {
                                                                 var hij = item.BatchDate.HasValue ? new System.Globalization.UmAlQuraCalendar().GetYear(item.BatchDate.Value) + "/" +
@@ -574,14 +572,9 @@
                                                                         <label class="HijryBatchDate control-label">@hij</label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="number" step="any" class="BatchValueBeforeDiscount form-control tabledit-input form-control-sm"
+                                                                        <input type="number" step="any" class="BatchValueBeforeDiscountAddtionAndTax form-control tabledit-input form-control-sm"
                                                                                value="@(item.BatchValueBeforeDiscountAddtionAndTax ?? 0)" />
                                                                     </td>
-                                                                    <td class="tabledit-edit-mode">
-                                                                        <input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm"
-                                                                               value="@(item.BatchValueBeforeDiscountAddtionAndTax ?? 0)" disabled readonly />
-                                                                    </td>
-                                                                    <!--to be adjusted to added value-->
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="number" step="any" class="BatchAddedValue form-control tabledit-input form-control-sm"
                                                                                value="@(item.AddValue ?? 0)" />
@@ -591,10 +584,6 @@
                                                                                value="@(item.Discount ?? 0)" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="number" step="any" class="BatchValueAfterDiscount form-control tabledit-input form-control-sm"
-                                                                               value="@(item.TotalBatchValue)" />
-                                                                    </td>
-                                                                    <td class="tabledit-edit-mode">
                                                                         <input type="number" step="any" class="BatchTaxPercentage form-control tabledit-input form-control-sm"
                                                                                value="@(item.BatchTaxPercentage ?? 0)" disabled readonly />
                                                                     </td>
@@ -602,16 +591,20 @@
                                                                         <input type="number" step="any" class="BatchTaxValue form-control tabledit-input form-control-sm"
                                                                                value="@(item.BatchTaxValue)" disabled readonly />
                                                                     </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" step="any" class="TotalBatchValue form-control tabledit-input form-control-sm"
+                                                                               value="@(item.TotalBatchValue)" />
+                                                                    </td>
                                                                     <td>
                                                                         <input type="checkbox" class="IsDelivered" @Html.Raw(item.IsDelivered == true ? "checked disabled" : "") />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="number" step="any" class="TotalPaid form-control tabledit-input form-control-sm"
-                                                                               value="@totalPreviousPaid.ToString("F2")" readonly disabled />
+                                                                               value="@(item.TotalPaid ?? 0)" readonly disabled />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="number" step="any" class="Paid form-control tabledit-input form-control-sm"
-                                                                               value="@(item.TotalPaid ?? 0)"
+                                                                               value="0"
                                                                                @Html.Raw(item.IsDelivered == true || item.IsFullyPaid ? "readonly disabled" : "") />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
@@ -619,7 +612,6 @@
                                                                                value="@item.Remain.ToString("F2")" readonly disabled />
                                                                     </td>
                                                                 </tr>
-                                                                totalPreviousPaid += (item.TotalPaid ?? 0);
                                                             }
                                                         }
                                                     </tbody>
@@ -959,105 +951,171 @@ $('#TaxValue').on('change', function () {
 $('#ContractValueWithoutTax').on('change', function () {
     $('#TaxPercentage').trigger('change');
 });
-$(document).on('change', '.Discount', function () {
-    var BatchValueBeforeDiscount = parseFloat($(this).closest('tr').find('.BatchValueBeforeDiscount').val() * 1);
-    var Discount = parseFloat($(this).val() * 1);
-    var BatchValueAfterDiscount = BatchValueBeforeDiscount - Discount;
-    $(this).closest('tr').find('.BatchValueAfterDiscount').val(BatchValueAfterDiscount.toFixed(2));
+//$(document).on('change', '.Discount', function () {
+//    var BatchValueBeforeDiscount = parseFloat($(this).closest('tr').find('.BatchValueBeforeDiscount').val() * 1);
+//    var Discount = parseFloat($(this).val() * 1);
+//    var BatchValueAfterDiscount = BatchValueBeforeDiscount - Discount;
+//    $(this).closest('tr').find('.BatchValueAfterDiscount').val(BatchValueAfterDiscount.toFixed(2));
 
-    // إعادة حساب الضريبة والمتبقي
-    calculateBatchTaxAndRemain($(this).closest('tr'));
-});
+//    // إعادة حساب الضريبة والمتبقي
+//    calculateBatchTaxAndRemain($(this).closest('tr'));
+//});
 
-$(document).on('change', '.Paid', function () {
-    calculateBatchRemain($(this).closest('tr'));
-    updateTotalPaidForAllRows();
-});
+//$(document).on('change', '.Paid', function () {
+//    calculateBatchTaxAndRemain($(this).closest('tr'));
+//    updateTotalPaidForAllRows();
+//});
 
-$(document).on('change', '.BatchValueAfterDiscount', function () {
-    calculateBatchTaxAndRemain($(this).closest('tr'));
-});
+//$(document).on('change', '.BatchValueAfterDiscount', function () {
+//    calculateBatchTaxAndRemain($(this).closest('tr'));
+//});
 
 // وظيفة حساب الضريبة والمتبقي لصف معين
-function calculateBatchTaxAndRemain(row) {
-    var batchValueAfterDiscount = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
-    var taxPercentage = parseFloat(row.find('.BatchTaxPercentage').val() * 1) || 0;
+//function calculateBatchTaxAndRemain(row) {
+//    var batchValueAfterDiscount = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
+//    var taxPercentage = parseFloat(row.find('.BatchTaxPercentage').val() * 1) || 0;
 
-    // حساب قيمة الضريبة
-    var taxValue = batchValueAfterDiscount * (taxPercentage / 100);
-    row.find('.BatchTaxValue').val(taxValue.toFixed(2));
+//    // حساب قيمة الضريبة
+//    var taxValue = batchValueAfterDiscount * (taxPercentage / 100);
+//    row.find('.BatchTaxValue').val(taxValue.toFixed(2));
 
-    // حساب المتبقي
-    calculateBatchRemain(row);
-}
+//    // حساب المتبقي
+//    calculateBatchRemain(row);
+//}
 
 // وظيفة حساب المتبقي لصف معين
-function calculateBatchRemain(row) {
-    var batchValueAfterDiscount = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
-    var taxValue = parseFloat(row.find('.BatchTaxValue').val() * 1) || 0;
-    var paid = parseFloat(row.find('.Paid').val() * 1) || 0;
+//function calculateBatchRemain(row) {
+//    var batchValueAfterDiscount = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
+//    var taxValue = parseFloat(row.find('.BatchTaxValue').val() * 1) || 0;
+//    var paid = parseFloat(row.find('.Paid').val() * 1) || 0;
 
-    // إجمالي قيمة الدفعة
-    var totalBatchValue = batchValueAfterDiscount + taxValue;
+//    // إجمالي قيمة الدفعة
+//    var totalBatchValue = batchValueAfterDiscount + taxValue;
 
-    // التحقق من أن المسدد لا يزيد عن إجمالي القيمة
-    if (paid > totalBatchValue) {
-        paid = totalBatchValue;
-        row.find('.Paid').val(paid.toFixed(2));
+//    // التحقق من أن المسدد لا يزيد عن إجمالي القيمة
+//    if (paid > totalBatchValue) {
+//        paid = totalBatchValue;
+//        row.find('.Paid').val(paid.toFixed(2));
 
-        showAlert('المبلغ المسدد لا يمكن أن يزيد عن إجمالي قيمة الدفعة', 'warning');
-    }
+//        showAlert('المبلغ المسدد لا يمكن أن يزيد عن إجمالي قيمة الدفعة', 'warning');
+//    }
 
-    // حساب المتبقي
-    var remain = totalBatchValue - paid;
-    row.find('.Remain').val(remain.toFixed(2));
+//    // حساب المتبقي
+//    var remain = totalBatchValue - paid;
+//    row.find('.Remain').val(remain.toFixed(2));
 
-    // تحديث حالة الصف حسب السداد
-    updateRowPaymentStatus(row, paid, totalBatchValue);
-}
+//    // تحديث حالة الصف حسب السداد
+//    updateRowPaymentStatus(row, paid, totalBatchValue);
+//}
 
 // وظيفة تحديث حالة السداد للصف
-function updateRowPaymentStatus(row, paid, totalValue) {
-    var paidInput = row.find('.Paid');
-    var remainInput = row.find('.Remain');
+//function updateRowPaymentStatus(row, paid, totalValue) {
+//    var paidInput = row.find('.Paid');
+//    var remainInput = row.find('.Remain');
 
-    if (paid >= totalValue) {
-        // مسدد بالكامل
-        row.addClass('fully-paid');
-        row.removeClass('partially-paid');
-        paidInput.attr('readonly', true);
-    } else if (paid > 0) {
-        // مسدد جزئياً
-        row.addClass('partially-paid');
-        row.removeClass('fully-paid');
-        paidInput.attr('readonly', false);
-    } else {
-        // غير مسدد
-        row.removeClass('fully-paid partially-paid');
-        paidInput.attr('readonly', false);
-    }
-}
+//    if (paid >= totalValue) {
+//        // مسدد بالكامل
+//        row.addClass('fully-paid');
+//        row.removeClass('partially-paid');
+//        paidInput.attr('readonly', true);
+//    } else if (paid > 0) {
+//        // مسدد جزئياً
+//        row.addClass('partially-paid');
+//        row.removeClass('fully-paid');
+//        paidInput.attr('readonly', false);
+//    } else {
+//        // غير مسدد
+//        row.removeClass('fully-paid partially-paid');
+//        paidInput.attr('readonly', false);
+//    }
+//}
 
 // وظيفة تحديث إجمالي المسدد السابق لكل الصفوف
-    function updateTotalPaidForAllRows() {
-        var totalPaid = 0;
+    //function updateTotalPaidForAllRows() {
+    //    var totalPaid = 0;
 
-        // نحصل على جميع الصفوف
-        var rows = $('#PropertyBatches tr');
+    //    // نحصل على جميع الصفوف
+    //    var rows = $('#PropertyBatches tr');
 
-        for (var i = 0; i < rows.length; i++) {
-            var row = $(rows[i]);
+    //    for (var i = 0; i < rows.length; i++) {
+    //        var row = $(rows[i]);
 
-            // نحسب المدفوع قبل هذا الصف فقط
-            row.find('.TotalPaid').val(totalPaid.toFixed(2));
+    //        // نحسب المدفوع قبل هذا الصف فقط
+    //        row.find('.TotalPaid').val(totalPaid.toFixed(2));
 
-            var paid = parseFloat(row.find('.Paid').val()) || 0;
-            totalPaid += paid;
+    //        var paid = parseFloat(row.find('.Paid').val()) || 0;
+    //        totalPaid += paid;
+    //    }
+
+    //    updatePaymentSummary();
+    //}
+
+    function updateBatchValues(batchRecord) {
+        
+        var BatchValueBeforeDiscountAddtionAndTax = parseFloat(batchRecord.find('.BatchValueBeforeDiscountAddtionAndTax').val()) || 0;
+        var AddValue = parseFloat(batchRecord.find('.BatchAddedValue').val()) || 0;
+        var Discount = parseFloat(batchRecord.find('.Discount').val()) || 0;
+        var BatchTaxPercentage = parseFloat(batchRecord.find('.BatchTaxPercentage').val()) || 0;
+        
+        //wanted to be calculated
+        
+        var valueAfterDiscount = (BatchValueBeforeDiscountAddtionAndTax ?? 0) - (Discount ?? 0);
+        var valueAfterDiscountAndAddvalue = valueAfterDiscount + (AddValue ?? 0);
+
+        var BatchTaxValue = valueAfterDiscountAndAddvalue * (BatchTaxPercentage ?? 0) / 100;
+        batchRecord.find('.BatchTaxValue').val(BatchTaxValue.toFixed(2));
+
+        var TotalBatchValue = valueAfterDiscountAndAddvalue + BatchTaxValue;
+        batchRecord.find('.TotalBatchValue').val(TotalBatchValue.toFixed(2));
+
+        var paid = parseFloat(batchRecord.find('.Paid').val()) || 0;
+        var oldRemain = parseFloat(batchRecord.find('.TotalBatchValue').val()) || 0;
+        var newCalcRemain = oldRemain - paid;
+        batchRecord.find('.Remain').val(newCalcRemain.toFixed(2));
+
+        var oldTotalPaid = parseFloat(batchRecord.find('.TotalPaid').val()) || 0;
+        var newTotalPaid = oldTotalPaid + paid;
+        batchRecord.find('.TotalPaid').val(newTotalPaid.toFixed(2).toString());
+
+        if (newCalcRemain <= 0) {
+            batchRecord.find('.IsDelivered').prop('checked', true);
+            batchRecord.find('.IsDelivered').prop('disabled', "disabled");
         }
+        else {
+            batchRecord.find('.IsDelivered').prop('checked', false);
+        }
+            
+    }
+    function UpdateContractValueWithoutTax(){
+        var ContractValueWithoutTax = 0;
+        $('#PropertyBatches tr').each(function () {
+            var batchRecord = $(this);
+            var BatchValueBeforeDiscountAddtionAndTax = parseFloat(batchRecord.find('.BatchValueBeforeDiscountAddtionAndTax').val()) || 0;
+            var AddValue = parseFloat(batchRecord.find('.BatchAddedValue').val()) || 0;
+            var Discount = parseFloat(batchRecord.find('.Discount').val()) || 0;
+            var BatchTaxPercentage = parseFloat(batchRecord.find('.BatchTaxPercentage').val()) || 0;
+            
+            var valueAfterDiscountAndAddvalue = BatchValueBeforeDiscountAddtionAndTax - Discount + AddValue;
 
-        updatePaymentSummary();
+            ContractValueWithoutTax += parseFloat(valueAfterDiscountAndAddvalue);
+        });
+        $('#ContractValueWithoutTax').val(ContractValueWithoutTax.toFixed(2));
+
     }
 
+    $(document).on('change', '.Discount', function (e) {
+        updateBatchValues($(this).closest('tr'));
+        UpdateContractValueWithoutTax();
+    });
+    $(document).on('change', '.BatchAddedValue', function (e) {
+        updateBatchValues($(this).closest('tr'));
+        UpdateContractValueWithoutTax();
+    });
+
+    $(document).on('change', '.Paid', function (e) {
+        updateBatchValues($(this).closest('tr'));
+        UpdateContractValueWithoutTax();
+    });
 
 // وظيفة عرض ملخص السداد
 function updatePaymentSummary() {
@@ -1092,10 +1150,23 @@ function validatePayments() {
     $('#PropertyBatches tr').each(function(index) {
         var row = $(this);
         var batchNo = row.find('.BatchNo').val();
-        var batchValue = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
+        //
+            
+        //var BatchValueBeforeDiscountAddtionAndTax = batchRecord.find('.BatchValueBeforeDiscountAddtionAndTax').val();
+        //var AddValue = batchRecord.find('.BatchAddedValue').val();
+        //var Discount = batchRecord.find('.Discount').val();
+        //var BatchTaxPercentage = batchRecord.find('.BatchTaxPercentage').val();
+        var TotalBatchValue = row.find('.TotalBatchValue').val();
+
+            //var valueAfterDiscountAndAddvalue = BatchValueBeforeDiscountAddtionAndTax - Discount + AddValue;
+
+            //ContractValueWithoutTax += parseFloat(valueAfterDiscountAndAddvalue);
+        
+        //
+        //var batchValue = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
         var taxValue = parseFloat(row.find('.BatchTaxValue').val() * 1) || 0;
         var paid = parseFloat(row.find('.Paid').val() * 1) || 0;
-        var totalValue = batchValue + taxValue;
+        //var totalValue = batchValue + taxValue;
 
         // التحقق من أن المسدد لا يكون سالب
         if (paid < 0) {
@@ -1104,7 +1175,7 @@ function validatePayments() {
         }
 
         // التحقق من أن المسدد لا يزيد عن إجمالي القيمة
-        if (paid > totalValue) {
+        if (paid > TotalBatchValue) {
             isValid = false;
             errorMessages.push(`الدفعة ${batchNo}: المبلغ المسدد يزيد عن قيمة الدفعة`);
         }
@@ -1257,9 +1328,12 @@ function CalculateBatches() {
         $('#PropertyBatches').empty();
         var NumberOfBatches = $('#NumberOfBatches').val() * 1;
         var ContractValueWithoutTax = parseFloat($('#ContractValueWithoutTax').val() * 1);
-        var BatchValueBeforeTax = ContractValueWithoutTax / NumberOfBatches;
+        var BatchValueBeforeDiscountAddtionAndTax = ContractValueWithoutTax / NumberOfBatches;
         var TaxPercentage = $('#TaxPercentage').val() * 1;
-        var TaxValue = TaxPercentage * BatchValueBeforeTax;
+        var TaxValue = TaxPercentage * BatchValueBeforeDiscountAddtionAndTax;
+        //initially AddValue and Discount are zeros
+        var BatchValueAfterDiscountAddtionAndTax = BatchValueBeforeDiscountAddtionAndTax + TaxValue;
+           
         lastdate = null;
 
         for (var i = 0; i < NumberOfBatches; i++) {
@@ -1294,10 +1368,7 @@ function CalculateBatches() {
                     '<label class="HijryBatchDate control-label">' + HijryBatchDate + '</label>' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
-                    '<input type="number" step="any" class="BatchValueBeforeDiscount form-control tabledit-input form-control-sm" value="' + BatchValueBeforeTax.toFixed(2) + '" />' +
-                '</td>' +
-                '<td class="tabledit-edit-mode">' +
-                    '<input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm" value="' + BatchValueBeforeTax.toFixed(2) + '" disabled readonly />' +
+                '<input type="number" step="any" class="BatchValueBeforeDiscountAddtionAndTax form-control tabledit-input form-control-sm" value="' + BatchValueBeforeDiscountAddtionAndTax.toFixed(2) + '" disabled readonly />' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
                     '<input type="number" step="any" class="BatchAddedValue form-control tabledit-input form-control-sm" value="0" />' +
@@ -1306,16 +1377,16 @@ function CalculateBatches() {
                     '<input type="number" step="any" class="Discount form-control tabledit-input form-control-sm" value="0" />' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
-                    '<input type="number" step="any" class="BatchValueAfterDiscount form-control tabledit-input form-control-sm" value="' + BatchValueBeforeTax.toFixed(2) + '"/>' +
-                '</td>' +
-                '<td class="tabledit-edit-mode">' +
                     '<input type="number" step="any" class="BatchTaxPercentage form-control tabledit-input form-control-sm" value="' + (TaxPercentage * 100).toFixed(2) + '" disabled readonly />' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
                     '<input type="number" step="any" class="BatchTaxValue form-control tabledit-input form-control-sm" value="' + TaxValue.toFixed(2) + '" disabled readonly />' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
-                    '<input type="checkbox" class="IsDelivered" />' +
+                '<input type="number" step="any" class="TotalBatchValue form-control tabledit-input form-control-sm" value="' + BatchValueAfterDiscountAddtionAndTax.toFixed(2) + '" disabled readonly />' +
+                '</td>' +
+                '<td class="tabledit-edit-mode">' +
+                    '<input type="checkbox" class="IsDelivered" disabled readonly/>' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
                     '<input type="number" step="any" class="TotalPaid form-control tabledit-input form-control-sm" value="0.00" readonly disabled />' +
@@ -1324,7 +1395,7 @@ function CalculateBatches() {
                     '<input type="number" step="any" class="Paid form-control tabledit-input form-control-sm" value="0.00" />' +
                 '</td>' +
                 '<td class="tabledit-edit-mode">' +
-                    '<input type="number" step="any" class="Remain form-control tabledit-input form-control-sm" value="' + (BatchValueBeforeTax + TaxValue).toFixed(2) + '" readonly disabled />' +
+                '<input type="number" step="any" class="Remain form-control tabledit-input form-control-sm" value="' + BatchValueAfterDiscountAddtionAndTax.toFixed(2) + '" readonly disabled />' +
                 '</td>' +
             '</tr>';
 
@@ -1332,7 +1403,7 @@ function CalculateBatches() {
         }
 
         // تحديث حسابات السداد بعد إنشاء الدفعات
-        updateTotalPaidForAllRows();
+        //updateTotalPaidForAllRows();
     }
 }
 function AppendIntoPropertyDetails() {
@@ -1405,14 +1476,12 @@ function addEdit(n) {
                 MainDocId: $('#Id').val(),
                 BatchNo: td.find('.BatchNo').val(),
                 BatchDate: td.find('.BatchDate').val(),
-                BatchValueBeforeDiscount: parseFloat(td.find('.BatchValueBeforeDiscount').val()) || 0,
-                BatchValueBeforeTax: parseFloat(td.find('.BatchValueBeforeTax').val()) || 0,
                 Discount: parseFloat(td.find('.Discount').val()) || 0,
-                BatchValueAfterDiscount: parseFloat(td.find('.BatchValueAfterDiscount').val()) || 0,
-                BatchTaxValue: parseFloat(td.find('.BatchTaxValue').val()) || 0,
+                AddValue: parseFloat(td.find('.BatchAddedValue').val()) || 0,
                 BatchTaxPercentage: parseFloat(td.find('.BatchTaxPercentage').val()) || 0,
+                BatchValueBeforeDiscountAddtionAndTax: parseFloat(td.find('.BatchValueBeforeDiscountAddtionAndTax').val()) || 0,
                 IsDelivered: td.find('.IsDelivered').prop('checked'),
-                Paid: parseFloat(td.find('.Paid').val()) || 0,
+                TotalPaid: parseFloat(td.find('.TotalPaid').val()) || 0,
                 IsDeleted: false,
                 UserId: $('#UserId').val(),
                 Notes: td.find('.Notes').val(),
