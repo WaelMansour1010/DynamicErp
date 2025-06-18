@@ -59,6 +59,8 @@ namespace MyERP.Models
         public Nullable<int> PropertyUnitId { get; set; }
         public Nullable<bool> IncludeRentValueInVAT { get; set; }
         public Nullable<bool> IncludeWaterValueInVAT { get; set; }
+     //   public Nullable<bool> IsRenewed { get; set; }
+        
         public Nullable<decimal> ElectricityValue { get; set; }
         public Nullable<bool> IncludeElectricityValueInVAT { get; set; }
         public Nullable<decimal> GasValue { get; set; }

@@ -2824,10 +2824,16 @@
     <Compile Include="Reporting\Reports\AllCustomersSales.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Reporting\Reports\DueOwnersPaymentsReport.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Reporting\Reports\GroupsProfits.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Reporting\Reports\PropertyContractsExpiredReport.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Reporting\Reports\PropertyDueRent_Report.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Reporting\Reports\PropertyProp.cs">
@@ -2854,9 +2860,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Reporting\Reports\RepTotals.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Reporting\Reports\PropertyDueRent_Report.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Reporting\Reports\PropertyContractTotal_Report.cs">
@@ -4879,7 +4882,6 @@
     <Content Include="Views\Report\Property.cshtml" />
     <Content Include="Views\Report\PropertyRenter.cshtml" />
     <Content Include="Views\Report\PropertyContractTotal.cshtml" />
-    <Content Include="Views\Report\PropertyDueRent.cshtml" />
     <Content Include="Views\Patient\FaceDetection.cshtml" />
     <Content Include="Views\EducationalSubject\Index.cshtml" />
     <Content Include="Views\EducationalSubject\AddEdit.cshtml" />
@@ -4931,6 +4933,7 @@
     <Content Include="Views\PropertyBillRegisteration\AddEdit.cshtml" />
     <Content Include="Views\Report\BalanceReviewDetails.cshtml" />
     <Content Include="Views\Report\PropertyContractsExpiredReport.cshtml" />
+    <Content Include="Views\Report\DueOwnersPaymentsReport.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -4989,11 +4992,17 @@
     <EmbeddedResource Include="Reporting\Reports\AllCustomersSales.resx">
       <DependentUpon>AllCustomersSales.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\DueOwnersPaymentsReport.resx">
+      <DependentUpon>DueOwnersPaymentsReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\GroupsProfits.resx">
       <DependentUpon>GroupsProfits.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\PropertyContractsExpiredReport.resx">
       <DependentUpon>PropertyContractsExpiredReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\PropertyDueRent_Report.resx">
+      <DependentUpon>PropertyDueRent_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\PropertyProp.resx">
       <DependentUpon>PropertyProp.cs</DependentUpon>
@@ -5009,9 +5018,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\RepTotals.resx">
       <DependentUpon>RepTotals.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Reporting\Reports\PropertyDueRent_Report.resx">
-      <DependentUpon>PropertyDueRent_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\PropertyContractTotal_Report.resx">
       <DependentUpon>PropertyContractTotal_Report.cs</DependentUpon>

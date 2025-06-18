@@ -4491,7 +4491,11 @@ namespace MyERP.Reporting
         {
             return View();
         }
-
+        public ActionResult DueOwnersPaymentsReport()
+        {
+            return View();
+        }
+        
         public ActionResult ChurchMembershipVisitInPeriod(DateTime? From, DateTime? To, bool? showReport)
         {
             if (showReport == true)
