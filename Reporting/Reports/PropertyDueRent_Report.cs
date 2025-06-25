@@ -1482,7 +1482,6 @@ public class PropertyDueRent_Report : DevExpress.XtraReports.UI.XtraReport
             new DevExpress.XtraReports.Expressions.BasicExpressionBinding("Value", "Now()")});
             this.DateFrom.Name = "DateFrom";
             this.DateFrom.Type = typeof(System.DateTime);
-            this.DateFrom.ValueInfo = "0";
             // 
             // PropertyDueRent_Report
             // 
@@ -1511,15 +1510,15 @@ public class PropertyDueRent_Report : DevExpress.XtraReports.UI.XtraReport
             this.ParameterPanelLayoutItems.AddRange(new DevExpress.XtraReports.Parameters.ParameterPanelLayoutItem[] {
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.RenterId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.PropertyId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
-            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DateTo, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DateFrom, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DateTo, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DepartmentId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.IsPay, DevExpress.XtraReports.Parameters.Orientation.Horizontal)});
             this.Parameters.AddRange(new DevExpress.XtraReports.Parameters.Parameter[] {
             this.RenterId,
             this.PropertyId,
-            this.DateTo,
             this.DateFrom,
+            this.DateTo,
             this.DepartmentId,
             this.IsPay});
             this.ReportUnit = DevExpress.XtraReports.UI.ReportUnit.TenthsOfAMillimeter;
