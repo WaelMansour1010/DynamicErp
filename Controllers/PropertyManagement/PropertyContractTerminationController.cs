@@ -164,6 +164,17 @@ namespace MyERP.Controllers.PropertyManagement
 
             ViewBag.UnitCode = PropUnit != null ? PropUnit.PropertyUnitNo : string.Empty; // تعيين قيمة فارغة إذا كانت PropUnit null
 
+            var mergedUnitIds = contractTermination.PropertyContract.PropertyContractMergedUnit.Select(mu => mu.PropertyUnitId).ToList();
+
+            var selectedMergedUnits = new MultiSelectList(db.PropertyDetails
+               .Where(pd => mergedUnitIds.Contains(pd.Id))
+               .Select(b => new
+               {
+                   Id = b.Id,
+                   ArName = b.PropertyUnitNo
+               }).ToList(), "Id", "ArName");
+            ViewBag.selectedMergedUnits = (MultiSelectList)selectedMergedUnits.AsEnumerable();
+
             return View(contractTermination);
         }
 
@@ -176,6 +187,21 @@ namespace MyERP.Controllers.PropertyManagement
                 var id = contractTermination.Id;
                 contractTermination.IsDeleted = false;
                 contractTermination.UserId = userId;
+                //set unit status and merged units status to available
+                var contract =
+                    db.PropertyContracts.FirstOrDefault(t => t.Id == contractTermination.PropertyContractId);
+                var unit = db.PropertyDetails.Where(t => t.MainDocId == contractTermination.PropertyId &&
+                                                         t.Id ==
+                                                         contract.PropertyUnitId).FirstOrDefault();
+                unit.StatusId = PropertyDetailsStatus.Available;
+                foreach (var item in contract.PropertyContractMergedUnit)
+                {
+                    var mergedunit = db.PropertyDetails.Where(t => t.MainDocId == contractTermination.PropertyId &&
+                                                             t.Id ==
+                                                             item.PropertyUnitId).FirstOrDefault();
+                    mergedunit.StatusId = PropertyDetailsStatus.Available;
+                }
+
                 if (contractTermination.Id > 0)
                 {
                     ////----------------------------------- **************************** ------------------------------------------//
@@ -184,13 +210,7 @@ namespace MyERP.Controllers.PropertyManagement
                     MyXML.xPathName = "Damages";
                     var PropertyContractTerminationDamages = MyXML.GetXML(contractTermination.PropertyContractTerminationDamages);
                     db.PropertyContractTerminate_Update(contractTermination.Id, contractTermination.DocumentNumber,contractTermination.DepartmentId, contractTermination.VoucherDate, contractTermination.PropertyContractId, contractTermination.PropertyId, contractTermination.PropertyUnitTypeId, contractTermination.PropertyRenterId, contractTermination.TerminationDate, contractTermination.LastBatchDate, contractTermination.IsLastBatchCalculation, contractTermination.IsDocumented, contractTermination.IncreaseDayValue, contractTermination.IncreaseDaysNo, contractTermination.IncreaseDaysTotalValue, contractTermination.DecreaseDayValue, contractTermination.DecreaseDaysNo, contractTermination.DecreaseDaysTotalValue, contractTermination.IsDeleted, contractTermination.UserId, contractTermination.Notes, contractTermination.Image, PropertyContractTerminationDetails, PropertyContractTerminationDamages);
-                    //set sttus to not avalable`
-                    var contract =
-                        db.PropertyContracts.FirstOrDefault(t => t.Id == contractTermination.PropertyContractId);
-                    var unit = db.PropertyDetails.Where(t => t.MainDocId == contractTermination.PropertyId &&
-                                                             t.Id ==
-                                                             contract.PropertyUnitId).FirstOrDefault();
-                    unit.StatusId = PropertyDetailsStatus.Available;
+                    
                     db.SaveChanges();
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("PropertyContractTermination", "Edit", "AddEdit", contractTermination.Id, null, "تصفية العقد");
@@ -203,13 +223,7 @@ namespace MyERP.Controllers.PropertyManagement
                     var PropertyContractTerminationDamages = MyXML.GetXML(contractTermination.PropertyContractTerminationDamages);
                     var idResult = new ObjectParameter("Id", typeof(Int32));
                     db.PropertyContractTerminate_Insert(idResult, contractTermination.DepartmentId, contractTermination.VoucherDate, contractTermination.PropertyContractId, contractTermination.PropertyId, contractTermination.PropertyUnitTypeId, contractTermination.PropertyRenterId, contractTermination.TerminationDate, contractTermination.LastBatchDate, contractTermination.IsLastBatchCalculation, contractTermination.IsDocumented, contractTermination.IncreaseDayValue, contractTermination.IncreaseDaysNo, contractTermination.IncreaseDaysTotalValue, contractTermination.DecreaseDayValue, contractTermination.DecreaseDaysNo, contractTermination.DecreaseDaysTotalValue, contractTermination.IsDeleted, contractTermination.UserId, contractTermination.Notes, contractTermination.Image, PropertyContractTerminationDetails, PropertyContractTerminationDamages);
-                    //set sttus to not avalable`
-                    var contract =
-                        db.PropertyContracts.FirstOrDefault(t => t.Id == contractTermination.PropertyContractId);
-                    var unit = db.PropertyDetails.Where(t => t.MainDocId == contractTermination.PropertyId &&
-                                                             t.Id ==
-                                                             contract.PropertyUnitId).FirstOrDefault();
-                    unit.StatusId = PropertyDetailsStatus.Available;
+                    
                     db.SaveChanges();
                     //////////
                     id = (int)idResult.Value;
@@ -502,6 +516,12 @@ namespace MyERP.Controllers.PropertyManagement
                     UnitCode = a.Property.PropertyDetails.Where(c=>c.Id==a.PropertyUnitId).FirstOrDefault().PropertyUnitNo,
                     UnitTypeId = a.PropertyUnitTypeId,
                     UnitType = a.PropertyUnitType.ArName,
+                    MergedUnits = a.Property.PropertyDetails
+                        .Where(pd => a.PropertyContractMergedUnit.Select(mu => mu.PropertyUnitId).Contains(pd.Id))
+                        .Select(pd => new {
+                            pd.Id,
+                            pd.PropertyUnitNo
+                        }).ToList(),
                     Details = a.PropertyContractBatches.Select(b => new
                     {
                         b.BatchNo,

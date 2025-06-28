@@ -132,6 +132,25 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row SearchResult" style="display:none;">
+                                                <label class="control-label col-sm-2 MergedUnitsDiv">@MyERP.Properties.Resources.MergedUnits</label>
+                                                <div class="col-sm-4 MergedUnitsDiv">
+                                                    @{ 
+                                                        if ((Model?.Id ?? 0) > 0)
+                                                        {
+                                                            @Html.ListBox("selectedMergedUnits", (MultiSelectList)ViewBag.selectedMergedUnits, new { @class = "form-control", size = 6, style = "width: 200px;" })
+                                                        }
+                                                        else
+                                                        {
+                                                            <select name="selectedMergedUnits" id="selectedMergedUnits" class="form-control" size="6" style="width: 200px;" multiple>
+                                                            </select>
+                                                        }
+                                                    }
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row SearchResult" style="display:none;">
                                                 <label class=" col-sm-2 control-label" for="TerminationDate">@MyERP.Properties.Resources.ContractStartDate</label>
                                                 <div class="col-sm-4">
                                                     <input id="ContractStartDate" class="form-control Gregorian" type="datetime" />
@@ -662,6 +681,12 @@ var PropertyComponentDetail = [];
                 var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
                 $(this).closest('tr').find('.HijryBatchDate').text(Hijry);
             });
+            //set all items in PropertyContractMergedUnit to be selected and disabled
+            var allValues = $('#selectedMergedUnits option').map(function () { return this.value; }).get();// $('#PropertyContractMergedUnit option').map(function () { return this.value; }).get();
+            $('#selectedMergedUnits').val(allValues).trigger('change');
+            // Disable the select and update Select2 UI
+            $('#selectedMergedUnits').prop('disabled', true).trigger('change.select2');
+            
         }
         else {
             setDocNum();
@@ -774,6 +799,20 @@ var PropertyComponentDetail = [];
             $('#UnitCode').val(contract.UnitCode);
             $('#UnitTypeId').val(contract.UnitTypeId);
             $('#UnitType').val(contract.UnitType);
+            // Fill merged units select as multi-select and select all
+            var mergedUnitsSelect = $('#selectedMergedUnits');
+            mergedUnitsSelect.empty(); // Clear previous options
+            contract.MergedUnits.forEach(function (item) {
+                mergedUnitsSelect.append(
+                    $('<option>', {
+                        value: item.PropertyUnitNo,
+                        text: item.PropertyUnitNo,
+                        selected: true 
+                    })
+                );
+            });
+            mergedUnitsSelect.prop('disabled', true).trigger('change.select2');
+
             for (var i = 0; i < contract.Details.length; i++) {
                 contract.Details[i].BatchDate = contract.Details[i].BatchDate != null ? convertToJavaScriptDate(contract.Details[i].BatchDate) : "";
                 var HijryBatchDate = new Intl.DateTimeFormat('ar-sa').format(new Date(contract.Details[i].BatchDate)).toString();
@@ -814,7 +853,7 @@ var PropertyComponentDetail = [];
                     for (var i = 0; i < r.length; i++) {
                        // r[i].UnitCode = r[i].UnitCode != null ? r[i].UnitCode : "";
                         r[i].RenterMobile = r[i].RenterMobile != null ? r[i].RenterMobile : "";
-                       if (r[i].UnitCode != null) {
+                        if (r[i].UnitCode != null) {
                             let PopUptr = '<tr><td class="tabledit-edit-mode" ><label class="PopUpRenter control-label control-label">' +
                                 r[i].Renter + '</label></td><td class="tabledit-edit-mode" ><label class="PopUpRenterMobile control-label control-label">' +
                                 r[i].RenterMobile + '</label></td><td class="tabledit-edit-mode" ><label class="PopUpContractNo control-label control-label">' +
