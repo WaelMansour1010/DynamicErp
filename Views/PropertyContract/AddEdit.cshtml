@@ -1262,7 +1262,11 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
                 $("#PropertyUnitId").empty().append(UnitOptions);
                 $("#PropertyUnitId").val(mval);
 
-                $("#PropertyContractMergedUnit").empty().append(UnitOptions);
+                // Filter UnitOptions for PropertyContractMergedUnit
+                var mergedUnitOptions = $($.parseHTML(UnitOptions)).filter(function () {
+                    return $(this).val() !== mval;
+                });
+                $("#PropertyContractMergedUnit").empty().append(mergedUnitOptions);
             });
         });;
     });
@@ -1272,6 +1276,14 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
 
             $("#PropertyContractMergedUnit").empty().append(UnitOptions);
         });
+    });
+    $('#PropertyUnitId').on('change', function () {
+        let mval = $("#PropertyUnitId").val();
+        // Filter UnitOptions for PropertyContractMergedUnit
+        var mergedUnitOptions = $($.parseHTML(UnitOptions)).filter(function () {
+            return $(this).val() !== mval;
+        });
+        $("#PropertyContractMergedUnit").empty().append(mergedUnitOptions);
     });
     $('#HasMergedUnits').on('change', function () {
         if ($('#HasMergedUnits').prop('checked') == true) {
@@ -1997,7 +2009,7 @@ var lastdate;
         }
 
         var PropertyContractMergedUnits = [];
-        if (valid) {
+        if (valid && $('#HasMergedUnits').prop('checked') == true) {
             $('#PropertyContractMergedUnit option:selected').each(function () {
                 var MergedUnit = {
                     PropertyUnitId: $(this).val()
