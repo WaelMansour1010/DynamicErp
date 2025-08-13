@@ -206,7 +206,7 @@ AND (ISNULL(@PropertyId2, 0) = 0 OR Property.Id = @PropertyId2)
 And (ISNULL(@DepartmentId, 0) = 0 OR Department.Id = @DepartmentId)
 AND (ISNULL(@PropertyRenterId, 0) = 0 OR PropertyRenter.Id = @PropertyRenterId)
 AND (ISNULL(@IsFree, 0) = 1 OR PropertyDetail.StatusId = 1)
-
+and  Property.IsActive = 1
 AND (ISNULL(@IsFree2, 0) = 1 OR PropertyDetail.StatusId = 2)
 
 --AND (ISNULL(@PropertyId, 0) = 0 OR Property.Id = @PropertyId)</value>

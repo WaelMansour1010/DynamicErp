@@ -148,6 +148,7 @@ INNER JOIN PropertyRenter r
     ON r.Id = c.PropertyRenterId
 INNER JOIN Property p
     ON p.Id = c.PropertyId
+	and  p.IsActive =1
 INNER JOIN PropertyType t
     ON t.Id = p.PropertyTypeId
 INNER JOIN PropertyDetail d

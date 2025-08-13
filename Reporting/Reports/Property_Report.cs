@@ -231,8 +231,9 @@ public class Property_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter2.Name = "ContractEndDate";
             queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter2.Value = new DevExpress.DataAccess.Expression("?EndDate", typeof(System.DateTime));
-            customSqlQuery2.Parameters.Add(queryParameter1);
-            customSqlQuery2.Parameters.Add(queryParameter2);
+            customSqlQuery2.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1,
+            queryParameter2});
             customSqlQuery2.Sql = resources.GetString("customSqlQuery2.Sql");
             storedProcQuery1.Name = "GetPropertyUnits";
             queryParameter3.Name = "@RenterId";
@@ -241,8 +242,9 @@ public class Property_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter4.Name = "@ContractEndDate";
             queryParameter4.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter4.Value = new DevExpress.DataAccess.Expression("?EndDate", typeof(System.DateTime));
-            storedProcQuery1.Parameters.Add(queryParameter3);
-            storedProcQuery1.Parameters.Add(queryParameter4);
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter3,
+            queryParameter4});
             storedProcQuery1.StoredProcName = "GetPropertyUnits";
             this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
             customSqlQuery1,
@@ -334,7 +336,7 @@ public class Property_Report : DevExpress.XtraReports.UI.XtraReport
             this.Time.StylePriority.UseForeColor = false;
             this.Time.StylePriority.UseTextAlignment = false;
             this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            this.Time.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Time_BeforePrint);
             // 
             // xrLabel6
             // 
@@ -398,7 +400,7 @@ public class Property_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrPictureBox1.Name = "xrPictureBox1";
             this.xrPictureBox1.SizeF = new System.Drawing.SizeF(157.7602F, 121.5416F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrPictureBox1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // xrLabel8
             // 
@@ -1231,7 +1233,7 @@ public class Property_Report : DevExpress.XtraReports.UI.XtraReport
             this.DataMember = "GetPropertyUnits";
             this.DataSource = this.sqlDataSource1;
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
-            this.Margins = new DevExpress.Drawing.DXMargins(40, 40, 40, 79);
+            this.Margins = new DevExpress.Drawing.DXMargins(40F, 40F, 40F, 78.79156F);
             this.PageHeight = 1169;
             this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
@@ -1246,7 +1248,7 @@ public class Property_Report : DevExpress.XtraReports.UI.XtraReport
             this.DetailData1,
             this.DetailData3_Odd,
             this.PageInfo});
-            this.Version = "20.1";
+            this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();

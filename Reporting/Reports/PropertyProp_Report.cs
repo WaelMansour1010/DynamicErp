@@ -171,6 +171,7 @@ public class PropertyProp_Report : DevExpress.XtraReports.UI.XtraReport
             this.DetailData3_Odd = new DevExpress.XtraReports.UI.XRControlStyle();
             this.PageInfo = new DevExpress.XtraReports.UI.XRControlStyle();
             this.TopMargin = new DevExpress.XtraReports.UI.TopMarginBand();
+            this.CompanyName = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel7 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.BottomMargin = new DevExpress.XtraReports.UI.BottomMarginBand();
@@ -223,13 +224,13 @@ public class PropertyProp_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrLabel16 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel18 = new DevExpress.XtraReports.UI.XRLabel();
             this.groupHeaderBand1 = new DevExpress.XtraReports.UI.GroupHeaderBand();
-            this.CompanyName = new DevExpress.XtraReports.UI.XRLabel();
             ((System.ComponentModel.ISupportInitialize)(this.reportDataSet1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
             // 
             // reportDataSet1
             // 
             this.reportDataSet1.DataSetName = "ReportDataSet";
+            this.reportDataSet1.EnforceConstraints = false;
             this.reportDataSet1.SchemaSerializationMode = System.Data.SchemaSerializationMode.IncludeSchema;
             // 
             // Title
@@ -291,6 +292,22 @@ public class PropertyProp_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrLabel7,
             this.xrPictureBox1});
             this.TopMargin.Name = "TopMargin";
+            // 
+            // CompanyName
+            // 
+            this.CompanyName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.CompanyName.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.CompanyName.ForeColor = System.Drawing.Color.White;
+            this.CompanyName.LocationFloat = new DevExpress.Utils.PointFloat(23.54834F, 10.00001F);
+            this.CompanyName.Multiline = true;
+            this.CompanyName.Name = "CompanyName";
+            this.CompanyName.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.CompanyName.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
+            this.CompanyName.StylePriority.UseBackColor = false;
+            this.CompanyName.StylePriority.UseFont = false;
+            this.CompanyName.StylePriority.UseForeColor = false;
+            this.CompanyName.StylePriority.UseTextAlignment = false;
+            this.CompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
             // 
             // xrLabel7
             // 
@@ -1002,22 +1019,6 @@ public class PropertyProp_Report : DevExpress.XtraReports.UI.XtraReport
             new DevExpress.XtraReports.UI.GroupField("DepartmentId", DevExpress.XtraReports.UI.XRColumnSortOrder.Ascending)});
             this.groupHeaderBand1.KeepTogether = true;
             this.groupHeaderBand1.Name = "groupHeaderBand1";
-            // 
-            // CompanyName
-            // 
-            this.CompanyName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
-            this.CompanyName.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.CompanyName.ForeColor = System.Drawing.Color.White;
-            this.CompanyName.LocationFloat = new DevExpress.Utils.PointFloat(23.54834F, 10.00001F);
-            this.CompanyName.Multiline = true;
-            this.CompanyName.Name = "CompanyName";
-            this.CompanyName.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.CompanyName.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.CompanyName.StylePriority.UseBackColor = false;
-            this.CompanyName.StylePriority.UseFont = false;
-            this.CompanyName.StylePriority.UseForeColor = false;
-            this.CompanyName.StylePriority.UseTextAlignment = false;
-            this.CompanyName.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
             // 
             // PropertyProp_Report
             // 

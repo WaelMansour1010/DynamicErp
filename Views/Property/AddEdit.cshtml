@@ -180,10 +180,12 @@
                                                 </div>
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.PropertyStatus</label>
                                                 <div class="col-sm-4">
-                                                    @Html.DropDownListFor(model => model.PropertyStatusId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
-                                                    <div class="invalid-feedback">
-                                                        @MyERP.Properties.Resources.Required
-                                                    </div>
+                                                    @Html.DropDownListFor(
+         model => model.PropertyStatusId,
+         (IEnumerable<SelectListItem>)ViewBag.PropertyStatusId,
+         new { @class = "form-control", required = "required" }
+     )
+
                                                 </div>
                                             </div>
                                             <div class="form-group row">
@@ -683,7 +685,28 @@
                                             <div class="form-group row">
                                                 <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.Status</label>
                                                 <div class="col-sm-4">
-                                                    @Html.DropDownList("StatusId", null, null, htmlAttributes: new { @class = "form-control" })
+
+                                                    @Html.DropDownList(
+        "StatusId",
+        new List<SelectListItem> {
+            new SelectListItem { Value = "1", Text = "مؤجر" },
+            new SelectListItem { Value = "2", Text = "متاح", Selected = true } // الافتراضي
+        },
+        new { @class = "form-control", id = "StatusId" }
+    )
+
+
+                                                    @*<script>
+            $(function () {
+                // لو مش متعيّنة، خلّيها 2 = متاح
+                var $s = $('#StatusId');
+                if (!$s.val()) { $s.val('2'); }
+                $s.trigger('change'); // لو Select2 مفعّل
+            });
+        </script>*@
+
+
+
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
@@ -1728,5 +1751,11 @@ function showAlert(message, type) {
         confirmButtonText: '@MyERP.Properties.Resources.Ok',
         confirmButtonColor: '#3085d6'
     });
-}
+    }
+
+    // ضبط الافتراضي = متاح
+    $(window).on('load', function () {
+        $('#StatusId').val('2').trigger('change');
+    });
+
 </script>

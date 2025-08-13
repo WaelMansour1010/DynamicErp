@@ -197,7 +197,7 @@ namespace MyERP.Controllers.PropertyManagement
                     item.IsDeleted = true; 
                     item.IsSelected = false;
                     var ContractBatch = db.PropertyContractBatches.Where(a => a.Id == item.PropertyContractBatchId).FirstOrDefault();
-                    ContractBatch.IsDeleted = true;
+                  //  ContractBatch.IsDeleted = true;
                     ContractBatch.IsRegisteredAsDue = false;
                 }
                

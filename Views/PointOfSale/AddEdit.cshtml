@@ -1968,7 +1968,7 @@
     function SendToKitchen() {
         addEdit(null,"SendToKitchen");
     }
-    function Payinvoice() {
+    function Payinvoice2() {
         var _PaymentAmount = $('.PaymentAmount').eq(1).val();
         /*$('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1 == $('#Paid').inputmask('unmaskedvalue') * 1 && */
         if (_PaymentAmount > 0) {
@@ -1980,6 +1980,18 @@
                 confirmButtonText: '@MyERP.Properties.Resources.Ok',
                 confirmButtonColor: '#3085d6'
             });
+        }
+        else {
+            addEdit(null, "Pay");
+        }
+    }
+
+
+    function Payinvoice() {
+        var _PaymentAmount = $('.PaymentAmount').eq(1).val();
+        // إذا المبلغ أكبر من صفر، افتح مودال اختيار طرق الدفع
+        if (_PaymentAmount > 0) {
+            showPaymentMethodsModal();
         }
         else {
             addEdit(null, "Pay");

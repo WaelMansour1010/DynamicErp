@@ -187,9 +187,10 @@ public class PropertyContractTotal_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter3.Name = "OwnerId";
             queryParameter3.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter3.Value = new DevExpress.DataAccess.Expression("?OwnerId", typeof(int));
-            customSqlQuery1.Parameters.Add(queryParameter1);
-            customSqlQuery1.Parameters.Add(queryParameter2);
-            customSqlQuery1.Parameters.Add(queryParameter3);
+            customSqlQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1,
+            queryParameter2,
+            queryParameter3});
             customSqlQuery1.Sql = resources.GetString("customSqlQuery1.Sql");
             customSqlQuery2.Name = "Renter";
             customSqlQuery2.Sql = "select Id,ArName from PropertyRenter where IsActive=1 and IsDeleted=0";
@@ -334,7 +335,7 @@ public class PropertyContractTotal_Report : DevExpress.XtraReports.UI.XtraReport
             this.Time.StylePriority.UseForeColor = false;
             this.Time.StylePriority.UseTextAlignment = false;
             this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            this.Time.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Time_BeforePrint);
             // 
             // pageInfo2
             // 
@@ -352,7 +353,7 @@ public class PropertyContractTotal_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrPictureBox1.Name = "xrPictureBox1";
             this.xrPictureBox1.SizeF = new System.Drawing.SizeF(148.0608F, 140.2916F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrPictureBox1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // xrLabel8
             // 
@@ -850,7 +851,7 @@ public class PropertyContractTotal_Report : DevExpress.XtraReports.UI.XtraReport
             this.DataMember = "PropertyContractTotal";
             this.DataSource = this.sqlDataSource1;
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
-            this.Margins = new DevExpress.Drawing.DXMargins(40, 40, 40, 73);
+            this.Margins = new DevExpress.Drawing.DXMargins(40F, 40F, 40F, 73.20897F);
             this.PageHeight = 1169;
             this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
@@ -866,7 +867,7 @@ public class PropertyContractTotal_Report : DevExpress.XtraReports.UI.XtraReport
             this.DetailData1,
             this.DetailData3_Odd,
             this.PageInfo});
-            this.Version = "20.1";
+            this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();

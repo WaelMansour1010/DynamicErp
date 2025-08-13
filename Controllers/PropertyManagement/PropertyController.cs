@@ -133,9 +133,22 @@ namespace MyERP.Controllers.PropertyManagement
                 ViewBag.TypeId = new SelectList(new List<dynamic> {
                new { Id=1,ArName="سكني"},
                 new { Id=2,ArName="إداري"}}, "Id", "ArName");
-                ViewBag.StatusId = new SelectList(new List<dynamic> {
-               new { Id=1,ArName="مؤجر"},
-                new { Id=2,ArName="متاح"}}, "Id", "ArName");
+                //ViewBag.StatusId = new SelectList(new List<dynamic> {
+                //new { Id=1,ArName="مؤجر"},
+                // new { Id=2,ArName="متاح"}}, "Id", "ArName");
+                ModelState.Remove("StatusId");
+                ViewBag.StatusId = new SelectList(
+    new[]
+    {
+        new { Id = 1, ArName = "مؤجر" },
+        new { Id = 2, ArName = "متاح" }
+    },
+    "Id", "ArName",
+    2 // الافتراضي = متاح
+);
+
+
+
                 ViewBag.ContractDate = cTime.ToString("yyyy-MM-dd");
                 ViewBag.ContractStartDate = cTime.ToString("yyyy-MM-dd");
                 ViewBag.ContractEndDate = cTime.ToString("yyyy-MM-dd");
@@ -217,9 +230,23 @@ namespace MyERP.Controllers.PropertyManagement
             ViewBag.TypeId = new SelectList(new List<dynamic> {
                new { Id=1,ArName="سكني"},
                 new { Id=2,ArName="إداري"}}, "Id", "ArName");
-            ViewBag.StatusId = new SelectList(new List<dynamic> {
-               new { Id=1,ArName="مؤجر"},
-                new { Id=2,ArName="متاح"}}, "Id", "ArName");
+
+
+            //ViewBag.StatusId = new SelectList(new List<dynamic> {
+            //   new { Id=1,ArName="مؤجر"},
+            //    new { Id=2,ArName="متاح"}}, "Id", "ArName");
+            ModelState.Remove("StatusId");
+            ViewBag.StatusId = new SelectList(
+               new[]
+               {
+        new { Id = 1, ArName = "مؤجر" },
+        new { Id = 2, ArName = "متاح" }
+               },
+               "Id", "ArName",
+               2 // خليه برضه متاح افتراضياً عند إضافة سطر تفصيلة جديد
+           );
+
+
             ViewBag.ContractDate = property.ContractDate != null ? property.ContractDate.Value.ToString("yyyy-MM-dd") : null;
             ViewBag.ContractStartDate = property.ContractStartDate != null ? property.ContractStartDate.Value.ToString("yyyy-MM-dd") : null;
             ViewBag.ContractEndDate = property.ContractEndDate != null ? property.ContractEndDate.Value.ToString("yyyy-MM-dd") : null;
