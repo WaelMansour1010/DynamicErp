@@ -114,6 +114,7 @@ namespace MyERP.Models
             this.PrepaidExpenseDetails1 = new HashSet<PrepaidExpenseDetail>();
             this.Departments521 = new HashSet<Department>();
             this.Departments53 = new HashSet<Department>();
+            this.PropertyRenters = new HashSet<PropertyRenter>();
         }
     
         public int Id { get; set; }
@@ -336,5 +337,7 @@ namespace MyERP.Models
         public virtual ICollection<Department> Departments521 { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Department> Departments53 { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PropertyRenter> PropertyRenters { get; set; }
     }
 }

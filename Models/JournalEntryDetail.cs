@@ -28,10 +28,15 @@ namespace MyERP.Models
         public Nullable<bool> IsPosted { get; set; }
         public bool IsDeleted { get; set; }
         public bool IsActive { get; set; }
+        public Nullable<int> VendorId { get; set; }
+        public Nullable<int> PartyType { get; set; }
+        public Nullable<int> PartyId { get; set; }
+        public Nullable<int> AccountId2 { get; set; }
     
         public virtual ChartOfAccount ChartOfAccount { get; set; }
         public virtual CostCenter CostCenter { get; set; }
         public virtual JournalEntry JournalEntry { get; set; }
         public virtual SystemPage SystemPage { get; set; }
+        public virtual Vendor Vendor { get; set; }
     }
 }

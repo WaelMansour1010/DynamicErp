@@ -649,14 +649,18 @@
 
 <script>
 //--------------- Variables Declarations -------------------//
-var taxPercentage = 0.14;
+var taxPercentage = 0.15;
 var ContractDetails = [];
 var PropertyComponentDetailOption = [];
-var PropertyComponentDetail = [];
+    var PropertyComponentDetail = [];
+    // بحث العقود (إلغاء الطلب السابق + ديباونس)
+    var _searchXhr = null;
+    var _searchTimer = null;
+
 
 //*********************************************************//
 //--------------- Ready Function -------------------//
-    $(document).ready(function () {
+    @*$(document).ready(function () {
         $('#VoucherDate').val('@ViewBag.VoucherDate');
         $('#TerminationDate').val('@ViewBag.TerminationDate');
         $('#LastBatchDate').val('@ViewBag.LastBatchDate');
@@ -686,13 +690,92 @@ var PropertyComponentDetail = [];
             $('#selectedMergedUnits').val(allValues).trigger('change');
             // Disable the select and update Select2 UI
             $('#selectedMergedUnits').prop('disabled', true).trigger('change.select2');
-            
+
         }
         else {
             setDocNum();
             GetCurrentTaxPercentage();
         }
     });
+//*********************************************************//*@
+
+
+    // بحث العقود: متغيّرات عامة للإلغاء والديباونس
+var _searchXhr = null;
+var _searchTimer = null;
+
+$(document).ready(function () {
+    $('#VoucherDate').val('@ViewBag.VoucherDate');
+    $('#TerminationDate').val('@ViewBag.TerminationDate');
+    $('#LastBatchDate').val('@ViewBag.LastBatchDate');
+
+    // $('.Gregorian').each(function () {
+    //     var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+    //     $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+    // });
+
+    $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+        $("input[type|='datetime-local']").not('#FromDate,#ToDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+    });
+
+    if ($('#Id').val() > 0) {
+        /// AddToDetails($('#PropertyContractId').val())
+        $('.SearchResult').show();
+        CalculateDamageTotals();
+        var code = $('#DocumentNumber').val();
+        $('#DocumentNumbers').val(code.replaceAll("-", ""))
+        $("#DepartmentId").prop('disabled', true);
+        $("#VoucherDate").prop('disabled', true);
+
+        $('.BatchDate').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $(this).closest('tr').find('.HijryBatchDate').text(Hijry);
+        });
+
+        // set all items in PropertyContractMergedUnit to be selected and disabled
+        var allValues = $('#selectedMergedUnits option').map(function () { return this.value; }).get();// $('#PropertyContractMergedUnit option').map(function () { return this.value; }).get();
+        $('#selectedMergedUnits').val(allValues).trigger('change');
+        // Disable the select and update Select2 UI
+        $('#selectedMergedUnits').prop('disabled', true).trigger('change.select2');
+
+    } else {
+        setDocNum();
+        GetCurrentTaxPercentage();
+    }
+
+    // ===================== [إضافات البحث عن العقود] =====================
+
+    // 1) فوكس تلقائي على حقل البحث عند فتح المودال
+    $('#SearchModal').on('shown.bs.modal', function () {
+        $('#SearchText').trigger('focus');
+    });
+
+    // 2) بحث أثناء الكتابة مع ديباونس 300ms + دعم ضغطة المسافة
+    $('#SearchText').on('keyup', function (e) {
+        clearTimeout(_searchTimer);
+        _searchTimer = setTimeout(function () {
+            if (typeof GetPropertyContractTerminationDetails === 'function') {
+                GetPropertyContractTerminationDetails();
+            }
+        }, 300);
+
+        // لو المستخدم ضغط Space مباشرةً لفتح القائمة بسرعة
+        if (e.key === ' ' || e.keyCode === 32) {
+            clearTimeout(_searchTimer);
+            if (typeof GetPropertyContractTerminationDetails === 'function') {
+                GetPropertyContractTerminationDetails();
+            }
+        }
+    });
+
+    // (اختياري) لو عندك زر بحث يدوي
+    $('#btnSearchNow').on('click', function () {
+        if (typeof GetPropertyContractTerminationDetails === 'function') {
+            GetPropertyContractTerminationDetails();
+        }
+    });
+    // ====================================================================
+});
 //*********************************************************//
 
 //--------------- Event Functions -------------------//
@@ -807,7 +890,7 @@ var PropertyComponentDetail = [];
                     $('<option>', {
                         value: item.PropertyUnitNo,
                         text: item.PropertyUnitNo,
-                        selected: true 
+                        selected: true
                     })
                 );
             });
@@ -843,34 +926,72 @@ var PropertyComponentDetail = [];
 
     }
 
-    function GetPropertyContractTerminationDetails() {
+   function GetPropertyContractTerminationDetails() {
+    var q = $('#SearchText').val().trim();
 
-       // if ($('#SearchText').val()) {
-            $.get('/PropertyContractTermination/GetPropertyContractTerminationDetails?SearchText=' + $('#SearchText').val()).done(function (r) {
-                if (r.length) {
-                    $('#ShowResultDetails').empty();
-                    ContractDetails = r;
-                    for (var i = 0; i < r.length; i++) {
-                       // r[i].UnitCode = r[i].UnitCode != null ? r[i].UnitCode : "";
-                        r[i].RenterMobile = r[i].RenterMobile != null ? r[i].RenterMobile : "";
-                        if (r[i].UnitCode != null) {
-                            let PopUptr = '<tr><td class="tabledit-edit-mode" ><label class="PopUpRenter control-label control-label">' +
-                                r[i].Renter + '</label></td><td class="tabledit-edit-mode" ><label class="PopUpRenterMobile control-label control-label">' +
-                                r[i].RenterMobile + '</label></td><td class="tabledit-edit-mode" ><label class="PopUpContractNo control-label control-label">' +
-                                r[i].ContractNo + '</label></td><td class="tabledit-edit-mode"><label class="PopUpProperty control-label control-label">' +
-                                r[i].Property + '</label></td><td class="tabledit-edit-mode"><label class="PopUpPropertyUnitType control-label control-label">' +
-                                r[i].UnitType + '</label></td> <td class="tabledit-edit-mode"><label class="PopUpUnitNo control-label control-label">' +
-                                r[i].UnitCode + '</label></td><td class="tabledit-edit-mode"><button class="btn btn-primary" onclick="AddToDetails(' +
-                                r[i].ContractId + ') " > @MyERP.Properties.Resources.Add </button></td></tr> ';
-                            $('#ShowResultDetails').append(PopUptr);
-                        }
-                    }
-                }
-            });
-            $('#SearchText').val('');
-            $('#preloader, #status').fadeOut();
-       // }
+    // شرط بسيط لتقليل الضغط
+    if (q.length < 2) {
+        $('#ShowResultDetails').html('<tr><td colspan="6" class="text-muted">اكتب حرفين على الأقل…</td></tr>');
+        return;
     }
+
+    // الغِ أي طلب سابق لسه ما خلصش
+    if (_searchXhr && _searchXhr.readyState !== 4) {
+        try { _searchXhr.abort(); } catch (e) {}
+    }
+
+    // شكل تحميل مبدئي
+    $('#ShowResultDetails').html('<tr><td colspan="6">...جارِ التحميل</td></tr>');
+
+    _searchXhr = $.ajax({
+        url: '/PropertyContractTermination/GetPropertyContractTerminationDetails',
+        type: 'GET',
+        cache: false,
+        // خليك على نفس اسم البارامتر في الكنترولر (searchText)
+        data: { searchText: q }
+    })
+    .done(function (r) {
+        var rows = Array.isArray(r) ? r : [];
+        if (!rows.length) {
+            $('#ShowResultDetails').html('<tr><td colspan="6" class="text-muted">لا توجد نتائج</td></tr>');
+            return;
+        }
+
+        $('#ShowResultDetails').empty();
+        ContractDetails = rows; // لو باقي الصفحة بيعتمد عليها
+
+        for (var i = 0; i < rows.length; i++) {
+            var x = rows[i];
+            var renter       = x.Renter || '';
+            var mobile       = x.RenterMobile || '';
+            var contractNo   = x.ContractNo || '';
+            var property     = x.Property || '';
+            var unitType     = x.UnitType || '';
+            var unitCode     = x.UnitCode || '';
+
+            // نفس الـ markup اللي كان موجود عندك (labels + زر الإضافة)
+            var tr =
+                '<tr>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpRenter control-label control-label">' + renter     + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpRenterMobile control-label control-label">' + mobile     + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpContractNo control-label control-label">' + contractNo + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpProperty control-label control-label">' + property   + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpPropertyUnitType control-label control-label">' + unitType   + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpUnitNo control-label control-label">' + unitCode   + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><button class="btn btn-primary" onclick="AddToDetails(' + x.ContractId + ')">@MyERP.Properties.Resources.Add</button></td>' +
+                '</tr>';
+
+            // لو حابب تظهر فقط اللي ليه UnitCode، أضف الشرط هنا:
+            // if (unitCode) { $('#ShowResultDetails').append(tr); }
+
+            $('#ShowResultDetails').append(tr);
+        }
+    })
+    .fail(function () {
+        $('#ShowResultDetails').html('<tr><td colspan="6" class="text-danger">حدث خطأ في البحث</td></tr>');
+    });
+}
+
 
     function GetPropertyComponentDetails() {
         if ($('#PropertyComponentId').val()) {

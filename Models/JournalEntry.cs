@@ -39,6 +39,11 @@ namespace MyERP.Models
         public int DepartmentId { get; set; }
         public Nullable<int> CurrencyId { get; set; }
         public Nullable<double> Equivalent { get; set; }
+        public string OriginalDocumentNumber { get; set; }
+        public Nullable<int> OriginalNoteId { get; set; }
+        public Nullable<int> OriginalNoteType { get; set; }
+        public string OriginalSerial { get; set; }
+        public string MigrationSource { get; set; }
     
         public virtual Branch Branch { get; set; }
         public virtual Company Company { get; set; }

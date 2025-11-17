@@ -444,6 +444,14 @@ namespace MyERP.Models
         public virtual DbSet<RegisterAttendanceAndAbsence> RegisterAttendanceAndAbsences { get; set; }
         public virtual DbSet<RegisterAttendanceAndAbsenceDetail> RegisterAttendanceAndAbsenceDetails { get; set; }
         public virtual DbSet<ExpenseAmortizationDistribution> ExpenseAmortizationDistributions { get; set; }
+
+        
+        public virtual DbSet<SalesRepresentativesGroup> SalesRepresentativesGroup { get; set; }
+        public virtual DbSet<SalesReturnPaymentMethod> SalesReturnPaymentMethod { get; set; }
+        
+        
+        public virtual DbSet<Service> Service { get; set; }
+        public virtual DbSet<ServiceInvoice> ServiceInvoice { get; set; }
         public virtual DbSet<SystemSetting> SystemSettings { get; set; }
         public virtual DbSet<ChurchService> ChurchServices { get; set; }
         public virtual DbSet<Child> Children { get; set; }
@@ -458,6 +466,10 @@ namespace MyERP.Models
         public virtual DbSet<DelMe> DelMes { get; set; }
         public virtual DbSet<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
         public virtual DbSet<PropertyContractMergedUnit> PropertyContractMergedUnit { get; set; }
+        public virtual DbSet<vw_PropertyBatchDetailed> vw_PropertyBatchDetailed { get; set; }
+        public virtual DbSet<vw_PropertyPaymentSummary> vw_PropertyPaymentSummary { get; set; }
+        public virtual DbSet<transactionsVatDetail> transactionsVatDetails { get; set; }
+        public virtual DbSet<JED_AccountFixLog> JED_AccountFixLog { get; set; }
     
         public virtual ObjectResult<CashBox_Balances_Result> CashBox_Balances(Nullable<int> cashBoxId)
         {
@@ -1254,7 +1266,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetCustomerOB_Result>("GetCustomerOB", departmentIdParameter);
         }
     
-        public virtual ObjectResult<GetAccountStatementDetails_Result> GetAccountStatementDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> accountId, Nullable<int> departmentId, Nullable<int> activityId, Nullable<int> companyId)
+        public virtual ObjectResult<GetAccountStatementDetails_Result> GetAccountStatementDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> accountId, Nullable<int> departmentId, Nullable<int> activityId, Nullable<int> companyId, Nullable<int> partyType, Nullable<int> partyId)
         {
             var fromDateParameter = fromDate.HasValue ?
                 new ObjectParameter("fromDate", fromDate) :
@@ -1280,7 +1292,15 @@ namespace MyERP.Models
                 new ObjectParameter("CompanyId", companyId) :
                 new ObjectParameter("CompanyId", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetAccountStatementDetails_Result>("GetAccountStatementDetails", fromDateParameter, toDateParameter, accountIdParameter, departmentIdParameter, activityIdParameter, companyIdParameter);
+            var partyTypeParameter = partyType.HasValue ?
+                new ObjectParameter("PartyType", partyType) :
+                new ObjectParameter("PartyType", typeof(int));
+    
+            var partyIdParameter = partyId.HasValue ?
+                new ObjectParameter("PartyId", partyId) :
+                new ObjectParameter("PartyId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetAccountStatementDetails_Result>("GetAccountStatementDetails", fromDateParameter, toDateParameter, accountIdParameter, departmentIdParameter, activityIdParameter, companyIdParameter, partyTypeParameter, partyIdParameter);
         }
     
         public virtual ObjectResult<GetAllBasicServiceCategory_Result> GetAllBasicServiceCategory()
@@ -1318,7 +1338,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("DeleteSubmittedTechnicians", orderIdParameter, techIdParameter);
         }
     
-        public virtual ObjectResult<GetFinancialStatement_Result> GetFinancialStatement(Nullable<int> departmentId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> activityId, Nullable<int> companyId)
+        public virtual ObjectResult<GetFinancialStatement_Result> GetFinancialStatement(Nullable<int> departmentId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> activityId, Nullable<int> companyId, Nullable<int> detailLevel)
         {
             var departmentIdParameter = departmentId.HasValue ?
                 new ObjectParameter("departmentId", departmentId) :
@@ -1340,7 +1360,11 @@ namespace MyERP.Models
                 new ObjectParameter("CompanyId", companyId) :
                 new ObjectParameter("CompanyId", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetFinancialStatement_Result>("GetFinancialStatement", departmentIdParameter, fromDateParameter, toDateParameter, activityIdParameter, companyIdParameter);
+            var detailLevelParameter = detailLevel.HasValue ?
+                new ObjectParameter("DetailLevel", detailLevel) :
+                new ObjectParameter("DetailLevel", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetFinancialStatement_Result>("GetFinancialStatement", departmentIdParameter, fromDateParameter, toDateParameter, activityIdParameter, companyIdParameter, detailLevelParameter);
         }
     
         public virtual int PurchaseRequest_Delete(Nullable<int> id, Nullable<int> userId)
@@ -7437,19 +7461,19 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("TechnicianServices_Insert", parentIdParameter, techIdParameter, techniciansServicesParameter);
         }
     
-        public virtual ObjectResult<GetIncomeList_Result> GetIncomeList(Nullable<int> departmentId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> activityId, Nullable<int> companyId)
+        public virtual ObjectResult<GetIncomeList_Result> GetIncomeList(Nullable<int> departmentId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> activityId, Nullable<int> companyId, Nullable<int> detailLevel)
         {
             var departmentIdParameter = departmentId.HasValue ?
-                new ObjectParameter("departmentId", departmentId) :
-                new ObjectParameter("departmentId", typeof(int));
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
     
             var fromDateParameter = fromDate.HasValue ?
-                new ObjectParameter("fromDate", fromDate) :
-                new ObjectParameter("fromDate", typeof(System.DateTime));
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
     
             var toDateParameter = toDate.HasValue ?
-                new ObjectParameter("toDate", toDate) :
-                new ObjectParameter("toDate", typeof(System.DateTime));
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
     
             var activityIdParameter = activityId.HasValue ?
                 new ObjectParameter("ActivityId", activityId) :
@@ -7459,7 +7483,11 @@ namespace MyERP.Models
                 new ObjectParameter("CompanyId", companyId) :
                 new ObjectParameter("CompanyId", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetIncomeList_Result>("GetIncomeList", departmentIdParameter, fromDateParameter, toDateParameter, activityIdParameter, companyIdParameter);
+            var detailLevelParameter = detailLevel.HasValue ?
+                new ObjectParameter("DetailLevel", detailLevel) :
+                new ObjectParameter("DetailLevel", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetIncomeList_Result>("GetIncomeList", departmentIdParameter, fromDateParameter, toDateParameter, activityIdParameter, companyIdParameter, detailLevelParameter);
         }
     
         public virtual ObjectResult<GetItemQuantityInEachWarehouse_Result> GetItemQuantityInEachWarehouse(Nullable<int> itemId, Nullable<int> departmentId)
@@ -12761,7 +12789,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetEmployeesNotInPayrollIssue_Result>("GetEmployeesNotInPayrollIssue", departmentIdParameter, yearParameter, monthParameter, activityIdParameter, companyIdParameter);
         }
     
-        public virtual ObjectResult<CashIssueAndReceipt_Get_Result> CashIssueAndReceipt_Get(Nullable<int> departmentId, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo, Nullable<int> cashBoxId, Nullable<int> activityId, Nullable<int> companyId)
+        public virtual ObjectResult<CashIssueAndReceipt_Get_Result> CashIssueAndReceipt_Get(Nullable<int> departmentId, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo, Nullable<int> cashBoxId, Nullable<int> activityId, Nullable<int> companyId, Nullable<int> propertyId, Nullable<int> propertyUnitId)
         {
             var departmentIdParameter = departmentId.HasValue ?
                 new ObjectParameter("DepartmentId", departmentId) :
@@ -12787,7 +12815,15 @@ namespace MyERP.Models
                 new ObjectParameter("CompanyId", companyId) :
                 new ObjectParameter("CompanyId", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CashIssueAndReceipt_Get_Result>("CashIssueAndReceipt_Get", departmentIdParameter, dateFromParameter, dateToParameter, cashBoxIdParameter, activityIdParameter, companyIdParameter);
+            var propertyIdParameter = propertyId.HasValue ?
+                new ObjectParameter("PropertyId", propertyId) :
+                new ObjectParameter("PropertyId", typeof(int));
+    
+            var propertyUnitIdParameter = propertyUnitId.HasValue ?
+                new ObjectParameter("PropertyUnitId", propertyUnitId) :
+                new ObjectParameter("PropertyUnitId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CashIssueAndReceipt_Get_Result>("CashIssueAndReceipt_Get", departmentIdParameter, dateFromParameter, dateToParameter, cashBoxIdParameter, activityIdParameter, companyIdParameter, propertyIdParameter, propertyUnitIdParameter);
         }
     
         public virtual ObjectResult<ChartOfAccount_Get_Result> ChartOfAccount_Get(Nullable<int> typeId, Nullable<int> classificationId, Nullable<int> categoryId, Nullable<int> parrentAccountId)
@@ -17570,7 +17606,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetParentOfServiceCategory_Result>("GetParentOfServiceCategory", childIdParameter);
         }
     
-        public virtual ObjectResult<GetPropertyUnits_Result> GetPropertyUnits(Nullable<int> renterId, Nullable<System.DateTime> contractEndDate)
+        public virtual ObjectResult<GetPropertyUnits_Result> GetPropertyUnits(Nullable<int> renterId, Nullable<System.DateTime> contractEndDate, Nullable<int> propertyId, Nullable<int> departmentId)
         {
             var renterIdParameter = renterId.HasValue ?
                 new ObjectParameter("RenterId", renterId) :
@@ -17580,7 +17616,15 @@ namespace MyERP.Models
                 new ObjectParameter("ContractEndDate", contractEndDate) :
                 new ObjectParameter("ContractEndDate", typeof(System.DateTime));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyUnits_Result>("GetPropertyUnits", renterIdParameter, contractEndDateParameter);
+            var propertyIdParameter = propertyId.HasValue ?
+                new ObjectParameter("PropertyId", propertyId) :
+                new ObjectParameter("PropertyId", typeof(int));
+    
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyUnits_Result>("GetPropertyUnits", renterIdParameter, contractEndDateParameter, propertyIdParameter, departmentIdParameter);
         }
     
         public virtual ObjectResult<GetPurchaseRequestsInPeriod_Result> GetPurchaseRequestsInPeriod(Nullable<int> depId, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo)
@@ -18885,6 +18929,281 @@ namespace MyERP.Models
                 new ObjectParameter("UserId", typeof(int));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_SaveBatchPayment_Result>("sp_SaveBatchPayment", batchIdParameter, paidAmountParameter, paymentDateParameter, paymentMethodParameter, paymentReferenceParameter, paymentNotesParameter, userIdParameter);
+        }
+    
+        public virtual ObjectResult<GetExpiredPropertyContracts1_Result> GetExpiredPropertyContracts1()
+        {
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetExpiredPropertyContracts1_Result>("GetExpiredPropertyContracts1");
+        }
+    
+        public virtual int CashReceiptVoucher_ReprocessAll(Nullable<int> departmentId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<bool> onlyUnposted, Nullable<int> fromId, Nullable<int> toId, Nullable<int> batchSize, Nullable<bool> previewOnly)
+        {
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var onlyUnpostedParameter = onlyUnposted.HasValue ?
+                new ObjectParameter("OnlyUnposted", onlyUnposted) :
+                new ObjectParameter("OnlyUnposted", typeof(bool));
+    
+            var fromIdParameter = fromId.HasValue ?
+                new ObjectParameter("FromId", fromId) :
+                new ObjectParameter("FromId", typeof(int));
+    
+            var toIdParameter = toId.HasValue ?
+                new ObjectParameter("ToId", toId) :
+                new ObjectParameter("ToId", typeof(int));
+    
+            var batchSizeParameter = batchSize.HasValue ?
+                new ObjectParameter("BatchSize", batchSize) :
+                new ObjectParameter("BatchSize", typeof(int));
+    
+            var previewOnlyParameter = previewOnly.HasValue ?
+                new ObjectParameter("PreviewOnly", previewOnly) :
+                new ObjectParameter("PreviewOnly", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashReceiptVoucher_ReprocessAll", departmentIdParameter, fromDateParameter, toDateParameter, onlyUnpostedParameter, fromIdParameter, toIdParameter, batchSizeParameter, previewOnlyParameter);
+        }
+    
+        public virtual ObjectResult<PropertyContractTermination_FixByUnit_Result> PropertyContractTermination_FixByUnit(Nullable<int> propertyUnitId, string propertyName, string propertyUnitNo)
+        {
+            var propertyUnitIdParameter = propertyUnitId.HasValue ?
+                new ObjectParameter("PropertyUnitId", propertyUnitId) :
+                new ObjectParameter("PropertyUnitId", typeof(int));
+    
+            var propertyNameParameter = propertyName != null ?
+                new ObjectParameter("PropertyName", propertyName) :
+                new ObjectParameter("PropertyName", typeof(string));
+    
+            var propertyUnitNoParameter = propertyUnitNo != null ?
+                new ObjectParameter("PropertyUnitNo", propertyUnitNo) :
+                new ObjectParameter("PropertyUnitNo", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<PropertyContractTermination_FixByUnit_Result>("PropertyContractTermination_FixByUnit", propertyUnitIdParameter, propertyNameParameter, propertyUnitNoParameter);
+        }
+    
+        public virtual ObjectResult<PropertyUnit_ContractsAndTermination_Get_Result> PropertyUnit_ContractsAndTermination_Get(string propertyName, string propertyUnitNo, Nullable<int> propertyUnitId)
+        {
+            var propertyNameParameter = propertyName != null ?
+                new ObjectParameter("PropertyName", propertyName) :
+                new ObjectParameter("PropertyName", typeof(string));
+    
+            var propertyUnitNoParameter = propertyUnitNo != null ?
+                new ObjectParameter("PropertyUnitNo", propertyUnitNo) :
+                new ObjectParameter("PropertyUnitNo", typeof(string));
+    
+            var propertyUnitIdParameter = propertyUnitId.HasValue ?
+                new ObjectParameter("PropertyUnitId", propertyUnitId) :
+                new ObjectParameter("PropertyUnitId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<PropertyUnit_ContractsAndTermination_Get_Result>("PropertyUnit_ContractsAndTermination_Get", propertyNameParameter, propertyUnitNoParameter, propertyUnitIdParameter);
+        }
+    
+        public virtual int usp_Migrate_LegacyToERP(string srcDb, Nullable<bool> doAccounts, Nullable<bool> doJournal, Nullable<bool> includeNotes, Nullable<bool> includeNotesAll, Nullable<bool> includeOpening, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo, Nullable<int> noteTypeFilter, Nullable<bool> clean, Nullable<bool> resetPaymentMethod, string docPrefix, Nullable<int> serialWidth)
+        {
+            var srcDbParameter = srcDb != null ?
+                new ObjectParameter("SrcDb", srcDb) :
+                new ObjectParameter("SrcDb", typeof(string));
+    
+            var doAccountsParameter = doAccounts.HasValue ?
+                new ObjectParameter("DoAccounts", doAccounts) :
+                new ObjectParameter("DoAccounts", typeof(bool));
+    
+            var doJournalParameter = doJournal.HasValue ?
+                new ObjectParameter("DoJournal", doJournal) :
+                new ObjectParameter("DoJournal", typeof(bool));
+    
+            var includeNotesParameter = includeNotes.HasValue ?
+                new ObjectParameter("IncludeNotes", includeNotes) :
+                new ObjectParameter("IncludeNotes", typeof(bool));
+    
+            var includeNotesAllParameter = includeNotesAll.HasValue ?
+                new ObjectParameter("IncludeNotesAll", includeNotesAll) :
+                new ObjectParameter("IncludeNotesAll", typeof(bool));
+    
+            var includeOpeningParameter = includeOpening.HasValue ?
+                new ObjectParameter("IncludeOpening", includeOpening) :
+                new ObjectParameter("IncludeOpening", typeof(bool));
+    
+            var dateFromParameter = dateFrom.HasValue ?
+                new ObjectParameter("DateFrom", dateFrom) :
+                new ObjectParameter("DateFrom", typeof(System.DateTime));
+    
+            var dateToParameter = dateTo.HasValue ?
+                new ObjectParameter("DateTo", dateTo) :
+                new ObjectParameter("DateTo", typeof(System.DateTime));
+    
+            var noteTypeFilterParameter = noteTypeFilter.HasValue ?
+                new ObjectParameter("NoteTypeFilter", noteTypeFilter) :
+                new ObjectParameter("NoteTypeFilter", typeof(int));
+    
+            var cleanParameter = clean.HasValue ?
+                new ObjectParameter("Clean", clean) :
+                new ObjectParameter("Clean", typeof(bool));
+    
+            var resetPaymentMethodParameter = resetPaymentMethod.HasValue ?
+                new ObjectParameter("ResetPaymentMethod", resetPaymentMethod) :
+                new ObjectParameter("ResetPaymentMethod", typeof(bool));
+    
+            var docPrefixParameter = docPrefix != null ?
+                new ObjectParameter("DocPrefix", docPrefix) :
+                new ObjectParameter("DocPrefix", typeof(string));
+    
+            var serialWidthParameter = serialWidth.HasValue ?
+                new ObjectParameter("SerialWidth", serialWidth) :
+                new ObjectParameter("SerialWidth", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("usp_Migrate_LegacyToERP", srcDbParameter, doAccountsParameter, doJournalParameter, includeNotesParameter, includeNotesAllParameter, includeOpeningParameter, dateFromParameter, dateToParameter, noteTypeFilterParameter, cleanParameter, resetPaymentMethodParameter, docPrefixParameter, serialWidthParameter);
+        }
+    
+        public virtual ObjectResult<sp_GetBatchInvoiceReportData_Result> sp_GetBatchInvoiceReportData(Nullable<int> propertyContractBatchId)
+        {
+            var propertyContractBatchIdParameter = propertyContractBatchId.HasValue ?
+                new ObjectParameter("PropertyContractBatchId", propertyContractBatchId) :
+                new ObjectParameter("PropertyContractBatchId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<sp_GetBatchInvoiceReportData_Result>("sp_GetBatchInvoiceReportData", propertyContractBatchIdParameter);
+        }
+    
+        public virtual int CashReceiptVoucher_ReprocessAll1(Nullable<int> departmentId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<bool> onlyUnposted, Nullable<int> fromId, Nullable<int> toId, Nullable<int> batchSize, Nullable<bool> previewOnly)
+        {
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var onlyUnpostedParameter = onlyUnposted.HasValue ?
+                new ObjectParameter("OnlyUnposted", onlyUnposted) :
+                new ObjectParameter("OnlyUnposted", typeof(bool));
+    
+            var fromIdParameter = fromId.HasValue ?
+                new ObjectParameter("FromId", fromId) :
+                new ObjectParameter("FromId", typeof(int));
+    
+            var toIdParameter = toId.HasValue ?
+                new ObjectParameter("ToId", toId) :
+                new ObjectParameter("ToId", typeof(int));
+    
+            var batchSizeParameter = batchSize.HasValue ?
+                new ObjectParameter("BatchSize", batchSize) :
+                new ObjectParameter("BatchSize", typeof(int));
+    
+            var previewOnlyParameter = previewOnly.HasValue ?
+                new ObjectParameter("PreviewOnly", previewOnly) :
+                new ObjectParameter("PreviewOnly", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashReceiptVoucher_ReprocessAll1", departmentIdParameter, fromDateParameter, toDateParameter, onlyUnpostedParameter, fromIdParameter, toIdParameter, batchSizeParameter, previewOnlyParameter);
+        }
+    
+        public virtual int RebuildCashReceiptVoucherJournal(Nullable<int> id)
+        {
+            var idParameter = id.HasValue ?
+                new ObjectParameter("Id", id) :
+                new ObjectParameter("Id", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("RebuildCashReceiptVoucherJournal", idParameter);
+        }
+    
+        public virtual int RebuildPropertyContractJournal(Nullable<int> id)
+        {
+            var idParameter = id.HasValue ?
+                new ObjectParameter("Id", id) :
+                new ObjectParameter("Id", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("RebuildPropertyContractJournal", idParameter);
+        }
+    
+        public virtual int usp_Migrate_LegacyToERP1(string srcDb, Nullable<bool> doAccounts, Nullable<bool> doJournal, Nullable<bool> includeNotes, Nullable<bool> includeNotesAll, Nullable<bool> includeOpening, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo, Nullable<int> noteTypeFilter, Nullable<bool> clean, Nullable<bool> resetPaymentMethod, string docPrefix, Nullable<int> serialWidth)
+        {
+            var srcDbParameter = srcDb != null ?
+                new ObjectParameter("SrcDb", srcDb) :
+                new ObjectParameter("SrcDb", typeof(string));
+    
+            var doAccountsParameter = doAccounts.HasValue ?
+                new ObjectParameter("DoAccounts", doAccounts) :
+                new ObjectParameter("DoAccounts", typeof(bool));
+    
+            var doJournalParameter = doJournal.HasValue ?
+                new ObjectParameter("DoJournal", doJournal) :
+                new ObjectParameter("DoJournal", typeof(bool));
+    
+            var includeNotesParameter = includeNotes.HasValue ?
+                new ObjectParameter("IncludeNotes", includeNotes) :
+                new ObjectParameter("IncludeNotes", typeof(bool));
+    
+            var includeNotesAllParameter = includeNotesAll.HasValue ?
+                new ObjectParameter("IncludeNotesAll", includeNotesAll) :
+                new ObjectParameter("IncludeNotesAll", typeof(bool));
+    
+            var includeOpeningParameter = includeOpening.HasValue ?
+                new ObjectParameter("IncludeOpening", includeOpening) :
+                new ObjectParameter("IncludeOpening", typeof(bool));
+    
+            var dateFromParameter = dateFrom.HasValue ?
+                new ObjectParameter("DateFrom", dateFrom) :
+                new ObjectParameter("DateFrom", typeof(System.DateTime));
+    
+            var dateToParameter = dateTo.HasValue ?
+                new ObjectParameter("DateTo", dateTo) :
+                new ObjectParameter("DateTo", typeof(System.DateTime));
+    
+            var noteTypeFilterParameter = noteTypeFilter.HasValue ?
+                new ObjectParameter("NoteTypeFilter", noteTypeFilter) :
+                new ObjectParameter("NoteTypeFilter", typeof(int));
+    
+            var cleanParameter = clean.HasValue ?
+                new ObjectParameter("Clean", clean) :
+                new ObjectParameter("Clean", typeof(bool));
+    
+            var resetPaymentMethodParameter = resetPaymentMethod.HasValue ?
+                new ObjectParameter("ResetPaymentMethod", resetPaymentMethod) :
+                new ObjectParameter("ResetPaymentMethod", typeof(bool));
+    
+            var docPrefixParameter = docPrefix != null ?
+                new ObjectParameter("DocPrefix", docPrefix) :
+                new ObjectParameter("DocPrefix", typeof(string));
+    
+            var serialWidthParameter = serialWidth.HasValue ?
+                new ObjectParameter("SerialWidth", serialWidth) :
+                new ObjectParameter("SerialWidth", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("usp_Migrate_LegacyToERP1", srcDbParameter, doAccountsParameter, doJournalParameter, includeNotesParameter, includeNotesAllParameter, includeOpeningParameter, dateFromParameter, dateToParameter, noteTypeFilterParameter, cleanParameter, resetPaymentMethodParameter, docPrefixParameter, serialWidthParameter);
+        }
+    
+        public virtual int GetGeneralLedgerByParent(Nullable<int> parentAccountId, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> departmentId)
+        {
+            var parentAccountIdParameter = parentAccountId.HasValue ?
+                new ObjectParameter("ParentAccountId", parentAccountId) :
+                new ObjectParameter("ParentAccountId", typeof(int));
+    
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("GetGeneralLedgerByParent", parentAccountIdParameter, fromDateParameter, toDateParameter, departmentIdParameter);
         }
     }
 }

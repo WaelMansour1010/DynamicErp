@@ -117,4 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="xrTableCell6.ExpressionBindings" xml:space="preserve">
+    <value>Iif(Abs(Round([Query].[ProfitLossPercentage], 0) 
+        - Floor(Round([Query].[ProfitLossPercentage], 0))) &lt; 0.0000001,
+    FormatString('{0:n0} %', Round([Query].[ProfitLossPercentage], 0)),
+    FormatString('{0:n2} %', Round([Query].[ProfitLossPercentage], 0)))
+</value>
+  </data>
+  <data name="xrLabel23.ExpressionBindings" xml:space="preserve">
+    <value>round(Iif(Abs([Query].[GroupProfitLossPercentage] 
+        - Floor([Query].[GroupProfitLossPercentage])) &lt; 0.0000001,
+    FormatString('{0:n0} %', [Query].[GroupProfitLossPercentage]),
+    FormatString('{0:n2} %', [Query].[GroupProfitLossPercentage])))
+</value>
+  </data>
 </root>

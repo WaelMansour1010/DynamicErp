@@ -257,7 +257,8 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter1.Name = "@Id";
             queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter1.Value = new DevExpress.DataAccess.Expression("?Id", typeof(int));
-            storedProcQuery1.Parameters.Add(queryParameter1);
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1});
             storedProcQuery1.StoredProcName = "PosReceiptVoucher_Get";
             customSqlQuery1.MetaSerializable = "<Meta X=\"190\" Y=\"20\" Width=\"100\" Height=\"257\" />";
             customSqlQuery1.Name = "Query";
@@ -266,7 +267,8 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter2.Name = "Id";
             queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter2.Value = new DevExpress.DataAccess.Expression("?Id", typeof(int));
-            customSqlQuery2.Parameters.Add(queryParameter2);
+            customSqlQuery2.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter2});
             customSqlQuery2.Sql = "select * from PosReceiptVoucherCustomerType where PosReceiptVoucherId=@Id";
             this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
             storedProcQuery1,
@@ -336,7 +338,7 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             this.Time.StylePriority.UseForeColor = false;
             this.Time.StylePriority.UseTextAlignment = false;
             this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            this.Time.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Time_BeforePrint);
             // 
             // User
             // 
@@ -635,7 +637,7 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrPictureBox1.Name = "xrPictureBox1";
             this.xrPictureBox1.SizeF = new System.Drawing.SizeF(174.5417F, 90.70834F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrPictureBox1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // DetailReport
             // 
@@ -790,7 +792,6 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             // 
             this.GroupHeader1.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
             this.xrTable2});
-            this.GroupHeader1.Expanded = false;
             this.GroupHeader1.HeightF = 26.66664F;
             this.GroupHeader1.Name = "GroupHeader1";
             this.GroupHeader1.RepeatEveryPage = true;
@@ -1123,7 +1124,7 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             this.DataSource = this.sqlDataSource1;
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
             this.Landscape = true;
-            this.Margins = new DevExpress.Drawing.DXMargins(19, 20, 20, 70);
+            this.Margins = new DevExpress.Drawing.DXMargins(19F, 20F, 20F, 70.37506F);
             this.PageHeight = 583;
             this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A5;
@@ -1134,7 +1135,7 @@ public class PosReceiptVoucher_Report : DevExpress.XtraReports.UI.XtraReport
             this.RightToLeftLayout = DevExpress.XtraReports.UI.RightToLeftLayout.Yes;
             this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
             this.xrControlStyle1});
-            this.Version = "20.1";
+            this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.xrTable1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable4)).EndInit();

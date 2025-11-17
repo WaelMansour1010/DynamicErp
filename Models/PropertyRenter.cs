@@ -51,6 +51,8 @@ namespace MyERP.Models
         public string Fax { get; set; }
         public string Email { get; set; }
         public string Address { get; set; }
+        public Nullable<int> AccountId { get; set; }
+        public string NormalizedName { get; set; }
     
         public virtual Customer Customer { get; set; }
         public virtual CustomerRep CustomerRep { get; set; }
@@ -70,5 +72,6 @@ namespace MyERP.Models
         public virtual ICollection<Order> Orders { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<DebitAndCreditNotification> DebitAndCreditNotifications { get; set; }
+        public virtual ChartOfAccount ChartOfAccount { get; set; }
     }
 }

@@ -79,11 +79,23 @@ else
                                        })
                                         </div>
                                     </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-1 control-label">مستوى التفاصيل</label>
+                                        <div class="col-sm-5">
+                                            <select id="DetailLevel" class="form-control">
+                                                <option value="4" selected>ملخص (4 حسابات)</option>
+                                                <option value="0">ملخص شجري</option>
+                                                <option value="1">متوسط</option>
+                                                <option value="2">تفصيلي</option>
+                                            </select>
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
                 </div>
                 <div class="row">
                     <div class="col-sm-offset-2">
@@ -183,17 +195,17 @@ else
 
 
     function ShowReport() {
-        window.open("/Report/FinancialStatement?DepartmentId=" + $('#DepartmentId').val() + "&From=" + $('#DateFrom').val() + "&To=" + $('#DateTo').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&showReport=' + true + '&print=' + false, "blank");
+        window.open("/Report/FinancialStatement?DepartmentId=" + $('#DepartmentId').val() + "&From=" + $('#DateFrom').val() + "&To=" + $('#DateTo').val() + '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&detailLevel=' + $('#DetailLevel').val() + '&showReport=' + true + '&print=' + false, "blank");
     }
     function DownloadReport() {
-        window.open("/Report/FinancialStatement?DepartmentId=" + $('#DepartmentId').val() + "&From=" + $('#DateFrom').val() + "&To=" + $('#DateTo').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&showReport=' + false+ '&print=' + true, "blank");
+        window.open("/Report/FinancialStatement?DepartmentId=" + $('#DepartmentId').val() + "&From=" + $('#DateFrom').val() + "&To=" + $('#DateTo').val() + '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&detailLevel=' + $('#DetailLevel').val() + '&showReport=' + false + '&print=' + true, "blank");
     }
 
     function ShowData() {
         $('#ShowDataTable').empty();
         $('#preloader, #status').fadeIn();
 
-        $.get("/Helper/GetFinancialStatement?DepartmentId=" + $('#DepartmentId').val() + "&From=" + $('#DateFrom').val() + "&To=" + $('#DateTo').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val()).done(function (r) {
+        $.get("/Helper/GetFinancialStatement?DepartmentId=" + $('#DepartmentId').val() + "&From=" + $('#DateFrom').val() + "&To=" + $('#DateTo').val() + '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&detailLevel=' + $('#DetailLevel').val()).done(function (r) {
             $('#AllTable').show();
             for (var i = 0; i < r.length; i++) {
                 r[i].Statement = r[i].Statement == null ? "" : r[i].Statement;

@@ -35,15 +35,6 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
     private XRTableCell tableCell13;
     private XRTableCell tableCell14;
     private DetailBand Detail;
-    private XRTable table2;
-    private XRTableRow tableRow2;
-    private XRTableCell tableCell15;
-    private XRTableCell tableCell17;
-    private XRTableCell tableCell18;
-    private XRTableCell tableCell20;
-    private XRTableCell tableCell25;
-    private XRTableCell tableCell27;
-    private XRTableCell tableCell28;
     private XRLabel User;
     private XRLabel xrLabel7;
     private XRLabel xrLabel6;
@@ -54,23 +45,16 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
     private DevExpress.XtraReports.Parameters.Parameter DateTo;
     private DevExpress.XtraReports.Parameters.Parameter UserId;
     private XRLabel xrLabel5;
-    private XRLabel xrLabel3;
-    private XRLabel xrLabel2;
     private XRLabel xrLabel1;
     private XRTableCell xrTableCell2;
-    private XRTableCell xrTableCell1;
     private DevExpress.XtraReports.Parameters.Parameter CashBoxId;
     private XRTableCell xrTableCell3;
-    private XRTableCell xrTableCell4;
     private PageHeaderBand PageHeader;
     private XRPictureBox xrPictureBox1;
     private XRLabel CompanyName;
     private DevExpress.XtraReports.Parameters.Parameter ActivityId;
     private DevExpress.XtraReports.Parameters.Parameter CompanyId;
     private ReportFooterBand ReportFooter;
-    private XRLabel xrLabel13;
-    private XRLabel xrLabel12;
-    private XRLabel xrLabel11;
     private XRLabel xrLabel10;
     private XRLabel xrLabel9;
     private XRLabel xrLabel8;
@@ -78,9 +62,25 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
     private CalculatedField TotalPayment;
     private CalculatedField TotalBanks;
     private XRLabel xrLabel14;
-    private XRLabel xrLabel15;
     private XRLabel xrLabel16;
+    private XRLabel xrLabel3;
+    private XRLabel xrLabel2;
+    private DevExpress.XtraReports.Parameters.Parameter PropertyId;
+    private DevExpress.XtraReports.Parameters.Parameter PropertyUnitId;
+    private XRLabel xrLabel18;
     private XRLabel xrLabel17;
+    private XRLabel xrLabel15;
+    private XRLabel xrLabel13;
+    private XRLabel xrLabel12;
+    private XRLabel xrLabel11;
+    private XRLabel xrLabel20;
+    private XRLabel xrLabel24;
+    private XRLabel xrLabel23;
+    private XRLabel xrLabel22;
+    private XRLabel xrLabel21;
+    private XRLabel xrLabel26;
+    private XRLabel xrLabel25;
+    private XRLabel xrLabel19;
 
     /// <summary>
     /// Required designer variable.
@@ -102,7 +102,19 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
         this.CashBoxId.Value = cashBoxId;
         this.ActivityId.Value = ActivityId;
         this.CompanyId.Value = CompanyId;
+      //  RequestParameters = false;
     }
+    public CashIssueAndReceipt_Report(
+        int? departmentId, int? cashBoxId, DateTime? dateFrom, DateTime? dateTo,
+        int? activityId, int? companyId, int? propertyId, int? propertyUnitId)
+        : this(departmentId, cashBoxId, dateFrom, dateTo, activityId, companyId)
+    {
+        if (Parameters["PropertyId"] != null) Parameters["PropertyId"].Value = propertyId;
+        if (Parameters["PropertyUnitId"] != null) Parameters["PropertyUnitId"].Value = propertyUnitId;
+
+       // RequestParameters = false;
+    }
+
 
     /// <summary> 
     /// Clean up any resources being used.
@@ -126,22 +138,12 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
     private void InitializeComponent()
     {
             this.components = new System.ComponentModel.Container();
-            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter5 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter6 = new DevExpress.DataAccess.Sql.QueryParameter();
             DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery1 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
-            DevExpress.DataAccess.Sql.QueryParameter queryParameter7 = new DevExpress.DataAccess.Sql.QueryParameter();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CashIssueAndReceipt_Report));
             DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery2 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
-            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery3 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
             DevExpress.DataAccess.Sql.SelectQuery selectQuery1 = new DevExpress.DataAccess.Sql.SelectQuery();
             DevExpress.DataAccess.Sql.Column column1 = new DevExpress.DataAccess.Sql.Column();
             DevExpress.DataAccess.Sql.ColumnExpression columnExpression1 = new DevExpress.DataAccess.Sql.ColumnExpression();
-            DevExpress.DataAccess.Sql.Table table3 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Table table2 = new DevExpress.DataAccess.Sql.Table();
             DevExpress.DataAccess.Sql.Column column2 = new DevExpress.DataAccess.Sql.Column();
             DevExpress.DataAccess.Sql.ColumnExpression columnExpression2 = new DevExpress.DataAccess.Sql.ColumnExpression();
             DevExpress.DataAccess.Sql.Column column3 = new DevExpress.DataAccess.Sql.Column();
@@ -149,15 +151,41 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             DevExpress.DataAccess.Sql.SelectQuery selectQuery2 = new DevExpress.DataAccess.Sql.SelectQuery();
             DevExpress.DataAccess.Sql.Column column4 = new DevExpress.DataAccess.Sql.Column();
             DevExpress.DataAccess.Sql.ColumnExpression columnExpression4 = new DevExpress.DataAccess.Sql.ColumnExpression();
-            DevExpress.DataAccess.Sql.Table table4 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Table table3 = new DevExpress.DataAccess.Sql.Table();
             DevExpress.DataAccess.Sql.Column column5 = new DevExpress.DataAccess.Sql.Column();
             DevExpress.DataAccess.Sql.ColumnExpression columnExpression5 = new DevExpress.DataAccess.Sql.ColumnExpression();
             DevExpress.DataAccess.Sql.Column column6 = new DevExpress.DataAccess.Sql.Column();
             DevExpress.DataAccess.Sql.ColumnExpression columnExpression6 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.SelectQuery selectQuery3 = new DevExpress.DataAccess.Sql.SelectQuery();
+            DevExpress.DataAccess.Sql.Column column7 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression7 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.Table table4 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Column column8 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression8 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.Column column9 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression9 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter5 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter6 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter7 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter8 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.SelectQuery selectQuery4 = new DevExpress.DataAccess.Sql.SelectQuery();
+            DevExpress.DataAccess.Sql.Column column10 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression10 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            DevExpress.DataAccess.Sql.Table table5 = new DevExpress.DataAccess.Sql.Table();
+            DevExpress.DataAccess.Sql.Column column11 = new DevExpress.DataAccess.Sql.Column();
+            DevExpress.DataAccess.Sql.ColumnExpression columnExpression11 = new DevExpress.DataAccess.Sql.ColumnExpression();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CashIssueAndReceipt_Report));
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings1 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings2 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings3 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings4 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings5 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
+            DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings6 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
             this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
             this.DetailCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
@@ -172,8 +200,6 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrLabel4 = new DevExpress.XtraReports.UI.XRLabel();
             this.pageInfo2 = new DevExpress.XtraReports.UI.XRPageInfo();
             this.xrLabel5 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel3 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel2 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel1 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel7 = new DevExpress.XtraReports.UI.XRLabel();
             this.GroupHeader1 = new DevExpress.XtraReports.UI.GroupHeaderBand();
@@ -189,17 +215,8 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrTableCell2 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell14 = new DevExpress.XtraReports.UI.XRTableCell();
             this.Detail = new DevExpress.XtraReports.UI.DetailBand();
-            this.table2 = new DevExpress.XtraReports.UI.XRTable();
-            this.tableRow2 = new DevExpress.XtraReports.UI.XRTableRow();
-            this.tableCell15 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.xrTableCell4 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell17 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell18 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell20 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell25 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell27 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.xrTableCell1 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell28 = new DevExpress.XtraReports.UI.XRTableCell();
+            this.xrLabel3 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel2 = new DevExpress.XtraReports.UI.XRLabel();
             this.DepartmentId = new DevExpress.XtraReports.Parameters.Parameter();
             this.DateFrom = new DevExpress.XtraReports.Parameters.Parameter();
             this.DateTo = new DevExpress.XtraReports.Parameters.Parameter();
@@ -211,27 +228,91 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.ActivityId = new DevExpress.XtraReports.Parameters.Parameter();
             this.CompanyId = new DevExpress.XtraReports.Parameters.Parameter();
             this.ReportFooter = new DevExpress.XtraReports.UI.ReportFooterBand();
-            this.xrLabel13 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel12 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel11 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel16 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel14 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel10 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel9 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel8 = new DevExpress.XtraReports.UI.XRLabel();
             this.TotalReciept = new DevExpress.XtraReports.UI.CalculatedField();
             this.TotalPayment = new DevExpress.XtraReports.UI.CalculatedField();
             this.TotalBanks = new DevExpress.XtraReports.UI.CalculatedField();
-            this.xrLabel14 = new DevExpress.XtraReports.UI.XRLabel();
+            this.PropertyId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.PropertyUnitId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.xrLabel11 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel12 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel13 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel15 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel16 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel17 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel18 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel20 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel21 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel22 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel23 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel24 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel25 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel26 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel19 = new DevExpress.XtraReports.UI.XRLabel();
             ((System.ComponentModel.ISupportInitialize)(this.table1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
             // 
             // sqlDataSource1
             // 
             this.sqlDataSource1.ConnectionName = "localhost_MySoftERP_Connection";
             this.sqlDataSource1.Name = "sqlDataSource1";
+            customSqlQuery1.Name = "Activity";
+            customSqlQuery1.Sql = "select Id,Code+N\' - \'+ArName ArName from Activity where IsActive=1 and IsDeleted=" +
+    "0\r\n";
+            customSqlQuery2.Name = "Company";
+            customSqlQuery2.Sql = "select Id,Code+N\' - \'+ArName ArName from Company where IsActive=1 and IsDeleted=0" +
+    "";
+            columnExpression1.ColumnName = "Id";
+            table2.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"1223\" />";
+            table2.Name = "Property";
+            columnExpression1.Table = table2;
+            column1.Expression = columnExpression1;
+            columnExpression2.ColumnName = "ArName";
+            columnExpression2.Table = table2;
+            column2.Expression = columnExpression2;
+            columnExpression3.ColumnName = "EnName";
+            columnExpression3.Table = table2;
+            column3.Expression = columnExpression3;
+            selectQuery1.Columns.Add(column1);
+            selectQuery1.Columns.Add(column2);
+            selectQuery1.Columns.Add(column3);
+            selectQuery1.Name = "Property";
+            selectQuery1.Tables.Add(table2);
+            columnExpression4.ColumnName = "Id";
+            table3.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"1983\" />";
+            table3.Name = "Department";
+            columnExpression4.Table = table3;
+            column4.Expression = columnExpression4;
+            columnExpression5.ColumnName = "ArName";
+            columnExpression5.Table = table3;
+            column5.Expression = columnExpression5;
+            columnExpression6.ColumnName = "EnName";
+            columnExpression6.Table = table3;
+            column6.Expression = columnExpression6;
+            selectQuery2.Columns.Add(column4);
+            selectQuery2.Columns.Add(column5);
+            selectQuery2.Columns.Add(column6);
+            selectQuery2.Name = "Department";
+            selectQuery2.Tables.Add(table3);
+            columnExpression7.ColumnName = "Id";
+            table4.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"363\" />";
+            table4.Name = "CashBox";
+            columnExpression7.Table = table4;
+            column7.Expression = columnExpression7;
+            columnExpression8.ColumnName = "ArName";
+            columnExpression8.Table = table4;
+            column8.Expression = columnExpression8;
+            columnExpression9.ColumnName = "EnName";
+            columnExpression9.Table = table4;
+            column9.Expression = columnExpression9;
+            selectQuery3.Columns.Add(column7);
+            selectQuery3.Columns.Add(column8);
+            selectQuery3.Columns.Add(column9);
+            selectQuery3.Name = "CashBox";
+            selectQuery3.Tables.Add(table4);
             storedProcQuery1.Name = "CashIssueAndReceipt_Get";
             queryParameter1.Name = "@DepartmentId";
             queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
@@ -249,68 +330,44 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter5.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter5.Value = new DevExpress.DataAccess.Expression("?ActivityId", typeof(int));
             queryParameter6.Name = "@CompanyId";
-            queryParameter6.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter6.Value = new DevExpress.DataAccess.Expression("?CompanyId", typeof(int));
+            queryParameter6.Type = typeof(int);
+            queryParameter6.ValueInfo = "0";
+            queryParameter7.Name = "@PropertyId";
+            queryParameter7.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter7.Value = new DevExpress.DataAccess.Expression("?PropertyId", typeof(int));
+            queryParameter8.Name = "@PropertyUnitId";
+            queryParameter8.Type = typeof(int);
+            queryParameter8.ValueInfo = "0";
             storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
             queryParameter1,
             queryParameter2,
             queryParameter3,
             queryParameter4,
             queryParameter5,
-            queryParameter6});
+            queryParameter6,
+            queryParameter7,
+            queryParameter8});
             storedProcQuery1.StoredProcName = "CashIssueAndReceipt_Get";
-            customSqlQuery1.Name = "CaskBox";
-            queryParameter7.Name = "UserId";
-            queryParameter7.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter7.Value = new DevExpress.DataAccess.Expression("?UserId", typeof(int));
-            customSqlQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
-            queryParameter7});
-            customSqlQuery1.Sql = resources.GetString("customSqlQuery1.Sql");
-            customSqlQuery2.Name = "Activity";
-            customSqlQuery2.Sql = "select Id,Code+N\' - \'+ArName ArName from Activity where IsActive=1 and IsDeleted=" +
-    "0\r\n";
-            customSqlQuery3.Name = "Company";
-            customSqlQuery3.Sql = "select Id,Code+N\' - \'+ArName ArName from Company where IsActive=1 and IsDeleted=0" +
-    "";
-            columnExpression1.ColumnName = "Id";
-            table3.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"1223\" />";
-            table3.Name = "Property";
-            columnExpression1.Table = table3;
-            column1.Expression = columnExpression1;
-            columnExpression2.ColumnName = "ArName";
-            columnExpression2.Table = table3;
-            column2.Expression = columnExpression2;
-            columnExpression3.ColumnName = "EnName";
-            columnExpression3.Table = table3;
-            column3.Expression = columnExpression3;
-            selectQuery1.Columns.Add(column1);
-            selectQuery1.Columns.Add(column2);
-            selectQuery1.Columns.Add(column3);
-            selectQuery1.Name = "Property";
-            selectQuery1.Tables.Add(table3);
-            columnExpression4.ColumnName = "Id";
-            table4.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"1983\" />";
-            table4.Name = "Department";
-            columnExpression4.Table = table4;
-            column4.Expression = columnExpression4;
-            columnExpression5.ColumnName = "ArName";
-            columnExpression5.Table = table4;
-            column5.Expression = columnExpression5;
-            columnExpression6.ColumnName = "EnName";
-            columnExpression6.Table = table4;
-            column6.Expression = columnExpression6;
-            selectQuery2.Columns.Add(column4);
-            selectQuery2.Columns.Add(column5);
-            selectQuery2.Columns.Add(column6);
-            selectQuery2.Name = "Department";
-            selectQuery2.Tables.Add(table4);
+            columnExpression10.ColumnName = "Id";
+            table5.MetaSerializable = "<Meta X=\"20\" Y=\"40\" Width=\"125\" Height=\"463\" />";
+            table5.Name = "PropertyDetail";
+            columnExpression10.Table = table5;
+            column10.Expression = columnExpression10;
+            columnExpression11.ColumnName = "PropertyUnitNo";
+            columnExpression11.Table = table5;
+            column11.Expression = columnExpression11;
+            selectQuery4.Columns.Add(column10);
+            selectQuery4.Columns.Add(column11);
+            selectQuery4.Name = "PropertyDetail";
+            selectQuery4.Tables.Add(table5);
             this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
-            storedProcQuery1,
             customSqlQuery1,
             customSqlQuery2,
-            customSqlQuery3,
             selectQuery1,
-            selectQuery2});
+            selectQuery2,
+            selectQuery3,
+            storedProcQuery1,
+            selectQuery4});
             this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
             // 
             // Title
@@ -469,42 +526,6 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrLabel5.StylePriority.UseForeColor = false;
             this.xrLabel5.Text = "التاريخ من";
             // 
-            // xrLabel3
-            // 
-            this.xrLabel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
-            this.xrLabel3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?DateTo")});
-            this.xrLabel3.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
-            this.xrLabel3.ForeColor = System.Drawing.Color.White;
-            this.xrLabel3.LocationFloat = new DevExpress.Utils.PointFloat(539.0865F, 108.7084F);
-            this.xrLabel3.Multiline = true;
-            this.xrLabel3.Name = "xrLabel3";
-            this.xrLabel3.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel3.SizeF = new System.Drawing.SizeF(197.8301F, 23F);
-            this.xrLabel3.StylePriority.UseBackColor = false;
-            this.xrLabel3.StylePriority.UseFont = false;
-            this.xrLabel3.StylePriority.UseForeColor = false;
-            this.xrLabel3.Text = "الى";
-            this.xrLabel3.TextFormatString = "{0:yyyy-MM-dd}";
-            // 
-            // xrLabel2
-            // 
-            this.xrLabel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
-            this.xrLabel2.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?DateFrom")});
-            this.xrLabel2.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
-            this.xrLabel2.ForeColor = System.Drawing.Color.White;
-            this.xrLabel2.LocationFloat = new DevExpress.Utils.PointFloat(93.08331F, 108.7084F);
-            this.xrLabel2.Multiline = true;
-            this.xrLabel2.Name = "xrLabel2";
-            this.xrLabel2.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel2.SizeF = new System.Drawing.SizeF(197.8336F, 23F);
-            this.xrLabel2.StylePriority.UseBackColor = false;
-            this.xrLabel2.StylePriority.UseFont = false;
-            this.xrLabel2.StylePriority.UseForeColor = false;
-            this.xrLabel2.Text = "من";
-            this.xrLabel2.TextFormatString = "{0:yyyy-MM-dd}";
-            // 
             // xrLabel1
             // 
             this.xrLabel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
@@ -525,7 +546,7 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrLabel7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
             this.xrLabel7.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
             this.xrLabel7.ForeColor = System.Drawing.Color.White;
-            this.xrLabel7.LocationFloat = new DevExpress.Utils.PointFloat(239.8362F, 47.50001F);
+            this.xrLabel7.LocationFloat = new DevExpress.Utils.PointFloat(217.4166F, 47.50001F);
             this.xrLabel7.Multiline = true;
             this.xrLabel7.Name = "xrLabel7";
             this.xrLabel7.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
@@ -643,118 +664,40 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             // Detail
             // 
             this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.table2});
-            this.Detail.HeightF = 25F;
+            this.xrLabel19,
+            this.xrLabel18,
+            this.xrLabel17,
+            this.xrLabel15,
+            this.xrLabel13,
+            this.xrLabel12,
+            this.xrLabel11,
+            this.xrLabel3,
+            this.xrLabel2});
+            this.Detail.HeightF = 25.00001F;
             this.Detail.Name = "Detail";
             // 
-            // table2
+            // xrLabel3
             // 
-            this.table2.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.table2.Name = "table2";
-            this.table2.OddStyleName = "DetailData3_Odd";
-            this.table2.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
-            this.tableRow2});
-            this.table2.SizeF = new System.Drawing.SizeF(747F, 25F);
-            // 
-            // tableRow2
-            // 
-            this.tableRow2.Cells.AddRange(new DevExpress.XtraReports.UI.XRTableCell[] {
-            this.tableCell15,
-            this.xrTableCell4,
-            this.tableCell17,
-            this.tableCell18,
-            this.tableCell20,
-            this.tableCell25,
-            this.tableCell27,
-            this.xrTableCell1,
-            this.tableCell28});
-            this.tableRow2.Name = "tableRow2";
-            this.tableRow2.Weight = 11.5D;
-            // 
-            // tableCell15
-            // 
-            this.tableCell15.Borders = DevExpress.XtraPrinting.BorderSide.None;
-            this.tableCell15.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            this.xrLabel3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[DocumentNumber]")});
-            this.tableCell15.Name = "tableCell15";
-            this.tableCell15.StyleName = "DetailData1";
-            this.tableCell15.StylePriority.UseBorders = false;
-            this.tableCell15.Weight = 0.082008120483374428D;
+            this.xrLabel3.LocationFloat = new DevExpress.Utils.PointFloat(0.08343506F, 0F);
+            this.xrLabel3.Multiline = true;
+            this.xrLabel3.Name = "xrLabel3";
+            this.xrLabel3.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel3.SizeF = new System.Drawing.SizeF(66.72235F, 23F);
+            this.xrLabel3.Text = "xrLabel3";
             // 
-            // xrTableCell4
+            // xrLabel2
             // 
-            this.xrTableCell4.Borders = DevExpress.XtraPrinting.BorderSide.None;
-            this.xrTableCell4.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[VoucherType2]")});
-            this.xrTableCell4.Multiline = true;
-            this.xrTableCell4.Name = "xrTableCell4";
-            this.xrTableCell4.StyleName = "DetailData1";
-            this.xrTableCell4.StylePriority.UseBorders = false;
-            this.xrTableCell4.Text = "xrTableCell4";
-            this.xrTableCell4.Weight = 0.082008120483374428D;
-            // 
-            // tableCell17
-            // 
-            this.tableCell17.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            this.xrLabel2.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
             new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[MoneyAmount]")});
-            this.tableCell17.Name = "tableCell17";
-            this.tableCell17.StyleName = "DetailData1";
-            this.tableCell17.StylePriority.UseTextAlignment = false;
-            this.tableCell17.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleLeft;
-            this.tableCell17.TextFormatString = "{0:0.00}";
-            this.tableCell17.Weight = 0.086397740770168374D;
-            // 
-            // tableCell18
-            // 
-            this.tableCell18.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[PropertyName]")});
-            this.tableCell18.Name = "tableCell18";
-            this.tableCell18.StyleName = "DetailData1";
-            this.tableCell18.Weight = 0.075318864060200275D;
-            // 
-            // tableCell20
-            // 
-            this.tableCell20.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[PropertyUnitName]")});
-            this.tableCell20.Name = "tableCell20";
-            this.tableCell20.StyleName = "DetailData1";
-            this.tableCell20.TextFormatString = "{0:yyyy-MM-dd}";
-            this.tableCell20.Weight = 0.094558805307890376D;
-            // 
-            // tableCell25
-            // 
-            this.tableCell25.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Date]")});
-            this.tableCell25.Name = "tableCell25";
-            this.tableCell25.StyleName = "DetailData1";
-            this.tableCell25.TextFormatString = "{0:yyyy-MM-dd}";
-            this.tableCell25.Weight = 0.10518501343704689D;
-            // 
-            // tableCell27
-            // 
-            this.tableCell27.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[CashBox]")});
-            this.tableCell27.Name = "tableCell27";
-            this.tableCell27.StyleName = "DetailData1";
-            this.tableCell27.Weight = 0.13635083058144654D;
-            // 
-            // xrTableCell1
-            // 
-            this.xrTableCell1.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Department]")});
-            this.xrTableCell1.Multiline = true;
-            this.xrTableCell1.Name = "xrTableCell1";
-            this.xrTableCell1.StyleName = "DetailData1";
-            this.xrTableCell1.Text = "xrTableCell1";
-            this.xrTableCell1.Weight = 0.1083106678161711D;
-            // 
-            // tableCell28
-            // 
-            this.tableCell28.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Notes]")});
-            this.tableCell28.Name = "tableCell28";
-            this.tableCell28.StyleName = "DetailData1";
-            this.tableCell28.Weight = 0.14692666849302383D;
+            this.xrLabel2.LocationFloat = new DevExpress.Utils.PointFloat(133.6117F, 0F);
+            this.xrLabel2.Multiline = true;
+            this.xrLabel2.Name = "xrLabel2";
+            this.xrLabel2.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel2.SizeF = new System.Drawing.SizeF(70.38177F, 23F);
+            this.xrLabel2.Text = "xrLabel2";
+            this.xrLabel2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
             // 
             // DepartmentId
             // 
@@ -762,6 +705,7 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.DepartmentId.Description = "الفرع";
             this.DepartmentId.Name = "DepartmentId";
             this.DepartmentId.Type = typeof(int);
+            this.DepartmentId.ValueInfo = "0";
             dynamicListLookUpSettings1.DataMember = "Department";
             dynamicListLookUpSettings1.DataSource = this.sqlDataSource1;
             dynamicListLookUpSettings1.DisplayMember = "ArName";
@@ -774,8 +718,6 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             // 
             this.DateFrom.AllowNull = true;
             this.DateFrom.Description = "التاريخ من";
-            this.DateFrom.ExpressionBindings.AddRange(new DevExpress.XtraReports.Expressions.BasicExpressionBinding[] {
-            new DevExpress.XtraReports.Expressions.BasicExpressionBinding("Value", "Now()")});
             this.DateFrom.Name = "DateFrom";
             this.DateFrom.Type = typeof(System.DateTime);
             // 
@@ -794,6 +736,7 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.UserId.Description = "Parameter1";
             this.UserId.Name = "UserId";
             this.UserId.Type = typeof(int);
+            this.UserId.ValueInfo = "0";
             this.UserId.Visible = false;
             // 
             // CashBoxId
@@ -802,7 +745,8 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.CashBoxId.Description = "الصندوق";
             this.CashBoxId.Name = "CashBoxId";
             this.CashBoxId.Type = typeof(int);
-            dynamicListLookUpSettings2.DataMember = "CaskBox";
+            this.CashBoxId.ValueInfo = "0";
+            dynamicListLookUpSettings2.DataMember = "CashBox";
             dynamicListLookUpSettings2.DataSource = this.sqlDataSource1;
             dynamicListLookUpSettings2.DisplayMember = "ArName";
             dynamicListLookUpSettings2.ValueMember = "Id";
@@ -811,14 +755,14 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             // PageHeader
             // 
             this.PageHeader.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrLabel26,
+            this.xrLabel25,
             this.CompanyName,
             this.xrPictureBox1,
             this.xrLabel7,
             this.xrLabel1,
-            this.xrLabel3,
-            this.xrLabel5,
-            this.xrLabel2});
-            this.PageHeader.HeightF = 131.7083F;
+            this.xrLabel5});
+            this.PageHeader.HeightF = 131.7084F;
             this.PageHeader.Name = "PageHeader";
             // 
             // CompanyName
@@ -852,6 +796,7 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.ActivityId.Description = "النشاط";
             this.ActivityId.Name = "ActivityId";
             this.ActivityId.Type = typeof(int);
+            this.ActivityId.ValueInfo = "0";
             dynamicListLookUpSettings3.DataMember = "Activity";
             dynamicListLookUpSettings3.DataSource = this.sqlDataSource1;
             dynamicListLookUpSettings3.DisplayMember = "ArName";
@@ -867,6 +812,7 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.CompanyId.Description = "العقار";
             this.CompanyId.Name = "CompanyId";
             this.CompanyId.Type = typeof(int);
+            this.CompanyId.ValueInfo = "0";
             dynamicListLookUpSettings4.DataMember = "Property";
             dynamicListLookUpSettings4.DataSource = this.sqlDataSource1;
             dynamicListLookUpSettings4.DisplayMember = "ArName";
@@ -875,76 +821,57 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             dynamicListLookUpSettings4.SortOrder = DevExpress.Data.ColumnSortOrder.Ascending;
             dynamicListLookUpSettings4.ValueMember = "Id";
             this.CompanyId.ValueSourceSettings = dynamicListLookUpSettings4;
+            this.CompanyId.Visible = false;
             // 
             // ReportFooter
             // 
             this.ReportFooter.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
+            this.xrLabel24,
+            this.xrLabel23,
+            this.xrLabel22,
+            this.xrLabel21,
+            this.xrLabel20,
             this.xrLabel16,
-            this.xrLabel17,
-            this.xrLabel15,
             this.xrLabel14,
-            this.xrLabel13,
-            this.xrLabel12,
-            this.xrLabel11,
             this.xrLabel10,
             this.xrLabel9,
             this.xrLabel8});
             this.ReportFooter.HeightF = 118F;
             this.ReportFooter.Name = "ReportFooter";
             // 
-            // xrLabel13
+            // xrLabel16
             // 
-            this.xrLabel13.BackColor = System.Drawing.Color.White;
-            this.xrLabel13.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalBanks])")});
-            this.xrLabel13.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel13.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel13.LocationFloat = new DevExpress.Utils.PointFloat(439.6781F, 32.99999F);
-            this.xrLabel13.Multiline = true;
-            this.xrLabel13.Name = "xrLabel13";
-            this.xrLabel13.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel13.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel13.StylePriority.UseBackColor = false;
-            this.xrLabel13.StylePriority.UseFont = false;
-            this.xrLabel13.StylePriority.UseForeColor = false;
-            this.xrLabel13.StylePriority.UseTextAlignment = false;
-            this.xrLabel13.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrLabel16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrLabel16.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.xrLabel16.ForeColor = System.Drawing.Color.White;
+            this.xrLabel16.LocationFloat = new DevExpress.Utils.PointFloat(224.8332F, 67.00004F);
+            this.xrLabel16.Multiline = true;
+            this.xrLabel16.Name = "xrLabel16";
+            this.xrLabel16.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel16.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
+            this.xrLabel16.StylePriority.UseBackColor = false;
+            this.xrLabel16.StylePriority.UseFont = false;
+            this.xrLabel16.StylePriority.UseForeColor = false;
+            this.xrLabel16.StylePriority.UseTextAlignment = false;
+            this.xrLabel16.Text = "الصافي";
+            this.xrLabel16.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
             // 
-            // xrLabel12
+            // xrLabel14
             // 
-            this.xrLabel12.BackColor = System.Drawing.Color.White;
-            this.xrLabel12.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalReciept])")});
-            this.xrLabel12.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel12.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel12.LocationFloat = new DevExpress.Utils.PointFloat(224.8333F, 32.99999F);
-            this.xrLabel12.Multiline = true;
-            this.xrLabel12.Name = "xrLabel12";
-            this.xrLabel12.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel12.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel12.StylePriority.UseBackColor = false;
-            this.xrLabel12.StylePriority.UseFont = false;
-            this.xrLabel12.StylePriority.UseForeColor = false;
-            this.xrLabel12.StylePriority.UseTextAlignment = false;
-            this.xrLabel12.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
-            // 
-            // xrLabel11
-            // 
-            this.xrLabel11.BackColor = System.Drawing.Color.White;
-            this.xrLabel11.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalPayment])")});
-            this.xrLabel11.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel11.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel11.LocationFloat = new DevExpress.Utils.PointFloat(10.00006F, 32.99999F);
-            this.xrLabel11.Multiline = true;
-            this.xrLabel11.Name = "xrLabel11";
-            this.xrLabel11.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel11.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel11.StylePriority.UseBackColor = false;
-            this.xrLabel11.StylePriority.UseFont = false;
-            this.xrLabel11.StylePriority.UseForeColor = false;
-            this.xrLabel11.StylePriority.UseTextAlignment = false;
-            this.xrLabel11.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrLabel14.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
+            this.xrLabel14.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
+            this.xrLabel14.ForeColor = System.Drawing.Color.White;
+            this.xrLabel14.LocationFloat = new DevExpress.Utils.PointFloat(16.29578F, 67.00001F);
+            this.xrLabel14.Multiline = true;
+            this.xrLabel14.Name = "xrLabel14";
+            this.xrLabel14.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel14.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
+            this.xrLabel14.StylePriority.UseBackColor = false;
+            this.xrLabel14.StylePriority.UseFont = false;
+            this.xrLabel14.StylePriority.UseForeColor = false;
+            this.xrLabel14.StylePriority.UseTextAlignment = false;
+            this.xrLabel14.Text = "اجمالي الوارد";
+            this.xrLabel14.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
             // 
             // xrLabel10
             // 
@@ -1018,75 +945,193 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
     "] , 0)";
             this.TotalBanks.Name = "TotalBanks";
             // 
-            // xrLabel14
+            // PropertyId
             // 
-            this.xrLabel14.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
-            this.xrLabel14.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel14.ForeColor = System.Drawing.Color.White;
-            this.xrLabel14.LocationFloat = new DevExpress.Utils.PointFloat(16.29578F, 67.00001F);
-            this.xrLabel14.Multiline = true;
-            this.xrLabel14.Name = "xrLabel14";
-            this.xrLabel14.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel14.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel14.StylePriority.UseBackColor = false;
-            this.xrLabel14.StylePriority.UseFont = false;
-            this.xrLabel14.StylePriority.UseForeColor = false;
-            this.xrLabel14.StylePriority.UseTextAlignment = false;
-            this.xrLabel14.Text = "اجمالي الوارد";
-            this.xrLabel14.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.PropertyId.AllowNull = true;
+            this.PropertyId.Description = "العقار";
+            this.PropertyId.Name = "PropertyId";
+            this.PropertyId.Type = typeof(int);
+            this.PropertyId.ValueInfo = "0";
+            dynamicListLookUpSettings5.DataMember = "Property";
+            dynamicListLookUpSettings5.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings5.DisplayMember = "ArName";
+            dynamicListLookUpSettings5.FilterString = null;
+            dynamicListLookUpSettings5.SortMember = null;
+            dynamicListLookUpSettings5.ValueMember = "Id";
+            this.PropertyId.ValueSourceSettings = dynamicListLookUpSettings5;
+            // 
+            // PropertyUnitId
+            // 
+            this.PropertyUnitId.AllowNull = true;
+            this.PropertyUnitId.Description = "الوحدة";
+            this.PropertyUnitId.Name = "PropertyUnitId";
+            this.PropertyUnitId.Type = typeof(int);
+            this.PropertyUnitId.ValueInfo = "0";
+            dynamicListLookUpSettings6.DataMember = "PropertyDetail";
+            dynamicListLookUpSettings6.DataSource = this.sqlDataSource1;
+            dynamicListLookUpSettings6.DisplayMember = "PropertyUnitNo";
+            dynamicListLookUpSettings6.FilterString = null;
+            dynamicListLookUpSettings6.SortMember = null;
+            dynamicListLookUpSettings6.ValueMember = "Id";
+            this.PropertyUnitId.ValueSourceSettings = dynamicListLookUpSettings6;
+            this.PropertyUnitId.Visible = false;
+            // 
+            // xrLabel11
+            // 
+            this.xrLabel11.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[PropertyName]")});
+            this.xrLabel11.LocationFloat = new DevExpress.Utils.PointFloat(203.9935F, 2.000014F);
+            this.xrLabel11.Multiline = true;
+            this.xrLabel11.Name = "xrLabel11";
+            this.xrLabel11.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel11.SizeF = new System.Drawing.SizeF(61.35657F, 23F);
+            this.xrLabel11.Text = "xrLabel11";
+            // 
+            // xrLabel12
+            // 
+            this.xrLabel12.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[PropertyUnitName]")});
+            this.xrLabel12.LocationFloat = new DevExpress.Utils.PointFloat(265.3501F, 0F);
+            this.xrLabel12.Multiline = true;
+            this.xrLabel12.Name = "xrLabel12";
+            this.xrLabel12.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel12.SizeF = new System.Drawing.SizeF(77.02979F, 23F);
+            this.xrLabel12.Text = "xrLabel12";
+            // 
+            // xrLabel13
+            // 
+            this.xrLabel13.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Date]")});
+            this.xrLabel13.LocationFloat = new DevExpress.Utils.PointFloat(342.3799F, 0F);
+            this.xrLabel13.Multiline = true;
+            this.xrLabel13.Name = "xrLabel13";
+            this.xrLabel13.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel13.SizeF = new System.Drawing.SizeF(85.68637F, 23F);
+            this.xrLabel13.Text = "xrLabel13";
+            this.xrLabel13.TextFormatString = "{0:d}";
             // 
             // xrLabel15
             // 
-            this.xrLabel15.BackColor = System.Drawing.Color.White;
             this.xrLabel15.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalReciept]) + Sum([TotalBanks]) ")});
-            this.xrLabel15.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel15.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel15.LocationFloat = new DevExpress.Utils.PointFloat(16.2959F, 90.00002F);
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[CashBox]")});
+            this.xrLabel15.LocationFloat = new DevExpress.Utils.PointFloat(439.0863F, 0F);
             this.xrLabel15.Multiline = true;
             this.xrLabel15.Name = "xrLabel15";
-            this.xrLabel15.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel15.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel15.StylePriority.UseBackColor = false;
-            this.xrLabel15.StylePriority.UseFont = false;
-            this.xrLabel15.StylePriority.UseForeColor = false;
-            this.xrLabel15.StylePriority.UseTextAlignment = false;
-            this.xrLabel15.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
-            // 
-            // xrLabel16
-            // 
-            this.xrLabel16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(3)))), ((int)(((byte)(142)))), ((int)(((byte)(188)))));
-            this.xrLabel16.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel16.ForeColor = System.Drawing.Color.White;
-            this.xrLabel16.LocationFloat = new DevExpress.Utils.PointFloat(224.8332F, 67.00004F);
-            this.xrLabel16.Multiline = true;
-            this.xrLabel16.Name = "xrLabel16";
-            this.xrLabel16.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel16.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel16.StylePriority.UseBackColor = false;
-            this.xrLabel16.StylePriority.UseFont = false;
-            this.xrLabel16.StylePriority.UseForeColor = false;
-            this.xrLabel16.StylePriority.UseTextAlignment = false;
-            this.xrLabel16.Text = "الصافي";
-            this.xrLabel16.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrLabel15.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel15.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel15.Text = "xrLabel15";
             // 
             // xrLabel17
             // 
-            this.xrLabel17.BackColor = System.Drawing.Color.White;
             this.xrLabel17.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalReciept]) + Sum([TotalBanks])  - Sum([TotalPayment])")});
-            this.xrLabel17.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold);
-            this.xrLabel17.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel17.LocationFloat = new DevExpress.Utils.PointFloat(224.8333F, 90.00002F);
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Department]")});
+            this.xrLabel17.LocationFloat = new DevExpress.Utils.PointFloat(539.0863F, 0F);
             this.xrLabel17.Multiline = true;
             this.xrLabel17.Name = "xrLabel17";
-            this.xrLabel17.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel17.SizeF = new System.Drawing.SizeF(187.6977F, 23F);
-            this.xrLabel17.StylePriority.UseBackColor = false;
-            this.xrLabel17.StylePriority.UseFont = false;
-            this.xrLabel17.StylePriority.UseForeColor = false;
-            this.xrLabel17.StylePriority.UseTextAlignment = false;
-            this.xrLabel17.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
+            this.xrLabel17.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel17.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel17.Text = "xrLabel17";
+            // 
+            // xrLabel18
+            // 
+            this.xrLabel18.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Notes]")});
+            this.xrLabel18.LocationFloat = new DevExpress.Utils.PointFloat(645.7081F, 0F);
+            this.xrLabel18.Multiline = true;
+            this.xrLabel18.Name = "xrLabel18";
+            this.xrLabel18.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel18.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel18.Text = "xrLabel18";
+            // 
+            // xrLabel20
+            // 
+            this.xrLabel20.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalPayment])")});
+            this.xrLabel20.LocationFloat = new DevExpress.Utils.PointFloat(10F, 33.00002F);
+            this.xrLabel20.Multiline = true;
+            this.xrLabel20.Name = "xrLabel20";
+            this.xrLabel20.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel20.SizeF = new System.Drawing.SizeF(187.5309F, 23F);
+            this.xrLabel20.Text = "xrLabel20";
+            // 
+            // xrLabel21
+            // 
+            this.xrLabel21.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalReciept])")});
+            this.xrLabel21.LocationFloat = new DevExpress.Utils.PointFloat(225.0001F, 33.00002F);
+            this.xrLabel21.Multiline = true;
+            this.xrLabel21.Name = "xrLabel21";
+            this.xrLabel21.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel21.SizeF = new System.Drawing.SizeF(187.5309F, 23F);
+            this.xrLabel21.Text = "xrLabel20";
+            // 
+            // xrLabel22
+            // 
+            this.xrLabel22.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalBanks]) ")});
+            this.xrLabel22.LocationFloat = new DevExpress.Utils.PointFloat(439.0863F, 33.00002F);
+            this.xrLabel22.Multiline = true;
+            this.xrLabel22.Name = "xrLabel22";
+            this.xrLabel22.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel22.SizeF = new System.Drawing.SizeF(187.5309F, 23F);
+            this.xrLabel22.Text = "xrLabel20";
+            // 
+            // xrLabel23
+            // 
+            this.xrLabel23.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalReciept]) + Sum([TotalBanks]) ")});
+            this.xrLabel23.LocationFloat = new DevExpress.Utils.PointFloat(16.46265F, 94.99998F);
+            this.xrLabel23.Multiline = true;
+            this.xrLabel23.Name = "xrLabel23";
+            this.xrLabel23.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel23.SizeF = new System.Drawing.SizeF(187.5309F, 23F);
+            this.xrLabel23.Text = "xrLabel20";
+            // 
+            // xrLabel24
+            // 
+            this.xrLabel24.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "Sum([TotalReciept]) + Sum([TotalBanks])  - Sum([TotalPayment])")});
+            this.xrLabel24.LocationFloat = new DevExpress.Utils.PointFloat(224.8333F, 94.99998F);
+            this.xrLabel24.Multiline = true;
+            this.xrLabel24.Name = "xrLabel24";
+            this.xrLabel24.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel24.SizeF = new System.Drawing.SizeF(187.5309F, 23F);
+            this.xrLabel24.Text = "xrLabel20";
+            // 
+            // xrLabel25
+            // 
+            this.xrLabel25.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?DateFrom")});
+            this.xrLabel25.LocationFloat = new DevExpress.Utils.PointFloat(103.9935F, 108.7083F);
+            this.xrLabel25.Multiline = true;
+            this.xrLabel25.Name = "xrLabel25";
+            this.xrLabel25.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel25.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel25.Text = "xrLabel25";
+            this.xrLabel25.TextFormatString = "{0:d}";
+            // 
+            // xrLabel26
+            // 
+            this.xrLabel26.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "?DateTo")});
+            this.xrLabel26.LocationFloat = new DevExpress.Utils.PointFloat(539.1409F, 108.7083F);
+            this.xrLabel26.Multiline = true;
+            this.xrLabel26.Name = "xrLabel26";
+            this.xrLabel26.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel26.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel26.Text = "xrLabel26";
+            this.xrLabel26.TextFormatString = "{0:d}";
+            // 
+            // xrLabel19
+            // 
+            this.xrLabel19.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[VoucherType2]")});
+            this.xrLabel19.LocationFloat = new DevExpress.Utils.PointFloat(66.80579F, 0F);
+            this.xrLabel19.Multiline = true;
+            this.xrLabel19.Name = "xrLabel19";
+            this.xrLabel19.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel19.SizeF = new System.Drawing.SizeF(66.80591F, 23F);
+            this.xrLabel19.Text = "xrLabel19";
             // 
             // CashIssueAndReceipt_Report
             // 
@@ -1117,7 +1162,9 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DateTo, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.UserId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
             new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.ActivityId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
-            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.CompanyId, DevExpress.XtraReports.Parameters.Orientation.Horizontal)});
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.CompanyId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.PropertyId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.PropertyUnitId, DevExpress.XtraReports.Parameters.Orientation.Horizontal)});
             this.Parameters.AddRange(new DevExpress.XtraReports.Parameters.Parameter[] {
             this.DepartmentId,
             this.CashBoxId,
@@ -1125,7 +1172,9 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.DateTo,
             this.UserId,
             this.ActivityId,
-            this.CompanyId});
+            this.CompanyId,
+            this.PropertyId,
+            this.PropertyUnitId});
             this.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.Yes;
             this.RightToLeftLayout = DevExpress.XtraReports.UI.RightToLeftLayout.Yes;
             this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
@@ -1136,7 +1185,6 @@ public class CashIssueAndReceipt_Report : DevExpress.XtraReports.UI.XtraReport
             this.PageInfo});
             this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
     }

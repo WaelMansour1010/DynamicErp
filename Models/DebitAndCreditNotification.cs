@@ -51,6 +51,48 @@ namespace MyERP.Models
         public string IssuedPerson { get; set; }
         public string InvoiceNo { get; set; }
         public Nullable<int> RenterId { get; set; }
+        public string QrCodeData { get; set; }
+        public string QrCodeDataPath { get; set; }
+        public byte[] QrCodeImage { get; set; }
+        public Nullable<int> zatcaStatus { get; set; }
+        public Nullable<double> InvoiceTypeCodeID { get; set; }
+        public string InvoiceTypeCodename { get; set; }
+        public string AdditionalDocumentReferencePIH { get; set; }
+        public string InvoiceDocumentReferenceID { get; set; }
+        public string AdditionalDocumentReferenceICVUUID { get; set; }
+        public Nullable<System.DateTime> ActualDeliveryDate { get; set; }
+        public Nullable<System.DateTime> LatestDeliveryDate { get; set; }
+        public Nullable<System.DateTime> RecTime { get; set; }
+        public Nullable<double> Transaction_ID { get; set; }
+        public string warrningmessage { get; set; }
+        public Nullable<double> PaymentMeansCode { get; set; }
+        public string InstructionNote { get; set; }
+        public string Iban { get; set; }
+        public string paymentnote { get; set; }
+        public string AdditionalStreetName { get; set; }
+        public string PlotIdentification { get; set; }
+        public string CountrySubentity { get; set; }
+        public string IdentificationCode { get; set; }
+        public Nullable<System.DateTime> last_changed { get; set; }
+        public string Identificationid { get; set; }
+        public string schemeID { get; set; }
+        public Nullable<double> TaxCategoryPercent { get; set; }
+        public string TaxCategoryID { get; set; }
+        public Nullable<int> Export { get; set; }
+        public Nullable<int> branch_id { get; set; }
+        public string branch_name { get; set; }
+        public string branchname { get; set; }
+        public string DocumentCurrencyCode { get; set; }
+        public string TaxCurrencyCode { get; set; }
+        public Nullable<double> allowancechargeAmount { get; set; }
+        public string allowancechargeAllowanceChargeReason { get; set; }
+        public Nullable<double> allowancechargeTaxCategoryid { get; set; }
+        public Nullable<double> allowancechargeTaxCategoryPercent { get; set; }
+        public Nullable<double> LegalMonetaryTotalPayableAmount { get; set; }
+        public Nullable<double> LegalMonetaryTotalPrepaidAmount { get; set; }
+        public string TableName { get; set; }
+        public string ErrorMessageS { get; set; }
+        public Nullable<bool> InvoiceType { get; set; }
     
         public virtual ChartOfAccount ChartOfAccount { get; set; }
         public virtual ChartOfAccount ChartOfAccount1 { get; set; }

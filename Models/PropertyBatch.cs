@@ -41,6 +41,12 @@ namespace MyERP.Models
         public Nullable<decimal> AddValue { get; set; }
         public Nullable<decimal> BatchValueBeforeDiscountAddtionAndTax { get; set; }
         public Nullable<decimal> TotalPaid { get; set; }
+        public Nullable<decimal> BatchTaxValue { get; set; }
+        public Nullable<decimal> BatchValueBeforeDiscount { get; set; }
+        public Nullable<decimal> BatchValueBeforeTax { get; set; }
+        public Nullable<decimal> BatchValueAfterDiscount { get; set; }
+        public Nullable<decimal> Paid { get; set; }
+        public Nullable<decimal> Discount_Backup { get; set; }
     
         public virtual ERPUser ERPUser { get; set; }
         public virtual Property Property { get; set; }

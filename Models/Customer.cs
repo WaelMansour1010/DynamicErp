@@ -99,6 +99,9 @@ namespace MyERP.Models
         public Nullable<bool> IsBlocked { get; set; }
         public Nullable<bool> InsuranceCompany { get; set; }
         public Nullable<double> InsuranceCompanyPercentage { get; set; }
+        public string VATNo { get; set; }
+        public string RegistrationNo { get; set; }
+        public string NormalizedName { get; set; }
     
         public virtual Branch Branch { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

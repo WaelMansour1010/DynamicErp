@@ -17,7 +17,6 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
     private MySoftERPEntity db = new MySoftERPEntity();
     private DevExpress.DataAccess.Sql.SqlDataSource sqlDataSource1;
     private DevExpress.XtraReports.Parameters.Parameter DepId;
-    private DevExpress.XtraReports.Parameters.Parameter DateFrom;
     private DevExpress.XtraReports.Parameters.Parameter DateTo;
     private XRControlStyle Title;
     private XRControlStyle GroupCaption1;
@@ -37,11 +36,6 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
     private XRTableCell tableCell4;
     private XRTableCell tableCell5;
     private DetailBand Detail;
-    private XRTable table3;
-    private XRTableRow tableRow3;
-    private XRTableCell tableCell6;
-    private XRTableCell tableCell7;
-    private XRTableCell tableCell8;
     private GroupFooterBand GroupFooter1;
     private XRLabel label2;
     private XRLabel xrLabel4;
@@ -56,6 +50,11 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
     private XRLabel CompanyName;
     private DevExpress.XtraReports.Parameters.Parameter ActivityId;
     private DevExpress.XtraReports.Parameters.Parameter CompanyId;
+    private DevExpress.XtraReports.Parameters.Parameter FromDate;
+    private DevExpress.XtraReports.Parameters.Parameter FDate;
+    private XRLabel xrLabel2;
+    private XRLabel xrLabel1;
+    private XRLabel xrLabel3;
 
     /// <summary>
     /// Required designer variable.
@@ -71,7 +70,7 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
         // TODO: Add constructor logic here
         //
         var helper = new HelperController().GetOpenPeriodBeginningEndingForReports();
-        this.DateFrom.ValueInfo = From != null ? From.ToString() : helper.start;
+        this.FDate.ValueInfo = From != null ? From.ToString() : helper.start;
         this.DateTo.ValueInfo = To != null ? To.ToString() : helper.end;
         this.DepId.Value = DepartmentId;
         this.ActivityId.Value = ActivityId;
@@ -100,23 +99,22 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
     private void InitializeComponent()
     {
             this.components = new System.ComponentModel.Container();
+            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery1 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
+            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery2 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
+            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery3 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
             DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
             DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery2 = new DevExpress.DataAccess.Sql.StoredProcQuery();
             DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
             DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
             DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
             DevExpress.DataAccess.Sql.QueryParameter queryParameter5 = new DevExpress.DataAccess.Sql.QueryParameter();
             DevExpress.DataAccess.Sql.QueryParameter queryParameter6 = new DevExpress.DataAccess.Sql.QueryParameter();
-            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery1 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
-            DevExpress.DataAccess.Sql.CustomSqlQuery customSqlQuery2 = new DevExpress.DataAccess.Sql.CustomSqlQuery();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FinancialStatement_Report));
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings1 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings2 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             DevExpress.XtraReports.Parameters.DynamicListLookUpSettings dynamicListLookUpSettings3 = new DevExpress.XtraReports.Parameters.DynamicListLookUpSettings();
             this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
             this.DepId = new DevExpress.XtraReports.Parameters.Parameter();
-            this.DateFrom = new DevExpress.XtraReports.Parameters.Parameter();
             this.DateTo = new DevExpress.XtraReports.Parameters.Parameter();
             this.Title = new DevExpress.XtraReports.UI.XRControlStyle();
             this.GroupCaption1 = new DevExpress.XtraReports.UI.XRControlStyle();
@@ -143,11 +141,6 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.tableCell4 = new DevExpress.XtraReports.UI.XRTableCell();
             this.tableCell5 = new DevExpress.XtraReports.UI.XRTableCell();
             this.Detail = new DevExpress.XtraReports.UI.DetailBand();
-            this.table3 = new DevExpress.XtraReports.UI.XRTable();
-            this.tableRow3 = new DevExpress.XtraReports.UI.XRTableRow();
-            this.tableCell6 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell7 = new DevExpress.XtraReports.UI.XRTableCell();
-            this.tableCell8 = new DevExpress.XtraReports.UI.XRTableCell();
             this.GroupFooter1 = new DevExpress.XtraReports.UI.GroupFooterBand();
             this.label2 = new DevExpress.XtraReports.UI.XRLabel();
             this.UserId = new DevExpress.XtraReports.Parameters.Parameter();
@@ -155,53 +148,58 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.CompanyName = new DevExpress.XtraReports.UI.XRLabel();
             this.ActivityId = new DevExpress.XtraReports.Parameters.Parameter();
             this.CompanyId = new DevExpress.XtraReports.Parameters.Parameter();
+            this.FromDate = new DevExpress.XtraReports.Parameters.Parameter();
+            this.FDate = new DevExpress.XtraReports.Parameters.Parameter();
+            this.xrLabel1 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel2 = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel3 = new DevExpress.XtraReports.UI.XRLabel();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.table3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
             // 
             // sqlDataSource1
             // 
             this.sqlDataSource1.ConnectionName = "localhost_MySoftERP_Connection";
             this.sqlDataSource1.Name = "sqlDataSource1";
-            storedProcQuery1.Name = "Department";
-            queryParameter1.Name = "@UserId";
-            queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter1.Value = new DevExpress.DataAccess.Expression("?UserId", typeof(int));
-            storedProcQuery1.Parameters.Add(queryParameter1);
-            storedProcQuery1.StoredProcName = "Department_ReportUserDepartments";
-            storedProcQuery2.Name = "GetFinancialStatement";
-            queryParameter2.Name = "@departmentId";
-            queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter2.Value = new DevExpress.DataAccess.Expression("?DepId", typeof(int));
-            queryParameter3.Name = "@fromDate";
-            queryParameter3.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter3.Value = new DevExpress.DataAccess.Expression("?DateFrom", typeof(System.DateTime));
-            queryParameter4.Name = "@toDate";
-            queryParameter4.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter4.Value = new DevExpress.DataAccess.Expression("?DateTo", typeof(System.DateTime));
-            queryParameter5.Name = "@ActivityId";
-            queryParameter5.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter5.Value = new DevExpress.DataAccess.Expression("?ActivityId", typeof(int));
-            queryParameter6.Name = "@CompanyId";
-            queryParameter6.Type = typeof(DevExpress.DataAccess.Expression);
-            queryParameter6.Value = new DevExpress.DataAccess.Expression("?CompanyId", typeof(int));
-            storedProcQuery2.Parameters.Add(queryParameter2);
-            storedProcQuery2.Parameters.Add(queryParameter3);
-            storedProcQuery2.Parameters.Add(queryParameter4);
-            storedProcQuery2.Parameters.Add(queryParameter5);
-            storedProcQuery2.Parameters.Add(queryParameter6);
-            storedProcQuery2.StoredProcName = "GetFinancialStatement";
             customSqlQuery1.Name = "Activity";
             customSqlQuery1.Sql = "select Id ,Code + N\' - \'+ArName ArName From Activity where IsActive=1 and IsDelet" +
     "ed=0\r\n";
             customSqlQuery2.Name = "Company";
             customSqlQuery2.Sql = "select Id ,Code + N\' - \'+ArName ArName From Company where IsActive=1 and IsDelete" +
     "d=0";
+            customSqlQuery3.Name = "Department2";
+            customSqlQuery3.Sql = "select id,arName\r\n  from \"dbo\".\"Department\" \"Department\"";
+            storedProcQuery1.Name = "GetFinancialStatement";
+            queryParameter1.Name = "@departmentId";
+            queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter1.Value = new DevExpress.DataAccess.Expression("?DepId", typeof(int));
+            queryParameter2.Name = "@fromDate";
+            queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter2.Value = new DevExpress.DataAccess.Expression("?FDate", typeof(System.DateTime));
+            queryParameter3.Name = "@toDate";
+            queryParameter3.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter3.Value = new DevExpress.DataAccess.Expression("?DateTo", typeof(System.DateTime));
+            queryParameter4.Name = "@ActivityId";
+            queryParameter4.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter4.Value = new DevExpress.DataAccess.Expression("?ActivityId", typeof(int));
+            queryParameter5.Name = "@CompanyId";
+            queryParameter5.Type = typeof(DevExpress.DataAccess.Expression);
+            queryParameter5.Value = new DevExpress.DataAccess.Expression("?CompanyId", typeof(int));
+            queryParameter6.Name = "@DetailLevel";
+            queryParameter6.Type = typeof(int);
+            queryParameter6.ValueInfo = "4";
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1,
+            queryParameter2,
+            queryParameter3,
+            queryParameter4,
+            queryParameter5,
+            queryParameter6});
+            storedProcQuery1.StoredProcName = "GetFinancialStatement";
             this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
-            storedProcQuery1,
-            storedProcQuery2,
             customSqlQuery1,
-            customSqlQuery2});
+            customSqlQuery2,
+            customSqlQuery3,
+            storedProcQuery1});
             this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
             // 
             // DepId
@@ -210,23 +208,20 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.DepId.Description = "الفرع";
             this.DepId.Name = "DepId";
             this.DepId.Type = typeof(int);
-            dynamicListLookUpSettings1.DataMember = "Department";
+            dynamicListLookUpSettings1.DataMember = "Department2";
             dynamicListLookUpSettings1.DataSource = this.sqlDataSource1;
             dynamicListLookUpSettings1.DisplayMember = "ArName";
             dynamicListLookUpSettings1.ValueMember = "Id";
             this.DepId.ValueSourceSettings = dynamicListLookUpSettings1;
             // 
-            // DateFrom
-            // 
-            this.DateFrom.Description = "التاريخ من";
-            this.DateFrom.Name = "DateFrom";
-            this.DateFrom.Type = typeof(System.DateTime);
-            // 
             // DateTo
             // 
             this.DateTo.Description = "التاريخ إلى";
+            this.DateTo.ExpressionBindings.AddRange(new DevExpress.XtraReports.Expressions.BasicExpressionBinding[] {
+            new DevExpress.XtraReports.Expressions.BasicExpressionBinding("Value", "LocalDateTimeNow()")});
             this.DateTo.Name = "DateTo";
             this.DateTo.Type = typeof(System.DateTime);
+            this.DateTo.ValueInfo = "2025-11-06";
             // 
             // Title
             // 
@@ -348,7 +343,7 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.Time.StylePriority.UseForeColor = false;
             this.Time.StylePriority.UseTextAlignment = false;
             this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            this.Time.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Time_BeforePrint);
             // 
             // xrLabel6
             // 
@@ -412,7 +407,7 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrPictureBox1.Name = "xrPictureBox1";
             this.xrPictureBox1.SizeF = new System.Drawing.SizeF(164.1251F, 96.99996F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrPictureBox1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // xrLabel7
             // 
@@ -507,61 +502,11 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             // Detail
             // 
             this.Detail.Controls.AddRange(new DevExpress.XtraReports.UI.XRControl[] {
-            this.table3});
+            this.xrLabel3,
+            this.xrLabel2,
+            this.xrLabel1});
             this.Detail.HeightF = 25F;
             this.Detail.Name = "Detail";
-            // 
-            // table3
-            // 
-            this.table3.LocationFloat = new DevExpress.Utils.PointFloat(0F, 0F);
-            this.table3.Name = "table3";
-            this.table3.OddStyleName = "DetailData3_Odd";
-            this.table3.Rows.AddRange(new DevExpress.XtraReports.UI.XRTableRow[] {
-            this.tableRow3});
-            this.table3.SizeF = new System.Drawing.SizeF(747F, 25F);
-            // 
-            // tableRow3
-            // 
-            this.tableRow3.Cells.AddRange(new DevExpress.XtraReports.UI.XRTableCell[] {
-            this.tableCell6,
-            this.tableCell7,
-            this.tableCell8});
-            this.tableRow3.Name = "tableRow3";
-            this.tableRow3.Weight = 11.5D;
-            // 
-            // tableCell6
-            // 
-            this.tableCell6.Borders = DevExpress.XtraPrinting.BorderSide.None;
-            this.tableCell6.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Statement]")});
-            this.tableCell6.Name = "tableCell6";
-            this.tableCell6.StyleName = "DetailData1";
-            this.tableCell6.StylePriority.UseBorders = false;
-            this.tableCell6.StylePriority.UseTextAlignment = false;
-            this.tableCell6.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
-            this.tableCell6.Weight = 0.3475326272538069D;
-            // 
-            // tableCell7
-            // 
-            this.tableCell7.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[PartialAmount]")});
-            this.tableCell7.Name = "tableCell7";
-            this.tableCell7.StyleName = "DetailData1";
-            this.tableCell7.StylePriority.UseTextAlignment = false;
-            this.tableCell7.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
-            this.tableCell7.TextFormatString = "{0:0.00}";
-            this.tableCell7.Weight = 0.37781117144358684D;
-            // 
-            // tableCell8
-            // 
-            this.tableCell8.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalAmount]")});
-            this.tableCell8.Name = "tableCell8";
-            this.tableCell8.StyleName = "DetailData1";
-            this.tableCell8.StylePriority.UseTextAlignment = false;
-            this.tableCell8.TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter;
-            this.tableCell8.TextFormatString = "{0:0.00}";
-            this.tableCell8.Weight = 0.2746562421561245D;
             // 
             // GroupFooter1
             // 
@@ -644,6 +589,60 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             dynamicListLookUpSettings3.ValueMember = "Id";
             this.CompanyId.ValueSourceSettings = dynamicListLookUpSettings3;
             // 
+            // FromDate
+            // 
+            this.FromDate.Description = "من تاريخ";
+            this.FromDate.ExpressionBindings.AddRange(new DevExpress.XtraReports.Expressions.BasicExpressionBinding[] {
+            new DevExpress.XtraReports.Expressions.BasicExpressionBinding("Value", "LocalDateTimeThisYear()")});
+            this.FromDate.Name = "FromDate";
+            this.FromDate.Type = typeof(System.DateTime);
+            this.FromDate.ValueInfo = "0";
+            this.FromDate.Visible = false;
+            // 
+            // FDate
+            // 
+            this.FDate.Description = "من تاريخ";
+            this.FDate.ExpressionBindings.AddRange(new DevExpress.XtraReports.Expressions.BasicExpressionBinding[] {
+            new DevExpress.XtraReports.Expressions.BasicExpressionBinding("Value", "LocalDateTimeThisYear()")});
+            this.FDate.Name = "FDate";
+            this.FDate.Type = typeof(System.DateTime);
+            this.FDate.ValueInfo = "2025-11-06";
+            // 
+            // xrLabel1
+            // 
+            this.xrLabel1.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[TotalAmount]")});
+            this.xrLabel1.LocationFloat = new DevExpress.Utils.PointFloat(541.8318F, 0F);
+            this.xrLabel1.Multiline = true;
+            this.xrLabel1.Name = "xrLabel1";
+            this.xrLabel1.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel1.SizeF = new System.Drawing.SizeF(195.1682F, 23F);
+            this.xrLabel1.Text = "xrLabel1";
+            this.xrLabel1.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
+            // xrLabel2
+            // 
+            this.xrLabel2.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Statement]")});
+            this.xrLabel2.LocationFloat = new DevExpress.Utils.PointFloat(10F, 0F);
+            this.xrLabel2.Multiline = true;
+            this.xrLabel2.Name = "xrLabel2";
+            this.xrLabel2.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel2.SizeF = new System.Drawing.SizeF(249.6069F, 23F);
+            this.xrLabel2.Text = "xrLabel2";
+            // 
+            // xrLabel3
+            // 
+            this.xrLabel3.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[PartialAmount]")});
+            this.xrLabel3.LocationFloat = new DevExpress.Utils.PointFloat(259.6069F, 0F);
+            this.xrLabel3.Multiline = true;
+            this.xrLabel3.Name = "xrLabel3";
+            this.xrLabel3.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 96F);
+            this.xrLabel3.SizeF = new System.Drawing.SizeF(282.1415F, 23F);
+            this.xrLabel3.Text = "xrLabel3";
+            this.xrLabel3.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            // 
             // FinancialStatement_Report
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -658,13 +657,22 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.DataMember = "GetFinancialStatement";
             this.DataSource = this.sqlDataSource1;
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
-            this.Margins = new DevExpress.Drawing.DXMargins(40, 40, 40, 64);
+            this.Margins = new DevExpress.Drawing.DXMargins(40F, 40F, 40F, 64.04171F);
             this.PageHeight = 1169;
             this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
+            this.ParameterPanelLayoutItems.AddRange(new DevExpress.XtraReports.Parameters.ParameterPanelLayoutItem[] {
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DepId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.FromDate, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.FDate, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.DateTo, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.UserId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.ActivityId, DevExpress.XtraReports.Parameters.Orientation.Horizontal),
+            new DevExpress.XtraReports.Parameters.ParameterLayoutItem(this.CompanyId, DevExpress.XtraReports.Parameters.Orientation.Horizontal)});
             this.Parameters.AddRange(new DevExpress.XtraReports.Parameters.Parameter[] {
             this.DepId,
-            this.DateFrom,
+            this.FromDate,
+            this.FDate,
             this.DateTo,
             this.UserId,
             this.ActivityId,
@@ -680,9 +688,8 @@ public class FinancialStatement_Report : DevExpress.XtraReports.UI.XtraReport
             this.GroupFooterBackground3,
             this.DetailData3_Odd,
             this.PageInfo});
-            this.Version = "20.1";
+            this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.table3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
     }

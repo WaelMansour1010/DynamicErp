@@ -106,7 +106,7 @@ namespace MyERP.Controllers.AccountSettings
                     BatchDate = t.BatchDate.Value.ToString("yyyy-MM-dd"),
                     BatchNo = t.BatchNo,
                     BatchTaxPercentage = t.BatchTaxPercentage??0d,
-                    BatchTaxValue = t.BatchTaxValue,
+                    BatchTaxValue = t.BatchTaxValueC,
                     BatchValueBeforeDiscountAddtionAndTax = t.BatchValueBeforeDiscountAddtionAndTax ?? 0m,
                     Discount = t.Discount??0m,
                     TotalBatchValue = t.TotalBatchValue,

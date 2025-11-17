@@ -33,7 +33,7 @@
         @Html.DevExpress().WebDocumentViewer(settings =>
    {
        settings.Name = "WebDocumentViewer2";
-   }).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(new CashIssueAndReceipt_Report(ViewBag.DepartmentId, ViewBag.CashBoxId, ViewBag.dateFrom, ViewBag.dateTo, ViewBag.ActivityId, ViewBag.CompanyId))).GetHtml()
+   }).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(new CashIssueAndReceipt_Report(ViewBag.DepartmentId, ViewBag.CashBoxId, ViewBag.dateFrom, ViewBag.dateTo, ViewBag.ActivityId, ViewBag.CompanyId, ViewBag.PropertyId, ViewBag.PropertyUnitId))).GetHtml()
 
     </div>
 }

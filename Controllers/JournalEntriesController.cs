@@ -82,18 +82,119 @@ namespace MyERP.Controllers
 
             IQueryable<JournalEntry> journalEntries;
             IQueryable<int> journalEntriesDetails;
+            
+
+            // فلتر أساسي يتكرر في الحالتين
+            var baseQuery =
+                repository.GetAll()
+                          .Where(s =>
+                                 !s.IsDeleted &&
+                                 depIds.Contains(s.DepartmentId) &&
+                                 (dateFrom == null || s.Date >= dateFrom) &&
+                                 (dateTo == null || s.Date <= dateTo));
+
             if (string.IsNullOrEmpty(searchWord))
             {
-                journalEntries = repository.GetAll().Where(s => s.IsDeleted == false && depIds.Contains(s.DepartmentId) && (dateFrom == null || s.Date > dateFrom) && (dateTo == null || s.Date < dateTo) && depIds.Contains(s.DepartmentId)).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
-                ViewBag.Count = await repository.GetAll().Where(s => s.IsDeleted == false && depIds.Contains(s.DepartmentId) && (dateFrom == null || s.Date > dateFrom) && (dateTo == null || s.Date < dateTo) && depIds.Contains(s.DepartmentId)).CountAsync();
+                ViewBag.Count = await baseQuery.CountAsync();
+                journalEntries = baseQuery
+                                    .OrderByDescending(s => s.Id)
+                                    .Skip(skipRowsNo)
+                                    .Take(wantedRowsNo);
             }
             else
             {
-                journalEntriesDetails = db.JournalEntryDetails.Where(d => d.Notes.Contains(searchWord) || d.Debit.ToString().Replace(".00", "") == searchWord || d.Credit.ToString().Replace(".00", "") == searchWord || d.ChartOfAccount.ArName.Contains(searchWord) || d.ChartOfAccount.Code.Contains(searchWord)).Select(d => d.JournalEntryId);
-                int x = db.JournalEntryDetails.Where(d => d.Notes.Contains(searchWord) || d.Debit.ToString() == searchWord || d.Credit.ToString() == searchWord).Select(d => d.Id).Count();
-                journalEntries = repository.GetAll().Where(s => s.IsDeleted == false && depIds.Contains(s.DepartmentId) && (dateFrom == null || s.Date > dateFrom) && (dateTo == null || s.Date < dateTo) && (s.DocumentNumber.Contains(searchWord) || s.Company.ArName.Contains(searchWord) || s.Branch.ArName.Contains(searchWord) || s.Notes.Contains(searchWord) || s.Currency.ArName.Contains(searchWord) || s.Department.ArName.Contains(searchWord) || journalEntriesDetails.Contains(s.Id))).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
-                ViewBag.Count = await repository.GetAll().Where(s => s.IsDeleted == false && depIds.Contains(s.DepartmentId) && (dateFrom == null || s.Date > dateFrom) && (dateTo == null || s.Date < dateTo) && (s.DocumentNumber.Contains(searchWord) || s.Company.ArName.Contains(searchWord) || s.Branch.ArName.Contains(searchWord) || s.Notes.Contains(searchWord) || s.Currency.ArName.Contains(searchWord) || s.Department.ArName.Contains(searchWord) || journalEntriesDetails.Contains(s.Id))).CountAsync();
+                var word = searchWord;
+
+                // مطابقات تفاصيل القيد الحالية (ملاحظتك الأصلية)
+                var detailsMatches =
+                    db.JournalEntryDetails
+                      .Where(d =>
+                             d.Notes.Contains(word) ||
+                             d.Debit.ToString().Replace(".00", "") == word ||
+                             d.Credit.ToString().Replace(".00", "") == word ||
+                             d.ChartOfAccount.ArName.Contains(word) ||
+                             d.ChartOfAccount.Code.Contains(word))
+                      .Select(d => d.JournalEntryId);
+
+                // ====== مطابقات بالطرف PartyId/PartyType ======
+                var jedByVendors =
+                    from d in db.JournalEntryDetails
+                    where d.PartyType == 1 && d.PartyId != null
+                    join v in db.Vendors on d.PartyId equals v.Id
+                    where (v.ArName.Contains(word) || v.EnName.Contains(word))
+                    select d.JournalEntryId;
+
+                var jedByCustomers =
+                    from d in db.JournalEntryDetails
+                    where d.PartyType == 2 && d.PartyId != null
+                    join c in db.Customers on d.PartyId equals c.Id
+                    where (c.ArName.Contains(word) || c.EnName.Contains(word))
+                    select d.JournalEntryId;
+
+                var jedByEmployees =
+                    from d in db.JournalEntryDetails
+                    where d.PartyType == 3 && d.PartyId != null
+                    join e in db.Employees on d.PartyId equals e.Id
+                    where (e.ArName.Contains(word) || e.EnName.Contains(word))
+                    select d.JournalEntryId;
+
+                var jedByRenters =
+                    from d in db.JournalEntryDetails
+                    where d.PartyType == 4 && d.PartyId != null
+                    join r in db.PropertyRenters on d.PartyId equals r.Id
+                    where (r.ArName.Contains(word) || r.EnName.Contains(word))
+                    select d.JournalEntryId;
+
+                var jedByOwners =
+                    from d in db.JournalEntryDetails
+                    where d.PartyType == 5 && d.PartyId != null
+                    join o in db.PropertyOwners on d.PartyId equals o.Id
+                    where (o.ArName.Contains(word) || o.EnName.Contains(word))
+                    select d.JournalEntryId;
+
+                var partyMatches = jedByVendors
+                                    .Concat(jedByCustomers)
+                                    .Concat(jedByEmployees)
+                                    .Concat(jedByRenters)
+                                    .Concat(jedByOwners);
+
+                var allDetailMatches = detailsMatches
+                                        .Concat(partyMatches)
+                                        .Distinct();
+
+                var searchQuery =
+                    baseQuery.Where(s =>
+                        s.DocumentNumber.Contains(word) ||
+                        s.Company.ArName.Contains(word) ||
+                        s.Branch.ArName.Contains(word) ||
+                        s.Notes.Contains(word) ||
+                        s.Currency.ArName.Contains(word) ||
+                        s.Department.ArName.Contains(word) ||
+                        allDetailMatches.Contains(s.Id));
+
+                ViewBag.Count = await searchQuery.CountAsync();
+                journalEntries = searchQuery
+                                    .OrderByDescending(s => s.Id)
+                                    .Skip(skipRowsNo)
+                                    .Take(wantedRowsNo);
             }
+
+            ViewBag.searchWord = searchWord;
+            ViewBag.wantedRowsNo = wantedRowsNo;
+
+            QueryHelper.AddLog(new MyLog()
+            {
+                ArAction = "فتح قائمة القيود",
+                EnAction = "Index",
+                ControllerName = "JournalEntries",
+                UserName = User.Identity.Name,
+                UserId = userId,
+                LogDate = DateTime.Now,
+                RequestMethod = "GET"
+            });
+
+            return View(await journalEntries.ToListAsync());
+
 
             ViewBag.searchWord = searchWord;
             ViewBag.wantedRowsNo = wantedRowsNo;
@@ -243,74 +344,162 @@ namespace MyERP.Controllers
         }
 
         [HttpPost]
+        
         public async Task<JsonResult> AddEdit(JournalEntry journalEntry)
         {
-            if (ModelState.IsValid)
+            try
             {
+                // 1) تحقق الموديل
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Where(x => x.Value.Errors.Count > 0)
+                                           .Select(x => new { x.Key, x.Value.Errors })
+                                           .ToArray();
+                    return Json(new { success = "false", errors });
+                }
+
                 var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
-
                 var id = journalEntry.Id;
-                if (id == 0)
+
+                // ⚠️ حمّل القسم مرة واحدة لاستخدامه في استنتاج PartyType
+                var dep = db.Departments.FirstOrDefault(d => d.Id == journalEntry.DepartmentId);
+
+                // ✅ قبل أي حفظ: عيّن PartyType لو ناقص/صفر
+                foreach (var d in (journalEntry.JournalEntryDetails ?? Enumerable.Empty<JournalEntryDetail>()))
                 {
-                    journalEntry.DocumentNumber = new JavaScriptSerializer().Serialize(SetDocNum(journalEntry.DepartmentId, journalEntry.Date).Data).ToString().Trim('"');
-                    db.JournalEntries.Add(journalEntry);    
-                }
-                else
-                {
-                    db.JournalEntryDetails.RemoveRange(db.JournalEntryDetails.Where(x => x.JournalEntryId == journalEntry.Id));
-                    List<JournalEntryDetail> journalEntryDetails = journalEntry.JournalEntryDetails.ToList();
-                    journalEntry.JournalEntryDetails = null;
-                    db.Entry(journalEntry).State = EntityState.Modified;
-                    db.JournalEntryDetails.AddRange(journalEntryDetails);
-                    QueryHelper.AddLog(new MyLog()
+                    if (d.PartyId.HasValue)
                     {
-                        ArAction = "تعديل قيد",
-                        EnAction = "AddEdit",
-                        ControllerName = "JournalEntries",
-                        UserName = User.Identity.Name,
-                        UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
-                        LogDate = DateTime.Now,
-                        RequestMethod = "POST",
-                        SelectedItem = journalEntry.Id,
-                        CodeOrDocNo = journalEntry.DocumentNumber
-                    });
-
-                    ////-------------------- Notification-------------------------////
-                    Notification.GetNotification("JournalEntries", "Edit", "InsertJournalEntry", id, null, "القيود");
-
-                    //////////-----------------------------------------------------------------------
+                        if (!d.PartyType.HasValue || d.PartyType.Value == 0)
+                        {
+                            var accId = d.AccountId ?? 0;
+                            d.PartyType = DeterminePartyType(dep, accId); // 1 Vendor, 2 Customer, 3 Employee, 4 Renter, 5 Owner
+                        }
+                    }
+                    else
+                    {
+                        // لو مفيش PartyId خليه null برضه في PartyType
+                        d.PartyType = null;
+                    }
                 }
-                await db.SaveChangesAsync();
+
                 if (id == 0)
                 {
-                    id = db.JournalEntries.Max(j => j.Id);
-                    QueryHelper.AddLog(new MyLog()
+                    // توليد رقم المستند
+                    journalEntry.DocumentNumber = new JavaScriptSerializer()
+                        .Serialize(SetDocNum(journalEntry.DepartmentId, journalEntry.Date).Data)
+                        .Trim('"');
+
+                    // إضافة القيد (الهيدر + التفاصيل القادمة من الـ View)
+                    db.JournalEntries.Add(journalEntry);
+                    await db.SaveChangesAsync();
+
+                    id = journalEntry.Id;
+
+                    // Log + Notification
+                    QueryHelper.AddLog(new MyLog
                     {
                         ArAction = "اضافة قيد",
                         EnAction = "AddEdit",
                         ControllerName = "JournalEntries",
                         UserName = User.Identity.Name,
-                        UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
+                        UserId = userId,
                         LogDate = DateTime.Now,
                         RequestMethod = "POST",
-                        SelectedItem = db.JournalEntries.Max(i => i.Id),
+                        SelectedItem = id,
                         CodeOrDocNo = journalEntry.DocumentNumber
                     });
-
-                    ////-------------------- Notification-------------------------////
                     Notification.GetNotification("JournalEntries", "Add", "InsertJournalEntry", id, null, "القيود");
-                    /////////////-----------------------------------------------------------------------
                 }
+                else
+                {
+                    // تعديل
+                    var entity = db.JournalEntries
+                                   .Include(x => x.JournalEntryDetails)
+                                   .FirstOrDefault(x => x.Id == id);
+
+                    if (entity == null)
+                        return Json(new { success = "false", message = "القيد غير موجود." });
+
+                    // تحديث بيانات الهيدر
+                    entity.DocumentNumber = journalEntry.DocumentNumber;
+                    entity.Date = journalEntry.Date;
+                    entity.DepartmentId = journalEntry.DepartmentId;
+                    entity.IsPosted = journalEntry.IsPosted;
+                    entity.Notes = journalEntry.Notes;
+
+                    // استبدال التفاصيل
+                    if (entity.JournalEntryDetails != null && entity.JournalEntryDetails.Any())
+                        db.JournalEntryDetails.RemoveRange(entity.JournalEntryDetails.ToList());
+
+                    // ممكن القسم يتغيّر في التعديل — اتأكد إن dep مناسب للهيدر بعد التعديل
+                    dep = dep ?? db.Departments.FirstOrDefault(d => d.Id == entity.DepartmentId);
+
+                    foreach (var d in (journalEntry.JournalEntryDetails ?? Enumerable.Empty<JournalEntryDetail>()))
+                    {
+                        d.JournalEntryId = entity.Id;
+
+                        // أمان إضافي: أكّد PartyType
+                        if (d.PartyId.HasValue)
+                        {
+                            if (!d.PartyType.HasValue || d.PartyType.Value == 0)
+                            {
+                                var accId = d.AccountId ?? 0;
+                                d.PartyType = DeterminePartyType(dep, accId);
+                            }
+                        }
+                        else
+                        {
+                            d.PartyType = null;
+                        }
+
+                        db.JournalEntryDetails.Add(d);
+                    }
+
+                    await db.SaveChangesAsync();
+
+                    // Log + Notification
+                    QueryHelper.AddLog(new MyLog
+                    {
+                        ArAction = "تعديل قيد",
+                        EnAction = "AddEdit",
+                        ControllerName = "JournalEntries",
+                        UserName = User.Identity.Name,
+                        UserId = userId,
+                        LogDate = DateTime.Now,
+                        RequestMethod = "POST",
+                        SelectedItem = entity.Id,
+                        CodeOrDocNo = entity.DocumentNumber
+                    });
+                    Notification.GetNotification("JournalEntries", "Edit", "InsertJournalEntry", entity.Id, null, "القيود");
+                }
+
                 return Json(new { Id = id, success = "true" });
             }
-            var errors = ModelState
-                   .Where(x => x.Value.Errors.Count > 0)
-                   .Select(x => new { x.Key, x.Value.Errors })
-                   .ToArray();
+            catch (Exception ex)
+            {
+                var msg = ex.GetBaseException()?.Message ?? ex.Message;
 
-            return Json(new { success = "false", errors });
+                // لوج مختصر بدون خاصية Notes
+                try
+                {
+                    QueryHelper.AddLog(new MyLog
+                    {
+                        ArAction = "فشل حفظ القيد: " + msg,
+                        EnAction = "AddEditError",
+                        ControllerName = "JournalEntries",
+                        UserName = User.Identity.Name,
+                        UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
+                        LogDate = DateTime.Now,
+                        RequestMethod = "POST"
+                        // SelectedItem و CodeOrDocNo اختياريين لو حابب تضيفهم
+                    });
+                }
+                catch { /* تجاهل أي فشل في اللوج نفسه */ }
+
+                return Json(new { success = "false", message = msg });
+            }
         }
-        //to fill Accounts DDL in View script
+
         [SkipERPAuthorize]
         public JsonResult GetAccounts()
         {
@@ -576,6 +765,31 @@ namespace MyERP.Controllers
             //return Json(i, JsonRequestBehavior.AllowGet);
         }
 
+        private byte? DeterminePartyType(int departmentId, int accountId)
+        {
+            var dep = db.Departments.FirstOrDefault(d => d.Id == departmentId);
+            if (dep == null) return null;
+
+            if (dep.VendorsAccountId == accountId) return 1;           // Vendor
+            if (dep.CustomersAccountId == accountId) return 2;         // Customer
+            if (dep.EmployeeReceivableAccountId == accountId) return 3;// Employee
+            if (dep.RenterAndBuyerAccountId == accountId) return 4;    // Renter
+            if (dep.OwnerAccountId == accountId) return 5;             // Owner
+
+            return null;
+        }
+
+        // (اختياري) Overload أسرع لو هتجيب القسم مرة وتعدّي الكائن نفسه
+        private static byte? DeterminePartyType(Department dep, int accountId)
+        {
+            if (dep == null) return null;
+            if (dep.VendorsAccountId == accountId) return 1;
+            if (dep.CustomersAccountId == accountId) return 2;
+            if (dep.EmployeeReceivableAccountId == accountId) return 3;
+            if (dep.RenterAndBuyerAccountId == accountId) return 4;
+            if (dep.OwnerAccountId == accountId) return 5;
+            return null;
+        }
         [SkipERPAuthorize]
         public JsonResult CheckValueAddedTaxes(int? AccountId, int? DepartmentId)
         {
@@ -594,4 +808,5 @@ namespace MyERP.Controllers
             base.Dispose(disposing);
         }
     }
+
 }

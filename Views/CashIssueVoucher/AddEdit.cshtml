@@ -1075,7 +1075,7 @@
         var EmployeeSalary = [];
     let IssueAnalysisAccountOptions = '';
     //let IssueAnalysisVendorOptions = '';
-    var taxPercentage = 0.14;
+    var taxPercentage = 0.15;
 
     //********************************************************************//
 
@@ -1186,16 +1186,17 @@
         }
     });
     $(document).on('change', '.ActualPaymentPaidAmount', function () {
-        if ($(this).val() > 0) {
-            EditAmount = 0;
-            ReCalculateMoneyAmount();
-            var remain = $(this).closest('tr').find('.ActualPaymentRemain').text();
-            var paidAmount = $(this).val();
-            var NetRequired = parseFloat(remain) - parseFloat(paidAmount);
-            $(this).closest('tr').find('.ActualPaymentNetRequired').text(NetRequired.toFixed(2));
-        }
+        // استخدم غير المقنّع في الحسابات
+        var remain = parseFloat($(this).closest('tr').find('.ActualPaymentRemain').text() || 0);
+        var paidRaw = $(this).inputmask('unmaskedvalue');
+        var paidAmount = parseFloat(paidRaw || 0);
 
+        ReCalculateMoneyAmount();
+
+        var NetRequired = remain - (isNaN(paidAmount) ? 0 : paidAmount);
+        $(this).closest('tr').find('.ActualPaymentNetRequired').text(NetRequired.toFixed(2));
     });
+
     $('#MoneyAmount').on('change', function () {
         var money = $(this).val();
         $('#PurchaseInvoiceActualPaymentTable tr').each(function () {
@@ -2007,18 +2008,26 @@
         EditAmount = 0;
         ReCalculateMoneyAmount();
     }
+    // ✅ الكود الجديد الصح
     function ReCalculateMoneyAmount() {
         if ($('#SourceTypeId').val() == 2) {
+            // استخدم متغير محلي هنا أفضل من العام
+            var totalPaidAmount = 0;
+
             $('#PurchaseInvoiceActualPaymentTable tr').each(function () {
                 let td = $(this);
-                if (td.find('.ActualPaymentPaidAmount').val() > 0) {
-                    EditAmount += parseFloat(td.find('.ActualPaymentPaidAmount').val());
+                // استخدم 'unmaskedvalue' عشان تاخد الرقم صافي من غير فواصل
+                let paidValue = td.find('.ActualPaymentPaidAmount').inputmask('unmaskedvalue');
+
+                if (paidValue && parseFloat(paidValue) > 0) {
+                    totalPaidAmount += parseFloat(paidValue);
                 }
             });
-            $('#MoneyAmount').val(EditAmount.toFixed(2));
-        }
 
+            // حدث خانة المبلغ بالإجمالي الجديد
+            $('#MoneyAmount').val(totalPaidAmount.toFixed(2));
         }
+    }
     function CalculateTaxesPercentage() {
             // if ($('#MoneyAmount').inputmask('unmaskedvalue') > 0) {
             //var percent = parseFloat($('#MoneyAmount').inputmask('unmaskedvalue')) * 0.15;
@@ -2049,38 +2058,28 @@
     }
 
     /**************************Batches Scripts**********************************/
+
     function getPropertyBatches() {
         let property = $('#PropertyId').val();
         $.get('/CashIssueVoucher/geOwnerBatchest?id=' + property).done(function (r) {
             $('#PropertyBatches').empty();
-            /*  console.log(r);*/
+            /* console.log(r);*/
             if (r) {
                 for (let i = 0; i < r.length; i++) {
-                    //let BatchDate = "";
-                    //if (r[i].BatchDate == null) {
-                    //    BatchDate = "";
-                    //}
-                    //else {
-                    //    BatchDate = convertToJavaScriptDate(r[i].BatchDate);
-                    //}
-                    /*  console.log(BatchDate);*/
 
                     let clsIsDelivered = r[i].IsDelivered == true ? "checked " : "";
                     var CheckPaid = r[i].IsDelivered == true ? "readonly disabled" : "";
-                    let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="' +
+
+                    // السطر التالي تم تعديله لإضافة data attributes
+                    let tr = '<tr data-original-total-paid="' + r[i].TotalPaid + '" data-total-batch-value="' + r[i].TotalBatchValue + '">' +
+                        '<td class="tabledit-edit-mode"><input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="' +
                         (i + 1) +
                         '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "date" class="BatchDate Gregorian  form-control tabledit-input form-control-sm" value = "' +
                         r[i].BatchDate +
                         '" disabled readonly /></td>' +
-                        /*  <td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label">' +*/
-                        //   r[i].HijryBatchDate + '</label>
-                        '</td ><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchValueBeforeDiscountAddtionAndTax form-control tabledit-input form-control-sm" value="' +
+                        '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchValueBeforeDiscountAddtionAndTax form-control tabledit-input form-control-sm" value="' +
                         r[i].BatchValueBeforeDiscountAddtionAndTax +
                         '" disabled readonly /></td>' +
-                        //'<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchValueBeforeTax form-control tabledit-input form-control-sm" value="' +
-                        //r[i].BatchValueBeforeTax +
-                        //'" disabled readonly /></td>' +
-                        //
                         '<td class="tabledit-edit-mode"><input type="number" step="any" class="AddValue form-control tabledit-input form-control-sm" value="' +
                         (r[i].AddValue) + '" /></td>' +
                         '<td class="tabledit-edit-mode"><input type="number" step="any" class="Discount form-control tabledit-input form-control-sm" value="' +
@@ -2118,10 +2117,22 @@
         tr.find('.Remain').val(newCalcRemain.toFixed(2));
     }
 
+    //function updateTotalAmountWhenBatchChange() {
+    //    var sum = 0;
+    //    $('.TotalPaid').each(function () {
+    //        sum += parseFloat($(this).val());
+    //    });
+    //    $('#MoneyAmount').val(sum.toFixed(2));
+    //}
     function updateTotalAmountWhenBatchChange() {
         var sum = 0;
-        $('.TotalPaid').each(function () {
-            sum += parseFloat($(this).val());
+        // هنا التعديل، خليناه يجمع من عمود "المدفوع" اللي الكلاس بتاعه Paid
+        $('.Paid').each(function () {
+            var paidValue = $(this).val();
+            // نتأكد إن القيمة مش فاضية وإنها رقم قبل ما نجمعها
+            if (paidValue && !isNaN(parseFloat(paidValue))) {
+                sum += parseFloat(paidValue);
+            }
         });
         $('#MoneyAmount').val(sum.toFixed(2));
     }
@@ -2141,21 +2152,36 @@
         updateTotalAmountWhenBatchChange();
     });
 
+
     $(document).on('change', '.Paid', function (e) {
-        var paid = parseFloat($(this).closest('tr').find('.Paid').val());
-        var oldRemain = parseFloat($(this).closest('tr').find('.Remain').val());
-        var newCalcRemain = oldRemain - paid;
-        $(this).closest('tr').find('.Remain').val(newCalcRemain);
+        // هنجيب الصف اللي بنعدل فيه
+        var $row = $(this).closest('tr');
 
-        var oldTotalPaid = parseFloat($(this).closest('tr').find('.TotalPaid').val());
-        var newTotalPaid = oldTotalPaid + paid;
-        $(this).closest('tr').find('.TotalPaid').val(newTotalPaid);
+        // هنجيب القيم الأصلية اللي خزنّاها في الخطوة الأولى
+        var originalTotalPaid = parseFloat($row.data('original-total-paid'));
+        var totalBatchValue = parseFloat($row.data('total-batch-value'));
 
-        if (newCalcRemain <= 0)
-            $(this).closest('tr').find('.IsDelivered').prop('checked', true);
-        else
-            $(this).closest('tr').find('.IsDelivered').prop('checked', false);
+        // هنجيب القيمة الجديدة اللي اتكتبت في خانة "المدفوع"
+        var currentPaid = parseFloat($(this).val()) || 0; // لو الخانة فاضية هتبقى قيمتها صفر
 
+        // 1. حساب "إجمالي المدفوع" الجديد = الأصلي + المدفوع حالياً
+        var newTotalPaid = originalTotalPaid + currentPaid;
+
+        // 2. حساب "المتبقي" الجديد = قيمة الدفعة الكاملة - إجمالي المدفوع الجديد
+        var newRemain = totalBatchValue - newTotalPaid;
+
+        // 3. تحديث الخانات بالقيم الصحيحة
+        $row.find('.TotalPaid').val(newTotalPaid.toFixed(2));
+        $row.find('.Remain').val(newRemain.toFixed(2));
+
+        // 4. تحديث حالة التسليم (checkbox)
+        if (newRemain <= 0) {
+            $row.find('.IsDelivered').prop('checked', true);
+        } else {
+            $row.find('.IsDelivered').prop('checked', false);
+        }
+
+        // 5. تحديث الإجمالي الكلي فوق
         updateTotalAmountWhenBatchChange();
     });
 

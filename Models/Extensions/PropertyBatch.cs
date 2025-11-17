@@ -17,12 +17,12 @@ namespace MyERP.Models
                 var valueAfterDiscount = (BatchValueBeforeDiscountAddtionAndTax ?? 0) - (Discount ?? 0);
                 var valueAfterDiscountAndAddvalue = valueAfterDiscount + (AddValue ?? 0) ;
                 
-                return valueAfterDiscountAndAddvalue + (decimal)BatchTaxValue;
+                return valueAfterDiscountAndAddvalue + (decimal)BatchTaxValueC;
             }
         }
 
         [NotMapped]
-        public double BatchTaxValue
+        public double BatchTaxValueC
         {
             get
             {

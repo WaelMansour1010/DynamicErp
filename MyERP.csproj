@@ -128,6 +128,12 @@
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>packages\EntityFramework.6.5.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="ExcelDataReader, Version=3.8.0.0, Culture=neutral, PublicKeyToken=93517dbe6a4012fa, processorArchitecture=MSIL">
+      <HintPath>packages\ExcelDataReader.3.8.0\lib\net462\ExcelDataReader.dll</HintPath>
+    </Reference>
+    <Reference Include="ExcelDataReader.DataSet, Version=3.8.0.0, Culture=neutral, PublicKeyToken=93517dbe6a4012fa, processorArchitecture=MSIL">
+      <HintPath>packages\ExcelDataReader.DataSet.3.8.0\lib\net462\ExcelDataReader.DataSet.dll</HintPath>
+    </Reference>
     <Reference Include="FastMember, Version=1.0.0.9, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\FastMember.1.1.0\lib\net40\FastMember.dll</HintPath>
     </Reference>
@@ -290,6 +296,7 @@
     <Reference Include="System.IdentityModel.Tokens.Jwt, Version=7.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\System.IdentityModel.Tokens.Jwt.7.5.0\lib\net472\System.IdentityModel.Tokens.Jwt.dll</HintPath>
     </Reference>
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.FileSystem.AccessControl, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.IO.FileSystem.AccessControl.5.0.0\lib\net461\System.IO.FileSystem.AccessControl.dll</HintPath>
     </Reference>
@@ -1590,6 +1597,9 @@
     <Compile Include="Models\GetExpensesInPeriod_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\GetExpiredPropertyContracts1_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\GetExpiredPropertyContracts_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2008,6 +2018,9 @@
     <Compile Include="Models\Item_TotalItemsProfit_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\JED_AccountFixLog.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Job.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2268,6 +2281,9 @@
     <Compile Include="Models\PropertyContractTerminationDetail.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PropertyContractTermination_FixByUnit_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\PropertyDetail.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2311,6 +2327,9 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\PropertyUnitType.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\PropertyUnit_ContractsAndTermination_Get_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\PurchaseInvoice.cs">
@@ -2586,6 +2605,9 @@
     <Compile Include="Models\SpiritualNote.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\sp_GetBatchInvoiceReportData_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\sp_GetPropertyPaymentSummary_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2709,6 +2731,9 @@
     <Compile Include="Models\TotalDailySales_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\transactionsVatDetail.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\UpdatedTransaction.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2787,6 +2812,12 @@
     <Compile Include="Models\Vendor_Get_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\vw_PropertyBatchDetailed.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\vw_PropertyPaymentSummary.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Warehouse.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2829,6 +2860,12 @@
     </Compile>
     <Compile Include="Reporting\Reports\GroupsProfits.cs">
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Reporting\Reports\PropertyBatchInvoice.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Reporting\Reports\PropertyBatchInvoice.Designer.cs">
+      <DependentUpon>PropertyBatchInvoice.cs</DependentUpon>
     </Compile>
     <Compile Include="Reporting\Reports\PropertyContractsExpiredReport.cs">
       <SubType>Component</SubType>
@@ -4934,6 +4971,7 @@
     <Content Include="Views\Report\BalanceReviewDetails.cshtml" />
     <Content Include="Views\Report\PropertyContractsExpiredReport.cshtml" />
     <Content Include="Views\Report\DueOwnersPaymentsReport.cshtml" />
+    <Content Include="Views\Report\PrintBatchInvoice.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -4997,6 +5035,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\GroupsProfits.resx">
       <DependentUpon>GroupsProfits.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\PropertyBatchInvoice.resx">
+      <DependentUpon>PropertyBatchInvoice.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\PropertyContractsExpiredReport.resx">
       <DependentUpon>PropertyContractsExpiredReport.cs</DependentUpon>

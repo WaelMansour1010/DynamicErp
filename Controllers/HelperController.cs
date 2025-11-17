@@ -589,7 +589,61 @@ namespace MyERP.Controllers
 
 
 
+        // using System.Linq;
+        // لو MVC5:
         [HttpGet]
+        public ActionResult GetPartiesByAccount(int departmentId, int accountId)
+        {
+            var dep = db.Departments.FirstOrDefault(d => d.Id == departmentId);
+            if (dep == null)
+                return Json(new { type = "", items = new object[0] }, JsonRequestBehavior.AllowGet);
+
+            IQueryable<object> items = Enumerable.Empty<object>().AsQueryable();
+            string type = "";
+
+            if (dep.VendorsAccountId == accountId)
+            {
+                type = "Vendor";
+                items = db.Vendors
+                         .Where(x => x.IsActive && !x.IsDeleted /* && x.DepartmentId == departmentId (لو عندك عمود) */)
+                         .Select(x => new { x.Id, Name = (x.ArName ?? x.EnName) });
+            }
+            else if (dep.CustomersAccountId == accountId)
+            {
+                type = "Customer";
+                items = db.Customers
+                         .Where(x => x.IsActive && !x.IsDeleted)
+                         .Select(x => new { x.Id, Name = (x.ArName ?? x.EnName) });
+            }
+            else if (dep.EmployeeReceivableAccountId == accountId)
+            {
+                type = "Employee";
+                items = db.Employees
+                         .Where(x => x.IsActive && !x.IsDeleted)
+                         .Select(x => new { x.Id, Name = (x.ArName ?? x.EnName) });
+            }
+            else if (dep.RenterAndBuyerAccountId == accountId)
+            {
+                type = "PropertyRenter";
+                items = db.PropertyRenters
+                         .Where(x => x.IsActive && !x.IsDeleted)
+                         .Select(x => new { x.Id, Name = (x.ArName ?? x.EnName) });
+            }
+            else if (dep.OwnerAccountId == accountId)
+            {
+                type = "PropertyOwner";
+                items = db.PropertyOwners
+                         .Where(x => x.IsActive && !x.IsDeleted)
+                         .Select(x => new { x.Id, Name = (x.ArName ?? x.EnName) });
+            }
+
+            var data = items.ToList();
+            return Json(new { type, items = data }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+
+
         public async Task UpdatePlayerCurrentUser(string playerId)
         {
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
@@ -1627,12 +1681,8 @@ namespace MyERP.Controllers
             return Json(EmployeeMonthlyAllocation, JsonRequestBehavior.AllowGet);
         }
         [SkipERPAuthorize]
-        public ActionResult GetCashIssueAndReceipt(int? departmentId, DateTime? dateFrom, DateTime? dateTo, int? cashBoxId, int? ActivityId, int? CompanyId)
-        {
-            var Receipt = db.CashIssueAndReceipt_Get(departmentId, dateFrom, dateTo, cashBoxId, ActivityId, CompanyId).ToList();
-            return Json(Receipt, JsonRequestBehavior.AllowGet);
-        }
-        [SkipERPAuthorize]
+      
+        
         public ActionResult GetChartOfAccount(int? TypeId, int? ClassificationId, int? CategoryId, int? AccountId)
         {
             var ChartOfAccount = db.ChartOfAccount_Get(TypeId, ClassificationId, CategoryId, AccountId).ToList();
@@ -1645,9 +1695,10 @@ namespace MyERP.Controllers
             return Json(AccountStatement, JsonRequestBehavior.AllowGet);
         }
         [SkipERPAuthorize]
-        public ActionResult GetAccountStatementDetails(DateTime? From, DateTime? To, int? AccountId, int? DepartmentId, int? ActivityId, int? CompanyId)
+        
+        public ActionResult GetAccountStatementDetails(DateTime? From, DateTime? To, int? AccountId, int? DepartmentId, int? ActivityId, int? CompanyId, int? PartyType, int? PartyId)
         {
-            var AccountStatementDetails = db.GetAccountStatementDetails(From, To, AccountId, DepartmentId, ActivityId, CompanyId).ToList();
+            var AccountStatementDetails = db.GetAccountStatementDetails(From, To, AccountId, DepartmentId, ActivityId, CompanyId, PartyType, PartyId).ToList();
             return Json(AccountStatementDetails, JsonRequestBehavior.AllowGet);
         }
         [SkipERPAuthorize]
@@ -1669,17 +1720,21 @@ namespace MyERP.Controllers
             return Json(Transactions, JsonRequestBehavior.AllowGet);
         }
         [SkipERPAuthorize]
-        public ActionResult GetIncomeList(int? DepartmentId, DateTime? From, DateTime? To, int? ActivityId, int? CompanyId)
+        public ActionResult GetIncomeList(int? DepartmentId, DateTime? From, DateTime? To, int? ActivityId, int? CompanyId, int? detailLevel) // <-- 1. أضفنا البارامتر هنا
         {
-            var List = db.GetIncomeList(DepartmentId, From, To,ActivityId,CompanyId).ToList();
+            // 2. مررنا البارامتر هنا
+            var List = db.GetIncomeList(DepartmentId, From, To, ActivityId, CompanyId, detailLevel).ToList();
             return Json(List, JsonRequestBehavior.AllowGet);
         }
+
         [SkipERPAuthorize]
-        public ActionResult GetFinancialStatement(int? DepartmentId, DateTime? From, DateTime? To, int? ActivityId, int? CompanyId)
+        public ActionResult GetFinancialStatement(int? DepartmentId, DateTime? From, DateTime? To, int? ActivityId, int? CompanyId, int? detailLevel) // <-- 1. أضفنا البارامتر هنا
         {
-            var FinancialStatement = db.GetFinancialStatement(DepartmentId, From, To, ActivityId, CompanyId).ToList();
+            // 2. مررنا البارامتر هنا
+            var FinancialStatement = db.GetFinancialStatement(DepartmentId, From, To, ActivityId, CompanyId, detailLevel).ToList();
             return Json(FinancialStatement, JsonRequestBehavior.AllowGet);
         }
+
         [SkipERPAuthorize]
         public ActionResult GetBalanceReview(int? DepartmentId, DateTime? From, DateTime? To, int? ActivityId, int? CompanyId, int? AccountId, string ReportType = "General")
         {

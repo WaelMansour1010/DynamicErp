@@ -52,7 +52,7 @@ namespace MyERP.Controllers.PropertyManagement
             }
             else
             {
-                propertyContracts = db.PropertyContracts.Where(s => s.IsDeleted == false && (s.PropertyRenter.ArName.Contains(searchWord) ||  (s.DocumentNumber.Contains(searchWord) ||  
+                propertyContracts = db.PropertyContracts.Where(s => s.IsDeleted == false && (s.PropertyRenter.ArName.Contains(searchWord) || (s.DocumentNumber.Contains(searchWord) ||
                     s.Property.ArName.Contains(searchWord)))).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
                 ViewBag.Count = db.PropertyContracts.Where(s => s.IsDeleted == false && (s.PropertyRenter.ArName.Contains(searchWord) || (s.DocumentNumber.Contains(searchWord) ||
                     s.Property.ArName.Contains(searchWord)))).Count();
@@ -118,7 +118,7 @@ namespace MyERP.Controllers.PropertyManagement
                     Id = b.Id,
                     ArName = b.Code + " - " + b.ArName
                 }).ToList(), "Id", "ArName");
-                
+
                 ViewBag.PropertyOwnerId = new SelectList(db.PropertyOwners.Where(a => a.IsActive == true && a.IsDeleted == false).Select(b => new
                 {
                     Id = b.Id,
@@ -216,11 +216,11 @@ namespace MyERP.Controllers.PropertyManagement
             //    ArName = b.Code + " - " + b.ArName
             //}), "Id", "ArName", contract.PropertyUnitTypeId);
             ViewBag.PropertyUnitTypeId = new SelectList(UnitType, "Id", "ArName", contract.PropertyUnitTypeId);
-            
-            var allUnits =( from d in db.PropertyDetails
-                where d.Id == contract.PropertyUnitId
-                      && d.MainDocId == contract.PropertyId
-                select d).ToList();
+
+            var allUnits = (from d in db.PropertyDetails
+                            where d.Id == contract.PropertyUnitId
+                                  && d.MainDocId == contract.PropertyId
+                            select d).ToList();
 
             ViewBag.PropertyUnitId = new SelectList(allUnits, "Id", "PropertyUnitNo", contract.PropertyUnitId);
 
@@ -233,7 +233,7 @@ namespace MyERP.Controllers.PropertyManagement
                     Id = b.Id,
                     ArName = b.PropertyUnitNo
                 }).ToList(), "Id", "ArName");
-            
+
             // Pass as MultiSelectList
             ViewBag.PropertyContractMergedUnit = new MultiSelectList(db.PropertyDetails.Where(a => a.MainDocId == contract.PropertyId && a.StatusId == PropertyDetailsStatus.Available).Select(b => new
             {
@@ -292,12 +292,12 @@ namespace MyERP.Controllers.PropertyManagement
                 .Select(t => t.Id).ToList();
 
             var bathces = (from bt in db.CashReceiptVoucherPropertyContractBatches
-                where voIds.Contains(bt.PropertyContractBatchId??0)
-                select new { bt.PropertyContractBatchId, bt.Paid    }).GroupBy(t => t.PropertyContractBatchId).Select(t => new BatchPaidModel
-            {
-                Id = t.Key ?? 0,
-                Paid = t.Sum(n => n.Paid ?? 0)
-            }).ToList();
+                           where voIds.Contains(bt.PropertyContractBatchId ?? 0)
+                           select new { bt.PropertyContractBatchId, bt.Paid }).GroupBy(t => t.PropertyContractBatchId).Select(t => new BatchPaidModel
+                           {
+                               Id = t.Key ?? 0,
+                               Paid = t.Sum(n => n.Paid ?? 0)
+                           }).ToList();
             //var bathces2 = (from bt in db.CashReceiptVoucherPropertyContractBatches
             //    where voIds.Contains(bt.PropertyContractBatchId ?? 0)
             //    select bt).ToList();
@@ -432,20 +432,20 @@ namespace MyERP.Controllers.PropertyManagement
                         //row["MainDocId"] = item.MainDocId;
                         row["BatchNo"] = item.BatchNo;
                         row["BatchDate"] = item.BatchDate;
-                        row["BatchRentValue"] = item.BatchRentValue!=null? item.BatchRentValue:0;
-                        row["BatchRentValueTaxes"] = item.BatchRentValueTaxes!=null? item.BatchRentValueTaxes:0;
-                        row["BatchWaterValue"] = item.BatchWaterValue!=null? item.BatchWaterValue:0;
-                        row["BatchWaterValueTaxes"] = item.BatchWaterValueTaxes!=null? item.BatchWaterValueTaxes:0;
-                        row["BatchElectricityValue"] = item.BatchElectricityValue!=null? item.BatchElectricityValue:0;
-                        row["BatchElectricityValueTaxes"] = item.BatchElectricityValueTaxes!=null? item.BatchElectricityValueTaxes:0;
-                        row["BatchCommissionValue"] = item.BatchCommissionValue!=null? item.BatchCommissionValue:0;
-                        row["BatchCommissionValueTaxes"] = item.BatchCommissionValueTaxes!=null? item.BatchCommissionValueTaxes:0;
-                        row["BatchGasValue"] = item.BatchGasValue!=null? item.BatchGasValue:0;
-                        row["BatchGasValueTaxes"] = item.BatchGasValueTaxes!=null? item.BatchGasValueTaxes:0;
-                        row["BatchServicesValue"] = item.BatchServicesValue!=null ? item.BatchServicesValue:0;
-                        row["BatchServicesValueTaxes"] = item.BatchServicesValueTaxes!=null? item.BatchServicesValueTaxes:0;
-                        row["BatchInsuranceValue"] = item.BatchInsuranceValue!=null? item.BatchInsuranceValue:0;
-                        row["BatchInsuranceValueTaxes"] = item.BatchInsuranceValueTaxes!=null? item.BatchInsuranceValueTaxes:0;
+                        row["BatchRentValue"] = item.BatchRentValue != null ? item.BatchRentValue : 0;
+                        row["BatchRentValueTaxes"] = item.BatchRentValueTaxes != null ? item.BatchRentValueTaxes : 0;
+                        row["BatchWaterValue"] = item.BatchWaterValue != null ? item.BatchWaterValue : 0;
+                        row["BatchWaterValueTaxes"] = item.BatchWaterValueTaxes != null ? item.BatchWaterValueTaxes : 0;
+                        row["BatchElectricityValue"] = item.BatchElectricityValue != null ? item.BatchElectricityValue : 0;
+                        row["BatchElectricityValueTaxes"] = item.BatchElectricityValueTaxes != null ? item.BatchElectricityValueTaxes : 0;
+                        row["BatchCommissionValue"] = item.BatchCommissionValue != null ? item.BatchCommissionValue : 0;
+                        row["BatchCommissionValueTaxes"] = item.BatchCommissionValueTaxes != null ? item.BatchCommissionValueTaxes : 0;
+                        row["BatchGasValue"] = item.BatchGasValue != null ? item.BatchGasValue : 0;
+                        row["BatchGasValueTaxes"] = item.BatchGasValueTaxes != null ? item.BatchGasValueTaxes : 0;
+                        row["BatchServicesValue"] = item.BatchServicesValue != null ? item.BatchServicesValue : 0;
+                        row["BatchServicesValueTaxes"] = item.BatchServicesValueTaxes != null ? item.BatchServicesValueTaxes : 0;
+                        row["BatchInsuranceValue"] = item.BatchInsuranceValue != null ? item.BatchInsuranceValue : 0;
+                        row["BatchInsuranceValueTaxes"] = item.BatchInsuranceValueTaxes != null ? item.BatchInsuranceValueTaxes : 0;
                         row["BatchTotal"] = item.BatchTotal;
                         row["UserId"] = item.UserId;
                         if (item.JournalEntryId != null || contract.JournalEntryId != null)
@@ -473,7 +473,7 @@ namespace MyERP.Controllers.PropertyManagement
                     MyXML.xPathName = "MergedUnits";
                     var PropertyContractMergedUnits = MyXML.GetXML(MergedUnits);
                     //---------------------------------------------------------------------------//
-                    if (contract.IsRenewed) 
+                    if (contract.IsRenewed)
                     {
                         var idResult = new ObjectParameter("Id", typeof(Int32));
                         db.PropertyContract_Insert(idResult, contract.DocumentNumber, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, contract.IsRenewed, PropertyContractBatches, PropertyContractReps, PropertyContractImages, PropertyContractMergedUnits);
@@ -483,7 +483,7 @@ namespace MyERP.Controllers.PropertyManagement
                         db.PropertyContract_Update(contract.Id, contract.DocumentNumber, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, PropertyContractBatches, PropertyContractReps, PropertyContractImages, PropertyContractMergedUnits);
                     }
                     ////-------------------- Notification-------------------------////
-                   
+
                     Notification.GetNotification("PropertyContract", "Edit", "AddEdit", contract.Id, null, "العقود");
                 }
                 else
@@ -622,7 +622,7 @@ namespace MyERP.Controllers.PropertyManagement
                     //----------------------------------------------------------------------------//
                     var idResult = new ObjectParameter("Id", typeof(Int32));
                     db.PropertyContract_Insert(idResult, null, contract.VoucherDate, contract.ContractTypeId, contract.PropertyId, contract.RentTypeId, contract.PropertyOwnerId, contract.PropertyRenterId, contract.RepId, contract.RentValue, contract.CommissionValue, contract.ServicesValue, contract.WaterValue, contract.NetTotal, contract.VATPercentage, contract.VATValue, contract.TotalAfterTaxes, contract.ContractStartDate, contract.ContractEndDate, contract.ContractPeriodNum, contract.ContractPeriodTypeId, contract.IsDeleted, contract.UserId, contract.Notes, contract.Image, contract.PropertyUnitTypeId, contract.PropertyUnitId, contract.IncludeRentValueInVAT, contract.IncludeWaterValueInVAT, contract.ElectricityValue, contract.IncludeElectricityValueInVAT, contract.GasValue, contract.GracePeriodDay, contract.GracePeriodMonth, contract.NumberOfBatches, contract.FirstBatchDate, contract.PeriodBetweenBatchesNum, contract.PeriodBetweenBatchesTypeId, contract.IsDivideWaterIntoBatches, contract.IsDivideElectricityIntoBatches, contract.UnifiedContractNumber, contract.IsAddedValue, contract.ContractSpecialTerms, contract.JournalEntryId, contract.DepartmentId, contract.InsuranceValue, contract.IncludeInsuranceValueInVAT, contract.IncludeGasValueInVAT, contract.IncludeCommissionValueInVAT, contract.IncludeServicesValueInVAT, contract.GovernmentalOrPrivateContract, false, PropertyContractBatches, PropertyContractReps, PropertyContractImages, PropertyContractMergedUnits);
-                   //set sttus to not avalable
+                    //set sttus to not avalable
                     var unit = db.PropertyDetails.Where(t => t.MainDocId == contract.PropertyId &&
                                                              t.Id ==
                                                              contract.PropertyUnitId).FirstOrDefault();
@@ -662,16 +662,16 @@ namespace MyERP.Controllers.PropertyManagement
                 contract.IsDeleted = true;
                 contract.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
                 var systemPage = db.SystemPages.Where(a => a.IsActive == true && a.IsDeleted == false && a.TableName == "PropertyContract").FirstOrDefault();
-                if(systemPage!=null)
+                if (systemPage != null)
                 {
                     var systemPageId = systemPage.Id;
                     var journalEntry = db.JournalEntries.Where(a => a.SourcePageId == systemPageId && a.SourceId == id).FirstOrDefault();
-                    if(journalEntry!=null)
+                    if (journalEntry != null)
                     {
                         journalEntry.IsDeleted = true;
                         db.Entry(journalEntry).State = EntityState.Modified;
                     }
-                    
+
                 }
                 foreach (var item in contract.PropertyContractBatches)
                 {
@@ -920,6 +920,20 @@ namespace MyERP.Controllers.PropertyManagement
 
         }
 
+        // أضف هذا الأكشن في ملف PropertyContractController.cs
+
+        [SkipERPAuthorize] // للسماح للجافاسكريبت باستدعائه
+        public JsonResult CheckBatchHasDue(int id)
+        {
+            // 1. نبحث إذا كان هناك استحقاق مسجل لهذه الدفعة
+            // (id هنا هو PropertyContractBatchId)
+            bool exists = db.PropertyDueBatchDetails.Any(p => p.PropertyContractBatchId == id);
+
+            // 2. نرجع النتيجة بصيغة JSON
+            return Json(new { hasDue = exists }, JsonRequestBehavior.AllowGet);
+        }
+
+
         [SkipERPAuthorize]
         public JsonResult GetPropertyOwner(int? PropertyId)
         {
@@ -930,9 +944,9 @@ namespace MyERP.Controllers.PropertyManagement
             return Json(new { Owners, UnitType }, JsonRequestBehavior.AllowGet);
         }
         [SkipERPAuthorize]
-        public JsonResult GetUnitByUnitTypeId(int? UnitTypeId, int? PropertyId , int? contractId)
+        public JsonResult GetUnitByUnitTypeId(int? UnitTypeId, int? PropertyId, int? contractId)
         {
-            var Unit = db.GetPropertyUnitsByPropertyAndUnitTypeId(PropertyId, UnitTypeId , contractId).ToList();
+            var Unit = db.GetPropertyUnitsByPropertyAndUnitTypeId(PropertyId, UnitTypeId, contractId).ToList();
             return Json(Unit, JsonRequestBehavior.AllowGet);
         }
         [SkipERPAuthorize]
@@ -959,4 +973,7 @@ namespace MyERP.Controllers.PropertyManagement
             base.Dispose(disposing);
         }
     }
+
 }
+
+

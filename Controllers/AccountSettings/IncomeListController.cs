@@ -97,9 +97,11 @@ namespace MyERP.Controllers.AccountSettings
         //    return File(renderedbytes, mimeType);
 
         //}
-        public JsonResult GETIncomeList(DateTime from, DateTime to,int? id)
+        // 1. نضيف البارامتر الجديد هنا
+        public JsonResult GETIncomeList(DateTime from, DateTime to, int? id, int? detailLevel)
         {
-            return Json(db.GetIncomeList( id, from,to,null,null), JsonRequestBehavior.AllowGet);
+            // 2. نمرر البارامتر السادس هنا
+            return Json(db.GetIncomeList(id, from, to, null, null, detailLevel), JsonRequestBehavior.AllowGet);
         }
     }
 }

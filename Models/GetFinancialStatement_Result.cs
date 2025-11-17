@@ -10,13 +10,22 @@
 namespace MyERP.Models
 {
     using System;
-    
+
     public partial class GetFinancialStatement_Result
     {
+        // åĞå åí ÇáÃÚãÏÉ ÇáÌÏíÏÉ ÇáÊí íõÑÌÚåÇ ÇáÈÑæÓíÌÑ
+        public string Code { get; set; }
+        public string Statement { get; set; }
+        public Nullable<int> Level { get; set; }
+
+        // ÇáÃÚãÏÉ ÇáÃÕáíÉ (ÕÇİí ÇáÑÕíÏ)
         public Nullable<decimal> TotalAmount { get; set; }
         public Nullable<decimal> PartialAmount { get; set; }
-        public string Statement { get; set; }
-        public string Type { get; set; }
-        public string SubType { get; set; }
+
+        // ÇáÃÚãÏÉ ÇáãİÕáÉ (ãÏíä/ÏÇÆä)
+        public Nullable<decimal> TotalDebit { get; set; }
+        public Nullable<decimal> TotalCredit { get; set; }
+        public Nullable<decimal> PartialDebit { get; set; }
+        public Nullable<decimal> PartialCredit { get; set; }
     }
 }

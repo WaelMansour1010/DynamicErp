@@ -57,9 +57,18 @@ namespace MyERP.Controllers
             return View();
         }
 
-        public JsonResult GetFinancialStatement(int? depId)
+        // 1. الدالة لازم تستقبل كل البارامترات من الـ View
+        // (تأكد من أنك تعدل الدالة الصحيحة في HelperController.cs)
+        public JsonResult GetFinancialStatement(
+            int? DepartmentId,  // <-- (تم تصحيح الاسم ليطابق الجافاسكريبت)
+            DateTime? From,     // <-- (تم تصحيح الاسم ليطابق الجافاسكريبت)
+            DateTime? To,       // <-- (تم تصحيح الاسم ليطابق الجافاسكريبت)
+            int? ActivityId,    // <-- (تم تصحيح الاسم ليطابق الجافاسكريبت)
+            int? CompanyId,     // <-- (تم تصحيح الاسم ليطابق الجافاسكريبت)
+            int? detailLevel)    // <-- (تمت إضافة البارامتر السادس)
         {
-            return Json(db.GetFinancialStatement(depId,null, null,null, null), JsonRequestBehavior.AllowGet);
+            var FinancialStatement = db.GetFinancialStatement(DepartmentId, From, To, ActivityId, CompanyId, detailLevel).ToList();
+            return Json(FinancialStatement, JsonRequestBehavior.AllowGet);
         }
     }
 }

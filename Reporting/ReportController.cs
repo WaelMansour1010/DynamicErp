@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using MyERP.Reporting.Reports;
 
 namespace MyERP.Reporting
 {
@@ -458,7 +459,7 @@ namespace MyERP.Reporting
             rpt.Parameters["DepId"].Value = DepartmentId > 0 ? DepartmentId : null;
             rpt.Parameters["ActivityId"].Value = ActivityId > 0 ? ActivityId : null;
             rpt.Parameters["CompanyId"].Value = CompanyId > 0 ? CompanyId : null;
-            rpt.Parameters["DateFrom"].Value = From;
+        //    rpt.Parameters["DateFrom"].Value = From;
             rpt.Parameters["DateTo"].Value = To;
             rpt.RequestParameters = false;
             ViewBag.ShowReport = showReport;
@@ -4533,6 +4534,31 @@ namespace MyERP.Reporting
             return View();
         }
 
+        // ===== قم بإضافة الأكشن الجديد هنا =====
+        // استبدل الدالة القديمة (التي كانت تعرض رسالة مؤقتة) بهذه الدالة
+        public ActionResult PrintBatchInvoice(int id)
+        {
+            // 1. إنشاء نسخة من التقرير الذي صممته
+            //    (اسم الكلاس مطابق للملفات التي أرسلتها)
+            PropertyBatchInvoice rpt = new PropertyBatchInvoice();
+
+            // 2. تمرير رقم الدفعة (id) الذي جاء من الرابط
+            //    إلى الباراميتر الخاص بالـ Stored Procedure في التقرير
+            rpt.Parameters["PropertyContractBatchId"].Value = id;
+
+            // 3. (مهم) إخفاء شاشة طلب الباراميتر من المستخدم
+            rpt.RequestParameters = false;
+
+            // 4. عرض التقرير في المتصفح
+            return View(rpt);
+        }
+
+            // ===== حل مؤقت جداً لعرض البيانات (احذفه بعد إنشاء التقرير) =====
+            // هذا السطر ليؤكد لك أن الزر يعمل ويصل للكنترولر
+         
+            // =======================================================
+        
+        // ===== نهاية الأكشن الجديد =====
 
     }
 }

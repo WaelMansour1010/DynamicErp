@@ -33,6 +33,7 @@ namespace MyERP.Models
             this.PurchaseRequests = new HashSet<PurchaseRequest>();
             this.IssueAnalysis = new HashSet<IssueAnalysis>();
             this.DebitAndCreditNotifications = new HashSet<DebitAndCreditNotification>();
+            this.JournalEntryDetails = new HashSet<JournalEntryDetail>();
         }
     
         public int Id { get; set; }
@@ -81,6 +82,8 @@ namespace MyERP.Models
         public string VATNumber { get; set; }
         public Nullable<int> FieldsCodingId { get; set; }
         public Nullable<int> CurrencyId { get; set; }
+        public string VATNo { get; set; }
+        public string RegistrationNo { get; set; }
     
         public virtual Branch Branch { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
@@ -124,5 +127,7 @@ namespace MyERP.Models
         public virtual ICollection<IssueAnalysis> IssueAnalysis { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<DebitAndCreditNotification> DebitAndCreditNotifications { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<JournalEntryDetail> JournalEntryDetails { get; set; }
     }
 }

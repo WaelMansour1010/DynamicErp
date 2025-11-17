@@ -11,7 +11,20 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MyERP.Repository;
 using System.Data.Entity.Core.Objects;
+using Microsoft.IdentityModel.Tokens;
+using ExcelDataReader;
+using System.IO;
+using System.Data;
+using System.Data.Entity.Core.Objects;
+using ExcelDataReader;
+using System.Data;
+using System.Data.SqlClient;
+using System.Security.Claims;
+using System.Data.SqlClient;
+using System.Text;
+using System.Globalization;
 
+using System.Text.RegularExpressions;
 namespace MyERP.Controllers.AccountSettings
 {
     public class DebitAndCreditNotificationController : Controller
@@ -691,66 +704,69 @@ debitAndCreditNotification.RenterId
             var IsZerosFills = (bool?)null;
             var newDocNo = "";
             var GeneratedDocNo = "";
-            var lastObj = db.DebitAndCreditNotifications.Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id).OrderByDescending(a => a.Id).FirstOrDefault();
+            var lastObj = db.DebitAndCreditNotifications
+                .Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id)
+                .OrderByDescending(a => a.Id).FirstOrDefault();
             var lastDocNo = lastObj != null ? lastObj.DocumentNumber : "0";
-            var DepartmentCode = db.Departments.Where(a => a.IsActive == true && a.IsDeleted == false && a.Id == id).FirstOrDefault().Code;
+            var DepartmentCode = db.Departments
+                .Where(a => a.IsActive == true && a.IsDeleted == false && a.Id == id)
+                .FirstOrDefault().Code;
             DepartmentCode = double.Parse(DepartmentCode) < 10 ? "0" + DepartmentCode : DepartmentCode;
-            var DepartmentDoc = db.DocumentsCodings.Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id).FirstOrDefault();
-            var MonthFormat = VoucherDate.Value.Month < 10 ? "0" + VoucherDate.Value.Month.ToString() : VoucherDate.Value.Month.ToString();
+
+            var DepartmentDoc = db.DocumentsCodings
+                .Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id)
+                .FirstOrDefault();
+
+            var MonthFormat = VoucherDate.Value.Month < 10
+                ? "0" + VoucherDate.Value.Month.ToString()
+                : VoucherDate.Value.Month.ToString();
+
             if (DepartmentDoc == null)
             {
-                DepartmentDoc = db.DocumentsCodings.Where(a => a.IsActive == true && a.IsDeleted == false && a.AllDepartments == true).FirstOrDefault();
-                if (DepartmentDoc == null)
-                {
-                    IsExistInDocumentsCoding = false;
-                }
-                else
-                {
-                    IsExistInDocumentsCoding = true;
-                }
+                DepartmentDoc = db.DocumentsCodings
+                    .Where(a => a.IsActive == true && a.IsDeleted == false && a.AllDepartments == true)
+                    .FirstOrDefault();
+                IsExistInDocumentsCoding = DepartmentDoc != null;
             }
             else
             {
                 IsExistInDocumentsCoding = true;
             }
+
             if (IsExistInDocumentsCoding == true)
             {
                 noOfDigits = DepartmentDoc.DigitsNo;
                 YearFormat = DepartmentDoc.YearFormat;
                 CodingTypeId = DepartmentDoc.CodingTypeId;
                 IsZerosFills = DepartmentDoc.IsZerosFills;
-                YearFormat = YearFormat == 2 ? int.Parse(VoucherDate.Value.Year.ToString().Substring(2, 2)) : int.Parse(VoucherDate.Value.Year.ToString());
+                YearFormat = YearFormat == 2
+                    ? int.Parse(VoucherDate.Value.Year.ToString().Substring(2, 2))
+                    : int.Parse(VoucherDate.Value.Year.ToString());
 
-                if (CodingTypeId == 1)//آلي
+                if (CodingTypeId == 1) // آلي
                 {
                     if (lastDocNo.Contains("-"))
                     {
                         var ar = lastDocNo.Split('-');
-                        if (IsZerosFills == true)
-                        {
-                            newDocNo = QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(ar[3]) + 1).ToString());
-                        }
-                        else
-                        {
-                            newDocNo = (double.Parse(ar[3]) + 1).ToString();
-                        }
+                        newDocNo = IsZerosFills == true
+                            ? QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(ar[3]) + 1).ToString())
+                            : (double.Parse(ar[3]) + 1).ToString();
                     }
                     else
                     {
-                        if (IsZerosFills == true)
-                        {
-                            newDocNo = QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(lastDocNo) + 1).ToString());
-                        }
-                        else
-                        {
-                            newDocNo = (double.Parse(lastDocNo) + 1).ToString();
-                        }
+                        newDocNo = IsZerosFills == true
+                            ? QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(lastDocNo) + 1).ToString())
+                            : (double.Parse(lastDocNo) + 1).ToString();
                     }
                     GeneratedDocNo = DepartmentCode + "-" + YearFormat + "-" + MonthFormat + "-" + newDocNo;
                 }
-                else if (CodingTypeId == 2)//متصل شهري
+                else if (CodingTypeId == 2) // متصل شهري
                 {
-                    lastObj = db.DebitAndCreditNotifications.Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id && a.Date.Month == VoucherDate.Value.Month && a.Date.Year == VoucherDate.Value.Year).OrderByDescending(a => a.Id).FirstOrDefault();
+                    lastObj = db.DebitAndCreditNotifications
+                        .Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id
+                                    && a.Date.Month == VoucherDate.Value.Month && a.Date.Year == VoucherDate.Value.Year)
+                        .OrderByDescending(a => a.Id).FirstOrDefault();
+
                     if (lastObj != null)
                     {
                         if (lastObj.DocumentNumber.Contains("-"))
@@ -758,109 +774,76 @@ debitAndCreditNotification.RenterId
                             var ar = lastObj.DocumentNumber.Split('-');
                             if (double.Parse(ar[2]) == VoucherDate.Value.Month)
                             {
-                                if (IsZerosFills == true)
-                                {
-                                    newDocNo = QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(ar[3]) + 1).ToString());
-                                }
-                                else
-                                {
-                                    newDocNo = (double.Parse(ar[3]) + 1).ToString();
-                                }
+                                newDocNo = IsZerosFills == true
+                                    ? QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(ar[3]) + 1).ToString())
+                                    : (double.Parse(ar[3]) + 1).ToString();
                             }
                             else
                             {
-                                if (IsZerosFills == true)
-                                {
-                                    newDocNo = QueryHelper.FillsWithZeros(noOfDigits, "1").ToString();
-                                }
-                                else
-                                {
-                                    newDocNo = "1";
-                                }
+                                newDocNo = IsZerosFills == true
+                                    ? QueryHelper.FillsWithZeros(noOfDigits, "1").ToString()
+                                    : "1";
                             }
                         }
                         else
                         {
-                            if (IsZerosFills == true)
-                            {
-                                newDocNo = QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(lastObj.DocumentNumber) + 1).ToString()).ToString();
-                            }
-                            else
-                            {
-                                newDocNo = (double.Parse(lastObj.DocumentNumber) + 1).ToString();
-                            }
+                            newDocNo = IsZerosFills == true
+                                ? QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(lastObj.DocumentNumber) + 1).ToString()).ToString()
+                                : (double.Parse(lastObj.DocumentNumber) + 1).ToString();
                         }
                     }
                     else
                     {
-                        if (IsZerosFills == true)
-                        {
-                            newDocNo = QueryHelper.FillsWithZeros(noOfDigits, "1").ToString();
-                        }
-                        else
-                        {
-                            newDocNo = "1";
-                        }
+                        newDocNo = IsZerosFills == true
+                            ? QueryHelper.FillsWithZeros(noOfDigits, "1").ToString()
+                            : "1";
                     }
+
                     GeneratedDocNo = DepartmentCode + "-" + YearFormat + "-" + MonthFormat + "-" + newDocNo;
                 }
-                else if (CodingTypeId == 3)//متصل سنوي
+                else if (CodingTypeId == 3) // متصل سنوي
                 {
-                    lastObj = db.DebitAndCreditNotifications.Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id && (a.Date.Year == VoucherDate.Value.Year)).OrderByDescending(a => a.Id).FirstOrDefault();
+                    lastObj = db.DebitAndCreditNotifications
+                        .Where(a => a.IsActive == true && a.IsDeleted == false && a.DepartmentId == id
+                                    && (a.Date.Year == VoucherDate.Value.Year))
+                        .OrderByDescending(a => a.Id).FirstOrDefault();
 
                     if (lastObj != null)
                     {
                         if (lastObj.DocumentNumber.Contains("-"))
                         {
                             var ar = lastObj.DocumentNumber.Split('-');
-                            var VoucherDateFormate = int.Parse(ar[1]).ToString().Length == 2 ? int.Parse((VoucherDate.Value.Year.ToString()).Substring(2, 2)) : VoucherDate.Value.Year;
+                            var VoucherDateFormate = int.Parse(ar[1]).ToString().Length == 2
+                                ? int.Parse((VoucherDate.Value.Year.ToString()).Substring(2, 2))
+                                : VoucherDate.Value.Year;
+
                             if (double.Parse(ar[1]) == VoucherDateFormate)
                             {
-                                if (IsZerosFills == true)
-                                {
-                                    newDocNo = QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(ar[3]) + 1).ToString());
-                                }
-                                else
-                                {
-                                    newDocNo = (double.Parse(ar[3]) + 1).ToString();
-                                }
+                                newDocNo = IsZerosFills == true
+                                    ? QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(ar[3]) + 1).ToString())
+                                    : (double.Parse(ar[3]) + 1).ToString();
                             }
                             else
                             {
-                                if (IsZerosFills == true)
-                                {
-                                    newDocNo = QueryHelper.FillsWithZeros(noOfDigits, "1").ToString();
-                                }
-                                else
-                                {
-                                    newDocNo = "1";
-                                }
+                                newDocNo = IsZerosFills == true
+                                    ? QueryHelper.FillsWithZeros(noOfDigits, "1").ToString()
+                                    : "1";
                             }
                         }
                         else
                         {
-                            if (IsZerosFills == true)
-                            {
-                                newDocNo = QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(lastObj.DocumentNumber) + 1).ToString()).ToString();
-                            }
-                            else
-                            {
-                                newDocNo = (double.Parse(lastObj.DocumentNumber) + 1).ToString();
-                            }
+                            newDocNo = IsZerosFills == true
+                                ? QueryHelper.FillsWithZeros(noOfDigits, (double.Parse(lastObj.DocumentNumber) + 1).ToString()).ToString()
+                                : (double.Parse(lastObj.DocumentNumber) + 1).ToString();
                         }
-
                     }
                     else
                     {
-                        if (IsZerosFills == true)
-                        {
-                            newDocNo = QueryHelper.FillsWithZeros(noOfDigits, "1").ToString();
-                        }
-                        else
-                        {
-                            newDocNo = "1";
-                        }
+                        newDocNo = IsZerosFills == true
+                            ? QueryHelper.FillsWithZeros(noOfDigits, "1").ToString()
+                            : "1";
                     }
+
                     GeneratedDocNo = DepartmentCode + "-" + YearFormat + "-" + MonthFormat + "-" + newDocNo;
                 }
             }
@@ -877,8 +860,472 @@ debitAndCreditNotification.RenterId
                 }
                 GeneratedDocNo = newDocNo;
             }
+
             return Json(GeneratedDocNo, JsonRequestBehavior.AllowGet);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken] // ← دي الصحيحة (بدون false)
+
+
+
+        public ActionResult ImportExcel(HttpPostedFileBase file, int? departmentId, DateTime? dateOverride)
+        {
+            try
+            {
+                if (file == null || file.ContentLength == 0)
+                    return Json(new { success = false, message = "يرجى اختيار ملف إكسل." });
+
+                using (var stream = file.InputStream)
+                using (var reader = ExcelReaderFactory.CreateReader(stream))
+                {
+                    var ds = reader.AsDataSet(new ExcelDataSetConfiguration
+                    {
+                        ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
+                    });
+
+                    if (ds.Tables.Count == 0)
+                        return Json(new { success = false, message = "لا توجد أوراق عمل في الملف." });
+
+                    var dt = ds.Tables[0];
+                    Func<string, bool> has = col => dt.Columns.Contains(col);
+
+                    // أعمدة أساسية مطلوبة
+                    string[] required = { "InvoiceDate", "CustomerName", "MoneyAmount", "VATPercentage", "TotalMoneyAmount", "NoteTypeText", "PartyType" };
+                    foreach (var c in required)
+                        if (!has(c)) return Json(new { success = false, message = $"العمود '{c}' مفقود في الشيت." });
+
+                    // أعمدة اختيارية: InvoiceNo, Notes
+                    bool hasInvoiceNoCol = has("InvoiceNo");
+                    bool hasNotesCol = has("Notes");
+
+                    // المستخدم الحالي
+                    var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+
+                    // أول حساب فعّال للاحتياط
+                    int anyActiveAccountId = db.ChartOfAccounts
+                        .Where(a => (a.IsActive ?? false) && !(a.IsDeleted ?? false))
+                        .Select(a => a.Id).FirstOrDefault();
+
+                    // العملة الافتراضية
+                    int? defaultCurrencyId = db.Currencies
+                        .Where(a => a.IsDefault == true && (a.IsDeleted == false || a.IsDeleted == null) && (a.IsActive == true || a.IsActive == null))
+                        .Select(a => (int?)a.Id).FirstOrDefault();
+
+                    // اتصال SQL خام للـ lookup
+                    var cn = (SqlConnection)db.Database.Connection;
+                    bool needClose = false;
+                    if (cn.State != ConnectionState.Open) { cn.Open(); needClose = true; }
+
+                    int inserted = 0, skipped = 0;
+                    var errors = new List<RowError>();
+
+                    for (int r = 0; r < dt.Rows.Count; r++)
+                    {
+                        // هنحتاج القيم دي في الـcatch
+                        string invoiceNoFromSheet = null, partyName = null, noteTypeText = null;
+                        decimal amount = 0m, total = 0m;
+                        double vatPerc = 0d;
+
+                        try
+                        {
+                            var row = dt.Rows[r];
+
+                            // ===== 1) التاريخ =====
+                            DateTime date = dateOverride ?? DateTime.Now;
+                            if (row["InvoiceDate"] != DBNull.Value)
+                            {
+                                if (!DateTime.TryParse(row["InvoiceDate"] + "", out date))
+                                    date = dateOverride ?? DateTime.Now;
+                            }
+
+                            // ===== 2) القسم =====
+                            int depId = departmentId ?? 0;
+                            if (depId == 0)
+                                throw new Exception("يجب اختيار القسم من المودال (لا يوجد DepartmentId افتراضي).");
+
+                            var depInfo = db.Departments.Where(d => d.Id == depId)
+                                         .Select(d => new
+                                         {
+                                             d.CustomersAccountId,
+                                             d.RenterAndBuyerAccountId
+                                         }).FirstOrDefault();
+                            if (depInfo == null) throw new Exception("القسم غير موجود.");
+
+                            // ===== 3) نوع الإشعار =====
+                            noteTypeText = (row["NoteTypeText"] + "").Trim();
+                            int typeId; // 4 = مدين، 5 = دائن
+                            if (noteTypeText.Contains("خصم"))
+                                typeId = 5;   // Credit Note
+                            else if (noteTypeText.Contains("ضاف") || noteTypeText.Contains("إضاف") || noteTypeText.Contains("اضاف"))
+                                typeId = 4;   // Debit Note
+                            else
+                                throw new Exception("NoteTypeText يجب أن يكون 'خصم' أو 'إضافة'.");
+
+                            // ===== 4) الجهة (Party) =====
+                            int partyType = 0; int.TryParse(row["PartyType"] + "", out partyType);
+                            partyName = (row["CustomerName"] + "").Trim();
+
+                            int sourceTypeId = 0;
+                            int? customerId = null, renterId = null;
+
+                            if (partyType == 1)
+                            {
+                                sourceTypeId = 1; // عميل
+                                customerId = LookupIdByNameSmart(cn, "Customer", partyName);
+                                if (customerId == 0) throw new Exception($"لم يتم العثور على العميل بالاسم: {partyName}");
+                            }
+                            else if (partyType == 4)
+                            {
+                                sourceTypeId = 10; // مستأجر/مشتري
+                                renterId = LookupIdByNameSmart(cn, "PropertyRenter", partyName);
+                                //if (renterId == 0) throw new Exception($"لم يتم العثور على المستأجر بالاسم: {partyName}");
+                                if (renterId == 0)
+                                {
+#if DEBUG
+                                    System.Diagnostics.Debugger.Break(); // 🔴 يوقف التنفيذ عند هذا السطر فقط في وضع Debug
+#endif
+                                    throw new Exception($"لم يتم العثور على المستأجر بالاسم: {partyName}");
+                                }
+
+                            }
+                            else
+                            {
+                                throw new Exception("PartyType غير مدعوم في هذا الاستيراد (المسموح: 1 عميل، 4 مستأجر).");
+                            }
+
+                            // ===== 5) المبالغ =====
+                            decimal.TryParse(row["MoneyAmount"] + "", out amount);
+                            decimal.TryParse(row["TotalMoneyAmount"] + "", out total);
+                            double.TryParse(row["VATPercentage"] + "", out vatPerc);
+
+                            decimal vatValue = 0m;
+
+                            if (total == 0 && amount > 0 && vatPerc > 0)
+                                total = amount + (amount * (decimal)vatPerc / 100m);
+
+                            if (total >= amount && amount > 0)
+                                vatValue = total - amount;
+
+                            // ===== 6) العملة =====
+                            int currencyId = defaultCurrencyId ?? db.Currencies.OrderByDescending(c => c.IsDefault).Select(c => c.Id).FirstOrDefault();
+                            double currEq = 1;
+
+                            // ===== 7) Fallback Accounts =====
+                            int creditIdFallback =
+                                depInfo.CustomersAccountId
+                                ?? depInfo.RenterAndBuyerAccountId
+                                ?? anyActiveAccountId;
+
+                            int debitIdFallback =
+                                depInfo.RenterAndBuyerAccountId
+                                ?? depInfo.CustomersAccountId
+                                ?? anyActiveAccountId;
+
+                            if (creditIdFallback == 0 || debitIdFallback == 0)
+                                throw new Exception("تعذّر تعيين حسابات fallback (تحقّق من إعدادات القسم والحسابات).");
+
+                            // ===== 8) ملاحظات — ضمّ InvoiceNo (اختياري) =====
+                            invoiceNoFromSheet = hasInvoiceNoCol ? (row["InvoiceNo"] + "").Trim() : null;
+                            string sheetNotes = hasNotesCol ? (row["Notes"] + "").Trim() : null;
+
+                            string notes = null;
+                            if (!string.IsNullOrEmpty(invoiceNoFromSheet) || !string.IsNullOrEmpty(sheetNotes))
+                            {
+                                var parts = new List<string>();
+                                if (!string.IsNullOrEmpty(invoiceNoFromSheet)) parts.Add($"InvoiceNo: {invoiceNoFromSheet}");
+                                if (!string.IsNullOrEmpty(sheetNotes)) parts.Add(sheetNotes);
+                                notes = string.Join(" | ", parts);
+                            }
+
+                            // ===== 9) استدعاء الستورد =====
+                            var idOut = new ObjectParameter("Id", typeof(Int32));
+
+                            db.DebitAndCreditNotifi_Insert(
+                                idOut,
+                                date,
+                                depId,
+                                typeId,
+                                sourceTypeId,
+                                repId: (int?)null,
+                                total,
+                                amount,
+                                vatValue,
+                                vatPerc,
+                                debitIdFallback,
+                                creditIdFallback,
+                                currencyId,
+                                currEq,
+                                false,   // IsLinked
+                                false,   // IsPosted
+                                true,    // IsActive
+                                false,   // IsDeleted
+                                userId,
+                                notes,
+                                null,    // Image
+                                customerId, null, null, null, null,
+                                null, null, (int?)null, (int?)null, (int?)null,
+                                null, null, (string)null, renterId
+                            );
+
+                            inserted++;
+                        }
+                        catch (Exception exRow)
+                        {
+                            skipped++;
+                            errors.Add(new RowError
+                            {
+                                Row = r + 2,
+                                InvoiceNo = invoiceNoFromSheet,
+                                PartyName = partyName,
+                                NoteTypeText = noteTypeText,
+                                Amount = amount,
+                                VATPerc = vatPerc,
+                                Total = total,
+                                Message = exRow.Message
+                            });
+                        }
+                    }
+
+                    // === نهاية ImportExcel بعد انتهاء الـ for وقبل الخروج من using(...) ===
+                    if (needClose) cn.Close();
+
+                    // 1) اكتب ملف اللوج لو فيه أخطاء
+                    var logUrlRel = ImportLogWriter.WriteCsv(
+                        errors,
+                        title: $"Import result on {DateTime.Now:yyyy-MM-dd HH:mm:ss} | Inserted: {inserted} | Skipped: {skipped}"
+                    );
+
+                    // 2) ابنِ رابط تحميل مباشر (مطلق) لو الملف موجود
+                    string logDownloadUrl = null;
+                    if (!string.IsNullOrEmpty(logUrlRel))
+                    {
+                        // WriteCsv بيرجع "/Uploads/ImportLogs/xxx.csv" ⇒ هنستخرج اسم الملف ونبني اكشن التحميل
+                        var fileName = System.IO.Path.GetFileName(logUrlRel);
+                        logDownloadUrl = Url.Action(
+                            "DownloadImportLog",
+                            "DebitAndCreditNotification",
+                            new { file = fileName },
+                            protocol: Request.Url.Scheme
+                        );
+                    }
+
+                    // 3) رجّع النتيجة — مافيش return تاني بعدها
+                    return Json(new
+                    {
+                        success = true,
+                        inserted,
+                        skipped,
+                        errors = (object)null,   // مش هنرجّع التفاصيل هنا
+                        logUrl = logDownloadUrl  // لو null يبقى مفيش ملف لوج
+                    }, JsonRequestBehavior.AllowGet);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+        [HttpGet]
+        public ActionResult DownloadImportLog(string file)
+        {
+            if (string.IsNullOrWhiteSpace(file)) return HttpNotFound();
+
+            // امنع التلاعب بالمسار: خذ الاسم فقط
+            var safeName = Path.GetFileName(file);
+
+            var root = Server.MapPath("~/Uploads/ImportLogs");
+            var full = Path.Combine(root, safeName);
+
+            if (!System.IO.File.Exists(full)) return HttpNotFound();
+
+            return File(full, "text/csv", safeName); // attachment; filename=safeName
+        }
+
+
+        // ======================
+        // Lookup ذكي للاسم (SQL)
+        // ======================
+        //        private static int LookupIdByNameSmart(SqlConnection cn, string table, string personName)
+        //        {
+        //            string sql = $@"
+        //DECLARE @hasFn BIT = CASE WHEN OBJECT_ID('dbo.fn_NormalizeArabic','FN') IS NULL THEN 0 ELSE 1 END;
+        //DECLARE @n NVARCHAR(400) = @name;
+
+        //IF (@hasFn = 1)
+        //BEGIN
+        //    DECLARE @q NVARCHAR(400) = dbo.fn_NormalizeArabic(@n);
+
+        //    ;WITH cand AS (
+        //      SELECT TOP 10 Id, ArName,
+        //             N = dbo.fn_NormalizeArabic(ArName),
+        //             Score = CASE 
+        //                       WHEN dbo.fn_NormalizeArabic(ArName) = @q THEN 100
+        //                       WHEN dbo.fn_NormalizeArabic(ArName) LIKE (@q + N'%') THEN 80
+        //                       WHEN dbo.fn_NormalizeArabic(ArName) LIKE (N'%' + @q + N'%') THEN 60
+        //                       ELSE 0
+        //                     END,
+        //             LenDiff = ABS(LEN(dbo.fn_NormalizeArabic(ArName)) - LEN(@q))
+        //      FROM dbo.{table} WITH (NOLOCK)
+        //    )
+        //    SELECT TOP 1 Id FROM cand WHERE Score > 0
+        //    ORDER BY Score DESC, LenDiff ASC, LEN(ArName) ASC;
+        //END
+        //ELSE
+        //BEGIN
+        //    DECLARE @q NVARCHAR(400) = @n;
+        //    SET @q = REPLACE(@q, N'أ', N'ا'); SET @q = REPLACE(@q, N'إ', N'ا'); SET @q = REPLACE(@q, N'آ', N'ا');
+        //    SET @q = REPLACE(@q, N'ؤ', N'و'); SET @q = REPLACE(@q, N'ئ', N'ي'); SET @q = REPLACE(@q, N'ى', N'ي'); SET @q = REPLACE(@q, N'ة', N'ه');
+
+        //    ;WITH cand AS (
+        //      SELECT TOP 10 Id, ArName,
+        //             N = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(ArName,N'أ',N'ا'),N'إ',N'ا'),N'آ',N'ا'),N'ؤ',N'و'),N'ئ',N'ي'),N'ى',N'ي'),N'ة',N'ه'),
+        //             Score = CASE 
+        //                       WHEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(ArName,N'أ',N'ا'),N'إ',N'ا'),N'آ',N'ا'),N'ؤ',N'و'),N'ئ',N'ي'),N'ى',N'ي'),N'ة',N'ه') = @q THEN 100
+        //                       WHEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(ArName,N'أ',N'ا'),N'إ',N'ا'),N'آ',N'ا'),N'ؤ',N'و'),N'ئ',N'ي'),N'ى',N'ي'),N'ة',N'ه') LIKE (@q + N'%') THEN 80
+        //                       WHEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(ArName,N'أ',N'ا'),N'إ',N'ا'),N'آ',N'ا'),N'ؤ',N'و'),N'ئ',N'ي'),N'ى',N'ي'),N'ة',N'ه') LIKE (N'%' + @q + N'%') THEN 60
+        //                       ELSE 0
+        //                     END,
+        //             LenDiff = ABS(LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(ArName,N'أ',N'ا'),N'إ',N'ا'),N'آ',N'ا'),N'ؤ',N'و'),N'ئ',N'ي'),N'ى',N'ي'),N'ة',N'ه')) - LEN(@q))
+        //      FROM dbo.{table} WITH (NOLOCK)
+        //    )
+        //    SELECT TOP 1 Id FROM cand WHERE Score > 0
+        //    ORDER BY Score DESC, LenDiff ASC, LEN(ArName) ASC;
+        //END
+        //";
+        //            using (var cmd = new SqlCommand(sql, cn))
+        //            {
+        //                cmd.Parameters.AddWithValue("@name", (object)personName ?? DBNull.Value);
+        //                var o = cmd.ExecuteScalar();
+        //                return (o == null || o == DBNull.Value) ? 0 : Convert.ToInt32(o);
+        //            }
+        //        }
+
+        //        static int LookupIdByNameSmart(SqlConnection cn, string table, string rawNameOrCode)
+        //        {
+        //            if (string.IsNullOrWhiteSpace(rawNameOrCode)) return 0;
+
+        //            // 1) تنظيف/توحيد عربي: حذف مسافات زائدة + توحيد أشكال الحروف
+        //            string s = NormalizeArabic(rawNameOrCode);
+
+        //            // 2) لو كله أرقام → جرّب كـ Code مباشرة
+        //            bool isNumeric = s.All(ch => char.IsDigit(ch));
+        //            string sql = $@"
+        //;WITH C AS
+        //(
+        //    SELECT TOP (1) Id
+        //    FROM dbo.{table} WITH (NOLOCK)
+        //    WHERE IsNull(IsDeleted,0)=0
+        //      AND IsNull(IsActive,1)=1
+        //      AND (
+        //            {(isNumeric ? "Code = @S OR" : "")}
+        //            ArName = @S OR EnName = @S
+        //          )
+        //    ORDER BY Id DESC
+        //)
+        //SELECT Id FROM C;
+
+        //IF @@ROWCOUNT = 0
+        //BEGIN
+        //    SELECT TOP (1) Id
+        //    FROM dbo.{table} WITH (NOLOCK)
+        //    WHERE IsNull(IsDeleted,0)=0
+        //      AND IsNull(IsActive,1)=1
+        //      AND (
+        //            {(isNumeric ? "Code = @S OR" : "")}
+        //            ArName LIKE @SLike OR EnName LIKE @SLike
+        //          )
+        //    ORDER BY Id DESC;
+        //END
+        //";
+
+        //            using (var cmd = new SqlCommand(sql, cn))
+        //            {
+        //                cmd.Parameters.AddWithValue("@S", s);
+        //                cmd.Parameters.AddWithValue("@SLike", "%" + s + "%");
+        //                object o = cmd.ExecuteScalar();
+        //                return (o == null || o == DBNull.Value) ? 0 : Convert.ToInt32(o);
+        //            }
+
+        //            // ============== Local helpers ==============
+        //            string NormalizeArabic(string x)
+        //            {
+        //                x = x.Trim();
+        //                x = System.Text.RegularExpressions.Regex.Replace(x, @"\s+", " "); // collapse spaces
+
+        //                // توحيد أشكال الحروف الشائعة
+        //                x = x.Replace('أ', 'ا').Replace('إ', 'ا').Replace('آ', 'ا');
+        //                x = x.Replace('ى', 'ي').Replace('ئ', 'ي').Replace('ي', 'ي'); // ياء موحّدة
+        //                x = x.Replace('ة', 'ه'); // اختياري: لو بياناتك مخلوطة بين (ة/ه)
+        //                x = x.Replace('ؤ', 'و');
+
+        //                // شيل التشكيل/المد
+        //                x = new string(x.Where(ch =>
+        //                    !"ًٌٍَُِّْـ".Contains(ch) // حركات وتطويل
+        //                ).ToArray());
+
+        //                // شيل رموز خفية/غير مرئية محتمَلة من الإكسل
+        //                x = new string(x.Where(ch => ch == ' ' || !char.IsControl(ch)).ToArray());
+
+        //                return x;
+        //            }
+        //        }
+
+        static int LookupIdByNameSmart(SqlConnection cn, string table, string rawNameOrCode)
+        {
+            if (string.IsNullOrWhiteSpace(rawNameOrCode)) return 0;
+
+            // 1. C# Normalization (This is correct)
+            string s = NormalizeArabic(rawNameOrCode);
+
+            // 2. SQL Query (Updated Scoring Logic)
+            string sql = $@"
+DECLARE @q NVARCHAR(200) = @S;
+
+;WITH base AS (
+    SELECT Id, ArName
+    FROM dbo.{table} WITH (NOLOCK)
+    WHERE ISNULL(IsDeleted,0)=0 AND ISNULL(IsActive,1)=1
+),
+cand AS (
+    SELECT TOP 10 Id,
+           ArName,
+           Score =
+             CASE 
+               WHEN dbo.fn_NormalizeArabic(ArName) = @q THEN 100                  -- 1. Exact Match
+               WHEN dbo.fn_NormalizeArabic(ArName) LIKE (@q + N'%') THEN 80      -- 2. Starts With Match
+               ELSE 60                                                          -- 3. Contains Match (guaranteed by WHERE)
+             END
+    FROM base
+    WHERE dbo.fn_NormalizeArabic(ArName) LIKE (N'%' + @q + N'%') -- Filter only 'Contains' matches
+)
+SELECT TOP 1 Id FROM cand 
+ORDER BY Score DESC, LEN(ArName);
+";
+
+            using (var cmd = new SqlCommand(sql, cn))
+            {
+                cmd.Parameters.AddWithValue("@S", s);
+                var o = cmd.ExecuteScalar();
+                return (o == null || o == DBNull.Value) ? 0 : Convert.ToInt32(o);
+            }
+
+            // This local C# function is correct and matches the updated SQL function
+            string NormalizeArabic(string x)
+            {
+                x = x.Trim();
+                x = System.Text.RegularExpressions.Regex.Replace(x, @"\s+", " "); // دمج المسافات
+                x = x.Replace('أ', 'ا').Replace('إ', 'ا').Replace('آ', 'ا');
+                x = x.Replace('ى', 'ي').Replace('ئ', 'ي').Replace('ؤ', 'و');
+               // x = x.Replace('ة', 'ه');
+                x = new string(x.Where(ch => !"\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652\u0640".Contains(ch)).ToArray());
+
+                return x;
+            }
+        }
+
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -888,4 +1335,56 @@ debitAndCreditNotification.RenterId
             base.Dispose(disposing);
         }
     }
+}
+
+
+public static class ImportLogWriter
+{
+    public static string WriteCsv(IEnumerable<RowError> errors, string title = null)
+    {
+        if (errors == null || !errors.Any()) return null;
+
+        var root = HttpContext.Current.Server.MapPath("~/Uploads/ImportLogs");
+        if (!Directory.Exists(root)) Directory.CreateDirectory(root);
+
+        var fileName = $"DebitCreditImport_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}.csv";
+        var fullPath = Path.Combine(root, fileName);
+
+        using (var sw = new StreamWriter(fullPath, false, Encoding.UTF8))
+        {
+            if (!string.IsNullOrWhiteSpace(title))
+                sw.WriteLine(title.Replace(Environment.NewLine, " ").Trim());
+
+            sw.WriteLine("Row,InvoiceNo,PartyName,NoteTypeText,Amount,VATPerc,Total,Message");
+            foreach (var e in errors)
+            {
+                string q(string s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
+                sw.WriteLine(string.Join(",",
+                    e.Row.ToString(),
+                    q(e.InvoiceNo),
+                    q(e.PartyName),
+                    q(e.NoteTypeText),
+                    e.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    e.VATPerc.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    e.Total.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    q(e.Message)
+                ));
+            }
+        }
+
+        return $"/Uploads/ImportLogs/{fileName}";
+    }
+}
+
+
+public class RowError
+{
+    public int Row { get; set; }
+    public string InvoiceNo { get; set; }
+    public string PartyName { get; set; }
+    public string NoteTypeText { get; set; }
+    public decimal Amount { get; set; }
+    public double VATPerc { get; set; }
+    public decimal Total { get; set; }
+    public string Message { get; set; }
 }

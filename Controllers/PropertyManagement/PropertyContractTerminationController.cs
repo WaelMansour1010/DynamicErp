@@ -487,59 +487,121 @@ namespace MyERP.Controllers.PropertyManagement
             }
             return Json(GeneratedDocNo, JsonRequestBehavior.AllowGet);
         }
-
         [SkipERPAuthorize]
-        public JsonResult GetPropertyContractTerminationDetails(string SearchText)
+        
+        public JsonResult GetPropertyContractTerminationDetails(string searchText)
         {
-           // var pt = db.PropertyDetails.Where(x => x.IsDeleted == false && x.PropertyUnitNo.ToString().Contains(SearchText)==true).ToList();
+            // 1) حماية: لو مافيش نص أو أقل من حرفين نرجّع فاضي
+            if (string.IsNullOrWhiteSpace(searchText) || searchText.Trim().Length < 2)
+                return Json(new object[0], JsonRequestBehavior.AllowGet);
 
-            var Details = db.PropertyContracts.Where(a => a.IsDeleted == false && (a.DocumentNumber.Contains(SearchText)
-            || a.PropertyRenter.Mobile.Contains(SearchText) || a.PropertyRenter.ArName.Contains(SearchText) || a.PropertyRenter.EnName.Contains(SearchText)
-            || a.Property.Code.Contains(SearchText) || a.Property.ArName.Contains(SearchText) || a.Property.EnName.Contains(SearchText)
-            || a.PropertyUnitType.Code.Contains(SearchText) || a.PropertyUnitType.ArName.Contains(SearchText) || a.PropertyUnitType.EnName.Contains(SearchText)
-            || a.Property.PropertyDetails.Where(x=>x.IsDeleted==false&& x.PropertyUnitNo.ToString().Contains(SearchText)==true).Any(x=>x.PropertyUnitNo.ToString().Contains(SearchText))
-             ))
+            var q = searchText.Trim();
+
+            // 2) الاستعلام مع AsNoTracking + ترتيب + حد أقصى للنتائج (يمكن تغييره)
+            var details = db.PropertyContracts
+                .AsNoTracking()
+                .Where(a => a.IsDeleted == false && (
+                       a.DocumentNumber.Contains(q)
+                    || a.PropertyRenter.Mobile.Contains(q)
+                    || a.PropertyRenter.ArName.Contains(q)
+                    || a.PropertyRenter.EnName.Contains(q)
+                    || a.Property.Code.Contains(q)
+                    || a.Property.ArName.Contains(q)
+                    || a.Property.EnName.Contains(q)
+                    || a.PropertyUnitType.Code.Contains(q)
+                    || a.PropertyUnitType.ArName.Contains(q)
+                    || a.PropertyUnitType.EnName.Contains(q)
+                    // بحث برقم/كود الوحدة بدون ToString (بافتراض أن PropertyUnitNo نصّي)
+                    || a.Property.PropertyDetails.Any(pd => pd.IsDeleted == false
+                                                            && pd.PropertyUnitNo.Contains(q))
+                ))
+                .OrderByDescending(a => a.Id)
                 .Select(a => new
                 {
                     ContractId = a.Id,
                     a.UnifiedContractNumber,
-                    a.ContractEndDate,
                     a.ContractStartDate,
+                    a.ContractEndDate,
+
                     ContractNo = a.DocumentNumber,
+
                     a.PropertyId,
                     Property = a.Property.ArName,
+
                     RenterId = a.PropertyRenterId,
                     Renter = a.PropertyRenter.ArName,
                     RenterMobile = a.PropertyRenter.Mobile,
+
                     UnitId = a.PropertyUnitId,
                     Unit = a.PropertyUnit.ArName,
-                    UnitCode = a.Property.PropertyDetails.Where(c=>c.Id==a.PropertyUnitId).FirstOrDefault().PropertyUnitNo,
+
+                    // تجنب NullReference: اختَر النص ثم FirstOrDefault
+                    UnitCode = a.Property.PropertyDetails
+                                        .Where(c => c.Id == a.PropertyUnitId)
+                                        .Select(c => c.PropertyUnitNo)
+                                        .FirstOrDefault(),
+
                     UnitTypeId = a.PropertyUnitTypeId,
                     UnitType = a.PropertyUnitType.ArName,
+
+                    // الوحدات المدمجة
                     MergedUnits = a.Property.PropertyDetails
-                        .Where(pd => a.PropertyContractMergedUnit.Select(mu => mu.PropertyUnitId).Contains(pd.Id))
-                        .Select(pd => new {
-                            pd.Id,
-                            pd.PropertyUnitNo
-                        }).ToList(),
+                        .Where(pd => a.PropertyContractMergedUnit
+                                        .Select(mu => mu.PropertyUnitId)
+                                        .Contains(pd.Id))
+                        .Select(pd => new { pd.Id, pd.PropertyUnitNo })
+                        .ToList(),
+
+                    // تفاصيل الدُفعات مع احترام IsDelivered
                     Details = a.PropertyContractBatches.Select(b => new
                     {
                         b.BatchNo,
                         b.BatchDate,
                         PropertyContractBatchId = b.Id,
-                        PropertyContractId=b.MainDocId,
-                        BatchRentValue = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).Select(c => c.IsDelivered).FirstOrDefault() == true ? 0 : b.BatchRentValue + b.BatchRentValueTaxes,
-                        BatchWaterValue = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).Select(c => c.IsDelivered).FirstOrDefault() == true ? 0 : b.BatchWaterValue + b.BatchWaterValueTaxes,
-                        BatchElectricityValue = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).Select(c => c.IsDelivered).FirstOrDefault() == true ? 0 : b.BatchElectricityValue + b.BatchElectricityValueTaxes,
-                        BatchCommissionValue = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).Select(c => c.IsDelivered).FirstOrDefault() == true ? 0 : b.BatchCommissionValue + b.BatchCommissionValueTaxes,
-                        BatchServicesValue = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).Select(c => c.IsDelivered).FirstOrDefault() == true ? 0 : b.BatchServicesValue + b.BatchServicesValueTaxes,
-                        BatchInsuranceValue = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).Select(c => c.IsDelivered).FirstOrDefault() == true ? 0 : b.BatchInsuranceValue + b.BatchInsuranceValueTaxes,
-                        Remain = b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).FirstOrDefault().Remain == null ? b.BatchTotal : b.CashReceiptVoucherPropertyContractBatches.Where(c => c.PropertyContractBatchId == b.Id).FirstOrDefault().Remain
-                    })
+                        PropertyContractId = b.MainDocId,
 
-                }).ToList();
-            return Json(Details, JsonRequestBehavior.AllowGet);
+                        BatchRentValue = b.CashReceiptVoucherPropertyContractBatches
+                                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                                    .Select(c => c.IsDelivered).FirstOrDefault() == true
+                                                    ? 0 : (b.BatchRentValue + b.BatchRentValueTaxes),
+
+                        BatchWaterValue = b.CashReceiptVoucherPropertyContractBatches
+                                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                                    .Select(c => c.IsDelivered).FirstOrDefault() == true
+                                                    ? 0 : (b.BatchWaterValue + b.BatchWaterValueTaxes),
+
+                        BatchElectricityValue = b.CashReceiptVoucherPropertyContractBatches
+                                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                                    .Select(c => c.IsDelivered).FirstOrDefault() == true
+                                                    ? 0 : (b.BatchElectricityValue + b.BatchElectricityValueTaxes),
+
+                        BatchCommissionValue = b.CashReceiptVoucherPropertyContractBatches
+                                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                                    .Select(c => c.IsDelivered).FirstOrDefault() == true
+                                                    ? 0 : (b.BatchCommissionValue + b.BatchCommissionValueTaxes),
+
+                        BatchServicesValue = b.CashReceiptVoucherPropertyContractBatches
+                                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                                    .Select(c => c.IsDelivered).FirstOrDefault() == true
+                                                    ? 0 : (b.BatchServicesValue + b.BatchServicesValueTaxes),
+
+                        BatchInsuranceValue = b.CashReceiptVoucherPropertyContractBatches
+                                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                                    .Select(c => c.IsDelivered).FirstOrDefault() == true
+                                                    ? 0 : (b.BatchInsuranceValue + b.BatchInsuranceValueTaxes),
+
+                        Remain = b.CashReceiptVoucherPropertyContractBatches
+                                    .Where(c => c.PropertyContractBatchId == b.Id)
+                                    .Select(c => c.Remain)
+                                    .FirstOrDefault() ?? b.BatchTotal
+                    }).ToList()
+                })
+                .Take(30)   // ⚠️ عدّلها حسب ما تحب، أو فعّل Paging
+                .ToList();
+
+            return Json(details, JsonRequestBehavior.AllowGet);
         }
+
         [SkipERPAuthorize]
         public JsonResult GetPropertyComponentDetails(int? PropertyComponentId)
         {

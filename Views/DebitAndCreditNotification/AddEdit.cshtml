@@ -181,14 +181,14 @@
                                 <div class="form-group row">
                                     <label class="col-sm-2 control-label ">@MyERP.Properties.Resources.VATValue</label>
                                     <div class="col-sm-4">
-                                        @Html.EditorFor(model => model.VATValue, new { htmlAttributes = new { @class = "form-control ", placeholder = @MyERP.Properties.Resources.VATValue, @required = "required",@readonly="readonly" } })
+                                        @Html.EditorFor(model => model.VATValue, new { htmlAttributes = new { @class = "form-control ", placeholder = @MyERP.Properties.Resources.VATValue, @required = "required", @readonly = "readonly" } })
                                         <div class="invalid-feedback">
                                             @MyERP.Properties.Resources.Required
                                         </div>
                                     </div>
                                     <label class="col-sm-2 control-label ">@MyERP.Properties.Resources.VATPercentage</label>
                                     <div class="col-sm-4">
-                                        @Html.EditorFor(model => model.VATPercentage, new { htmlAttributes = new { @class = "form-control ", placeholder = @MyERP.Properties.Resources.VATPercentage, @required = "required",@readonly="readonly" } })
+                                        @Html.EditorFor(model => model.VATPercentage, new { htmlAttributes = new { @class = "form-control ", placeholder = @MyERP.Properties.Resources.VATPercentage, @required = "required", @readonly = "readonly" } })
                                         <div class="invalid-feedback">
                                             @MyERP.Properties.Resources.Required
                                         </div>
@@ -223,7 +223,7 @@
                                     </div>
                                     <label class="col-sm-2 control-label ">@MyERP.Properties.Resources.InvoiceNo</label>
                                     <div class="col-sm-4">
-                                        @Html.EditorFor(model => model.InvoiceNo, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.InvoiceNo} })
+                                        @Html.EditorFor(model => model.InvoiceNo, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.InvoiceNo } })
                                         <div class="invalid-feedback">
                                             @MyERP.Properties.Resources.Required
                                         </div>
@@ -252,240 +252,302 @@
                         <!-------------------------------------------------------------------------------------------------------------->
                         <div class="row">
                             <div class="col-sm-offset-2">
+
                                 @if (Model == null)
                                 {
-
-                                    <button type="submit" onclick="addEdit('report')" class="btn btn-success">
+                                    <button type="button" id="btnSavePrint" class="btn btn-success" onclick="addEdit('report')">
                                         @MyERP.Properties.Resources.SaveAndPrint
                                     </button>
-                                    <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+
+                                    <button type="button" id="newbtn" class="btn btn-success" onclick="addEdit('new')">
                                         @MyERP.Properties.Resources.SaveAndNew
                                     </button>
-                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+
+                                    <button type="button" id="save" class="btn btn-success" onclick="addEdit()">
                                         @MyERP.Properties.Resources.Save
                                     </button>
-                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
-                                    @*<button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>*@
+
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">
+                                        @MyERP.Properties.Resources.Back
+                                    </a>
+                                    @* <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button> *@
                                 }
                                 else if (Model.IsDeleted == false)
                                 {
-
-                                    <button type="submit" onclick="addEdit('report')" class="btn btn-success">
+                                    <button type="button" id="btnSavePrint" class="btn btn-success" onclick="addEdit('report')">
                                         @MyERP.Properties.Resources.SaveAndPrint
                                     </button>
-                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+
+                                    <button type="button" id="save" class="btn btn-success" onclick="addEdit()">
                                         @MyERP.Properties.Resources.Save
                                     </button>
-                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
-                                    <button class="btn btn-danger" onclick="DeleteFunc(@Model.Id)">
+
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">
+                                        @MyERP.Properties.Resources.Back
+                                    </a>
+
+                                    <button type="button" id="btnDelete" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)">
                                         @MyERP.Properties.Resources.Delete
                                     </button>
-                                    @*<button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>*@
+
+                                    @* <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button> *@
                                 }
+
+                                <!-- زر استيراد من إكسل -->
+                                <button type="button" id="btnImportExcel" class="btn btn-info" data-toggle="modal" data-target="#importExcelModal">
+                                    استيراد من إكسل
+                                </button>
+
+                                <!-- نافذة المودال للاستيراد -->
+                                <div class="modal fade" id="importExcelModal" tabindex="-1" role="dialog" aria-labelledby="importExcelLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+
+                                            <form id="excelImportForm" enctype="multipart/form-data">
+                                                @* مهم: المودال له فورم مستقل خاص بالاستيراد *@
+                                                @Html.AntiForgeryToken()
+                                                <div class="modal-header">
+                                                    <h4 class="modal-title" id="importExcelLabel">استيراد إشعارات من ملف إكسل</h4>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">×</span>
+                                                    </button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    <div class="form-group">
+                                                        <label for="excelFile">ملف الإكسل (.xls / .xlsx)</label>
+                                                        <input type="file" name="file" id="excelFile" accept=".xls,.xlsx" class="form-control" required />
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <label for="departmentId">القسم (افتراضي عند غياب العمود)</label>
+                                                        @Html.DropDownList("departmentId", (SelectList)ViewBag.DepartmentId, "-- اختر --", new { @class = "form-control", @id = "departmentId" })
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <label for="dateOverride">تاريخ افتراضي</label>
+                                                        <input type="datetime-local" name="dateOverride" id="dateOverride" class="form-control" value="@ViewBag.Date" />
+                                                    </div>
+
+                                                    <div class="mb-2">
+                                                        <a href="@Url.Action("DownloadCreditNotesTemplate","DebitAndCreditNotification")" class="btn btn-link">
+                                                            تحميل نموذج إكسل
+                                                        </a>
+                                                    </div>
+
+                                                    <small class="text-muted d-block">
+                                                        يدعم الأعمدة: Date, DepartmentCode/Id, DebitCode/Id, CreditCode/Id, TypeId,
+                                                        SourceTypeId, RepCode/Id, TotalMoneyAmount, MoneyAmount, VATValue, VATPercentage,
+                                                        CurrencyCode/Id, CostCenterCode/Id, Notes, InvoiceNo, CustomerCode/Id, VendorCode/Id, ... إلخ.
+                                                    </small>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">إغلاق</button>
+                                                    <button type="submit" class="btn btn-primary">ابدأ الاستيراد</button>
+                                                </div>
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
-                    </div>
-                </div>
-                @*</form>*@
-            </div>
-            @*-------------------------End Of Form---------------------------------*@
-        </div>
-    </div>
-</div>
 
 
-@if (Model != null)
-{
-    if (ViewBag.JE != null)
-    {
-        <div class="card">
-            <div class="card-body">
-                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntries</h5>
-                <div class="form-horizontal">
-                    <div class="form-group row">
-                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.VoucherNo</label>
-                        <div class="col-sm-4">
-                            <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.VoucherNo disabled>
-
-                        </div>
-                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date </label>
-                        <div class="col-sm-4">
-                            <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.Date" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
-                        </div>
-
-                    </div>
-                    <div class="form-group row">
-
-                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
-                        <div class="col-sm-4">
-                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
-                        </div>
-
-                    </div>
-                    <div class="form-group row">
-                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
-                        <div class="col-sm-11">
-                            <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
-                        </div>
-                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Deported</label>
-                        <div class="col-sm-4">
-                            @if (Model.IsPosted == true)
+                        @if (Model != null)
+                        {
+                            if (ViewBag.JE != null)
                             {
-                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" checked disabled>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="header-title">@MyERP.Properties.Resources.JournalEntries</h5>
+                                        <div class="form-horizontal">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.VoucherNo</label>
+                                                <div class="col-sm-4">
+                                                    <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.VoucherNo disabled>
+
+                                                </div>
+                                                <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date </label>
+                                                <div class="col-sm-4">
+                                                    <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.Date" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
+                                                </div>
+
+                                            </div>
+                                            <div class="form-group row">
+
+                                                <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
+                                                </div>
+
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                                <div class="col-sm-11">
+                                                    <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
+                                                </div>
+                                                <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Deported</label>
+                                                <div class="col-sm-4">
+                                                    @if (Model.IsPosted == true)
+                                                    {
+                                                        <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" checked disabled>
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" disabled>
+                                                    }
+
+                                                </div>
+                                            </div>
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-centered mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>@MyERP.Properties.Resources.Debit</th>
+                                                                    <th>@MyERP.Properties.Resources.Credit</th>
+                                                                    <th>@MyERP.Properties.Resources.Account</th>
+                                                                    <th>@MyERP.Properties.Resources.Explanation</th>
+                                                                    <th>@MyERP.Properties.Resources.CostCenter</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @if (Model.Id != 0)
+                                                                {
+                                                                    foreach (var jED in ViewBag.JEDetails)
+                                                                    {
+                                                                        <tr>
+                                                                            <td>
+                                                                                <label>@jED.Debit</label>
+                                                                                <input type='text' class='txtDebit' value="@jED.Debit" hidden>
+                                                                            </td>
+                                                                            <td>
+                                                                                <label>@jED.Credit</label>
+                                                                                <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
+                                                                            </td>
+                                                                            <td>
+                                                                                @if (jED.AccountId != null)
+                                                                                {
+                                                                                    <label>@jED.ChartOfAccount.ArName</label>
+                                                                                    <input type='number' class='AccountId' value="@jED.AccountId" hidden>
+                                                                                }
+
+                                                                            </td>
+                                                                            <td>
+                                                                                <label>@jED.Notes</label>
+                                                                            </td>
+                                                                            <td>
+                                                                                @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             }
-                            else
-                            {
-                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" disabled>
-                            }
-
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
-                            <div class="table-responsive">
-                                <table class="table table-centered mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>@MyERP.Properties.Resources.Debit</th>
-                                            <th>@MyERP.Properties.Resources.Credit</th>
-                                            <th>@MyERP.Properties.Resources.Account</th>
-                                            <th>@MyERP.Properties.Resources.Explanation</th>
-                                            <th>@MyERP.Properties.Resources.CostCenter</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @if (Model.Id != 0)
-                                        {
-                                            foreach (var jED in ViewBag.JEDetails)
-                                            {
-                                                <tr>
-                                                    <td>
-                                                        <label>@jED.Debit</label>
-                                                        <input type='text' class='txtDebit' value="@jED.Debit" hidden>
-                                                    </td>
-                                                    <td>
-                                                        <label>@jED.Credit</label>
-                                                        <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
-                                                    </td>
-                                                    <td>
-                                                        @if (jED.AccountId != null)
-                                                        {
-                                                            <label>@jED.ChartOfAccount.ArName</label>
-                                                            <input type='number' class='AccountId' value="@jED.AccountId" hidden>
-                                                        }
-
-                                                    </td>
-                                                    <td>
-                                                        <label>@jED.Notes</label>
-                                                    </td>
-                                                    <td>
-                                                        @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
-                                                    </td>
-                                                </tr>
-                                            }
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-}
+                        }
 
 
-<div id="BalanceDetails" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                @*<h4 class="modal-title" id="myModalLabel">تفاصيل الصنف</h4>*@
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card-box">
-                            <div class=" table-responsive">
-                                <table id="balanceTable" class="table table-striped table-centered mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>
-                                                @MyERP.Properties.Resources.Department
-                                            </th>
-                                            <th>
-                                                @MyERP.Properties.Resources.DebitBalance
-                                            </th>
-                                            <th>
-                                                @MyERP.Properties.Resources.CreditBalance
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
+                        <div id="BalanceDetails" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        @*<h4 class="modal-title" id="myModalLabel">تفاصيل الصنف</h4>*@
+                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="card-box">
+                                                    <div class=" table-responsive">
+                                                        <table id="balanceTable" class="table table-striped table-centered mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.Department
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.DebitBalance
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.CreditBalance
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody></tbody>
 
-                                </table>
-                            </div>
+                                                        </table>
+                                                    </div>
 
-                        </div>
-                    </div>
-                </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
 
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
-            </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-    <!--<div class="modal-dialog modal-lg" role="document">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                                    </div>
+                                </div><!-- /.modal-content -->
+                            </div><!-- /.modal-dialog -->
+                            <!--<div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="row">
                     <div class="col-md-1">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     </div>-->
-    @*<div class="col-md-11">
-            <input class="form-control" id="search-items" placeholder="بحث" type="text" />
-        </div>*@
-    <!--<div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
-    </div>
+                            @*<div class="col-md-11">
+                <input class="form-control" id="search-items" placeholder="بحث" type="text" />
+            </div>*@
+                            <!--<div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
         </div>
-    </div>
-    <div class="modal-body">
-        <div class="row">-->
-    @*<table class="table table-condensed">
-            <thead>
-                <tr>
-                    <th class="col-sm-2">الباركود</th>
-                    <th class="col-md-5">اسم الصنف</th>
-                    <th class="col-md-2">السعر</th>
-                    <th class="col-md-2">الكمية</th>
-                    <th class="col-md-1">إضافة</th>
-                </tr>
-            </thead>
-            <tbody id="items-prices-quantities"></tbody>
-        </table>*@
-    <!--</div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
             </div>
         </div>
+        <div class="modal-body">
+            <div class="row">-->
+                            @*<table class="table table-condensed">
+                <thead>
+                    <tr>
+                        <th class="col-sm-2">الباركود</th>
+                        <th class="col-md-5">اسم الصنف</th>
+                        <th class="col-md-2">السعر</th>
+                        <th class="col-md-2">الكمية</th>
+                        <th class="col-md-1">إضافة</th>
+                    </tr>
+                </thead>
+                <tbody id="items-prices-quantities"></tbody>
+            </table>*@
+                            <!--</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
+                </div>
+            </div>
 
-    </div>-->
-</div>
+        </div>-->
+                        </div>
 
 
 
 
 
-<script>
+                        <script>
     // --- Variable Declaration ---//
-    var taxPercentage = 0.14;
+    var taxPercentage = 0.15;
 
 //*********************************************************************************************//
     //---------- Ready Function --------------------//
@@ -560,7 +622,7 @@
         if (!$('#Id').val()) {
             setDocNum();
             GetCurrentTaxPercentage();
-            
+
         }
     });
 
@@ -594,6 +656,7 @@
             $('#DocumentNumber').val(r);
         });
     }
+
     function sourceTypeChange() {
         if ($('#SourceTypeId').val() == 6) { // Others
             $('.AccountId').show();
@@ -869,13 +932,15 @@
     function addEdit(n) {
         let valid = true;
         var sum = 0;
-        if ($(".form-control:invalid").length > 0) {
+        var $invalid = $(".form-horizontal .form-control")
+            .filter(":visible")
+            .filter(function () { return !this.disabled && !this.readOnly && !this.checkValidity(); });
+
+        if ($invalid.length) {
             $('.form-horizontal').addClass('was-validated');
-            $('html, body').animate({
-                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
-            }, 500);
-            console.log($(".form-control:invalid"));
-            valid = false;
+            $('html, body').animate({ scrollTop: $invalid.eq(0).offset().top - 80 }, 500);
+            console.log($invalid);
+            return; // اخرج بدل متغيّر valid
         }
 
         var DebitAndCreditNotification = {
@@ -994,4 +1059,88 @@
             });
         }
     }
-</script>
+
+
+                        </script>
+
+
+
+                        <script>
+(function () {
+  if (typeof $ === 'undefined') { alert('jQuery غير محمّل'); return; }
+
+  // ربط الحدث حتى لو المودال ديناميك
+  $(document).on('submit', '#excelImportForm', function (e) {
+    e.preventDefault();
+
+    var form = this;
+    var $form = $(form);
+    var $btn  = $form.find('button[type="submit"]');
+    var fileInput = $form.find('#excelFile')[0];
+
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+      alert('يرجى اختيار ملف إكسل أولاً.');
+      return;
+    }
+
+    var fd = new FormData(form);
+
+    // ضمِّن التوكن الموجود داخل نفس الفورم
+    var tokenInput = $form.find('input[name="__RequestVerificationToken"]');
+    var tokenVal   = tokenInput.length ? tokenInput.val() : null;
+    if (tokenVal) fd.set('__RequestVerificationToken', tokenVal);
+
+    // تأكيد القيم الموجودة بعناصر المودال
+    var depSel  = document.getElementById('departmentId');
+    var dateInp = form.querySelector('input[name="dateOverride"]');
+    if (depSel)  fd.set('departmentId', depSel.value || '');
+    if (dateInp) fd.set('dateOverride', dateInp.value || '');
+
+    if ($btn.length) {
+      $btn.data('_txt', $btn.text());
+      $btn.prop('disabled', true).text('جارٍ الاستيراد...');
+    }
+
+    $.ajax({
+      url: '@Url.Action("ImportExcel","DebitAndCreditNotification")',
+      type: 'POST',
+      data: fd,
+      processData: false,
+      contentType: false,
+      beforeSend: function (xhr) {
+        if (tokenVal) xhr.setRequestHeader('RequestVerificationToken', tokenVal);
+      },
+      success: function (res) {
+        if (typeof res === 'string' && /<!DOCTYPE|<html/i.test(res)) {
+          alert('الرد جاء صفحة HTML (قد تكون الجلسة انتهت). حدِّث الصفحة وحاول ثانية.');
+          return;
+        }
+        if (res && res.success) {
+          var msg = 'تم الاستيراد بنجاح: ' + (res.inserted || 0) + ' صف.';
+          if (res.skipped) msg += ' — تم تخطّي: ' + res.skipped + ' صف.';
+          if (res.errors && res.errors.length) {
+            msg += '\nأخطاء:\n' + res.errors.map(function (e) {
+              return 'سطر ' + (e.row || '?') + ': ' + (e.message || 'خطأ غير محدد');
+            }).join('\n');
+          }
+          alert(msg);
+          $('#importExcelModal').modal('hide');
+        } else {
+          alert((res && res.message) ? res.message : 'فشل الاستيراد.');
+        }
+      },
+      error: function (xhr) {
+        var details = xhr && (xhr.responseText || xhr.statusText) ? ('\n' + (xhr.responseText || xhr.statusText)) : '';
+        alert('خطأ غير متوقع أثناء الرفع/المعالجة.' + details);
+      },
+      complete: function () {
+        if ($btn.length) {
+          $btn.prop('disabled', false).text($btn.data('_txt') || 'ابدأ الاستيراد');
+        }
+      }
+    });
+  });
+})();
+                        </script>
+
+

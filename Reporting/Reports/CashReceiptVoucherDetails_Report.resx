@@ -118,32 +118,47 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="customSqlQuery1.Sql" xml:space="preserve">
-    <value>SELECT        CashReceiptVoucher.DocumentNumber, CONVERT(nvarchar, CashReceiptVoucher.MoneyAmount) AS MoneyAmount, CashReceiptVoucher.Date, CashReceiptVoucher.CurrencyEquivalent, CashReceiptVoucher.Notes, 
-                         Customer.ArName AS Customer, CashReceiptSourceType.ArName AS CashReceiptSource, Currency.ArName AS Currency, ChartOfAccount.ArName AS Account, Vendor.ArName AS Vendor, Employee.ArName AS Employee, 
-                         Department.ArName AS Department, Branch.ArName AS Branch, CashBox.ArName AS CashBox, BankAccount.AccountNumber, CashReceiptVoucher.TransactionNo, CashReceiptVoucher.TransactionDate, 
-                         Emp.ArName AS EmployeeName, DirectRevenue.ArName AS DirectRevenue, ShareHolder.ArName AS ShareHolder, CashIssuePaymentMethod.ArName AS PaymentMethodName, 
-                         CashIssuePaymentMethod.EnName AS EnPaymentMethodName, CashReceiptVoucherPropertyContractBatch.Paid, CashReceiptVoucherPropertyContractBatch.Remain, CashReceiptVoucherPropertyContractBatch.IsDelivered, 
-                         PropertyContractBatch.BatchNo, PropertyContractBatch.BatchDate, PropertyContractBatch.BatchRentValue, PropertyContractBatch.BatchRentValueTaxes, PropertyContractBatch.BatchTotal
-FROM            PropertyContractBatch INNER JOIN
-                         ERPUser AS [User] ON PropertyContractBatch.UserId = [User].Id RIGHT OUTER JOIN
-                         CashReceiptVoucherPropertyContractBatch ON PropertyContractBatch.Id = CashReceiptVoucherPropertyContractBatch.PropertyContractBatchId 
-and CashReceiptVoucherPropertyContractBatch.paid &lt;&gt; 0
-RIGHT OUTER JOIN
-                         CashReceiptVoucher AS CashReceiptVoucher ON CashReceiptVoucherPropertyContractBatch.CashReceiptVoucherId = CashReceiptVoucher.Id AND [User].Id = CashReceiptVoucher.UserId LEFT OUTER JOIN
-                         Branch AS Branch ON Branch.Id = CashReceiptVoucher.BranchId LEFT OUTER JOIN
-                         CashReceiptSourceType AS CashReceiptSourceType ON CashReceiptSourceType.Id = CashReceiptVoucher.SourceTypeId LEFT OUTER JOIN
-                         Currency AS Currency ON Currency.Id = CashReceiptVoucher.CurrencyId LEFT OUTER JOIN
-                         ChartOfAccount AS ChartOfAccount ON ChartOfAccount.Id = CashReceiptVoucher.AccountId LEFT OUTER JOIN
-                         DirectRevenue AS DirectRevenue ON DirectRevenue.Id = CashReceiptVoucher.DirectRevenueId LEFT OUTER JOIN
-                         Customer AS Customer ON Customer.Id = CashReceiptVoucher.CustomerId LEFT OUTER JOIN
-                         Vendor AS Vendor ON Vendor.Id = CashReceiptVoucher.VendorId LEFT OUTER JOIN
-                         Employee AS Emp ON Emp.Id = [User].EmployeeId LEFT OUTER JOIN
-                         Employee AS Employee ON Employee.Id = CashReceiptVoucher.EmployeeId LEFT OUTER JOIN
-                         Department AS Department ON Department.Id = CashReceiptVoucher.DepartmentId LEFT OUTER JOIN
-                         CashBox AS CashBox ON CashBox.Id = CashReceiptVoucher.CashBoxId LEFT OUTER JOIN
-                         BankAccount AS BankAccount ON BankAccount.Id = CashReceiptVoucher.BankAccountId LEFT OUTER JOIN
-                         ShareHolder AS ShareHolder ON ShareHolder.Id = CashReceiptVoucher.ShareholderId LEFT OUTER JOIN
-                         CashIssuePaymentMethod AS CashIssuePaymentMethod ON CashIssuePaymentMethod.Id = CashReceiptVoucher.CashReceiptPaymentMethodId
+    <value>SELECT
+    CashReceiptVoucher.DocumentNumber, CONVERT(nvarchar, CashReceiptVoucher.MoneyAmount) AS MoneyAmount, CashReceiptVoucher.Date, CashReceiptVoucher.CurrencyEquivalent, CashReceiptVoucher.Notes, 
+    Customer.ArName AS Customer, CashReceiptSourceType.ArName AS CashReceiptSource, Currency.ArName AS Currency, ChartOfAccount.ArName AS Account, Vendor.ArName AS Vendor, Employee.ArName AS Employee, 
+    Department.ArName AS Department, Branch.ArName AS Branch, CashBox.ArName AS CashBox, BankAccount.AccountNumber, CashReceiptVoucher.TransactionNo, CashReceiptVoucher.TransactionDate, 
+    Emp.ArName AS EmployeeName, DirectRevenue.ArName AS DirectRevenue, ShareHolder.ArName AS ShareHolder, CashIssuePaymentMethod.ArName AS PaymentMethodName, 
+    CashIssuePaymentMethod.EnName AS EnPaymentMethodName, CashReceiptVoucherPropertyContractBatch.Paid, CashReceiptVoucherPropertyContractBatch.Remain, CashReceiptVoucherPropertyContractBatch.IsDelivered, 
+    PropertyContractBatch.BatchNo, PropertyContractBatch.BatchDate, PropertyContractBatch.BatchRentValue, PropertyContractBatch.BatchRentValueTaxes, PropertyContractBatch.BatchTotal
+
+FROM
+    -- ابدأ بالجدول الرئيسي الذي تقوم بالتصفية بناءً عليه
+    CashReceiptVoucher AS CashReceiptVoucher
+
+    -- اجلب الدفعات المرتبطة
+    LEFT OUTER JOIN CashReceiptVoucherPropertyContractBatch 
+        ON CashReceiptVoucher.Id = CashReceiptVoucherPropertyContractBatch.CashReceiptVoucherId
+        -- احذف السطر التالي إذا أردت رؤية الدفعات التي قيمتها صفر
+        AND CashReceiptVoucherPropertyContractBatch.paid &lt;&gt; 0 
+
+    -- اجلب بيانات العقد المرتبطة بالدفعات
+    LEFT OUTER JOIN PropertyContractBatch 
+        ON CashReceiptVoucherPropertyContractBatch.PropertyContractBatchId = PropertyContractBatch.Id
+
+    -- اجلب المستخدم المرتبط بالعقد (هذا هو الإصلاح الرئيسي)
+    LEFT OUTER JOIN ERPUser AS [User] 
+        ON PropertyContractBatch.UserId = [User].Id
+
+    -- اجلب كل الجداول الفرعية الأخرى بناءً على السند الرئيسي أو الجداول المرتبطة
+    LEFT OUTER JOIN Branch AS Branch ON Branch.Id = CashReceiptVoucher.BranchId
+    LEFT OUTER JOIN CashReceiptSourceType AS CashReceiptSourceType ON CashReceiptSourceType.Id = CashReceiptVoucher.SourceTypeId
+    LEFT OUTER JOIN Currency AS Currency ON Currency.Id = CashReceiptVoucher.CurrencyId
+    LEFT OUTER JOIN ChartOfAccount AS ChartOfAccount ON ChartOfAccount.Id = CashReceiptVoucher.AccountId
+    LEFT OUTER JOIN DirectRevenue AS DirectRevenue ON DirectRevenue.Id = CashReceiptVoucher.DirectRevenueId
+    LEFT OUTER JOIN Customer AS Customer ON Customer.Id = CashReceiptVoucher.CustomerId
+    LEFT OUTER JOIN Vendor AS Vendor ON Vendor.Id = CashReceiptVoucher.VendorId
+    LEFT OUTER JOIN Employee AS Emp ON Emp.Id = [User].EmployeeId
+    LEFT OUTER JOIN Employee AS Employee ON Employee.Id = CashReceiptVoucher.EmployeeId
+    LEFT OUTER JOIN Department AS Department ON Department.Id = CashReceiptVoucher.DepartmentId
+    LEFT OUTER JOIN CashBox AS CashBox ON CashBox.Id = CashReceiptVoucher.CashBoxId
+    LEFT OUTER JOIN BankAccount AS BankAccount ON BankAccount.Id = CashReceiptVoucher.BankAccountId
+    LEFT OUTER JOIN ShareHolder AS ShareHolder ON ShareHolder.Id = CashReceiptVoucher.ShareholderId
+    LEFT OUTER JOIN CashIssuePaymentMethod AS CashIssuePaymentMethod ON CashIssuePaymentMethod.Id = CashReceiptVoucher.CashReceiptPaymentMethodId
 
 where
        (("CashReceiptVoucher"."DocumentNumber" = @DocumentNumber)

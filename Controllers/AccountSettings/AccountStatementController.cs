@@ -53,7 +53,7 @@ namespace MyERP.Controllers.AccountSettings
 
         public ActionResult GETAccountStatementDetails(int accId)
         {
-            return PartialView(db.GetAccountStatementDetails(null, null, accId,null, null, null));
+            return PartialView(db.GetAccountStatementDetails(null, null, accId,null, null, null, null, null));
         }
 
         protected override void Dispose(bool disposing)

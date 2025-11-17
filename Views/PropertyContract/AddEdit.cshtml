@@ -1,4 +1,5 @@
-﻿@using MyERP.Models.MyModels
+﻿
+@using MyERP.Models.MyModels
 @model MyERP.Models.PropertyContract
 @{
     UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
@@ -674,9 +675,10 @@
                                     <td>
                                         @MyERP.Properties.Resources.PrintJournalEntry
                                     </td>
+                                                                *@
                                     <td>
                                         @MyERP.Properties.Resources.PrintInvoice
-                                    </td>*@
+                                    </td>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="PropertyContractBatches">
@@ -755,18 +757,19 @@
                                                                         <input type="number" step="any" class="totalpaid form-control tabledit-input form-control-sm" value="@totalPaid" readonly disabled />
                                                                     </td>
                                                                     @*<td class="tabledit-edit-mode">
-                                                <input type="text" class="JournalEntryDocumentNumber form-control tabledit-input form-control-sm" value="@(item.JournalEntry != null ? item.JournalEntry.DocumentNumber : "")" disabled readonly />
-                                            </td>
-                                            <td class="tabledit-edit-mode">
-                                                <a href="javascript:void(0);" onclick="PrintJournalEntry(@item.JournalEntryId)">
-                                                    <i class="remixicon-printer-fill"></i>
-                                                </a>
-                                            </td>
-                                            <td class="tabledit-edit-mode">
-                                                <a href="javascript:void(0);" onclick="PrintInvoice(@item.Id)">
-                                                    <i class="remixicon-printer-fill"></i>
-                                                </a>
-                                            </td>*@
+            <input type="text" class="JournalEntryDocumentNumber form-control tabledit-input form-control-sm" value="@(item.JournalEntry != null ? item.JournalEntry.DocumentNumber : "")" disabled readonly />
+        </td>
+        <td class="tabledit-edit-mode">
+            <a href="javascript:void(0);" onclick="PrintJournalEntry(@item.JournalEntryId)">
+                <i class="remixicon-printer-fill"></i>
+            </a>
+        </td>
+                                                                    *@
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <a href="javascript:void(0);" onclick="PrintInvoice(@item.Id)">
+                                                                            <i class="remixicon-printer-fill"></i>
+                                                                        </a>
+                                                                    </td>
                                                                 </tr>
                                                             }
                                                         }
@@ -1066,7 +1069,7 @@
 
 <script>
 //--------------- Variables Declarations -------------------//
-var taxPercentage = 0.14;
+var taxPercentage = 0.15;
 var RepOptions = '';
 var OwnerOptions = '';
 var UnitOptions = "";
@@ -1125,7 +1128,9 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
                 $('.JE').prop('disabled', true);
             }
             //GetCurrentTaxPercentage();
-            taxPercentage = $('#VATPercentage').val();
+            //taxPercentage = $('#VATPercentage').val();
+            taxPercentage = getTaxPct();
+
         }
         else {
             if (!$('#Id').val()) {
@@ -1340,63 +1345,81 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
                 }
             }
     function GetCurrentTaxPercentage() {
-        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val()).done(function (r) {
-            taxPercentage = r / 100;
-            CalculateTotalsContractItems();
-        });
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val())
+            .done(function (r) {
+                // r عادة 15 — نخزّنه ككسر 0.15 ونظهر نفس الكسر في الحقل
+                var pct = (r > 1 ? r / 100 : r);
+                taxPercentage = pct;
+                $('#VATPercentage').val(pct);      // مهم جداً علشان getTaxPct ما ترجعش 0
+                CalculateTotalsContractItems();
+            })
+            .fail(function () {
+                // فشل الاستعلام: استخدم آخر قيمة معروفة أو 0.15 كافتراضي
+                if (!taxPercentage || taxPercentage <= 0) taxPercentage = 0.15;
+                if (!$('#VATPercentage').val()) $('#VATPercentage').val(taxPercentage);
+                CalculateTotalsContractItems();
+            });
     }
+
     function CalculateTotalsContractItems() {
-                var RentValue = parseFloat($('#RentValue').inputmask('unmaskedvalue') > 0 ? $('#RentValue').inputmask('unmaskedvalue') : 0);
-                var RentValueWithTaxes = 0;
-                if ($('#IncludeRentValueInVAT').prop('checked') == true) {
-                    RentValueWithTaxes = (RentValue * taxPercentage);
-        }
-                var WaterValue = parseFloat($('#WaterValue').inputmask('unmaskedvalue') > 0 ? $('#WaterValue').inputmask('unmaskedvalue') : 0);
-                var WaterValueWithTaxes = 0;
-                if ($('#IncludeWaterValueInVAT').prop('checked') == true) {
-                    WaterValueWithTaxes = (WaterValue * taxPercentage);
-                }
-                var ElectricityValue = parseFloat($('#ElectricityValue').inputmask('unmaskedvalue') > 0 ? $('#ElectricityValue').inputmask('unmaskedvalue') : 0);
-                var ElectricityValueWithTaxes = 0;
-                if ($('#IncludeElectricityValueInVAT').prop('checked') == true) {
-                    ElectricityValueWithTaxes = (ElectricityValue * taxPercentage);
-        }
-        var GasValue = parseFloat($('#GasValue').inputmask('unmaskedvalue') > 0 ? $('#GasValue').inputmask('unmaskedvalue') : 0);
-        var GasValueWithTaxes = 0;
-                if ($('#IncludeGasValueInVAT').prop('checked') == true) {
-                    GasValueWithTaxes = (GasValue * taxPercentage);
-        }
-        var ServicesValue = parseFloat($('#ServicesValue').inputmask('unmaskedvalue') > 0 ? $('#ServicesValue').inputmask('unmaskedvalue') : 0);
-        var ServicesValueWithTaxes = 0;
-                if ($('#IncludeServicesValueInVAT').prop('checked') == true) {
-                    ServicesValueWithTaxes = (ServicesValue * taxPercentage);
-        }
-        var CommissionValue = parseFloat($('#CommissionValue').inputmask('unmaskedvalue') > 0 ? $('#CommissionValue').inputmask('unmaskedvalue') : 0);
-        var CommissionValueWithTaxes = 0;
-                if ($('#IncludeCommissionValueInVAT').prop('checked') == true) {
-                    CommissionValueWithTaxes = (CommissionValue * taxPercentage);
-        }
-        var InsuranceValue = parseFloat($('#InsuranceValue').inputmask('unmaskedvalue') > 0 ? $('#InsuranceValue').inputmask('unmaskedvalue') : 0);
-        var InsuranceValueWithTaxes = 0;
-                if ($('#IncludeInsuranceValueInVAT').prop('checked') == true) {
-                    InsuranceValueWithTaxes = (InsuranceValue * taxPercentage);
-                }
-                var GasValue = parseFloat($('#GasValue').inputmask('unmaskedvalue') > 0 ? $('#GasValue').inputmask('unmaskedvalue') : 0);
-                var ServicesValue = parseFloat($('#ServicesValue').inputmask('unmaskedvalue') > 0 ? $('#ServicesValue').inputmask('unmaskedvalue') : 0);
-                var CommissionValue = parseFloat($('#CommissionValue').inputmask('unmaskedvalue') > 0 ? $('#CommissionValue').inputmask('unmaskedvalue') : 0);
-                var InsuranceValue = parseFloat($('#InsuranceValue').inputmask('unmaskedvalue') > 0 ? $('#InsuranceValue').inputmask('unmaskedvalue') : 0);
+        // خُد نسبة الضريبة ككسر (مثلاً 0.15)
+        var pct = getTaxPct();
+        if (isNaN(pct) || pct < 0) pct = 0;
 
-        var NetTotal = RentValue + WaterValue + ElectricityValue + GasValue + ServicesValue + CommissionValue + InsuranceValue;
-        var VATValue = RentValueWithTaxes + ElectricityValueWithTaxes + WaterValueWithTaxes + GasValueWithTaxes + ServicesValueWithTaxes
-            + CommissionValueWithTaxes + InsuranceValueWithTaxes;
-                var TotalAfterTaxes = NetTotal + VATValue;
-
-                $('#NetTotal').val(NetTotal);
-                $('#VATPercentage').val(taxPercentage);
-                $('#VATValue').val(VATValue);
-                $('#TotalAfterTaxes').val(TotalAfterTaxes);
-                CalculateBatches();
+        // Helpers
+        var num = function (sel) {
+            var $el = $(sel);
+            var v = ($el.inputmask ? $el.inputmask('unmaskedvalue') : $el.val());
+            if (typeof asNumber === 'function') {
+                return asNumber(v);
             }
+            v = parseFloat(v);
+            return isNaN(v) ? 0 : v;
+        };
+        var round2 = function (n) { return Math.round((n || 0) * 100) / 100; };
+
+        // قيم البنود
+        var RentValue = num('#RentValue');
+        var WaterValue = num('#WaterValue');
+        var ElectricityValue = num('#ElectricityValue');
+        var GasValue = num('#GasValue');
+        var ServicesValue = num('#ServicesValue');
+        var CommissionValue = num('#CommissionValue');
+        var InsuranceValue = num('#InsuranceValue');
+
+        // هل شامل ضريبة؟
+        var incRent = $('#IncludeRentValueInVAT').prop('checked');
+        var incWater = $('#IncludeWaterValueInVAT').prop('checked');
+        var incElectricity = $('#IncludeElectricityValueInVAT').prop('checked');
+        var incGas = $('#IncludeGasValueInVAT').prop('checked');
+        var incServices = $('#IncludeServicesValueInVAT').prop('checked');
+        var incCommission = $('#IncludeCommissionValueInVAT').prop('checked');
+        var incInsurance = $('#IncludeInsuranceValueInVAT').prop('checked');
+
+        // ضرائب البنود
+        var RentValueWithTaxes = incRent ? RentValue * pct : 0;
+        var WaterValueWithTaxes = incWater ? WaterValue * pct : 0;
+        var ElectricityValueWithTaxes = incElectricity ? ElectricityValue * pct : 0;
+        var GasValueWithTaxes = incGas ? GasValue * pct : 0;
+        var ServicesValueWithTaxes = incServices ? ServicesValue * pct : 0;
+        var CommissionValueWithTaxes = incCommission ? CommissionValue * pct : 0;
+        var InsuranceValueWithTaxes = incInsurance ? InsuranceValue * pct : 0;
+
+        // المجاميع
+        var NetTotal = RentValue + WaterValue + ElectricityValue + GasValue + ServicesValue + CommissionValue + InsuranceValue;
+        var VATValue = RentValueWithTaxes + WaterValueWithTaxes + ElectricityValueWithTaxes + GasValueWithTaxes + ServicesValueWithTaxes + CommissionValueWithTaxes + InsuranceValueWithTaxes;
+        var TotalAfterTaxes = NetTotal + VATValue;
+
+        // إخراج القيم
+        $('#NetTotal').val(round2(NetTotal));
+        $('#VATPercentage').val(pct);                // نحافظ على التزامن (0.15 وليس 15)
+        $('#VATValue').val(round2(VATValue));
+        $('#TotalAfterTaxes').val(round2(TotalAfterTaxes));
+
+        // حساب الدُفعات
+        CalculateBatches();
+    }
+
     function convertToJavaScriptDate(value) {
                 if (value === null)
                     return null;
@@ -1528,16 +1551,36 @@ var lastdate;
 
 
     function CalculateBatches() {
-        $('#PropertyContractBatches').empty();
-        var NumberOfBatches = $('#NumberOfBatches').val() * 1;
-        var RentValue = $('#RentValue').inputmask('unmaskedvalue') * 1;
-        var WaterValue = $('#WaterValue').inputmask('unmaskedvalue') * 1;
-        var ElectricityValue = $('#ElectricityValue').inputmask('unmaskedvalue') * 1;
-        var CommissionValue = $('#CommissionValue').inputmask('unmaskedvalue') * 1;
-        var GasValue = $('#GasValue').inputmask('unmaskedvalue') * 1;
-        var ServicesValue = $('#ServicesValue').inputmask('unmaskedvalue') * 1;
-        var InsuranceValue = $('#InsuranceValue').inputmask('unmaskedvalue') * 1;
+        var pct = getTaxPct();
+        if (isNaN(pct) || pct < 0) pct = 0;
 
+        $('#PropertyContractBatches').empty();
+
+        // Helpers
+        var num = function (sel) {
+            var $el = $(sel);
+            var v = ($el.inputmask ? $el.inputmask('unmaskedvalue') : $el.val());
+            if (typeof asNumber === 'function') return asNumber(v);
+            v = parseFloat(v);
+            return isNaN(v) ? 0 : v;
+        };
+        var round2 = function (n) { n = parseFloat(n); return isFinite(n) ? Math.round(n * 100) / 100 : 0; };
+        var fix2 = function (n) { return round2(n).toFixed(2); };
+
+        // عدد الدُفعات
+        var NumberOfBatches = parseInt($('#NumberOfBatches').val(), 10);
+        if (!isFinite(NumberOfBatches) || NumberOfBatches <= 0) return;
+
+        // القيم الإجمالية
+        var RentValue = num('#RentValue');
+        var WaterValue = num('#WaterValue');
+        var ElectricityValue = num('#ElectricityValue');
+        var CommissionValue = num('#CommissionValue');
+        var GasValue = num('#GasValue');
+        var ServicesValue = num('#ServicesValue');
+        var InsuranceValue = num('#InsuranceValue');
+
+        // خيارات شمول الضريبة
         var IncludeRentValueInVAT = $('#IncludeRentValueInVAT').prop('checked');
         var IncludeWaterValueInVAT = $('#IncludeWaterValueInVAT').prop('checked');
         var IncludeElectricityValueInVAT = $('#IncludeElectricityValueInVAT').prop('checked');
@@ -1546,140 +1589,129 @@ var lastdate;
         var IncludeInsuranceValueInVAT = $('#IncludeInsuranceValueInVAT').prop('checked');
         var IncludeCommissionValueInVAT = $('#IncludeCommissionValueInVAT').prop('checked');
 
-        var BatchRentValue = parseFloat(RentValue / NumberOfBatches).toFixed(2);
-        var BatchRentValueTaxes = 0;
-        if (IncludeRentValueInVAT == true) {
-            BatchRentValueTaxes = parseFloat(BatchRentValue * taxPercentage).toFixed(2);
-        }
-        var BatchWaterValue = parseFloat(WaterValue / NumberOfBatches).toFixed(2);
+        // القيم لكل دفعة (تقسيم متساوي مبدئيًا)
+        var BatchRentValue = round2(RentValue / NumberOfBatches);
+        var BatchWaterValue = round2(WaterValue / NumberOfBatches);
+        var BatchElectricityValue = round2(ElectricityValue / NumberOfBatches);
+        var BatchGasValue = round2(GasValue / NumberOfBatches);
+        var BatchServicesValue = round2(ServicesValue / NumberOfBatches);
+        var BatchCommissionValue = round2(CommissionValue / NumberOfBatches);
+        var BatchInsuranceValue = round2(InsuranceValue / NumberOfBatches);
 
-        var BatchWaterValueTaxes = 0;
-        if (IncludeWaterValueInVAT == true) {
-            BatchWaterValueTaxes = parseFloat(BatchWaterValue * taxPercentage).toFixed(2);
-        }
-        var BatchElectricityValue = parseFloat(ElectricityValue / NumberOfBatches).toFixed(2);
-        var BatchElectricityValueTaxes = 0;
-        if (IncludeElectricityValueInVAT == true) {
-            BatchElectricityValueTaxes = parseFloat(BatchElectricityValue * taxPercentage).toFixed(2);
-        }
-        var BatchGasValue = parseFloat(GasValue / NumberOfBatches).toFixed(2);
-        var BatchGasValueTaxes = 0;
-        if (IncludeGasValueInVAT == true) {
-            BatchGasValueTaxes = parseFloat(BatchGasValue * taxPercentage).toFixed(2);
-        }
-        var BatchServicesValue = parseFloat(ServicesValue / NumberOfBatches).toFixed(2);
-        var BatchServicesValueTaxes = 0;
-        if (IncludeServicesValueInVAT == true) {
-            BatchServicesValueTaxes = parseFloat(BatchServicesValue * taxPercentage).toFixed(2);
-        }
-        var BatchInsuranceValue = parseFloat(InsuranceValue / NumberOfBatches).toFixed(2);
-        var BatchInsuranceValueTaxes = 0;
-        if (IncludeInsuranceValueInVAT == true) {
-            BatchInsuranceValueTaxes = parseFloat(BatchInsuranceValue * taxPercentage).toFixed(2);
-        }
-        var BatchCommissionValue = parseFloat(CommissionValue / NumberOfBatches).toFixed(2);
-        var BatchCommissionValueTaxes = 0;
-        if (IncludeCommissionValueInVAT == true) {
-            BatchCommissionValueTaxes = parseFloat(BatchCommissionValue * taxPercentage).toFixed(2);
-        }
-        var BatchTotal = parseFloat(BatchRentValue) + parseFloat(BatchRentValueTaxes)
-            + parseFloat(BatchWaterValue) + parseFloat(BatchWaterValueTaxes)
-            + parseFloat(BatchElectricityValue) + parseFloat(BatchElectricityValueTaxes)
-            + parseFloat(BatchGasValue) + parseFloat(BatchGasValueTaxes)
-            + parseFloat(BatchServicesValue) + parseFloat(BatchServicesValueTaxes)
-            + parseFloat(BatchInsuranceValue) + parseFloat(BatchInsuranceValueTaxes)
-            + parseFloat(BatchCommissionValue) + parseFloat(BatchCommissionValueTaxes);
+        // الضرائب لكل دفعة (على حسب الشمول)
+        var BatchRentValueTaxes = IncludeRentValueInVAT ? round2(BatchRentValue * pct) : 0;
+        var BatchWaterValueTaxes = IncludeWaterValueInVAT ? round2(BatchWaterValue * pct) : 0;
+        var BatchElectricityValueTaxes = IncludeElectricityValueInVAT ? round2(BatchElectricityValue * pct) : 0;
+        var BatchGasValueTaxes = IncludeGasValueInVAT ? round2(BatchGasValue * pct) : 0;
+        var BatchServicesValueTaxes = IncludeServicesValueInVAT ? round2(BatchServicesValue * pct) : 0;
+        var BatchCommissionValueTaxes = IncludeCommissionValueInVAT ? round2(BatchCommissionValue * pct) : 0;
+        var BatchInsuranceValueTaxes = IncludeInsuranceValueInVAT ? round2(BatchInsuranceValue * pct) : 0;
+
+        // نبني الصفوف
         lastdate = null;
         for (var i = 0; i < NumberOfBatches; i++) {
-            BatchDate = SetBatchDate(i);
+            var BatchDate = SetBatchDate(i);
             var HijryBatchDate = new Intl.DateTimeFormat('ar-sa').format(new Date(BatchDate)).toString();
-            let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="' +
-                (1 + i) + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="' +
-                BatchDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label" > ' +
-                HijryBatchDate + '</label ></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' +
-                BatchRentValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchRentValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchWaterValue form-control tabledit-input form-control-sm" value = "' +
-                BatchWaterValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchWaterValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="' +
-                BatchElectricityValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchElectricityValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchGasValue form-control tabledit-input form-control-sm" value = "' +
-                BatchGasValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchGasValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchGasValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValue form-control tabledit-input form-control-sm" value="' +
-                BatchServicesValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchServicesValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchCommissionValue form-control tabledit-input form-control-sm" value = "' +
-                BatchCommissionValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchCommissionValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchInsuranceValue form-control tabledit-input form-control-sm" value = "' +
-                BatchInsuranceValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchInsuranceValueTaxes form-control tabledit-input form-control-sm" value="' +
-                BatchInsuranceValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="' +
-                BatchTotal + '" disabled readonly /></td><td><input type="checkbox" class="IsDelivered" disabled /> <input hidden type="checkbox" class="IsRegisteredAsDue" disabled /><input hidden type="checkbox" class="IsRegisteredAsRevenue" disabled /></td><td><input type="number" step="any" class="totalpaid form-control tabledit-input form-control-sm" value="0" readonly disabled /></td></tr> ';
+
+            // قيم مبدئية لكل صف
+            var r = BatchRentValue, rT = BatchRentValueTaxes;
+            var w = BatchWaterValue, wT = BatchWaterValueTaxes;
+            var e = BatchElectricityValue, eT = BatchElectricityValueTaxes;
+            var g = BatchGasValue, gT = BatchGasValueTaxes;
+            var s = BatchServicesValue, sT = BatchServicesValueTaxes;
+            var c = BatchCommissionValue, cT = BatchCommissionValueTaxes;
+            var ins = BatchInsuranceValue, insT = BatchInsuranceValueTaxes;
+
+            // في حالة اختيار عدم تقسيم بنود معينة: نحطها كلها في أول دفعة
+            if ($('#IsDivideWaterIntoBatches').prop('checked') !== true) {
+                if (i === 0) { w = round2(WaterValue); wT = IncludeWaterValueInVAT ? round2(WaterValue * pct) : 0; }
+                else { w = 0; wT = 0; }
+            }
+            if ($('#IsDivideElectricityIntoBatches').prop('checked') !== true) {
+                if (i === 0) { e = round2(ElectricityValue); eT = IncludeElectricityValueInVAT ? round2(ElectricityValue * pct) : 0; }
+                else { e = 0; eT = 0; }
+            }
+            if ($('#IsDivideGasIntoBatches').prop('checked') !== true) {
+                if (i === 0) { g = round2(GasValue); gT = IncludeGasValueInVAT ? round2(GasValue * pct) : 0; }
+                else { g = 0; gT = 0; }
+            }
+            // نفس النمط للخدمات/السعي/التأمين بناءً على Check واحد كما كان عندك
+            if ($('#IsDivideCommission').prop('checked') !== true) {
+                if (i === 0) {
+                    s = round2(ServicesValue);
+                    sT = IncludeServicesValueInVAT ? round2(ServicesValue * pct) : 0;
+                    c = round2(CommissionValue);
+                    cT = IncludeCommissionValueInVAT ? round2(CommissionValue * pct) : 0;
+                    ins = round2(InsuranceValue);
+                    insT = IncludeInsuranceValueInVAT ? round2(InsuranceValue * pct) : 0;
+                } else {
+                    s = sT = c = cT = ins = insT = 0;
+                }
+            }
+
+            var BatchTotal =
+                r + rT + w + wT + e + eT + g + gT + s + sT + c + cT + ins + insT;
+
+            var tr =
+                '<tr>'
+                + '<td class="tabledit-edit-mode"><input type="text" class="BatchNo form-control tabledit-input form-control-sm" value="' + (1 + i) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="' + BatchDate + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label">' + HijryBatchDate + '</label></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' + fix2(r) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(rT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="' + fix2(w) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(wT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="' + fix2(e) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(eT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchGasValue form-control tabledit-input form-control-sm" value="' + fix2(g) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchGasValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(gT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValue form-control tabledit-input form-control-sm" value="' + fix2(s) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(sT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="' + fix2(c) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(cT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchInsuranceValue form-control tabledit-input form-control-sm" value="' + fix2(ins) + '" disabled readonly /></td>'
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchInsuranceValueTaxes form-control tabledit-input form-control-sm" value="' + fix2(insT) + '" disabled readonly /></td>'
+
+                + '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="' + fix2(BatchTotal) + '" disabled readonly /></td>'
+                + '<td><input type="checkbox" class="IsDelivered" disabled /> <input hidden type="checkbox" class="IsRegisteredAsDue" disabled /><input hidden type="checkbox" class="IsRegisteredAsRevenue" disabled /></td>'
+                + '<td><input type="number" step="any" class="totalpaid form-control tabledit-input form-control-sm" value="0" readonly disabled /></td>'
+                + '</tr>';
+
             $('#PropertyContractBatches').append(tr);
-            if ($('#IsDivideWaterIntoBatches').prop('checked') != true) {
-                $('#PropertyContractBatches tr:first').find('.BatchWaterValue').val(parseFloat(WaterValue).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchWaterValue').val(0);
-                //**********************
-                let wtax = parseFloat(WaterValue * taxPercentage).toFixed(2);
-                $('#PropertyContractBatches tr:first').find('.BatchWaterValueTaxes').val(parseFloat(!IncludeWaterValueInVAT ? 0 :wtax).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchWaterValueTaxes').val(0);
-
-
-            }
-            if ($('#IsDivideElectricityIntoBatches').prop('checked') != true) {
-                $('#PropertyContractBatches tr:first').find('.BatchElectricityValue').val(parseFloat(ElectricityValue).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchElectricityValue').val(0);
-                //**********************
-                let etax = parseFloat(ElectricityValue * taxPercentage).toFixed(2);
-                $('#PropertyContractBatches tr:first').find('.BatchElectricityValueTaxes').val(parseFloat(!IncludeElectricityValueInVAT ? 0 :etax).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchElectricityValueTaxes').val(0);
-            }
-            if ($('#IsDivideGasIntoBatches').prop('checked') != true) {
-                $('#PropertyContractBatches tr:first').find('.BatchGasValue').val(parseFloat(GasValue).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchGasValue').val(0);
-                let gtax = parseFloat(GasValue * taxPercentage).toFixed(2);
-                $('#PropertyContractBatches tr:first').find('.BatchGasValueTaxes').val(parseFloat(!IncludeGasValueInVAT ? 0 :gtax).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchGasValueTaxes').val(0);
-            }
-
-            if ($('#IsDivideCommission').prop('checked') != true) {
-
-                $('#PropertyContractBatches tr:first').find('.BatchServicesValue').val(parseFloat(ServicesValue).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchServicesValue').val(0);
-                let stax = parseFloat(ServicesValue * taxPercentage).toFixed(2);
-                $('#PropertyContractBatches tr:first').find('.BatchServicesValueTaxes').val(parseFloat(!IncludeServicesValueInVAT ? 0:stax).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchServicesValueTaxes').val(0);
-
-                $('#PropertyContractBatches tr:first').find('.BatchCommissionValue').val(parseFloat(CommissionValue).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchCommissionValue').val(0);
-                let ctax = parseFloat(CommissionValue * taxPercentage).toFixed(2);
-                $('#PropertyContractBatches tr:first').find('.BatchCommissionValueTaxes').val(parseFloat(!IncludeInsuranceValueInVAT ? 0 :ctax).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchCommissionValueTaxes').val(0);
-
-
-                $('#PropertyContractBatches tr:first').find('.BatchInsuranceValue').val(parseFloat(InsuranceValue).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchInsuranceValue').val(0);
-
-                let itax = parseFloat(CommissionValue * taxPercentage).toFixed(2);
-                $('#PropertyContractBatches tr:first').find('.BatchInsuranceValueTaxes').val(parseFloat(!IncludeCommissionValueInVAT ? 0 :itax).toFixed(2));
-                $('#PropertyContractBatches tr').not(':first').find('.BatchInsuranceValueTaxes').val(0);
-            }
-            $('.BatchTotal').each(function () {
-                var Totals = parseFloat($(this).closest('tr').find('.BatchRentValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchRentValueTaxes').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchWaterValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchWaterValueTaxes').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchElectricityValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchElectricityValueTaxes').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchCommissionValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchCommissionValueTaxes').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchGasValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchGasValueTaxes').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchServicesValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchServicesValueTaxes').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchInsuranceValue').inputmask('unmaskedvalue'))
-                    + parseFloat($(this).closest('tr').find('.BatchInsuranceValueTaxes').inputmask('unmaskedvalue'));
-                $(this).val(Totals);
-            });
         }
+
+        // إعادة حساب الإجمالي لكل صف لضمان التزامن بعد أي تعديل تقسيم
+        function _asNumber(v) {
+            if (v && typeof v.inputmask === 'function') v = v.inputmask('unmaskedvalue');
+            v = parseFloat(String(v).replace(',', '.'));
+            return isFinite(v) ? v : 0;
+        }
+
+        $('.BatchTotal').each(function () {
+            const tr = $(this).closest('tr');
+            const v = cls => _asNumber(tr.find('.' + cls));
+
+            const Totals =
+                v('BatchRentValue') + v('BatchRentValueTaxes')
+                + v('BatchWaterValue') + v('BatchWaterValueTaxes')
+                + v('BatchElectricityValue') + v('BatchElectricityValueTaxes')
+                + v('BatchCommissionValue') + v('BatchCommissionValueTaxes')
+                + v('BatchGasValue') + v('BatchGasValueTaxes')
+                + v('BatchServicesValue') + v('BatchServicesValueTaxes')
+                + v('BatchInsuranceValue') + v('BatchInsuranceValueTaxes');
+
+            $(this).val(round2(Totals).toFixed(2));
+        });
     }
+
+
     function GetContractReps() {
         RepOptions = '';
         $('.repId').last().find('option').each(function () {
@@ -1718,8 +1750,48 @@ var lastdate;
             window.open("/Report/JournalEntryDetails/" + r);
         });
     }
-    function PrintInvoice(Id) {
-        alert("PrintSalesInvoice")
+
+function PrintInvoice(Id) {
+
+        // 1. نتأكد أن الدفعة لها رقم (تم حفظها)
+        if (Id > 0) {
+
+            // 2. نقوم باستدعاء الأكشن الذي أنشأناه أولاً
+            $.get('@Url.Action("CheckBatchHasDue", "PropertyContract")?id=' + Id)
+                .done(function (response) {
+
+                    // 3. إذا كان الرد (hasDue) صحيحاً
+                    if (response.hasDue == true) {
+
+                        // 4. افتح التقرير (الوضع الطبيعي)
+                        var url = '@Url.Action("PrintBatchInvoice", "Report")?id=' + Id;
+                        window.open(url, '_blank');
+                    }
+                    else {
+                        // 5. إذا كان الرد (hasDue) خاطئاً، أظهر الرسالة المطلوبة
+                        Swal.fire({
+                            title: 'لا يمكن الطباعة!',
+                            text: "لم يتم عمل استحقاق لهذه الدفعة بعد.",
+                            icon: 'error',
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok'
+                        });
+                    }
+                })
+                .fail(function() {
+                    // في حالة فشل الاتصال بالكنترولر
+                    Swal.fire('خطأ', 'حدث خطأ أثناء التحقق من الاستحقاق.', 'error');
+                });
+        }
+        else {
+            // (هذا الكود كما هو من قبل)
+            // في حالة الضغط على زر طباعة لدفعة لم تُحفظ بعد (Id = 0)
+            Swal.fire({
+                title: 'لا يمكن الطباعة',
+                text: "يجب حفظ العقد أولاً قبل طباعة الدفعة.",
+                icon: 'warning',
+                confirmButtonText: '@MyERP.Properties.Resources.Ok'
+            });
+        }
     }
 
 
@@ -2204,6 +2276,29 @@ var lastdate;
 
     //    $('#ContractStartDate').focus();
     //}
+    function asNumber(v) {
+        if (v && typeof v.inputmask === 'function') v = v.inputmask('unmaskedvalue');
+        v = parseFloat(String(v).replace(',', '.'));
+        return isFinite(v) ? v : 0;
+    }
+    function getTaxPct() {
+        // اقرأ من الحقل إن وُجد، وإلا ارجع آخر قيمة معروفة
+        var raw = $('#VATPercentage').val();
+        var v = asNumber(raw);                  // asNumber موجودة عندك
+        var normalized;
+
+        if (v > 0) {
+            normalized = (v > 1 ? v / 100 : v); // تقبل 15 أو 0.15
+        } else {
+            normalized = (typeof taxPercentage !== 'undefined' && taxPercentage > 0) ? taxPercentage : 0;
+        }
+
+        // لو الحقل فاضي أو كان صفر، عبّيه بالقيمة المستخدمة (علشان المرات الجاية ما يرجعش 0)
+        if (!raw || v === 0) {
+            $('#VATPercentage').val(normalized);
+        }
+        return normalized;
+    }
 
     function SetRenewalContractStartDate() {
         var endDateVal = $('#ContractEndDate').val();

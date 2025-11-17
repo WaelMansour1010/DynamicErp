@@ -1806,6 +1806,12 @@
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_User" />
         <EntityTypeShape EntityType="MyERPModel.PropertyContractMergedUnit" Width="1.5" PointX="11.254591745908648" PointY="9.4832540496640156" />
         <AssociationConnector Association="MyERPModel.FK_PropertyContractMergedUnit_PropertyContract" />
+        <EntityTypeShape EntityType="MyERPModel.vw_PropertyBatchDetailed" Width="1.5" PointX="7.0602517626528876" PointY="14.269643492190932" />
+        <EntityTypeShape EntityType="MyERPModel.vw_PropertyPaymentSummary" Width="1.5" PointX="5.7199644174985425" PointY="6.5916830928026151" />
+        <EntityTypeShape EntityType="MyERPModel.transactionsVatDetail" Width="1.5" PointX="2.288284902595116" PointY="12.423661044064751" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRenter_ChartOfAccount_AccountId" />
+        <AssociationConnector Association="MyERPModel.FK_JED_Vendor" />
+        <EntityTypeShape EntityType="MyERPModel.JED_AccountFixLog" Width="1.5" PointX="7.9425132497877415" PointY="7.6404447889143814" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
