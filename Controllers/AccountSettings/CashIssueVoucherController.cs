@@ -18,6 +18,7 @@ using MyERP.Models.MyModels;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using MyERP.Utils;
 
+
 namespace MyERP.Controllers.AccountSettings
 {
     public class CashIssueVoucherController : Controller
@@ -803,21 +804,148 @@ namespace MyERP.Controllers.AccountSettings
                     var IssueAnalysis = MyXML.GetXML(IssueAnalysisWithoutDetails);
                     //var IssueAnalysis = MyXML.GetXML(cashIssueVoucher.IssueAnalysis);
 
-                    db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount,
-                        cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date,
-                        cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false, 
-                        cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId, cashIssueVoucher.Notes,
-                        cashIssueVoucher.Image, cashIssueVoucher.CustomerId, cashIssueVoucher.VendorId, cashIssueVoucher.TechnicianId,
-                        cashIssueVoucher.EmployeeId, cashIssueVoucher.CurrencyEquivalent, cashIssueVoucher.DepartmentId,
-                        cashIssueVoucher.CashBoxId, cashIssueVoucher.ShareholderId, cashIssueVoucher.CostCenterId, 
-                        cashIssueVoucher.PosId, cashIssueVoucher.CashierUserId, cashIssueVoucher.ShiftId, 
-                        cashIssueVoucher.IsCollected, cashIssueVoucher.IsClosed, cashIssueVoucher.IsInvoiceSelected,
-                        PurchaseInvoiceActualPaymentsXml, cashIssueVoucher.BankAccountId, cashIssueVoucher.TransactionNo, 
-                        cashIssueVoucher.TransactionDate, cashIssueVoucher.ChartOfAccountId, cashIssueVoucher.CashIssuePaymentMethodId,
-                        cashIssueVoucher.FeesAmount, cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, 
-                        cashIssueVoucher.IsUpdateSynced, cashIssueVoucher.BorrowReceipt, BorrowRequestId, cashIssueVoucher.Month,
-                        cashIssueVoucher.Year, CashIssueVoucherEmployeePayrollIssue,null,cashIssueVoucher.DoctorId,
-                        cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId,cashIssueVoucher.PropertyId);
+                    // التحقق من XML وإصلاحه إذا كان فارغاً
+                    if (string.IsNullOrEmpty(PurchaseInvoiceActualPaymentsXml) || PurchaseInvoiceActualPaymentsXml.Trim() == "")
+                    {
+                        PurchaseInvoiceActualPaymentsXml = "<DocumentElement></DocumentElement>";
+                    }
+
+                    if (string.IsNullOrEmpty(CashIssueVoucherEmployeePayrollIssue) || CashIssueVoucherEmployeePayrollIssue.Trim() == "")
+                    {
+                        CashIssueVoucherEmployeePayrollIssue = "<DocumentElement></DocumentElement>";
+                    }
+
+                    if (string.IsNullOrEmpty(IssueAnalysis) || IssueAnalysis.Trim() == "")
+                    {
+                        IssueAnalysis = "<DocumentElement></DocumentElement>";
+                    }
+
+                    // التحقق من البيانات الأساسية
+                    if (cashIssueVoucher.DepartmentId == null || cashIssueVoucher.DepartmentId == 0)
+                    {
+                        ModelState.AddModelError("DepartmentId", "يجب اختيار القسم");
+                        throw new Exception("يجب اختيار القسم");
+                    }
+
+                    if (cashIssueVoucher.DepartmentId == null || cashIssueVoucher.DepartmentId == 0)
+                    {
+                        ModelState.AddModelError("DepartmentId", "يجب اختيار الفرع");
+                        throw new Exception("يجب اختيار الفرع");
+                    }
+
+                    if (cashIssueVoucher.MoneyAmount == null || cashIssueVoucher.MoneyAmount <= 0)
+                    {
+                        ModelState.AddModelError("MoneyAmount", "يجب إدخال المبلغ");
+                        throw new Exception("يجب إدخال المبلغ");
+                    }
+
+                    if (cashIssueVoucher.CurrencyId == null || cashIssueVoucher.CurrencyId == 0)
+                    {
+                   //     ModelState.AddModelError("CurrencyId", "يجب اختيار العملة");
+                 //       throw new Exception("يجب اختيار العملة");
+                    }
+
+                    // التحقق من طريقة الدفع والبيانات المرتبطة بها
+                    if (cashIssueVoucher.CashIssuePaymentMethodId == 1) // نقدي - يحتاج CashBoxId
+                    {
+                        if (cashIssueVoucher.CashBoxId == null || cashIssueVoucher.CashBoxId == 0)
+                        {
+                            ModelState.AddModelError("CashBoxId", "يجب اختيار الصندوق للدفع النقدي");
+                            throw new Exception("يجب اختيار الصندوق للدفع النقدي");
+                        }
+                    }
+                    else if (cashIssueVoucher.CashIssuePaymentMethodId == 2 || cashIssueVoucher.CashIssuePaymentMethodId == 3) // بنكي - يحتاج BankAccountId
+                    {
+                        if (cashIssueVoucher.BankAccountId == null || cashIssueVoucher.BankAccountId == 0)
+                        {
+                            ModelState.AddModelError("BankAccountId", "يجب اختيار الحساب البنكي للدفع البنكي");
+                            throw new Exception("يجب اختيار الحساب البنكي للدفع البنكي");
+                        }
+                    }
+
+                    try
+                    {
+                        db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount,
+                            cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date,
+                            cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false,
+                            cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
+                            cashIssueVoucher.Notes, cashIssueVoucher.Image, cashIssueVoucher.CustomerId,
+                            cashIssueVoucher.VendorId, cashIssueVoucher.TechnicianId, cashIssueVoucher.EmployeeId,
+                            cashIssueVoucher.CurrencyEquivalent, cashIssueVoucher.DepartmentId,
+                            cashIssueVoucher.CashBoxId, cashIssueVoucher.ShareholderId, cashIssueVoucher.CostCenterId,
+                            cashIssueVoucher.PosId, cashIssueVoucher.CashierUserId, cashIssueVoucher.ShiftId,
+                            cashIssueVoucher.IsCollected, cashIssueVoucher.IsClosed, cashIssueVoucher.IsInvoiceSelected,
+                            PurchaseInvoiceActualPaymentsXml, cashIssueVoucher.BankAccountId,
+                            cashIssueVoucher.TransactionNo, cashIssueVoucher.TransactionDate,
+                            cashIssueVoucher.ChartOfAccountId, cashIssueVoucher.CashIssuePaymentMethodId,
+                            cashIssueVoucher.FeesAmount, cashIssueVoucher.ValueAddedTaxesAmount,
+                            cashIssueVoucher.IsSynced, cashIssueVoucher.IsUpdateSynced, cashIssueVoucher.BorrowReceipt,
+                            BorrowRequestId, cashIssueVoucher.Month, cashIssueVoucher.Year,
+                            CashIssueVoucherEmployeePayrollIssue, null, cashIssueVoucher.DoctorId,
+                            cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId,
+                            cashIssueVoucher.PropertyId);
+
+                        id = (int)idResult.Value;
+                    }
+                    catch (SqlException sqlEx)
+                    {
+                        // خطأ في SQL Server
+                        var errorDetails = $"خطأ في قاعدة البيانات:\n";
+                        errorDetails += $"رسالة الخطأ: {sqlEx.Message}\n";
+                        errorDetails += $"رقم الخطأ: {sqlEx.Number}\n";
+                        errorDetails += $"السطر: {sqlEx.LineNumber}\n";
+
+                        if (sqlEx.InnerException != null)
+                        {
+                            errorDetails += $"\nتفاصيل إضافية: {sqlEx.InnerException.Message}";
+                        }
+
+                        // سجل الخطأ في الـ Log
+                        QueryHelper.AddLog(new MyLog
+                        {
+                            ArAction = "خطأ في الحفظ",
+                            EnAction = "Save Error",
+                            ControllerName = "CashIssueVoucher",
+                            UserName = User.Identity.Name,
+                            UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
+                            LogDate = DateTime.Now,
+                            RequestMethod = "POST",
+                            CodeOrDocNo = errorDetails
+                        });
+
+                        ModelState.AddModelError("", errorDetails);
+                        throw new Exception(errorDetails);
+                    }
+                    catch (Exception ex)
+                    {
+                        // أخطاء أخرى
+                        var errorMessage = $"حدث خطأ أثناء الحفظ:\n{ex.Message}";
+
+                        if (ex.InnerException != null)
+                        {
+                            errorMessage += $"\nتفاصيل: {ex.InnerException.Message}";
+                        }
+
+                        ModelState.AddModelError("", errorMessage);
+                        throw new Exception(errorMessage);
+                    }
+
+
+                    //db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount,
+                    //    cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date,
+                    //    cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false, 
+                    //    cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId, cashIssueVoucher.Notes,
+                    //    cashIssueVoucher.Image, cashIssueVoucher.CustomerId, cashIssueVoucher.VendorId, cashIssueVoucher.TechnicianId,
+                    //    cashIssueVoucher.EmployeeId, cashIssueVoucher.CurrencyEquivalent, cashIssueVoucher.DepartmentId,
+                    //    cashIssueVoucher.CashBoxId, cashIssueVoucher.ShareholderId, cashIssueVoucher.CostCenterId, 
+                    //    cashIssueVoucher.PosId, cashIssueVoucher.CashierUserId, cashIssueVoucher.ShiftId, 
+                    //    cashIssueVoucher.IsCollected, cashIssueVoucher.IsClosed, cashIssueVoucher.IsInvoiceSelected,
+                    //    PurchaseInvoiceActualPaymentsXml, cashIssueVoucher.BankAccountId, cashIssueVoucher.TransactionNo, 
+                    //    cashIssueVoucher.TransactionDate, cashIssueVoucher.ChartOfAccountId, cashIssueVoucher.CashIssuePaymentMethodId,
+                    //    cashIssueVoucher.FeesAmount, cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, 
+                    //    cashIssueVoucher.IsUpdateSynced, cashIssueVoucher.BorrowReceipt, BorrowRequestId, cashIssueVoucher.Month,
+                    //    cashIssueVoucher.Year, CashIssueVoucherEmployeePayrollIssue,null,cashIssueVoucher.DoctorId,
+                    //    cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId,cashIssueVoucher.PropertyId);
 
                     id = (int)idResult.Value;
                     //then loop for IssueAnalysis that has id =-1 
