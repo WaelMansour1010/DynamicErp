@@ -2,6 +2,7 @@
 using MyERP.Repository;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.Entity;
 using System.Data.Entity.Core.Objects;
@@ -9,6 +10,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace MyERP.Controllers.PropertyManagement
@@ -175,6 +177,13 @@ namespace MyERP.Controllers.PropertyManagement
                     RequestMethod = "Post",
                     SelectedItem = id,
                 });
+
+                // إرسال رسائل SMS للمستأجرين عند إنشاء دفعات جديدة
+                if (dueBatch.Id == 0)
+                {
+                    Task.Run(async () => await SendDueBatchSmsNotifications(id));
+                }
+
                 return Json(new { success = true });
             }
             var errors = ModelState
@@ -432,6 +441,88 @@ namespace MyERP.Controllers.PropertyManagement
             var Details = db.GetPropertyDueBatchDetails(FromDate, ToDate).ToList();
             return Json(Details, JsonRequestBehavior.AllowGet);
         }
+        /// <summary>
+        /// إرسال رسائل SMS للمستأجرين عند إنشاء دفعات مستحقة جديدة
+        /// </summary>
+        /// <param name="dueBatchId">معرف الدفعة المستحقة</param>
+        private async Task SendDueBatchSmsNotifications(int dueBatchId)
+        {
+            try
+            {
+                using (var dbContext = new MySoftERPEntity())
+                {
+                    // جلب تفاصيل الدفعات المستحقة مع بيانات المستأجرين
+                    var dueBatchDetails = dbContext.PropertyDueBatchDetails
+                        .Where(d => d.MainDocId == dueBatchId && d.IsDeleted == false)
+                        .Include(d => d.PropertyContractBatch)
+                        .Include(d => d.PropertyContract)
+                        .Include(d => d.PropertyContract.PropertyRenter)
+                        .ToList();
+
+                    // فحص الرصيد قبل الإرسال
+                    var creditsResult = await SmsService.CheckCredits();
+                    if (creditsResult.Success && creditsResult.IsLowBalance)
+                    {
+                        // إرسال تنبيه للمدير عند انخفاض الرصيد
+                        var adminPhone = ConfigurationManager.AppSettings["OursmsAdminPhone"];
+                        if (!string.IsNullOrEmpty(adminPhone))
+                        {
+                            await SmsService.SendLowBalanceAlert(adminPhone, creditsResult.Credits);
+                        }
+                    }
+
+                    foreach (var detail in dueBatchDetails)
+                    {
+                        if (detail.PropertyContract?.PropertyRenter != null)
+                        {
+                            var renter = detail.PropertyContract.PropertyRenter;
+                            var batch = detail.PropertyContractBatch;
+
+                            // الحصول على رقم الهاتف (نفضل Mobile على Phone)
+                            var phone = !string.IsNullOrEmpty(renter.Mobile) ? renter.Mobile : renter.Phone;
+
+                            if (!string.IsNullOrEmpty(phone) && batch != null)
+                            {
+                                var renterName = !string.IsNullOrEmpty(renter.ArName) ? renter.ArName : renter.EnName;
+                                var amount = batch.BatchTotal ?? 0;
+                                var dueDate = batch.BatchDate ?? DateTime.Now;
+
+                                // إنشاء الرسالة
+                                var message = SmsService.CreateDueBatchMessage(renterName, amount, dueDate);
+
+                                // إرسال الرسالة
+                                var result = await SmsService.SendSms(phone, message);
+
+                                // تسجيل نتيجة الإرسال
+                                System.Diagnostics.Debug.WriteLine($"SMS to {phone}: {(result.Success ? "Success" : "Failed")} - {result.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error sending SMS notifications: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// فحص رصيد الرسائل النصية (API للواجهة الأمامية)
+        /// </summary>
+        [HttpGet]
+        [SkipERPAuthorize]
+        public async Task<JsonResult> CheckSmsCredits()
+        {
+            var result = await SmsService.CheckCredits();
+            return Json(new
+            {
+                success = result.Success,
+                credits = result.Credits,
+                isLowBalance = result.IsLowBalance,
+                message = result.Message
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
