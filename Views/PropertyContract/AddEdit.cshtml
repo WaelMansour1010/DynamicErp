@@ -230,17 +230,7 @@
                                             <div class="form-group row">
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.PropertyUnitType </label>
                                                 <div class="col-sm-4">
-                                                    @{
-                                                        if ((Model?.Id ?? 0) > 0)
-                                                        {
-                                                            @Html.DropDownListFor(model => model.PropertyUnitTypeId, null, null, htmlAttributes: new { disabled = "disabled",@class = "form-control", required = "required" })
-                                                        }
-                                                        else
-                                                        {
-                                                            @Html.DropDownListFor(model => model.PropertyUnitTypeId, null, null, htmlAttributes: new {  @class = "form-control", required = "required" })
-
-                                                        }
-                                                    }
+                                                    @Html.DropDownListFor(model => model.PropertyUnitTypeId, null, null, htmlAttributes: new {@class = "form-control", required = "required" })
 
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
@@ -248,16 +238,7 @@
                                                 </div>
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.Unit</label>
                                                 <div class="col-sm-4">
-                                                    @{
-                                                        if ((Model?.Id ?? 0) > 0)
-                                                        {
-                                                            @Html.DropDownListFor(model => model.PropertyUnitId, null, null, htmlAttributes: new { disabled = "disabled", @class = "form-control", required = "required" })
-                                                        }
-                                                        else
-                                                        {
-                                                            @Html.DropDownListFor(model => model.PropertyUnitId, null, null, htmlAttributes: new {  @class = "form-control", required = "required" })
-                                                        }
-                                                    }
+                                                    @Html.DropDownListFor(model => model.PropertyUnitId, null, null, htmlAttributes: new {@class = "form-control", required = "required" })
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
@@ -1119,7 +1100,8 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
             $('#PropertyUnitId').select2()*@
             var code = $('#DocumentNumber').val();
             $('#DocumentNumbers').val(code.replaceAll("-", ""))
-            $("#DepartmentId").prop('disabled', true);
+            // تم إلغاء قفل الفرع للسماح بالتعديل بعد الحفظ
+            //$("#DepartmentId").prop('disabled', true);
             $("#VoucherDate").prop('disabled', true);
             if (IsPrevious_JE == 'True') {
                 $("#CreateJournalEntry").prop('disabled', true);
@@ -1139,6 +1121,9 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
             GetCurrentTaxPercentage();
             $('#PropertyId').trigger('change');
             $('#PropertyUnitTypeId').trigger('change');
+
+            // حفظ القيمة الأولية للوحدة لاستخدامها في التحذير
+            $('#PropertyUnitId').data('previous-value', $('#PropertyUnitId').val());
 
             ///
             $('.MergedUnitsDiv').hide();
@@ -1160,9 +1145,8 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
     });
     $('#DepartmentId').on('change', function () {
         GetCurrentTaxPercentage();
-        if (!$('#Id').val()) {
-            SetDocNum();
-        }
+        // تحديث السيريال عند تغيير الفرع سواء في الإضافة أو التعديل
+        SetDocNum();
     });
     $('#RentValue').on('change', function () {
                 CalculateTotalsContractItems();
@@ -1284,6 +1268,20 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
     });
     $('#PropertyUnitId').on('change', function () {
         let mval = $("#PropertyUnitId").val();
+
+        // تحذير المستخدم عند تغيير الوحدة في وضع التعديل
+        if ($('#Id').val() && $('#Id').val() > 0) {
+            var currentUnitText = $("#PropertyUnitId option:selected").text();
+            if (!confirm('تنبيه: عند تغيير الوحدة سيتم إرجاع الوحدة القديمة إلى "متاحة" وتحديث الوحدة الجديدة "' + currentUnitText + '" إلى "مشغولة". هل تريد المتابعة؟')) {
+                // إذا اختار المستخدم "إلغاء"، نعيد القيمة للوحدة القديمة
+                $(this).val($(this).data('previous-value')).trigger('change.select2');
+                return false;
+            }
+        }
+
+        // حفظ القيمة الحالية للرجوع إليها إذا لزم الأمر
+        $(this).data('previous-value', mval);
+
         // Filter UnitOptions for PropertyContractMergedUnit
         var mergedUnitOptions = $($.parseHTML(UnitOptions)).filter(function () {
             return $(this).val() !== mval;
