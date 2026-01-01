@@ -460,14 +460,14 @@ namespace MyERP.Controllers.PropertyManagement
                         .ToList();
 
                     // فحص الرصيد قبل الإرسال
-                    var creditsResult = await SmsService.CheckCredits();
+                    var creditsResult = await OurSmsService.CheckCredits();
                     if (creditsResult.Success && creditsResult.IsLowBalance)
                     {
                         // إرسال تنبيه للمدير عند انخفاض الرصيد
                         var adminPhone = ConfigurationManager.AppSettings["OursmsAdminPhone"];
                         if (!string.IsNullOrEmpty(adminPhone))
                         {
-                            await SmsService.SendLowBalanceAlert(adminPhone, creditsResult.Credits);
+                            await OurSmsService.SendLowBalanceAlert(adminPhone, creditsResult.Credits);
                         }
                     }
 
@@ -488,10 +488,10 @@ namespace MyERP.Controllers.PropertyManagement
                                 var dueDate = batch.BatchDate ?? DateTime.Now;
 
                                 // إنشاء الرسالة
-                                var message = SmsService.CreateDueBatchMessage(renterName, amount, dueDate);
+                                var message = OurSmsService.CreateDueBatchMessage(renterName, amount, dueDate);
 
                                 // إرسال الرسالة
-                                var result = await SmsService.SendSms(phone, message);
+                                var result = await OurSmsService.SendSms(phone, message);
 
                                 // تسجيل نتيجة الإرسال
                                 System.Diagnostics.Debug.WriteLine($"SMS to {phone}: {(result.Success ? "Success" : "Failed")} - {result.Message}");
@@ -513,7 +513,7 @@ namespace MyERP.Controllers.PropertyManagement
         [SkipERPAuthorize]
         public async Task<JsonResult> CheckSmsCredits()
         {
-            var result = await SmsService.CheckCredits();
+            var result = await OurSmsService.CheckCredits();
             return Json(new
             {
                 success = result.Success,

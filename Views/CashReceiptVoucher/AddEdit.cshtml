@@ -164,6 +164,15 @@
                                     <div class="RenterId col-sm-4">
                                         @Html.DropDownList("RenterId", null, htmlAttributes: new { @class = "RenterId form-control" })
                                     </div>
+
+                                    <!-- قسم اختيار التصفية -->
+                                    <label for="SettlementId" class="SettlementId control-label col-sm-2">التصفية</label>
+                                    <div class="SettlementId col-sm-4">
+                                        <select id="SettlementId" name="PropertyContractTerminationId" class="SettlementId form-control">
+                                            <option value="">-- اختر التصفية --</option>
+                                        </select>
+                                    </div>
+
                                 </div>
 
                                 <div class="form-group row" id="Month_Year" style="display:none;">
@@ -467,7 +476,7 @@
                                                                 <input type="number" step="any" class="TotalPaid form-control tabledit-input form-control-sm" value="@totalPaid" readonly disabled />
                                                             </td>
                                                             <td class="tabledit-edit-mode">
-                                                                <input type="number" step="any"  class="Paid form-control tabledit-input form-control-sm" value="@item.Paid" @Html.Raw(Model != null && item.IsDelivered == true ? "readonly disabled" : "") />
+                                                                <input type="number" step="any" class="Paid form-control tabledit-input form-control-sm" value="@item.Paid" @Html.Raw(Model != null && item.IsDelivered == true ? "readonly disabled" : "") />
                                                             </td>
                                                             <td class="tabledit-edit-mode">
                                                                 <input type="number" step="any" class="Remain form-control tabledit-input form-control-sm" value="@item.Remain" readonly disabled />
@@ -478,6 +487,150 @@
                                             </tbody>
 
                                         </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!--------------------------------  SettlementDetailsTable  --------------------------------------------->
+                        <div class="row" id="SettlementDetailsTable" style="display:none;">
+                            <div class="col-12">
+                                <div class="card-box">
+                                    <!-- معلومات التصفية الأساسية -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-12">
+                                            <h5 class="header-title">تفاصيل التصفية</h5>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">رقم التصفية:</label>
+                                            <p id="settlement-doc-number" class="text-primary"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">رقم العقد:</label>
+                                            <p id="settlement-contract-no"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">المستأجر:</label>
+                                            <p id="settlement-renter-name"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">العقار:</label>
+                                            <p id="settlement-property-name"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">المبلغ الإجمالي:</label>
+                                            <p id="settlement-total-amount" class="text-success font-weight-bold"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">رصيد المستأجر:</label>
+                                            <p id="settlement-renter-balance"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">التأمين:</label>
+                                            <p id="settlement-insurance"></p>
+                                        </div>
+                                    </div>
+
+                                    <!-- جدول الدفعات -->
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>الدفعة</th>
+                                                    <th>التاريخ</th>
+                                                    <th>الإيجار</th>
+                                                    <th>المياه</th>
+                                                    <th>الكهرباء</th>
+                                                    <th>الغاز</th>
+                                                    <th>الخدمات</th>
+                                                    <th>السعي/العمولة</th>
+                                                    <th>التأمين</th>
+                                                    <th>الإجمالي</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="SettlementDetailsBody">
+                                                <!-- سيتم ملؤها من JavaScript -->
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <th colspan="9" class="text-right">الإجمالي الكلي:</th>
+                                                    <th id="settlement-grand-total">0.00</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" id="PropertyContractTerminationIdHidden" value="@(Model != null ? Model.PropertyContractTerminationId : (int?)null)" />
+
+
+                        <!-- ✅ عرض معلومات إضافية عن التصفية -->
+                        <div id="SettlementSummaryInfo" style="display:none; margin-top: 20px;">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">"ملخص التصفية"</h5>
+
+                                    <div class="row">
+                                        <!-- أيام الزيادة -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.ExtraDays:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-extra-days" class="form-control-plaintext font-weight-bold text-success">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- قيمة أيام الزيادة -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.ExtraDaysValue:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-extra-days-value" class="form-control-plaintext font-weight-bold text-success">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <!-- إجمالي التلفيات -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.TotalDamages:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-total-damages" class="form-control-plaintext font-weight-bold text-danger">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- المبلغ النهائي -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.Amount:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-final-amount" class="form-control-plaintext font-weight-bold text-primary">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- شرح الحساب -->
+                                    <div class="alert alert-info">
+                                        <strong>@MyERP.Properties.Resources.Calculate:</strong><br>
+                                        <span>@MyERP.Properties.Resources.Remain</span>: <span id="calc-unpaid">0.00</span><br>
+                                        <span class="text-success">+ @MyERP.Properties.Resources.ExtraDaysValue</span>: <span id="calc-extra" class="text-success">0.00</span><br>
+                                        <span class="text-warning">+ @MyERP.Properties.Resources.TotalDamages</span>: <span id="calc-damages" class="text-warning">0.00</span><br>
+                                        <hr>
+                                        <span class="font-weight-bold">= @MyERP.Properties.Resources.Amount</span>: <span id="calc-total" class="font-weight-bold">0.00</span>
                                     </div>
                                 </div>
                             </div>
@@ -515,93 +668,93 @@
                                         </div>
                                     </div>
                                 </div>
-                                </div>
                             </div>
-                                <div class="row">
-                                    <div class="col-sm-offset-2">
-                                        @if (Model == null)
-                                        {
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-offset-2">
+                                @if (Model == null)
+                                {
 
-                                            <button type="submit" onclick="addEdit('report')" class="btn btn-success">
-                                                @MyERP.Properties.Resources.SaveAndPrint
-                                            </button>
-                                            <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
-                                                @MyERP.Properties.Resources.SaveAndNew
-                                            </button>
-                                            <button class="btn btn-success" id="save" onclick="addEdit()">
-                                                @MyERP.Properties.Resources.Save
-                                            </button>
-                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
-                                            <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
-                                        }
-                                        else if (Model.IsDeleted == false)
-                                        {
+                                    <button type="submit" onclick="addEdit('report')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndPrint
+                                    </button>
+                                    <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
+                                }
+                                else if (Model.IsDeleted == false)
+                                {
 
-                                            <button type="submit" id="SaveAndPrint" onclick="addEdit('report')" class="btn btn-success">
-                                                @MyERP.Properties.Resources.SaveAndPrint
-                                            </button>
-                                            <button class="btn btn-success" id="save" onclick="addEdit()">
-                                                @MyERP.Properties.Resources.Save
-                                            </button>
-                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
-                                            <button class="btn btn-danger" onclick="DeleteFunc(@Model.Id)">
-                                                @MyERP.Properties.Resources.Delete
-                                            </button>
-                                            <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
+                                    <button type="submit" id="SaveAndPrint" onclick="addEdit('report')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndPrint
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="DeleteFunc(@Model.Id)">
+                                        @MyERP.Properties.Resources.Delete
+                                    </button>
+                                    <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
 
-                                            if (Model.IsActive == false)
-                                            {
-                                                <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
-                                                    @MyERP.Properties.Resources.Approval
-                                                </button>
-                                            }
-                                            else
-                                            {
-                                                <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
-                                                    @MyERP.Properties.Resources.CancelApproval
-                                                </button>
-                                            }
-                                        }
-                                    </div>
-                                </div>
+                                    if (Model.IsActive == false)
+                                    {
+                                        <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
+                                            @MyERP.Properties.Resources.Approval
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
+                                            @MyERP.Properties.Resources.CancelApproval
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </div>
 
-                                @*<div style="float:left;">
-                <input id="new" name="newBtn" hidden />
-                @if (Model != null)
+                        @*<div style="float:left;">
+            <input id="new" name="newBtn" hidden />
+            @if (Model != null)
+            {
+                if (Model.IsDeleted == true)
                 {
-                    if (Model.IsDeleted == true)
-                    {
-                        <a class="btn btn-danger" href="@Url.Action("Index","DeletedTransaction", new { table= "CashReceiptVoucher" })" role="button">@MyERP.Properties.Resources.Back</a>
-                    }
-                    else if (Model.IsDeleted == false)
-                    {
-                        <button type="submit" id="Report" class="btn btn-success">
-                            @MyERP.Properties.Resources.SaveAndPrint
-                        </button>
-                        <button type="submit" class="btn btn-success" id="save">
-                            @MyERP.Properties.Resources.Save
-                        </button>
-                        <a class="btn btn-success" target="_blank" href="@Url.Action("CashReceiptVoucherDetails","Report",new { id=Model.Id})" role="button">@MyERP.Properties.Resources.Print</a>
-                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
-                        <a class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button" href="javascript:void(0);">@MyERP.Properties.Resources.Delete</a>
-                    }
+                    <a class="btn btn-danger" href="@Url.Action("Index","DeletedTransaction", new { table= "CashReceiptVoucher" })" role="button">@MyERP.Properties.Resources.Back</a>
                 }
-                else
+                else if (Model.IsDeleted == false)
                 {
                     <button type="submit" id="Report" class="btn btn-success">
                         @MyERP.Properties.Resources.SaveAndPrint
                     </button>
-                    <button type="submit" id="newbtn" class="btn btn-success">
-                        @MyERP.Properties.Resources.SaveAndNew
-                    </button>
                     <button type="submit" class="btn btn-success" id="save">
                         @MyERP.Properties.Resources.Save
                     </button>
+                    <a class="btn btn-success" target="_blank" href="@Url.Action("CashReceiptVoucherDetails","Report",new { id=Model.Id})" role="button">@MyERP.Properties.Resources.Print</a>
                     <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
-
+                    <a class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button" href="javascript:void(0);">@MyERP.Properties.Resources.Delete</a>
                 }
-            </div>*@
-                            </div>
+            }
+            else
+            {
+                <button type="submit" id="Report" class="btn btn-success">
+                    @MyERP.Properties.Resources.SaveAndPrint
+                </button>
+                <button type="submit" id="newbtn" class="btn btn-success">
+                    @MyERP.Properties.Resources.SaveAndNew
+                </button>
+                <button type="submit" class="btn btn-success" id="save">
+                    @MyERP.Properties.Resources.Save
+                </button>
+                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+
+            }
+        </div>*@
+                    </div>
                         </div>
                 @*</form>*@
             </div>
@@ -802,7 +955,7 @@
 <script>
     // --- Variable Declaration ---//
     var EditAmount = 0;
-
+    var savedPropertyContractTerminationId = @(Model?.PropertyContractTerminationId ?? 0);
     //---------- Ready Function --------------------//
     $(document).ready(function () {
 
@@ -1009,103 +1162,116 @@
             $('#DocumentNumber').val(r);
         });
     }
-    function sourceTypeChange() {
-        $('.AccountId').hide();
-        $('.VendorId').hide();
-        $('.CustomerId').hide();
 
-        $('.EmployeeId').hide();
-        $('.RenterId').hide();
-        $('.TechId').hide();
 
-        $('.DirectRevenueId').hide();
-        $('.ShareholderId').hide();
-        $('#balanceTable').hide();
-        $('#IsInvoiceSelected').prop('disabled', true);
-        $('#IsInvoiceSelected').prop('readonly', true);
-        $('#IsInvoiceSelected').prop("checked", false);
-        $('#SalesInvoiceActualPayment').hide();
-        $('#Month_Year').hide();
-        $('.ElderId').hide();
-        $('.ChildrenId').hide();
-        $('.PropertyContractId').hide();
-        $('#PropertyBillRegisteration').hide();
-        $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
-        if ($('#SourceTypeId').val() == 6) {
-            $('.AccountId').show();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 4) {
-            $('.DirectRevenueId').show();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 3) {
-            $('.EmployeeId').show();
-            $('.RenterId').show();
-            $('.RenterId').prop('disabled', false);
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 5) {
-            $('.TechId').show();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 2) {
-            $('.VendorId').show();
-            $('#balanceTable').show();
-            getVendorBalanceInEachDept();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.VendorBalance');
-        }
-        else if ($('#SourceTypeId').val() == 1) {
-            $('.CustomerId').show();
-            $('#balanceTable').show();
-            getCustomerBalanceInEachDept();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.CustomerBalance');
-            $('#IsInvoiceSelected').prop('disabled', false);
-            $('#IsInvoiceSelected').prop('readonly', false);
-            if ($('#IsInvoiceSelected').prop("checked") == true) {
-                $('#SalesInvoiceActualPayment').show();
-            }
-        }
-        else if ($('#SourceTypeId').val() == 8) {
-            $('.ShareholderId').show();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 9) {  //Elder
-            $('#Month_Year').show();
-            $('.ElderId').show();
-            GetMonthlySubscription();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance')
-        }
-        else if ( $('#SourceTypeId').val() == 10) { //child
-            $('#Month_Year').show();
-            $('.ChildrenId').show();
-            GetMonthlySubscription();
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 11) { //Property Contract
-            $('.PropertyContractId').show();
-            $('.PropertyContractId').prop('disabled', false);
-            $('.RenterId').show();
-            $('.RenterId').prop('disabled', false);
-            $('#CashReceiptVoucherPropertyContractBatchesTable').show();
-            if (!checkId()) {
-                $('#PropertyContractId').trigger('change');
-            }
+function sourceTypeChange() {
+    $('.AccountId').hide();
+    $('.VendorId').hide();
+    $('.CustomerId').hide();
+    $('.EmployeeId').hide();
+    $('.RenterId').hide();
+    $('.TechId').hide();
+    $('.DirectRevenueId').hide();
+    $('.ShareholderId').hide();
+    $('.ElderId').hide();
+    $('.ChildrenId').hide();
+    $('.PropertyContractId').hide();
+    $('.SettlementId').hide(); // ===== إضافة جديدة =====
 
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-        else if ($('#SourceTypeId').val() == 12) { //Property Bill registeration تسجيل مصاريف
-            
-            $('.PropertyContractId').show();
-            $('.PropertyContractId').prop('disabled', true);
-            $('.RenterId').show();
-            $('.RenterId').prop('disabled', true);
-            $('#PropertyBillRegisteration').show();
+    $('#balanceTable').hide();
+    $('#IsInvoiceSelected').prop('disabled', true);
+    $('#IsInvoiceSelected').prop('readonly', true);
+    $('#IsInvoiceSelected').prop("checked", false);
+    $('#SalesInvoiceActualPayment').hide();
+    $('#Month_Year').hide();
+    $('#PropertyBillRegisteration').hide();
+    $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+    $('#SettlementDetailsTable').hide(); // ===== إضافة جديدة =====
+    $('#SettlementSummaryInfo').hide(); // ✅ إخفاء ملخص التصفية عند تغيير نوع المصدر
 
-            $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
-        }
-
+    if ($('#SourceTypeId').val() == 6) {
+        $('.AccountId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
     }
+    else if ($('#SourceTypeId').val() == 4) {
+        $('.DirectRevenueId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 3) {
+        $('.EmployeeId').show();
+        $('.RenterId').show();
+        $('.RenterId').prop('disabled', false);
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 5) {
+        $('.TechId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 2) {
+        $('.VendorId').show();
+        $('#balanceTable').show();
+        getVendorBalanceInEachDept();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.VendorBalance');
+    }
+    else if ($('#SourceTypeId').val() == 1) {
+        $('.CustomerId').show();
+        $('#balanceTable').show();
+        getCustomerBalanceInEachDept();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.CustomerBalance');
+        $('#IsInvoiceSelected').prop('disabled', false);
+        $('#IsInvoiceSelected').prop('readonly', false);
+        if ($('#IsInvoiceSelected').prop("checked") == true) {
+            $('#SalesInvoiceActualPayment').show();
+        }
+    }
+    else if ($('#SourceTypeId').val() == 8) {
+        $('.ShareholderId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 9) {  //Elder
+        $('#Month_Year').show();
+        $('.ElderId').show();
+        GetMonthlySubscription();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance')
+    }
+    else if ($('#SourceTypeId').val() == 10) { //child
+        $('#Month_Year').show();
+        $('.ChildrenId').show();
+        GetMonthlySubscription();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 11) { //Property Contract
+        $('.PropertyContractId').show();
+        $('.PropertyContractId').prop('disabled', false);
+        $('.RenterId').show();
+        $('.RenterId').prop('disabled', false);
+        $('#CashReceiptVoucherPropertyContractBatchesTable').show();
+        if (!checkId()) {
+            $('#PropertyContractId').trigger('change');
+        }
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 12) { //Property Bill registeration تسجيل مصاريف
+        $('.PropertyContractId').show();
+        $('.PropertyContractId').prop('disabled', true);
+        $('.RenterId').show();
+        $('.RenterId').prop('disabled', true);
+        $('#PropertyBillRegisteration').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    // ===== إضافة كود التصفية =====
+    else if ($('#SourceTypeId').val() == 13) { // تصفية
+        $('.SettlementId').show();
+        $('#SettlementDetailsTable').hide(); // مخفي في البداية
+        // ✅ تحميل التصفيات مع تحديد المحفوظة إن وجدت
+       // var savedTerminationId = checkId() ? $('#PropertyContractTerminationIdHidden').val() : null;
+        //var savedTerminationId = checkId() ? @(Model?.PropertyContractTerminationId ?? 0) : null;
+        var savedTerminationId = checkId() ? savedPropertyContractTerminationId : null;
+        loadSettlements(savedTerminationId);
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+}
+
 
     $('#ElderId').on('change', function () {
         GetMonthlySubscription()
@@ -1617,6 +1783,7 @@
             GasBillValue: $('#GasBillValue').val(),
             ElectricityBillValue: $('#ElectricityBillValue').val(),
             ViolationBillValue: $('#ViolationBillValue').val(),
+            PropertyContractTerminationId: $('#SourceTypeId').val() == 13 ? $('#SettlementId').val() : null,
         }
 
         if (valid == true) {
@@ -1704,4 +1871,154 @@
         }
         return true;
     }
+
+
+
+    function loadSettlements(selectedId) {
+    $.ajax({
+        url: '@Url.Action("GetActiveSettlements", "CashReceiptVoucher")',
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            var settlementDropdown = $('#SettlementId');
+            settlementDropdown.empty();
+            settlementDropdown.append('<option value="">-- اختر التصفية --</option>');
+
+            $.each(data, function (index, item) {
+                settlementDropdown.append(
+                    $('<option></option>')
+                        .val(item.Id)
+                        .text(item.DocumentNumber + ' - ' + item.RenterName + ' (' + item.TotalAmount.toFixed(2) + ')')
+                );
+            });
+            // ✅ تحديد التصفية المحفوظة وتفعيل التغيير
+            if (selectedId && selectedId > 0) {
+                settlementDropdown.val(selectedId);
+                settlementDropdown.trigger('change');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('خطأ في تحميل التصفيات:', error);
+            Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء تحميل قائمة التصفيات',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    });
+    }
+
+
+
+
+$('#SettlementId').on('change', function () {
+    var settlementId = $(this).val();
+
+    if (!settlementId || settlementId == '' || settlementId == '0') {
+        $('#SettlementDetailsTable').hide();
+        $('#SettlementSummaryInfo').hide(); // ✅ إخفاء ملخص التصفية
+        $('#MoneyAmount').val('');
+        // ✅ مسح الحقول المخفية
+       // $('#PropertyContractTerminationId').val('');
+        return;
+    }
+
+    // جلب تفاصيل التصفية
+    $('#pleasewait').fadeIn();
+    $.ajax({
+        url: '@Url.Action("GetSettlementDetails", "CashReceiptVoucher")',
+        type: 'GET',
+        data: { id: settlementId },
+        dataType: 'json',
+        success: function (response) {
+            $('#pleasewait').fadeOut();
+
+            if (response.success) {
+                var settlement = response.data;
+
+                // ✅ حفظ رقم التصفية في Hidden Field
+              //  $('#PropertyContractTerminationId').val(settlement.Id);
+
+                // عرض المعلومات الأساسية
+                $('#settlement-doc-number').text(settlement.DocumentNumber);
+                $('#settlement-contract-no').text(settlement.ContractNumber);
+                $('#settlement-renter-name').text(settlement.RenterName);
+                $('#settlement-property-name').text(settlement.PropertyName);
+                $('#settlement-total-amount').text(settlement.TotalUnpaidAmount.toFixed(2));
+                $('#settlement-renter-balance').text(settlement.RenterBalance.toFixed(2));
+                $('#settlement-insurance').text(settlement.InsuranceAmount.toFixed(2));
+
+                // ✅ عرض أيام الزيادة وقيمتها
+                $('#settlement-extra-days').text(settlement.IncreaseDaysNo);
+                $('#settlement-extra-days-value').text(settlement.IncreaseDaysTotalValue.toFixed(2));
+
+                // ✅ عرض إجمالي التلفيات
+                $('#settlement-total-damages').text(settlement.TotalDamages.toFixed(2));
+
+                // ✅ حساب المبلغ الإجمالي (المبلغ غير المدفوع + أيام الزيادة + التلفيات)
+                // التلفيات تُضاف لأنها مستحقة على المستأجر لصالح الشركة
+                var finalAmount = 
+                                settlement.IncreaseDaysTotalValue +
+                                settlement.TotalDamages;
+
+                // ملء المبلغ تلقائياً
+                $('#MoneyAmount').val(finalAmount.toFixed(2));
+
+                // عرض الدفعات
+                var detailsHtml = '';
+                var grandTotal = 0;
+
+                $.each(settlement.Details, function (index, detail) {
+                    var batchDate = detail.BatchDate != null ? convertToJavaScriptDate(detail.BatchDate) : '';
+                    grandTotal += detail.Remain;
+
+                    detailsHtml += '<tr>' +
+                        '<td>' + detail.BatchNo + '</td>' +
+                        '<td>' + batchDate + '</td>' +
+                        '<td>' + detail.BatchRentValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchWaterValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchElectricityValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchGasValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchServicesValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchCommissionValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchInsuranceValue.toFixed(2) + '</td>' +
+                        '<td class="font-weight-bold">' + detail.Remain.toFixed(2) + '</td>' +
+                        '</tr>';
+                });
+
+                $('#SettlementDetailsBody').html(detailsHtml);
+                $('#settlement-grand-total').text(grandTotal.toFixed(2));
+
+                // إظهار الجدول
+                $('#SettlementDetailsTable').show();
+
+                // ✅ عرض قسم ملخص التصفية وتحديث الحسابات
+                $('#SettlementSummaryInfo').show();
+                $('#calc-unpaid').text(settlement.TotalUnpaidAmount.toFixed(2));
+                $('#calc-extra').text(settlement.IncreaseDaysTotalValue.toFixed(2));
+                $('#calc-damages').text(settlement.TotalDamages.toFixed(2));
+                $('#calc-total').text(finalAmount.toFixed(2));
+                $('#settlement-final-amount').text(finalAmount.toFixed(2));
+            } else {
+                Swal.fire({
+                    title: 'خطأ',
+                    text: response.message || 'خطأ في جلب بيانات التصفية',
+                    icon: 'error',
+                    confirmButtonText: 'حسناً'
+                });
+            }
+        },
+        error: function (xhr, status, error) {
+            $('#pleasewait').fadeOut();
+            console.error('خطأ في جلب تفاصيل التصفية:', error);
+            Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء جلب تفاصيل التصفية',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    });
+});
 </script>

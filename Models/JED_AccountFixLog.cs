@@ -14,15 +14,16 @@ namespace MyERP.Models
     
     public partial class JED_AccountFixLog
     {
+        public int Id { get; set; }
         public System.Guid FixBatchId { get; set; }
         public System.DateTime FixDateTime { get; set; }
         public string FixedBy { get; set; }
         public int JournalEntryId { get; set; }
-        public int DetailId { get; set; }
+        public Nullable<int> DetailId { get; set; }
         public Nullable<int> OldAccountId { get; set; }
         public int NewAccountId { get; set; }
-        public Nullable<decimal> Debit { get; set; }
-        public Nullable<decimal> Credit { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
         public string DocumentNumber { get; set; }
         public Nullable<System.DateTime> EntryDate { get; set; }
         public string Notes { get; set; }

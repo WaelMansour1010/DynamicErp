@@ -163,50 +163,78 @@ namespace MyERP.Controllers.HR
             return View(employeePayrollIssue);
         }
 
+        
         [HttpPost]
-        public async Task<JsonResult> AddEdit( EmployeePayrollIssue employeePayrollIssue)
+        public async Task<JsonResult> AddEdit(EmployeePayrollIssue employeePayrollIssue)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+            {
+                var errs = ModelState
+                    .Where(x => x.Value.Errors != null && x.Value.Errors.Count > 0)
+                    .Select(x => new {
+                        Key = x.Key,
+                        Errors = x.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                    }).ToList();
+
+                return Json(new { success = false, errors = errs });
+            }
+
+
+
+            try
             {
                 var id = employeePayrollIssue.Id;
-                int userId= int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
-                if (employeePayrollIssue.Id>0)
+                int userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+
+                if (employeePayrollIssue.Id > 0)
                 {
                     MyXML.xPathName = "Details";
-                    var EmployeePayrollIssueDetails = MyXML.GetXML(employeePayrollIssue.EmployeePayrollIssueDetails);
-                     db.EmployeePayrollIssue_Update(employeePayrollIssue.Id, employeePayrollIssue.Month, employeePayrollIssue.Year,employeePayrollIssue.DepartmentId, employeePayrollIssue.VoucherDate, userId, employeePayrollIssue.EmployeeId, employeePayrollIssue.HrDepartmentId, employeePayrollIssue.AdministrativeDepartmentId, EmployeePayrollIssueDetails);
-                    // db.Entry(employeePayrollIssue).State = EntityState.Modified;
+                    var detailsXml = MyXML.GetXML(employeePayrollIssue.EmployeePayrollIssueDetails);
+
+                    db.EmployeePayrollIssue_Update(employeePayrollIssue.Id,
+                        employeePayrollIssue.Month, employeePayrollIssue.Year, employeePayrollIssue.DepartmentId,
+                        employeePayrollIssue.VoucherDate, userId, employeePayrollIssue.EmployeeId,
+                        employeePayrollIssue.HrDepartmentId, employeePayrollIssue.AdministrativeDepartmentId,
+                        detailsXml);
                 }
                 else
                 {
                     var idResult = new ObjectParameter("Id", typeof(Int32));
                     MyXML.xPathName = "Details";
-                    var EmployeePayrollIssueDetails = MyXML.GetXML(employeePayrollIssue.EmployeePayrollIssueDetails);
-                     db.EmployeePayrollIssue_Insert(idResult, employeePayrollIssue.Month, employeePayrollIssue.Year, employeePayrollIssue.DepartmentId, employeePayrollIssue.VoucherDate, userId, employeePayrollIssue.EmployeeId, employeePayrollIssue.HrDepartmentId, employeePayrollIssue.AdministrativeDepartmentId, EmployeePayrollIssueDetails);
-                    //db.EmployeePayrollIssues.Add(employeePayrollIssue);
+                    var detailsXml = MyXML.GetXML(employeePayrollIssue.EmployeePayrollIssueDetails);
+
+                    db.EmployeePayrollIssue_Insert(idResult,
+                        employeePayrollIssue.Month, employeePayrollIssue.Year, employeePayrollIssue.DepartmentId,
+                        employeePayrollIssue.VoucherDate, userId, employeePayrollIssue.EmployeeId,
+                        employeePayrollIssue.HrDepartmentId, employeePayrollIssue.AdministrativeDepartmentId,
+                        detailsXml);
+
+                    // لو محتاج ترجع Id الجديد:
+                    // employeePayrollIssue.Id = (int)idResult.Value;
                 }
-                await db.SaveChangesAsync();
-                QueryHelper.AddLog(new MyLog()
-                {
-                    ArAction = id > 0 ? "تعديل اصدار الراتب" : "اضافة اصدار الراتب",
-                    EnAction = "AddEdit",
-                    ControllerName = "EmployeePayrollIssue",
-                    UserName = User.Identity.Name,
-                    UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
-                    LogDate = DateTime.Now,
-                    RequestMethod = "POST",
-                    SelectedItem = employeePayrollIssue.Id,
-                    CodeOrDocNo = employeePayrollIssue.DocumentNumber
-                });
-                Notification.GetNotification("EmployeePayrollIssue", id > 0 ? "Edit" : "Add", "AddEdit", employeePayrollIssue.Id, null, "اصدار الراتب");
+
+                await db.SaveChangesAsync(); // هنا غالبًا لو فيه FK/Null/Constraint هيقع
+
                 return Json(new { success = true });
             }
-            var errors = ModelState
-                   .Where(x => x.Value.Errors.Count > 0)
-                   .Select(x => new { x.Key, x.Value.Errors })
-                   .ToArray();
-            return Json(new { success = false, errors });
+            catch (System.Data.Entity.Validation.DbEntityValidationException ex)
+            {
+                var msgs = ex.EntityValidationErrors
+                    .SelectMany(e => e.ValidationErrors)
+                    .Select(v => $"{v.PropertyName}: {v.ErrorMessage}")
+                    .ToList();
+                return Json(new { success = false, error = "DbEntityValidationException", details = msgs });
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message;
+                if (ex.InnerException != null) msg += " | INNER: " + ex.InnerException.Message;
+                if (ex.InnerException?.InnerException != null) msg += " | INNER2: " + ex.InnerException.InnerException.Message;
+
+                return Json(new { success = false, error = msg });
+            }
         }
+
 
         // POST: EmployeePayrollIssue/Delete/5
         [HttpPost, ActionName("Delete")]

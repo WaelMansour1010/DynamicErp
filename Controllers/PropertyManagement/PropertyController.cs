@@ -279,6 +279,8 @@ namespace MyERP.Controllers.PropertyManagement
                     var existingDetails = db.PropertyDetails.Where(x => x.MainDocId == property.Id).ToList();
 
                     // Update existing records
+                    System.Diagnostics.Debug.WriteLine("=== PropertyDetails Count: " + property.PropertyDetails?.Count);
+
                     foreach (var propDetail in property.PropertyDetails)
                     {
                         var existingDetail = existingDetails.FirstOrDefault(x => x.Id == propDetail.Id);
@@ -289,11 +291,14 @@ namespace MyERP.Controllers.PropertyManagement
                             existingDetail.PropertyUnitNo = propDetail.PropertyUnitNo;
                             existingDetail.PropertyUnitTypeId = propDetail.PropertyUnitTypeId;
                             existingDetail.Floor = propDetail.Floor;
-                            existingDetail.RoomsNo = propDetail.RoomsNo;
+                          existingDetail.RoomsNo = propDetail.RoomsNo;
                             existingDetail.HallsNo = propDetail.HallsNo;
                             existingDetail.IsFurnishing = propDetail.IsFurnishing;
                             existingDetail.IsApplyTax = propDetail.IsApplyTax;
-                            existingDetail.StatusId = propDetail.StatusId;
+                            //    existingDetail.StatusId = propDetail.StatusId;
+                            existingDetail.KitchenCount= propDetail.KitchenCount;
+                            existingDetail.SplitACCount = propDetail.SplitACCount;
+                            existingDetail.WindowACCount= propDetail.WindowACCount;
                             existingDetail.TypeId = propDetail.TypeId;
                             existingDetail.RentMethod = propDetail.RentMethod;
                             existingDetail.Area = propDetail.Area;
@@ -304,6 +309,7 @@ namespace MyERP.Controllers.PropertyManagement
                             existingDetail.UserId = propDetail.UserId;
                             existingDetail.Notes = propDetail.Notes;
                             existingDetail.Image = propDetail.Image;
+                            db.Entry(existingDetail).State = EntityState.Modified;
                         }
                         else
                         {

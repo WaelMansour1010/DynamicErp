@@ -1069,7 +1069,8 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
             $("#BatchHeader").show();
         }
         $('.Gregorian').each(function () {
-            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+
+            var Hijry = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura').format(new Date($(this).val())).toString();
             $('#Hijry' + $(this).attr('id') + '').val(Hijry);
         });
 
@@ -1093,7 +1094,9 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
             $("input[name=IsAddedValue][value=" + $('#IsAddedValue').prop('checked') + "]").prop('checked', true);
             $("input[name=GovernmentalOrPrivateContract][value=" + $('#GovernmentalOrPrivateContract').val() + "]").prop('checked', true);
             $('.BatchDate').each(function () {
-                var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+                
+                var Hijry = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura').format(new Date($(this).val())).toString();
+
                 $(this).closest('tr').find('.HijryBatchDate').text(Hijry);
             });
             @*$('#PropertyUnitId').val('@Model.PropertyUnitId')
@@ -1133,7 +1136,8 @@ var IsPrevious_JE = '@ViewBag.IsPrevious_JE';
 
 //--------------- Event Functions -------------------//
     $('.Gregorian').on('change', function () {
-        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        
+        var Hijry = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura').format(new Date($(this).val())).toString();
         $('#Hijry' + $(this).attr('id') + '').val(Hijry);
     });
     $('#VoucherDate').on('change', function () {
@@ -1609,8 +1613,8 @@ var lastdate;
         lastdate = null;
         for (var i = 0; i < NumberOfBatches; i++) {
             var BatchDate = SetBatchDate(i);
-            var HijryBatchDate = new Intl.DateTimeFormat('ar-sa').format(new Date(BatchDate)).toString();
-
+            
+            var HijryBatchDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura').format(new Date(BatchDate)).toString();
             // قيم مبدئية لكل صف
             var r = BatchRentValue, rT = BatchRentValueTaxes;
             var w = BatchWaterValue, wT = BatchWaterValueTaxes;

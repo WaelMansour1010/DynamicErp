@@ -40,6 +40,9 @@ namespace MyERP.Models
         public Nullable<int> UserId { get; set; }
         public string Notes { get; set; }
         public string Image { get; set; }
+        public Nullable<int> SplitACCount { get; set; }
+        public Nullable<int> KitchenCount { get; set; }
+        public Nullable<int> WindowACCount { get; set; }
     
         public virtual ERPUser ERPUser { get; set; }
         public virtual PropertyUnitType PropertyUnitType { get; set; }

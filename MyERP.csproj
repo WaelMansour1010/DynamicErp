@@ -2263,6 +2263,9 @@
     <Compile Include="Models\PropertyContractBatch.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\PropertyContractFixLog.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\PropertyContractImage.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -3308,6 +3311,7 @@
     <Compile Include="Utils\ReportAuthorize.cs" />
     <Compile Include="Utils\SendNotifications.cs" />
     <Compile Include="Utils\Serializer.cs" />
+    <Compile Include="Utils\SmsService.cs" />
     <Compile Include="Utils\StockIssueAuthorize.cs" />
     <Compile Include="ViewModels\PropertyBillRegisterationViewModel.cs" />
   </ItemGroup>

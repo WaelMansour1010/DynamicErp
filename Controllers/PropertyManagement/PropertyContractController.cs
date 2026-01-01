@@ -654,6 +654,8 @@ namespace MyERP.Controllers.PropertyManagement
         }
 
         [HttpPost, ActionName("Delete")]
+
+        
         public ActionResult DeleteConfirmed(int id)
         {
             try
@@ -661,18 +663,40 @@ namespace MyERP.Controllers.PropertyManagement
                 PropertyContract contract = db.PropertyContracts.Find(id);
                 contract.IsDeleted = true;
                 contract.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
-                var systemPage = db.SystemPages.Where(a => a.IsActive == true && a.IsDeleted == false && a.TableName == "PropertyContract").FirstOrDefault();
+
+                // ✅ إضافة جديدة: إرجاع حالة الوحدة الأساسية إلى "متاح"
+                var unit = db.PropertyDetails.FirstOrDefault(t => t.Id == contract.PropertyUnitId);
+                if (unit != null)
+                {
+                    unit.StatusId = PropertyDetailsStatus.Available; // 2 = متاح
+                }
+
+                // ✅ إضافة جديدة: إرجاع حالة الوحدات المدمجة إلى "متاح"
+                if (contract.PropertyContractMergedUnit != null)
+                {
+                    foreach (var mergedUnit in contract.PropertyContractMergedUnit)
+                    {
+                        var mu = db.PropertyDetails.FirstOrDefault(t => t.Id == mergedUnit.PropertyUnitId);
+                        if (mu != null)
+                        {
+                            mu.StatusId = PropertyDetailsStatus.Available; // 2 = متاح
+                        }
+                    }
+                }
+
+                // حذف القيد اليومية المرتبط
+                var systemPage = db.SystemPages.FirstOrDefault(a => a.IsActive == true && a.IsDeleted == false && a.TableName == "PropertyContract");
                 if (systemPage != null)
                 {
                     var systemPageId = systemPage.Id;
-                    var journalEntry = db.JournalEntries.Where(a => a.SourcePageId == systemPageId && a.SourceId == id).FirstOrDefault();
+                    var journalEntry = db.JournalEntries.FirstOrDefault(a => a.SourcePageId == systemPageId && a.SourceId == id);
                     if (journalEntry != null)
                     {
                         journalEntry.IsDeleted = true;
                         db.Entry(journalEntry).State = EntityState.Modified;
                     }
-
                 }
+
                 foreach (var item in contract.PropertyContractBatches)
                 {
                     item.IsDeleted = true;
@@ -684,6 +708,7 @@ namespace MyERP.Controllers.PropertyManagement
 
                 db.Entry(contract).State = EntityState.Modified;
                 db.SaveChanges();
+
                 QueryHelper.AddLog(new MyLog()
                 {
                     ArAction = "حذف العقود",
@@ -694,8 +719,8 @@ namespace MyERP.Controllers.PropertyManagement
                     LogDate = DateTime.Now,
                     RequestMethod = "POST",
                     SelectedItem = id,
-
                 });
+
                 Notification.GetNotification("PropertyContract", "Delete", "Delete", id, null, "العقود");
                 return Content("true");
             }
@@ -703,8 +728,9 @@ namespace MyERP.Controllers.PropertyManagement
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-
         }
+
+
 
         [SkipERPAuthorize]
         //public JsonResult SetDocNum()

@@ -163,41 +163,95 @@ namespace MyERP.Controllers.PropertyManagement
                     int LastItemID = (lastPropertyRenterImage != null ? lastPropertyRenterImage.Id : 0) + 1;
                     List<PropertyRenterImage> imageList = db.PropertyRenterImages.Where(i => i.MainDocId == renter.Id).ToList();
 
-                    foreach (var img in renter.PropertyRenterImages)
+                    // ================= صور المستأجر =================
+                    // ================= صور المستأجر =================
+                    foreach (var img in renter.PropertyRenterImages ?? new List<PropertyRenterImage>())
                     {
+                        if (img == null || string.IsNullOrWhiteSpace(img.Image))
+                            continue;
 
-                        if (img != null && img.Image.Contains("base64"))
+                        var imageString = img.Image.Trim();
+
+                        // لو القيمة URL قديم مش data:image نخليها زي ما هي
+                        if (!imageString.StartsWith("data:image", StringComparison.OrdinalIgnoreCase))
                         {
-                            fileName = "/images/PropertyManagement/PropertyRenter/PropertyRenter" + LastItemID.ToString() + ".jpeg";
-                            if (img.Image.Contains("jpeg"))
+                            PropertyRenterimageList.Add(new PropertyRenterImage
                             {
-                                bytes = Convert.FromBase64String(img.Image.Replace("data:image/jpeg;base64,", ""));
-                            }
-                            else
-                            {
-                                bytes = Convert.FromBase64String(img.Image.Replace("data:image/png;base64,", ""));
-                            }
-                            using (var imageFile = new FileStream(Server.MapPath(fileName), FileMode.Create))
-                            {
-                                imageFile.Write(bytes, 0, bytes.Length);
-                                imageFile.Flush();
-                            }
-                            PropertyRenterimageList.Add(new PropertyRenterImage()
-                            {
-                                Image = domainName + fileName,
+                                Image = imageString,
                                 MainDocId = renter.Id
                             });
-                            LastItemID++;
+                            continue;
                         }
-                        else //previous images
+
+                        // ===== 1) تجهيز الفولدر ومسارات الحفظ =====
+                        string relativeFolder = "~/images/PropertyManagement/PropertyRenter/";
+                        string physicalFolder = Server.MapPath(relativeFolder);
+
+                        // لو الفولدر مش موجود نعمله
+                        if (!Directory.Exists(physicalFolder))
+                            Directory.CreateDirectory(physicalFolder);
+
+                        // تحديد الامتداد من الـ header
+                        string extension = ".jpeg";
+                        if (imageString.StartsWith("data:image/png", StringComparison.OrdinalIgnoreCase))
+                            extension = ".png";
+                        else if (imageString.StartsWith("data:image/jpg", StringComparison.OrdinalIgnoreCase) ||
+                                 imageString.StartsWith("data:image/jpeg", StringComparison.OrdinalIgnoreCase))
+                            extension = ".jpeg";
+
+                        // اسم الملف نفسه
+                        string fileNameOnly = "PropertyRenter" + LastItemID.ToString() + extension;
+
+                        // المسار النسبى اللى هيتخزن فى الداتابيز
+                         fileName = "/images/PropertyManagement/PropertyRenter/" + fileNameOnly;
+
+                        // المسار الفعلى على السيرفر
+                        string physicalPath = Path.Combine(physicalFolder, fileNameOnly);
+
+                        // ===== 2) استخراج الجزء الـ base64 الصافي =====
+                        var commaIndex = imageString.IndexOf(',');
+                        if (commaIndex < 0 || commaIndex == imageString.Length - 1)
+                            continue; // string مش سليمة
+
+                        var base64Part = imageString.Substring(commaIndex + 1);
+
+                        // تنظيف أى مسافات أو new lines
+                        base64Part = base64Part
+                            .Trim()
+                            .Replace(" ", "")
+                            .Replace("\r", "")
+                            .Replace("\n", "");
+
+                        // ===== 3) تحويل الـ base64 إلى bytes وحفظ الصورة =====
+                        byte[] imageBytes;
+                        try
                         {
-                            PropertyRenterimageList.Add(new PropertyRenterImage()
-                            {
-                                Image = img.Image,
-                                MainDocId = renter.Id
-                            });
+                            imageBytes = Convert.FromBase64String(base64Part);
                         }
+                        catch (FormatException)
+                        {
+                            // لو فى مشكلة فى الـ base64 نتجاهل الصورة دى
+                            continue;
+                        }
+
+                        using (var imageFile = new FileStream(physicalPath, FileMode.Create))
+                        {
+                            imageFile.Write(imageBytes, 0, imageBytes.Length);
+                            imageFile.Flush();
+                        }
+
+                        // إضافة السطر الجديد لقائمة الصور
+                        PropertyRenterimageList.Add(new PropertyRenterImage
+                        {
+                            Image = domainName + fileName,  // رابط الويب للصورة
+                            MainDocId = renter.Id
+                        });
+
+                        LastItemID++;
                     }
+
+
+
                     db.PropertyRenterImages.RemoveRange(db.PropertyRenterImages.Where(x => x.MainDocId == renter.Id));
                     var PropertyRenterImages = renter.PropertyRenterImages.ToList();
                     PropertyRenterImages.ForEach((x) => x.MainDocId = renter.Id);

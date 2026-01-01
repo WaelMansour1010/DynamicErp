@@ -19,6 +19,7 @@ namespace MyERP.Models
         {
             this.PropertyContractTerminationDamages = new HashSet<PropertyContractTerminationDamage>();
             this.PropertyContractTerminationDetails = new HashSet<PropertyContractTerminationDetail>();
+            this.CashReceiptVoucher = new HashSet<CashReceiptVoucher>();
         }
     
         public int Id { get; set; }
@@ -43,6 +44,10 @@ namespace MyERP.Models
         public Nullable<int> UserId { get; set; }
         public string Notes { get; set; }
         public string Image { get; set; }
+        public Nullable<decimal> TotalUnpaidAmount { get; set; }
+        public Nullable<decimal> InsuranceAmount { get; set; }
+        public Nullable<int> CalculationMethod { get; set; }
+        public Nullable<decimal> RenterBalance { get; set; }
     
         public virtual Department Department { get; set; }
         public virtual ERPUser ERPUser { get; set; }
@@ -54,5 +59,7 @@ namespace MyERP.Models
         public virtual ICollection<PropertyContractTerminationDamage> PropertyContractTerminationDamages { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<PropertyContractTerminationDetail> PropertyContractTerminationDetails { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<CashReceiptVoucher> CashReceiptVoucher { get; set; }
     }
 }

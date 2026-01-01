@@ -265,6 +265,19 @@
                                                     @Html.TextAreaFor(model => model.SiteDescription, new { @class = "form-control", rows = "5", cols = "5" })
                                                 </div>
                                             </div>
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label" for="IsTaxable">خاضع للضريبة</label>
+                                                <div class="col-sm-4">
+                                                    @if (Model != null)
+                                                    {
+                                                        <input type="checkbox" id="IsTaxable" @(Model.IsTaxable == true ? "checked" : "") />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="checkbox" id="IsTaxable" checked />
+                                                    }
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -669,7 +682,7 @@
                                             <div class="form-group row">
                                                 <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.RoomsNo</label>
                                                 <div class="col-sm-4">
-                                                    @Html.Editor("RoomsNo", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.RoomsNo, @type = "text" } })
+                                                    @Html.Editor("SRoomsNo", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.RoomsNo, @type = "number" } })
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
@@ -697,13 +710,13 @@
 
 
                                                     @*<script>
-            $(function () {
-                // لو مش متعيّنة، خلّيها 2 = متاح
-                var $s = $('#StatusId');
-                if (!$s.val()) { $s.val('2'); }
-                $s.trigger('change'); // لو Select2 مفعّل
-            });
-        </script>*@
+                    $(function () {
+                        // لو مش متعيّنة، خلّيها 2 = متاح
+                        var $s = $('#StatusId');
+                        if (!$s.val()) { $s.val('2'); }
+                        $s.trigger('change'); // لو Select2 مفعّل
+                    });
+                </script>*@
 
 
 
@@ -736,21 +749,30 @@
                                                 </div>
                                             </div>
                                             <div class="form-group row">
-                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.Furnishing</label>
-                                                <div class="col-sm-4">
+                                                <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.Furnishing</label>
+                                                <div class="col-sm-2">
                                                     <input type="checkbox" id="IsFurnishing" />
-                                                    <div class="invalid-feedback">
-                                                        @MyERP.Properties.Resources.Required
-                                                    </div>
                                                 </div>
-                                                <label class=" col-sm-2 control-label" for="EnName">  @MyERP.Properties.Resources.ApplyTax</label>
-                                                <div class="col-sm-4">
-                                                    <input type="checkbox" id="IsApplyTax" />
-                                                    <div class="invalid-feedback">
-                                                        @MyERP.Properties.Resources.Required
-                                                    </div>
+                                                <label class="col-sm-2 control-label" for="SplitACCount">مكيف سبليت</label>
+                                                <div class="col-sm-2">
+                                                    <input type="number" id="SplitACCount" class="form-control" value="0" min="0" />
+                                                </div>
+                                                <label class="col-sm-2 control-label" for="KitchenCount">مطبخ</label>
+                                                <div class="col-sm-2">
+                                                    <input type="number" id="KitchenCount" class="form-control" value="0" min="0" />
                                                 </div>
                                             </div>
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label" for="WindowACCount">مكيف شباك</label>
+                                                <div class="col-sm-2">
+                                                    <input type="number" id="WindowACCount" class="form-control" value="0" min="0" />
+                                                </div>
+                                                <label class="col-sm-2 control-label" for="IsApplyTax">@MyERP.Properties.Resources.ApplyTax</label>
+                                                <div class="col-sm-2">
+                                                    <input type="checkbox" id="IsApplyTax" />
+                                                </div>
+                                            </div>
+                                        </div>
                                             <div class="form-group row">
                                                 <button class="btn btn-success" onclick="AppendIntoPropertyDetails()"> @MyERP.Properties.Resources.Add </button>
                                             </div>
@@ -769,6 +791,9 @@
                                                             <td>@MyERP.Properties.Resources.RoomsNo</td>
                                                             <td>@MyERP.Properties.Resources.HallsNo</td>
                                                             <td>@MyERP.Properties.Resources.Furnishing</td>
+                                                            <td>مكيف سبليت</td>
+                                                            <td>مطبخ</td>
+                                                            <td>مكيف شباك</td>
                                                             <td>@MyERP.Properties.Resources.Type</td>
                                                             <td>@MyERP.Properties.Resources.Status</td>
                                                             <td>@MyERP.Properties.Resources.ApplyTax</td>
@@ -785,11 +810,11 @@
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="text" class="PropertyUnitTypeName form-control tabledit-input form-control-sm" value="@item.PropertyUnitType.ArName" disabled readonly />
-                                                                        <input type="text" hidden class="PropDetailId" value="@item.Id" disabled readonly />
-                                                                        <input type="text" hidden class="PropertyUnitTypeId form-control tabledit-input form-control-sm" value="@item.PropertyUnitTypeId" disabled readonly />
+                                                                        <input type="text" hidden class="PropDetailId" value="@item.Id" />
+                                                                        <input type="text" hidden class="PropertyUnitTypeId form-control tabledit-input form-control-sm" value="@item.PropertyUnitTypeId" />                                                                        
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="text" class="Floor form-control tabledit-input form-control-sm" value="@item.Floor" disabled readonly />
+                                                                        <input type="text" class="Floor form-control tabledit-input form-control-sm" value="@item.Floor" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="text" class="RentMethod form-control tabledit-input form-control-sm" value="@item.RentMethod" />
@@ -807,26 +832,46 @@
                                                                         <input type="number" step="any" class="LowestRentalValue form-control tabledit-input form-control-sm" value="@item.LowestRentalValue" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="text" class="RoomsNo form-control tabledit-input form-control-sm"
-                                                                               value="@(item.RoomsNo?.ToString() ?? "0")" disabled readonly />
+                                                                        <input type="number" class="RoomsNo form-control tabledit-input form-control-sm"                                                                               
+                                                                               value="@(item.RoomsNo?.ToString() ?? "0")" min="0" />
+                                                                    </td>
+
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" class="HallsNo form-control tabledit-input form-control-sm"                                                                        
+                                                                               
+                                                                               value="@(item.HallsNo?.ToString() ?? "0")" min="0" />
+
+                                                                    </td>
+
+                                                                    <td class="tabledit-edit-mode">
+                                                                        
+                                                                        <input type="checkbox" class="IsFurnishing tabledit-input form-control-sm" @Html.Raw(item.IsFurnishing == true ? "checked" : "") />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="text" class="HallsNo form-control tabledit-input form-control-sm"
-                                                                               value="@(item.HallsNo?.ToString() ?? "0")" disabled readonly />
+                                                                        <input type="number" class="SplitACCount form-control tabledit-input form-control-sm"
+                                                                               value="@(item.SplitACCount?.ToString() ?? "0")" min="0" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="checkbox" class="IsFurnishing form-control tabledit-input form-control-sm" @Html.Raw(item.IsFurnishing == true ? "checked" : "") disabled readonly />
+                                                                        <input type="number" class="KitchenCount form-control tabledit-input form-control-sm"
+                                                                               value="@(item.KitchenCount?.ToString() ?? "0")" min="0" />
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="number" class="WindowACCount form-control tabledit-input form-control-sm"
+                                                                               value="@(item.WindowACCount?.ToString() ?? "0")" min="0" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="text" class="TypeName form-control tabledit-input form-control-sm" value="@(item.TypeId == 1 ? "سكني" : "إدارى")" disabled readonly />
-                                                                        <input type="text" hidden class="TypeId form-control tabledit-input form-control-sm" value="@item.TypeId" disabled readonly />
+                                                                        <input type="text" hidden class="TypeId form-control tabledit-input form-control-sm" value="@item.TypeId" />
+                                                                        
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="text" class="StatusName form-control tabledit-input form-control-sm" value="@(item.StatusId == 1 ? "مؤجر" : "متاح")" disabled readonly />
-                                                                        <input type="text" hidden class="StatusId form-control tabledit-input form-control-sm" value="@item.StatusId" disabled readonly />
+                                                                         <input type="text" hidden class="StatusId form-control tabledit-input form-control-sm" value="@item.StatusId" />                                                                        
+                                                                        
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="checkbox" class="IsApplyTax form-control tabledit-input form-control-sm" @Html.Raw(item.IsApplyTax == true ? "checked" : "") disabled readonly />
+                                                                        <input type="checkbox" class="IsApplyTax tabledit-input form-control-sm" @Html.Raw(item.IsApplyTax == true ? "checked" : "") />
+                                                                        
                                                                     </td>
                                                                 </tr>
                                                             }
@@ -875,33 +920,80 @@
 var CitiesOptions = '';
 var taxPercentage = 0.15;
 //*********************************************************//
-//--------------- Ready Function -------------------//
+    //--------------- Ready Function -------------------//
+
+    function parseLocalDate(val) {
+        if (!val) return null;
+        val = ('' + val).trim();
+
+        // yyyy-MM-dd
+        var m1 = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (m1) return new Date(+m1[1], +m1[2] - 1, +m1[3]);
+
+        // yyyy-MM-ddTHH:mm (datetime-local)
+        var m2 = val.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+        if (m2) return new Date(+m2[1], +m2[2] - 1, +m2[3], +m2[4], +m2[5], 0);
+
+        // fallback
+        var d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    function toHijri(val) {
+        var d = parseLocalDate(val);
+        if (!d) return '';
+
+        try {
+            // أم القرى (السعودية)
+            return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(d);
+        } catch (e) {
+            return '';
+        }
+    }
+
+
 $(document).ready(function () {
+
     $('#ContractStartDate').val('@ViewBag.ContractStartDate');
     $('#ContractEndDate').val('@ViewBag.ContractEndDate');
     $('#ContractDate').val('@ViewBag.ContractDate');
     $('#FirstBatchDate').val('@ViewBag.FirstBatchDate');
 
     $('.Gregorian').each(function () {
-        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
-        $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        var Hijry = toHijri($(this).val());
+        $('#Hijry' + this.id).val(Hijry);
     });
 
-    if ($('#Id').val() > 0) {
+    $(document).on('change', '.Gregorian', function () {
+        var Hijry = toHijri($(this).val());
+        $('#Hijry' + this.id).val(Hijry);
+    });
 
-    }
-    else {
+    if ($('#Id').val() <= 0) {
         setCodeNum();
         $('#CountryId').trigger('change');
         GetCurrentTaxPercentage();
     }
 });
+
+
 //*********************************************************//
 //--------------- Event Functions -------------------//
-$('.Gregorian').on('change', function () {
-    var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
-    $('#Hijry' + $(this).attr('id') + '').val(Hijry);
-});
+//$('.Gregorian').on('change', function () {
+//    //var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+//    var Hijry = toHijri($(this).val());
+
+//    $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+    //});
+    $(document).on('change', '.Gregorian', function () {
+        var Hijry = toHijri($(this).val());
+        $('#Hijry' + $(this).attr('id')).val(Hijry);
+    });
+
 $('#CountryId').on('change', function () {
     getCities($(this).val()).then(function () {
         $("#CityId").empty().append(CitiesOptions);
@@ -1074,14 +1166,14 @@ $('#ContractValueWithoutTax').on('change', function () {
     //}
 
     function updateBatchValues(batchRecord) {
-        
+
         var BatchValueBeforeDiscountAddtionAndTax = parseFloat(batchRecord.find('.BatchValueBeforeDiscountAddtionAndTax').val()) || 0;
         var AddValue = parseFloat(batchRecord.find('.BatchAddedValue').val()) || 0;
         var Discount = parseFloat(batchRecord.find('.Discount').val()) || 0;
         var BatchTaxPercentage = parseFloat(batchRecord.find('.BatchTaxPercentage').val()) || 0;
-        
+
         //wanted to be calculated
-        
+
         var valueAfterDiscount = (BatchValueBeforeDiscountAddtionAndTax ?? 0) - (Discount ?? 0);
         var valueAfterDiscountAndAddvalue = valueAfterDiscount + (AddValue ?? 0);
 
@@ -1107,7 +1199,7 @@ $('#ContractValueWithoutTax').on('change', function () {
         else {
             batchRecord.find('.IsDelivered').prop('checked', false);
         }
-            
+
     }
     function UpdateContractValueWithoutTax(){
         var ContractValueWithoutTax = 0;
@@ -1117,7 +1209,7 @@ $('#ContractValueWithoutTax').on('change', function () {
             var AddValue = parseFloat(batchRecord.find('.BatchAddedValue').val()) || 0;
             var Discount = parseFloat(batchRecord.find('.Discount').val()) || 0;
             var BatchTaxPercentage = parseFloat(batchRecord.find('.BatchTaxPercentage').val()) || 0;
-            
+
             var valueAfterDiscountAndAddvalue = BatchValueBeforeDiscountAddtionAndTax - Discount + AddValue;
 
             ContractValueWithoutTax += parseFloat(valueAfterDiscountAndAddvalue);
@@ -1174,7 +1266,7 @@ function validatePayments() {
         var row = $(this);
         var batchNo = row.find('.BatchNo').val();
         //
-            
+
         //var BatchValueBeforeDiscountAddtionAndTax = batchRecord.find('.BatchValueBeforeDiscountAddtionAndTax').val();
         //var AddValue = batchRecord.find('.BatchAddedValue').val();
         //var Discount = batchRecord.find('.Discount').val();
@@ -1184,7 +1276,7 @@ function validatePayments() {
             //var valueAfterDiscountAndAddvalue = BatchValueBeforeDiscountAddtionAndTax - Discount + AddValue;
 
             //ContractValueWithoutTax += parseFloat(valueAfterDiscountAndAddvalue);
-        
+
         //
         //var batchValue = parseFloat(row.find('.BatchValueAfterDiscount').val() * 1) || 0;
         var taxValue = parseFloat(row.find('.BatchTaxValue').val() * 1) || 0;
@@ -1356,28 +1448,40 @@ function CalculateBatches() {
         var TaxValue = TaxPercentage * BatchValueBeforeDiscountAddtionAndTax;
         //initially AddValue and Discount are zeros
         var BatchValueAfterDiscountAddtionAndTax = BatchValueBeforeDiscountAddtionAndTax + TaxValue;
-           
+
         lastdate = null;
 
+        //for (var i = 0; i < NumberOfBatches; i++) {
+        //    BatchDate = SetBatchDate(i);
+
+        //    // حساب التاريخ الهجري بشكل صحيح
+        //    var HijryBatchDate = '';
+        //    try {
+        //        HijryBatchDate = new Intl.DateTimeFormat('ar-sa', {
+        //            calendar: 'islamic',
+        //            year: 'numeric',
+        //            month: '2-digit',
+        //            day: '2-digit'
+        //        }).format(new Date(BatchDate));
+        //    } catch (e) {
+        //        // في حالة فشل حساب التاريخ الهجري، استخدم طريقة بديلة
+        //        var batchDateObj = new Date(BatchDate);
+        //        HijryBatchDate = batchDateObj.getFullYear() + '/' +
+        //                        (batchDateObj.getMonth() + 1) + '/' +
+        //                        batchDateObj.getDate() + ' هـ';
+        //    }
         for (var i = 0; i < NumberOfBatches; i++) {
             BatchDate = SetBatchDate(i);
 
-            // حساب التاريخ الهجري بشكل صحيح
-            var HijryBatchDate = '';
-            try {
-                HijryBatchDate = new Intl.DateTimeFormat('ar-sa', {
-                    calendar: 'islamic',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                }).format(new Date(BatchDate));
-            } catch (e) {
-                // في حالة فشل حساب التاريخ الهجري، استخدم طريقة بديلة
-                var batchDateObj = new Date(BatchDate);
-                HijryBatchDate = batchDateObj.getFullYear() + '/' +
-                                (batchDateObj.getMonth() + 1) + '/' +
-                                batchDateObj.getDate() + ' هـ';
+            // التاريخ الهجري الصحيح (أم القرى)
+            var HijryBatchDate = toHijri(BatchDate);
+
+            // لو حابب تأمين إضافي
+            if (!HijryBatchDate) {
+                HijryBatchDate = '';
             }
+        }
+
 
             let tr = '<tr>' +
                 '<td class="tabledit-edit-mode">' +
@@ -1429,51 +1533,62 @@ function CalculateBatches() {
         //updateTotalPaidForAllRows();
     }
 }
-function AppendIntoPropertyDetails() {
-    var PropertyUnitTypeId = $('#PropertyUnitTypeId').val();
-    var PropertyUnitTypeName = $('#PropertyUnitTypeId option:selected').text();
-    var Floor = $('#Floor').val();
-    var RoomsNo = $('#RoomsNo').val() * 1;
-    var HallsNo = $('#HallsNo').val() * 1;
-    var StatusId = $('#StatusId').val();
-    var StatusName = $('#StatusId option:selected').text();
-    var TypeId = $('#TypeId').val();
-    var TypeName = $('#TypeId option:selected').text();
-    var IsFurnishing = $('#IsFurnishing').prop('checked') == true ? "checked" : "";
-    var IsApplyTax = $('#IsApplyTax').prop('checked') == true ? "checked" : "";
+    function AppendIntoPropertyDetails() {
+        var PropertyUnitNo = $('#PropertyUnitNo').val();
+        var PropertyUnitTypeId = $('#PropertyUnitTypeId').val();
+        var PropertyUnitTypeName = $('#PropertyUnitTypeId option:selected').text();
+        var Floor = $('#Floor').val();
+        var RoomsNo = $('#SRoomsNo').val() || 0;
+        var HallsNo = $('#HallsNo').val() || 0;
 
-    let alphabeticPart = (($('#PropertyUnitNo').val()).match(/^[a-zA-Z]+/) ?? [''])[0];
+        var IsFurnishing = $('#IsFurnishing').is(":checked") ? "checked" : "";
+        var SplitACCount = $('#SplitACCount').val() || 0;
+        var KitchenCount = $('#KitchenCount').val() || 0;
+        var WindowACCount = $('#WindowACCount').val() || 0;
+        var StatusName = $('#StatusId option:selected').text();
+        var StatusId = $('#StatusId').val();
+        var TypeName = $('#TypeId option:selected').text();
+        var TypeId = $('#TypeId').val();
+        var IsApplyTax = $('#IsApplyTax').is(":checked") ? "checked" : "";
 
-    var UnitSequenceFrom = $('#UnitSequenceFrom').val();
-    var UnitSequenceTo = $('#UnitSequenceTo').val();
+        var UnitSequenceFrom = $('#UnitSequenceFrom').val();
+        var UnitSequenceTo = $('#UnitSequenceTo').val();
 
-    let UnitSequenceFromNumeric = parseInt(UnitSequenceFrom.replace(/^[a-zA-Z]+/, ''));
-    let UnitSequenceToNumeric = parseInt(UnitSequenceTo.replace(/^[a-zA-Z]+/, ''));
+        let alphabeticPart = (UnitSequenceFrom.match(/^[a-zA-Z]+/) ?? [''])[0];
+        let UnitSequenceFromNumeric = parseInt(UnitSequenceFrom.replace(/^[a-zA-Z]+/, ''));
+        let UnitSequenceToNumeric = parseInt(UnitSequenceTo.replace(/^[a-zA-Z]+/, ''));
 
-    for (var i = UnitSequenceFromNumeric; i < UnitSequenceToNumeric; i++) {
-        let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="' +
-            alphabeticPart + (i) + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="text" class="PropertyUnitTypeName  form-control tabledit-input form-control-sm" value="' +
-            PropertyUnitTypeName + '" disabled readonly />' +
-            '<input type="text" hidden class="PropDetailId" value="0" disabled readonly />' +
-            '<input type="text" hidden class="PropertyUnitTypeId  form-control tabledit-input form-control-sm" value="' +
-            PropertyUnitTypeId + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "text" class="Floor form-control tabledit-input form-control-sm" value = "' +
-            Floor + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="text" class="RentMethod form-control tabledit-input form-control-sm" value="' +
-            0 + '" /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="Area form-control tabledit-input form-control-sm" value="' +
-            0 + '" /></td> <td class="tabledit-edit-mode"><input type="number" step="any" class="MeterPrice form-control tabledit-input form-control-sm" value="' +
-            0 + '" /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="RentalValue form-control tabledit-input form-control-sm" value="' +
-            0 + '" /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="LowestRentalValue form-control tabledit-input form-control-sm" value="' +
-            0 + '" /></td><td class="tabledit-edit-mode"><input type="text" class="RoomsNo form-control tabledit-input form-control-sm" value="' +
-            RoomsNo + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="text" class="HallsNo form-control tabledit-input form-control-sm" value="' +
-            HallsNo + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "checkbox" class="IsFurnishing form-control tabledit-input form-control-sm" ' +
-            IsFurnishing + ' disabled readonly /></td><td class="tabledit-edit-mode"><input type="text" class="TypeName  form-control tabledit-input form-control-sm" value="' +
-            TypeName + '" disabled readonly /><input type="text" hidden class="TypeId  form-control tabledit-input form-control-sm" value="' +
-            TypeId + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="text" class="StatusName  form-control tabledit-input form-control-sm" value="' +
-            StatusName + '" disabled readonly /><input type = "text" hidden class="StatusId  form-control tabledit-input form-control-sm" value = "' +
-            StatusId + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="checkbox" class="IsApplyTax form-control tabledit-input form-control-sm" ' +
-            IsApplyTax + ' disabled readonly /></td></tr>';
-        $('#PropertyDetails').append(tr);
+        for (var i = UnitSequenceFromNumeric; i < UnitSequenceToNumeric; i++) {
+            let tr = '<tr>' +
+                '<td class="tabledit-edit-mode"><input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="' + alphabeticPart + (i) + '" disabled readonly /></td>' +
+                '<td class="tabledit-edit-mode"><input type="text" class="PropertyUnitTypeName form-control tabledit-input form-control-sm" value="' + PropertyUnitTypeName + '" disabled readonly />' +
+
+                '<input type="text" hidden class="PropDetailId" value="0" />' +
+                '<input type="text" hidden class="PropertyUnitTypeId form-control tabledit-input form-control-sm" value="' + PropertyUnitTypeId + '" /></td>' +
+
+                '<td class="tabledit-edit-mode"><input type="text" class="Floor form-control tabledit-input form-control-sm" value="' + Floor + '"  /></td>' +
+                '<td class="tabledit-edit-mode"><input type="text" class="RentMethod form-control tabledit-input form-control-sm" value="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" step="any" class="Area form-control tabledit-input form-control-sm" value="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" step="any" class="MeterPrice form-control tabledit-input form-control-sm" value="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" step="any" class="RentalValue form-control tabledit-input form-control-sm" value="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" step="any" class="LowestRentalValue form-control tabledit-input form-control-sm" value="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" class="RoomsNo form-control tabledit-input form-control-sm" value="' + RoomsNo + '" min="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" class="HallsNo form-control tabledit-input form-control-sm" value="' + HallsNo + '" min="0" /></td>' +
+
+
+                '<td class="tabledit-edit-mode"><input type="checkbox" class="IsFurnishing form-control tabledit-input form-control-sm" ' + IsFurnishing + ' /></td>' +
+
+
+                '<td class="tabledit-edit-mode"><input type="number" class="SplitACCount form-control tabledit-input form-control-sm" value="' + SplitACCount + '" min="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" class="KitchenCount form-control tabledit-input form-control-sm" value="' + KitchenCount + '" min="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="number" class="WindowACCount form-control tabledit-input form-control-sm" value="' + WindowACCount + '" min="0" /></td>' +
+                '<td class="tabledit-edit-mode"><input type="text" class="TypeName form-control tabledit-input form-control-sm" value="' + TypeName + '" disabled readonly /><input type="text" hidden class="TypeId form-control tabledit-input form-control-sm" value="' + TypeId + '" disabled readonly /></td>' +
+                '<td class="tabledit-edit-mode"><input type="text" class="StatusName form-control tabledit-input form-control-sm" value="' + StatusName + '" disabled readonly /><input type="text" hidden class="StatusId form-control tabledit-input form-control-sm" value="' + StatusId + '" disabled readonly /></td>' +
+                '<td class="tabledit-edit-mode"><input type="checkbox" class="IsApplyTax form-control tabledit-input form-control-sm" ' + IsApplyTax + '  /></td>' +
+                '</tr>';
+            $('#PropertyDetails').append(tr);
+        }
     }
-}
 //*********************************************************//
 function addEdit(n) {
     let valid = true;
@@ -1506,6 +1621,7 @@ function addEdit(n) {
                 IsDelivered: td.find('.IsDelivered').prop('checked'),
                 TotalPaid: parseFloat(td.find('.TotalPaid').val()) || 0,
                 IsDeleted: false,
+                IsTaxable: $('#IsTaxable').prop('checked'),
                 UserId: $('#UserId').val(),
                 Notes: td.find('.Notes').val(),
                 Image: td.find('.Image').val(),
@@ -1522,14 +1638,24 @@ function addEdit(n) {
     if (valid) {
         $('#PropertyDetails tr').each(function () {
             var td = $(this);
+            console.log('=== Row Data ===');
+            console.log('RoomsNo input value:', td.find('.RoomsNo').val());
+            console.log('HallsNo input value:', td.find('.HallsNo').val());
+            console.log('RoomsNo parsed:', parseInt(td.find('.RoomsNo').val()) || 0);
+            console.log('HallsNo parsed:', parseInt(td.find('.HallsNo').val()) || 0);
             var PropertyDetail = {
                 MainDocId: $('#Id').val(),
                 PropertyUnitNo: td.find('.PropertyUnitNo').val(),
                 PropertyUnitTypeId: td.find('.PropertyUnitTypeId').val(),
                 Floor: td.find('.Floor').val(),
-                RoomsNo: td.find('.RoomsNo').val(),
-                HallsNo: td.find('.HallsNo').val(),
+
+                RoomsNo: parseInt(td.find('.RoomsNo').val()) || 0,
+                HallsNo: parseInt(td.find('.HallsNo').val()) || 0,
+
                 IsFurnishing: td.find('.IsFurnishing').prop('checked'),
+                SplitACCount: parseInt(td.find('.SplitACCount').val()) || 0,
+                KitchenCount: parseInt(td.find('.KitchenCount').val()) || 0,
+                WindowACCount: parseInt(td.find('.WindowACCount').val()) || 0,
                 IsApplyTax: td.find('.IsApplyTax').prop('checked'),
                 StatusId: td.find('.StatusId').val(),
                 TypeId: td.find('.TypeId').val(),
@@ -1741,6 +1867,8 @@ function requestData(url) {
     return $.get(url);
 }
 
+
+
 // Function to show alerts (if not available)
 function showAlert(message, type) {
     Swal.fire({
@@ -1757,5 +1885,24 @@ function showAlert(message, type) {
     $(window).on('load', function () {
         $('#StatusId').val('2').trigger('change');
     });
+    // عند تغيير التشيك بوكس الرئيسى "خاضع للضريبة"
+    // ربط خاضع للضريبة الرئيسى بكل الوحدات
+
+    // لما أغيّر التشيك بوكس العام فوق "خاضع للضريبة"
+    $('#IsTaxable').on('change', function () {
+        var isChecked = $(this).is(':checked');
+
+        // خلى تشيك بوكس الوحدات ياخد نفس القيمة
+        $('#IsApplyTax')
+            .prop('checked', isChecked)
+            .trigger('change');   // يستدعي نفس اللوجيك اللي بيعلم على كل الوحدات
+    });
+
+    // (لو مش كنت ضايفه قبل كده تأكد إنه موجود)
+    $('#IsApplyTax').on('change', function () {
+        var isChecked = $(this).is(':checked');
+        $('#PropertyDetails').find('.IsApplyTax').prop('checked', isChecked);
+    });
+
 
 </script>

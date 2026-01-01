@@ -11,7 +11,7 @@ namespace MyERP
     /// <summary>
     /// خدمة إرسال الرسائل النصية عبر Oursms API
     /// </summary>
-    public static class SmsService
+    public static class OurSmsService
     {
         private static readonly string BaseUrl = "https://api.oursms.com/msgs/sms";
         private static readonly string CreditsUrl = "https://api.oursms.com/billing/credits";

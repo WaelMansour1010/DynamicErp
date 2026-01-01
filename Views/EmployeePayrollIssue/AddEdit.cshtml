@@ -346,7 +346,14 @@
                             }
                         </td>
                         <td>
-                            <label class="FirstWorkDate control-label"> @item.FirstWorkDate </label>
+                            <input type="hidden" class="FirstWorkDateVal"
+                                   value="@(item.FirstWorkDate.HasValue ? item.FirstWorkDate.Value.ToString("yyyy-MM-dd") : "")" />
+
+                            <label class="FirstWorkDateTxt control-label">
+                                @(item.FirstWorkDate.HasValue ? item.FirstWorkDate.Value.ToString("dd/MM/yyyy") : "")
+                            </label>
+
+
                         </td>
                         <td>
                             <label class="LastWorkDate control-label"> @item.LastWorkDate </label>
@@ -841,6 +848,17 @@
         return (dt.getMonth() + 1) + "/" + dt.getDate() + "/" + dt.getFullYear();
     }
 
+    function toISODate(val) {
+        if (!val) return "";
+        // لو val جاي من .NET /Date(123)/ أو ISO… عدل حسب حالتك
+        var d = new Date(val);
+        if (isNaN(d.getTime())) return "";
+
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var dd = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '-' + mm + '-' + dd;
+    }
+
     function showEmps(e) {
         if ($(e).prop('checked') == true) {
             $('.IsEmpSelected').show();
@@ -932,9 +950,9 @@
                     let td = $(this);
                     let employeePayrollIssueDetail = {
                         EmployeeId: td.find('.EmployeeId').val(),
-                        JobId: td.find('.JobId').val(),
-                        HrDepartmentId: td.find('.HrDepartmentId').val(),
-                        NationalityId: td.find('.NationalityId').val(),
+                        HrDepartmentId: td.find('.HrDepartmentId').val() || null,
+                        NationalityId: td.find('.NationalityId').val() || null,
+                        JobId: td.find('.JobId').val() || null,
                         TotalPenalty: td.find('.TotalPenalty').text(),
                         TotalDeductionItems: td.find('.TotalDeductionItems').text(),
                         TotalReward: td.find('.TotalReward').text(),
@@ -942,8 +960,8 @@
                         TotalDueItems: td.find('.TotalDueItems').text(),
                         NetSalary: td.find('.NetSalary').text(),
                         AbsenceDays: td.find('.AbsenceDays').text(),
-                        AdvancedExpenses: td.find('.AdvancedExpenses').text(),
-                        FirstWorkDate: td.find('.FirstWorkDate').text(),
+                        AdvancedExpenses: td.find('.AdvancedExpenses').text(),                        
+                        FirstWorkDate:/* td.find('.FirstWorkDate').text() || */'1/1/2021',
                         LastWorkDate: /*td.find('.LastWorkDate').text()*/ '1/1/2021',
                         NoOfWorkingDays: td.find('.NoOfWorkingDays').text(),
                         SalaryItem1: td.find('.SalaryItem1').text(),

@@ -64,11 +64,11 @@ namespace MyERP.Models
         public Nullable<decimal> ElectricityBillValue { get; set; }
         public Nullable<decimal> GasBillValue { get; set; }
         public Nullable<decimal> ViolationBillValue { get; set; }
+        public Nullable<int> PropertyContractTerminationId { get; set; }
     
         public virtual BankAccount BankAccount { get; set; }
         public virtual Branch Branch { get; set; }
         public virtual CashBox CashBox { get; set; }
-        public virtual CashReceiptSourceType CashReceiptSourceType { get; set; }
         public virtual ChartOfAccount ChartOfAccount { get; set; }
         public virtual CostCenter CostCenter { get; set; }
         public virtual Department Department { get; set; }
@@ -89,5 +89,7 @@ namespace MyERP.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<CashReceiptVoucherPropertyContractBatch> CashReceiptVoucherPropertyContractBatches { get; set; }
         public virtual Child Child { get; set; }
+        public virtual PropertyContractTermination PropertyContractTermination { get; set; }
+        public virtual CashReceiptSourceType CashReceiptSourceType { get; set; }
     }
 }

@@ -82,6 +82,7 @@ namespace MyERP.Models
         public Nullable<System.DateTime> FirstBatchDate { get; set; }
         public Nullable<int> PeriodBetweenBatchesNum { get; set; }
         public Nullable<int> PeriodBetweenBatchesTypeId { get; set; }
+        public Nullable<bool> IsTaxable { get; set; }
     
         public virtual Department Department { get; set; }
         public virtual Employee Employee { get; set; }

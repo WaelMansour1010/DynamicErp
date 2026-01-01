@@ -91,6 +91,224 @@ namespace MyERP.Controllers.AccountSettings
             ViewBag.wantedRowsNo = wantedRowsNo;
             return View(await cashReceiptVouchers.ToListAsync());
         }
+
+
+        /// <summary>
+        /// جلب قائمة التصفيات النشطة
+        /// </summary>
+        [HttpGet]
+        public JsonResult GetActiveSettlements()
+        {
+            try
+            {
+                var settlements = db.PropertyContractTerminations
+                    .Where(s =>  !s.IsDeleted)
+                    .OrderByDescending(s => s.Id)
+                    .Select(s => new
+                    {
+                        Id = s.Id,
+                        DocumentNumber = s.DocumentNumber,
+                        VoucherDate = s.VoucherDate,
+                        PropertyRenterId = s.PropertyRenterId,
+                        RenterName = s.PropertyRenter.ArName,
+                        RenterCode = s.PropertyRenter.Code,
+                        PropertyName = s.PropertyContract.Property.ArName,
+                        ContractNumber = s.PropertyContract.DocumentNumber,
+                        TotalAmount = s.TotalUnpaidAmount ?? 0,
+                        RenterBalance = s.RenterBalance ?? 0,
+                        InsuranceAmount = s.InsuranceAmount ?? 0
+                    })
+                    .ToList();
+
+                return Json(settlements, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        /// <summary>
+        /// جلب تفاصيل تصفية معينة مع الدفعات
+        /// </summary>
+        /// <param name="id">رقم التصفية</param>
+        [HttpGet]
+        public JsonResult GetSettlementDetails(int id)
+        {
+            try
+            {
+                // ✅ 1) جلب سجل التصفية مع العقد والمستأجر والعقار
+                var termination = db.PropertyContractTerminations
+                    .Include("PropertyContract.Property")
+                    .Include("PropertyContract.PropertyRenter")
+                    .FirstOrDefault(pct => pct.Id == id && pct.IsDeleted == false);
+
+                if (termination == null)
+                {
+                    return Json(new { success = false, message = "التصفية غير موجودة" }, JsonRequestBehavior.AllowGet);
+                }
+
+                var contract = termination.PropertyContract;
+                if (contract == null)
+                {
+                    return Json(new { success = false, message = "العقد المرتبط بالتصفية غير موجود" }, JsonRequestBehavior.AllowGet);
+                }
+
+                // ✅ 2) جلب تفاصيل التصفية من جدول PropertyContractTerminationDetail
+                var terminationDetails = db.PropertyContractTerminationDetails
+                    .Where(d => d.MainDocId == termination.Id && d.IsDeleted == false)
+                    .ToList();
+
+                // ✅ 3) جلب أرقام الدفعات المرتبطة بالتصفية
+                var batchIds = terminationDetails
+                    .Where(d => d.PropertyContractBatchId.HasValue)
+                    .Select(d => d.PropertyContractBatchId.Value)
+                    .ToList();
+
+                // ✅ 4) حساب إجمالي التلفيات من جدول PropertyContractTerminationDamage (Qty * Price)
+                var totalDamages = db.PropertyContractTerminationDamages
+             .Where(d => d.PropertyContractTerminationId == termination.Id)
+             .ToList()   // هنا نطلعهم من الـ DB الأول
+             .Sum(d => (decimal)(d.Qty ?? 0) * (d.Price ?? 0));
+
+
+                // ✅ 5) جلب المدفوعات السابقة من جدول السداد
+                var payments = db.CashReceiptVoucherPropertyContractBatches
+                    .AsNoTracking()
+                    .Where(p => p.PropertyContractBatchId.HasValue
+                             && batchIds.Contains(p.PropertyContractBatchId.Value)
+                             && p.Paid != 0)
+                    .GroupBy(p => p.PropertyContractBatchId.Value)
+                    .Select(g => new
+                    {
+                        PropertyContractBatchId = g.Key,
+                        TotalPaid = g.Sum(x => x.Paid ?? 0),
+                        IsFullyDelivered = g.Any(x => x.IsDelivered == true)
+                    })
+                    .ToList();
+
+                // ✅ 6) جلب الدفعات الفعلية وحساب المتبقي
+                var relevantBatches = db.PropertyContractBatches
+                    .Where(b => batchIds.Contains(b.Id))
+                    .ToList();
+
+                var batchDetails = relevantBatches.Select(b =>
+                {
+                    var payment = payments.FirstOrDefault(p => p.PropertyContractBatchId == b.Id);
+                    var termDetail = terminationDetails.FirstOrDefault(d => d.PropertyContractBatchId == b.Id);
+
+                    decimal totalPaid = payment?.TotalPaid ?? 0;
+                    bool isFullyPaid = payment?.IsFullyDelivered == true;
+
+                    decimal batchRentOriginal =
+                        (b.BatchRentValue ?? 0) + (b.BatchRentValueTaxes ?? 0);
+                    decimal batchWaterOriginal =
+                        (b.BatchWaterValue ?? 0) + (b.BatchWaterValueTaxes ?? 0);
+                    decimal batchElectricityOriginal =
+                        (b.BatchElectricityValue ?? 0) + (b.BatchElectricityValueTaxes ?? 0);
+                    decimal batchGasOriginal =
+                        (b.BatchGasValue ?? 0) + (b.BatchGasValueTaxes ?? 0);
+                    decimal batchServicesOriginal =
+                        (b.BatchServicesValue ?? 0) + (b.BatchServicesValueTaxes ?? 0);
+                    decimal batchCommissionOriginal =
+                        (b.BatchCommissionValue ?? 0) + (b.BatchCommissionValueTaxes ?? 0);
+                    decimal batchInsuranceOriginal =
+                        (b.BatchInsuranceValue ?? 0) + (b.BatchInsuranceValueTaxes ?? 0);
+
+                    decimal batchTotalOriginal = b.BatchTotal ?? 0;
+
+                    // المتبقي الحقيقي من الدفعة = إجمالي الفاتورة - مجموع المدفوعات
+                    // أو استخدام القيمة المخزنة في تفاصيل التصفية
+                    decimal remain = termDetail?.Remain ?? (batchTotalOriginal - totalPaid);
+                    if (remain < 0) remain = 0;
+
+                    return new
+                    {
+                        b.Id,
+                        b.BatchNo,
+                        b.BatchDate,
+
+                        BatchRentValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                        (remain > 0 ? (batchRentOriginal * remain / batchTotalOriginal) : 0),
+
+                        BatchWaterValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                         (remain > 0 ? (batchWaterOriginal * remain / batchTotalOriginal) : 0),
+
+                        BatchElectricityValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                               (remain > 0 ? (batchElectricityOriginal * remain / batchTotalOriginal) : 0),
+
+                        BatchGasValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                       (remain > 0 ? (batchGasOriginal * remain / batchTotalOriginal) : 0),
+
+                        BatchServicesValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                            (remain > 0 ? (batchServicesOriginal * remain / batchTotalOriginal) : 0),
+
+                        BatchCommissionValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                              (remain > 0 ? (batchCommissionOriginal * remain / batchTotalOriginal) : 0),
+
+                        BatchInsuranceValue = isFullyPaid || batchTotalOriginal <= 0 ? 0 :
+                                             (remain > 0 ? (batchInsuranceOriginal * remain / batchTotalOriginal) : 0),
+
+                        Remain = remain,
+                        OriginalTotal = batchTotalOriginal,
+                        TotalPaid = totalPaid
+                    };
+                }).ToList();
+
+                // ✅ 7) إجمالي المتبقي + إجمالي التأمين المتبقي
+                decimal totalUnpaidAmount = batchDetails.Sum(b => b.Remain);
+                decimal insuranceAmount = batchDetails.Sum(b => b.BatchInsuranceValue);
+
+                // ✅ رصيد المستأجر من التصفية نفسها
+                decimal renterBalance = termination.RenterBalance ?? 0;
+
+                // ✅ 8) تجهيز النتيجة النهائية لسند القبض
+                var result = new
+                {
+                    termination.Id,
+                    termination.DocumentNumber,
+
+                    termination.PropertyContractId,
+                    ContractNumber = contract.DocumentNumber,
+
+                    RenterName = contract.PropertyRenter?.ArName,
+                    RenterCode = contract.PropertyRenter?.Code,
+                    PropertyName = contract.Property?.ArName,
+
+                    // أيام الزيادة
+                    IncreaseDaysNo = termination.IncreaseDaysNo ?? 0,
+                    IncreaseDayValue = termination.IncreaseDayValue ?? 0,
+                    IncreaseDaysTotalValue = termination.IncreaseDaysTotalValue ?? 0,
+
+                    // أيام النقص
+                    DecreaseDaysNo = termination.DecreaseDaysNo ?? 0,
+                    DecreaseDayValue = termination.DecreaseDayValue ?? 0,
+                    DecreaseDaysTotalValue = termination.DecreaseDaysTotalValue ?? 0,
+
+                    // ✅ إجمالي التلفيات
+                    TotalDamages = totalDamages,
+
+                    // ✅ التأمين من تفاصيل الدفعات
+                    InsuranceAmount = insuranceAmount,
+
+                    // ✅ رصيد المستأجر المجمع من التصفية
+                    RenterBalance = renterBalance,
+
+                    // ✅ إجمالي الدفعات غير المسددة
+                    TotalUnpaidAmount = termination.DecreaseDayValue ?? 0, 
+
+                    // ✅ تفاصيل الدفعات المتبقية
+                    Details = batchDetails
+                };
+
+                return Json(new { success = true, data = result }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         [HttpGet]
         public async Task<ActionResult> ContractList(int Id)
         {
@@ -858,11 +1076,11 @@ namespace MyERP.Controllers.AccountSettings
                         cashReceiptVoucher.ChartOfAccountId, 
                         cashReceiptVoucher.CashReceiptPaymentMethodId, cashReceiptVoucher.VendorReceiptNumber, cashReceiptVoucher.Month, cashReceiptVoucher.Year, 
                         cashReceiptVoucher.ChildrenId, cashReceiptVoucher.ElderId, 
-                        cashReceiptVoucher.PropertyContractId,
+                        cashReceiptVoucher.PropertyContractId,  
                         cashReceiptVoucher.ElectricityBillValue,
                         cashReceiptVoucher.GasBillValue,
                         cashReceiptVoucher.ViolationBillValue,
-                        CashReceiptVoucherPropertyContractBatches);
+                        CashReceiptVoucherPropertyContractBatches, cashReceiptVoucher.PropertyContractTerminationId);
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashReceiptVoucher", "Edit", "AddEdit", id, null, " سند القبض");
                     ////////////////-----------------------------------------------------------------------
@@ -910,10 +1128,16 @@ namespace MyERP.Controllers.AccountSettings
                             cashReceiptVoucher.Month, cashReceiptVoucher.Year, 
                             cashReceiptVoucher.ChildrenId, cashReceiptVoucher.ElderId, 
                             cashReceiptVoucher.PropertyContractId,
-                            cashReceiptVoucher.ElectricityBillValue,
-                            cashReceiptVoucher.GasBillValue,
-                            cashReceiptVoucher.ViolationBillValue,
-                            CashReceiptVoucherPropertyContractBatches);
+                            
+
+    // ✅✅✅ CRITICAL: إضافة PropertyContractTerminationId هنا
+    cashReceiptVoucher.PropertyContractTerminationId,
+
+    cashReceiptVoucher.ElectricityBillValue,
+    cashReceiptVoucher.GasBillValue,
+    cashReceiptVoucher.ViolationBillValue,
+    CashReceiptVoucherPropertyContractBatches
+                            );
                     }
                     catch (Exception ex)
                     {
