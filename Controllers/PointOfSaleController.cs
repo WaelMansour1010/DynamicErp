@@ -250,7 +250,7 @@ namespace MyERP.Controllers
                     if (custodyAmount > 0)
                     {
                         var idResult = new ObjectParameter("Id", typeof(Int32));
-                        db.CashTransfer_Insert(idResult, null, null, null, null, null, null, null, posManagerBoxId, custodyBoxId, null, null, custodyAmount, cTime, userId, true, false, true, false, null, null, 3, pos.DepartmentId, null, null, pos.DepartmentId);
+                        db.CashTransfer_Insert(idResult, null, null, null, null, null, null, null, posManagerBoxId, custodyBoxId, null,null, null, null, custodyAmount, cTime, userId, true, false, true, false, null, null, 3, pos.DepartmentId, null, null, pos.DepartmentId);
                     }
                     Session["PosId"] = posId;
                     Session["IsCashier"] = true;

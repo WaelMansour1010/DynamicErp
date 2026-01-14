@@ -1584,6 +1584,16 @@
                                             </div>
                                         </div>
 
+                                        @* Added: Debt Aging Types (أنواع أعمار الديون) *@
+                                        <div class="form-group row">
+                                            <div class="col-sm-3">
+                                                <a href="/DebitAgesType" pv="/DebitAgesType">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    @MyERP.Properties.Resources.DebitAgesType
+                                                </a>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </li>
 
@@ -1644,6 +1654,13 @@
                                     <a href="/CommissionSetting" pv="/CommissionSetting">
                                         <i class="fa  fa-caret-left"></i>
                                         @MyERP.Properties.Resources.CommissionSettings
+                                    </a>
+                                </li>
+                                @* Added: Debt Aging Types (أنواع أعمار الديون) *@
+                                <li>
+                                    <a href="/DebitAgesType" pv="/DebitAgesType">
+                                        <i class="fa  fa-caret-left"></i>
+                                        @MyERP.Properties.Resources.DebitAgesType
                                     </a>
                                 </li>
 
@@ -4507,9 +4524,50 @@
                                 <li>
                                     <div class="card-body">
                                         <span class="form-group row col-sm-1 h3 control-label" style="font-family: Tahoma !important;">     @MyERP.Properties.Resources.GeneralSettings</span>
+                                        @* Reordered according to new requirement *@
+                                        <div class="form-group row">
+                                            @* 1. Companies (الشركات) *@
+                                            <div class="col-sm-3">
+                                                <a href="/Company" pv="/Company"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Companies</a>
+                                            </div>
+                                            @* 2. Activities (الأنشطة) *@
+                                            <div class="col-sm-3">
+                                                <a href="/Activity" pv="/Activity"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Activities</a>
+                                            </div>
+                                            @* 3. Branches (الفروع) *@
+                                            <div class="col-sm-3">
+                                                <a href="/Departments" pv="/Departments"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Branches</a>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            @* 4. System Settings (إعدادات النظام) *@
+                                            <div class="col-sm-3">
+                                                <a href="/SystemSetting" pv="/SystemSetting"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SystemSettings</a>
+                                            </div>
+                                            @* 5. Accounting Periods (الفترات المحاسبية) *@
+                                            <div class="col-sm-3">
+                                                <a href="/FinancialPeriods" pv="/FinancialPeriods"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FinancialPeriods</a>
+                                            </div>
+                                            @* 6. Tax Settings (إعدادات الضريبة) *@
+                                            <div class="col-sm-3">
+                                                <a href="/TaxesPercentages" pv="/TaxesPercentages"><i class="fa  fa-caret-left"></i>  @MyERP.Properties.Resources.TaxSettings </a>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            @* 7. Document Coding (تكويد المستندات) *@
+                                            <div class="col-sm-3">
+                                                <a href="/DocumentsCoding" pv="/DocumentsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DocumentsCoding</a>
+                                            </div>
+                                            @* 8. Field Coding (تكويد الحقول) *@
+                                            <div class="col-sm-3">
+                                                <a href="/FieldsCoding" pv="/FieldsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FieldsCoding</a>
+                                            </div>
+                                            <div class="col-sm-3">
+                                            </div>
+                                        </div>
+                                        @* 9. Users and Permissions (المستخدمين والصلاحيات) *@
                                         <div class="form-group row">
                                             <span class=" col-sm-3 h4 control-label " style="font-family: Tahoma !important;"><i class="mdi mdi-office-building"></i> @MyERP.Properties.Resources.UsersAndAuthorities</span>
-                                            <span class=" col-sm-3 h4 control-label" style="font-family: Tahoma !important;"><i class="mdi mdi-office-building"></i>  @MyERP.Properties.Resources.MonitorTransactions </span>
                                         </div>
                                         <div class="form-group row">
                                             <div class="col-sm-3">
@@ -4519,49 +4577,16 @@
                                                 </a>
                                             </div>
                                             <div class="col-sm-3">
-                                                <a href="/Log" pv="/Log">
-                                                    <i class="fa  fa-caret-left"></i>
-                                                    @MyERP.Properties.Resources.Log
-                                                </a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/SystemSetting" pv="/SystemSetting"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SystemSettings</a>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            @*<label class=" col-sm-1 control-label">Sample 1</label>*@
-
-                                            <div class="col-sm-3">
                                                 <a href="/ERPUsers" pv="/ERPUsers">
                                                     <i class="fa  fa-caret-left"></i>
                                                     @MyERP.Properties.Resources.ERPUser
                                                 </a>
                                             </div>
                                             <div class="col-sm-3">
-                                                <a href="/UpdatedTransaction" pv="/UpdatedTransaction">
-                                                    <i class="fa  fa-caret-left"></i>
-                                                    @MyERP.Properties.Resources.UpdatedTransactions
-                                                </a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/Departments" pv="/Departments"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Branches</a>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <div class="col-sm-3">
                                                 <a href="/RolePrivilege" pv="/RolePrivilege">
                                                     <i class="fa  fa-caret-left"></i>
                                                     @MyERP.Properties.Resources.RolePrivilege
                                                 </a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/DeletedTransaction" pv="/DeletedTransaction">
-                                                    <i class="fa  fa-caret-left"></i>
-                                                    @MyERP.Properties.Resources.DeletedTransaction
-                                                </a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/FinancialPeriods" pv="/FinancialPeriods"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FinancialPeriods</a>
                                             </div>
                                         </div>
                                         <div class="form-group row">
@@ -4572,40 +4597,15 @@
                                                 </a>
                                             </div>
                                             <div class="col-sm-3">
-                                                <a href="/Country"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Countries</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/TaxesPercentages" pv="/TaxesPercentages"><i class="fa  fa-caret-left"></i>  @MyERP.Properties.Resources.TaxSettings </a>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <div class="col-sm-3">
                                                 <a href="/ERPRoleReports" pv="/ERPRoleReports">
                                                     <i class="fa  fa-caret-left"></i>
                                                     @MyERP.Properties.Resources.ERPRoleReport
                                                 </a>
                                             </div>
                                             <div class="col-sm-3">
-                                                <a href="/City"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Cities</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/UserTask" pv="/UserTask"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Tasks</a>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <div class="col-sm-3">
                                                 <a href="/UserReports" pv="/UserReports">
                                                     <i class="fa  fa-caret-left"></i>
                                                     @MyERP.Properties.Resources.UsersReportingPrivileges
-                                                </a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/Area"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Areas</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/DebitAgesType" pv="/DebitAgesType">
-                                                    <i class="fa  fa-caret-left"></i>
-                                                    @MyERP.Properties.Resources.DebitAgesType
                                                 </a>
                                             </div>
                                         </div>
@@ -4617,68 +4617,96 @@
                                                 </a>
                                             </div>
                                             <div class="col-sm-3">
-                                                <a href="/Helper/SendDailyReportToAdmin" pv="/Helper/SendDailyReportToAdmin"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SendDailyReportToAdmin</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                @if (isECommerce)
-                                                {
-                                                    <a href="/Coupon" pv="/Coupon"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.DiscountCoupons</a>
-                                                }
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group row">
-                                            <div class="col-sm-3">
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/Company" pv="/Company"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Companies</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                @if (isECommerce)
-                                                {
-                                                    <a href="/Slider" pv="/Slider"><i class="fa  fa-caret-left"></i>Slider</a>
-                                                }
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <div class="col-sm-3">
                                                 <a href="/UserHomePage" pv="/UserHomePage">
                                                     <i class="fa  fa-caret-left"></i>
                                                     @MyERP.Properties.Resources.CustomizeUserIcons
                                                 </a>
                                             </div>
                                             <div class="col-sm-3">
-                                                <a href="/Activity" pv="/Activity"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Activities</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/NotificationsManager" pv="/NotificationsManager"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.NotificationsManager</a>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <div class="col-sm-3">
                                                 <a href="/LogIn/ResetPassword" pv="/LogIn/ResetPassword">
                                                     <i class="fa  fa-caret-left"></i>
                                                     @MyERP.Properties.Resources.ChangePassWord
                                                 </a>
                                             </div>
-                                            <div class="col-sm-3">
-                                                <a href="/FieldsCoding" pv="/FieldsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FieldsCoding</a>
-                                            </div>
-                                            <div class="col-sm-3">
-                                                <a href="/DocumentsCoding" pv="/DocumentsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DocumentsCoding</a>
-                                            </div>
-
+                                        </div>
+                                        @* 10. System Audit/Log (مراقبة حركات النظام) *@
+                                        <div class="form-group row">
+                                            <span class=" col-sm-3 h4 control-label" style="font-family: Tahoma !important;"><i class="mdi mdi-office-building"></i>  @MyERP.Properties.Resources.MonitorTransactions </span>
                                         </div>
                                         <div class="form-group row">
-
                                             <div class="col-sm-3">
+                                                <a href="/Log" pv="/Log">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    @MyERP.Properties.Resources.Log
+                                                </a>
                                             </div>
                                             <div class="col-sm-3">
+                                                <a href="/UpdatedTransaction" pv="/UpdatedTransaction">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    @MyERP.Properties.Resources.UpdatedTransactions
+                                                </a>
+                                            </div>
+                                            <div class="col-sm-3">
+                                                <a href="/DeletedTransaction" pv="/DeletedTransaction">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    @MyERP.Properties.Resources.DeletedTransaction
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            @* 11. Countries (الدول) *@
+                                            <div class="col-sm-3">
+                                                <a href="/Country"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Countries</a>
+                                            </div>
+                                            @* 12. Cities (المدن) *@
+                                            <div class="col-sm-3">
+                                                <a href="/City"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Cities</a>
+                                            </div>
+                                            @* 13. Regions (المناطق) *@
+                                            <div class="col-sm-3">
+                                                <a href="/Area"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Areas</a>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            @* 14. Tasks (المهام) *@
+                                            <div class="col-sm-3">
+                                                <a href="/UserTask" pv="/UserTask"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Tasks</a>
+                                            </div>
+                                            @* 15. Notification Manager (مدير التنبيهات) *@
+                                            <div class="col-sm-3">
+                                                <a href="/NotificationsManager" pv="/NotificationsManager"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.NotificationsManager</a>
+                                            </div>
+                                            <div class="col-sm-3">
+                                            </div>
+                                        </div>
+                                        @* Hidden items *@
+                                        @*<div class="form-group row">
+                                            <div class="col-sm-3">
+                                                <a href="/Helper/SendDailyReportToAdmin" pv="/Helper/SendDailyReportToAdmin"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SendDailyReportToAdmin</a>
                                             </div>
                                             <div class="col-sm-3">
                                                 <a href="/ExcelTemplate" pv="/ExcelTemplate"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DownloadExcelTemplate</a>
                                             </div>
-                                        </div>
+                                            <div class="col-sm-3">
+                                                <a href="/DebitAgesType" pv="/DebitAgesType">
+                                                    <i class="fa  fa-caret-left"></i>
+                                                    @MyERP.Properties.Resources.DebitAgesType
+                                                </a>
+                                            </div>
+                                        </div>*@
+                                        @if (isECommerce)
+                                        {
+                                            <div class="form-group row">
+                                                <div class="col-sm-3">
+                                                    <a href="/Coupon" pv="/Coupon"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.DiscountCoupons</a>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <a href="/Slider" pv="/Slider"><i class="fa  fa-caret-left"></i>Slider</a>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                </div>
+                                            </div>
+                                        }
                                     </div>
                                 </li>
                                 <!--<li>
@@ -4755,6 +4783,103 @@
                                         </li>
                                     </ul>
                                 </li>
+                                @* 1. Companies (الشركات) *@
+                                <li>
+                                    <a href="/Company" pv="/Company"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Companies</a>
+                                </li>
+                                @* 2. Activities (الأنشطة) *@
+                                <li>
+                                    <a href="/Activity" pv="/Activity"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Activities</a>
+                                </li>
+                                @* 3. Branches (الفروع) *@
+                                <li>
+                                    <a href="/Departments" pv="/Departments"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Branches</a>
+                                </li>
+                                @* 4. System Settings (إعدادات النظام) *@
+                                <li>
+                                    <a href="/SystemSetting" pv="/SystemSetting"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SystemSettings</a>
+                                </li>
+                                @* 5. Accounting Periods (الفترات المحاسبية) *@
+                                <li>
+                                    <a href="/FinancialPeriods" pv="/FinancialPeriods"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FinancialPeriods</a>
+                                </li>
+                                @* 6. Tax Settings (إعدادات الضريبة) *@
+                                <li>
+                                    <a href="/TaxesPercentages" pv="/TaxesPercentages"><i class="fa  fa-caret-left"></i>  @MyERP.Properties.Resources.TaxSettings </a>
+                                </li>
+                                @* 7. Document Coding (تكويد المستندات) *@
+                                <li>
+                                    <a href="/DocumentsCoding" pv="/DocumentsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DocumentsCoding</a>
+                                </li>
+                                @* 8. Field Coding (تكويد الحقول) *@
+                                <li>
+                                    <a href="/FieldsCoding" pv="/FieldsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FieldsCoding</a>
+                                </li>
+                                @* 9. Users and Permissions (المستخدمين والصلاحيات) *@
+                                <li>
+                                    <a href="javascript:void(0);"><i class="mdi mdi-office-building"></i> @MyERP.Properties.Resources.UsersAndAuthorities  <i class="menu-arrow"></i></a>
+                                    <ul class="nav-third-level nav" aria-expanded="false">
+                                        <li>
+                                            <a href="/ERPRoles" pv="/ERPRoles">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.ERPRole
+                                            </a>
+
+                                        </li>
+                                        <li>
+                                            <a href="/ERPUsers" pv="/ERPUsers">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.ERPUser
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="/RolePrivilege" pv="/RolePrivilege">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.RolePrivilege
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="/UserPrivilege" pv="/UserPrivilege">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.UserPrivilege
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="/ERPRoleReports" pv="/ERPRoleReports">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.ERPRoleReport
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a href="/UserReports" pv="/UserReports">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.UsersReportingPrivileges
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="/UserNotificationSetting" pv="/UserNotificationSetting">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.UserNotificationSetting
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="/UserHomePage" pv="/UserHomePage">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.CustomizeUserIcons
+
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="/LogIn/ResetPassword" pv="/LogIn/ResetPassword">
+                                                <i class="fa  fa-caret-left"></i>
+                                                @MyERP.Properties.Resources.ChangePassWord
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                @* 10. System Audit/Log (مراقبة حركات النظام) *@
                                 <li>
                                     <a href="javascript:void(0);"><i class="mdi mdi-office-building"></i>  @MyERP.Properties.Resources.MonitorTransactions  <i class="menu-arrow"></i></a>
                                     <ul class="nav-third-level nav" aria-expanded="false">
@@ -4778,28 +4903,15 @@
                                         </li>
                                     </ul>
                                 </li>
-                                <li>
-                                    <a href="/SystemSetting" pv="/SystemSetting"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SystemSettings</a>
-                                </li>
-                                <li>
-                                    <a href="/Helper/SendDailyReportToAdmin" pv="/Helper/SendDailyReportToAdmin"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SendDailyReportToAdmin</a>
-                                </li>
-
-                                <li>
-                                    <a href="/Departments" pv="/Departments"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Branches</a>
-                                </li>
-                                <li>
-                                    <a href="/DebitAgesType" pv="/DebitAgesType">
-                                        <i class="fa  fa-caret-left"></i>
-                                        @MyERP.Properties.Resources.DebitAgesType
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="/City"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Cities</a>
-                                </li>
+                                @* 11. Countries (الدول) *@
                                 <li>
                                     <a href="/Country"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Countries</a>
                                 </li>
+                                @* 12. Cities (المدن) *@
+                                <li>
+                                    <a href="/City"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Cities</a>
+                                </li>
+                                @* 13. Regions (المناطق) *@
                                 <li>
                                     <a href="/Area"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Areas</a>
                                 </li>
@@ -4809,36 +4921,26 @@
                                     <li>
                                         <a href="/ShareHolderEquity" pv="/ShareHolderEquity"><i class="fa  fa-caret-left"></i> حقوق المساهمين</a>
                                     </li>*@
-                                <li>
-                                    <a href="/FinancialPeriods" pv="/FinancialPeriods"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FinancialPeriods</a>
-                                </li>
-                                <li>
-                                    <a href="/TaxesPercentages" pv="/TaxesPercentages"><i class="fa  fa-caret-left"></i>  @MyERP.Properties.Resources.TaxSettings </a>
-                                </li>
                                 @*<li>
                                         <a href="/SystemSetting/DBSetting" pv="/SystemSetting/DBSetting"><i class="fa  fa-caret-left"></i>تهيئة قاعدة البيانات</a>
                                     </li>*@
+                                @* 14. Tasks (المهام) *@
                                 <li>
                                     <a href="/UserTask" pv="/UserTask"><i class="fa  fa-caret-left"></i>@MyERP.Properties.Resources.Tasks</a>
                                 </li>
-                                <li>
-                                    <a href="/Company" pv="/Company"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Companies</a>
-                                </li>
-                                <li>
-                                    <a href="/Activity" pv="/Activity"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.Activities</a>
-                                </li>
-                                <li>
-                                    <a href="/FieldsCoding" pv="/FieldsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FieldsCoding</a>
-                                </li>
-                                <li>
-                                    <a href="/DocumentsCoding" pv="/DocumentsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DocumentsCoding</a>
-                                </li>
-                                <li>
-                                    <a href="/ExcelTemplate" pv="/ExcelTemplate"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DownloadExcelTemplate </a>
-                                </li>
+                                @* 15. Notification Manager (مدير التنبيهات) *@
                                 <li>
                                     <a href="/NotificationsManager" pv="/NotificationsManager"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.NotificationsManager</a>
                                 </li>
+                                @* Hidden: Send Daily Report to Admin (إرسال التقرير اليومي إلى الـ Admin) *@
+                                @*<li>
+                                    <a href="/Helper/SendDailyReportToAdmin" pv="/Helper/SendDailyReportToAdmin"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.SendDailyReportToAdmin</a>
+                                </li>*@
+                                @* Hidden: Download Excel Templates (تحميل نماذج الاكسل) *@
+                                @*<li>
+                                    <a href="/ExcelTemplate" pv="/ExcelTemplate"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.DownloadExcelTemplate </a>
+                                </li>*@
+                                @* Note: DebitAgesType moved to Sales Management module *@
                                 @if (isECommerce)
                                 {
                                     <li>

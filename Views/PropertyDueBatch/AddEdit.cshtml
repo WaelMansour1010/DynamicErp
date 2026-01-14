@@ -85,7 +85,9 @@
                                             <div class="form-group row">
                                                 <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
                                                 <div class="col-sm-4">
-                                                    @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                    
+                                                    @Html.DropDownList("DepartmentId", null, new { @class = "form-control", @required = "required", id = "DepartmentId" })
+
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Select
                                                     </div>
@@ -465,40 +467,76 @@ var taxPercentage = 0.15;
                     return '0' + val;
     }
     function GetPropertyDueBatchDetails() {
-        $('#PropertyDueBatchDetails').empty();
-        $.get('/PropertyDueBatch/GetPropertyDueBatchDetails?FromDate=' + $('#FromDate').val() + '&ToDate=' + $('#ToDate').val()).done(function (r) {
-            if (r.length) {
-                for (var i = 0; i < r.length; i++) {
-                    r[i].BatchDate = r[i].BatchDate != null ? convertToJavaScriptDate(r[i].BatchDate) : "";
-                    r[i].UnitNo = r[i].UnitNo != null ? r[i].UnitNo : "";
-                    [i].IsSelected = [i].IsSelected == true ? "checked" : "";
-                    var HijryBatchDate =new Intl.DateTimeFormat('ar-sa').format(new Date(r[i].BatchDate)).toString();
 
-                    let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="ContractId form-control tabledit-input form-control-sm" value="'+
-                        r[i].ContractId + '" hidden /><input type="text" class="BatchId form-control tabledit-input form-control-sm" value="' +
-                        r[i].BatchId + '" hidden /><label class="ContractNo control-label control-label">' +
-                        r[i].ContractNo + '</label></td><td class="tabledit-edit-mode"><label class="BatchNo control-label control-label">' +
-                        r[i].BatchNo + '</label></td><td class="tabledit-edit-mode"><label class="Renter control-label control-label"> ' +
-                        r[i].Renter + '</label></td><td class="tabledit-edit-mode"><label class="Owner control-label control-label">' +
-                        r[i].Owner + '</label></td><td class="tabledit-edit-mode"><label class="Property control-label control-label">' +
-                        r[i].Property + '</label></td><td class="tabledit-edit-mode"><label class="UnitType control-label control-label">' +
-                        r[i].UnitType + '</label></td><td class="tabledit-edit-mode"><label class="UnitNo control-label control-label">' +
-                        r[i].UnitNo + '</label></td><td class="tabledit-edit-mode"><input type = "date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value = "'+
-                        r[i].BatchDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label">' +
-                        HijryBatchDate + '</label></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' +
-                        r[i].BatchRentValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value = "'+
-                        r[i].BatchRentValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchElectricityValue form-control tabledit-input form-control-sm" value = "'+
-                        r[i].BatchElectricityValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value = "'+
-                        r[i].BatchElectricityValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="' +
-                        r[i].BatchWaterValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' +
-                        r[i].BatchWaterValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="' +
-                        r[i].BatchCommissionValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="' +
-                        r[i].BatchTotal + '" disabled readonly /></td><td><input type="checkbox" class="IsSelected" '+r[i].IsSelected+' /></td></tr> ';
-                    $('#PropertyDueBatchDetails').append(tr);
+        $('#PropertyDueBatchDetails').empty();
+
+        var fromDate = $('#FromDate').val();
+        var toDate = $('#ToDate').val();
+        var deptId = $('#DepartmentId').val() || 0;
+
+        $.get('/PropertyDueBatch/GetPropertyDueBatchDetails', {
+            FromDate: fromDate,
+            ToDate: toDate,
+            DepartmentId: deptId
+        }).done(function (r) {
+
+            if (!r || !r.length) return;
+
+            for (var i = 0; i < r.length; i++) {
+
+                // ✅ تاريخ الجريد: لازم يبقى yyyy-MM-dd للـ input type="date"
+                r[i].BatchDate = r[i].BatchDate != null ? convertToJavaScriptDate(r[i].BatchDate) : "";
+
+                r[i].UnitNo = r[i].UnitNo != null ? r[i].UnitNo : "";
+
+                // ✅ FIX: دي كانت غلط عندك
+                var isChecked = (r[i].IsSelected === true) ? "checked" : "";
+
+                // ✅ الهجري (اختياري) - لو BatchDate فاضي ما نكسرش
+                var HijryBatchDate = "";
+                if (r[i].BatchDate) {
+                    try {
+                        HijryBatchDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+                            year: 'numeric', month: '2-digit', day: '2-digit'
+                        }).format(new Date(r[i].BatchDate));
+                    } catch (e) { HijryBatchDate = ""; }
                 }
+
+                let tr =
+                    '<tr>' +
+                    '<td class="tabledit-edit-mode">' +
+                    '<input type="text" class="ContractId form-control tabledit-input form-control-sm" value="' + r[i].ContractId + '" hidden />' +
+                    '<input type="text" class="BatchId form-control tabledit-input form-control-sm" value="' + r[i].BatchId + '" hidden />' +
+                    '<label class="ContractNo control-label">' + (r[i].ContractNo || '') + '</label>' +
+                    '</td>' +
+                    '<td class="tabledit-edit-mode"><label class="BatchNo control-label">' + (r[i].BatchNo || '') + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="Renter control-label">' + (r[i].Renter || '') + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="Owner control-label">' + (r[i].Owner || '') + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="Property control-label">' + (r[i].Property || '') + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="UnitType control-label">' + (r[i].UnitType || '') + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="UnitNo control-label">' + (r[i].UnitNo || '') + '</label></td>' +
+                    '<td class="tabledit-edit-mode">' +
+                    '<input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="' + r[i].BatchDate + '" disabled readonly />' +
+                    '</td>' +
+                    '<td class="tabledit-edit-mode"><label class="HijryBatchDate control-label">' + HijryBatchDate + '</label></td>' +
+
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' + (r[i].BatchRentValue || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="' + (r[i].BatchRentValueTaxes || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="' + (r[i].BatchElectricityValue || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="' + (r[i].BatchElectricityValueTaxes || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="' + (r[i].BatchWaterValue || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' + (r[i].BatchWaterValueTaxes || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="' + (r[i].BatchCommissionValue || 0) + '" disabled readonly /></td>' +
+                    '<td class="tabledit-edit-mode"><input type="number" step="any" class="BatchTotal form-control tabledit-input form-control-sm" value="' + (r[i].BatchTotal || 0) + '" disabled readonly /></td>' +
+
+                    '<td><input type="checkbox" class="IsSelected" ' + isChecked + ' /></td>' +
+                    '</tr>';
+
+                $('#PropertyDueBatchDetails').append(tr);
             }
         });
     }
+
     //*********************************************************//
     function addEdit(n) {
         let valid = true;

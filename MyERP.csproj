@@ -2018,9 +2018,6 @@
     <Compile Include="Models\Item_TotalItemsProfit_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
-    <Compile Include="Models\JED_AccountFixLog.cs">
-      <DependentUpon>ErpDBModel.tt</DependentUpon>
-    </Compile>
     <Compile Include="Models\Job.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2261,9 +2258,6 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\PropertyContractBatch.cs">
-      <DependentUpon>ErpDBModel.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Models\PropertyContractFixLog.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\PropertyContractImage.cs">

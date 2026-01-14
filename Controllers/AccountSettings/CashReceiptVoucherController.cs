@@ -1820,6 +1820,78 @@ namespace MyERP.Controllers.AccountSettings
             return cashReceiptJEDetails;
 
         }
+
+        /// <summary>
+        /// جلب رصيد المستأجر الكامل (Opening Balance + الحركات)
+        /// </summary>
+        [HttpGet]
+        public JsonResult GetRenterBalance(int propertyRenterId)
+        {
+            try
+            {
+                var renter = db.PropertyRenters
+                    .Where(r => r.Id == propertyRenterId && r.IsDeleted == false)
+                    .Select(r => new
+                    {
+                        r.AccountId,
+                        r.OpeningDebitBalance,
+                        r.OpeningCreditBalance
+                    })
+                    .FirstOrDefault();
+
+                if (renter == null)
+                {
+                    return Json(new { success = false, message = "المستأجر غير موجود", balance = 0 }, JsonRequestBehavior.AllowGet);
+                }
+
+                // 1. الرصيد الافتتاحي
+                decimal openingDebit = renter.OpeningDebitBalance ?? 0;
+                decimal openingCredit = renter.OpeningCreditBalance ?? 0;
+                decimal openingBalance = openingDebit - openingCredit;
+
+                // 2. حساب الحركات من JournalEntryDetail (PartyType = 4 للمستأجر)
+                decimal totalDebit = 0;
+                decimal totalCredit = 0;
+
+                if (renter.AccountId != null)
+                {
+                    var movements = db.JournalEntryDetails
+                        .Where(jed => jed.PartyType == 4
+                                   && jed.PartyId == propertyRenterId
+                                   && jed.IsDeleted == false
+                                   && jed.JournalEntry.IsDeleted == false)
+                        .GroupBy(x => 1)
+                        .Select(g => new
+                        {
+                            TotalDebit = g.Sum(x => x.Debit),
+                            TotalCredit = g.Sum(x => x.Credit)
+                        })
+                        .FirstOrDefault();
+
+                    if (movements != null)
+                    {
+                        totalDebit = movements.TotalDebit;
+                        totalCredit = movements.TotalCredit;
+                    }
+                }
+
+                // 3. الرصيد الكلي = الافتتاحي + (المدين - الدائن)
+                decimal currentBalance = openingBalance + (totalDebit - totalCredit);
+
+                return Json(new {
+                    success = true,
+                    balance = currentBalance,
+                    openingBalance = openingBalance,
+                    totalDebit = totalDebit,
+                    totalCredit = totalCredit
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message, balance = 0 }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

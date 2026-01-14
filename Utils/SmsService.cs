@@ -275,7 +275,7 @@ namespace MyERP
         /// <returns>نص الرسالة</returns>
         public static string CreateDueBatchMessage(string renterName, decimal amount, DateTime dueDate)
         {
-            return $"عزيزي {renterName}، نود إخطارك بصدور قسط بقيمة {amount:N2} يستحق بتاريخ {dueDate:yyyy/MM/dd}. شكراً لتعاونكم.";
+            return $"عزيزي المستأجر {renterName}، نود إخطارك بضرورة سداد دفعة الايجار  بقيمة {amount:N2} المستحق بتاريخ {dueDate:yyyy/MM/dd}.  شركة جوهرة الابتكار شكراً لتعاونكم.";
         }
 
         /// <summary>

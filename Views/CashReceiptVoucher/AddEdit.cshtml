@@ -140,6 +140,21 @@
                                         @Html.DropDownList("PropertyContractId", null, htmlAttributes: new { @class = "PropertyContractId form-control" })
                                     </div>
 
+                                    <label for="IsAgainstOpeningBalance" class="PropertyContractId control-label col-sm-2">نوع السداد</label>
+                                    <div class="PropertyContractId col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+
+                                            @Html.CheckBox("IsAgainstOpeningBalance",
+      (Model != null && Model.IsAgainstOpeningBalance.GetValueOrDefault()),
+      new { @class = "custom-control-input", @id = "IsAgainstOpeningBalance" })
+                                            <label class="custom-control-label" for="IsAgainstOpeningBalance">
+                                                التحصيل من رصيد سابق (Opening Balance)
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            عند تفعيل هذا الخيار، لن يتم ربط السند بأقساط محددة
+                                        </small>
+                                    </div>
 
                                     <label for="TechId" class="TechId control-label col-sm-2">@MyERP.Properties.Resources.Technician</label>
                                     <div class="TechId col-sm-4">
@@ -186,7 +201,13 @@
                                     </div>
                                 </div>
 
-
+                                <div class="form-group row PropertyContractId" style="display:none;">
+                                    <label class="control-label col-sm-2">رصيد المستأجر الكامل</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" id="RenterBalance" class="form-control money-format" readonly disabled style="font-weight: bold; background-color: #f8f9fa;" value="0.00" />
+                                        <small class="form-text text-muted">الرصيد الافتتاحي + الأقساط المستحقة - المسدد</small>
+                                    </div>
+                                </div>
 
                                 <div class="form-group row">
                                     <label for="CashReceiptPaymentMethodId" class="CashReceiptPaymentMethodId control-label col-sm-2">@MyERP.Properties.Resources.PaymentMethod</label>
@@ -962,19 +983,38 @@
 
 
         $('#RenterId').change(function () {
-            console.log('RenterId');
-            $('#PropertyContractId').empty( );
-            $.getJSON('@Url.Action("ContractList","CashReceiptVoucher")/' + $('#RenterId').val(), function (data) {
-                console.log(data);
-                var items = "";
-                $.each(data, function (i, state)
-                {
-                    items += "<option value='" + state.Value + "'>" + state.Text + "</option>";
-                });
-                $('#PropertyContractId').html(items);
+            console.log('RenterId changed');
 
-                GetContractBatches();
-            });
+            // ✅ تفريغ العقود والدفعات
+            $('#PropertyContractId').empty();
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+
+            // ✅ فقط في حالة SourceTypeId = 11 (مستأجر)
+            if ($('#SourceTypeId').val() == 11) {
+
+                // ✅ تحميل رصيد المستأجر
+                loadRenterBalance();
+
+                // ✅ التحقق من الـ checkbox
+                if ($('#IsAgainstOpeningBalance').prop('checked')) {
+                    // ✅ معلم على checkbox: رصيد سابق - لا نجلب العقود
+                    $('#PropertyContractId').prop('disabled', true);
+                    $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+                } else {
+                    // ✅ مش معلم: تحصيل عادي - نجلب العقود والدفعات
+                    $('#PropertyContractId').prop('disabled', false);
+                    $.getJSON('@Url.Action("ContractList","CashReceiptVoucher")/' + $('#RenterId').val(), function (data) {
+                        console.log(data);
+                        var items = "";
+                        $.each(data, function (i, state) {
+                            items += "<option value='" + state.Value + "'>" + state.Text + "</option>";
+                        });
+                        $('#PropertyContractId').html(items);
+                        GetContractBatches();
+                    });
+                }
+            }
+            // ملحوظة: SourceTypeId = 12 (مصاريف العقارات) له كود منفصل تماماً
         });
 
         $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
@@ -1201,6 +1241,10 @@ function sourceTypeChange() {
         $('.EmployeeId').show();
         $('.RenterId').show();
         $('.RenterId').prop('disabled', false);
+        // ✅ تأكيد إخفاء العقود والدفعات في حالة التحصيل من رصيد سابق
+        $('.PropertyContractId').hide();
+        $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+        $('#PropertyBillRegisteration').hide();
         $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
     }
     else if ($('#SourceTypeId').val() == 5) {
@@ -1245,10 +1289,35 @@ function sourceTypeChange() {
         $('.PropertyContractId').prop('disabled', false);
         $('.RenterId').show();
         $('.RenterId').prop('disabled', false);
-        $('#CashReceiptVoucherPropertyContractBatchesTable').show();
-        if (!checkId()) {
-            $('#PropertyContractId').trigger('change');
+
+        // ✅ التحقق من حالة Checkbox الرصيد الافتتاحي
+        if ($('#IsAgainstOpeningBalance').prop('checked')) {
+            // ✅ إذا كان التحصيل من رصيد سابق: إخفاء وقفل العقد والدفعات
+            $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+
+            // ✅ تفريغ رقم العقد والدفعات
+            $('#PropertyContractId').val('');
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+
+            // ✅ قفل الـ dropdown بتاع العقد (بدون إخفاء)
+            $('#PropertyContractId').prop('disabled', true);
+
+        } else {
+            // ✅ التحصيل العادي: إظهار وفتح العقد والدفعات
+            $('#CashReceiptVoucherPropertyContractBatchesTable').show();
+
+            // ✅ فتح الـ dropdown بتاع العقد
+            $('#PropertyContractId').prop('disabled', false);
+
+            // ✅ تحميل بيانات العقد إذا لم يكن في وضع الإنشاء
+            if (!checkId()) {
+                $('#PropertyContractId').trigger('change');
+            }
         }
+
+        // تحميل رصيد المستأجر
+        loadRenterBalance();
+
         $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
     }
     else if ($('#SourceTypeId').val() == 12) { //Property Bill registeration تسجيل مصاريف
@@ -1777,6 +1846,7 @@ function sourceTypeChange() {
             ChildrenId: $('#SourceTypeId').val() == 10 ? $('#ChildrenId').val() : null,
             ElderId: $('#SourceTypeId').val() == 9 ? $('#ElderId').val() : null,
             PropertyContractId: ($('#SourceTypeId').val() == 11 || $('#SourceTypeId').val() == 12) ? $('#PropertyContractId').val() : null,
+            IsAgainstOpeningBalance: $('#SourceTypeId').val() == 11 ? $('#IsAgainstOpeningBalance').prop('checked') : false,
             SalesInvoiceActualPayments: SalesInvoiceActualPayments,
             VendorReceiptNumber: $('#VendorReceiptNumber').val(),
             CashReceiptVoucherPropertyContractBatches: CashReceiptVoucherPropertyContractBatches,
@@ -2021,4 +2091,67 @@ $('#SettlementId').on('change', function () {
         }
     });
 });
+
+// ===================== Opening Balance Handling =====================
+
+// دالة تحميل رصيد المستأجر
+function loadRenterBalance() {
+    var renterId = $('#RenterId').val();
+    if (!renterId || renterId == '') {
+        $('#RenterBalance').val('0.00');
+        return;
+    }
+
+    $.ajax({
+        url: '/CashReceiptVoucher/GetRenterBalance',
+        type: 'GET',
+        data: { propertyRenterId: renterId },
+        success: function (response) {
+            if (response.success) {
+                var balance = parseFloat(response.balance) || 0;
+                $('#RenterBalance').val(balance.toFixed(2));
+            } else {
+                console.error('Error loading renter balance:', response.message);
+                $('#RenterBalance').val('0.00');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading renter balance:', error);
+            $('#RenterBalance').val('0.00');
+        }
+    });
+}
+
+// Event handler للـ Checkbox (IsAgainstOpeningBalance)
+$('#IsAgainstOpeningBalance').on('change', function () {
+    if ($('#SourceTypeId').val() == 11) { // فقط للمستأجرين
+        if ($(this).prop('checked')) {
+            // ✅ التحصيل من رصيد سابق: إخفاء جدول الأقساط وتفريغ العقد
+            $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+
+            // ✅ تفريغ رقم العقد والدفعات
+            $('#PropertyContractId').val('').trigger('change');
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+
+            // ✅ قفل الـ dropdown بتاع العقد (بدون إخفاء)
+            $('#PropertyContractId').prop('disabled', true);
+
+        } else {
+            // ✅ التحصيل العادي: إظهار جدول الأقساط وفتح العقد
+            $('#CashReceiptVoucherPropertyContractBatchesTable').show();
+
+            // ✅ فتح الـ dropdown بتاع العقد
+            $('#PropertyContractId').prop('disabled', false);
+
+            // ✅ إعادة تحميل الأقساط إذا كان هناك عقد محدد
+            if ($('#PropertyContractId').val()) {
+                GetContractBatches();
+            }
+        }
+    }
+});
+
+// ملحوظة: event handler لـ RenterId موجود في الأعلى (السطر 985)
+// وبيتعامل مع كل الحالات: تحميل الرصيد + تحميل العقود
+
 </script>

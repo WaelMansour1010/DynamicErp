@@ -65,6 +65,7 @@ namespace MyERP.Models
         public Nullable<decimal> GasBillValue { get; set; }
         public Nullable<decimal> ViolationBillValue { get; set; }
         public Nullable<int> PropertyContractTerminationId { get; set; }
+        public Nullable<bool> IsAgainstOpeningBalance { get; set; }
     
         public virtual BankAccount BankAccount { get; set; }
         public virtual Branch Branch { get; set; }

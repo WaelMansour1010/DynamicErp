@@ -53,6 +53,9 @@ namespace MyERP.Models
         public string Address { get; set; }
         public Nullable<int> AccountId { get; set; }
         public string NormalizedName { get; set; }
+        public Nullable<decimal> InsuranceAmount { get; set; }
+        public Nullable<decimal> OpeningDebitBalance { get; set; }
+        public Nullable<decimal> OpeningCreditBalance { get; set; }
     
         public virtual Customer Customer { get; set; }
         public virtual CustomerRep CustomerRep { get; set; }

@@ -460,8 +460,6 @@ namespace MyERP.Models
         public virtual DbSet<vw_PropertyBatchDetailed> vw_PropertyBatchDetailed { get; set; }
         public virtual DbSet<vw_PropertyPaymentSummary> vw_PropertyPaymentSummary { get; set; }
         public virtual DbSet<transactionsVatDetail> transactionsVatDetails { get; set; }
-        public virtual DbSet<PropertyContractFixLog> PropertyContractFixLogs { get; set; }
-        public virtual DbSet<JED_AccountFixLog> JED_AccountFixLog { get; set; }
         public virtual DbSet<CashReceiptSourceType> CashReceiptSourceTypes { get; set; }
     
         public virtual ObjectResult<CashBox_Balances_Result> CashBox_Balances(Nullable<int> cashBoxId)
@@ -473,7 +471,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CashBox_Balances_Result>("CashBox_Balances", cashBoxIdParameter);
         }
     
-        public virtual int CashTransfer_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
+        public virtual int CashTransfer_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> chartOfAccountIdFrom, Nullable<int> chartOfAccountIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
         {
             var branchIdParameter = branchId.HasValue ?
                 new ObjectParameter("BranchId", branchId) :
@@ -510,6 +508,14 @@ namespace MyERP.Models
             var cashBoxIdToParameter = cashBoxIdTo.HasValue ?
                 new ObjectParameter("CashBoxIdTo", cashBoxIdTo) :
                 new ObjectParameter("CashBoxIdTo", typeof(int));
+    
+            var chartOfAccountIdFromParameter = chartOfAccountIdFrom.HasValue ?
+                new ObjectParameter("ChartOfAccountIdFrom", chartOfAccountIdFrom) :
+                new ObjectParameter("ChartOfAccountIdFrom", typeof(int));
+    
+            var chartOfAccountIdToParameter = chartOfAccountIdTo.HasValue ?
+                new ObjectParameter("ChartOfAccountIdTo", chartOfAccountIdTo) :
+                new ObjectParameter("ChartOfAccountIdTo", typeof(int));
     
             var currencyIdParameter = currencyId.HasValue ?
                 new ObjectParameter("CurrencyId", currencyId) :
@@ -575,10 +581,10 @@ namespace MyERP.Models
                 new ObjectParameter("DepartmentIdTo", departmentIdTo) :
                 new ObjectParameter("DepartmentIdTo", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Insert", id, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Insert", id, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, chartOfAccountIdFromParameter, chartOfAccountIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
         }
     
-        public virtual int CashTransfer_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
+        public virtual int CashTransfer_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> chartOfAccountIdFrom, Nullable<int> chartOfAccountIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
         {
             var idParameter = id.HasValue ?
                 new ObjectParameter("Id", id) :
@@ -624,6 +630,14 @@ namespace MyERP.Models
                 new ObjectParameter("CashBoxIdTo", cashBoxIdTo) :
                 new ObjectParameter("CashBoxIdTo", typeof(int));
     
+            var chartOfAccountIdFromParameter = chartOfAccountIdFrom.HasValue ?
+                new ObjectParameter("ChartOfAccountIdFrom", chartOfAccountIdFrom) :
+                new ObjectParameter("ChartOfAccountIdFrom", typeof(int));
+    
+            var chartOfAccountIdToParameter = chartOfAccountIdTo.HasValue ?
+                new ObjectParameter("ChartOfAccountIdTo", chartOfAccountIdTo) :
+                new ObjectParameter("ChartOfAccountIdTo", typeof(int));
+    
             var currencyIdParameter = currencyId.HasValue ?
                 new ObjectParameter("CurrencyId", currencyId) :
                 new ObjectParameter("CurrencyId", typeof(int));
@@ -688,7 +702,7 @@ namespace MyERP.Models
                 new ObjectParameter("DepartmentIdTo", departmentIdTo) :
                 new ObjectParameter("DepartmentIdTo", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Update", idParameter, documentNumberParameter, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Update", idParameter, documentNumberParameter, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, chartOfAccountIdFromParameter, chartOfAccountIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
         }
     
         public virtual int CloseTransactions(Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo)
@@ -15423,7 +15437,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPrintItemsBarcode_Result>("GetPrintItemsBarcode", idParameter);
         }
     
-        public virtual ObjectResult<GetPropertyDueBatchDetails_Result> GetPropertyDueBatchDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate)
+        public virtual ObjectResult<GetPropertyDueBatchDetails_Result> GetPropertyDueBatchDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> departmentId)
         {
             var fromDateParameter = fromDate.HasValue ?
                 new ObjectParameter("FromDate", fromDate) :
@@ -15433,7 +15447,11 @@ namespace MyERP.Models
                 new ObjectParameter("ToDate", toDate) :
                 new ObjectParameter("ToDate", typeof(System.DateTime));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyDueBatchDetails_Result>("GetPropertyDueBatchDetails", fromDateParameter, toDateParameter);
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyDueBatchDetails_Result>("GetPropertyDueBatchDetails", fromDateParameter, toDateParameter, departmentIdParameter);
         }
     
         public virtual int PropertyDueBatch_Insert(ObjectParameter id, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, string details)

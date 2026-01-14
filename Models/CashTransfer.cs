@@ -41,6 +41,8 @@ namespace MyERP.Models
         public Nullable<int> SystemPageId { get; set; }
         public Nullable<int> SelectedId { get; set; }
         public Nullable<int> DepartmentIdTo { get; set; }
+        public Nullable<int> ChartOfAccountIdFrom { get; set; }
+        public Nullable<int> ChartOfAccountIdTo { get; set; }
     
         public virtual Bank Bank { get; set; }
         public virtual Bank Bank1 { get; set; }
@@ -54,5 +56,7 @@ namespace MyERP.Models
         public virtual Department Department { get; set; }
         public virtual ERPUser ERPUser { get; set; }
         public virtual SystemPage SystemPage { get; set; }
+        public virtual ChartOfAccount ChartOfAccount { get; set; }
+        public virtual ChartOfAccount ChartOfAccount1 { get; set; }
     }
 }

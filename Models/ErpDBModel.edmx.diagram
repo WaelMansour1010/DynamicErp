@@ -1808,12 +1808,12 @@
         <EntityTypeShape EntityType="MyERPModel.vw_PropertyPaymentSummary" Width="1.5" PointX="5.7199644174985425" PointY="6.5916830928026151" />
         <EntityTypeShape EntityType="MyERPModel.transactionsVatDetail" Width="1.5" PointX="2.288284902595116" PointY="12.423661044064751" />
         <AssociationConnector Association="MyERPModel.FK_PropertyRenter_ChartOfAccount_AccountId" />
-        <AssociationConnector Association="MyERPModel.FK_JED_Vendor" />        
-        <EntityTypeShape EntityType="MyERPModel.PropertyContractFixLog" Width="1.5" PointX="11.723220940550426" PointY="14.043326235396474" />
+        <AssociationConnector Association="MyERPModel.FK_JED_Vendor" />
         <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_PropertyContractTermination" />
-        <EntityTypeShape EntityType="MyERPModel.JED_AccountFixLog" Width="1.5" PointX="4.96159586913958" PointY="3.3871244803942386" />
         <EntityTypeShape EntityType="MyERPModel.CashReceiptSourceType" Width="1.5" PointX="4.9181257546498092" PointY="3.3520241395346932" />
         <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_ReceiptAndPaymentSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ChartOfAccount_From" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ChartOfAccount_To" />
         
         </Diagram>
     </edmx:Diagrams>

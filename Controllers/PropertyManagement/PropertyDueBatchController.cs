@@ -436,11 +436,18 @@ namespace MyERP.Controllers.PropertyManagement
         }
 
         [SkipERPAuthorize]
-        public JsonResult GetPropertyDueBatchDetails(DateTime? FromDate, DateTime? ToDate)
+        public JsonResult GetPropertyDueBatchDetails(DateTime? FromDate, DateTime? ToDate, int? DepartmentId)
         {
-            var Details = db.GetPropertyDueBatchDetails(FromDate, ToDate).ToList();
-            return Json(Details, JsonRequestBehavior.AllowGet);
+            var list = db.Database.SqlQuery<GetPropertyDueBatchDetails_Result>(
+                "EXEC dbo.GetPropertyDueBatchDetails @FromDate, @ToDate, @DepartmentId",
+                new System.Data.SqlClient.SqlParameter("@FromDate", FromDate ?? (object)DBNull.Value),
+                new System.Data.SqlClient.SqlParameter("@ToDate", ToDate ?? (object)DBNull.Value),
+                new System.Data.SqlClient.SqlParameter("@DepartmentId", DepartmentId ?? (object)DBNull.Value)
+            ).ToList();
+
+            return Json(list, JsonRequestBehavior.AllowGet);
         }
+
         /// <summary>
         /// إرسال رسائل SMS للمستأجرين عند إنشاء دفعات مستحقة جديدة
         /// </summary>

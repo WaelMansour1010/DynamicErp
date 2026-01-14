@@ -77,12 +77,21 @@ namespace MyERP.Controllers.AccountSettings
                 ArName = b.Code + " - " + b.ArName
             });
 
+            // Load Chart of Accounts for Account option
+            var chartOfAccounts = db.ChartOfAccounts.Where(a => a.IsActive == true && a.IsDeleted == false).Select(a => new
+            {
+                a.Id,
+                ArName = a.Code + " - " + a.ArName
+            });
+
             if (id == null)
             {
                 ViewBag.BankIdFrom = new SelectList(banks, "Id", "ArName", sysObj.DefaultBankId);
                 ViewBag.BankIdTo = new SelectList(banks, "Id", "ArName", sysObj.DefaultBankId);
                 ViewBag.BankAccountIdFrom = new SelectList(bankAccounts, "Id", "AccountNumber");
                 ViewBag.BankAccountIdTo = new SelectList(bankAccounts, "Id", "AccountNumber");
+                ViewBag.ChartOfAccountIdFrom = new SelectList(chartOfAccounts, "Id", "ArName");
+                ViewBag.ChartOfAccountIdTo = new SelectList(chartOfAccounts, "Id", "ArName");
                 ViewBag.BranchId = new SelectList(db.Branches.Where(b => b.IsDeleted == false && b.IsActive == true).Select(b => new
                 {
                     Id = b.Id,
@@ -180,15 +189,25 @@ namespace MyERP.Controllers.AccountSettings
             }
             if (cashTransfer.DepartmentId != cashTransfer.DepartmentIdTo)//transaction has two journals
             {
-                ViewBag.JE2 = db.GetJournalEntryBySourceIdAndSourcePageId(id, sysPageId).ElementAt(1);
-                if (ViewBag.JE2 != null)
-                {
-                    var JEDocNo = ViewBag.JE2;
-                    ViewBag.JE2.DocumentNumber = JEDocNo != null ? JEDocNo.DocumentNumber.Replace("-", "") : "";
-                    int JEId = ViewBag.JE2.Id;
-                    //int sourcePageId = ViewBag.JE2.SourcePageId;
-                    ViewBag.JEDetails2 = db.JournalEntryDetails.Where(a => a.JournalEntryId == JEId).OrderBy(a => a.Id).ToList();
+                // Get all journal entries for this transaction
 
+                var allJournalEntries = db.GetJournalEntryBySourceIdAndSourcePageId(id, sysPageId).ToList();
+                if (allJournalEntries.Count > 1)
+                {
+                    ViewBag.JE2 = allJournalEntries[1];
+
+                    
+
+                // Check if there is a second journal entry (for different departments)
+
+                    if (ViewBag.JE2 != null)
+                    {
+                        var JEDocNo = ViewBag.JE2;
+                        ViewBag.JE2.DocumentNumber = JEDocNo != null ? JEDocNo.DocumentNumber.Replace("-", "") : "";
+                        int JEId = ViewBag.JE2.Id;
+                        //int sourcePageId = ViewBag.JE2.SourcePageId;
+                        ViewBag.JEDetails2 = db.JournalEntryDetails.Where(a => a.JournalEntryId == JEId).OrderBy(a => a.Id).ToList();
+                    }
                 }
             }
 
@@ -202,6 +221,8 @@ namespace MyERP.Controllers.AccountSettings
             ViewBag.BankIdTo = new SelectList(banks, "Id", "ArName", cashTransfer.BankIdTo);
             ViewBag.BankAccountIdFrom = new SelectList(bankAccounts, "Id", "AccountNumber", cashTransfer.BankAccountIdFrom);
             ViewBag.BankAccountIdTo = new SelectList(bankAccounts, "Id", "AccountNumber", cashTransfer.BankAccountIdTo);
+            ViewBag.ChartOfAccountIdFrom = new SelectList(chartOfAccounts, "Id", "ArName", cashTransfer.ChartOfAccountIdFrom);
+            ViewBag.ChartOfAccountIdTo = new SelectList(chartOfAccounts, "Id", "ArName", cashTransfer.ChartOfAccountIdTo);
             ViewBag.BranchId = new SelectList(db.Branches.Where(b => b.IsDeleted == false && b.IsActive == true).Select(b => new
             {
                 Id = b.Id,
@@ -301,7 +322,7 @@ namespace MyERP.Controllers.AccountSettings
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public ActionResult AddEdit([Bind(Include = "Id,DocumentNumber,BranchId,BankIdFrom,BankAccountIdFrom,BankBranchFrom,BankIdTo,BankAccountIdTo,BankBranchTo,CashBoxIdFrom,CashBoxIdTo,CurrencyId,CurrencyEquivalent,TotalMoneyAmount,TransferTypeId,Date,UserId,IsActive,IsDeleted,IsLinked,IsPosted,Notes,Image,DepartmentId,DepartmentIdTo")] CashTransfer cashTransfer, string newBtn)
+        public ActionResult AddEdit([Bind(Include = "Id,DocumentNumber,BranchId,BankIdFrom,BankAccountIdFrom,BankBranchFrom,BankIdTo,BankAccountIdTo,BankBranchTo,CashBoxIdFrom,CashBoxIdTo,ChartOfAccountIdFrom,ChartOfAccountIdTo,CurrencyId,CurrencyEquivalent,TotalMoneyAmount,TransferTypeId,Date,UserId,IsActive,IsDeleted,IsLinked,IsPosted,Notes,Image,DepartmentId,DepartmentIdTo")] CashTransfer cashTransfer, string newBtn)
         {
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
             if (ModelState.IsValid)
@@ -313,12 +334,16 @@ namespace MyERP.Controllers.AccountSettings
                 {
                     cashTransfer.CashBoxIdFrom = null;
                     cashTransfer.CashBoxIdTo = null;
+                    cashTransfer.ChartOfAccountIdFrom = null;
+                    cashTransfer.ChartOfAccountIdTo = null;
                 }
                 else if (cashTransfer.TransferTypeId == 2)
                 {
                     cashTransfer.CashBoxIdFrom = null;
                     cashTransfer.BankIdTo = null;
                     cashTransfer.BankAccountIdTo = null;
+                    cashTransfer.ChartOfAccountIdFrom = null;
+                    cashTransfer.ChartOfAccountIdTo = null;
                 }
                 else if (cashTransfer.TransferTypeId == 3)
                 {
@@ -326,11 +351,53 @@ namespace MyERP.Controllers.AccountSettings
                     cashTransfer.BankAccountIdFrom = null;
                     cashTransfer.BankIdTo = null;
                     cashTransfer.BankAccountIdTo = null;
+                    cashTransfer.ChartOfAccountIdFrom = null;
+                    cashTransfer.ChartOfAccountIdTo = null;
                 }
                 else if (cashTransfer.TransferTypeId == 4)
                 {
                     cashTransfer.BankIdFrom = null;
                     cashTransfer.BankAccountIdFrom = null;
+                    cashTransfer.CashBoxIdTo = null;
+                    cashTransfer.ChartOfAccountIdFrom = null;
+                    cashTransfer.ChartOfAccountIdTo = null;
+                }
+                // New transfer types for Account option
+                else if (cashTransfer.TransferTypeId == 5) // Bank to Account
+                {
+                    cashTransfer.CashBoxIdFrom = null;
+                    cashTransfer.CashBoxIdTo = null;
+                    cashTransfer.ChartOfAccountIdFrom = null;
+                }
+                else if (cashTransfer.TransferTypeId == 6) // Account to Bank
+                {
+                    cashTransfer.CashBoxIdFrom = null;
+                    cashTransfer.CashBoxIdTo = null;
+                    cashTransfer.ChartOfAccountIdTo = null;
+                }
+                else if (cashTransfer.TransferTypeId == 7) // CashBox to Account
+                {
+                    cashTransfer.BankIdFrom = null;
+                    cashTransfer.BankAccountIdFrom = null;
+                    cashTransfer.BankIdTo = null;
+                    cashTransfer.BankAccountIdTo = null;
+                    cashTransfer.ChartOfAccountIdFrom = null;
+                }
+                else if (cashTransfer.TransferTypeId == 8) // Account to CashBox
+                {
+                    cashTransfer.BankIdFrom = null;
+                    cashTransfer.BankAccountIdFrom = null;
+                    cashTransfer.BankIdTo = null;
+                    cashTransfer.BankAccountIdTo = null;
+                    cashTransfer.ChartOfAccountIdTo = null;
+                }
+                else if (cashTransfer.TransferTypeId == 9) // Account to Account
+                {
+                    cashTransfer.BankIdFrom = null;
+                    cashTransfer.BankAccountIdFrom = null;
+                    cashTransfer.BankIdTo = null;
+                    cashTransfer.BankAccountIdTo = null;
+                    cashTransfer.CashBoxIdFrom = null;
                     cashTransfer.CashBoxIdTo = null;
                 }
 
@@ -342,7 +409,7 @@ namespace MyERP.Controllers.AccountSettings
                     }
                     cashTransfer.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
 
-                    db.CashTransfer_Update(cashTransfer.Id, cashTransfer.DocumentNumber, cashTransfer.BranchId, cashTransfer.BankIdFrom, cashTransfer.BankAccountIdFrom, cashTransfer.BankBranchFrom, cashTransfer.BankIdTo, cashTransfer.BankAccountIdTo, cashTransfer.BankBranchTo, cashTransfer.CashBoxIdFrom, cashTransfer.CashBoxIdTo, cashTransfer.CurrencyId, cashTransfer.CurrencyEquivalent, cashTransfer.TotalMoneyAmount, cashTransfer.Date, cashTransfer.UserId, cashTransfer.IsActive, cashTransfer.IsDeleted, cashTransfer.IsLinked, cashTransfer.IsPosted, cashTransfer.Notes, cashTransfer.Image, cashTransfer.TransferTypeId, cashTransfer.DepartmentId, null, null, cashTransfer.DepartmentIdTo);
+                    db.CashTransfer_Update(cashTransfer.Id, cashTransfer.DocumentNumber, cashTransfer.BranchId, cashTransfer.BankIdFrom, cashTransfer.BankAccountIdFrom, cashTransfer.BankBranchFrom, cashTransfer.BankIdTo, cashTransfer.BankAccountIdTo, cashTransfer.BankBranchTo, cashTransfer.CashBoxIdFrom, cashTransfer.CashBoxIdTo, cashTransfer.ChartOfAccountIdFrom, cashTransfer.ChartOfAccountIdTo, cashTransfer.CurrencyId, cashTransfer.CurrencyEquivalent, cashTransfer.TotalMoneyAmount, cashTransfer.Date, cashTransfer.UserId, cashTransfer.IsActive, cashTransfer.IsDeleted, cashTransfer.IsLinked, cashTransfer.IsPosted, cashTransfer.Notes, cashTransfer.Image, cashTransfer.TransferTypeId, cashTransfer.DepartmentId, null, null, cashTransfer.DepartmentIdTo);
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashTransfers", "Edit", "AddEdit", id, null, "تحويل النقدية");
                     ////////////-----------------------------------------------------------------------
@@ -355,7 +422,7 @@ namespace MyERP.Controllers.AccountSettings
                     cashTransfer.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
                     var idResult = new ObjectParameter("Id", typeof(Int32));
                     //-----------------------------------------------------
-                    db.CashTransfer_Insert(idResult, cashTransfer.BranchId, cashTransfer.BankIdFrom, cashTransfer.BankAccountIdFrom, cashTransfer.BankBranchFrom, cashTransfer.BankIdTo, cashTransfer.BankAccountIdTo, cashTransfer.BankBranchTo, cashTransfer.CashBoxIdFrom, cashTransfer.CashBoxIdTo, cashTransfer.CurrencyId, cashTransfer.CurrencyEquivalent, cashTransfer.TotalMoneyAmount, cashTransfer.Date, cashTransfer.UserId, cashTransfer.IsActive, cashTransfer.IsDeleted, cashTransfer.IsLinked, false, cashTransfer.Notes, cashTransfer.Image, cashTransfer.TransferTypeId, cashTransfer.DepartmentId, null, null, cashTransfer.DepartmentIdTo);
+                    db.CashTransfer_Insert(idResult, cashTransfer.BranchId, cashTransfer.BankIdFrom, cashTransfer.BankAccountIdFrom, cashTransfer.BankBranchFrom, cashTransfer.BankIdTo, cashTransfer.BankAccountIdTo, cashTransfer.BankBranchTo, cashTransfer.CashBoxIdFrom, cashTransfer.CashBoxIdTo, cashTransfer.ChartOfAccountIdFrom, cashTransfer.ChartOfAccountIdTo ,cashTransfer.CurrencyId, cashTransfer.CurrencyEquivalent, cashTransfer.TotalMoneyAmount, cashTransfer.Date, cashTransfer.UserId, cashTransfer.IsActive, cashTransfer.IsDeleted, cashTransfer.IsLinked, false, cashTransfer.Notes, cashTransfer.Image, cashTransfer.TransferTypeId, cashTransfer.DepartmentId, null, null, cashTransfer.DepartmentIdTo);
 
                     id = (int)idResult.Value;
                     ////-------------------- Notification-------------------------////
