@@ -396,3 +396,13 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/Scripts
+/nul
+/QUICK_START_CashTransfer_Account.md
+/SUMMARY_التحديثات.md
+/تحسين_شاشة_تحويل_النقدية_README.md
+/دليل_التطبيق_السريع.md
+/مقارنة_قبل_وبعد.md
+/CashTransfer_Account_Enhancement.md
+/CLAUDE.MD
+/INDEX_الملفات.md
