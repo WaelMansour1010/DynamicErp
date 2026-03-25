@@ -1,0 +1,141 @@
+﻿@model MyERP.Models.UserReport
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.UsersReportingPrivileges;
+}
+
+@Html.AntiForgeryToken()
+<div class="panel panel-widget forms-panel">
+   <div class="row">
+       <div class="col-12">
+           <div class="page-title-box">
+               <div class="page-title-right">
+                   <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+               </div>
+               <div class="page-title">@MyERP.Properties.Resources.UsersReportingPrivileges:</div>
+           </div>
+       </div>
+   </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+         @*   <form action="/UserReports/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+                <div class="row">
+                    <div class="col-12">
+
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        @if (Model != null)
+                        {
+                            @Html.HiddenFor(model => model.Id)
+
+
+                        }
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel-group" id="accordion">
+                                    <div>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.User </label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownList("UserId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>                                            
+    @*<span class="Asterisks">*</span>*@
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        <div class="form-group">
+                                            <table class="table table-hover table-condensed">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="col-sm-6">@MyERP.Properties.Resources.Reports</th>
+                                                        <th class="col-sm-6">@MyERP.Properties.Resources.Privilege</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="Privileges"></tbody>
+                                            </table>
+                                        </div>
+
+                                        <div style="float:left">
+                                            <button class="btn btn-success" onclick="addEdit()">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @*</form>*@
+        </div>
+    </div>
+</div>
+
+<input type="hidden" value="@Session["UserId"]" id="hdnUserId" />
+
+
+<script>
+    $(document).on('change', '#UserId', function () {
+        $('#UserId').val() ? $('#preloader, #status').fadeIn() : null;
+        $.get('/UserReports/UserReports?userId=' + $('#UserId').val()).done(function (r) {
+            $('#Privileges').empty();
+            $('#Privileges').append('<tr><td class="col-sm-8">' + '@MyERP.Properties.Resources.All' + '</td><td class="col-sm-4"><input type="checkbox" id="checkAll" onclick="All()" /></td></tr>' + r);
+            $('#preloader, #status').fadeOut();
+        });
+    });
+    $(document).on('change', 'input[type="checkbox"]:not("#checkAll")', function () {
+        $(this).prop('checked') ? null : $('#checkAll').removeAttr('checked');
+    });
+
+    function All() {
+        if ($('#checkAll').prop('checked')) {
+            $('input[type="checkbox"]').prop('checked', 'checked');
+        } else {
+            $('input[type="checkbox"]').removeAttr('checked');
+        }
+    }
+
+    function addEdit() {
+        var Privileges = [];
+        $('#Privileges tr').each(function () {
+            var td = $(this);
+            var erpRoleReport = {
+                ReportId: td.find('.ReportId').val(),
+                UserId: $('#UserId').val(),
+                Privileged: td.find('.Privileged').prop('checked')
+            };
+            Privileges.push(erpRoleReport);
+        });
+        var data = {
+            Id: $('#UserId').val(),
+            UserReports: Privileges
+
+        }
+        console.log(data)
+
+        $.ajax({
+            type: "POST",
+            url: "/UserReports/Index",
+            data:
+            data
+            ,
+            success: function (r) {
+
+                alert('@MyERP.Properties.Resources.Saved'+'!');
+                window.location.reload();
+
+            },
+            error: function (r) {
+                alert('@MyERP.Properties.Resources.NotSaved'+'!');
+
+
+            }
+        });
+    }
+</script>

@@ -1,0 +1,24 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequest>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td class="tabledit-edit-mode">
+            @item.DocumentNumber
+        </td>
+        <td class="tabledit-edit-mode">
+            @Html.DisplayFor(x=>item.VoucherDate)
+        </td>
+        <td class="tabledit-edit-mode">
+            @item.DepartmentArName
+        </td>
+        <td class="tabledit-edit-mode">
+            <a href="javascript:void(0);" data-toggle="modal" data-target="#PRDetails" onclick="showPRDetials(@item.Id);">
+                <i class="remixicon-pages-line"></i>
+            </a>
+        </td>
+        <td>
+            <input type="checkbox" class="AddPRToMR" value="@item.Id" onchange="AddPRToMR()" @Html.Raw(item.Checked==true?"checked":"") />
+        </td>
+    </tr>
+}

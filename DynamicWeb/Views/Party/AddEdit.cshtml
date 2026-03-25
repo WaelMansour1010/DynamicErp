@@ -1,0 +1,587 @@
+﻿@model MyERP.Models.Party
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.Parties;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Parties :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.Image)
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                    }
+
+                                    <label for="Code" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                    <label for="Date" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Date, new { htmlAttributes = new { @class = "form-control", @type = "date", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="From"> @MyERP.Properties.Resources.FromTime </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.FromTime, new { htmlAttributes = new { @class = "form-control", type = "time", @required = "required" } })
+                                    </div>
+                                    <label class="col-sm-2 control-label" for="To"> @MyERP.Properties.Resources.ToTime </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ToTime, new { htmlAttributes = new { @class = "form-control", type = "time", @required = "required" } })
+                                    </div>
+                                </div>
+                                <div class="form-group  row">
+                                    <label for="TypeId" class="control-label col-sm-2">@MyERP.Properties.Resources.Singer</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SingerId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                                @* مكان الصورة *@
+                                <div class="form-group row">
+                                    <div id="gallery" style="width: 100%;margin: 20px;">
+                                        @{ if (Model != null && Model.PartyImages != null)
+                                            {
+                                                foreach (MyERP.Models.PartyImage img in Model.PartyImages)
+                                                {
+                                                    <img onclick="ShowModal(this)" data-toggle="modal" data-target="#ImageModal" src="@img.Image" alt="" class="img_@img.Id" style="max-width: 200px;max-height: 200px;" />
+                                                    <i class="fas fa-trash-alt img_@img.Id" style="cursor:pointer;" onclick="DeleteIMG('@img.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                }
+                                            }
+                                        }
+                                    </div>
+                                    <input type="file" id="BrowseImage" onchange="previewFile()" value="Browse" multiple />
+                                    <div style="display:none;">
+                                        @Html.ListBoxFor(i => i.PartyImages, new SelectList(Model == null ? new List<MyERP.Models.PartyImage>() : Model.PartyImages, "Id", "Image", Model == null ? null : Model.PartyImages), new { @class = "form-control1", placeholder = "Item Photos" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!----------------------------------------------- Chair Prices -------------------------------------------------------->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.ChairsPrices</h5>
+                            <h3 class="header-title" id="ReservedChairsTitle" style="color:red;">   </h3>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.From</th>
+                                                <th>@MyERP.Properties.Resources.To</th>
+                                                <th>@MyERP.Properties.Resources.Price</th>
+                                                <th>@MyERP.Properties.Resources.Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="Chairs">
+                                            @if (Model != null)
+                                            {
+                                                
+                                                @*foreach (var item in Model.Chairs)
+                                                        {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode"><input class="FromNo  form-control tabledit-input form-control-sm" type="text" value="@item.ChairNo" required /></td>
+                                                        <td class="tabledit-edit-mode"><input class="ToNo  form-control tabledit-input form-control-sm" type="text" value="@item.ChairNo" required /></td>
+                                                        <td class="tabledit-edit-mode"><input type="text" class="money Price form-control tabledit-input form-control-sm" value="@item.Price" required /></td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                        }*@
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td class="tabledit-edit-mode"><input class="FromNo  form-control tabledit-input form-control-sm" type="text" required /></td>
+                                                    <td class="tabledit-edit-mode"><input class="ToNo  form-control tabledit-input form-control-sm" type="text" required /></td>
+                                                    <td class="tabledit-edit-mode"><input type="text" class="money Price form-control tabledit-input form-control-sm" required /></td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <button class="btn btn-success" onclick="addToChairs()">
+                                    @MyERP.Properties.Resources.AddPrice
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!----------------------------------------------- End Of Chair Prices -------------------------------------------------------->
+
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button type="submit" onclick="addEdit('new')" class="btn btn-success">@MyERP.Properties.Resources.SaveAndNew</button>
+                        <button class="btn btn-success" onclick="addEdit()">@MyERP.Properties.Resources.Save</button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+
+                        <button class="btn btn-success" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ----------------------------------  image Modal ---------------------------------------------- *@
+<div class="modal fade" id="ImageModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img id="imagepreview" src="" style="max-width: 400px;max-height: 400px;margin-left: 2%;margin-bottom: 2%;" alt="" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+//--------------- Variables Declarations -------------------//
+    var ReservedChairsCount = '@ViewBag.ReservedChairsCount';
+    var ReservedChairs = [];
+
+    //*********************************************************//
+
+
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#Date').val('@ViewBag.Date');
+
+        if ($('#Id').val()) {
+            GetChairsPrices();
+            if (ReservedChairsCount > 0) {
+                $('#ReservedChairsTitle').text('@MyERP.Properties.Resources.YouCantEditReservedChairs')
+            }
+        }
+        else {
+            setCodeNum();
+        }
+
+        $('#img').on('change', function () {
+
+            $('#oImg').val($('#img').val());
+        });
+
+    });
+
+    //*********************************************************//
+    $(".photo").change(function () {
+        $(".imgold").addClass("hidden");
+    });
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $(".imgnew").removeClass("hidden");
+
+                $('#blah')
+                    .attr('src', e.target.result)
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    //---------------------------------------------------------------- images gallery  --------------------------------------------------------------//
+    function DeleteIMG(url)
+    {
+        $("#PartyImages option[value='" + url + "']").remove();
+    }
+    function previewFile()
+    {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /></a><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#PartyImages").append("<option style='float: left;' selected=selected>" + reader.result + "</option>");
+        }, false);
+
+        for (var i = 0; i < $("#BrowseImage")[0].files.length; i++) {
+            if ($("#BrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#BrowseImage")[0].files[i]);
+            }
+        }
+    }
+    $("#PartyImages option").attr('selected', 'selected');
+    $("#PartyImages").hide();
+    $("#GetImage").click(function () {
+        $("#GetImage").fadeOut();
+        $('#UploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteIMG("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#PartyImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+    function ShowModal(img)
+    {
+        let ImageSelected = $(img);
+        let ImageSrc = ImageSelected[0].currentSrc;
+        $('#imagepreview').attr('src', ImageSrc);
+    }
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+
+
+    function addToChairs() {
+        if ($('#Chairs .form-control:invalid').length > 0) {
+            $('#Chairs').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#Chairs").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        }
+        else {
+            let tr = '<tr><td class="tabledit-edit-mode" > <input class="FromNo  form-control tabledit-input form-control-sm" type="text" required /></td ><td class="tabledit-edit-mode"><input class="ToNo  form-control tabledit-input form-control-sm" type="text" required /></td><td class="tabledit-edit-mode"><input type="text" class="money Price form-control tabledit-input form-control-sm" required /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            $('#Chairs').append(tr);
+
+            $('.money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+            });
+            $('#Chairs input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+
+        }
+    }
+
+
+
+    function setCodeNum() {
+        var doc = $.get('/Party/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+
+    function GetChairsPrices() {
+        $('#Chairs').empty();
+        $.get('/Party/GetChairsPrices?PartyId=' + $('#Id').val()).done(function (r) {
+            var ChairsPrices = r.ChairsPrices;
+            ReservedChairs = r.Chairs;
+            var readonly = ReservedChairsCount > 0 ? 'readonly' : '';
+            for (var i = 0; i < ChairsPrices.length; i++) {
+                let tr = '<tr><td class="tabledit-edit-mode" > <input '+readonly+' class="FromNo form-control tabledit-input form-control-sm" type="text" required value="' +
+                    ChairsPrices[i].FromNo + '" /></td ><td class="tabledit-edit-mode"><input '+readonly+' class="ToNo  form-control tabledit-input form-control-sm" type="text" required value="' +
+                    ChairsPrices[i].ToNo + '"/></td><td class="tabledit-edit-mode"><input type="text" '+readonly+' class="money Price form-control tabledit-input form-control-sm" required value="' +
+                    ChairsPrices[i].Price + '" /></td><td><a href="javascript:void(0);" ' + readonly +'onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                $('#Chairs').append(tr);
+            }
+        });
+    }
+
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1)
+            $(tr).find("input").val('');
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+        }
+    }
+
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+
+
+        var PartyImages = [];
+        if (valid) {
+            $('#PartyImages option').each(function () {
+                var option = $(this);
+
+                var PartyImage =
+                {
+                    MainDocId: $('#Id').val(),
+                    Image: option.text()
+                };
+                PartyImages.push(PartyImage);
+            });
+        }
+
+        var Chairs = [];
+        if (valid) {
+            $('#Chairs tr').each(function () {
+                var td = $(this);
+                var Chair = {
+                    PartyId: $('#Id').val(),
+                    FromNo: td.find('.FromNo').val(),
+                    ToNo: td.find('.ToNo').val(),
+                    Price: td.find('.Price').inputmask('unmaskedvalue') * 1,
+                    IsActive: true,
+                    IsDeleted: false,
+                };
+                if (td.find('.Price').inputmask('unmaskedvalue') && td.find('.ToNo').inputmask('unmaskedvalue') && td.find('.FromNo').inputmask('unmaskedvalue')) {
+                    Chairs.push(Chair);
+                }
+            });
+
+            var ChairsArr = []
+
+            for (var i = 0; i < Chairs.length; i++) {
+                for (var j = parseInt(Chairs[i].FromNo); j <= parseInt(Chairs[i].ToNo); j++) {
+                    let oldChair = ReservedChairs.filter(function (i) { return i.ChairNo == j; })[0];
+
+                    var _chair = {
+                        PartyId: Chairs[i].PartyId,
+                        ChairNo:j,
+                        Price: Chairs[i].Price,
+                        IsActive: true,
+                        IsDeleted: false,
+                        IsReserved: oldChair!=null? oldChair.IsReserved:null
+                    }
+                    ChairsArr.push(_chair);
+
+                }
+            }
+        }
+        if (Chairs.length == 0) {
+            valid = false;
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.ChairsPrices @MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/Party/AddEdit",
+                        data:
+                            JSON.stringify({
+                                Id: $('#Id').val(),
+                                Code: $('#Code').val(),
+                                Date: $('#Date').val(),
+                                FromTime: $('#FromTime').val(),
+                                ToTime: $('#ToTime').val(),
+                                Notes: $('#Notes').val(),
+                                UserId: $('#UserId').val(),
+                                Image: $('#Image').val(),
+                                SingerId: $('#SingerId').val(),
+                                IsActive: true,
+                                IsDeleted: false,
+                                PartyImages: PartyImages,
+                                Chairs: ChairsArr,
+
+                            }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                                if (n == "new") {
+                                    window.location.replace("/Party/AddEdit");
+                                }
+                                else {
+                                    window.location.replace("/Party");
+                                }
+                            }
+                            else {
+                                $('#preloader, #status').fadeOut();
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/Party/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/Party');
+                            } else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+</script>

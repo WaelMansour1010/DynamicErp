@@ -1,0 +1,21 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoiceInstallmentDetail>
+
+@foreach (var item in Model) {
+    <tr>
+        <td class="col-sm-2">
+            <input type="date" class="InstallmentDueDate form-control" value="@item.DueDate.ToString("yyyy-MM-dd")"/>
+        </td>
+        <td>
+            <input type="text" class="InstallmentAmount money form-control" value="@item.InstallmentAmount"/>
+        </td>
+        <td class="InstallmentPaid">
+            @Html.DisplayFor(modelItem => item.Paid)
+        </td>
+        <td class="InstallmentRemaining">
+            @Html.DisplayFor(modelItem => item.Remaining)
+        </td>
+        <td>
+            <textarea class="form-control InstallmentNotes">@item.Notes</textarea>
+        </td>
+    </tr>
+}

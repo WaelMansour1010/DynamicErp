@@ -1,0 +1,44 @@
+﻿@model IEnumerable<MyERP.Models.SalesOrder>
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.DocumentNumber)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Customer.ArName)
+        </td>
+
+        <td>
+            @Html.DisplayFor(modelItem => item.VoucherDate)
+        </td>
+
+        <td>
+            @Html.DisplayFor(modelItem => item.Department.ArName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Warehouse.ArName)
+        </td>
+
+        <td>
+                @Html.DisplayFor(modelItem => item.TotalAfterTaxes, new { @class = "money" })
+        </td>
+
+        <td>
+            @if (item.IsCompleted != true)
+            {
+                <a href="javascript:void(0);" onclick="editSalesOrder(@item.Id, @item.DocumentNumber, @item.DepartmentId, @item.WarehouseId, @item.VendorOrCustomerId)">
+                    <i class="fa fa-edit"></i>
+                </a>
+            }
+        </td>
+        <td>
+            @if (item.IsCompleted != true)
+            {
+                <a href="javascript:void(0);" onclick="Delete(@item.Id)">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            }
+        </td>
+    </tr>
+}

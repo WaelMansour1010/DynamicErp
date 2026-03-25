@@ -1,0 +1,2520 @@
+﻿@model MyERP.Models.SalesOrder
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.ReservationVoucher;
+    if (ViewBag.IsCashier == true)
+    {
+        Layout = "~/Views/Shared/_CashierLayout.cshtml";
+    }
+    else if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+}
+<link href="~/assets/css/easy-numpad.css" rel="stylesheet" />
+
+<link href="~/Content/numpad-light.css" rel="stylesheet" />
+
+<script src="~/Scripts/numpad.js"></script>
+<script src="~/assets/js/easy-numpad.js"></script>
+
+@*<div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                </div>
+                <h4 class="page-title">@MyERP.Properties.Resources.ReservationVoucher : </h4>
+            </div>
+        </div>
+    </div>*@
+@if (Model != null)
+{
+    @Html.HiddenFor(x => x.Id)
+}
+<!-- //**** NEW Code ****// -->
+<div class="row">
+    @*<input type="hidden" id="CashBoxId" value="@ViewBag.CashBoxId" />*@
+
+    <div class="col-sm-6" style=" padding: 1px;background-color: white;">
+        <div class="form-group row" style="margin-bottom:0">
+        </div>
+        <div style="background-color:white;">
+            <div class="row form-group " style="margin-bottom:0">
+                <label class="control-label col-sm-1 VendorOrCustomerIdDiv">@MyERP.Properties.Resources.Customer </label>
+                <label class="control-label col-sm-1 PosCustomerIdDiv">@MyERP.Properties.Resources.Customer </label>
+                <div class="col-sm-2 VendorOrCustomerIdDiv">
+                    <div class="row ">
+                        <div class="col-sm-10">
+                            <select class="form-control" id="VendorOrCustomerId">
+                                @if (Model != null)
+                                {
+                                    <option value="@Model.VendorOrCustomerId"></option>
+                                }
+                            </select>
+
+                            @if (Model != null)
+                            {
+                                <input hidden class="VendorOrCustomerId" value='@Model.VendorOrCustomerId' />
+
+                            }
+                            else
+                            {
+                                <input hidden class="VendorOrCustomerId" />
+
+                            }
+
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-sm-2 customer-model-btn" style="padding: 0;margin-right: -10px;">
+                            <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#customer-modal"><i class="remixicon-user-add-fill"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-3 PosCustomerIdDiv">
+                    <div class="row ">
+                        <div class="col-sm-10">
+                            <select class="form-control" disabled id="PosCustomerId">
+                                @if (Model != null)
+                                {
+                                    <option value="@Model.PosCustomerId"></option>
+                                }
+                            </select>
+
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+
+                        <div class="col-sm-2 pos-customer-model-btn" style="padding: 0;margin-right: -10px;">
+                            <button class="btn btn-success  btn-sm" id="posCustomerAddBtn" data-toggle="modal"><i class="remixicon-user-add-fill"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                @* <label class="control-label tableDiv col-sm-1">@MyERP.Properties.Resources.Table </label>
+                    <div class="col-sm-3 tableDiv">
+                         @if (Model != null)
+                         {
+                             if (Model.Table != null)
+                             {
+                                 <input class="form-control" readonly id="tableName" value="@Html.Raw((Model.Table.Code != null ? Model.Table.Code : "") + "-" + (Model.Table.ArName != null ? Model.Table.ArName : ""))" />
+                                 <input class="form-control" readonly id="selectedTableId" value="@Model.Table.Id" hidden />
+                             }
+
+                         }
+                         else
+                         {
+                             <input class="form-control" readonly id="tableName" value='@ViewBag.SelectedTableName' />
+                             <input class="form-control" readonly id="selectedTableId" value='@ViewBag.SelectedTableId' hidden />
+                         }
+                     </div>*@
+                <label class=" VendorOrCustomerDetailsDiv col-sm-1 ml-2 control-label" for="Phone">@MyERP.Properties.Resources.CustomerTel</label>
+                <div class=" VendorOrCustomerDetailsDiv col-sm-3">
+                    <input type="text" class="form-control" id="customer-mobile" readonly />
+                </div>
+                <label class="VendorOrCustomerDetailsDiv col-sm-1 control-label" for="Address">@MyERP.Properties.Resources.CustomerAddress</label>
+                <div class="VendorOrCustomerDetailsDiv col-sm-3">
+                    <input type="text" class="form-control" id="customer-address" readonly />
+                </div>
+                <label class="PosCustomerDetailsDiv col-sm-2 ml-2 control-label" for="Phone">@MyERP.Properties.Resources.CustomerTel</label>
+                <div class="PosCustomerDetailsDiv col-sm-3">
+                    <input type="text" class="form-control" id="pos-customer-mobile" />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="PosCustomerDetailsDiv col-sm-2 control-label" for="Address">@MyERP.Properties.Resources.CustomerAddress</label>
+                <div class="PosCustomerDetailsDiv col-sm-3">
+                    <label type="text" class="label control-label" id="pos-customer-address" readonly></label>
+
+                </div>
+            </div>
+        </div>
+        <!--********* ItemGroupDiv ***************-->
+        <div id="ItemGropDiv">
+            <div class="row">
+                <div id="item-groups" style="width:100%">
+                </div>
+            </div>
+        </div>
+        <!-- End of ItemGroupDiv -->
+        @*@if (ViewBag.ShowCashBoxBalance != false)
+                {
+                    <div class="row form-group">
+                        <label class="control-label">@MyERP.Properties.Resources.CashBoxBalance</label>
+                        <div class="col-sm-2">
+                            <input class="form-control form-control-sm" id="cashBoxBalance" readonly />
+                        </div>
+                    </div>
+                }
+            <div class="row form-group">
+            </div>*@
+    </div>
+    <div class="col-sm-6 " style="background-color: white;">
+        <div class="row ml-1 mr-1 mb-1" style="border-style: solid;
+        border-color: #e7eaed;
+        border-width: 1px;
+        border-radius: 5px;">
+            <button class="btn btn-info invoiceInfoBtn ml-1 mr-1" id="invoiceInfoBtn">@MyERP.Properties.Resources.InvoiceInfo</button>
+            @if (ViewBag.IsCashier == true)
+            {
+                <a class="btn btn-success ml-1 mr-1" href="/SalesOrder/Panel" target="_blank" role="button">@MyERP.Properties.Resources.NewInvoice <i class="fa fa-receipt"></i></a>
+                <a class="btn btn-danger ml-1 mr-1" href="@Url.Action("AddEdit", "PosClosing")" role="button">@MyERP.Properties.Resources.ShiftClosing <i class="fa fa-window-close"></i></a>
+            }
+        </div>
+        <!-- Invoice Div -->
+        <div id="InvoiceDiv" style="min-height: 69%;
+        max-height: 70%;
+        overflow-y: scroll;
+        border-style: solid;
+        border-color: #e7eaed;
+        border-width: 1px;
+        border-radius: 5px;">
+            <div class="card m-1 p-1">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="form-group row d-flex justify-content-between" style="height:fit-content">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-centered table-sm mb-0">
+                            <thead>
+                                <tr style="background-color:#37cde6;color:white">
+                                    <th style="width:40%">@MyERP.Properties.Resources.Item </th>
+                                    <th class="text-center">@MyERP.Properties.Resources.Qty</th>
+                                    <th class="text-center UnitClass" style="display:none;">@MyERP.Properties.Resources.Unit</th>
+                                    <th class="text-center price-th">@MyERP.Properties.Resources.Price</th>
+                                    <th class="text-center price-th">@MyERP.Properties.Resources.Total</th>
+                                    <th><i class="fas fa-trash-alt"></i></th>
+                                    <th class="EnableAdditionalItemsOnPos"><i class="fa fa-plus" aria-hidden="true"></i></th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div class="table-responsive" id="itemTable">
+                        <table class="table table-centered table-sm mb-0">
+                            <tbody id="SalesOrderDetails">
+                                @if (Model != null)
+                                {
+                                    foreach (var item in Model.SalesOrderDetails)
+                                    {
+                                        <tr bgcolor="@Html.Raw(item.ExtraTypeId!= null ? "Pink" : "")">
+                                            <td hidden class="RowId"></td>
+                                            <td hidden class="@Html.Raw(item.ExtraTypeId== null ? "Main" : "")">Main</td>
+                                            <td hidden class="MainItemId"></td>
+
+                                            <td style="width:40%" class="tabledit-edit-mode" colspan="1">
+                                                <input type="hidden" class="item" required value="@item.ItemId" />
+                                                <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="@item.Item.ArName" />
+                                                <input type="hidden" class="barcode" required value="@item.ItemPrice.Barcode" />
+                                                <input type="hidden" class="item-price-id" required value="@item.ItemPriceId" />
+                                            </td>
+                                            <td class="tabledit-edit-mode" colspan="1">
+                                                <input class="money quantity form-control tabledit-input form-control-sm" type="text" min="0" required value="@item.Qty" />
+                                            </td>
+                                            <td class="tabledit-edit-mode UnitClass" style="display:none;" colspan="1">
+                                                <select class="item-unit form-control tabledit-input form-control-sm" required><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select>
+                                                <input class="unit-equavalent" type="hidden" required value="@item.UnitEquivalent" />
+                                            </td>
+                                            <td class="tabledit-edit-mode" colspan="1">
+                                                <input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="@item.Price" />
+                                                <input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly value="@item.AccessoryPrice" />
+                                            </td>
+                                            <td class="tabledit-edit-mode" colspan="1">
+                                                <input type="text" class="money total form-control tabledit-input form-control-sm" required readonly value="@Html.Raw(item.Item.IsAccessory == true? 0 : item.Price*(decimal)item.Qty)" />
+                                                <input hidden class="itemTotalAccessoryPrice" readonly value="@Html.Raw(item.AccessoryPrice*(decimal)item.Qty)" />
+                                            </td>
+                                            <td>
+                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </td>
+                                            @if (item.ExtraTypeId == null)
+                                            {
+                                                <td class="EnableAdditionalItemsOnPos text-center">
+                                                    <a href="javascript:void(0);" onclick="ShowExtra(this)">
+                                                        <i class="fa fa-plus" aria-hidden="true"></i>
+                                                    </a>
+                                                </td>
+                                            }
+                                            <td hidden><input class="ExtraTypeId" required value="@item.ExtraTypeId" /></td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div><!-- End Of InvoiceDiv -->
+        <!-- Totals Paid  -->
+        <div style="background-color: azure;
+        border-style: solid;
+        border-color: #e7eaed;
+        border-width: 1px;
+        border-radius: 5px;
+        position: absolute;
+        bottom: 0;
+        margin-bottom: 3%;">
+            @*<div id="strech" class="form-group row m-auto pt-2 totals" style="margin-top: 315px !important; margin-bottom: 0px !important;">*@
+            <div id="strech" class="form-group row m-auto pt-2 totals" style="margin-bottom: 0px !important;">
+                <label for="VoucherDiscountValue" class="control-label col-sm-2">@MyERP.Properties.Resources.DiscountValue: </label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.VoucherDiscountValue, new { htmlAttributes = new { @class = "form-control money", id = "DiscountValue", type = "text" } })
+                    <input class="form-control" type="hidden" id="Total" required />
+                    @Html.HiddenFor(x => x.VoucherDiscountPercentage)
+                </div>
+                <label for="NetTotal" class="control-label col-sm-2"> @MyERP.Properties.Resources.AfterDiscount:</label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                </div>
+                <label for="DeliveryCost" class="control-label col-sm-2">@MyERP.Properties.Resources.DeliveryCost:</label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.DeliveryCost, new { htmlAttributes = new { @class = "form-control money", type = "text", disabled = "disabled" } })
+                </div>
+                <label for="ServiceFees" hidden class="control-label col-sm-2">@MyERP.Properties.Resources.ServiceFees:</label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.ServiceFees, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly", @hidden = "hidden" } })
+                    <input type="hidden" id="ServiceFeesPercentage" value="@ViewBag.ServiceFeesPercentage" />
+                </div>
+            </div>
+            <div class="form-group row m-auto totals">
+                <label class="control-label col-sm-2">@MyERP.Properties.Resources.IncludeTheTax</label>
+                @if (Model != null)
+                {
+                    <div class="col-sm-2">
+                        <input type="checkbox" id="hasTaxes" @Html.Raw(Model != null && Model.SalesTaxes > 0 ? "checked" : "") />
+                    </div>
+                }
+                else
+                {
+                    <div class="col-sm-2">
+                        <input type="checkbox" id="hasTaxes" @Html.Raw(ViewBag.ApplyTaxes == true ? "checked" : "") />
+                    </div>
+                }
+                <label for="SalesTaxes" class="control-label col-sm-2">@MyERP.Properties.Resources.Tax:</label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                </div>
+                <label for="RefundableInsurance" class="control-label col-sm-2">@MyERP.Properties.Resources.RefundableInsurance:</label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.RefundableInsurance, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                </div>
+            </div>
+            <div class="form-group row m-auto">
+                <label for="TotalAfterTaxes" class="control-label col-sm-2">@MyERP.Properties.Resources.Total:</label>
+                <div class="col-sm-2">
+                    @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                </div>
+                <label for="Paid" class="totals control-label col-sm-2">@MyERP.Properties.Resources.Paid:</label>
+                <div class="col-sm-2 totals ">
+                    @Html.EditorFor(model => model.Paid, new { htmlAttributes = new { @class = "form-control money ", @readonly = "readonly", type = "text" } })
+                </div>
+
+                <label for="Remaining" class=" totals control-label col-sm-2"> @MyERP.Properties.Resources.Remain:</label>
+                <div class="col-sm-2 totals">
+                    <input class="form-control" type="text" id="Remaining" readonly />
+                </div>
+                <div class="col-sm-4">
+
+                </div>
+
+
+            </div>
+
+        </div>
+        <!--**************************************-->
+    </div>
+    <!-- end row -->
+</div>
+<!-- Save  Buttons -->
+<div class="row" style="background-color:aliceblue;float:right;">
+    @*position:absolute;bottom:0;*@
+    <div class="col-12">
+        <div class="page-title-box" id="page-title-box" @Html.Raw(ViewBag.IsCashier == true ? "style=margin-bottom:0" : "")>
+            <div class="page-title-right">
+                @if (Model != null && ViewBag.CanPrintInvoice == true)
+                {
+                    <a class="btn btn-success" href="@Url.Action("CashierInvoice","Report",new { id=Model.Id, print=true})" role="button" target="_blank">@MyERP.Properties.Resources.Print</a>
+                }
+                <div class="clock btn btn-primary" id="clock"> </div>
+                <a class="btn btn-danger ml-1 mr-1" href="@Url.Action("Index", "LogOut")" role="button">@MyERP.Properties.Resources.LogOut <i class="fa fa-sign-out-alt"></i></a>
+                <button class="btn btn-success" id="save" onclick="addEdit()">
+                    @MyERP.Properties.Resources.Save <i class="fa fa-save"></i>
+                </button>
+                <button type="submit" onclick="addEdit('report')" class="btn btn-success" id="SaveAndPrint">
+                    @MyERP.Properties.Resources.SaveAndPrint
+                </button>
+
+                <button class="btn btn-success" id="invoiceTypeBtn" onclick="showInvoiceTypeModal()">
+                    @MyERP.Properties.Resources.InvoiceType <i class="fa fa-money-check-alt"></i>
+                </button>
+                <button class="btn btn-success deliveryData" id="deliveryData" hidden onclick="showDeliveryDataModal()">
+                    @MyERP.Properties.Resources.DeliveryData <i class="fa fa-info"></i>
+                </button>
+                <button class="btn btn-success drivers">
+                    @MyERP.Properties.Resources.Drivers <i class="fa fa-car"></i>
+                </button>
+
+                <button class="btn btn-success" onclick="showPaymentMethodsModal()">
+                    @MyERP.Properties.Resources.PaymentMethods <i class="fa fa-money-bill-alt"></i>
+                </button>
+                <button class="btn btn-success deliveryInvoicesBtn" onclick="showUnpaidInvoicesModal()">
+                    @MyERP.Properties.Resources.DeliveryInvoices <i class="fa fa-file-invoice-dollar"></i>
+                </button>
+
+                <button id="getPurchaseRequestsBtn" onclick="getPurchaseRequests();" type="button" class="btn btn-success" style="display:none;">@MyERP.Properties.Resources.LinkToPurchaseRequests <i class="fa fa-link"></i></button>
+                <label id="PurchaseRequestDocNum"></label>
+                <button id="cancelPurchaseRequest" onclick="cancelPurchaseRequest()" class="btn btn-icon waves-effect waves-light btn-danger btn-xs" style="display:none;"> <i class="fas fa-times"></i> </button>
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back <i class="fa fa-arrow-alt-circle-left"></i></a>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!--******************************************************************************************-->
+<!-- End Of New Code -->
+<!-- *********************** Modals ********************************-->
+<!-- Customer Modal  -->
+<div id="customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="ArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="EnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+
+                                @* Old code
+                                    <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Tel</label>
+                                    <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Tel>*@
+
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile</label>
+                                <input type="text" class="form-control" id="Mobile" placeholder="@MyERP.Properties.Resources.Mobile">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="Address" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="Notes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- PosCustomer Modal -->
+<div id="pos-customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <input hidden id="posCustomerIdInput" name="posCustomerIdInput" />
+                    <input hidden id="posCustomerCodeInput" name="posCustomerCodeInput" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="PosCustomerArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="PosCustomerEnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+
+                                @* Old code
+                                    <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Tel</label>
+                                    <input type="text" class="form-control" id="Mobile" placeholder=@MyERP.Properties.Resources.Tel>*@
+
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile 1</label>
+                                <input type="text" class="form-control" id="Mobile1" placeholder="@MyERP.Properties.Resources.Mobile 1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Mobile2" hidden class="control-label">@MyERP.Properties.Resources.Mobile 2</label>
+                                <input hidden type="text" class="form-control" id="Mobile2" placeholder="@MyERP.Properties.Resources.Mobile 2">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class=" control-label" for="">@MyERP.Properties.Resources.Country</label>
+
+                                @*@Html.DropDownList("GovernorateId", null, htmlAttributes: new { @class = "form-control" })*@
+                                <select class="form-control" id="GovernorateId" name="GovernorateId"></select>
+
+
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+
+                            <div class="form-group">
+                                <label class="control-label" for="">@MyERP.Properties.Resources.City</label>
+
+                                <select class="form-control" id="CityId" name="CityId"></select>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="control-label" for="">@MyERP.Properties.Resources.District</label>
+                                <select class="form-control" id="AreaId" name="AreaId"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="PosCustomerAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="PosCustomerNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addPosCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!----- Payment Method Modal ------>
+<div id="paymentMethodsModal" class="paymentMethodsModal modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="form-group form-row">
+                <div class="easy-numpad-number-container m-2" style="width:45%">
+                    <table>
+                        <tr>
+                            <td><a href="7" onclick="easynum()">7</a></td>
+                            <td><a href="8" onclick="easynum()">8</a></td>
+                            <td><a href="9" onclick="easynum()">9</a></td>
+                            <td><a href="Del" class="del" id="del0" onclick="easy_numpad_del()">Del</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="4" onclick="easynum()">4</a></td>
+                            <td><a href="5" onclick="easynum()">5</a></td>
+                            <td><a href="6" onclick="easynum()">6</a></td>
+                            <td><a href="Clear" class="clear" id="clear0" onclick="easy_numpad_clear()">Clear</a></td>
+                        </tr>
+                        <tr>
+                            <td><a href="1" onclick="easynum()">1</a></td>
+                            <td><a href="2" onclick="easynum()">2</a></td>
+                            <td><a href="3" onclick="easynum()">3</a></td>
+                            <td><a href="Cancel" class="cancel" id="cancel0" onclick="easy_numpad_cancel()">Cancel</a></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" onclick="easynum()"><a href="0">0</a></td>
+                            <td onclick="easynum()"><a href=".">.</a></td>
+                            <td><a href="Done" class="done" id="done0" onclick="easy_numpad_done()">Done</a></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="form-horizontal needs-validation ml-4 mt-3" role="form" style="width: 49%;">
+                    <div class="table-responsive">
+                        <table class="table table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>@MyERP.Properties.Resources.PaymentMethod</th>
+                                    <th>@MyERP.Properties.Resources.Amount</th>
+                                    <th>@MyERP.Properties.Resources.CashBox</th>
+                                    @*<th>الحساب البنكى</th>*@
+                                </tr>
+                            </thead>
+                            <tbody id="SalesOrderPaymentMethods">
+                                @if (Model != null && Model.Id > 0)
+                                {
+                                    foreach (var method in Model.SalesOrderPaymentMethods)
+                                    {
+                                        <tr>
+                                            <td class="tabledit-edit-mode">
+                                                <input value="@method.PaymentMethod.Id" class="PaymentMethodId" type="hidden" />
+                                                <label>
+                                                    @method.PaymentMethod.ArName
+                                                </label>
+                                            </td>
+                                            @if (method.PaymentMethod.Id == 1)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" value="@method.Amount" id="@("PayMethod"+method.PaymentMethod.Id)" /></td>
+                                                <td class="tabledit-edit-mode">
+                                                    @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control tabledit-input form-control-sm" })
+                                                </td>
+                                                <td></td>
+                                            }
+                                            else if (method.PaymentMethod.Id == 3)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" id="@("PayMethod"+method.PaymentMethod.Id)" type="text" value="@method.Amount" readonly="readonly" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                            else /*if (method.PaymentMethod.Id == 2)*/
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" id="@("PayMethod"+method.PaymentMethod.Id)" type="text" value="@method.Amount" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var method in (List<MyERP.Models.PaymentMethod>)ViewBag.PaymentMethods)
+                                    {
+                                        <tr>
+                                            <td class="tabledit-edit-mode">
+                                                <input value="@method.Id" class="PaymentMethodId" type="hidden" />
+                                                <label>@method.ArName</label>
+                                            </td>
+                                            @if (method.Id == 1)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" id="@("PayMethod"+method.Id)" /></td>
+                                                <td class="tabledit-edit-mode">
+                                                    @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control tabledit-input form-control-sm" })
+                                                </td>
+                                                <td></td>
+                                            }
+                                            else if (method.Id == 3)
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" readonly="readonly" id="@("PayMethod"+method.Id)" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                            else /*if (method.PaymentMethod.Id == 2)*/
+                                            {
+                                                <td class="tabledit-edit-mode"><input class="money PaymentAmount form-control tabledit-input form-control-sm" type="text" id="@("PayMethod"+method.Id)" /></td>
+                                                <td></td>
+                                                <td></td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!--Invoice Info-->
+<div class="modal fade bs-example-modal-lg" id="invoiceInfoModal" tabindex="-1" role="dialog"
+     aria-labelledby="invoiceInfoModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="width:fit-content">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="invoiceInfoModalTitle">@MyERP.Properties.Resources.MainData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group form-row">
+                    <label class=" col-sm-4 control-label" for="DocumentNumber">@MyERP.Properties.Resources.ReservationVoucherNo</label>
+                    <div class="col-sm-8">
+                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required" } })
+                    </div>
+                </div>
+                <div class="col-sm-1 pt-1" style="display:none;">
+                    <button id="cancelSalesOrder" onclick="cancelSalesOrder()" class="btn btn-icon waves-effect waves-light btn-danger btn-xs"> <i class="fas fa-times"></i> </button>
+                </div>
+
+
+                <div class="form-group form-row">
+                    <label for="VoucherDate" class=" col-sm-4 control-label">@MyERP.Properties.Resources.VoucherDate</label>
+                    <div class="col-sm-8">
+                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />
+                    </div>
+                </div>
+                <div class="form-group form-row">
+                    <label class="control-label col-sm-4">@MyERP.Properties.Resources.DeliveryDate</label>
+                    <div class="col-sm-8">
+                        <input id="DeliveryDate" name="DeliveryDate" class="form-control" type="datetime-local" value="@ViewBag.DeliveryDate" />
+                    </div>
+                </div>
+                <div class="form-group form-row">
+                    <label class=" col-sm-4 control-label" for="CustomerType">@MyERP.Properties.Resources.CustomerType</label>
+                    <div class="col-sm-8">
+                        @Html.DropDownList("CustomerType", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                    </div>
+                </div>
+
+
+                @*<div class="form-group form-row">
+                        <label for="VendorOrCustomerId" class="control-label col-sm-4">@MyERP.Properties.Resources.Customer </label>
+                        <div class="col-sm-8">
+                            <select class="form-control" id="VendorOrCustomerId">
+                                @if (Model != null)
+                                {
+                                    <option value="@Model.VendorOrCustomerId"></option>
+                                }
+                            </select>
+                        </div>
+                    </div>*@
+                <div class="form-group form-row">
+                    <label class=" col-sm-4 control-label" for="DepartmentId">@MyERP.Properties.Resources.Branch</label>
+                    <div class="col-sm-8">
+                        @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                    </div>
+                </div>
+                <div class="form-group form-row">
+                    <label class=" col-sm-4 control-label" for="WarehouseId"> @MyERP.Properties.Resources.WareHouse</label>
+                    <div class="col-sm-8">
+                        @Html.DropDownList("WarehouseId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                    </div>
+                </div>
+
+
+                <div class="form-group form-row">
+                    <label for="ReservationMethodId" class="control-label col-sm-4"> @MyERP.Properties.Resources.ReservationMethod </label>
+                    <div class="col-sm-8">
+                        @Html.DropDownList("ReservationMethodId", null, htmlAttributes: new { @class = "form-control", @required = "required", @id = "ReservationMethodId" })
+                    </div>
+                </div>
+
+
+                <div class="form-group form-row">
+                    <label for="AdministrativeDepartmentId" class="control-label col-sm-4"> @MyERP.Properties.Resources.AdministrativeDepartment </label>
+                    <div class="col-sm-8">
+                        @Html.DropDownListFor(a => a.AdministrativeDepartmentId, null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--modal of extras-->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="exampleModalLabel">@MyERP.Properties.Resources.AdditionalItems</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-centered table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>@MyERP.Properties.Resources.Item </th>
+                                <th>@MyERP.Properties.Resources.Unit</th>
+                                <th>@MyERP.Properties.Resources.Increase</th>
+                                <th>@MyERP.Properties.Resources.Double</th>
+                                <th>@MyERP.Properties.Resources.Without</th>
+                            </tr>
+                        </thead>
+                        <tbody id="AdditionalItems">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                @*<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>*@
+            </div>
+        </div>
+    </div>
+</div>
+<!--Unpaid Invoices-->
+<div class="modal fade bd-example-modal-xl" id="UnpaidInvoicesModal" tabindex="-1" role="dialog"
+     aria-labelledby="UnpaidInvoicesModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document" style="max-width:100%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="UnpaidInvoicesModalTitle">@MyERP.Properties.Resources.UnpaidInvoices</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="UnpaidInvoicesModalTable">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Drivers Modal-->
+<div class="modal fade bs-example-modal-lg" id="DriversModal" tabindex="-1" role="dialog"
+     aria-labelledby="DriversModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="DriversModalTitle">@MyERP.Properties.Resources.Drivers</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" id="DriversModalTable">
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Invoice Type-->
+<div class="modal fade bs-example-modal-lg" id="invoiceTypeModal" tabindex="-1" role="dialog"
+     aria-labelledby="invoiceTypeModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="width:fit-content">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="invoiceTypeModalTitle">@MyERP.Properties.Resources.InvoiceType</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group form-row">
+                    <button class="btn btn-success m-1 getForm" customerType="3">
+                        @MyERP.Properties.Resources.Delivery <i class="fa fa-truck"></i>
+                    </button>
+                    <button class="btn btn-success m-1 getForm" customerType="1">
+                        @MyERP.Properties.Resources.TakeAway <i class="fa fa-hamburger"></i>
+                    </button>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!----------------------------*************************************************-------------------------------->
+<script>
+    //----------- Variable Declaration ---------------//
+    let customers = [];
+    var itemGroupIndex = 1;
+    let getDocNum = true;
+    let warehouseOptions = '';
+    let UniqueSerial = 0;   // unique part added to item id to make it easy to add additional item to it  when this item added many times //
+    var taxPercentage = 0.15;
+    let newHeight = 315;
+    var selectedPaymentMethodInput = null;
+
+    //************************************************//
+    //------------------- Ready Function --------------------//
+    $(document).ready(function () {
+         @*if ('@ViewBag.showPaymentMethods' == 'True')
+            $('#paymentMethodsModal').modal("show");
+        else
+            $('#paymentMethodsModal').hide();*@
+
+        @*if ('@ViewBag.NewInvoice' == 'True') {
+            $('#invoiceTypeModal').modal("show");
+        }*@
+
+        if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True')
+            $('.EnableAdditionalItemsOnPos').show();
+        else
+            $('.EnableAdditionalItemsOnPos').hide();
+        if (!$('#Id').val()) {
+            setDocNum();
+            cashBoxByDepartment();
+            $('#hasTaxes').trigger('change');
+        } else {
+            // $('.quantity').attr('type', 'number').attr('min','0');
+            let totalPaied = 0;
+            $('#SalesOrderPaymentMethods tr').each(function () {
+                var td = $(this);
+                totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+            });
+            $('#Paid').val(totalPaied);
+            $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') * 1 - $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1).toFixed(2));
+        }
+        if ($('#CustomerType').val() != 2) {
+            checkCustomerType();
+        }
+
+        getSalesOrders();
+        $.get('/Helper/ItemGroups?pageIndex=1&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+            $('#item-groups').append(r);
+            $('.nav-link.mb-2').first().trigger('click');
+        });
+        if ($('#Id').val()) {
+            let customerId = $('#VendorOrCustomerId').val();
+            appendCustomerOptions(true).then(function () { $('#VendorOrCustomerId').val(customerId).trigger('change') });
+            let posCustomerId = $('#PosCustomerId').val();
+            appendPosCustomerOptions(true).then(function () { $('#PosCustomerId').val(posCustomerId).trigger('change') });
+
+        }
+        else {
+            appendCustomerOptions(true);
+            appendPosCustomerOptions(true);
+            getGovernorates();
+            getCities();
+            getAreas();
+        }
+        GetCurrentTaxPercentage();
+
+    });
+    //****************************************************************************************//
+
+    //----------------- Event Functions --------------------//
+    $('#Paid').on('change', function () {
+        $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') * 1 - $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1).toFixed(2));
+    });
+    //$('.PaymentAmount').on('change', function () {
+    //    let totalPaied = 0;
+    //    $('#SalesOrderPaymentMethods tr').each(function () {
+    //        var td = $(this);
+    //        totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+    //    });
+    //    $('#Paid').val(totalPaied);
+    //    $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') * 1 - $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1).toFixed(2))
+    //});
+    $('#CustomerType').on('change', function () {
+        if ($("#CustomerType").val() == 2 || $("#CustomerType").val() == 3) {
+            $("#PayMethod2").val($("#TotalAfterTaxes").val());
+            $("#PayMethod1").val('');
+        }
+        else if ($("#CustomerType").val() == 1) {
+            $("#PayMethod1").val($("#TotalAfterTaxes").val());
+            $("#PayMethod2").val('');
+        }
+        if ($("#CustomerType").val() == 3) {
+            // Enable delivery cost input
+            $("#DeliveryCost").prop("disabled", false);
+            $(".deliveryData").prop("hidden", false);
+        }
+        else {
+            $("#DeliveryCost").prop("disabled", true);
+            $(".deliveryData").prop("hidden", true);
+        }
+        appendCustomerOptions(false).then(function () { $('#VendorOrCustomerId').trigger('change') });
+        checkCustomerType();
+    });
+    $('#VendorOrCustomerId').on('change', function () {
+        CalculateTotals($('#NetTotal').inputmask('unmaskedvalue') * 1);
+        let customer = customers.filter(function (i) { return i.Id == $('#VendorOrCustomerId').val() })[0];
+        if (customer) {
+            $('#customer-address').val(customer.Address);
+            $('#customer-mobile').val(customer.Mobile);
+        }
+    });
+
+    $(document).on('change', '.quantity', function () {
+        CalculateTotals();
+    });
+    $(document).on('change', '#DepartmentId', function () {
+        getDrivers();
+        if ($('#DepartmentId').val()) {
+            setWarehouseValues().then(function () {
+                $("#WarehouseId").empty().append(warehouseOptions);
+            });
+            $.get('/Helper/ItemGroups?pageIndex=1&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+                $('#item-groups').empty();
+                $('#item-groups').append(r);
+                $('.nav-link.mb-2').first().trigger('click');
+            });
+            setDocNum();
+            cashBoxByDepartment();
+        } else {
+            $('#DocumentNumber').val('');
+            //  $("#WarehouseId").empty().append('<option value>إختر المخزن</option>');
+            $("#WarehouseId").empty();
+        }
+        checkCustomerType();
+
+        $('#SalesOrderDetails tr').each(function () {
+            var td = $(this);
+            var quantity0;
+            if ('@System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"]' == "Genoise" && $('#DepartmentId').val() == 28) {
+                quantity0 = 0.00;
+                }
+            else {
+               quantity0 = '@ViewBag.DefaultQuantityInPos';
+            }
+            td.find('.quantity').val(quantity0);
+        });
+        $('.item-unit').trigger('change');
+
+    });
+    $(document).on('change', '.item-unit', function () {
+        let itemUnitId = $(this).val();
+        let item = $(this).closest('tr').find('.item');
+        let isFactoryChosen = false;
+        if ($('#DepartmentId')[0].value == 28 && '@ViewBag.ProjectName' == "Genoise")
+            isFactoryChosen = true;
+        getItemUnits(item.val()).done(function (r) {
+            let itemUnit = r.filter(function (i) { return i.Id == itemUnitId })[0];
+            item.closest('tr').find('.unit-equavalent').val(itemUnit.Equivalent);
+            if (item.closest('tr').find('.extra').val() == null) {
+                //item.closest('tr').find('.price').val(itemUnit.Price);
+                item.closest('tr').find('.accessoryPrice').val(itemUnit.AccessoryPrice);
+                item.closest('tr').find('.price').val(isFactoryChosen ? itemUnit.FactoryPrice : itemUnit.Price);
+            }
+            item.closest('tr').find('.barcode').val(itemUnit.Barcode);
+            item.closest('tr').find('.item-price-id').val(itemUnit.ItemPriceId);
+            CalculateTotals();
+            $("#TotalAfterTaxes").trigger('change');
+        });
+    });
+    // ---- Function that responsible for add main item to tabel of Items ------- //
+    $(document).on('change', '#DiscountValue', function () {
+        let total = 0;
+        let totalAccessoryPrice = 0;
+        $('.price').each(function () {
+            total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+            let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').val();
+            let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+            $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+
+            totalAccessoryPrice += itemTotalAccessoryPrice;
+        });
+        if (($(this).inputmask('unmaskedvalue') / total) >= 1) {
+            $(this).val(0);
+        }
+        $('#VoucherDiscountPercentage').val(($(this).inputmask('unmaskedvalue') * 100 / total));
+        CalculateTotals(total, totalAccessoryPrice);
+        //let total = 0;
+        //$('.price').each(function () {
+        //    total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+        //});
+        //if (($(this).inputmask('unmaskedvalue') / total) >= 1) {
+        //    $(this).val(0);
+        //}
+        //$('#VoucherDiscountPercentage').val(($(this).inputmask('unmaskedvalue') * 100 / total));
+        //CalculateTotals(total);
+    });
+    //********************************************************************************************************//
+
+    //--------------------- Other Functions -------------------//
+    function getCustomers(refill) {
+        if (refill == true)
+            requestCache['/Helper/GetCustomers'] = null;
+        return requestData('/Helper/GetCustomers').done(function (r) {
+            customers = r;
+        });
+    }
+    function appendCustomerOptions(refill) {
+        return getCustomers(refill).then(function () {
+            let custumerType = $('#CustomerType').val();
+            let customerOptions = '';
+            let customersfiltered = customers.filter(function (i) {
+                if (custumerType == 1 || custumerType == 3)
+                    return i.IsBranch != true && i.IncludeFees != true
+                else if (custumerType == 2)
+                    return i.IncludeFees == true;
+                else if (custumerType == 4)
+                    return i.IsBranch == true;
+            });
+            for (var i = 0; i < customersfiltered.length; i++) {
+                if (custumerType == 1 || custumerType == 3)
+                    customerOptions += '<option value="' + customersfiltered[i].Id + '">' + customersfiltered[i].ArName + ' - ' + customersfiltered[i].Mobile + '</option>';
+                else
+                    customerOptions += '<option value="' + customersfiltered[i].Id + '">' + customersfiltered[i].ArName + ' - ' + customersfiltered[i].Code + '</option>';
+            }
+            $('#VendorOrCustomerId').empty().append(customerOptions);
+        });
+    }
+    function getSalesOrders() {
+        $.get('/SalesOrder/_index').done(function (r) {
+            $('#sales-orders').empty().append(r);
+        });
+    }
+    function editSalesOrder(id, docNum, depId, warehouseId, customerId) {
+        $.get('/PointOfSale/SalesOrdersDetails/' + id).done(function (r) {
+            $('#SalesOrderDetails').empty().append(r.view);
+            $('#SalesOrderDetails select').select2({
+                matcher: matchCustom
+            });
+            $('#SalesOrderDetails .money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+            });
+            $('#DocumentNumber').val(docNum);
+            $('#cancelSalesOrder').closest('div').show();
+            getDocNum = false;
+            $('#DepartmentId').val(depId).trigger('change').attr('disabled', 'disabled');
+            setWarehouseValues().then(function () {
+                $('#WarehouseId').empty().append(warehouseOptions).val(warehouseId).trigger('change').attr('disabled', 'disabled');
+            });
+            $('#VendorOrCustomerId').val(customerId).trigger('change').attr('disabled', 'disabled');
+            $('#VoucherDate').val(r.VoucherDate).closest('div').append('<input type="hidden" id="Id" value="' + id + '"/>');
+            CalculateTotals();
+        });
+    }
+    function cancelSalesOrder() {
+        $('#SalesOrderDetails').empty();
+        $('#DocumentNumber').val('');
+        $('#cancelSalesOrder').closest('div').hide();
+        $('#DepartmentId').removeAttr('disabled');
+        $('#WarehouseId').removeAttr('disabled');
+        CalculateTotals();
+        $('#VendorOrCustomerId').removeAttr('disabled').trigger('change');
+        $('#Id').remove();
+        $.get('/Helper/CurrentTime').done(function (r) { $('#VoucherDate').val(r) });
+        setDocNum();
+        $('#DeliveryDate').val('');
+    }
+    function setWarehouseValues() {
+        warehouseOptions = '';
+        return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function (r) {
+                //warehouseOptions = '<option value>إختر المخزن</option>';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+            });
+    }
+    function getItemUnits(itemId) {
+        return requestData('/Helper/ItemUnits?itemId=' + itemId);
+    }
+    function setDocNum() {
+        if ($('#DepartmentId').val() && getDocNum)
+            $.get('/SalesOrder/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+            });
+        getDocNum = true;
+    }
+    function cashBoxByDepartment() {
+        $.get('/Helper/CashBoxByDepartment/' + $('#DepartmentId').val()).done(function (r) {
+            $('.CashBoxId').empty();
+            for (var i = 0; i < r.length; i++) {
+                $('.CashBoxId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+            cashBoxBalance();
+        });
+    }
+    @*function addItem(e)
+    {
+        UniqueSerial++;     // unique part added to item id to make it easy to add additional item to it  when this item added many times  //
+        let itemid = $(e).siblings('.item-id').val();
+        let RowId = itemid + UniqueSerial.toString();   // unique part added to item id to make it easy to add additional item to it when this item added many times //
+        let AllowToAddSameItemMultipleTimes = '@ViewBag.AllowToAddSameItemMultipleTimes';
+        let quantity = '@ViewBag.DefaultQuantityInPos';
+        let valid = true;
+        $('#SalesOrderDetails tr').each(function () {
+            var td = $(this);
+            if (td.find('.item').val() == itemid) {
+                valid = false
+            }
+        });
+
+
+
+            if (valid == false && '@ViewBag.AllowToAddSameItemMultipleTimes' != 'True')
+            alert('لا يمكن إضافة الصنف أكثر من مرة');
+            else
+            {
+                $('#preloader, #status').fadeIn();
+                let tr = '<tr><td hidden class="RowId">' + RowId +'</td><td hidden class="Main">Main</td><td hidden class="MainItemId">' + itemid + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item" required /><input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" required /></td><td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" required value="' + quantity + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td class="EnableAdditionalItemsOnPos text-center"><a href="javascript:void(0);" onclick="ShowExtra(this)" /*data-toggle="modal" data-target="#exampleModal*/"><i class="fa fa-plus" aria-hidden="true"></i></a></td></tr>';
+
+
+              $('#SalesOrderDetails').append(tr);
+
+
+               if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True')
+                $('.EnableAdditionalItemsOnPos').show();
+              else
+                $('.EnableAdditionalItemsOnPos').hide();
+                $('.item').last().val(itemid).closest('tr').find('.item-name').val($(e).text());
+                $('#SalesOrderDetails tr:last select').select2({
+                   matcher: matchCustom
+                });
+                $('#SalesOrderDetails tr:last .money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+                getItemUnits(itemid).done(function (r)
+                {
+                  let units = '';
+                    for (var i = 0; i < r.length; i++)
+                    {
+                      units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                    }
+                  $('#preloader, #status').fadeOut();
+                  $('.item-unit').last().empty().append(units).trigger('change');
+                });
+            }
+
+
+    }*@
+    function deleteElement(e)
+    {
+        let RowId = $(e).closest('tr').find('.RowId').text();
+        if ($(e).closest('tr').find('.Main').text() == "Main")
+        {
+            $('#SalesOrderDetails tr').each(function ()
+            {
+                tr = $(this);
+                if (tr.find('.RowId').text() == RowId && tr.find('.Main').text() != "Main") {
+                    tr.remove();
+                }
+            });
+        }
+        $(e).closest('tr').remove();
+        CalculateTotals();
+    }
+    //----- Function that responsible for get Additional Items of current item and draw hidden row in case the user choose one ------ //
+    function ShowExtra(e)
+    {
+        let id = $(e).closest('tr').find('.item').val();
+        let RowId = $(e).closest('tr').find('.RowId').text();
+        $.ajax({
+            type: "GET",
+            contentType: "application/json",
+            url: "/AdditionalItem/GetAdditionalItems/" + id,
+            success: function (r) {
+                $('#AdditionalItems').empty();
+                if (r == 0)
+                {
+                    //alert("@MyERP.Properties.Resources.ThereAreNoAdditivesForThisItem");
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.ThereAreNoAdditivesForThisItem',
+                        text: " ",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+                else
+                {
+                    for (var i = 0; i < r.length; i++) {
+                        $('#AdditionalItems').append('<tr><td hidden class="RowId">' + RowId +'</td><td class="ItemId" hidden>' + r[i].ItemId + '</td><td class="MainItemId" hidden>' + id + '</td><td class="ItemPriceId" hidden>' + r[i].ItemPriceId + '</td><td class="ArName">' + r[i].ArName + '</td><td class="ItemUnitId">' + r[i].ItemUnit + '</td><td hidden name="Extra" class="ExtraQuantity">'+r[i].ExtraQuantity+'</td><td><button onclick="AddExtra(this)" name="Extra" class=" btn btn-danger ExtraPrice">' + r[i].ExtraPrice + '</button></td><td hidden name="Double" class="DoubleQuantity">'+r[i].DoubleQuantity+'</td><td><button class=" btn btn-danger DoublePrice" name="Double" onclick="AddExtra(this)">' + r[i].DoublePrice +'</button></td><td><button name="NoExtra" class=" btn btn-danger NoExtraPrice" onclick="AddExtra(this)">0</button></td></tr>');
+                    }
+                    $('#exampleModal').modal("show");
+
+
+                }
+            },
+            error: function () {
+                //alert('@MyERP.Properties.Resources.AnErrorOccurredTryAgain' + '!');
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain' + '!',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+
+    }
+
+    //----- Function that responsible for add Additional Item that has been chosen from the pop up to the tabel of Items with its values ------ //
+    function AddExtra(e) {
+
+        $('#exampleModal').modal("hide");
+        let name = $(e).attr('name');
+        let ItemId = $(e).closest('tr').find('.ItemId').text();
+        let MainItemId = $(e).closest('tr').find('.MainItemId').text();
+        let RowId = $(e).closest('tr').find('.RowId').text();
+
+
+
+        //----------------------------- new way (Add additional items for choisen main item in order under this item) ---------------------------------------------//
+        let WantedRow;
+        let count = 0;
+        $('#SalesOrderDetails tr').each(function () {
+            tr = $(this);
+            MainItem = tr.closest('tr').find('.MainItemId').text();
+            rowid = tr.closest('tr').find('.RowId').text();
+
+            if (RowId == rowid && tr.find('.Main').text() == "Main") {
+
+                WantedRow = tr;
+            }
+            else {
+                if (RowId == rowid) {
+                    count++;
+                }
+            }
+        });
+        // create variable to carry the data of Extra type id to distinguish the additional item from main item at edit time
+        let ExtraTypeId;
+        if (name == "Extra") {
+            ExtraTypeId = 1;
+        }
+        else {
+            if (name == "Double") {
+                ExtraTypeId = 2;
+            }
+            else {
+                if (name == "NoExtra") {
+                    ExtraTypeId = 3;
+                }
+            }
+        }
+
+        if (count > 0) {
+            $('#SalesOrderDetails').find('tr.' + RowId + ':last').after('<tr class="' + RowId + '" bgcolor="pink"><td hidden class="RowId">' + RowId + '</td><td hidden class="MainItemId">' + MainItemId + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item extra" required value="' + ItemId + '" /> <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.ArName').text() + '" /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" value="' + $(e).closest('tr').find('.ItemPriceId').text() + '" required /></td > <td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" readonly required value="' + $(e).closest('tr').find('.' + name + 'Quantity').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.' + name + 'Price').text() + '" /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm"  readonly value=""/></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /><input hidden class="itemTotalAccessoryPrice" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td hidden><input class="ExtraTypeId" required value="' + ExtraTypeId + '" /></td></tr >');
+
+            $('#SalesOrderDetails tr select').select2({
+                matcher: matchCustom
+            });
+
+            getItemUnits(ItemId).done(function (r) {
+                let units = '';
+                for (var i = 0; i < r.length; i++) {
+                    units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+
+                let WantedSelect = $('#SalesOrderDetails').find('tr.' + RowId + ':eq(' + count + ')');
+                WantedSelect.closest('tr').find('.item-unit').append(units).trigger('change');
+            });
+
+        }
+        else {
+            WantedRow.after('<tr class="' + RowId + '" bgcolor="pink"><td hidden class="RowId">' + RowId + '</td><td hidden  class="MainItemId">' + MainItemId + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item extra" required value="' + ItemId + '" /> <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.ArName').text() + '" /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" value="' + $(e).closest('tr').find('.ItemPriceId').text() + '" required /></td > <td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" readonly required value="' + $(e).closest('tr').find('.' + name + 'Quantity').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.' + name + 'Price').text() + '" /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm"  readonly value=""/></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /><input hidden class="itemTotalAccessoryPrice" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td hidden><input class="ExtraTypeId" required value="' + ExtraTypeId + '" /></td></tr > ');
+
+            $('#SalesOrderDetails tr select').select2({
+                matcher: matchCustom
+            });
+
+            getItemUnits(ItemId).done(function (r) {
+                let units = '';
+                for (var i = 0; i < r.length; i++) {
+                    units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+
+                let WantedSelect = $('#SalesOrderDetails').find('tr.' + RowId + ':eq(' + count + ')');
+                WantedSelect.closest('tr').find('.item-unit').append(units).trigger('change');
+            });
+
+        }
+
+        //----------------------------- end of new way ---------------------------------------------//
+
+        CalculateTotals();
+        // CalculateTotalRefundableInsurance();
+    }
+     // ---- Function that responsible for add main item to tabel of Items ------- //
+    function addItem(e)
+    {
+        UniqueSerial++;     // unique part added to item id to make it easy to add additional item to it  when this item added many times  //
+        let itemid = $(e).siblings('.item-id').val();
+        let RowId = itemid + UniqueSerial.toString();   // unique part added to item id to make it easy to add additional item to it when this item added many times //
+
+        //let isAccessory = $(e).attr("is-accessory");
+        let AllowToAddSameItemMultipleTimes = '@ViewBag.AllowToAddSameItemMultipleTimes';
+        let valid = true;
+        $('#SalesOrderDetails tr').each(function ()
+        {
+                var td = $(this);
+            if (td.find('.item').val() == itemid)
+            {
+                 valid=false
+            }
+        });
+
+
+
+            if (valid == false && '@ViewBag.AllowToAddSameItemMultipleTimes' != 'True')
+                //alert('@MyERP.Properties.Resources.TheItemCannotBeAddedMoreThanOnce');
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.TheItemCannotBeAddedMoreThanOnce',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            else
+            {
+                var quantity ;
+                if ('@System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"]' == "Genoise" && $('#DepartmentId').val() == 28) {
+                     quantity = 0.00;
+                }
+                else {
+                      quantity = '@ViewBag.DefaultQuantityInPos';
+                }
+                //var quantity = '@ViewBag.DefaultQuantityInPos';
+                $('#preloader, #status').fadeIn();
+                let tr = '<tr><td hidden class="RowId">' + RowId + '</td><td hidden class="Main">Main</td><td hidden class="MainItemId">' + itemid + '</td><td style="width:40%" class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item" required /><input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" required /></td><td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" value="' + quantity +'"  required /></td><td class="tabledit-edit-mode UnitClass" style="display:none;" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /><input hidden class="itemTotalAccessoryPrice" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td class=" EnableAdditionalItemsOnPos text-center"><a href="javascript:void(0);" onclick="ShowExtra(this)" /*data-toggle="modal" data-target="#exampleModal*/"><i class="fa fa-plus" aria-hidden="true"></i></a></td></tr>';
+
+                $('#SalesOrderDetails').append(tr);
+                if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+                    $('.UnitClass').show();
+                }
+
+
+            //    $('.table td, .table th').css("min-width", "0vh");
+                newHeight = newHeight - 45;
+                //if (newHeight >= 0)
+                //{
+                //    $('#strech').css("cssText", "margin-top:" + newHeight + "px !important;");
+                //}
+
+                if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True')
+                $('.EnableAdditionalItemsOnPos').show();
+                else
+                $('.EnableAdditionalItemsOnPos').hide();
+
+                if ($('#DepartmentId')[0].value == 28 /*&& DisplayFactoryPrice != 'True'*/ && '@ViewBag.ProjectName' == "Genoise") {
+                    $('.price').last().closest('td').hide();
+                    $('.total').last().closest('td').hide();
+                }
+                $('.item').last().val(itemid).closest('tr').find('.item-name').val($(e).text());
+                $('#SalesOrderDetails tr:last select').select2({
+                    matcher: matchCustom
+                });
+                $('#SalesOrderDetails tr:last .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+                getItemUnits(itemid).done(function (r) {
+                    let units = '';
+                    for (var i = 0; i < r.length; i++) {
+                        units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                    }
+                    $('#preloader, #status').fadeOut();
+                    $('.item-unit').last().empty().append(units).trigger('change');
+                });
+                $('#itemTable').scrollTop(9000000);//scroll to bottom of table
+                if ($(e).attr('item-has-accessory') == "true" && '@ViewBag.UseRefundableInsurancesForAccessories' != null && '@ViewBag.UseRefundableInsurancesForAccessories' == 'True') {
+                    //alert('@MyERP.Properties.Resources.ThisItemHasAccessory');
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.ThisItemHasAccessory',
+                        text: " ",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    if ('@ViewBag.AccessoryGroupId' != null) {
+                        $(".active").removeClass("active")
+                        $("#@ViewBag.AccessoryGroupId-tab").addClass("active");
+                        refreshItems(@ViewBag.AccessoryGroupId);
+                    }
+                }
+            }
+
+
+    }
+    function CalculateTotals(total, totalAccessoryPrice) {
+        if (!total || !totalAccessoryPrice) {
+            total = 0;
+            totalAccessoryPrice = 0;
+
+            $('.price').each(function () {
+                let itemTotal = $(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val();
+                $(this).closest('tr').find('.total').val(itemTotal);
+
+                let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').inputmask('unmaskedvalue');
+                let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+                $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+                totalAccessoryPrice += itemTotalAccessoryPrice;
+                total += itemTotal
+
+            });
+        }
+        // total -= salesOrdersPaid;
+        $('#Total').val(total);
+        $('#RefundableInsurance').val(totalAccessoryPrice);
+
+        // Add delivery cost
+        total += $("#DeliveryCost").inputmask('unmaskedvalue') * 1;
+
+        if ($('#VoucherDiscountPercentage').inputmask('unmaskedvalue') < 100) {
+            $('#DiscountValue').val(($('#VoucherDiscountPercentage').inputmask('unmaskedvalue') / 100) * total);
+        } else {
+            $('#VoucherDiscountPercentage').val(0);
+            $('#DiscountValue').val(0);
+        }
+        if ($('#DiscountValue').val()) {
+            total -= $('#DiscountValue').inputmask('unmaskedvalue');
+        }
+        $('#NetTotal').val(total);
+        let customer = customers.filter((i) => { return i.Id == $('#VendorOrCustomerId').val() })[0];
+        if (customer != null && customer.IncludeFees == true) {
+            let ServiceFees = $('#ServiceFeesPercentage').val() * total;
+            $('#ServiceFees').val(ServiceFees);
+            total = total * 1 + ServiceFees;
+        } else
+            $('#ServiceFees').val('');
+
+        if ($('#hasTaxes').prop('checked')) {
+            $('#SalesTaxes').val(total * taxPercentage);
+        }
+        else {
+
+            $('#SalesTaxes').val('0');
+
+        }
+        total += $('#SalesTaxes').val() * 1;
+
+
+        $('#TotalAfterTaxes').val(total + totalAccessoryPrice);
+        //$('#TotalAfterTaxes').trigger('change');
+        //CalculateTotalRefundableInsurance();
+        // $('#CashAmount').val(total);
+        $('#Paid').val(total.toFixed(2))
+        $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') - total).toFixed(2));
+        $('.PaymentAmount').first().val(total.toFixed(2));
+    }
+    function getGovernorates() {
+        $.get('/Helper/GetGovernorates/').done(function (r) {
+            $('#GovernorateId').empty();
+            @* $('#GovernorateId').append($('<option>', {
+                value: "",
+                text: '@MyERP.Properties.Resources.Select'
+            }));*@
+            for (var i = 0; i < r.length; i++) {
+                $('#GovernorateId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+            $('#GovernorateId').trigger('change');
+        });
+    }
+    function getCities() {
+        $('#CityId').empty();
+        $.get('/Helper/getCities').done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                $('#CityId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+            //$('#CityId').trigger('change');
+        });
+
+    }
+    function getAreas() {
+        $('#AreaId').empty();
+        $.get('/Helper/getAreas').done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                $('#AreaId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+    function Delete(id)
+    {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/SalesOrder/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            //alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                getSalesOrders();
+                            } else
+                                //alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+        @*if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete'))
+        {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/SalesOrder/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        //alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            getSalesOrders();
+                        } else
+                            //alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                            Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }*@
+    }
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+        var SalesOrderDetails = [];
+        if (valid) {
+            $('#SalesOrderDetails tr').each(function () {
+                var td = $(this);
+                if (td.find('.quantity').val() * 1 != 0 && td.find('.item').val() > 0) {
+                    var salesOrderDetail = {
+                        ItemId: td.find('.item').val(),
+                        ItemPriceId: td.find('.item-price-id').val(),
+                        ItemUnitId: td.find('.item-unit').val(),
+                        UnitEquivalent: td.find('.unit-equavalent').val(),
+                        Price: td.find('.price').inputmask('unmaskedvalue') * 1,
+                        Qty: td.find('.quantity').val(),
+                        IsActive: true,
+                        IsDeleted: false,
+                        ExtraTypeId: td.find('.ExtraTypeId').val(),
+                        RowId: td.find('.RowId').text(),
+                        AccessoryPrice: td.find('.accessoryPrice').inputmask('unmaskedvalue') * 1
+                    };
+
+                    SalesOrderDetails.push(salesOrderDetail);
+                }
+            });
+            valid = SalesOrderDetails.length > 0;
+            valid == false ?
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.PleaseEnterFullDetails' + '!',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                }) : null;
+        }
+        if (valid) {
+            var paymentMethods = [];
+            let totalPaied = 0;
+            let noneCashMoney = 0;
+            var creditAmount = 0;
+            $('#SalesOrderPaymentMethods tr').each(function () {
+                var td = $(this);
+                totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+                if (td.find('.PaymentMethodId').val() != 1) {
+                    noneCashMoney += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+                }
+                var paymentMethod = {
+                    SalesOrderId: $('#Id').val(),
+                    PaymentMethodId: td.find('.PaymentMethodId').val(),
+                    CashBoxId: td.find('.PaymentAmount').inputmask('unmaskedvalue') ? td.find('.CashBoxId').val() : null,
+                    Amount: td.find('.PaymentAmount').inputmask('unmaskedvalue'),
+                    BankId: td.find('.PaymentAmount').inputmask('unmaskedvalue') && td.find('.BankId').val() > 0 ? td.find('.BankId').val() : null,
+                    BankAccountId: td.find('.PaymentAmount').inputmask('unmaskedvalue') && td.find('.BankAccountId').val() > 0 ? td.find('.BankAccountId').val() : null
+                };
+                if (paymentMethod.PaymentMethodId == 2)
+                    creditAmount = paymentMethod.Amount;
+                paymentMethods.push(paymentMethod);
+            });
+            paymentMethods[0].Amount = $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1 - noneCashMoney;
+            let finalTotal = $('#IsInstallmentPlan').prop('checked') ? $('#TotalAfterTotalInstallment').inputmask('unmaskedvalue') : $('#TotalAfterTaxes').inputmask('unmaskedvalue');
+            if (finalTotal * 1 > totalPaied) {
+                //alert("@MyERP.Properties.Resources.TheValuePaidIsLessThanRequired");
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.TheValuePaidIsLessThanRequired',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                valid = false;
+            }
+            else if (finalTotal * 1 < noneCashMoney) {
+                //alert("@MyERP.Properties.Resources.TheValueOfTheCashlessPaymentCannotBeGreaterThanTheRequiredAmount");
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.TheValueOfTheCashlessPaymentCannotBeGreaterThanTheRequiredAmount',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                valid = false;
+            }
+        }
+        if (valid && $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1 > $('#Paid').inputmask('unmaskedvalue') * 1) {
+            if ($('#Paid').inputmask('unmaskedvalue') * 1 != 0) {
+                $('#Paid').val('').attr('required', 'required');
+                valid = false;
+                $('#TotalAfterTaxes').closest('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+                }, 500);
+                $('#Remaining').val($('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1);
+            }
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#save').prop('disabled', true);
+                    $('#SaveAndPrint').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/SalesOrder/AddEdit",
+                        data:
+                            JSON.stringify({
+                                Id: $('#Id').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                BranchId: $('#BranchId').val(),
+                                WarehouseId: $('#WarehouseId').val(),
+                                VoucherDate: $('#VoucherDate').val(),
+                                VendorOrCustomerId: $('#VendorOrCustomerId').val(),
+                                CurrencyId: $('#CurrencyId').val(),
+                                CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                                Total: $('#Total').inputmask('unmaskedvalue'),
+                                SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+                                Paid: $('#Paid').inputmask('unmaskedvalue'),
+                                TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+                                VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+                                VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+                                NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                                SystemPageId: $('#SystemPageId').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                SalesOrderDetails: SalesOrderDetails,
+                                SalesOrderPaymentMethods: paymentMethods,
+                                IsActive: true,
+                                IsDeleted: false,
+                                Notes: $('#Notes').val(),
+                                IsCompleted: false,
+                                CustomerType: $('#CustomerType').val(),
+                                DeliveryDate: $('#DeliveryDate').val(),
+                                AdministrativeDepartmentId: $('#AdministrativeDepartmentId').val(),
+                                ReservationMethodId: $('#ReservationMethodId').val(),
+                                PosCustomerId: $("#PosCustomerId").val(),
+                                RefundableInsurance: $("#RefundableInsurance").inputmask('unmaskedvalue'),
+                                DeliveryCost: $("#DeliveryCost").inputmask('unmaskedvalue'),
+                                //  ServiceFees: $("#ServiceFees").val(),
+                            }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                if (n == "report") {
+                                    //alert("@MyERP.Properties.Resources.Saved");
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                    window.open("/Report/SalesOrder/" + r.id + "?print=true");
+                                    window.location.replace("/SalesOrder/Panel");
+                                }
+                                else {
+                                    // alert("@MyERP.Properties.Resources.Saved");
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                    $('#preloader, #status').fadeOut();
+                                    window.location.replace("/SalesOrder/Panel");
+                                }
+
+                            } else if (r.success == 'false' && r.errors == 'IsCompleted') {
+                                //alert("@MyERP.Properties.Resources.TheSalesOrderHasBeenInvoiced" + "!");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.TheSalesOrderHasBeenInvoiced' + '!',
+                                    text: " ",
+                                    icon: 'info',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            else if (r.success == "false" && r.errors == "NotCashier") {
+                                // alert("@MyERP.Properties.Resources.TheInvoiceCannotBeAddedOrModifiedUnlessTheUserIsCashier");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.TheInvoiceCannotBeAddedOrModifiedUnlessTheUserIsCashier',
+                                    text: " ",
+                                    icon: 'info',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                            else
+                                // alert("@MyERP.Properties.Resources.NotSaved" + "!");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved' + ' !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            $('#preloader, #status').fadeOut();
+                            $('#save').prop('disabled', false);
+                            $('#SaveAndPrint').prop('disabled', false);
+                            console.log("Fail : ", r);
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#save').prop('disabled', false);
+                            $('#SaveAndPrint').prop('disabled', false);
+                            //alert("@MyERP.Properties.Resources.NotSaved" + "!");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved' + ' !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            console.log("ERROR : ", r);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+        @*if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            $('#save').prop('disabled', true);
+            $('#SaveAndPrint').prop('disabled', true);
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/SalesOrder/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: $('#Id').val(),
+                        DocumentNumber: $('#DocumentNumber').val(),
+                        BranchId: $('#BranchId').val(),
+                        WarehouseId: $('#WarehouseId').val(),
+                        VoucherDate: $('#VoucherDate').val(),
+                        VendorOrCustomerId: $('#VendorOrCustomerId').val(),
+                        CurrencyId: $('#CurrencyId').val(),
+                        CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                        Total: $('#Total').inputmask('unmaskedvalue'),
+                        SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+                        Paid: $('#Paid').inputmask('unmaskedvalue'),
+                        TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+                        VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+                        VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+                        NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                        SystemPageId: $('#SystemPageId').val(),
+                        DepartmentId: $('#DepartmentId').val(),
+                        SalesOrderDetails: SalesOrderDetails,
+                        SalesOrderPaymentMethods: paymentMethods,
+                        IsActive: true,
+                        IsDeleted: false,
+                        Notes: $('#Notes').val(),
+                        IsCompleted: false,
+                        CustomerType: $('#CustomerType').val(),
+                        DeliveryDate: $('#DeliveryDate').val(),
+                        AdministrativeDepartmentId: $('#AdministrativeDepartmentId').val(),
+                        ReservationMethodId: $('#ReservationMethodId').val(),
+                        PosCustomerId: $("#PosCustomerId").val(),
+                        RefundableInsurance: $("#RefundableInsurance").inputmask('unmaskedvalue'),
+                        DeliveryCost: $("#DeliveryCost").inputmask('unmaskedvalue'),
+                        //  ServiceFees: $("#ServiceFees").val(),
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+                        if (n == "report") {
+                            //alert("@MyERP.Properties.Resources.Saved");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.Saved',
+                                text: " ",
+                                icon: 'success',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            window.open("/Report/SalesOrder/" + r.id + "?print=true");
+                            window.location.replace("/SalesOrder/Panel");
+                        }
+                        else {
+                            // alert("@MyERP.Properties.Resources.Saved");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.Saved',
+                                text: " ",
+                                icon: 'success',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                            window.location.replace("/SalesOrder/Panel");
+                        }
+
+                    } else if (r.success == 'false' && r.errors == 'IsCompleted') {
+                        //alert("@MyERP.Properties.Resources.TheSalesOrderHasBeenInvoiced" + "!");
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.TheSalesOrderHasBeenInvoiced' + '!',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    else if (r.success == "false" && r.errors == "NotCashier") {
+                        // alert("@MyERP.Properties.Resources.TheInvoiceCannotBeAddedOrModifiedUnlessTheUserIsCashier");
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.TheInvoiceCannotBeAddedOrModifiedUnlessTheUserIsCashier',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    }
+                    else
+                        // alert("@MyERP.Properties.Resources.NotSaved" + "!");
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.NotSaved' + ' !',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    $('#preloader, #status').fadeOut();
+                    $('#save').prop('disabled', false);
+                    $('#SaveAndPrint').prop('disabled', false);
+                    console.log("Fail : ", r);
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    $('#save').prop('disabled', false);
+                    $('#SaveAndPrint').prop('disabled', false);
+                    //alert("@MyERP.Properties.Resources.NotSaved" + "!");
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotSaved' + ' !',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    console.log("ERROR : ", r);
+                }
+            });
+        }*@
+    }
+    //****************************************************************************************************************//
+
+    //------------ New Code ---------------------------//
+    function checkCustomerType() {
+        //if ($("#CustomerType").val() == 4) {
+        //    $(".VendorOrCustomerIdDiv").show();
+        //    $(".VendorOrCustomerDetailsDiv").show();
+        //    // $(".customer-model-btn").removeAttr('hidden');
+        //    $(".PosCustomerIdDiv").hide();
+        //    $(".PosCustomerDetailsDiv").hide();
+        //    $(".tableDiv").hide();
+        //    // $(".pos-customer-model-btn").hide();
+        //}
+        //else {
+            if ($("#CustomerType").val() != 2) {
+                $(".PosCustomerIdDiv").show();
+                $(".PosCustomerDetailsDiv").show();
+                $(".VendorOrCustomerIdDiv").hide();
+                $(".VendorOrCustomerDetailsDiv").hide();
+                $(".VendorOrCustomerId").val(1);
+                $(".tableDiv").hide();
+            }
+            else {
+                $(".PosCustomerIdDiv").hide();
+                $(".PosCustomerDetailsDiv").hide();
+                $(".VendorOrCustomerIdDiv").hide();
+                $(".VendorOrCustomerDetailsDiv").hide();
+                $(".VendorOrCustomerId").val(1);
+                $(".tableDiv").show();
+            }
+        //}
+    }
+    $('#PosCustomerId').on('change', function () {
+
+        CalculateTotals($('#NetTotal').inputmask('unmaskedvalue') * 1);
+
+        let customer = posCustomers.filter(function (i) { return i.Id == $('#PosCustomerId').val() })[0];
+        if (customer) {
+            $('#pos-customer-address').text(customer.Address);
+            $('#pos-customer-mobile').val(customer.Mobile1);
+        }
+    });
+    $(document).on('keydown', '#pos-customer-mobile', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            let elem = $(this);
+            let mobileNo = elem.val();
+            searchPosCustomers(mobileNo);
+        }
+    });
+    $(document).on('click', '#posCustomerAddBtn', function () {
+        getGovernorates();
+        $('#pos-customer-modal').modal("show");
+    });
+
+    let posCustomers = [];
+    function searchPosCustomers(mobileNo) {
+        $.get('/Helper/SearchPosCustomers?mobileNo=' + mobileNo).done(function (r) {
+            if (r.posCustomer != null) {
+                $("#PosCustomerId").val(r.posCustomer.PosCustomerId).trigger('change');
+                showPosCustomerModal(r.posCustomer, false, null);
+            }
+            else
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.ThereIsNoCustomerWithThisNoDoYouWantToAdd',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        showPosCustomerModal(null, true, mobileNo);
+                    }
+                    else { result.dismiss; }
+                });
+                 @*if (confirm('@MyERP.Properties.Resources.ThereIsNoCustomerWithThisNoDoYouWantToAdd')) {
+                 showPosCustomerModal(null, true, mobileNo);
+             }*@
+        });
+    }
+    function showPosCustomerModal(posCustomer, isNew, mobileNo) {
+        if (posCustomer != null && isNew == false) {
+            $("#posCustomerIdInput").val(posCustomer.PosCustomerId);
+            $("#posCustomerCodeInput").val(posCustomer.PosCustomerCode);
+            $("#PosCustomerArName").val(posCustomer.ArName);
+            $("#PosCustomerEnName").val(posCustomer.EnName);
+            $("#PosCustomerAddress").val(posCustomer.Address);
+            $("#PosCustomerNotes").val(posCustomer.Notes);
+            $("#Mobile1").val(posCustomer.Mobile1);
+            $("#Mobile2").val(posCustomer.Mobile2);
+            $("#GovernorateId").val(posCustomer.GovernorateId).trigger('change');
+            $("#CityId").val(posCustomer.CityId).trigger('change');
+            $("#AreaId").val(posCustomer.AreaId).trigger('change');
+
+            //$("#CityId").val(posCustomer.CityId).trigger('change')
+            //$("#AreaId").val(posCustomer.AreaId).trigger('change'))
+        }
+        else {
+            if (mobileNo != "" && mobileNo != null)
+                $("#Mobile1").val(mobileNo);
+            else
+                $("#Mobile1").val("");
+
+            $("#PosCustomerArName").val("");
+            $("#PosCustomerEnName").val("");
+            $("#PosCustomerAddress").val("");
+            $("#PosCustomerNotes").val("");
+        }
+        $('#pos-customer-modal').modal("show");
+    }
+    function appendPosCustomerOptions(refill) {
+        return getPosCustomers(refill).then(function () {
+            // let custumerType = $('#CustomerType').val();
+            let posCustomerOptions = '';
+
+            for (var i = 0; i < posCustomers.length; i++) {
+                posCustomerOptions += '<option value="' + posCustomers[i].Id + '">' + posCustomers[i].ArName + ' - ' + posCustomers[i].Code + '</option>';
+            }
+            $('#PosCustomerId').empty().append(posCustomerOptions);
+            $('#PosCustomerId').trigger('change');
+        });
+    }
+    function addPosCustomer() {
+        let valid = true;
+        if ($("#PosCustomerArName").val() == "") {
+            $("#PosCustomerArName").prop('required', true);
+        }
+        if ($("#pos-customer-modal").find(".form-control:invalid").length > 0) {
+            $("#pos-customer-modal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        } else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PosCustomers/addUpdate', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Id: $("#posCustomerIdInput").val() != "" ? $("#posCustomerIdInput").val() : 0,
+                        Code: $("#posCustomerCodeInput").val(),
+
+                        ArName: $("#PosCustomerArName").val(),
+                        EnName: $('#PosCustomerEnName').val(),
+                        Address: $('#PosCustomerAddress').val(),
+                        Mobile1: $('#Mobile1').val(),
+                        Mobile2: $('#Mobile2').val(),
+                        Notes: $('#PosCustomerNotes').val(),
+                        GovernorateId: $('#GovernorateId').val(),
+                        CityId: $('#CityId').val(),
+                        AreaId: $('#AreaId').val()
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        appendPosCustomerOptions(true).then(function () { $('#PosCustomerId').val(r.Id).trigger('change'); });
+                        $('#pos-customer-modal').modal('hide');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+    function addCustomer() {
+        if ($("#customer-modal").find(".form-control:invalid").length > 0) {
+            $("#customer-modal").find('.form-horizontal').addClass('was-validated');
+        } else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Customers/addedit', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        ArName: $("#ArName").val(),
+                        EnName: $('#EnName').val(),
+                        Address: $('#Address').val(),
+                        Mobile: $('#Mobile').val(),
+                        Notes: $('#Notes').val(),
+                        IsBranch: false,
+                        IncludeFees: false
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        appendCustomerOptions(true).then(function () { $('#VendorOrCustomerId').val(r.Id).trigger('change'); });
+                        $('#customer-modal').modal('hide');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+    $(document).on('click', '.invoiceInfoBtn', function () {
+        $('#invoiceInfoModal').modal("show");
+    });
+    function getPosCustomers(refill) {
+        if (refill == true)
+            requestCache['/Helper/GetPosCustomers'] = null;
+        return requestData('/Helper/GetPosCustomers').done(function (r) {
+            posCustomers = r;
+        });
+    }
+    // ------ Digital clock --------
+    function showTime() {
+        // to get current time/ date.
+        var date = new Date();
+        // to get the current hour
+        var h = date.getHours();
+        // to get the current minutes
+        var m = date.getMinutes();
+        //to get the current second
+        var s = date.getSeconds();
+        // AM, PM setting
+        var session = "AM";
+
+        //conditions for times behavior
+        if (h == 0) {
+            h = 12;
+        }
+        if (h >= 12) {
+            session = "PM";
+        }
+
+        if (h > 12) {
+            h = h - 12;
+        }
+        m = (m < 10) ? m = "0" + m : m;
+        s = (s < 10) ? s = "0" + s : s;
+
+        //putting time in one variable
+        var time = h + ":" + m + ":" + s + " " + session;
+        //putting time in our div
+        $('#clock').html(time);
+        //to change time in every seconds
+        setTimeout(showTime, 1000);
+    }
+    showTime();
+    // ------ End of Digital clock --------//
+    function showPaymentMethodsModal() {
+        $('#paymentMethodsModal').modal("show");
+        //  $("#TotalAfterTaxes").trigger('change');
+    }
+    function showUnpaidInvoicesModal() {
+        var depId = $("#DepartmentId").val();
+        getUnpaidInvoices(depId);
+
+        $("#UnpaidInvoicesModal").modal("show");
+    }
+    function showDriversModal() {
+        getDriversWithOrders();
+
+        $("#DriversModal").modal("show");
+    }
+    function getDriversWithOrders() {
+        $('#DriversModalTable').empty().append('<div class="col-sm-12"><div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div></div>');
+        $.get('/PointOfSale/DriversWithOrdersByDepartment?depId=' + $("#DepartmentId").val()).done(function (r) {
+            $('#DriversModalTable').empty().append(r);
+        });
+    }
+    function showInvoiceTypeModal() {
+        $("#invoiceTypeModal").modal('show');
+
+    }
+    function cashBoxBalance() {
+        if ($('#CashBoxId').val())
+            $.get('/Helper/CashBoxBalance/' + $('#CashBoxId').val()).done(function (r) {
+                $('#cashBoxBalance').val(r);
+            });
+    }
+    function getUnpaidInvoices(depId) {
+        $('#UnpaidInvoicesModalTable').empty().append('<div class="col-sm-12"><div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div></div>');
+        $.get('/PointOfSale/UnpaidSalesInvoicesByDepartment?id=' + depId).done(function (r) {
+            $('#UnpaidInvoicesModalTable').empty().append(r);
+        });
+    }
+    function getDrivers() {
+        return requestData('/Helper/GetDriversByDep?depId='+$("#DepartmentId").val()).done(function (r) {
+            $('.DriverId').empty();
+            $('.DriverId').append($('<option>', {
+                value: "",
+                text: '@MyERP.Properties.Resources.Select'
+            }));
+            for (var i = 0; i < r.length; i++) {
+                $('.DriverId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+
+            //$('#GovernorateId').trigger('change');
+        });
+    }
+    function GetCurrentTaxPercentage() {
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val()).done(function (r) {
+            taxPercentage = r / 100;
+            CalculateTotals();
+        });
+
+    }
+    $(document).on('change', '.PaymentAmount', function () {
+        let totalPaied = 0;
+        $('#SalesOrderPaymentMethods tr').each(function () {
+            var td = $(this);
+            totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+        });
+        $('#Paid').val(totalPaied);
+        $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') - $('#TotalAfterTaxes').inputmask('unmaskedvalue')).toFixed(2))
+    });
+    $('.PaymentAmount').on('click', function () {
+        selectedPaymentMethodInput = $(this);
+    });
+    $('.drivers').on('click', function () {
+        //window.location.replace('/Drivers/AddEdit');
+        showDriversModal();
+    });
+    $(document).on('click', '.getForm', function () {
+        var btn = $(this);
+        var customerType = btn.attr("customerType");
+        //window.location.replace("/PointOfSale/AddEdit?selectedcustomerType=" + customerType);
+        $("#invoiceTypeModal").modal('hide');
+        $('#CustomerType').val(customerType).trigger('change').attr('disabled', 'disabled');
+    });
+    $(document).on('change', '#CashBoxId', function () {
+        cashBoxBalance();
+    });
+    $('#hasTaxes').on('click', function () {
+
+        CalculateTotals();
+    });
+    $('#VoucherDate').on('change', function () {
+        GetCurrentTaxPercentage();
+    });
+    $(document).on('change', '#DeliveryCost', function () {
+        CalculateTotals();
+        $('#TotalAfterTaxes').trigger('change');
+        //CalculateTotalRefundableInsurance();
+    });
+    $(document).on('change', "#TotalAfterTaxes", function () {
+        if ($("#CustomerType").val() == 2 || $("#CustomerType").val() == 3) {
+            $("#PayMethod2").val($("#TotalAfterTaxes").val());
+            $("#PayMethod1").val('');
+            //$(".PaymentAmount").val($("#TotalAfterTaxes").val());
+
+            $(".PaymentAmount").trigger('change');
+
+        }
+        else if ($("#CustomerType").val() == 1) {
+            $("#PayMethod1").val($("#TotalAfterTaxes").val());
+            $("#PayMethod2").val('');
+
+            $(".PaymentAmount").trigger('change');
+        }
+    });
+
+    //********************************************************//
+    //function CalculateTotals(total) {
+    //    if (!total) {
+    //        total = 0;
+    //        $('.price').each(function () {
+    //            let itemTotal = $(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val();
+    //            $(this).closest('tr').find('.total').val(itemTotal);
+    //            total += itemTotal;
+    //        });
+    //    }
+
+    //    $('#Total').val(total);
+    //    if ($('#VoucherDiscountPercentage').inputmask('unmaskedvalue') < 100) {
+    //        $('#DiscountValue').val(($('#VoucherDiscountPercentage').inputmask('unmaskedvalue') / 100) * total);
+    //    } else {
+    //        $('#VoucherDiscountPercentage').val(0);
+    //        $('#DiscountValue').val(0);
+    //    }
+    //    if ($('#DiscountValue').val()) {
+    //        total -= $('#DiscountValue').inputmask('unmaskedvalue');
+    //    }
+    //    $('#NetTotal').val(total);
+    //    let customer = customers.filter((i) => { return i.Id == $('#VendorOrCustomerId').val() })[0];
+    //    if (customer.IncludeFees == true) {
+    //        let ServiceFees = $('#ServiceFeesPercentage').val() * total;
+    //        $('#ServiceFees').val(ServiceFees);
+    //        total = total * 1 + ServiceFees;
+    //    } else
+    //        $('#ServiceFees').val('');
+    //    $('#TotalAfterTaxes').val(total);
+    //    $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') - total).toFixed(2));
+    //    $('.PaymentAmount').first().trigger('change');
+    //}
+
+    //----- Function that responsible for add Additional Item that has been chosen from the pop up to the tabel of Items with its values ------ //
+    //function AddExtra(e)
+    //{
+    //    $('#exampleModal').modal("hide");
+    //    let name = $(e).attr('name');
+    //    let ItemId = $(e).closest('tr').find('.ItemId').text();
+    //    let MainItemId = $(e).closest('tr').find('.MainItemId').text();
+    //    let RowId = $(e).closest('tr').find('.RowId').text();
+
+
+    //    //----------------------------- new way (Add additional items for choisen main item in order under this item) ---------------------------------------------//
+    //    let WantedRow;
+    //    let count = 0;
+    //    $('#SalesOrderDetails tr').each(function ()
+    //    {
+    //        tr = $(this);
+    //        MainItem = tr.closest('tr').find('.MainItemId').text();
+    //        rowid = tr.closest('tr').find('.RowId').text();
+
+    //        if (RowId == rowid && tr.find('.Main').text() == "Main")
+    //        {
+    //            WantedRow = tr;
+    //        }
+    //        else
+    //        {
+    //            if (RowId == rowid)
+    //            {
+    //                count++;
+    //            }
+    //        }
+    //    });
+
+    //    // create variable to carry the data of Extra type id to distinguish the additional item from main item at edit time
+    //    let ExtraTypeId;
+    //    if (name == "Extra") {
+    //        ExtraTypeId = 1;
+    //    }
+    //    else {
+    //        if (name == "Double") {
+    //            ExtraTypeId = 2;
+    //        }
+    //        else {
+    //            if (name == "NoExtra") {
+    //                ExtraTypeId = 3;
+    //            }
+    //        }
+    //    }
+
+
+    //    if (count > 0)
+    //    {
+    //        $('#SalesOrderDetails').find('tr.' + RowId + ':last').after('<tr  class="' + RowId + '" bgcolor="pink"><td hidden class="RowId">' + RowId + '</td><td hidden class="MainItemId">' + MainItemId + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item extra" required value="' + ItemId + '" /> <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.ArName').text() + '" /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" value="' + $(e).closest('tr').find('.ItemPriceId').text() + '" required /></td > <td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" readonly required value="' + $(e).closest('tr').find('.' + name + 'Quantity').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.' + name + 'Price').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td hidden><input class="ExtraTypeId" required value="' + ExtraTypeId + '" /></td></tr > ');
+
+    //        $('#SalesOrderDetails tr select').select2({
+    //            matcher: matchCustom
+    //        });
+
+    //        getItemUnits(ItemId).done(function (r)
+    //        {
+    //            let units = '';
+    //            for (var i = 0; i < r.length; i++)
+    //            {
+    //                units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+    //            }
+
+    //            let WantedSelect = $('#SalesOrderDetails').find('tr.' + RowId + ':eq(' + count + ')');
+    //            WantedSelect.closest('tr').find('.item-unit').append(units).trigger('change');
+    //        });
+
+    //    }
+    //    else
+    //    {
+    //        WantedRow.after('<tr class="' + RowId + '" bgcolor="pink"><td hidden class="RowId">' + RowId + '</td><td hidden  class="MainItemId">' + MainItemId + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item extra" required value="' + ItemId + '" /> <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.ArName').text() + '" /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" value="' + $(e).closest('tr').find('.ItemPriceId').text() + '" required /></td > <td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" readonly required value="' + $(e).closest('tr').find('.' + name + 'Quantity').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.' + name + 'Price').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td hidden><input class="ExtraTypeId" required value="' + ExtraTypeId + '" /></td></tr > ');
+
+    //        $('#SalesOrderDetails tr select').select2({
+    //            matcher: matchCustom
+    //        });
+
+    //        getItemUnits(ItemId).done(function (r) {
+    //            let units = '';
+    //            for (var i = 0; i < r.length; i++) {
+    //                units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+    //            }
+
+    //            let WantedSelect = $('#SalesOrderDetails').find('tr.' + RowId + ':eq(' + count + ')');
+    //            WantedSelect.closest('tr').find('.item-unit').append(units).trigger('change');
+    //        });
+
+    //    }
+
+    //    //----------------------------- end of new way ---------------------------------------------//
+
+    //    CalculateTotals();
+    //}
+</script>

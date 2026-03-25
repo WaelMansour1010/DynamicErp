@@ -1,0 +1,1141 @@
+﻿@model MyERP.Models.Department
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Departments;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+                <a class="btn btn-primary" href="javascript:void(0);" data-toggle="modal" data-target="#CheckPassWordModal"><i class="fa fa-solid fa-key"></i></a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Departments</h4>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Departments/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @Html.HiddenFor(model => model.UserId)
+                        @Html.HiddenFor(model => model.Image)
+                        @Html.HiddenFor(model => model.IsLinked)
+                        @Html.HiddenFor(model => model.IsPosted)
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <br /> <br />
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArName
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="EnName"> @MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label class="control-label col-sm-2" for="PhoneNo">@MyERP.Properties.Resources.Mobile</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.PhoneNo, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Mobile } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Kimo")
+                                {
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="IdOnWebSite">@MyERP.Properties.Resources.DepartmetInWebSite</label>
+                                        <div class="col-sm-4">
+                                            <select name="IdOnWebSite" id="IdOnWebSite"><option value="@Html.Raw(Model!=null?Model.IdOnWebSite:null)"></option></select>
+                                            @Html.ValidationMessageFor(model => model.IdOnWebSite, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="IdOnWebsite2">@MyERP.Properties.Resources.DepartmetInWebSite 2</label>
+                                        <div class="col-sm-4">
+                                            <select name="IdOnWebsite2" id="IdOnWebsite2"><option value="@Html.Raw(Model!=null?Model.IdOnWebsite2:null)"></option></select>
+                                            @Html.ValidationMessageFor(model => model.IdOnWebsite2, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label" for="IdOnWebsite3">@MyERP.Properties.Resources.DepartmetInWebSite 3</label>
+                                        <div class="col-sm-4">
+                                            <select name="IdOnWebsite3" id="IdOnWebsite3"><option value="@Html.Raw(Model!=null?Model.IdOnWebsite3:null)"></option></select>
+                                            @Html.ValidationMessageFor(model => model.IdOnWebsite3, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                }
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Company</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CompanyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.Activity</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ActivityId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Address" name="Address" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Address; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.DepartmentAccounts
+                                </h5>
+                                <br /> <br />
+                                <div class="form-group row">
+                                    <label for="SalesAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.SalesAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SalesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="SalesReturnsAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.SalesReturnsAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SalesReturnsAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CostOfSalesAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.CostOfSalesAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CostOfSalesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="InventoryAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.InventoryAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("InventoryAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="InventoryVarianceAccountId">@MyERP.Properties.Resources.InventoryVarianceAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.InventoryVarianceAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label" for="LostAndDamagedAccountId">@MyERP.Properties.Resources.LostAndDamagedAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.LostAndDamagedAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="GiftsAndSamplesAccountId">@MyERP.Properties.Resources.GiftsAndSamplesAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.GiftsAndSamplesAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="AcquiredDeductionAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.AcquiredDeductionAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("AcquiredDeductionAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="DiscountAllowedAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.DiscountAllowedAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DiscountAllowedAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CustomersAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.CustomersAccounts</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CustomersAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VendorsAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.VendorAccounts</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("VendorsAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CommercialRevenueTaxAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.CommercialRevenueTaxAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CommercialRevenueTaxAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="InstallmentRevenueAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.InstallmentRevenueAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("InstallmentRevenueAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    @*  <label for="VisaAccountId" class="control-label col-sm-2">حساب  الدفع بالفيزا</label>
+                            <div class="col-sm-4">
+                                @Html.DropDownList("VisaAccountId", null, "اختار حساب", htmlAttributes: new { @class = "form-control", required = "required" })
+                                <div class="invalid-feedback">
+                                    حساب الدفع بالفيزا مطلوب
+                                </div>
+                            </div>*@
+
+                                    <label for="VisaCommissionAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.BankingFeesAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("VisaCommissionAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DirectExpensesAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.DirectExpensesAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DirectExpensesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="AccruedSalariesAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.AccruedSalariesAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("AccruedSalariesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="TaxAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.TaxAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("TaxAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ReservationPaymentAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.ReservationPaymentAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ReservationPaymentAccountId", null, @MyERP.Properties.Resources.Select
+                                       , htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="DepartmentCurrentAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.CurrentAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentCurrentAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="DepartmentsInventoryTransferAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.DepartmentsInventoryTransferAccount  </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentsInventoryTransferAccountId", null,
+                                @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="RefundableInsuranceAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.RefundableInsuranceAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("RefundableInsuranceAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="HotelRevenueAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.HotelRevenueAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("HotelRevenueAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="SmokingTaxAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.SmokingTaxAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SmokingTaxAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ServiceRevenueAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.ServiceRevenueAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ServiceRevenueAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ElderHostingAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.ElderHostingAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ElderHostingAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ChildSubscriptionAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.SchoolSubscriptionAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ChildSubscriptionAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DebitValueAddedTaxesAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.DebitValueAddedTaxesAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DebitValueAddedTaxesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="CreditValueAddedTaxesAccountId" class="control-label col-sm-2">   @MyERP.Properties.Resources.CreditValueAddedTaxesAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CreditValueAddedTaxesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="GeneralAccounts" style="display:none;">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.FinancialCenterSettings
+                                    </h5>
+
+                                    <br /> <br />
+                                    <div class="form-group row">
+                                        <label for="FixedAssetsAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.FixedAssetsAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("FixedAssetsAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.FixedAssetsAccountId, "", new { @class = "text-danger" })*@
+                                        </div>
+
+                                        <label for="CurrentAssetsAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.CurrentAssetsAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("CurrentAssetsAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.CurrentAssetsAccountId, "", new { @class = "text-danger" })*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="ShareHolderAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.ShareHolderAccount </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ShareHolderAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.ShareHolderAccountId, "", new { @class = "text-danger" })*@
+                                        </div>
+
+                                        <label for="CurrentShareHolderAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.CurrentShareHolderAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("CurrentShareHolderAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.CurrentShareHolderAccountId, "", new { @class = "text-danger" })*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.IncomeStatementSettings
+                                    </h5>
+                                    <br /> <br />
+                                    <div class="form-group row">
+                                        <label for="RevenueAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.RevenueAccount </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("RevenueAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.RevenueAccountId, "", new { @class = "text-danger" })*@
+                                        </div>
+                                        <label for="ExpensesAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.ExpensesAccount </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ExpensesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>
+                                    @Html.ValidationMessageFor(model => model.ExpensesAccountId, "", new { @class = "text-danger" })*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-group row">
+                                        <label for="PaidAllowancesAccumulatedAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.PaidAllowancesAccumulatedAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.PaidAllowancesAccumulatedAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="PaidAllowancesExpensesAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.PaidAllowancesExpensesAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.PaidAllowancesExpensesAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="EmpVacationAccumulatedAccountId " class="control-label col-sm-2">  @MyERP.Properties.Resources.EmpVacationAccumulatedAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.EmpVacationAccumulatedAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="EmpVacationExpensesAccountId" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.EmpVacationExpensesAccount
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.EmpVacationExpensesAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="TravelingTicketsAccumulatedAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.TravelingTicketsAccumulatedAccount</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.TravelingTicketsAccumulatedAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="TravelingTicketsExpensesAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.TravelingTicketsExpensesAccount   </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.TravelingTicketsExpensesAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="EndOfServiceAccumulatedAccountId" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.EndOfServiceAccumulatedAccount
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.EndOfServiceAccumulatedAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="EndOfServiceExpensesAccountId" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.EndOfServiceExpensesAccount
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(a => a.EndOfServiceExpensesAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="EmployeeReceivableAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.EmployeeReceivableAccount  </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EmployeeReceivableAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <label for="DueSalariesAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.DueSalariesAccount  </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("DueSalariesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control GeneralAccounts", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!----------------------------------------------------- PropertyManagementAccounts -------------------------------------------------->
+                <div class="row" id="PropertyManagementAccounts" style="display:none;">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.PropertyManagementAccounts
+                                </h5>
+                                <br /> <br />
+
+
+
+                                <div class="form-group row">
+                                    <label for="GasDueRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.GasDueRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("GasDueRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="GasRevenueId" class="control-label col-sm-2">  @MyERP.Properties.Resources.GasRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("GasRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="WaterDueRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.WaterDueRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("WaterDueRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="WaterRevenueId" class="control-label col-sm-2">  @MyERP.Properties.Resources.WaterRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("WaterRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ElectricityDueRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.ElectricityDueRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ElectricityDueRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ElectricityRevenueId" class="control-label col-sm-2">  @MyERP.Properties.Resources.ElectricityRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ElectricityRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ViolationsDueRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.ViolationsDueRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ViolationsDueRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ViolationsRevenueId" class="control-label col-sm-2">  @MyERP.Properties.Resources.ViolationsRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ViolationsRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ServicesDueRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.ServicesDueRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ServicesDueRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ServicesRevenueId" class="control-label col-sm-2">  @MyERP.Properties.Resources.ServicesRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ServicesRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DueRentId" class="control-label col-sm-2"> @MyERP.Properties.Resources.DueRents </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DueRentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="RentRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.RentRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("RentRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="RentsDueToOthersId" class="control-label col-sm-2">  @MyERP.Properties.Resources.RentsDueToOthers </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("RentsDueToOthersId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="RenterAndBuyerAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.RenterAndBuyerAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("RenterAndBuyerAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="MediatorARentsDueToOthersId" class="control-label col-sm-2"> @MyERP.Properties.Resources.MediatorARentsDueToOthers </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("MediatorARentsDueToOthersId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="MediatorAInsuranceForOthersToAllRentersId" class="control-label col-sm-2">  @MyERP.Properties.Resources.MediatorAInsuranceForOthersToAllRenters </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("MediatorAInsuranceForOthersToAllRentersId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="OwnerDueExpensesId" class="control-label col-sm-2">  @MyERP.Properties.Resources.OwnerDueExpenses </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("OwnerDueExpensesId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="OwnerAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.OwnerAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("OwnerAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CompanyDueCommissionId" class="control-label col-sm-2">  @MyERP.Properties.Resources.CompanyDueCommission </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CompanyDueCommissionId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="QuestAndCommissionRevenueId" class="control-label col-sm-2"> @MyERP.Properties.Resources.QuestAndCommissionRevenue </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("QuestAndCommissionRevenueId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="CommissionDueFromOthersOwningId" class="control-label col-sm-2">  @MyERP.Properties.Resources.CommissionDueFromOthersOwning </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CommissionDueFromOthersOwningId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="RepsCommissionAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.RepsCommissionAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("RepsCommissionAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DueBatchesId" class="control-label col-sm-2"> @MyERP.Properties.Resources.DueBatches </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DueBatchesId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="BookingBatchesId" class="control-label col-sm-2"> @MyERP.Properties.Resources.BookingBatches </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("BookingBatchesId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="RefundableInsuranceAccountForRentersId" class="control-label col-sm-2">  @MyERP.Properties.Resources.RefundableInsuranceAccountForRenters </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("RefundableInsuranceAccountForRentersId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="PropertyRefundInsuranceId" class="control-label col-sm-2">  @MyERP.Properties.Resources.PropertyRefundInsurance </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("PropertyRefundInsuranceId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ElectricityExpensesAndInvoicesId" class="control-label col-sm-2">  @MyERP.Properties.Resources.ElectricityExpensesAndInvoices </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ElectricityExpensesAndInvoicesId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="CommissionAccountId" class="control-label col-sm-2">  @MyERP.Properties.Resources.CommissionAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CommissionAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="PropertyExpensesAccountId" class="control-label col-sm-2"> @MyERP.Properties.Resources.PropertyExpensesAccount </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("PropertyExpensesAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control PropertyManagementAccounts", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--------------------------------------------------------------------------------------------------------->
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <button type="submit" id="newbtn" class="btn btn-success saveBtns">
+                                            @MyERP.Properties.Resources.SaveAndNew
+                                        </button>
+                                        <button type="submit" class="btn btn-success saveBtns">
+                                            @MyERP.Properties.Resources.Save
+                                        </button>
+                                        <a class="btn btn-info" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-success" id="repeatLink" href="@Url.Action("AddEdit",new { id=Model.Id, repeat=true})" target="_blank"> @MyERP.Properties.Resources.Repeat</a>
+                                            <a class="btn btn-info" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                                            <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button"> @MyERP.Properties.Resources.Delete</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    @*<button onclick="get()">dfdfdfdfd</button>*@
+</div>
+
+<!--------------------------------------------- Modal Section ---------------------------------------------------------------->
+<div class="modal fade" id="CheckPassWordModal" tabindex="-1" role="dialog" aria-labelledby="DiscountModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="DiscountModalTitle">@MyERP.Properties.Resources.ConfirmPassword</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.PassWord </label>
+                    <div class="col-sm-6">
+                        <input type="password" class="form-control" id="Password" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="ResetDiscountValue()">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="CheckPassword()">@MyERP.Properties.Resources.Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="CheckPassWordModalNew" tabindex="-1" role="dialog" aria-labelledby="DiscountModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="DiscountModalTitle">@MyERP.Properties.Resources.ConfirmPassword</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.PassWord </label>
+                    <div class="col-sm-6">
+                        <input type="password" class="form-control" id="PasswordNew" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="CheckPasswordNew()">@MyERP.Properties.Resources.Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--------------------------------------------- End Of Modal Section ---------------------------------------------------------------->
+
+<script>
+//--------------- Variables Declarations -------------------//
+    var IsPropertyManagement = '@ViewBag.IsPropertyManagement';
+    var IsGeneralAccounts = '@ViewBag.IsGeneralAccounts';
+    let isRepeat = '@ViewBag.IsRepeat';
+    var projectName = '@Html.Raw(System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"])';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if (isRepeat == 'True') {
+            $('#Id, #repeatLink, button.btn.btn-danger').remove();
+        }
+        if (!$('#Id').val() > 0 || isRepeat == 'True') {
+            setCodeNum();
+            $('#CheckPassWordModalNew').modal('show');
+            $('.saveBtns').hide();
+        }
+        if (IsPropertyManagement != 'True') {
+            $('.PropertyManagementAccounts').prop('required', false);
+        }
+        else {
+            $('#PropertyManagementAccounts').show();
+        }
+        if (IsGeneralAccounts != 'True') {
+            $('.GeneralAccounts').prop('required', false);
+        }
+        else {
+            $('#GeneralAccounts').show();
+        }
+
+   // if (projectName == "Kimo") {
+        var idOnWebsite = $('#IdOnWebSite').val();
+        var idOnWebsite2 = $('#IdOnWebsite2').val();
+        var idOnWebsite3 = $('#IdOnWebsite3').val();
+        $.ajax({
+            type: "GET",
+            dataType: "json",
+            url: "http://165.227.194.105/api/erp/Categories",
+            headers: { "x-app-token": "kimostore", "x-app-erp":"kimostore_erp"},
+            success: function (r) {
+                $('#IdOnWebSite').empty();
+                $('#IdOnWebsite2').empty();
+                $('#IdOnWebsite3').empty();
+                $('#IdOnWebSite').append($('<option>', {
+                    text: '@MyERP.Properties.Resources.Select',
+                    value: ''
+                }));
+                $('#IdOnWebsite2').append($('<option>', {
+                    text: '@MyERP.Properties.Resources.Select',
+                    value: ''
+                }));
+                $('#IdOnWebsite3').append($('<option>', {
+                    text: '@MyERP.Properties.Resources.Select',
+                    value: ''
+                }));
+                for (var i = 0; i < r.categories.length; i++) {
+                    $('#IdOnWebSite').append($('<option>', {
+                        value: r.categories[i]._id,
+                        text: r.categories[i].name.ar
+                    }));
+                    $('#IdOnWebsite2').append($('<option>', {
+                        value: r.categories[i]._id,
+                        text: r.categories[i].name.ar
+                    }));
+                    $('#IdOnWebsite3').append($('<option>', {
+                        value: r.categories[i]._id,
+                        text: r.categories[i].name.ar
+                    }));
+                }
+                idOnWebsite ? $('#IdOnWebSite').val(idOnWebsite) : null;
+                idOnWebsite2 ? $('#IdOnWebsite2').val(idOnWebsite2) : null;
+                idOnWebsite3 ? $('#IdOnWebsite3').val(idOnWebsite3) : null;
+            }
+        })
+   // }
+
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setCodeNum() {
+        var doc = $.get('/Departments/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function CheckPassword() {
+        var Password = $('#Password').val();
+        if ( Password.length>0) {
+            $.get('/Helper/CheckCurrentUserPassWord?Password=' + Password).done(function (r) {
+                if (r.success == "PasswordIncorrect") {
+
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.PassWordNotMatched',
+                        text: " ",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+                else {
+                        var link = '/SystemSetting/AllowedModule';
+                        window.open(link, "_blank");
+                }
+            });
+        }
+        else {
+             Swal.fire({
+                    title: '@MyERP.Properties.Resources.PassWordRequired',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+        }
+        $('#Password').val('');
+    }
+
+    function CheckPasswordNew() {
+        var Password = $('#PasswordNew').val();
+        if (Password.length > 0) {
+            $.get('/Helper/CheckCurrentUserPassWord?Password=' + Password).done(function (r) {
+                if (r.success == "PasswordIncorrect") {
+
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.PassWordNotMatched',
+                        text: " ",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+                else {
+                    $('.saveBtns').show();
+                }
+            });
+        }
+        else {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.PassWordRequired',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        $('#PasswordNew').val('');
+    }
+
+    //*********************************************************//
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Departments/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Departments');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+</script>

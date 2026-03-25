@@ -1,0 +1,144 @@
+﻿
+
+<script src="~/js/jquery-1.11.1.min.js"></script>
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    <input type="button" class="btn btn-info btnAdd" name="AddEdit" value="رجوع" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')" style="float:left;">
+                    <h4>بيانات الخدمة :</h4>
+                </div>
+                <div class="form-body">
+                    <form class="form-horizontal">
+                     
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label"> اسم الخدمة عربي</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="txtArName" id="txtArName" placeholder="الاسم العربى" required>
+                                <span class="Asterisks">*</span>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label"> اسم الخدمة انجليزي</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="txtArName" id="txtEnName" placeholder="الاسم الانجليزى" required>
+                            
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label">الفئة التابعة لها </label>
+                            <div class="col-sm-9">
+                              
+                                    <select id="ddlCategoryId" name="ddlCategoryId" class="form-control"></select>
+                                
+
+                            </div>
+                        </div>
+                  
+         
+                        <div class="col-sm-offset-2">
+                            <button type="button" class="btn btn-success" onclick="save()">
+                                حفظ
+                            </button>
+                            <button type="reset" class="btn btn-danger" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')">
+                                رجوع
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hdnobjID" />
+<input type="hidden" id="hdnUserId" />
+<input type="hidden" id="hdnIsDeleted" />
+<input type="hidden" id="hdnIsActive" />
+<input type="hidden" id="hdnImage" />
+<script>
+
+    FillcategoryDDL();
+    function save() {
+
+        CheckInputs();
+
+        if ($("form").valid() && $('.error:visible').length == 0) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: MainDomain + 'api/Services/' + $('#hdnobjID').val(),
+                    type: ((@ViewBag.ID.ToString() != '') ? 'PUT' : 'POST'),
+                    data: {
+                        "Id": $('#hdnobjID').val(),
+                
+                        "ArServiceName": $('#txtArName').val(),
+                        "EnServiceName": $('#txtEnName').val(),
+                        "CategoryId": $('#ddlCategoryId').val(),
+                        
+                        "UserId": $('#hdnUserId').val(),
+                        "IsDeleted": (@ViewBag.ID.ToString() != '') ? $('#hdnIsDeleted').val() : false,
+                        "IsActive": (@ViewBag.ID.ToString() != '') ? $('#hdnIsActive').val() : true,
+                        "Image": (@ViewBag.ID.ToString() != '') ? $('#hdnImage').val() : true,
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                    },
+                    error: function (e) {
+                        if (e) {
+                           
+                            $('#preloader, #status').fadeOut();
+                        } else
+                            window.location = '/logout/';
+                    },
+                    success: function (r) {
+                        back('@ViewContext.RouteData.Values["controller"].ToString()');
+                    }
+                });
+        } else {
+            CheckSave();
+            $("label.error").html('يرحى ادخال هذا الحقل');
+            $('html').animate({ scrollTop: $('.error:visible').offset().top - 170 }, '500', 'swing');
+        }
+    }
+
+    if (@ViewBag.ID.ToString() != '') {
+
+        $.ajax(
+            {
+                url: MainDomain + 'api/Services/@ViewBag.ID.ToString()',
+                type: 'Get',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                },
+                error: function (e) {
+                    console.log(e);
+                    window.location = '/logout/';
+                },
+                success: function (r) {
+
+                    if (r != null) {
+
+                        $('#txtArName').val(r['ArServiceName']);
+                        $('#txtEnName').val(r['EnServiceName']);
+                        $('#ddlCategoryId').val(r['CategoryId']);
+                        $('#hdnImage').val(r['Image']);
+                        $('#hdnobjID').val(r['Id']);
+                        $('#hdnUserId').val(r['UserId']);
+                        $('#hdnIsDeleted').val(r['IsDeleted']);
+                        $('#hdnIsActive').val(r['IsActive']);
+
+                        FillAutoCompelete();
+                    }
+
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+    }
+
+</script>
+
+

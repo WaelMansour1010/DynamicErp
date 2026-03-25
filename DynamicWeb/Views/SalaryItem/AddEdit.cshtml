@@ -1,0 +1,796 @@
+﻿@model MyERP.Models.SalaryItem
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.SalaryItems;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.SalaryItems:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/SalaryItem/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.Code)
+                                    @Html.HiddenFor(model => model.IsActive)
+
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control ", placeholder = @MyERP.Properties.Resources.Code, required = "required", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="ArName"> @MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+                                    <label for="ChartOfAccountId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.LinkedAccount
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.ChartOfAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    
+                                    <label for="HrDepartmentId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.HrDepartment
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.HrDepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                                <!-- MY CODE ↓↓↓↓-->
+
+                                <div class="form-group row">
+                                    <label for="Type" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.SalaryItemType
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.Type, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="SalaryItemNatureId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.SalaryItemNature
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.SalaryItemNatureId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                                <div class="form-group row">
+
+                                    <label for="SalaryItemUnitId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.SalaryItemUnit
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.SalaryItemUnitId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="SalaryItemCalcMethodId" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.SalaryItemCalcMethod
+
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.SalaryItemCalcMethodId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <br />
+                                <br />
+
+                                <!-- Checks panel -->
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class=" col-md-4">
+                                                    @*يدخل فى مخصص الاجازات*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsIncludedInVacations == true)
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInVacations", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInVacations", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsIncludedInVacations" class="control-label col-sm-10"> @MyERP.Properties.Resources.IncludedInVacations</label>
+                                                    </div>
+                                                    @*يدخل فى مخصص مكافأة نهاية الخدمة*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsIncludedInEndOfService == true)
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInEndOfService", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInEndOfService", false, htmlAttributes: new { @class = "form-control" })
+
+                                                            }
+                                                        </div>
+                                                        <label for="IsIncludedInEndOfService" class="control-label col-sm-10">@MyERP.Properties.Resources.IncludedInEndOfService</label>
+                                                    </div>
+                                                    @*يدخل فى الزيادة السنوية*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsIncludedInAnnualIncrease == true)
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInAnnualIncrease", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInAnnualIncrease", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsIncludedInAnnualIncrease" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.IncludedInAnnualIncrease
+                                                        </label>
+                                                    </div>
+                                                    @*يستخدم حساب الذمم*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsIncludedInReceivable == true)
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInReceivable", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInReceivable", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsIncludedInReceivable" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.IncludedInReceivable
+                                                        </label>
+                                                    </div>
+                                                    @*يستخدم حساب المدفوعات المقدمة للموظف*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsUsingAdvancePaymentAcc == true)
+                                                            {
+                                                                @Html.CheckBox("IsUsingAdvancePaymentAcc", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsUsingAdvancePaymentAcc", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsUsingAdvancePaymentAcc" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.UsingAdvancePaymentAccount
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class=" col-md-4">
+                                                    @*يظهر فى المسير*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.AppearInPayroll == true)
+                                                            {
+                                                                @Html.CheckBox("AppearInPayroll", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("AppearInPayroll", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="AppearInPayroll" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.AppearInPayroll
+                                                        </label>
+                                                    </div>
+                                                    @*يظهر فى مسير الاجازات*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.AppearInVacationsPayroll == true)
+                                                            {
+                                                                @Html.CheckBox("AppearInVacationsPayroll", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("AppearInVacationsPayroll", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="AppearInVacationsPayroll" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.AppearInVacationsPayroll
+                                                        </label>
+                                                    </div>
+                                                    @*يظهر كامل فى مستحقات الاجازة*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.AppearAllInVacationsDues == true)
+                                                            {
+                                                                @Html.CheckBox("AppearAllInVacationsDues", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("AppearAllInVacationsDues", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="AppearAllInVacationsDues" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.IncludedInTickets
+                                                        </label>
+                                                    </div>
+                                                    @*يخضع للتأمينات*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsIncludedInInsurance == true)
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInInsurance", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsIncludedInInsurance", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsIncludedInInsurance" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.IncludedInInsurance
+                                                        </label>
+                                                    </div>
+                                                    @*مفرد تأمين*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsInsuranceItem == true)
+                                                            {
+                                                                @Html.CheckBox("IsInsuranceItem", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsInsuranceItem", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsInsuranceItem" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.InsuranceItem
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class=" col-md-4">
+                                                    @*مفرد غياب*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsAbsenceItem == true)
+                                                            {
+                                                                @Html.CheckBox("IsAbsenceItem", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsAbsenceItem", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsAbsenceItem" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.AbsenceItem
+                                                        </label>
+                                                    </div>
+                                                    @*مفرد خصم*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsPenaltyItem == true)
+                                                            {
+                                                                @Html.CheckBox("IsPenaltyItem", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsPenaltyItem", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsPenaltyItem" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.PenaltyItem
+                                                        </label>
+                                                    </div>
+                                                    @*مفرد مكافأة*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsRewardItem == true)
+                                                            {
+                                                                @Html.CheckBox("IsRewardItem", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsRewardItem", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsRewardItem" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.IsRewardItem
+                                                        </label>
+                                                    </div>
+                                                    @*مفرد راتب اساسى*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsBasicSalaryItem == true)
+                                                            {
+                                                                @Html.CheckBox("IsBasicSalaryItem", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsBasicSalaryItem", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsBasicSalaryItem" class="control-label col-sm-10">
+
+                                                            @MyERP.Properties.Resources.BasicSalaryItem
+                                                        </label>
+                                                    </div>
+                                                    @*مفرد بدلات مقدمة*@
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-2">
+                                                            @if (Model != null && Model.IsAdvanceAllowancesItem == true)
+                                                            {
+                                                                @Html.CheckBox("IsAdvanceAllowancesItem", true, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                            else
+                                                            {
+                                                                @Html.CheckBox("IsAdvanceAllowancesItem", false, htmlAttributes: new { @class = "form-control" })
+                                                            }
+                                                        </div>
+                                                        <label for="IsAdvanceAllowancesItem" class="control-label col-sm-10">
+                                                            @MyERP.Properties.Resources.AdvanceAllowancesItem
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--*******************-->
+                                <!-- End Of Code-->
+                                <!--  طريقة حساب قيمة البند-->
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="header-title">
+                                                @MyERP.Properties.Resources.SalaryItemValueCalcMethod :
+                                            </h5>
+                                            <hr />
+                                            <br />
+
+                                            <div class="card-body">
+
+                                                <div class="form-group row">
+                                                    <label for="SalaryItemValueCalcMethodId" class="control-label col-sm-2">@MyERP.Properties.Resources.SelectSalaryItemValueCalcMethod </label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(model => model.SalaryItemValueCalcMethodId, null, htmlAttributes: new { @class = "form-control" })
+
+                                                    </div>
+                                                    <div style="display:none" id="ValOfAll" class="col-ms-4">
+                                                        @Html.EditorFor(a => a.ItemFixedValueForAllEmployees, new { htmlAttributes = new { @class = "form-control form-control-sm col-sm-10", placeholder = @MyERP.Properties.Resources.Value } })
+                                                    </div>
+                                                </div>
+
+                                                <div style="display:none" id="itemTable">
+                                                    <hr />
+                                                    <!-- Main Table -- -- -- -->
+                                                    <div class="table-responsive">
+                                                        <table class="table table-striped table-centered mb-0">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>
+                                                                        <label>@MyERP.Properties.Resources.SalaryItem</label>
+                                                                    </td>
+                                                                    <td>
+                                                                        @Html.DropDownList("SalaryItemId", ViewBag.SalaryItemId as SelectList, @MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control col-sm-8 Relation" } })
+                                                                    </td>
+                                                                    <td>
+                                                                        <button class="btn btn-success" onclick="Additem()"> @MyERP.Properties.Resources.Add</button>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>
+                                                                        <label>
+                                                                            @MyERP.Properties.Resources.Sign
+                                                                        </label>
+                                                                    </td>
+                                                                    <td>
+                                                                        @Html.DropDownList("Operation", ViewBag.Operation as SelectList, @MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control col-sm-8" } })
+                                                                    </td>
+                                                                    <td>
+                                                                        <button class="btn btn-success" onclick="Addoperation()"> @MyERP.Properties.Resources.Add</button>
+
+                                                                    </td>
+                                                                </tr>
+
+                                                                <tr>
+                                                                    <td>
+                                                                        <lable> @MyERP.Properties.Resources.Value</lable>
+                                                                    </td>
+                                                                    <td>
+                                                                        <input type="text" placeholder=" @MyERP.Properties.Resources.Value" class="form-control col-sm-8" id="Val" />
+                                                                    </td>
+                                                                    <td>
+                                                                        <button class="btn btn-success" onclick="Addvalue()"> @MyERP.Properties.Resources.Add</button>
+                                                                    </td>
+
+                                                                </tr>
+                                                            </tbody>
+
+                                                        </table>
+                                                    </div>
+                                                    <!-- End Of Table -->
+                                                    <br />
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-5">
+                                                            @Html.EditorFor(a => a.EquationText, new { htmlAttributes = new { @class = "form-control col-sm-12 ", @readonly = "readonly" } })
+                                                        </div>
+                                                        <div class="col-sm-5">
+                                                            @Html.EditorFor(a => a.EquationValue, new { htmlAttributes = new { @class = "form-control col-sm-12", @readonly = "readonly" } })
+                                                        </div>
+                                                        <div class="col-sm-2">
+                                                            <a href="javascript:void(0);" onclick="ClearEquation()">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <hr />
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="EquationMinimumValue">
+                                                            @MyERP.Properties.Resources.Minimum
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            @Html.EditorFor(model => model.EquationMinimumValue, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Minimum } })
+
+                                                        </div>
+                                                        <label class=" col-sm-2 control-label" for="EquationMaximumValue">
+                                                            @MyERP.Properties.Resources.Maximum
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            @Html.EditorFor(model => model.EquationMaximumValue, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Maximum } })
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--*******************-->
+                                    <!-- حفظ و جديد-->
+                                    <hr />
+                                    <div class="row">
+                                        <div class="col-sm-offset-2">
+                                            @if (Model == null)
+                                            {
+                                                <button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                                                    @MyERP.Properties.Resources.SaveAndNew
+                                                </button>
+                                                <button class="btn btn-success" onclick="addEdit()">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            }
+                                            else if (Model.IsDeleted == false)
+                                            {
+                                                <button class="btn btn-success" onclick="addEdit()">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            }
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*</form>*@
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <script>
+        $(document).ready(function () {
+            $('#SalaryItemValueCalcMethodId').trigger('change');
+        });
+
+        if (!$('#Id').val() > 0) {
+            function setCodeNum() {
+                $.get('/SalaryItem/SetCodeNum').done(function (r) {
+                    $('#Code').val(r);
+                });
+
+            }
+
+            setCodeNum();
+        }
+
+
+
+        function addEdit(n) {
+            if ($(".form-control:invalid").length > 0) {
+                console.log($(".form-control:invalid"));
+                $('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+            }
+            else {
+                var SalaryItem =
+                {
+                    Id: $('#Id').val(),
+                    Code: $('#Code').val(),
+                    ArName: $('#ArName').val(),
+                    EnName: $('#EnName').val(),
+                    Type: $('#Type').val(),
+                    IsActive: true,
+                    ChartOfAccountId: $('#ChartOfAccountId').val(),
+                    HrDepartmentId: $('#HrDepartmentId').val(),
+                    SalaryItemNatureId: $('#SalaryItemNatureId').val(),
+                    SalaryItemUnitId: $('#SalaryItemUnitId').val(),
+                    SalaryItemCalcMethodId: $('#SalaryItemCalcMethodId').val(),
+                    IsIncludedInVacations: $('#IsIncludedInVacations').prop('checked'),
+                    IsIncludedInEndOfService: $('#IsIncludedInEndOfService').prop('checked'),
+                    IsIncludedInAnnualIncrease: $('#IsIncludedInAnnualIncrease').prop('checked'),
+                    IsIncludedInReceivable: $('#IsIncludedInReceivable').prop('checked'),
+                    IsUsingAdvancePaymentAcc: $('#IsUsingAdvancePaymentAcc').prop('checked'),
+                    AppearInPayroll: $('#AppearInPayroll').prop('checked'),
+                    IsIncludedInInsurance: $('#IsIncludedInInsurance').prop('checked'),
+                    IsInsuranceItem: $('#IsInsuranceItem').prop('checked'),
+                    IsAbsenceItem: $('#IsAbsenceItem').prop('checked'),
+                    IsPenaltyItem: $('#IsPenaltyItem').prop('checked'),
+                    IsRewardItem: $('#IsRewardItem').prop('checked'),
+                    IsBasicSalaryItem: $('#IsBasicSalaryItem').prop('checked'),
+                    IsAdvanceAllowancesItem: $('#IsAdvanceAllowancesItem').prop('checked'),
+                    AppearInVacationsPayroll: $('#AppearInVacationsPayroll').prop('checked'),
+                    AppearAllInVacationsDues: $('#AppearAllInVacationsDues').prop('checked'),
+                    SalaryItemValueCalcMethodId: $('#SalaryItemValueCalcMethodId').val(),
+                    ItemFixedValueForAllEmployees: $('#ItemFixedValueForAllEmployees').val(),
+                    EquationValue: $('#EquationValue').val(),
+                    EquationText:$('#EquationText').val(),
+                    EquationMinimumValue: $('#EquationMinimumValue').val(),
+                    EquationMaximumValue: $('#EquationMaximumValue').val()
+                };
+                if ($('#SalaryItemValueCalcMethodId').val() == 1) {
+                    SalaryItem.EquationValue = null;
+                    SalaryItem.ItemFixedValueForAllEmployees = null
+                }
+                else if ($('#SalaryItemValueCalcMethodId').val() == 2) {
+                    SalaryItem.EquationValue = null;
+                }
+                else if ($('#SalaryItemValueCalcMethodId').val() == 3) {
+                    SalaryItem.ItemFixedValueForAllEmployees = null
+                }
+
+
+                if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                    $.ajax({
+                        type: "POST",
+                        url: "/SalaryItem/AddEdit",
+                        data: SalaryItem,
+                        success: function (r) {
+                            if (r.success == "true") {
+                                if (n == "new") {
+                                    window.location.replace("/SalaryItem/AddEdit");
+                                } else {
+                                    window.location.replace("/SalaryItem");
+                                }
+                            }
+                            else
+                                alert(' @MyERP.Properties.Resources.NotSaved');
+                            $('#preloader, #status').fadeOut();
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            alert(' @MyERP.Properties.Resources.NotSaved');
+                        }
+                    });
+
+
+
+
+            }
+        }
+
+        $('#SalaryItemValueCalcMethodId').change(function () {
+            var getValue = $(this).val();
+
+            if (getValue == 1) {
+                $('#ValOfAll').hide();
+                $('#itemTable').hide();
+            }
+            else if (getValue == 2) {
+                $('#ValOfAll').show();
+                $('#itemTable').hide();
+            }
+            else {
+                $('#ValOfAll').hide();
+                $('#itemTable').show();
+            }
+
+        })
+
+
+        function Additem() {
+            var SalaryID = $('#SalaryItemId').val();
+            var SalaryTxt = $('#SalaryItemId option:selected').text();
+            if ($('#SalaryItemId').val() != 0 && $('#SalaryItemId').val() != null && $('#SalaryItemId').val() != "") {
+                if ($('#EquationValue').val() != 0 && $('#EquationValue').val() != null) {
+                    //Value
+                    $('#EquationValue').val($('#EquationValue').val() + "_" + "Id" + SalaryID);
+                    //Text
+                    $('#EquationText').val($('#EquationText').val() + "_" + SalaryTxt);
+                }
+                else {
+
+                //Value
+                $('#EquationValue').val($('#EquationValue').val() + "Id" + SalaryID);
+                //Text
+                    $('#EquationText').val($('#EquationText').val() + SalaryTxt);
+                }
+            }
+            else {
+                alert("@MyERP.Properties.Resources.SelectSalaryItem");
+                ////Value
+                //$('#EquationValue').val($('#EquationValue').val());
+                ////Text
+                //$('#EquationText').val($('#EquationText').val());
+            }
+        }
+
+        function Addoperation() {
+            var operationID = $('#Operation').val();
+            var operationTxt = $('#Operation option:selected').text();
+            if ($('#Operation').val() != 0 && $('#Operation').val() != null && $('#Operation').val() != "") {
+                //Value
+                $('#EquationValue').val($('#EquationValue').val() + "_" + operationTxt );
+                //Text
+                $('#EquationText').val($('#EquationText').val() + "_" + operationTxt );
+            }
+            else {
+                alert("@MyERP.Properties.Resources.Sign @MyERP.Properties.Resources.Required");
+                //////Value
+                ////$('#EquationValue').val($('#EquationValue').val());
+                //////Text
+                ////$('#EquationText').val($('#EquationText').val());
+            }
+        }
+
+        function Addvalue() {
+            var Value = $('#Val').val();
+            if ($('#Val').val() != 0 && $('#Val').val() != null && $('#Val').val() != "") {
+                //Value
+                $('#EquationValue').val($('#EquationValue').val() + "_" + Value );
+                //Text
+                $('#EquationText').val($('#EquationText').val() + "_" + Value);
+                $('#Val').val('')
+            }
+            else {
+                //Value
+                $('#EquationValue').val($('#EquationValue').val());
+                //Text
+                $('#EquationText').val($('#EquationText').val());
+            }
+        }
+
+        function ClearEquation() {
+            $('#EquationValue').val('');
+            $('#EquationText').val('');
+        }
+
+                            //function DeleteFunc(id) {
+                    //    if (confirm('هل تريد الحذف؟')) {
+                    //        $('#preloader, #status').fadeIn();
+                    //        $.ajax(
+                    //            {
+                    //                url: '/SalaryItem/Delete',
+                    //                type: 'POST',
+                    //                data: {
+                    //                    "Id": id,
+                    //                },
+                    //                error: function (e) {
+                    //                    $('#preloader, #status').fadeOut();
+                    //                    alert('لم يتم الحذف!');
+                    //                },
+                    //                success: function (r) {
+                    //                    if (r == 'true') {
+                    //                        window.location.replace('/SalaryItem');
+                    //                    } else
+                    //                        alert('لم يتم الحذف!');
+                    //                }
+                    //            });
+                    //    }
+                    //}
+
+
+                     //function Delete(id) {
+                    //    if (confirm('هل تريد الحذف؟')) {
+                    //        $('#preloader, #status').fadeIn();
+                    //        $.ajax(
+                    //            {
+                    //                url: '/SalaryItem/Delete',
+                    //                type: 'POST',
+                    //                data: {
+                    //                    "Id": id,
+                    //                },
+                    //                error: function (e) {
+
+                    //                },
+                    //                success: function (r) {
+                    //                    if (r == 'true') {
+                    //                        window.location.replace('/SalaryItem');
+                    //                    } else
+                    //                        alert('لم يتم الحذف!');
+                    //                    $('#preloader, #status').fadeOut();
+                    //                }
+                    //            });
+                    //    }
+                    //}
+
+
+    </script>

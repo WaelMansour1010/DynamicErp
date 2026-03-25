@@ -1,0 +1,752 @@
+﻿
+@model MyERP.Models.CustomModels.ERPUsersModel
+@{
+    bool isECommerce = System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true" ? true : false;
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    else if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ERPUser;
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.ERPUser:</div>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    @Html.HiddenFor(model => model.IsActive)
+}
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ERPUsers/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input type="hidden" value="@Model.Id" id="Id" />
+                                <div id="accordion">
+                                    <h5 class="header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.MainData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse1">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Name </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Email </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control" } })
+
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="EnableTwoFactorAuthentication" class="control-label col-sm-2"> @MyERP.Properties.Resources.EnableTwoFactorAuthentication</label>
+                                        <div class="col-sm-4">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" value="true" class="custom-control-input" name="EnableTwoFactorAuthentication" id="EnableTwoFactorAuthentication" @Html.Raw(Model == null ? "" : Model.EnableTwoFactorAuthentication == null ? "" : (bool)Model.EnableTwoFactorAuthentication ? "checked" : "") />
+                                                <label class="custom-control-label" for="EnableTwoFactorAuthentication"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- App Password -->
+                                    <div class="form-group row" id="AppPasswordDiv" style="display:none;">
+                                        <label for="EnableAppPassword" class="control-label col-sm-2"> @MyERP.Properties.Resources.EnableAppPassword</label>
+                                        <div class="col-sm-4">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" value="true" class="custom-control-input" name="EnableAppPassword" id="EnableAppPassword" @Html.Raw(Model == null ? "" : Model.EnableAppPassword == null ? "" : (bool)Model.EnableAppPassword ? "checked" : "") />
+                                                <label class="custom-control-label" for="EnableAppPassword"></label>
+                                            </div>
+                                        </div>
+                                        <label class=" col-sm-2 control-label AppPassword" style="display:none;"> @MyERP.Properties.Resources.AppPassword  </label>
+                                        <div class="col-sm-4 AppPassword" style="display:none;">
+                                            @Html.EditorFor(model => model.AppPassword, new { htmlAttributes = new { @class = "form-control" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- End Of App Password -->
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Employee </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Group </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("RoleId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.UserName</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.UserName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class="col-sm-2 control-label">@MyERP.Properties.Resources.PassWord</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="form-control" name="Password" id="Password" @Html.Raw(Model.Id > 0 ? "" : "required") />
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">
+                                            @MyERP.Properties.Resources.CustodyBox
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("CustodyBoxId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        </div>
+                                        <label for="IsCashier" class="control-label col-sm-2">@MyERP.Properties.Resources.Cashier</label>
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" id="IsCashier" @Html.Raw(Model.IsCashier == true ? "checked" : "") />
+                                        </div>
+
+                                    </div>
+
+
+
+                                    <div class="form-group row">
+
+                                        <label for="ShowDashBoardForUser" class="control-label col-sm-2">@MyERP.Properties.Resources.ShowDashBoardForUser</label>
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" id="ShowDashBoardForUser" @Html.Raw(Model.ShowDashBoardForUser == true ? "checked" : "") />
+                                        </div>
+
+                                        <label for="IsWaiter" class="control-label col-sm-2">@MyERP.Properties.Resources.Waiter</label>
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" id="IsWaiter" @Html.Raw(Model.IsWaiter == true ? "checked" : "") />
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        @if (!isECommerce)
+                        {
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                        @MyERP.Properties.Resources.UserDepartments
+                                    </a>
+                                </h5>
+                                <div id="collapse2">
+                                    <div class="tables">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Department
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Privilege
+                                                    </th>
+
+                                                </tr>
+                                            </thead>
+                                            <tbody id="DepTable">
+                                                @if (Model.Id > 0)
+                                                {
+                                                    foreach (var item in Model.UserDepartments)
+                                                    {
+                                                        <tr>
+                                                            <td hidden>
+                                                                <input type="text" class="DepartmentId form-control" value="@item.Id" />
+                                                            </td>
+                                                            <td>
+                                                                @Html.DisplayFor(modelItem => item.ArName)
+                                                            </td>
+                                                            <td>
+                                                                @if (item.Allow == "true")
+                                                                {
+
+                                                                    <input type="checkbox" class="Allow" checked />
+
+                                                                }
+                                                                else
+                                                                {
+
+                                                                    <input type="checkbox" class="Allow" />
+                                                                }
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    foreach (var item in Model.AllDepartments)
+                                                    {
+                                                        <tr>
+                                                            <td hidden>
+                                                                <input type="text" class="DepartmentId form-control" value="@item.Id" />
+                                                            </td>
+                                                            <td>
+                                                                @Html.DisplayFor(modelItem => item.ArName)
+                                                            </td>
+                                                            <td>
+                                                                @if (item.Allow == "true")
+                                                                {
+
+                                                                    <input type="checkbox" class="Allow" checked />
+
+                                                                }
+                                                                else
+                                                                {
+
+                                                                    <input type="checkbox" class="Allow" />
+                                                                }
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        }
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                        @MyERP.Properties.Resources.UserWareHouses
+                                    </a>
+                                </h5>
+                                <div id="collapse3">
+                                    <div class="tables">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.WareHouse
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Privilege
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="WarTable">
+                                                @if (Model.Id > 0)
+                                                {
+                                                    foreach (var item in Model.UserWareHouses)
+                                                    {
+                                                        <tr>
+                                                            <td hidden>
+                                                                <input type="text" class="WareHouseId form-control" value="@item.Id" />
+                                                            </td>
+                                                            <td>
+                                                                @Html.DisplayFor(modelItem => item.ArName)
+                                                            </td>
+                                                            <td>
+                                                                @if (item.Allow == "true")
+                                                                {
+
+                                                                    <input type="checkbox" class="Allow" checked />
+
+                                                                }
+                                                                else
+                                                                {
+
+                                                                    <input type="checkbox" class="Allow" />
+                                                                }
+
+
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+                                                }
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                        @MyERP.Properties.Resources.CashBoxes
+                                    </a>
+                                </h5>
+                                <div id="collapse4">
+                                    <div>
+                                        <div class="tables">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.CashBox
+                                                        </th>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Privilege
+                                                        </th>
+
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="cashTable">
+                                                    @if (Model.Id > 0)
+                                                    {
+                                                        foreach (var item in Model.UserCashboxes)
+                                                        {
+                                                            <tr>
+                                                                <td hidden>
+                                                                    <input type="text" class="CashBoxId form-control" value="@item.Id" />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.DisplayFor(modelItem => item.ArName)
+                                                                </td>
+                                                                <td>
+                                                                    @if (item.Allow == "true")
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" checked />
+
+                                                                    }
+                                                                    else
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" />
+                                                                    }
+                                                                </td>
+
+                                                            </tr>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        foreach (var item in Model.AllCashBoxes)
+                                                        {
+                                                            <tr>
+                                                                <td hidden>
+                                                                    <input type="text" class="CashBoxId form-control" value="@item.Id" />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.DisplayFor(modelItem => item.ArName)
+                                                                </td>
+                                                                <td>
+                                                                    @if (item.Allow == "true")
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" checked />
+
+                                                                    }
+                                                                    else
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" />
+                                                                    }
+                                                                </td>
+
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                        @MyERP.Properties.Resources.PointOfSales
+                                    </a>
+                                </h5>
+                                <div id="collapse5">
+                                    <div>
+                                        <div class="tables">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.PointOfSale
+                                                        </th>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Privilege
+                                                        </th>
+
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="posTable">
+                                                    @if (Model.Id > 0)
+                                                    {
+                                                        foreach (var item in Model.UserPos)
+                                                        {
+                                                            <tr>
+                                                                <td hidden>
+                                                                    <input type="text" class="PosId form-control" value="@item.Id" />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.DisplayFor(modelItem => item.ArName)
+                                                                </td>
+                                                                <td>
+                                                                    @if (item.Allow == "true")
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" checked />
+
+                                                                    }
+                                                                    else
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" />
+                                                                    }
+                                                                </td>
+
+                                                            </tr>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        foreach (var item in Model.AllPos)
+                                                        {
+                                                            <tr>
+                                                                <td hidden>
+                                                                    <input type="text" class="PosId form-control" value="@item.Id" />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.DisplayFor(modelItem => item.ArName)
+                                                                </td>
+                                                                <td>
+                                                                    @if (item.Allow == "true")
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" checked />
+
+                                                                    }
+                                                                    else
+                                                                    {
+
+                                                                        <input type="checkbox" class="Allow" />
+                                                                    }
+                                                                </td>
+
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="float:left">
+                        @if (Model.Id == 0)
+                        {
+                        <button type="button" onclick="AddEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button type="button" onclick="AddEdit()" class="btn btn-success">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                        }
+                        else if (Model.IsDeleted == false)
+                        {
+                    <button type="button" onclick="AddEdit()" class="btn btn-success">
+                        @MyERP.Properties.Resources.Save
+                    </button>
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+
+                        }
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            if ($('#Id').val() == 1) // Admin
+            {
+                $('#AppPasswordDiv').show();
+                if ($('#EnableAppPassword').prop('checked') == true) {
+                    $('.AppPassword').show();
+                    $('#AppPassword').prop('required', true);
+                }
+                else {
+                    $('.AppPassword').hide();
+                    $('#AppPassword').val('');
+                    $('#AppPassword').prop('required', false);
+                }
+            }
+        }
+        else { }
+    });
+    //*********************************************************//
+
+    //--------------- Event Functions -------------------//
+     $(document).on('click', '#EnableTwoFactorAuthentication', function () {
+        if ($(this).prop('checked') == true) {
+            if ($('#Email').val()) {
+
+            } else {
+                alert('@MyERP.Properties.Resources.EmailRequired');
+                $(this).prop('checked', false);
+            }
+        }
+     });
+    $(document).on('click', '#IsWaiter', function () {
+        if ($(this).prop('checked') == true) {
+            $('#IsCashier').prop('checked', false);
+        }
+    });
+    $(document).on('click', '#IsCashier', function () {
+        if ($(this).prop('checked') == true) {
+            $('#IsWaiter').prop('checked', false);
+        }
+    });
+
+    $(document).on('click', '#EnableAppPassword', function () {
+        if ($(this).prop('checked') == true) {
+            if ($('#Email').val()) {
+                $('.AppPassword').show();
+                $('#AppPassword').prop('required', true);
+            } else {
+                alert('@MyERP.Properties.Resources.EmailRequired');
+                $(this).prop('checked', false);
+                $('.AppPassword').hide();
+                $('#AppPassword').val('');
+                $('#AppPassword').prop('required', false);
+            }
+        }
+        else {
+            $('.AppPassword').hide();
+            $('#AppPassword').val('');
+            $('#AppPassword').prop('required', false);
+        }
+    });
+    $('.Allow').click(function () {
+        if ($(this).prop("checked") == true) {
+            var depId = $(this).closest('#DepTable tr').find('.DepartmentId').val();
+            console.log(depId);
+            setWarehouseValues(depId);
+        }
+        else if ($(this).prop("checked") == false) {
+            var depId = $(this).closest('#DepTable tr').find('.DepartmentId').val();
+            console.log(depId);
+            RemoveWarehouseValues(depId);
+        }
+    });
+    //*********************************************************//
+
+     //--------------- Other Functions -------------------//
+    function setWarehouseValues(depId) {
+        var Warehouses = $.get('/helper/WarehousesByDepartmentId?id=' + depId)
+            .done(function () {
+                Warehouses = Warehouses.responseJSON;
+
+                for (var i = 0; i < Warehouses.length; i++) {
+                    $('#WarTable').append(
+                        '<tr><td hidden><input type="text" value="' + Warehouses[i].Id + '" class="WareHouseId form-control"/>\
+                     </td><td>'+ Warehouses[i].ArName + '</td> <td><input type="checkbox" class="Allow"/></td></tr>'
+                    );
+                }
+            })
+    }
+    function RemoveWarehouseValues(depId) {
+        var Warehouses = $.get('/helper/WarehousesByDepartmentId?id=' + depId)
+            .done(function () {
+                Warehouses = Warehouses.responseJSON;
+
+                for (var i = 0; i < Warehouses.length; i++) {
+                    $('#WarTable tr').each(function (index, ele) {
+                        if ($(this).closest('#WarTable tr').find('.WareHouseId').val() == Warehouses[i].Id) {
+                            $(this).closest('#WarTable tr').remove();
+                        }
+                    });
+
+                }
+            })
+    }
+    //*********************************************************/
+    function AddEdit(n) {
+        if ($('#IsCashier').prop('checked')) {
+            $('#IsCashier').val('true');
+        }
+        else {
+            $('#IsCashier').val('false');
+        }
+
+        if ($('#IsWaiter').prop('checked')) {
+            $('#IsWaiter').val('true');
+        }
+        else {
+            $('#IsWaiter').val('false');
+        }
+
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            $('#preloader, #status').fadeIn();
+            var Departmentslist = [];
+            var WareHousesList = [];
+            var CashBoxesList = [];
+            var PosList = [];
+            $('#cashTable tr').each(function (index, ele) {
+                var cashBox = {
+                    CashBoxId: $('.CashBoxId', this).val(), Privilege: $('.Allow', this).is(":checked")
+                }
+                CashBoxesList.push(cashBox);
+            });
+
+            $('#posTable tr').each(function (index, ele) {
+                var pos = {
+                    PosId: $('.PosId', this).val(), Privilege: $('.Allow', this).is(":checked")
+                }
+                PosList.push(pos);
+            });
+
+            $('#DepTable tr').each(function (index, ele) {
+                var department = {
+                    DepartmentId: $('.DepartmentId', this).val(), Privilege: $('.Allow', this).is(":checked")
+                }
+                Departmentslist.push(department);
+            });
+            $('#WarTable tr').each(function (index, ele) {
+                var warehouse = {
+                    WareHouseId: $('.WareHouseId', this).val(), Privilege: $('.Allow', this).is(":checked")
+                }
+                WareHousesList.push(warehouse);
+            });
+            var data = {
+                Id: $('#Id').val(),
+                Name: $('#Name').val(),
+                Email: $('#Email').val(),
+                EmployeeId: $('#EmployeeId').val(),
+                RoleId: $('#RoleId').val(),
+                UserName: $('#UserName').val(),
+                IsActive: $('#IsActive').val(),
+                Password: $('#Password').val(),
+                IsCashier: $('#IsCashier').val(),
+                IsWaiter: $('#IsWaiter').val(),
+                CustodyBoxId: $('#CustodyBoxId').val(),
+                UserDepartments: Departmentslist,
+                UserWareHouses: WareHousesList,
+                UserCashBoxes: CashBoxesList,
+                UserPos: PosList,
+                ShowDashBoardForUser: $('#ShowDashBoardForUser').prop('checked'),
+                EnableTwoFactorAuthentication: $('#EnableTwoFactorAuthentication').prop('checked'),
+                VerificationCode: $('#VerificationCode').val(),
+                AppPassword: $('#AppPassword').val(),
+                EnableAppPassword: $('#EnableAppPassword').prop('checked'),
+            }
+            console.log(data);
+            if (confirm(' @MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                $.ajax({
+                    type: "POST",
+                    url: "/ERPUsers/AddEdit",
+                    data: data
+                    ,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/ERPUsers/AddEdit");
+                            } else {
+                                window.location.replace("/ERPUsers");
+                            }
+                        }
+                        else if (r.success == 'false') {
+                            if (r.cause == 'username taken') {
+                                alert('@MyERP.Properties.Resources.UserNameExistsBefore');
+                            }
+                            else if (r.EmpExist == "Employee Exist") {
+                                alert('@MyERP.Properties.Resources.EmployeeAttachedToAnotherUser');
+                            }
+                        }
+                        else
+                            alert(' @MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert(' @MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+        }
+    }
+    function Delete(id) {
+        if (confirm(' @MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/ERPUsers/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert(' @MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace("/ERPUsers");
+                        } else
+                            alert(' @MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+</script>

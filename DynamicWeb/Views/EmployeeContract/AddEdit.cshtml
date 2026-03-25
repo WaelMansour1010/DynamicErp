@@ -1,0 +1,1681 @@
+﻿@model MyERP.Models.EmployeeContract
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeeContracts;
+}
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">  @MyERP.Properties.Resources.EmployeeContracts :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        @* panal 1 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.ContractData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse1">
+
+                                    <div class="form-group row">
+                                        @if (Model != null)
+                                        {
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.HiddenFor(model => model.IsActive)
+                                            @Html.HiddenFor(model => model.UserId)
+                                            @Html.HiddenFor(model => model.Image)
+                                        }
+                                        <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.ContractNo</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ContractNo, @readonly = "readonly", required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+
+                                        <label class=" col-sm-2 control-label" for="Sequence">@MyERP.Properties.Resources.Sequence</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Sequence, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Sequence, required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="ContractStartTime" class="control-label col-sm-2">@MyERP.Properties.Resources.ContractStartDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ContractStartTime, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                            @Html.ValidationMessageFor(model => model.ContractStartTime, "", new { @class = "text-danger" })
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriContractStartDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryContractStartTime" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="ContractEndTime" class="control-label col-sm-2">@MyERP.Properties.Resources.ContractEndDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ContractEndTime, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                            @Html.ValidationMessageFor(model => model.ContractStartTime, "", new { @class = "text-danger" })
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriContractEndDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryContractEndTime" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.EmployeeName</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.EmployeeCode</label>
+                                        <div class="col-sm-4">
+                                            @if (Model != null)
+                                            {
+                                                <input type="text" readonly class="form-control" id="EmployeeCode" value="@Model.Employee.Code" />
+                                            }
+                                            else
+                                            {
+                                                <input type="text" readonly class="form-control" id="EmployeeCode" />
+                                            }
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="ContractPeriodNum" class="control-label col-sm-2">@MyERP.Properties.Resources.ContractPeriod</label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.ContractPeriodNum, new { htmlAttributes = new { @class = "form-control", @required = "required", @type = "number" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            @Html.DropDownList("ContractPeriodTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.TestPeriodNum</label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.TestPeriodNum, new { htmlAttributes = new { @class = "form-control", @type = "number" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            @Html.DropDownList("TestPeriodTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="ContractJobId" class="control-label col-sm-2">@MyERP.Properties.Resources.Job</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ContractJobId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                        <label for="ContractsTypeId" class="control-label col-sm-2">@MyERP.Properties.Resources.ContractsType</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ContractsTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="ContractsStatusId" class="control-label col-sm-2">@MyERP.Properties.Resources.ContractsStatus </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ContractsStatusId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="ContractTypeId" class="control-label col-sm-2"> @MyERP.Properties.Resources.ContractType</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ContractTypeId", null, @MyERP.Properties.Resources.ContractType, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="AdministrativeDepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.AdministrativeDepartment</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("AdministrativeDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="HireDate" class="control-label col-sm-2">@MyERP.Properties.Resources.HireDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.HireDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriHireDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryHireDate" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        @* panal 7 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse7">
+                                            @MyERP.Properties.Resources.EmployeeSalaryItems
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse7">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="SalaryItemId">@MyERP.Properties.Resources.SalaryItem</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EmployeeSalaryItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                            @*<div class="invalid-feedback">
+                                                    اختر مفردات الراتب
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-offset-2">
+                                            <button id="EndOfServices" class="btn btn-success AddSalaryItem">
+                                                @MyERP.Properties.Resources.Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemName
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemValue
+
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemType
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemCalcMethod
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemFixedValue
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemMinValue
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemMaxValue
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Delete
+                                                    </th>
+
+                                                </tr>
+                                            </thead>
+                                            <tbody id="EmployeeContractSalaryItems">
+                                                @if (Model != null)
+                                                {
+                                                    foreach (var item in Model.EmployeeContractSalaryItems)
+                                                    {
+                                                <tr>
+                                                    <td hidden><input class="SalaryItemId" value="@item.SalaryItemId" /></td>
+                                                    <td>
+                                                        <label>@item.SalaryItem.ArName</label>
+                                                    </td>
+                                                    @if (item.SalaryItem.SalaryItemValueCalcMethodId == 1 || item.EquationValue == "لا يوجد قيمة")
+                                                    {
+                                                        <td hidden><label class="SalaryItemValueCalcMethodId">1</label></td>
+                                                        <td>
+                                                            <input onchange="CalculateEquation()" type="number" step="any" class="ItemValue variable form-control" value="@item.ItemValue" />
+                                                        </td>
+
+                                                        <td>
+                                                            <select class="SalaryItemTypeId form-control">
+                                                                @if (item.SalaryItemTypeId == 0)
+                                                                {
+                                                                    <option selected value="0">
+                                                                        @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                    </option>
+                                                                    <option value="1">
+                                                                        @MyERP.Properties.Resources.DueSalaryItem
+                                                                    </option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="0">
+                                                                        @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                    </option>
+                                                                    <option selected value="1">
+                                                                        @MyERP.Properties.Resources.DueSalaryItem
+                                                                    </option>
+                                                                }
+                                                            </select>
+                                                        </td>
+
+                                                        <td hidden>
+                                                            <label class="Equation">@item.EquationValue</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="EquationValue">
+                                                                @MyERP.Properties.Resources.NoValue
+                                                            </label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="ItemFixedValue">@item.ItemFixedValueForAllEmployees</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="MinimumValue">0</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="MaximumValue">0</label>
+                                                        </td>
+                                                    }
+                                                    else if (item.SalaryItem.SalaryItemValueCalcMethodId == 2)
+                                                    {
+                                                        <td hidden><label class="SalaryItemValueCalcMethodId">2</label></td>
+                                                        <td>
+                                                            <input type="number" step="any" readonly class="ItemValue form-control" value="@item.ItemValue" />
+                                                        </td>
+
+                                                        <td>
+                                                            <select class="SalaryItemTypeId form-control">
+                                                                @if (item.SalaryItemTypeId == 0)
+                                                                {
+                                                                    <option selected value="0">
+                                                                        @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                    </option>
+                                                                    <option value="1">
+                                                                        @MyERP.Properties.Resources.DueSalaryItem
+                                                                    </option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="0">
+                                                                        @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                    </option>
+                                                                    <option selected value="1">
+                                                                        @MyERP.Properties.Resources.DueSalaryItem
+                                                                    </option>
+                                                                }
+                                                            </select>
+                                                        </td>
+                                                        <td hidden>
+                                                            <label class="Equation">@item.SalaryItem.EquationValue</label>
+                                                        </td>
+                                                        <td>
+                                                            <label class="EquationValue">
+                                                                @MyERP.Properties.Resources.NoValue
+                                                            </label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="ItemFixedValue">@item.ItemFixedValueForAllEmployees</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="MinimumValue">0</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="MaximumValue">0</label>
+                                                        </td>
+                                                    }
+                                                    else if (item.SalaryItem.SalaryItemValueCalcMethodId == 3)
+                                                    {
+                                                        <td hidden><label class="SalaryItemValueCalcMethodId">3</label></td>
+                                                        <td>
+                                                            <input type="number" step="any" readonly class="ItemValue form-control" value="@item.ItemValue" />
+                                                        </td>
+
+                                                        <td>
+                                                            <select class="SalaryItemTypeId form-control">
+                                                                @if (item.SalaryItemTypeId == 0)
+                                                                {
+                                                                    <option selected value="0">
+                                                                        @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                    </option>
+                                                                    <option value="1">
+                                                                        @MyERP.Properties.Resources.DueSalaryItem
+                                                                    </option>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <option value="0">
+                                                                        @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                    </option>
+                                                                    <option selected value="1">
+                                                                        @MyERP.Properties.Resources.DueSalaryItem
+                                                                    </option>
+                                                                }
+                                                            </select>
+                                                        </td>
+                                                        <td hidden>
+                                                            @*<label class="Equation">@item.EquationValue</label>*@
+                                                            <label class="Equation">@item.SalaryItem.EquationValue</label>
+                                                        </td>
+                                                        <td>
+                                                            <label class="EquationValue">@item.SalaryItem.EquationText</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="ItemFixedValue">@item.ItemFixedValueForAllEmployees</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="MinimumValue">@item.SalaryItem.EquationMinimumValue</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="MaximumValue">@item.SalaryItem.EquationMaximumValue</label>
+                                                        </td>
+                                                    }
+                                                    else if(item.EquationValue.Trim() == "لا يوجد قيمة")
+                                                    {
+                                                    <td hidden><label class="SalaryItemValueCalcMethodId">@item.SalaryItemId</label></td>
+                                                    <td>
+                                                        @*CalculateSalaryItems*@
+                                                        <input onchange="CalculateEquation()" type="number" step="any" class="ItemValue variable form-control" value="@item.ItemValue" />
+                                                    </td>
+
+                                                    <td>
+                                                        <select class="SalaryItemTypeId form-control">
+                                                            @if (item.SalaryItemTypeId == 0)
+                                                            {
+                                                                <option selected value="0">
+                                                                    @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                </option>
+                                                                <option value="1">
+                                                                    @MyERP.Properties.Resources.DueSalaryItem
+                                                                </option>
+                                                            }
+                                                            else
+                                                            {
+                                                                <option value="0">
+                                                                    @MyERP.Properties.Resources.GeneralSalaryItem
+                                                                </option>
+                                                                <option selected value="1">
+                                                                    @MyERP.Properties.Resources.DueSalaryItem
+                                                                </option>
+                                                            }
+                                                        </select>
+                                                    </td>
+
+                                                    <td hidden>
+                                                        <label class="Equation">@item.EquationValue</label>
+                                                    </td>
+
+                                                    <td>
+                                                        <label class="EquationValue">
+                                                            @MyERP.Properties.Resources.NoValue
+                                                        </label>
+                                                    </td>
+
+                                                    <td>
+                                                        <label class="ItemFixedValue">@item.ItemFixedValueForAllEmployees</label>
+                                                    </td>
+
+                                                    <td>
+                                                        <label class="MinimumValue">0.00</label>
+                                                    </td>
+
+                                                    <td>
+                                                        <label class="MaximumValue">0.00</label>
+                                                    </td>
+                                                    }
+                                                    <td>
+                                                        <button type="button" class="btn btn-danger" onclick="deleteElement(this)">
+                                                            @MyERP.Properties.Resources.Delete
+                                                        </button>
+                                                    </td>
+
+                                                </tr>
+                                                    }
+                                                }
+
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="form-group row py-3">
+                                        <label class=" col-sm-3" for="SalaryItemId">  @MyERP.Properties.Resources.TotalSalaryItem</label>
+                                        <div class="col-sm-3">
+                                            @Html.EditorFor(model => model.EmployeeTotalSalary, new { htmlAttributes = new { @class = "form-control", @readonly = "true" } })
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Panal 2 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                            @MyERP.Properties.Resources.AnnualTravelTickets
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse2">
+                                    <div class="form-group row">
+                                        <label for="EmployeeHasTicket" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.EmployeeTicket
+                                        </label>
+                                        <div class="col-sm-2">
+                                            @if (Model != null && Model.EmployeeHasTicket == true)
+                                            {
+                                                @Html.CheckBox("EmployeeHasTicket", true, new { htmlAttributes = new { @class = "form-control", @valeu = Model.EmployeeHasTicket } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("EmployeeHasTicket", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                        <label for="WifeHasTicket" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.WifeTicket
+                                        </label>
+                                        <div class="col-sm-2">
+                                            @if (Model != null && Model.WifeHasTicket == true)
+                                            {
+                                                @Html.CheckBox("WifeHasTicket", true, new { htmlAttributes = new { @class = "form-control", @valeu = Model.WifeHasTicket } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("WifeHasTicket", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                        <label for="RelativesHasTicket" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.RelativesTicket
+                                        </label>
+                                        <div class="col-sm-2">
+                                            @if (Model != null && Model.RelativesHasTicket == true)
+                                            {
+                                                @Html.CheckBox("RelativesHasTicket", true, new { htmlAttributes = new { @class = "form-control", @valeu = Model.RelativesHasTicket } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("RelativesHasTicket", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="TicketsNum" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.TicketsNo
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.TicketsNum, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    @type = "number",@*@required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    عدد التذاكر مطلوب
+                                                </div>*@
+
+                                        </div>
+                                        <label for="TicketsTotalValue" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.TicketsTotalValue
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.TicketsTotalValue, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",@*@required = "required",*@@type = "number"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    إجمالى قيمة التذاكر مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 3 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                            @MyERP.Properties.Resources.MedicalInsurance
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse3">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="InsuranceNum">
+                                            @MyERP.Properties.Resources.MedicalInsuranceNo
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.InsuranceNum, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",
+                                               placeholder = @MyERP.Properties.Resources.MedicalInsuranceNo
+,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    الرقم التأمينى مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="EmployeeHasInsurance">
+@MyERP.Properties.Resources.HasMedicalInsurance
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @if (Model != null && Model.EmployeeHasInsurance == true)
+                                            {
+                                                @Html.CheckBox("EmployeeHasInsurance", true, new { htmlAttributes = new { @class = "form-control", @valeu = Model.EmployeeHasInsurance } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("EmployeeHasInsurance", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                        <label for="EmployeeInsuranceCategoryId" class="control-label col-sm-2">
+@MyERP.Properties.Resources.EmployeeInsuranceCategory
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EmployeeInsuranceCategoryId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    فئة تأمين الموظف مطلوبة
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="WifeHasInsurance"> @MyERP.Properties.Resources.FamilyHasInsurance</label>
+                                        <div class="col-sm-4">
+                                            @if (Model != null && Model.WifeHasInsurance == true)
+                                            {
+                                                @Html.CheckBox("WifeHasInsurance", true, new { htmlAttributes = new { @class = "form-control", @valeu = Model.WifeHasInsurance } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("WifeHasInsurance", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                        <label for="WifeInsuranceCategoryId" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.FamilyInsuranceCategory
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("WifeInsuranceCategoryId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    فئة تأمين الزوجة مطلوبة
+                                                </div>*@
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 4 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                            @MyERP.Properties.Resources.Vacations
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse4">
+
+                                    <div class="form-group row">
+
+                                        <label class=" col-sm-2 control-label" for="InsuranceNum">
+                                            @MyERP.Properties.Resources.FinancialDueForEach
+                                        </label>
+
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.VacationDuePeriodNum, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",@*@required = "required",*@@type = "number"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("VacationDuePeriodTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <div class="col-sm-2">
+                                            <input id="Variable" class="Vacation" type="radio" name="Vacation" />
+                                            <label class=" control-label" for="InsuranceNum">@MyERP.Properties.Resources.Salary</label>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.VacationEquivalentWorkPeriodNum, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                           @type = "number",
+                                                    @disabled = "true"@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-2">
+                                            @Html.DropDownList("VacationEquivalentWorkPeriodId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",
+                                           @disabled = "true"@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <input id="Fixed" class="Vacation" type="radio" name="Vacation" />
+                              <label class="control-label" for="InsuranceNum">@MyERP.Properties.Resources.SalaryItemFixedValue
+                                   </label>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            @Html.EditorFor(model => model.VacationSalaryIncreaseValue, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.SalaryItemFixedValue,
+                                                    @disabled = "true",
+                                                    @type = "number"@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                    <div id="VacationTable">
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="SalaryItemId"> @MyERP.Properties.Resources.SalaryItem</label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownList("VacationsSalaryItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @disabled = "true" })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-offset-2">
+                                                <button id="Vacations" class="btn btn-success AddItem">
+                                                    @MyERP.Properties.Resources.Add
+                                                </button>
+                                                <button name="Vacations" class="btn btn-success AddAllItem">
+                                                    @MyERP.Properties.Resources.All
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-centered mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.SalaryItemName
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Delete
+                                                        </th>
+
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="EmployeeContractVacations">
+                                                    @if (Model != null)
+                                                    {
+                                                        foreach (var item in Model.EmployeeContractVacations)
+                                                        {
+                                                            <tr>
+                                                                <td hidden><input class="SalaryItemId" value="@item.SalaryItemId" /></td>
+                                                                <td>
+                                                                    <label>@item.SalaryItem.ArName</label>
+                                                                </td>
+
+                                                                <td>
+                                                                    <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                                                </td>
+
+                                                            </tr>
+                                                        }
+                                                    }
+
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class=" pt-3 form-group row">
+
+                                        <label class=" col-sm-2 control-label" for="InsuranceNum">@MyERP.Properties.Resources.VacationDaysNo</label>
+
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.VacationPeriodNum, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    @type = "number"@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("VacationPeriodTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 5 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                            @MyERP.Properties.Resources.AnnualIncrease
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse5">
+                                    <div class="form-group row">
+                                        <div class="col-sm-2">
+                                            <input id="Fixed" class="AnnualIncrease" type="radio" name="Annual" @Html.Raw(Model!=null&&Model.SalaryFixedIncreaseValue!=null?"checked":"") />
+                                            <label class=" control-label" for="InsuranceNum"> @MyERP.Properties.Resources.SalaryItemFixedValue</label>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.SalaryFixedIncreaseValue, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.SalaryItemFixedValue,
+                                                    @type = "number",
+                                                    @disabled = "true"@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    القيمة مطلوبة
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <input id="Ratio" class="AnnualIncrease" type="radio" name="Annual" @Html.Raw(Model!=null&&Model.SalaryIncreaseRatio!=null?"checked":"") />
+                                            <label class="control-label" for="InsuranceNum">@MyERP.Properties.Resources.Percentage</label>
+                                        </div>
+                                        <div class="col-sm-3">
+                                            @Html.EditorFor(model => model.SalaryIncreaseRatio, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.Percentage,
+                                                    @disabled = "true",@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    النسبة مطلوبة
+                                                </div>*@
+                                        </div>
+                                        <span class="font-20">%</span>
+                                    </div>
+                                    <div id="AnnualIncreaseTable">
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="SalaryItemId"> @MyERP.Properties.Resources.SalaryItem</label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownList("AnnualIncreasesSalaryItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @disabled = "true" })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-offset-2">
+                                                <button id="AnnualIncreases" class="btn btn-success AddItem">
+                                                    @MyERP.Properties.Resources.Add
+                                                </button>
+                                                <button name="AnnualIncreases" class="btn btn-success AddAllItem">
+                                                    @MyERP.Properties.Resources.All
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-centered mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.SalaryItemName
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.Delete
+                                                        </th>
+
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="EmployeeContractAnnualIncreases">
+                                                    @if (Model != null)
+                                                    {
+                                                        foreach (var item in Model.EmployeeContractAnnualIncreases)
+                                                        {
+                                                            <tr>
+                                                                <td hidden><input class="SalaryItemId" value="@item.SalaryItemId" /></td>
+                                                                <td>
+                                                                    <label>@item.SalaryItem.ArName</label>
+                                                                </td>
+
+                                                                <td>
+                                                                    <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                                                </td>
+
+                                                            </tr>
+                                                        }
+                                                    }
+
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 6 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+                                            @MyERP.Properties.Resources.EndOfServiceBenefits
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse6">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="SalaryItemId"> @MyERP.Properties.Resources.SalaryItem</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EndOfServicesSalaryItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                            @*<div class="invalid-feedback">
+                                                    اختر مفردات الراتب
+                                                </div>*@
+                                        </div>
+                                        <div class="col-sm-offset-2">
+                                            <button id="EndOfServices" class="btn btn-success AddItem">
+                                                @MyERP.Properties.Resources.Add
+                                            </button>
+                                            <button name="EndOfServices" class="btn btn-success AddAllItem">
+                                                @MyERP.Properties.Resources.All
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalaryItemName
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Delete
+                                                    </th>
+
+                                                </tr>
+                                            </thead>
+                                            <tbody id="EmployeeContractEndOfServices">
+                                                @if (Model != null)
+                                                {
+                                                    foreach (var item in Model.EmployeeContractEndOfServices)
+                                                    {
+                                                        <tr>
+                                                            <td hidden><input class="SalaryItemId" value="@item.SalaryItemId" /></td>
+                                                            <td>
+                                                                <label>@item.SalaryItem.ArName</label>
+                                                            </td>
+
+                                                            <td>
+                                                                <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+                                                }
+
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:left;">
+                            @if (Model == null)
+                            {
+                                <button onclick="addEdit('new')" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button onclick="addEdit()" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button onclick="addEdit()" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <a class="btn btn-danger" onclick="Delete(@Model.Id,'EmployeeContract')" role="button">@MyERP.Properties.Resources.Delete</a>
+                                    <a class="btn btn-success" target="_blank" href="/Report/EmployeesContract/@Model.Id" role="button">@MyERP.Properties.Resources.Print</a>
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    if ($('#Id').val() > 0) {
+        $('#ContractStartTime').val('@ViewBag.ContractStartTime');
+        $('#ContractEndTime').val('@ViewBag.ContractEndTime');
+        $('#HireDate').val('@ViewBag.HireDate');
+
+    }
+    else
+    {
+        var d = new Date();
+        $('#HireDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#ContractStartTime').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#ContractEndTime').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+    }
+
+
+    if (!$('#Id').val() > 0)
+    {
+        function setCodeNum() {
+            var doc = $.get('/EmployeeContract/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    // show the equvalent hijry date of selected date
+    $('.Gregorian').on('change', function () {
+
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+
+    });
+
+
+    // show the code of the selected employee
+    $('#EmployeeId').change(function () {
+        GetEmployeeContract($(this).val());
+        var choise = $('#EmployeeId option:selected').text();
+        var code = choise.split("-")[0]
+        $('#EmployeeCode').val(code);
+    });
+
+     // // show the employee total salary
+    //$('.ItemValue').on('change', function ()
+    //{
+    //    CalculateSalaryItems();
+
+    //    //$('#EmployeeTotalSalary').val(0);
+    //    //$('#EmployeeContractSalaryItems tr').each(function () {
+    //    //    var tr = $(this);
+    //    //    $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(tr.find('.ItemValue').val()))
+    //    //  //  alert($('#EmployeeTotalSalary').val()+" EmployeeTotalSalary");
+    //    //});
+    //});
+
+    // vacation radio button function
+    $('.Vacation').on('click', function () {
+        let Fixed = "Fixed";
+        let Variable = "Variable";
+        if ($(this).attr("id") == Fixed) {
+            // console.log($(this).attr("id"));
+            $('#VacationEquivalentWorkPeriodNum').val('');
+            $('#VacationEquivalentWorkPeriodId').attr('disabled', true);
+            $('#VacationEquivalentWorkPeriodId').val('');
+            $('#VacationsSalaryItemId').attr('disabled', true);
+            $('#VacationEquivalentWorkPeriodNum').attr("disabled", true);
+            $('#VacationSalaryIncreaseValue').attr("disabled", false);
+
+            $("#VacationTable button").each(function () {
+                $(this).attr('disabled', true);
+            });
+        }
+        else if ($(this).attr("id") == Variable)
+        {
+            $('#VacationSalaryIncreaseValue').val('');
+            $('#VacationSalaryIncreaseValue').attr("disabled", true);
+            $('#VacationEquivalentWorkPeriodNum').attr("disabled", false);
+            $('#VacationEquivalentWorkPeriodId').attr('disabled', false);
+            $('#VacationEquivalentWorkPeriodId').val('');
+            $('#VacationsSalaryItemId').attr('disabled', false);
+            $("#VacationTable button").each(function () {
+                $(this).attr('disabled', false);
+            });
+        }
+    });
+
+    // annual increase radio button function
+    $('.AnnualIncrease').on('click', function () {
+        let Fixed = "Fixed";
+        let Ratio = "Ratio";
+        if ($(this).attr("id") == Fixed) {
+            // console.log($(this).attr("id"));
+            $('#SalaryIncreaseRatio').val('');
+            $('#SalaryIncreaseRatio').attr("disabled", true);
+            $('#SalaryFixedIncreaseValue').attr("disabled", false);
+            $('#AnnualIncreasesSalaryItemId').attr('disabled', true);
+            $("#AnnualIncreaseTable button").each(function () {
+                $(this).attr('disabled', true);
+            });
+        }
+        else if ($(this).attr("id") == Ratio) {
+            $('#SalaryFixedIncreaseValue').val('');
+            $('#SalaryFixedIncreaseValue').attr("disabled", true);
+            $('#SalaryIncreaseRatio').attr("disabled", false);
+            $('#AnnualIncreasesSalaryItemId').attr('disabled', false);
+            $("#AnnualIncreaseTable button").each(function () {
+                $(this).attr('disabled', false);
+            });
+        }
+    });
+
+
+    // add item in any salary item table Vacation , Annual increase or End of service
+    $('.AddItem').on('click', function () {
+        let id = $(this).attr('id');
+        // console.log(id);
+        // console.log('#'+ id +'SalaryItemId');
+        if (!$('#' + id + 'SalaryItemId').val()) {
+            alert('@MyERP.Properties.Resources.SelectSalaryItem')
+        }
+        else {
+            let valid = true;
+            $('#EmployeeContract'+ id +' tr').each(function () {
+                var td = $(this);
+                //// console.log($('#'+ id +'SalaryItemId').val());
+                // console.log(td.find('.SalaryItemId').val());
+                if ($('#'+ id +'SalaryItemId').val() == td.find('.SalaryItemId').val())
+                    valid = false;
+            });
+
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.ExistsBefore')
+            else {
+                $('#EmployeeContract' + id + '').append('<tr><td hidden><input class="SalaryItemId" value=' + $('#' + id +'SalaryItemId').val() + '></td ><td><label >' + $('#' + id + 'SalaryItemId option:selected').text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">حذف</button></td></tr>');
+            }
+        }
+
+    });
+
+
+
+    // add item in Employee salary item table
+    $('.AddSalaryItem').on('click', function () {
+        $('#EmployeeTotalSalary').val(0);
+        // console.log($('#EmployeeSalaryItemId').val());
+        if (!$('#EmployeeSalaryItemId').val()) {
+            alert('@MyERP.Properties.Resources.SelectSalaryItem')
+        }
+        else {
+            let valid = true;
+            $('#EmployeeContractSalaryItems tr').each(function () {
+                var td = $(this);
+                //// console.log($('#'+ id +'SalaryItemId').val());
+                // console.log(td.find('.SalaryItemId').val());
+                if ($('#EmployeeSalaryItemId').val() == td.find('.SalaryItemId').val())
+                    valid = false;
+            });
+
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.ExistsBefore')
+            else
+            {
+                let id = $('#EmployeeSalaryItemId').val()
+                $.ajax({
+                    type: "GET",
+                    //contentType: "application/json",
+                    url: "/SalaryItem/GetSalaryItem/"+id,
+                    //data: { id : id },
+                    success: function (r) {
+                        // console.log(r, "salaryitem");
+                        if (r.ItemFixedValueForAllEmployees == null) {
+                            r.ItemFixedValueForAllEmployees = 0;
+                        }
+                        if (r.EquationMaximumValue == null) {
+                            r.EquationMaximumValue = 0;
+                        }
+                        if (r.EquationMinimumValue == null) {
+                            r.EquationMinimumValue = 0;
+                        }
+                        if (r.SalaryItemValueCalcMethodId == 2) {
+                            $('#EmployeeContractSalaryItems').append('<tr><td hidden><label class="SalaryItemValueCalcMethodId">2</label></td><td hidden><input class="SalaryItemId form-control" value=' + $('#EmployeeSalaryItemId').val() + '></td ><td><label >' + $('#EmployeeSalaryItemId option:selected').text() + '</label ></td><td><input readonly  type="number" step="any" value="' + r.ItemFixedValueForAllEmployees + '" class="ItemValue form-control "/></label></td><td><select class=" SalaryItemTypeId form-control"><option value="0" > ' + '@MyERP.Properties.Resources.GeneralSalaryItem' + '</option ><option value="1"> ' + '@MyERP.Properties.Resources.DueSalaryItem' + '</option></select ></td><td hidden><label class"Equation">' + r.EquationValue + '</label></td><td><label class="EquationValue">' + '@MyERP.Properties.Resources.NoValue' + '</label></td><td><label class="ItemFixedValue">' + r.ItemFixedValueForAllEmployees + '</label></td><td><label class="MinimumValue">0</label></td><td><label class="MaximumValue">0</label></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+                        }
+                        else {
+                            if (r.SalaryItemValueCalcMethodId == 1 || r.EquationValue==null) {
+                                $('#EmployeeContractSalaryItems').append('<tr><td hidden><label class="SalaryItemValueCalcMethodId">1</label></td><td hidden><input class="SalaryItemId form-control variable" value=' + $('#EmployeeSalaryItemId').val() + '></td ><td><label >' + $('#EmployeeSalaryItemId option:selected').text() + '</label ></td><td><input id="iVal" onchange="CalculateEquation()" type="number" step="any" value="0" class="ItemValue form-control"/></td><td><select class=" SalaryItemTypeId form-control"><option value="0" >' + '@MyERP.Properties.Resources.GeneralSalaryItem' + '</option ><option value="1">' + '@MyERP.Properties.Resources.DueSalaryItem' + ' </option></select ></td><td hidden><label class"Equation">' + r.EquationValue + '</label></td><td><label class="EquationValue">' + '@MyERP.Properties.Resources.NoValue' + ' </label></td><td><label class="ItemFixedValue">0</label></td><td><label class="MinimumValue">0</label></td><td><label class="MaximumValue">0</label></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+                                CalculateSalaryItems()
+
+                            }
+                            else {
+                                // calculate the equation
+                                let e = r.EquationValue;
+                                // console.log(e,"e")
+                                //if (e != null) {
+                                    let arr = e.split('_');
+                                    let arr2 = [];
+                                    // console.log(arr,"");
+                                    for (var i = 0; i < arr.length; i++) {
+
+                                        if (arr[i].includes("Id")) {
+
+                                            arr[i] = arr[i].slice(2)
+                                            var exist = false;
+                                            $('#EmployeeContractSalaryItems tr').each(function () {
+                                                var td = $(this);
+                                                if (arr[i] == td.find('.SalaryItemId').val()) {
+                                                    exist = true;
+                                                    arr2.push(td.find('.ItemValue').val());
+                                                }
+
+                                            });
+                                            if (exist == false) {
+                                                arr2.push(0);
+                                            }
+                                        }
+                                        else {
+                                            arr2.push(arr[i]);
+                                        }
+                                    }
+                                    let finalEquation = "";
+                                    for (var i = 0; i < arr2.length; i++) {
+                                        finalEquation += arr2[i];
+                                    }
+                                    // console.log(finalEquation,"finalEquation");
+                                    let finalEquationValue = parseInt(eval(finalEquation));
+                                if (finalEquationValue < r.EquationMinimumValue && r.EquationMinimumValue>0) {
+                                        finalEquationValue = r.EquationMinimumValue;
+                                    }
+                                    else {
+                                        if (finalEquationValue > r.EquationMaximumValue && r.EquationMaximumValue>0) {
+                                            finalEquationValue = r.EquationMaximumValue;
+                                        }
+                                    }
+
+                                    // then append
+                                    $('#EmployeeContractSalaryItems').append('<tr><td hidden><label class="SalaryItemValueCalcMethodId">3</label></td><td hidden><input class="SalaryItemId form-control" value=' + $('#EmployeeSalaryItemId').val() + '></td ><td><label >' + $('#EmployeeSalaryItemId option:selected').text() + '</label ></td><td><input readonly type="number" step="any" value="' + finalEquationValue + '" class="ItemValue form-control"/></td><td><select class=" SalaryItemTypeId form-control"><option value="0" >' + '@MyERP.Properties.Resources.GeneralSalaryItem' + ' </option ><option value="1"> ' + '@MyERP.Properties.Resources.DueSalaryItem' + '</option></select ></td><td><label class="EquationValue">' + r.EquationText + '</label></td><td class="Equation" hidden>' + r.EquationValue + '</td><td><label class="ItemFixedValue">0</label></td><td><label class="MinimumValue">' + r.EquationMinimumValue + '</label></td><td><label class="MaximumValue">' + r.EquationMaximumValue + '</label></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+                                @*}
+                                else {
+                                    $('#EmployeeContractSalaryItems').append('<tr><td hidden><label class="SalaryItemValueCalcMethodId">3</label></td><td hidden><input class="SalaryItemId form-control" value=' + $('#EmployeeSalaryItemId').val() + '></td ><td><label >' + $('#EmployeeSalaryItemId option:selected').text() + '</label ></td><td><input type="number" step="any" onchange="CalculateSalaryItems()"  class="ItemValue form-control"/></td><td><select class=" SalaryItemTypeId form-control"><option value="0" >' + '@MyERP.Properties.Resources.GeneralSalaryItem' + ' </option ><option value="1"> ' + '@MyERP.Properties.Resources.DueSalaryItem' + '</option></select ></td><td><label class="EquationValue"> </label></td><td class="Equation" hidden>0.00</td><td><label class="ItemFixedValue">0</label></td><td><label class="MinimumValue">0.00</label></td><td><label class="MaximumValue">0.00</label></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+                                }*@
+
+                            }
+                        }
+
+
+                        //$('#EmployeeContractSalaryItems tr').each(function () {
+                        //    var tr = $(this);
+                        //    console.log($('#EmployeeTotalSalary').val(), "EmployeeTotalSalary");
+                        //    var ItemValue = tr.find('.ItemValue').val() > 0 ? tr.find('.ItemValue').val() : 0;
+                        //   // $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(tr.find('.ItemValue').val()))
+                        //    $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(ItemValue))
+                        //    console.log(ItemValue, "tr.find('.ItemValue').val()");
+                        //});
+                        CalculateSalaryItems();
+                    },
+                    error: function () {
+                        alert('@MyERP.Properties.Resources.NotLinked');
+                    }
+                });
+
+            }
+        }
+    });
+
+
+
+    // add all items of selected list of any salary item table Vacation , Annual increase or End of service
+    $('.AddAllItem').on('click', function () {
+        let id = $(this).attr('name');
+        // console.log(id);
+        $('#' + id + 'SalaryItemId > option').each(function () {
+            let item = $(this);
+            if (item.val() > 0) {
+                let valid = true;
+                $('#EmployeeContract' + id + ' tr').each(function () {
+                    var td = $(this);
+                    // console.log(item);
+                    if (item.val() == td.find('.SalaryItemId').val())
+                        valid = false;
+                });
+                if (valid == true) {
+                    $('#EmployeeContract' + id).append('<tr><td hidden><input class="SalaryItemId" value=' + item.val() + '></td ><td><label >' + item.text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">'+'@MyERP.Properties.Resources.Delete'+'</button></td></tr>');
+                }
+            }
+        });
+
+    });
+
+    // delete specific item (row) from any salary item table Vacation , Annual increase or End of service
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        CalculateEquation()
+        $('#EmployeeTotalSalary').val(0);
+        //$('#EmployeeContractSalaryItems tr').each(function () {
+        //    var tr = $(this);
+        //    $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(tr.find('.ItemValue').val()))
+        //    //console.log($('#EmployeeTotalSalary').val());
+        //});
+        CalculateSalaryItems();
+
+    }
+
+    function CalculateSalaryItems() {
+        $('#EmployeeTotalSalary').val(0);
+        $('#EmployeeContractSalaryItems tr').each(function () {
+            var tr = $(this);
+            // console.log($('#EmployeeTotalSalary').val(), "EmployeeTotalSalary");
+            var ItemValue = tr.find('.ItemValue').val() > 0 ? tr.find('.ItemValue').val() : 0;
+            // $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(tr.find('.ItemValue').val()))
+            $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(ItemValue))
+            // console.log(ItemValue, "tr.find('.ItemValue').val()");
+        });
+
+        //$('#EmployeeContractSalaryItems tr').each(function () {
+        //    var tr = $(this);
+        //    $('#EmployeeTotalSalary').val(parseInt($('#EmployeeTotalSalary').val()) + parseInt(tr.find('.ItemValue').val()))
+        //    //console.log($('#EmployeeTotalSalary').val());
+        //});
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+
+            var employeeContractSalaryItems = [];
+            $('#EmployeeContractSalaryItems tr').each(function () {
+                var td = $(this);
+                // console.log(td);
+                var ItemFixedValue = td.find('.ItemFixedValue').text() > 0 ? td.find('.ItemFixedValue').text() : 0;
+                var employeeContractSalaryItem = {
+                    EmployeeContractId: $('#Id').val(),
+                    SalaryItemId: td.find('.SalaryItemId').val(),
+                    EmployeeId: $('#EmployeeId').val(),
+                    ItemValue: td.find('.ItemValue').val(),
+                    SalaryItemTypeId: td.find('.SalaryItemTypeId option:selected').val(),
+                    EquationValue: td.find('.EquationValue').text(),
+                    ItemFixedValueForAllEmployees: parseInt(ItemFixedValue),
+                    EquationMinimumValue: parseInt(td.find('.MinimumValue').text()),
+                    EquationMaximumValue: parseInt(td.find('.MaximumValue').text()),
+
+                };
+                employeeContractSalaryItems.push(employeeContractSalaryItem);
+            });
+            // console.log(employeeContractSalaryItems,"employeeContractSalaryItems");
+
+            var employeeContractVacations = [];
+            $('#EmployeeContractVacations tr').each(function () {
+                var td = $(this);
+                // console.log(td);
+                var employeeContractVacation = {
+                    EmployeeContractId: $('#Id').val(),
+                    SalaryItemId: td.find('.SalaryItemId').val(),
+                    EmployeeId: $('#EmployeeId').val(),
+                };
+                employeeContractVacations.push(employeeContractVacation);
+            });
+            // console.log(employeeContractVacations);
+
+
+
+            var employeeContractAnnualIncreases = [];
+            $('#EmployeeContractAnnualIncreases tr').each(function () {
+                var td = $(this);
+                // console.log(td);
+                var employeeContractAnnualIncrease = {
+                    EmployeeContractId: $('#Id').val(),
+                    SalaryItemId: td.find('.SalaryItemId').val(),
+                    EmployeeId: $('#EmployeeId').val()
+                };
+                employeeContractAnnualIncreases.push(employeeContractAnnualIncrease);
+            });
+            // console.log(employeeContractAnnualIncreases);
+
+
+
+            var employeeContractEndOfServices = [];
+            $('#EmployeeContractEndOfServices tr').each(function () {
+                var td = $(this);
+                // console.log(td);
+                var employeeContractEndOfService = {
+                    EmployeeContractId: $('#Id').val(),
+                    SalaryItemId: td.find('.SalaryItemId').val()
+                };
+                employeeContractEndOfServices.push(employeeContractEndOfService);
+            });
+            // console.log(employeeContractEndOfServices);
+
+
+            var employeeContract =
+            {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                //ArName: $('#ArName').val(),
+                //EnName: $('#EnName').val(),
+
+                //panal 1 variables
+                ContractStartTime: $('#ContractStartTime').val(),
+                ContractEndTime: $('#ContractEndTime').val(),
+                EmployeeId: $('#EmployeeId').val(),
+                ContractPeriodNum: $('#ContractPeriodNum').val(),
+                ContractPeriodTypeId: $('#ContractPeriodTypeId').val(),
+                TestPeriodNum: $('#TestPeriodNum').val(),
+                TestPeriodTypeId: $('#TestPeriodTypeId').val(),
+                ContractJobId: $('#ContractJobId').val(),
+                ContractsTypeId: $('#ContractsTypeId').val(),
+                ContractsStatusId: $('#ContractsStatusId').val(),
+                ContractTypeId: $('#ContractTypeId').val(),
+                AdministrativeDepartmentId: $('#AdministrativeDepartmentId').val(),
+                HireDate: $('#HireDate').val(),
+
+                //panal 2 Variables
+                EmployeeHasTicket: $('#EmployeeHasTicket').prop('checked'),
+                WifeHasTicket: $('#WifeHasTicket').prop('checked'),
+                RelativesHasTicket: $('#RelativesHasTicket').prop('checked'),
+                TicketsNum: $('#TicketsNum').val(),
+                TicketsTotalValue: $('#TicketsTotalValue').val(),
+
+                //panal 3 variables
+                InsuranceNum: $('#InsuranceNum').val(),
+                EmployeeHasInsurance: $('#EmployeeHasInsurance').prop('checked'),
+                EmployeeInsuranceCategoryId: $('#EmployeeInsuranceCategoryId').val(),
+                WifeHasInsurance: $('#WifeHasInsurance').prop('checked'),
+                WifeInsuranceCategoryId: $('#WifeInsuranceCategoryId').val(),
+
+                //panal 4 variables
+                VacationDuePeriodNum: $('#VacationDuePeriodNum').val(),
+                VacationDuePeriodTypeId: $('#VacationDuePeriodTypeId').val(),
+                VacationEquivalentWorkPeriodNum: $('#VacationEquivalentWorkPeriodNum').val(),
+                VacationEquivalentWorkPeriodId: $('#VacationEquivalentWorkPeriodId').val(),
+                VacationSalaryIncreaseValue: $('#VacationSalaryIncreaseValue').val(),
+                VacationPeriodNum: $('#VacationPeriodNum').val(),
+                VacationPeriodTypeId: $('#VacationPeriodTypeId').val(),
+
+                //panal 5 variables
+                SalaryFixedIncreaseValue: $('#SalaryFixedIncreaseValue').val(),
+                SalaryIncreaseRatio: $('#SalaryIncreaseRatio').val(),
+
+                //panal 7 variables
+                EmployeeTotalSalary:$('#EmployeeTotalSalary').val(),
+
+                IsActive: true,
+                IsDeleted: false,
+                Sequence: $('#Sequence').val(),
+                EmployeeContractSalaryItems: employeeContractSalaryItems,
+                EmployeeContractVacations: employeeContractVacations,
+                EmployeeContractAnnualIncreases: employeeContractAnnualIncreases,
+                EmployeeContractEndOfServices: employeeContractEndOfServices,
+            };
+            // console.log(employeeContract);
+
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                $.ajax({
+                    type: "POST",
+                    url: "/EmployeeContract/AddEdit",
+                    data: employeeContract,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/EmployeeContract/AddEdit");
+                            } else {
+                                window.location.replace("/EmployeeContract");
+                            }
+                        }
+                        else
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+
+        }
+    }
+
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/EmployeeContract/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/EmployeeContract');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+    function CalculateEquation()
+    {
+        $('#EmployeeContractSalaryItems tr').each(function () {
+            var tr = $(this);
+            var calculatedEquation = parseInt(tr.find('.SalaryItemValueCalcMethodId').text());
+            // console.log(calculatedEquation,"calc");
+            if (calculatedEquation == 3) {
+                let e = tr.find('.Equation').text();
+                //// console.log(e, "e");
+                let arr = e.split('_');
+                let arr2 = [];
+                //// console.log(arr,"arr");
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i].includes("Id")) {
+
+                        arr[i] = arr[i].slice(2)
+                        var exist = false;
+                        $('#EmployeeContractSalaryItems tr').each(function () {
+                            var td = $(this);
+                            if (arr[i] == td.find('.SalaryItemId').val()) {
+                                exist = true;
+                                arr2.push(td.find('.ItemValue').val());
+                            }
+
+                        });
+                        if (exist == false) {
+                            arr2.push(0);
+                        }
+                    }
+                    else {
+                        arr2.push(arr[i]);
+                    }
+                }
+                // console.log(arr2, "arr2");
+
+                let finalEquation = "";
+                for (var i = 0; i < arr2.length; i++) {
+                    finalEquation += arr2[i];
+                }
+                // console.log(finalEquation,"FnalEqn");
+                // console.log(finalEquation,"eval(finalEquation)");
+                let finalEquationValue = parseInt(eval(finalEquation));
+                // console.log(finalEquationValue,"finalEquationValue");
+                if (finalEquationValue < parseInt(tr.find('.MinimumValue').text()) && parseInt(tr.find('.MinimumValue').text())>0) {
+                    finalEquationValue = parseInt(tr.find('.MinimumValue').text());
+                   // console.log("finalEquationValue : ", finalEquationValue);
+                }
+                else {
+                    if (finalEquationValue > parseInt(tr.find('.MaximumValue').text()) && parseInt(tr.find('.MaximumValue').text())>0) {
+                        finalEquationValue = parseInt(tr.find('.MaximumValue').text());
+                       //console.log("finalEquationValue Max : ",finalEquationValue);
+                    }
+                }
+                tr.find('.ItemValue').val(finalEquationValue);
+            }
+
+        });
+        CalculateSalaryItems()
+    }
+
+
+
+    //-----------------------------------------------------------------//
+    $(document).ready(function () {
+
+        // show the equvalent hijry date of the current selected date
+        $('.Gregorian').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        });
+
+
+        // disable the vacation salary item options
+        $("#VacationTable button").each(function () {
+            $(this).attr('disabled', true);
+        });
+
+        // disable the annual increase salary item options
+        $("#AnnualIncreaseTable button").each(function () {
+            $(this).attr('disabled', true);
+        });
+
+        @*// show the value of salary item type
+        $('#SalaryItemTypeId').val(@Model.Em)*@
+    });
+
+    function GetEmployeeContract(e) {
+        $.get('/EmployeeContract/GetEmployeeContract?EmpId=' + e).done(function (r) {
+            if (r.success == "true") {
+                if(confirm("@MyERP.Properties.Resources.ThisEmployeeAlreadyHadAContract"))
+                {
+                    window.location.replace("/EmployeeContract/AddEdit/" + r.id);
+                }
+                $('#EmployeeId').prop('selectedIndex', 0).select2();
+            }
+
+        });
+    }
+
+
+</script>

@@ -1,0 +1,2311 @@
+﻿
+<script>
+$(document).ready(function() {
+    // باقي الكود الأصلي
+    $('body.enlarged').css('min-height', '0px');
+    if (window.location.href.includes('selectedTableId') || window.location.href.includes('selectedTableName') || window.location.href.includes('depId') || window.location.href.includes('selectedcustomerType')) {
+        // باقي الكود هنا...
+    }
+    
+    // تطبيق inputmask على العناصر المالية
+    $('.money').inputmask({
+        alias: 'numeric', 
+        groupSeparator: ',', 
+        autoGroup: true, 
+        digits: 2, 
+        'allowMinus': false, 
+        digitsOptional: false, 
+        placeholder: '0'
+    });
+
+    // تطبيق select2 على القوائم المنسدلة
+    $('select').select2({
+        matcher: matchCustom
+    });
+
+    // إظهار/إخفاء العناصر الإضافية
+    if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True') {
+        $('.EnableAdditionalItemsOnPos').show();
+    } else {
+        $('.EnableAdditionalItemsOnPos').hide();
+    }
+});
+
+ $('#invoiceTypeModal').modal("hide");
+ checkCustomerType();
+ const urlParams = new URLSearchParams(window.location.search);
+ const selectedTableName = urlParams.get('selectedTableName');
+ const selectedTableId = urlParams.get('selectedTableId');
+ selectTable(selectedTableName, selectedTableId);
+ }
+ else {
+ if ('@ViewBag.showPaymentMethods' == 'True')
+ $('#paymentMethodsModal').modal("show");
+ else
+ $('#paymentMethodsModal').hide();
+ if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True')
+ $('.EnableAdditionalItemsOnPos').show();
+ else
+ $('.EnableAdditionalItemsOnPos').hide();
+ if ('@ViewBag.NewInvoice' == 'True') {
+ if ($('#DepartmentId').val() == 28 && '@ViewBag.ProjectName' == "Genoise") {
+ $('#ShowDepartmentBtn').show();
+ }
+ if (WorkWithCommercialPOS == "True") {
+ $('#invoiceTypeModal').modal("hide");
+ $('#CustomerType').val(1).trigger('change');
+ }
+ else {
+ $('#invoiceTypeModal').modal("show");
+ }
+ }
+ if ('@ViewBag.SelectedCustomerType' != "") {
+ $("#CustomerType").val('@ViewBag.SelectedCustomerType').trigger('change');
+ }
+ if ('@ViewBag.DepId') {
+ $("#DepartmentId").val('@ViewBag.DepId').trigger('change');
+ }
+ checkCustomerType();
+ }
+ $('#cashBoxBalance').inputmask({
+ alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': true, digitsOptional: false, 'placeholder': '0'
+ });
+ if (!$('#Id').val()) {
+ $('#hasTaxes').trigger('change');
+ setDocNum();
+ cashBoxByDepartment();
+ if ($('#DepartmentId').val() == 28 && '@ViewBag.ProjectName' == "Genoise") {
+ $('#DepartmentId').trigger('change');
+ } else {
+ getItemGroups();
+ }
+ }
+ else {
+ var code = $('#DocumentNumber').val();
+ $('#DocumentNumbers').val(code.replaceAll("-", ""))
+ $("#DepartmentId").prop('disabled', true);
+ $("#VoucherDate").prop('disabled', true);
+ let totalPaied = 0;
+ $('#SalesInvoicePaymentMethods tr').each(function () {
+ var td = $(this);
+ totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+ });
+ $('#Paid').val(totalPaied);
+ $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') * 1 - $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1).toFixed(2));
+ getItemGroups();
+ }
+ $('#CashBoxId').trigger('change');
+ $('#CustomerType').trigger('change');
+ if ($('#DepartmentId').val() > 0) {
+ GetHallsByDepartmentId();
+ }
+ if (ShowTaxPercentageAndValue=='True') {
+ $('.ItemTax').show();
+ }
+ else {
+ $('.ItemTax').hide();
+ }
+ getGovernorates();
+ getCities();
+ getAreas();
+ $('#SearchText').focus();
+ });
+ // تطبيق التحسينات المتجاوبة - بسيط وآمن
+ 
+ // إضافة كلاسات CSS - بسيط
+ function addResponsiveClasses() {
+ $('.card, .card-box').addClass('shadow-soft');
+ $('.btn').addClass('border-radius-lg');
+ $('.form-control').addClass('border-radius-lg');
+ }
+ // التعامل مع التخطيط المتجاوب - بسيط جداً
+ 
+ 
+ // === الوظائف الأساسية الأصلية ===
+ function showItemDetials(e) {
+ let itemPrice = $(e).closest('tr').find('.item');
+ var itemId = itemPrice.val();
+ console.log(itemPrice);
+ $('#itemDetailsBody').empty();
+ if (itemId) {
+ $('#itemDetailsBody').append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+ $.get('/Item/GetItemQuantityInEachWarehouse?itemId=' + itemId + '&depId=' + $('#DepartmentId').val()).done(function (r) {
+ $('#itemDetailsBody').empty().append(r);
+ });
+ }
+ }
+ function AlternativeItems(e) {
+ let itemPrice = $(e).closest('tr').find('.item');
+ var itemId = itemPrice.val();
+ $(e).closest('tr').find('.IsAltItem').prop('checked', true);
+ $('#AlternativeItemsModal').modal('show');
+ GetAlternativeItems(itemId);
+ }
+ function GetAlternativeItems(id) {
+ $('#AlternativeItemsTr').empty();
+ $.get('/Helper/GetAlternativeItems?MainItemId=' + id).done(function (r) {
+ if (r.length > 0) {
+ for (var i = 0; i < r.length; i++) {
+ let item = items.filter(function (e) { return e.Id == r[i].ItemId })[0];
+ item.Barcode = item.Barcode != null ? item.Barcode : "";
+ let tr = '<tr><td><input class="AltMainItemId" value="' +
+ r[i].MainItemId + '" hidden /><input class="AltItemId" value="' +
+ r[i].ItemId + '" hidden /><input class="AltItemPriceId" value="' +
+ item.ItemPriceId+'" hidden /><label class="AltItemBarcode"> ' +
+ item.Barcode + '</label></td><td><label class="AltItemName">' +
+ item.ArName + '</label></td><td><label class="AltItemPrice">' +
+ item.Price + '</label></td><td><label class="AltItemQty">' +
+ item.Quantity + '</label></td><td><button class="btn btn-primary" onclick="ReplaceItem(' +
+ r[i].ItemId + ' , ' + id +')" > @MyERP.Properties.Resources.Replace</button></td></tr>';
+ $('#AlternativeItemsTr').append(tr);
+ }
+ }
+ });
+ }
+ function ReplaceItem(ItemId,oid) {
+ if (items.length) {
+ let itemPrice = items.filter(function (i) { return i.Id === ItemId; })[0];
+ let itmId = itemPrice.Id;
+ let barcode = itemPrice.barcode;
+ if (itemPrice) {
+ let itmId = itemPrice.Id;
+ $('#PointOfSaleDetails tr').each(function () {
+ let td = $(this);
+ let ritem = td.closest('tr').find('.itemId').val();
+ console.log(`${oid}-${ritem}`);
+ if (ritem == oid) {
+ let quantity = td.closest('tr').find('.quantity').val();
+ var ItemTaxPercentage = itemPrice.ItemTaxPercentage;
+ var TaxValue = (parseFloat(itemPrice.Price) * parseInt(parseFloat(quantity))) * (parseFloat(ItemTaxPercentage) / 100);
+ let IsAltItem = td.find('.IsAltItem').prop('checked');
+ td.closest('tr').find('.itemId').val(itmId);
+ td.closest('tr').find('.item-name').val(itemPrice.ArName);
+ td.closest('tr').find('.ItemTaxPercentage').val(itemPrice.ItemTaxPercentage);
+ td.closest('tr').find('.price').val(itemPrice.Price);
+ td.closest('tr').find('.ItemTaxValue').val(TaxValue);
+ td.closest('tr').find('.IsAltItem').prop('checked', false);
+ td.closest('tr').find('.item').val(itemPrice.ItemPriceId).trigger('change');
+ }
+ });
+ }
+ }
+ $('#AlternativeItemsModal').modal('hide');
+ }
+ var AutoSavedItemsCount = '@ViewBag.AutoSavedItemsCount';
+ function AutoSaved() {
+ if (AutoSavedItemsCount <= 9 && $('#CustomerType').val() == 1) {
+ $('#Paid').removeAttr('required');
+ let valid = true;
+ if ($(".form-control:invalid").length > 0) {
+ $('.form-horizontal').addClass('was-validated');
+ $('html, body').animate({
+ scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+ }, 500);
+ valid = false;
+ console.log($(".form-control:invalid"));
+ }
+ if (valid) {
+ var paymentMethods = [];
+ let totalPaied = 0;
+ let noneCashMoney = 0;
+ var creditAmount = 0;
+ $('#SalesInvoicePaymentMethods tr').each(function () {
+ var td = $(this);
+ totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+ if (td.find('.PaymentMethodId').val() != 1) {
+ noneCashMoney += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+ }
+ var paymentMethod = {
+ SalesInvoiceId: $('#Id').val(),
+ PaymentMethodId: td.find('.PaymentMethodId').val(),
+ CashBoxId: td.find('.PaymentAmount').inputmask('unmaskedvalue') ? td.find('.CashBoxId').val() : null,
+ Amount: td.find('.PaymentAmount').inputmask('unmaskedvalue'),
+ BankId: td.find('.PaymentAmount').inputmask('unmaskedvalue') && td.find('.BankId').val() > 0 ? td.find('.BankId').val() : null,
+ BankAccountId: td.find('.PaymentAmount').inputmask('unmaskedvalue') && td.find('.BankAccountId').val() > 0 ? td.find('.BankAccountId').val() : null
+ };
+ if (paymentMethod.PaymentMethodId == 2)
+ creditAmount = paymentMethod.Amount;
+ paymentMethods.push(paymentMethod);
+ });
+ paymentMethods.Amount = $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1 - noneCashMoney;
+ let finalTotal = $('#IsInstallmentPlan').prop('checked') ? $('#TotalAfterTotalInstallment').inputmask('unmaskedvalue') : $('#TotalAfterTaxes').inputmask('unmaskedvalue');
+ if (finalTotal * 1 > totalPaied) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheValuePaidIsLessThanRequired',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ valid = false;
+ }
+ else if (finalTotal * 1 < noneCashMoney) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheValueOfTheCashlessPaymentCannotBeGreaterThanTheRequiredAmount',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ valid = false;
+ }
+ }
+ var SalesInvoiceDetails = [];
+ var ItemGroupIDs = [];
+ if (valid) {
+ $('#PointOfSaleDetails tr').each(function () {
+ var td = $(this);
+ if (td.find('.quantity').val() * 1 != 0 && td.find('.item').val() > 0) {
+ var ItemPriceId = td.find('.item-price-id').val();
+ var ItemGroupId = items.filter(function (i) { return i.ItemPriceId == ItemPriceId }).ItemGroupId;
+ if ($.inArray(ItemGroupId, ItemGroupIDs) == -1) {
+ ItemGroupIDs.push(ItemGroupId);
+ }
+ var salesInvoiceDetail = {
+ ItemId: td.find('.item').val(),
+ ItemGroupId: ItemGroupId,
+ ItemPriceId: td.find('.item-price-id').val(),
+ ItemUnitId: td.find('.item-unit').val(),
+ UnitEquivalent: td.find('.unit-equavalent').val(),
+ Price: td.find('.price').inputmask('unmaskedvalue') * 1,
+ WareHouseId: $('#WarehouseId').val(),
+ Qty: td.find('.quantity').val(),
+ IsActive: true,
+ IsDeleted: false,
+ ExtraTypeId: td.find('.ExtraTypeId').val(),
+ RowId: td.find('.RowId').text(),
+ AccessoryPrice: td.find('.accessoryPrice').inputmask('unmaskedvalue') * 1,
+ Notes: td.next('tr').find('.ItemNotes').text(),
+ ItemTaxPercentage: td.find('.ItemTaxPercentage').val(),
+ ItemTaxValue: td.find('.ItemTaxValue').inputmask('unmaskedvalue'),
+ IsAdded: td.find('.IsAdded').prop('checked'),
+ };
+ SalesInvoiceDetails.push(salesInvoiceDetail);
+ }
+ });
+ valid = SalesInvoiceDetails.length > 0 ? true : false;
+ valid == false ? Swal.fire({ title: '@MyERP.Properties.Resources.PleaseEnterFullDetails !', text: " ", icon: 'info', showCancelButton: false, confirmButtonText: '@MyERP.Properties.Resources.Ok', confirmButtonColor: '#3085d6' }) : null;
+ }
+ if (valid) {
+ $('#preloader, #status').fadeIn();
+ $.ajax({
+ type: "POST", contentType: "application/json",
+ url: "/SalesInvoice/AddEdit",
+ data:
+ JSON.stringify({
+ Id: $('#Id').val(),
+ DocumentNumber: $('#DocumentNumber').val(),
+ BranchId: $('#BranchId').val(),
+ WarehouseId: $('#WarehouseId').val(),
+ VoucherDate: $('#VoucherDate').val(),
+ VendorOrCustomerId: $('#VendorOrCustomerId').val() ? $('#VendorOrCustomerId').val() : $('.VendorOrCustomerId').val(),
+ CurrencyId: $('#CurrencyId').val(),
+ CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+ Total: $('#Total').inputmask('unmaskedvalue'),
+ SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+ CommercialRevenueTaxAmount: $('#CommercialRevenueTaxAmount').inputmask('unmaskedvalue'),
+ TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+ VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+ VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+ NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+ ServiceFees: $('#ServiceFees').inputmask('unmaskedvalue'),
+ SystemPageId: SystemPageId,
+ DepartmentId: $('#DepartmentId').val(),
+ SalesInvoiceDetails: SalesInvoiceDetails,
+ IsActive: true,
+ IsDeleted: false,
+ IsLinked: isLinked,
+ SalesInvoicePaymentMethods: paymentMethods,
+ SalesOrdersSalesInvoices: salesOrderIds.map(function (i) { return { SalesInvoiceId: $('#Id').val(), SalesOrderId: i } }),
+ Paid: $('#Paid').inputmask('unmaskedvalue') * 1,
+ IsCompleted: $('#Paid').inputmask('unmaskedvalue') * 1 >= $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1,
+ CustomerType: $('#CustomerType').val(),
+ SalesInvoicePurchaseRequests: purchaseReqeustIds.map(function (i) { return { SalesInvoiceId: $('#Id').val(), PurchaseRequestId: i } }),
+ RefundableInsurance: $("#RefundableInsurance").inputmask('unmaskedvalue'),
+ TableId: $("#selectedTableId").val(),
+ PosCustomerId: $("#PosCustomerId").val(),
+ IsCollectedByCashier: false,
+ DeliveryCost: $("#DeliveryCost").inputmask('unmaskedvalue'),
+ SmokingTax: $('#SmokingTax').val(),
+ WaiterId: $('#WaiterId').val(),
+ }),
+ success: function (r) {
+ if (r.success == "true") {
+ $('#preloader, #status').fadeOut();
+ window.location.replace("/PointOfSale/AddEdit?Id=" + r.id);
+ }
+ else if (r.success == "false" && r.errors == "NotCashier") {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheInvoiceCannotBeAddedOrModifiedUnlessTheUserIsCashier',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ $('#preloader, #status').fadeOut();
+ }
+ else if (r.success == "Cannot Be Edited") {
+ $('#preloader, #status').fadeOut();
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheInvoiceHasBeenGeneratedAndCannotBeEdited',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ else {
+ $('#preloader, #status').fadeOut();
+ $('#save').prop('disabled', false);
+ $('#SaveAndPrint').prop('disabled', false);
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.NotSaved !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ },
+ error: function (r) {
+ $('#preloader, #status').fadeOut();
+ $('#save').prop('disabled', false);
+ $('#SaveAndPrint').prop('disabled', false);
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ });
+ }
+ }
+ }
+ function changeLaguage() {
+ $('#preloader, #status').fadeIn();
+ requestData('/Helper/ChangeLanguage').done(function (r) {
+ window.location.reload();
+ });
+ $('#preloader, #status').fadeOut();
+ }
+ function AddNotes(e) {
+ var _RowId = $(e).closest('tr').find('.RowId').text();
+ $('#AddItemNotesRowId').val(_RowId);
+ $('#AddNotesModal').modal('show');
+ }
+ function AddNotesToTable(e) {
+ let _RowId = $('#AddItemNotesRowId').val();
+ var tableRow = $("#PointOfSaleDetails tr").filter(function () {
+ return $(this).find('.RowId').text() == _RowId;
+ }).last("tr");
+ if ($('#AddItemNotes').val()) {
+ tableRow.next('.ItemNotesTr').show();
+ tableRow.next('tr').find('.ItemNotes').text($('#AddItemNotes').val());
+ $('#AddItemNotes').val('');
+ }
+ }
+ function CheckManagerPassWord() {
+ var PosManagerPassword = $('#PosManagerPassword').val();
+ if (PosManagerPassword != null || PosManagerPassword != " ") {
+ $.get('/PointOfSale/CheckManagerPassWord?posManagerPassword=' + PosManagerPassword).done(function (r) {
+ if (r.success == "managerPasswordIncorrect") {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.ThePOSManagerPasswordIsIncorrect',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ $('#DiscountValue').val(0);
+ let total = 0;
+ let totalAccessoryPrice = 0;
+ $('.price').each(function () {
+ total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+ let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').val();
+ let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+ totalAccessoryPrice += itemTotalAccessoryPrice;
+ });
+ var _perc = ($('#DiscountValue').inputmask('unmaskedvalue') * 100 / total).toFixed(2);
+ $('#VoucherDiscountPercentage').val(_perc);
+ CalculateTotals(total, totalAccessoryPrice);
+ }
+ else {
+ let total = 0;
+ let totalAccessoryPrice = 0;
+ $('.price').each(function () {
+ total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+ let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').val();
+ let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+ totalAccessoryPrice += itemTotalAccessoryPrice;
+ });
+ if (($('#DiscountValue').inputmask('unmaskedvalue') / total) >= 1) {
+ $('#DiscountValue').val(0);
+ }
+ var _perc00 = ($('#DiscountValue').inputmask('unmaskedvalue') * 100 / total).toFixed(2);
+ $('#VoucherDiscountPercentage').val(_perc00);
+ CalculateTotals(total, totalAccessoryPrice);
+ }
+ });
+ }
+ else {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.POSManagerPasswordMustBeEntered',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ $('#PosManagerPassword').val('');
+ }
+ // متغيرات من الكود الأصلي
+ let WorkWithCommercialPOS = '@ViewBag.WorkWithCommercialPOS';
+ let AllowToAddSameItemMultipleTimes = '@ViewBag.AllowToAddSameItemMultipleTimes';
+ var ApplySmokingTax = '@ViewBag.ApplySmokingTax';
+ var SmokingTaxPercentage = '@ViewBag.SmokingTaxPercentage';
+ var CashierMaximumAllowedDiscountPercentage = '@ViewBag.CashierMaximumAllowedDiscountPercentage'/100;
+ var taxPercentage = 0.14;
+ var selectedPaymentMethodInput = null;
+ var paymentMethodsModal = $("#paymentMethodsModal");
+ var DepartmentHalls = [];
+ var UseRefundableInsurancesForAccessories = '@ViewBag.UseRefundableInsurancesForAccessories';
+ let items = [];
+ var ShowTaxPercentageAndValue = '@ViewBag.ShowTaxPercentageAndValue';
+ var UseThermalPrinterToPrintInvoices = '@ViewBag.UseThermalPrinterToPrintInvoices';
+ var UsePrintingAssistantProgram = '@ViewBag.UsePrintingAssistantProgram';
+ var UsePricePolicyIncludedInItemsValueAddedTax = '@ViewBag.UsePricePolicyIncludedInItemsValueAddedTax';
+ var IsDeliveryPossibility = '@ViewBag.IsDeliveryPossibility';
+ var IsTableSellingPossibility = '@ViewBag.IsTableSellingPossibility';
+ var IsTakeAwaySellingPossibility = '@ViewBag.IsTakeAwaySellingPossibility';
+ if (IsTakeAwaySellingPossibility != 'True') {
+ $('button[customertype=1]').hide();
+ }
+ if (IsDeliveryPossibility != 'True') {
+ $('button[customertype=3]').hide();
+ }
+ if (IsTableSellingPossibility != 'True') {
+ $('button[customertype=2]').hide();
+ }
+ GetCurrentTaxPercentage();
+ getItems();
+ function SendToKitchen() {
+ addEdit(null,"SendToKitchen");
+ }
+ function Payinvoice() {
+ var _PaymentAmount = $('.PaymentAmount').eq(1).val();
+ if (_PaymentAmount > 0) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.PaymentMethodMustBeCash',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ else {
+ addEdit(null, "Pay");
+ }
+ }
+ function AddToSalesInvoicePrintQueue(id, status) {
+ $.get('/SalesInvoice/AddToSalesInvoicePrintQueue?SalesInvoiceId=' + id + '&Status=' + status).done(function (r) {
+ console.log("AddToSalesInvoicePrintQueue : ", r);
+ });
+ }
+ $(document).on('click', '.PaymentMethodName', function () {
+ var TotalAfterTaxes = $('#TotalAfterTaxes').inputmask('unmaskedvalue');
+ $('.PaymentAmount').val(0);
+ $(this).closest('tr').find('.PaymentAmount').val(TotalAfterTaxes);
+ });
+ let DepartmentHallsOptions = '';
+ function GetHallsByDepartmentId() {
+ DepartmentHallsOptions = '';
+ $.get('/Helper/GetHallsByDepartmentId?departmentId=' + $('#DepartmentId').val()).done(function (r) {
+ DepartmentHalls = r;
+ for (var i = 0; i < DepartmentHalls.length; i++) {
+ DepartmentHallsOptions += '<option value="' + DepartmentHalls[i].Id + '">' + DepartmentHalls[i].ArName + '</option>';
+ }
+ $("#DepartmentHallsId").empty().append(DepartmentHallsOptions)
+ });
+ }
+ function getItems() {
+ return requestData('/Helper/ItemsByDepId/?departmentId=' + $('#DepartmentId').val()).done(function (r) {
+ items = r;
+ });
+ }
+ var HallTables = [];
+ $("#DepartmentHallsId").on('change', function () {
+ $("#TablesDiv").empty();
+ GetTableByHallId();
+ $('#PosCustomerId').trigger('change');
+ });
+ var HallIncreasePercentage = 0;
+ var HallIncreaseValue = 0;
+ function GetTableByHallId(IsChange) {
+ $.get('/Helper/GetTableByHallId?hallId=' + $('#DepartmentHallsId').val() + '&IsChange=' + IsChange).done(function (r) {
+ HallTables = r;
+ if (HallTables.length) {
+ HallIncreasePercentage = HallTables.HallIncreasePercentage;
+ HallIncreaseValue = HallTables.HallIncreaseValue;
+ if (HallIncreasePercentage > 0) {
+ HallIncreasePercentage = parseFloat(HallIncreasePercentage/100);
+ }
+ else if (HallIncreaseValue > 0) {
+ HallIncreaseValue = parseFloat(HallIncreaseValue);
+ }
+ $("#TablesDiv").empty();
+ if (HallTables.length > 5) {
+ var rowCount = r.length % 5 ? Math.floor((HallTables.length / 5)) + 1 : HallTables.length / 5;
+ var next = iterator(HallTables, 5);
+ for (var j = 1; j <= rowCount; j++) {
+ var tables = next();
+ var tr = '<tr>';
+ drawTablesRow(tables);
+ }
+ }
+ else {
+ drawTablesRow(r)
+ }
+ $('#tablesModal').modal("show");
+ }
+ else {
+ $("#TablesDiv").empty();
+ $('#tablesModal').modal("show");
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.NoTablesInThisDepartment',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ });
+ }
+ var itemGroupIndex = 1;
+ function getItemGroups() {
+ $('#item-groups').empty();
+ $.get('/Helper/ItemGroups?pageIndex=1&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+ $('#item-groups').append(r);
+ $('.nav-link.mb-2').first().trigger('click');
+ });
+ }
+ let DisplayFactoryPrice = '@ViewBag.DisplayFactoryPrice';
+ let customers = [];
+ let posCustomers = [];
+ function getCustomers(refill) {
+ if (refill == true)
+ requestCache['/Helper/GetCustomers'] = null;
+ return requestData('/Helper/GetCustomers').done(function (r) {
+ customers = r;
+ });
+ }
+ function getPosCustomers(refill) {
+ if (refill == true)
+ requestCache['/Helper/GetPosCustomers'] = null;
+ return requestData('/Helper/GetPosCustomers').done(function (r) {
+ posCustomers = r;
+ });
+ }
+ function GetCurrentTaxPercentage() {
+ $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#VoucherDate').val()).done(function (r) {
+ taxPercentage = r / 100;
+ CalculateTotals();
+ });
+ }
+ function appendCustomerOptions(refill) {
+ return getCustomers(refill).then(function () {
+ let custumerType = $('#CustomerType').val();
+ let customerOptions = '';
+ let customersfiltered = customers.filter(function (i) {
+ if (custumerType == 1 || custumerType == 3)
+ return i.IsBranch != true && i.IncludeFees != true
+ else if (custumerType == 2)
+ return i.IncludeFees == true;
+ else if (custumerType == 4)
+ return i.IsBranch == true;
+ });
+ for (var i = 0; i < customersfiltered.length; i++) {
+ if (custumerType == 1 || custumerType == 3)
+ customerOptions += '<option value="' + customersfiltered[i].Id + '">' + customersfiltered[i].ArName + ' - ' + customersfiltered[i].Mobile + '</option>';
+ else
+ customerOptions += '<option value="' + customersfiltered[i].Id + '">' + customersfiltered[i].ArName + ' - ' + customersfiltered[i].Code + '</option>';
+ }
+ $('#VendorOrCustomerId').empty().append(customerOptions);
+ $('#VendorOrCustomerId').trigger('change');
+ });
+ }
+ function appendPosCustomerOptions(refill) {
+ return getPosCustomers(refill).then(function () {
+ let posCustomerOptions = '';
+ for (var i = 0; i < posCustomers.length; i++) {
+ posCustomerOptions += '<option value="' + posCustomers[i].Id + '">' + posCustomers[i].ArName + ' - ' + posCustomers[i].Code + '</option>';
+ }
+ $('#PosCustomerId').empty().append(posCustomerOptions);
+ $('#PosCustomerId').trigger('change');
+ });
+ }
+ if ($('#Id').val()) {
+ let customerId = $('#VendorOrCustomerId').val();
+ appendCustomerOptions(true).then(function () { $('#VendorOrCustomerId').val(customerId).trigger('change') });
+ } else {
+ appendCustomerOptions(true);
+ }
+ if ($('#Id').val()) {
+ let posCustomerId = $('#PosCustomerId').val();
+ appendPosCustomerOptions(true).then(function () { $('#PosCustomerId').val(posCustomerId).trigger('change') });
+ } else {
+ إليك باقي الكود المكتمل:
+ appendPosCustomerOptions(true);
+ }
+ $(document).on('change', '#CustomerType',function () {
+ if ($("#CustomerType").val() == 2 || $("#CustomerType").val() == 3) {
+ $("#PayMethod1").val('');
+ if (WorkWithCommercialPOS == "True") {
+ $(".drivers").prop("hidden", false);
+ $(".deliveryInvoicesBtn").prop("hidden", false);
+ $("#getSalesOrdersBtn").prop("hidden", false);
+ }
+ }
+ else if ($("#CustomerType").val() == 1) {
+ $("#PayMethod1").val($("#TotalAfterTaxes").val());
+ $("#PayMethod2").val('');
+ if (WorkWithCommercialPOS == "True") {
+ $(".drivers").prop("hidden", true);
+ $(".deliveryInvoicesBtn").prop("hidden", true);
+ $("#getSalesOrdersBtn").prop("hidden", true);
+ }
+ }
+ if ($("#CustomerType").val() == 3) {
+ $("#DeliveryCost").prop("disabled", false);
+ $(".deliveryData").prop("hidden", false);
+ if (WorkWithCommercialPOS == "True") {
+ $(".drivers").prop("hidden", false);
+ $(".deliveryInvoicesBtn").prop("hidden", false);
+ $("#getSalesOrdersBtn").prop("hidden", false);
+ }
+ }
+ else {
+ $("#DeliveryCost").prop("disabled", true);
+ $(".deliveryData").prop("hidden", true);
+ $("#DeliveryCost").val(0);
+ }
+ appendCustomerOptions(false).then(function () { $('#VendorOrCustomerId').trigger('change') });
+ checkCustomerType();
+ });
+ $('#customer-modal').on('show.bs.modal', function () {
+ $("#ArName, #Address, #Mobile").attr('required', 'required');
+ });
+ $('#customer-modal').on('hide.bs.modal', function () {
+ $("#ArName, #Address, #Mobile").removeAttr('required');
+ $("#customer-modal").find(".form-control").val('');
+ });
+ function addCustomer() {
+ if ($("#customer-modal").find(".form-control:invalid").length > 0) {
+ $("#customer-modal").find('.form-horizontal').addClass('was-validated');
+ } else {
+ $('#preloader, #status').fadeIn();
+ $.ajax(
+ {
+ url: '/Customers/addedit', contentType: "application/json",
+ type: 'POST',
+ data: JSON.stringify({
+ ArName: $("#ArName").val(),
+ EnName: $('#EnName').val(),
+ Address: $('#Address').val(),
+ Mobile: $('#Mobile').val(),
+ Notes: $('#Notes').val(),
+ IsBranch: false,
+ IncludeFees: false
+ }),
+ error: function (e) {
+ $('#preloader, #status').fadeOut();
+ },
+ success: function (r) {
+ appendCustomerOptions(true).then(function () { $('#VendorOrCustomerId').val(r.Id).trigger('change'); });
+ $('#customer-modal').modal('hide');
+ $('#preloader, #status').fadeOut();
+ }
+ });
+ }
+ }
+ function addPosCustomer() {
+ let valid = true;
+ if ($("#PosCustomerArName").val() == "") {
+ $("#PosCustomerArName").prop('required', true);
+ }
+ if ($("#pos-customer-modal").find(".form-control:invalid").length > 0) {
+ $("#pos-customer-modal").find('.form-horizontal').addClass('was-validated');
+ $('html, body').animate({
+ scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+ }, 500);
+ } else {
+ $('#preloader, #status').fadeIn();
+ $.ajax(
+ {
+ url: '/PosCustomers/addUpdate', contentType: "application/json",
+ type: 'POST',
+ data: JSON.stringify({
+ Id: $("#posCustomerIdInput").val() != "" ? $("#posCustomerIdInput").val():0,
+ Code: $("#posCustomerCodeInput").val(),
+ ArName: $("#PosCustomerArName").val(),
+ EnName: $('#PosCustomerEnName').val(),
+ Address: $('#PosCustomerAddress').val(),
+ Mobile1: $('#Mobile1').val(),
+ Mobile2: $('#Mobile2').val(),
+ Notes: $('#PosCustomerNotes').val(),
+ GovernorateId: $('#GovernorateId').val(),
+ CityId: $('#CityId').val(),
+ AreaId: $('#AreaId').val(),
+ CustomerId: $('#PosLinkedCustomerId').val(),
+ }),
+ error: function (e) {
+ $('#preloader, #status').fadeOut();
+ },
+ success: function (r) {
+ appendPosCustomerOptions(true).then(function () { $('#PosCustomerId').val(r.Id).trigger('change'); });
+ $('#pos-customer-modal').modal('hide');
+ $('#preloader, #status').fadeOut();
+ }
+ });
+ }
+ }
+ $('#VendorOrCustomerId').on('change', function () {
+ CalculateTotals($('#NetTotal').inputmask('unmaskedvalue')*1);
+ let customer = customers.filter(function (i) { return i.Id == $('#VendorOrCustomerId').val() });
+ if (customer) {
+ $('#customer-address').val(customer.Address);
+ $('#customer-mobile').val( customer.Mobile);
+ }
+ });
+ function getItemPrice(item) {
+ let _item = items.filter(function (i) { return i.Id == item.val(); });
+ let itemId = _item.Id;
+ $('#pleasewait').fadeIn();
+ $.get('/PointOfSale/GetItemPrice?PosCustomerId=' + $('#PosCustomerId').val() + '&itemId=' + itemId + '&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+ if (r) {
+ let isFactoryChosen = false;
+ if ($('#DepartmentId').val() == 28 && '@ViewBag.ProjectName' == "Genoise") {
+ isFactoryChosen = true;
+ let itemFactoryPrice = items.filter(function (i) { return i.Id == item.val(); }).FactoryPrice;
+ $(item).closest('tr').find('.price').val(itemFactoryPrice);
+ if (itemFactoryPrice == 0) {
+ $(item).closest('tr').find('.price').val(0);
+ $(item).closest('tr').find('.price').prop('required', false);
+ }
+ }
+ else {
+ var PriceWithIncrease = (r.Price);
+ if (HallIncreasePercentage > 0) {
+ PriceWithIncrease = (r.Price) + ((r.Price) * parseFloat(HallIncreasePercentage));
+ }
+ else if (HallIncreaseValue > 0) {
+ PriceWithIncrease = (r.Price) + parseFloat(HallIncreaseValue);
+ }
+ $(item).closest('tr').find('.price').val(PriceWithIncrease);
+ }
+ }
+ else {
+ $(item).closest('tr').find('.price').val(0);
+ }
+ var _price = parseFloat($(item).closest('tr').find('.price').inputmask('unmaskedvalue')) * parseInt($(item).closest('tr').find('.quantity').val());
+ $(item).closest('tr').find('.total').val(_price);
+ var ItemTaxPercentage = 0;
+ if ($('#Id').val() > 0 && item.closest('tr').find('.ItemTaxPercentage').val() > 0) {
+ ItemTaxPercentage = item.closest('tr').find('.ItemTaxPercentage').val();
+ }
+ else {
+ ItemTaxPercentage = _item.ItemTaxPercentage;
+ }
+ ItemTaxPercentage = ItemTaxPercentage != null ? ItemTaxPercentage : 0;
+ var TaxValue = (parseFloat($(item).closest('tr').find('.price').inputmask('unmaskedvalue')) * parseInt(parseFloat($(item).closest('tr').find('.quantity').val()))) * (parseFloat(ItemTaxPercentage) / 100);
+ item.closest('tr').find('.ItemTaxPercentage').val(ItemTaxPercentage);
+ item.closest('tr').find('.ItemTaxValue').val(TaxValue);
+ $(item).closest('tr').find('.price').trigger('change');
+ $('#pleasewait').fadeOut();
+ })
+ .fail(function () {
+ $(item).closest('tr').find('.price').val(0);
+ $(item).closest('tr').find('.total').val(0);
+ $(item).closest('tr').find('.price').trigger('change');
+ $('#pleasewait').fadeOut();
+ }).done(function () {
+ CalculateTotals();
+ });
+ }
+ $('#PosCustomerId').on('change', function () {
+ $('.item').each(function () {
+ if ($(this).val())
+ getItemPrice($(this));
+ });
+ CalculateTotals($('#NetTotal').inputmask('unmaskedvalue') * 1);
+ let customer = posCustomers.filter(function (i) { return i.Id == $('#PosCustomerId').val() });
+ if (customer) {
+ $('#pos-customer-address').text(customer.Address);
+ $('#pos-customer-mobile').val(customer.Mobile1);
+ }
+ });
+ function getSalesInvoices() {
+ $.get('/PointOfSale/SalesInvoices').done(function (r) {
+ $('#sales-invoice').empty().append(r);
+ });
+ }
+ getSalesInvoices();
+ function editSalesInvoice(id) {
+ $('#preloader, #status').fadeIn();
+ $.get('/PointOfSale/SalesInvoiceDetails/' + id).done(function (r) {
+ appendSalesInvoiceDetails(r);
+ $('#preloader, #status').fadeOut();
+ });
+ }
+ function cashBoxBalance() {
+ if ($('#CashBoxId').val())
+ $.get('/Helper/CashBoxBalance/' + $('#CashBoxId').val()).done(function (r) {
+ $('#cashBoxBalance').val(r);
+ });
+ }
+ $(document).on('change', '#CashBoxId', function () {
+ cashBoxBalance();
+ });
+ function CalculateTotals(total, totalAccessoryPrice) {
+ if (!total || !totalAccessoryPrice) {
+ total = 0;
+ totalAccessoryPrice = 0;
+ $('.price').each(function () {
+ let itemTotal = $(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.total').val(itemTotal);
+ let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').inputmask('unmaskedvalue');
+ let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+ totalAccessoryPrice += itemTotalAccessoryPrice;
+ total += itemTotal;
+ });
+ }
+ if (UsePricePolicyIncludedInItemsValueAddedTax == 'True') {
+ total = total / 1.15;
+ }
+ $('#TotalWithoutTax').val(total)
+ $('#Total').val(total);
+ if (UseRefundableInsurancesForAccessories == 'True') {
+ $('#RefundableInsurance').val(totalAccessoryPrice);
+ }
+ else {
+ $('#RefundableInsurance').val('');
+ }
+ total += $("#DeliveryCost").inputmask('unmaskedvalue')*1;
+ if ($('#DiscountValue').val()) {
+ total -= $('#DiscountValue').inputmask('unmaskedvalue');
+ }
+ $('#NetTotal').val(total);
+ let customer = customers.filter((i) => { return i.Id == $('#VendorOrCustomerId').val() });
+ if ( customer != null &&customer.IncludeFees == true) {
+ let ServiceFees = $('#ServiceFeesPercentage').val() * total;
+ $('#ServiceFees').val(ServiceFees);
+ total = total * 1 + ServiceFees;
+ } else
+ $('#ServiceFees').val('');
+ if (ApplySmokingTax == 'True' && SmokingTaxPercentage > 0) {
+ var perc = (total * parseFloat(SmokingTaxPercentage / 100));
+ $('#SmokingTax').val(perc)
+ total = total + (total * parseFloat(SmokingTaxPercentage / 100))
+ }
+ var ItemTaxValue = 0;
+ $('.ItemTaxValue').each(function () {
+ ItemTaxValue += $(this).inputmask('unmaskedvalue') * 1;
+ });
+ if ($('#hasTaxes').prop('checked') == true) {
+ if (UsePricePolicyIncludedInItemsValueAddedTax == 'True') {
+ $('#SalesTaxes').val(total * taxPercentage);
+ }
+ }
+ else {
+ $('#SalesTaxes').val('0');
+ }
+ total += $('#SalesTaxes').val() * 1;
+ $('#TotalAfterTaxes').val(total + totalAccessoryPrice);
+ $('#TotalAfterTaxes').trigger('change');
+ $('#Paid').val(total.toFixed(2))
+ $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') - total).toFixed(2));
+ }
+ $('#hasTaxes').on('click', function () {
+ if (ShowTaxPercentageAndValue == 'True') {
+ $('.ItemTax').show();
+ }
+ else {
+ $('.ItemTax').hide();
+ }
+ CalculateTotals();
+ });
+ function addEdit(n,status) {
+ $('#Paid').removeAttr('required');
+ let valid = true;
+ if ($(".form-control:invalid").length > 0) {
+ $('.form-horizontal').addClass('was-validated');
+ $('html, body').animate({
+ scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+ }, 500);
+ valid = false;
+ }
+ if ($('#Id').val() > 0) {
+ if ($('#IsClosed').val() == 'True' || $('#IsCollected').val() == 'True') {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.InvoicesThatHaveBeenClosedOrCollectedCannotBeModified',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ valid = false;
+ }
+ }
+ var SalesInvoiceDetails = [];
+ var ItemGroupIDs = [];
+ if (valid) {
+ $('#PointOfSaleDetails tr').each(function () {
+ var td = $(this);
+ if (td.find('.quantity').val() * 1 != 0 && td.find('.item').val() > 0) {
+ var ItemPriceId = td.find('.item-price-id').val();
+ var ItemGroupId = items.filter(function (i) { return i.ItemPriceId == ItemPriceId }).ItemGroupId;
+ if ($.inArray(ItemGroupId, ItemGroupIDs) == -1) {
+ ItemGroupIDs.push(ItemGroupId);
+ }
+ var salesInvoiceDetail = {
+ ItemId: td.find('.item').val(),
+ ItemGroupId: ItemGroupId,
+ ItemPriceId: td.find('.item-price-id').val(),
+ ItemUnitId: td.find('.item-unit').val(),
+ UnitEquivalent: td.find('.unit-equavalent').val(),
+ Price: td.find('.price').inputmask('unmaskedvalue') * 1,
+ WareHouseId: $('#WarehouseId').val(),
+ Qty: td.find('.quantity').val(),
+ IsActive: true,
+ IsDeleted: false,
+ ExtraTypeId: td.find('.ExtraTypeId').val(),
+ RowId: td.find('.RowId').text(),
+ AccessoryPrice: td.find('.accessoryPrice').inputmask('unmaskedvalue') * 1,
+ Notes: td.next('tr').find('.ItemNotes').text(),
+ ItemTaxPercentage: td.find('.ItemTaxPercentage').val(),
+ ItemTaxValue: td.find('.ItemTaxValue').inputmask('unmaskedvalue'),
+ IsAdded: td.find('.IsAdded').prop('checked'),
+ };
+ SalesInvoiceDetails.push(salesInvoiceDetail);
+ }
+ });
+ valid = SalesInvoiceDetails.length > 0 ? true : false;
+ valid == false ?Swal.fire({title: '@MyERP.Properties.Resources.PleaseEnterFullDetails !',text: " ",icon: 'info',showCancelButton: false,confirmButtonText: '@MyERP.Properties.Resources.Ok',confirmButtonColor: '#3085d6'}) : null;
+ }
+ if (valid) {
+ var paymentMethods = [];
+ let totalPaied = 0;
+ let noneCashMoney = 0;
+ var creditAmount = 0;
+ $('#SalesInvoicePaymentMethods tr').each(function () {
+ var td = $(this);
+ totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+ if (td.find('.PaymentMethodId').val() != 1) {
+ noneCashMoney += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+ }
+ var paymentMethod = {
+ SalesInvoiceId: $('#Id').val(),
+ PaymentMethodId: td.find('.PaymentMethodId').val(),
+ CashBoxId: td.find('.PaymentAmount').inputmask('unmaskedvalue') ? td.find('.CashBoxId').val() : null,
+ Amount: td.find('.PaymentAmount').inputmask('unmaskedvalue'),
+ BankId: td.find('.PaymentAmount').inputmask('unmaskedvalue') && td.find('.BankId').val() > 0 ? td.find('.BankId').val() : null,
+ BankAccountId: td.find('.PaymentAmount').inputmask('unmaskedvalue') && td.find('.BankAccountId').val() > 0 ? td.find('.BankAccountId').val() : null
+ };
+ if (paymentMethod.PaymentMethodId == 2)
+ creditAmount = paymentMethod.Amount;
+ paymentMethods.push(paymentMethod);
+ });
+ paymentMethods.Amount = $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1 - noneCashMoney;
+ let finalTotal = $('#IsInstallmentPlan').prop('checked') ? $('#TotalAfterTotalInstallment').inputmask('unmaskedvalue') : $('#TotalAfterTaxes').inputmask('unmaskedvalue');
+ if (finalTotal * 1 > totalPaied) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheValuePaidIsLessThanRequired',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ valid = false;
+ }
+ else if (finalTotal * 1 < noneCashMoney) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheValueOfTheCashlessPaymentCannotBeGreaterThanTheRequiredAmount',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ valid = false;
+ }
+ }
+ if (valid && $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1 > $('#Paid').inputmask('unmaskedvalue') * 1) {
+ if ($('#Paid').inputmask('unmaskedvalue') * 1 != 0)
+ {
+ $('#Paid').val('').attr('required', 'required');
+ valid = false;
+ $('#TotalAfterTaxes').closest('.form-horizontal').addClass('was-validated');
+ $('html, body').animate({
+ scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+ }, 500);
+ $('#Remaining').val($('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1);
+ }
+ }
+ if (valid) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+ text: " ",
+ icon: 'info',
+ showCancelButton: true,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+ confirmButtonColor: '#3085d6',
+ cancelButtonColor: '#d33',
+ reverseButtons: true
+ }).then((result) => {
+ if (result.isConfirmed) {
+ $('#preloader, #status').fadeIn();
+ $('#save').prop('disabled', true);
+ $('#SaveAndPrint').prop('disabled', true);
+ $.ajax({
+ type: "POST", contentType: "application/json",
+ url: "/SalesInvoice/AddEdit?Status=" + status,
+ data:
+ JSON.stringify({
+ Id: $('#Id').val(),
+ DocumentNumber: $('#DocumentNumber').val(),
+ BranchId: $('#BranchId').val(),
+ WarehouseId: $('#WarehouseId').val(),
+ VoucherDate: $('#VoucherDate').val(),
+ VendorOrCustomerId: $('#VendorOrCustomerId').val() ? $('#VendorOrCustomerId').val() : $('.VendorOrCustomerId').val(),
+ CurrencyId: $('#CurrencyId').val(),
+ CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+ Total: $('#Total').inputmask('unmaskedvalue'),
+ SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+ CommercialRevenueTaxAmount: $('#CommercialRevenueTaxAmount').inputmask('unmaskedvalue'),
+ TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+ VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+ VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+ NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+ ServiceFees: $('#ServiceFees').inputmask('unmaskedvalue'),
+ SystemPageId: SystemPageId,
+ DepartmentId: $('#DepartmentId').val(),
+ SalesInvoiceDetails: SalesInvoiceDetails,
+ IsActive: true,
+ IsDeleted: false,
+ IsLinked: isLinked,
+ SalesInvoicePaymentMethods: paymentMethods,
+ SalesOrdersSalesInvoices: salesOrderIds.map(function (i) { return { SalesInvoiceId: $('#Id').val(), SalesOrderId: i } }),
+ Paid: $('#Paid').inputmask('unmaskedvalue') * 1,
+ IsCompleted: $('#Paid').inputmask('unmaskedvalue') * 1 >= $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1,
+ CustomerType: $('#CustomerType').val(),
+ SalesInvoicePurchaseRequests: purchaseReqeustIds.map(function (i) { return { SalesInvoiceId: $('#Id').val(), PurchaseRequestId: i } }),
+ RefundableInsurance: $("#RefundableInsurance").inputmask('unmaskedvalue'),
+ TableId: $("#selectedTableId").val(),
+ PosCustomerId: $("#PosCustomerId").val(),
+ IsCollectedByCashier: creditAmount == 0 ? true : false,
+ DeliveryCost: $("#DeliveryCost").inputmask('unmaskedvalue'),
+ SmokingTax: $('#SmokingTax').val(),
+ WaiterId: $('#WaiterId').val(),
+ }),
+ success: function (r) {
+ if (r.success == "true") {
+ if (n == "report") {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.Saved',
+ text: " ",
+ icon: 'success',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ if (UsePrintingAssistantProgram != 'True') {
+ print(r.id);
+ }
+ window.location.replace("/PointOfSale/AddEdit");
+ }
+ else
+ {
+ Swal.fire(
+ {
+ title: '@MyERP.Properties.Resources.Saved',
+ text: " ",
+ icon: 'success',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ window.location.replace("/PointOfSale/AddEdit");
+ $('#preloader, #status').fadeOut();
+ }
+ }
+ else if (r.success == "false" && r.errors == "NotCashier") {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheInvoiceCannotBeAddedOrModifiedUnlessTheUserIsCashier',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ $('#preloader, #status').fadeOut();
+ }
+ else if (r.success == "Cannot Be Edited") {
+ $('#preloader, #status').fadeOut();
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheInvoiceHasBeenGeneratedAndCannotBeEdited',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ else {
+ $('#preloader, #status').fadeOut();
+ $('#save').prop('disabled', false);
+ $('#SaveAndPrint').prop('disabled', false);
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.NotSaved !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ cashBoxBalance();
+ getSalesInvoices();
+ },
+ error: function (r) {
+ $('#preloader, #status').fadeOut();
+ $('#save').prop('disabled', false);
+ $('#SaveAndPrint').prop('disabled', false);
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.NotSaved !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ });
+ }
+ else { result.dismiss; }
+ });
+ }
+ }
+ // === باقي الوظائف الأساسية ===
+ function Delete(id) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+ text: " ",
+ icon: 'warning',
+ showCancelButton: true,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+ confirmButtonColor: '#3085d6',
+ cancelButtonColor: '#d33',
+ reverseButtons: true
+ }).then((result) => {
+ if (result.isConfirmed) {
+ $('#preloader, #status').fadeIn();
+ $.ajax(
+ {
+ url: '/SalesInvoice/Delete',
+ type: 'POST',
+ data: {
+ "Id": id,
+ },
+ error: function (e) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ $('#preloader, #status').fadeOut();
+ },
+ success: function (r) {
+ if (r == 'true') {
+ getSalesInvoices();
+ }
+ else if (r == 'Cannot Be Deleted') {
+ $('#preloader, #status').fadeOut();
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.TheInvoiceHasBeenGeneratedAndCannotBeDeleted',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ else {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ $('#preloader, #status').fadeOut();
+ }
+ });
+ }
+ else { result.dismiss; }
+ });
+ }
+ function print(id) {
+ var frameElement = window.open("/Report/CashierInvoice/" + id + "?print=true","_blank");
+ frameElement.addEventListener("load", function (e) {
+ if (frameElement.document.contentType !== "text/html")
+ frameElement.print();
+ if (UseThermalPrinterToPrintInvoices != 'True') {
+ window.location.replace("/PointOfSale/AddEdit");
+ }
+ })
+ }
+ function checkCustomerType() {
+ if ($("#CustomerType").val() == 4) {
+ $(".VendorOrCustomerIdDiv").show();
+ $(".VendorOrCustomerDetailsDiv").show();
+ $(".PosCustomerIdDiv").hide();
+ $(".PosCustomerDetailsDiv").hide();
+ $(".tableDiv").hide();
+ HallIncreaseValue = 0;
+ HallIncreasePercentage = 0;
+ $('#PosCustomerId').trigger('change');
+ }
+ else {
+ if ($("#CustomerType").val() != 2) {
+ $(".PosCustomerIdDiv").show();
+ $(".PosCustomerDetailsDiv").show();
+ $(".VendorOrCustomerIdDiv").hide();
+ $(".VendorOrCustomerDetailsDiv").hide();
+ $(".VendorOrCustomerId").val(1);
+ $(".tableDiv").hide();
+ HallIncreaseValue = 0;
+ HallIncreasePercentage = 0;
+ $('#PosCustomerId').trigger('change');
+ }
+ else {
+ $(".PosCustomerIdDiv").hide();
+ $(".PosCustomerDetailsDiv").hide();
+ $(".VendorOrCustomerIdDiv").hide();
+ $(".VendorOrCustomerDetailsDiv").hide();
+ $(".VendorOrCustomerId").val(1);
+ $(".tableDiv").show();
+ }
+ }
+ }
+ // وظائف أخرى أساسية
+ let warehouseOptions = '';
+ function setWarehouseValues() {
+ warehouseOptions = '';
+ return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+ .done(function (r) {
+ for (var i = 0; i < r.length; i++) {
+ warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+ }
+ });
+ }
+ function getItemUnits(itemId) {
+ return requestData('/Helper/ItemUnits?itemId=' + itemId);
+ }
+ let getDocNum = true;
+ function setDocNum() {
+ if ($('#DepartmentId').val() && getDocNum)
+ $.get('/SalesInvoice/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+ $('#DocumentNumber').val(r);
+ $('#DocumentNumbers').val(r.replaceAll("-", ""));
+ });
+ getDocNum = true;
+ }
+ let isLinked = false;
+ let SystemPageId;
+ $(document).on('change', '#DepartmentId', function () {
+ getDrivers();
+ $("#DepartmentHallsId").empty();
+ GetHallsByDepartmentId();
+ getItems();
+ if ($(this).value == 28 && '@ViewBag.ProjectName' == "Genoise") {
+ getItemGroups();
+ $('#getSalesOrdersBtn').hide();
+ $('#getPurchaseRequestsBtn').show();
+ $('#CustomerType').val(4).trigger('change').attr('disabled', 'disabled');
+ } else if ('@ViewBag.ProjectName' == "Genoise") {
+ getItemGroups();
+ $('#getSalesOrdersBtn').show();
+ $('#getPurchaseRequestsBtn').hide();
+ $('#CustomerType').val() == 4 ? $('#CustomerType').val(1).trigger('change').attr('disabled', 'disabled') : $('#CustomerType').val($('#CustomerType').val()).trigger('change').attr('disabled', 'disabled');
+ }
+ else {
+ $('#getSalesOrdersBtn').hide();
+ $('#getPurchaseRequestsBtn').hide();
+ $('#CustomerType').val(1).trigger('change').attr('disabled', 'disabled');
+ }
+ checkCustomerType();
+ if ($('#DepartmentId').val()) {
+ setWarehouseValues().then(function () {
+ $("#WarehouseId").empty().append(warehouseOptions);
+ if ($('#DepartmentId').val() == 28 && '@ViewBag.ProjectName' == "Genoise") {
+ $("#WarehouseId").val(9);
+ }
+ });
+ setDocNum();
+ cashBoxByDepartment();
+ } else {
+ $('#DocumentNumber').val('');
+ $("#WarehouseId").empty();
+ }
+ if ($(this).value == 28 && DisplayFactoryPrice != 'True' && '@ViewBag.ProjectName' == "Genoise") {
+ $('.price, .total').closest('td').hide();
+ $('.price-th').hide();
+ $('.totals').hide();
+ }
+ else {
+ $('.price, .total').closest('td').show();
+ $('.totals').show();
+ $('.price-th').show();
+ }
+ $('.item-unit').trigger('change');
+ $('#PointOfSaleDetails tr').each(function () {
+ var td = $(this);
+ var quantity0;
+ if ('@System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"]' == "Genoise" && $('#DepartmentId').val() == 28) {
+ quantity0 = 0.00;
+ }
+ else {
+ quantity0 = '@ViewBag.DefaultQuantityInPos';
+ }
+ td.find('.quantity').val(quantity0);
+ });
+ });
+ function cashBoxByDepartment() {
+ $.get('/Helper/CashBoxByDepartment/' + $('#DepartmentId').val()).done(function (r) {
+ $('.CashBoxId').empty();
+ for (var i = 0; i < r.length; i++) {
+ $('.CashBoxId').append($('<option>', {
+ value: r[i].Id,
+ text: r[i].ArName
+ }));
+ }
+ cashBoxBalance();
+ });
+ }
+ let UniqueSerial = 0;
+ let newHeight = 315;
+ function addItem(e) {
+ UniqueSerial++;
+ let itemid = $(e).siblings('.item-id').val();
+ let RowId = itemid + UniqueSerial.toString();
+ let valid = true;
+ $('#PointOfSaleDetails tr').each(function () {
+ var td = $(this);
+ if (td.find('.item').val() == itemid) {
+ valid=false;
+ var qty = $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.item').closest('tr').find('.quantity').val(parseFloat(qty
+ $(this).closest('tr').find('.item').closest('tr').find('.quantity').val(parseFloat(qty) + parseFloat(1));
+ }
+ });
+ if(valid == false && '@ViewBag.AllowToAddSameItemMultipleTimes' != 'True') {
+ }else {
+ var quantity ;
+ if ('@System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"]' == "Genoise" && $('#DepartmentId').val() == 28) {
+ quantity = 0.00;
+ }
+ else {
+ quantity = '@ViewBag.DefaultQuantityInPos';
+ }
+ let _item = items.filter(function (i) { return i.Id == itemid; })[0];
+ var ItemTaxPercentage = _item.ItemTaxPercentage;
+ var TaxValue = (parseFloat(_item.Price) * parseInt(parseFloat(quantity))) * (parseFloat(ItemTaxPercentage) / 100);
+ var ItemNotes = "";
+ $('#preloader, #status').fadeIn();
+ let tr = '<tr><td hidden class="RowId">' + RowId + '</td><td hidden class="Main">Main</td>' +
+ ` <td>
+ <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button>
+ </td>
+ <td>
+ <input class="IsAltItem" type="checkbox" hidden />
+ <a href="javascript:void(0);" onclick="AlternativeItems(this)">
+ <i class="fe-refresh-ccw"></i>
+ </a>
+ </td>`+
+ '<td hidden class="MainItemId">' + itemid + '</td><td style="width:40%" class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item itemId" required /><input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" required /></td><td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" value="' +
+ quantity + '" required /></td><td class="tabledit-edit-mode UnitClass" style="display:none;" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /><input hidden class="itemTotalAccessoryPrice" readonly /></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxPercentage form-control tabledit-input form-control-sm" value="' +
+ ItemTaxPercentage + '" /></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxValue form-control tabledit-input form-control-sm money" value="' +
+ TaxValue + '" /></td><td><a href="javascript:void(0);" onclick="AddNotes(this)"><i class="fa fa-plus"></i></a><input hidden class="IsAdded" type="checkbox" '+'@Html.Raw(Model != null && Model.Id>0?"checked":"")'+' /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td class=" EnableAdditionalItemsOnPos text-center"><a href="javascript:void(0);" onclick="ShowExtra(this)"><i class="fa fa-plus" aria-hidden="true"></i></a></td></tr><tr class="ItemNotesTr" style="display:none;"><td class="tabledit-edit-mode"><label class="ItemNotes control-label form-control-sm">' +
+ ItemNotes + '</label></td></tr>';
+ $('#PointOfSaleDetails').append(tr);
+ if (ShowTaxPercentageAndValue == 'True') {
+ $('.ItemTax').show();
+ }
+ else {
+ $('.ItemTax').hide();
+ }
+ newHeight = newHeight - 45;
+ if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True')
+ $('.EnableAdditionalItemsOnPos').show();
+ else
+ $('.EnableAdditionalItemsOnPos').hide();
+ if ($('#DepartmentId')[0].value == 28 && DisplayFactoryPrice != 'True' && '@ViewBag.ProjectName' == "Genoise") {
+ $('.price').last().closest('td').hide();
+ $('.total').last().closest('td').hide();
+ }
+ $('.item').last().val(itemid).closest('tr').find('.item-name').val($(e).text());
+ $('#PointOfSaleDetails tr:last select').select2({
+ matcher: matchCustom
+ });
+ $('#PointOfSaleDetails tr:last .money').inputmask({
+ alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+ });
+ getItemUnits(itemid).done(function (r) {
+ let units = '';
+ for (var i = 0; i < r.length; i++) {
+ units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+ }
+ $('#preloader, #status').fadeOut();
+ $('.item-unit').last().empty().append(units).trigger('change');
+ });
+ $('#itemTable').scrollTop(9000000);
+ if ($(e).attr('item-has-accessory') == "true" && '@ViewBag.UseRefundableInsurancesForAccessories' != null && '@ViewBag.UseRefundableInsurancesForAccessories' == 'True') {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.ThisItemHasAccessory',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ if ('@ViewBag.AccessoryGroupId' != null) {
+ $(".active").removeClass("active")
+ $("#@ViewBag.AccessoryGroupId-tab").addClass("active");
+ refreshItems(@ViewBag.AccessoryGroupId);
+ }
+ }
+ }
+ $("#PosCustomerId").trigger('change');
+ }
+ $(document).on('change', '.item-unit', function () {
+ let itemUnitId = $(this).val();
+ let item = $(this).closest('tr').find('.item');
+ let isFactoryChosen = false;
+ if ($('#DepartmentId')[0].value == 28 && '@ViewBag.ProjectName' == "Genoise")
+ isFactoryChosen = true;
+ getItemUnits(item.val()).done(function (r) {
+ let itemUnit = r.filter(function (i) { return i.Id == itemUnitId })[0];
+ item.closest('tr').find('.unit-equavalent').val(itemUnit.Equivalent);
+ if (item.closest('tr').find('.extra').val() == null) {
+ item.closest('tr').find('.accessoryPrice').val(itemUnit.AccessoryPrice);
+ item.closest('tr').find('.price').val(isFactoryChosen ? itemUnit.FactoryPrice : itemUnit.Price);
+ }
+ item.closest('tr').find('.barcode').val(itemUnit.Barcode);
+ item.closest('tr').find('.item-price-id').val(itemUnit.ItemPriceId);
+ CalculateTotals();
+ $("#TotalAfterTaxes").trigger('change');
+ });
+ });
+ $(document).on('change', '.quantity', function () {
+ let itemPrice = $(this).closest('tr').find('.item-price-id');
+ var item = items.filter(function (i) { return i.ItemPriceId == itemPrice.val() * 1; })[0];
+ var TaxPerc = 0;
+ if ($('#Id').val() > 0 && itemPrice.closest('tr').find('.ItemTaxPercentage').val() > 0) {
+ TaxPerc = itemPrice.closest('tr').find('.ItemTaxPercentage').val();
+ }
+ else {
+ TaxPerc = item.ItemTaxPercentage;
+ }
+ TaxPerc = TaxPerc != null ? TaxPerc : 0;
+ var TaxValue = (parseFloat(itemPrice.closest('tr').find('.price').inputmask('unmaskedvalue')*1) * parseInt($(this).val())) * (parseFloat(TaxPerc) / 100);
+ itemPrice.closest('tr').find('.ItemTaxPercentage').val(TaxPerc);
+ itemPrice.closest('tr').find('.ItemTaxValue').val(TaxValue);
+ CalculateTotals();
+ });
+ $(document).on('change', '#DeliveryCost', function () {
+ CalculateTotals();
+ $('#TotalAfterTaxes').trigger('change');
+ });
+ function deleteElement(e) {
+ let RowId = $(e).closest('tr').find('.RowId').text();
+ if ($(e).closest('tr').find('.Main').text() == "Main") {
+ $('#PointOfSaleDetails tr').each(function () {
+ tr = $(this);
+ if (tr.find('.RowId').text() == RowId && tr.find('.Main').text() != "Main") {
+ tr.remove();
+ }
+ });
+ }
+ $(e).closest('tr').remove();
+ CalculateTotals();
+ }
+ function ShowExtra(e) {
+ let id = $(e).closest('tr').find('.item').val();
+ let RowId = $(e).closest('tr').find('.RowId').text();
+ $.ajax({
+ type: "GET",
+ contentType: "application/json",
+ url: "/AdditionalItem/GetAdditionalItems/" + id,
+ success: function (r) {
+ $('#AdditionalItems').empty();
+ if (r == 0) {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.ThereAreNoAdditivesForThisItem !',
+ text: " ",
+ icon: 'info',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ else {
+ for (var i = 0; i < r.length; i++) {
+ $('#AdditionalItems').append('<tr><td hidden class="RowId">'+RowId+'</td><td class="ItemId" hidden>' + r[i].ItemId + '</td><td class="MainItemId" hidden>' + id + '</td><td class="ItemPriceId" hidden>' + r[i].ItemPriceId + '</td><td class="ArName">' + r[i].ArName + '</td><td class="ItemUnitId">' + r[i].ItemUnit + '</td><td hidden name="Extra" class="ExtraQuantity">' + r[i].ExtraQuantity + '</td><td><button onclick="AddExtra(this)" name="Extra" class=" btn btn-danger ExtraPrice">' + r[i].ExtraPrice + '</button></td><td hidden name="Double" class="DoubleQuantity">' + r[i].DoubleQuantity + '</td><td><button class=" btn btn-danger DoublePrice" name="Double" onclick="AddExtra(this)">' + r[i].DoublePrice + '</button></td><td><button name="NoExtra" class=" btn btn-danger NoExtraPrice" onclick="AddExtra(this)">0</button></td></tr>');
+ }
+ $('#exampleModal').modal("show");
+ }
+ },
+ error: function () {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ });
+ }
+ function AddExtra(e) {
+ $('#exampleModal').modal("hide");
+ let name = $(e).attr('name');
+ let ItemId = $(e).closest('tr').find('.ItemId').text();
+ let MainItemId = $(e).closest('tr').find('.MainItemId').text();
+ let RowId = $(e).closest('tr').find('.RowId').text();
+ let WantedRow;
+ let count = 0;
+ $('#PointOfSaleDetails tr').each(function () {
+ tr = $(this);
+ MainItem = tr.closest('tr').find('.MainItemId').text();
+ rowid = tr.closest('tr').find('.RowId').text();
+ if (RowId == rowid && tr.find('.Main').text() == "Main") {
+ WantedRow = tr;
+ }
+ else {
+ if (RowId == rowid) {
+ count++;
+ }
+ }
+ });
+ let ExtraTypeId;
+ if (name == "Extra") {
+ ExtraTypeId = 1;
+ }
+ else {
+ if (name == "Double") {
+ ExtraTypeId = 2;
+ }
+ else {
+ if (name == "NoExtra") {
+ ExtraTypeId = 3;
+ }
+ }
+ }
+ if (count > 0) {
+ $('#PointOfSaleDetails').find('tr.' + RowId + ':last').after('<tr class="' + RowId + '" bgcolor="pink"><td hidden class="RowId">' + RowId + '</td><td hidden class="MainItemId">' + MainItemId + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item extra" required value="' + ItemId + '" /> <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.ArName').text() + '" /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" value="' + $(e).closest('tr').find('.ItemPriceId').text() + '" required /></td > <td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" readonly required value="' + $(e).closest('tr').find('.' + name + 'Quantity').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.' + name + 'Price').text() + '" /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly value=""/></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /><input hidden class="itemTotalAccessoryPrice" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td hidden><input class="ExtraTypeId" required value="' + ExtraTypeId + '" /></td></tr >');
+ $('#PointOfSaleDetails tr select').select2({
+ matcher: matchCustom
+ });
+ getItemUnits(ItemId).done(function (r) {
+ let units = '';
+ for (var i = 0; i < r.length; i++) {
+ units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+ }
+ let WantedSelect = $('#PointOfSaleDetails').find('tr.' + RowId + ':eq(' + count + ')');
+ WantedSelect.closest('tr').find('.item-unit').append(units).trigger('change');
+ });
+ }
+ else {
+ WantedRow.after('<tr class="' + RowId + '" bgcolor="pink"><td hidden class="RowId">' + RowId + '</td><td hidden class="MainItemId">' + MainItemId + '</td><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item extra" required value="' + ItemId + '" /> <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.ArName').text() + '" /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" value="' + $(e).closest('tr').find('.ItemPriceId').text() + '" required /></td > <td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" readonly required value="' + $(e).closest('tr').find('.' + name + 'Quantity').text() + '" /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' + $(e).closest('tr').find('.' + name + 'Price').text() + '" /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly value=""/></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly /><input hidden class="itemTotalAccessoryPrice" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td hidden><input class="ExtraTypeId" required value="' + ExtraTypeId + '" /></td></tr > ');
+ $('#PointOfSaleDetails tr select').select2({
+ matcher: matchCustom
+ });
+ getItemUnits(ItemId).done(function (r) {
+ let units = '';
+ for (var i = 0; i < r.length; i++) {
+ units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+ }
+ let WantedSelect = $('#PointOfSaleDetails').find('tr.' + RowId + ':eq(' + count + ')');
+ WantedSelect.closest('tr').find('.item-unit').append(units).trigger('change');
+ });
+ }
+ CalculateTotals();
+ }
+ $(document).on('change', '#DiscountValue', function () {
+ let total = 0;
+ let totalAccessoryPrice = 0;
+ $('.price').each(function () {
+ total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+ let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').val();
+ let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+ totalAccessoryPrice += itemTotalAccessoryPrice;
+ });
+ if (($(this).inputmask('unmaskedvalue') / total) >= 1) {
+ $(this).val(0);
+ }
+ var VoucherPerc = ($(this).inputmask('unmaskedvalue') * 100 / total).toFixed(2);
+ $('#VoucherDiscountPercentage').val(VoucherPerc);
+ var Perc = $('#VoucherDiscountPercentage').val() / 100;
+ if (Perc > CashierMaximumAllowedDiscountPercentage) {
+ $('#DiscountModal').modal('show');
+ }
+ else {
+ CalculateTotals(total, totalAccessoryPrice);
+ }
+ });
+ $(document).on('change', '#VoucherDiscountPercentage', function () {
+ let total = 0;
+ let totalAccessoryPrice = 0;
+ $('.price').each(function () {
+ total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+ let accessoryPrice = $(this).closest('tr').find('.accessoryPrice').val();
+ let itemTotalAccessoryPrice = accessoryPrice * $(this).closest('tr').find('.quantity').val();
+ $(this).closest('tr').find('.itemTotalAccessoryPrice').val(itemTotalAccessoryPrice);
+ totalAccessoryPrice += itemTotalAccessoryPrice;
+ });
+ var value = ($(this).inputmask('unmaskedvalue') / 100 * total)
+ $('#DiscountValue').val(value);
+ var Perc = $($(this)).val() / 100;
+ if (Perc > CashierMaximumAllowedDiscountPercentage) {
+ $('#DiscountModal').modal('show');
+ }
+ else {
+ CalculateTotals(total, totalAccessoryPrice);
+ }
+ });
+ function ResetDiscountValue() {
+ $('#DiscountValue').val(0);
+ $('#VoucherDiscountPercentage').val(0);
+ }
+ $(document).on('keydown', '#pos-customer-mobile', function (e) {
+ if (e.which == 13 || e.keyCode == 13) {
+ let elem = $(this);
+ let mobileNo = elem.val();
+ searchPosCustomers(mobileNo);
+ }
+ });
+ function searchPosCustomers(mobileNo) {
+ $.get('/Helper/SearchPosCustomers?mobileNo=' + mobileNo).done(function (r) {
+ if (r.posCustomer != null) {
+ $("#PosCustomerId").val(r.posCustomer.PosCustomerId).trigger('change');
+ showPosCustomerModal(r.posCustomer, false, null);
+ }
+ else {
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.ThereIsNoCustomerWithThisNoDoYouWantToAdd',
+ text: " ",
+ icon: 'info',
+ showCancelButton: true,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+ confirmButtonColor: '#3085d6',
+ cancelButtonColor: '#d33',
+ reverseButtons: true
+ }).then((result) => {
+ if (result.isConfirmed) {
+ showPosCustomerModal(null, true, mobileNo);
+ }
+ else { result.dismiss; }
+ });
+ }
+ });
+ }
+ $(document).on('change', '.PaymentAmount', function () {
+ let totalPaied = 0;
+ $('#SalesInvoicePaymentMethods tr').each(function () {
+ var td = $(this);
+ totalPaied += td.find('.PaymentAmount').inputmask('unmaskedvalue') * 1;
+ });
+ $('#Paid').val(totalPaied);
+ $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') - $('#TotalAfterTaxes').inputmask('unmaskedvalue')).toFixed(2))
+ });
+ $('.PaymentAmount').on('click', function () {
+ selectedPaymentMethodInput = $(this);
+ });
+ $('.drivers').on('click', function () {
+ showDriversModal();
+ });
+ $(document).on('click', '#posCustomerAddBtn',function () {
+ getGovernorates();
+ $('#pos-customer-modal').modal("show");
+ });
+ let custIems = [];
+ $(document).on('keyup', '#SearchText', function () {
+ let itemNameInput = $(this);
+ if (!custIems.length)
+ custIems = $.map(items, function (n) {
+ return { label: n.ArName, value: n.ItemPriceId };
+ });
+ $(this).autocomplete({
+ source: custIems,
+ select: function (event, ui) {
+ event.preventDefault();
+ $(itemNameInput).val(ui.item.label);
+ $(itemNameInput).closest('td').find('.item').val(ui.item.value).trigger('change');
+ if (items.length) {
+ let itemPrice = items.filter(function (i) { return i.ItemPriceId === ui.item.value; })[0];
+ let itemid = itemPrice.Id;
+ let RowId = itemid + UniqueSerial.toString();
+ if ('@System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"]' == "Genoise" && $('#DepartmentId').val() == 28) {
+ itemPrice.Quantity = 0.00;
+ }
+ else {
+ itemPrice.Quantity = '@ViewBag.DefaultQuantityInPos';
+ }
+ var ItemTaxPercentage = 0;
+ if ($('#Id').val() > 0 && itemPrice.closest('tr').find('.ItemTaxPercentage').val() > 0) {
+ ItemTaxPercentage = itemPrice.closest('tr').find('.ItemTaxPercentage').val();
+ }
+ else {
+ ItemTaxPercentage = itemPrice.ItemTaxPercentage;
+ }
+ ItemTaxPercentage = ItemTaxPercentage != null ? ItemTaxPercentage : 0;
+ var TaxValue = (parseFloat(itemPrice.Price) * parseInt(itemPrice.Quantity)) * (parseFloat(ItemTaxPercentage) / 100);
+ var ItemNotes = "";
+ let tr = '<tr><td hidden class="RowId">' + RowId + '</td><td hidden class="Main">Main</td>' +
+ ` <td>
+ <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button>
+ </td>
+ <td>
+ <input class="IsAltItem" type="checkbox" hidden />
+ <a href="javascript:void(0);" onclick="AlternativeItems(this)">
+ <i class="fe-refresh-ccw"></i>
+ </a>
+ </td>`+
+ '< td hidden class="MainItemId" > ' + itemid + '</td><td style="width:40%" class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item itemId" required value="' + itemPrice.Id + '" /><input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="' + itemPrice.ArName + '" /><input type="hidden" class="barcode" required value="' +
+ itemPrice.Barcode + '" /><input type="hidden" class="item-price-id" required value="' + itemPrice.ItemPriceId + '" /></td><td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" min="0" required value="' + itemPrice.Quantity + '" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required><option value="' +
+ itemPrice.ItemUnitId + '">' + itemPrice.ItemUnitArName + '</option></select><input class="unit-equavalent" type="hidden" required value="' + itemPrice.Equivalent + '" /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="' +
+ itemPrice.Price + '" /><input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly value="" /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money total form-control tabledit-input form-control-sm" required readonly value="' +
+ itemPrice.Price * itemPrice.Quantity + '" /><input hidden class="itemTotalAccessoryPrice" readonly value="" /></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxPercentage form-control tabledit-input form-control-sm" value="' +
+ ItemTaxPercentage + '" /></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxValue form-control tabledit-input form-control-sm money" value="' +
+ TaxValue + '" /></td><td><a href="javascript:void(0);" onclick="AddNotes(this)"><i class="fa fa-plus"></i></a><input hidden class="IsAdded" type="checkbox" /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td><td class=" EnableAdditionalItemsOnPos text-center"><a href="javascript:void(0);" onclick="ShowExtra(this)"><i class="fa fa-plus" aria-hidden="true"></i></a ></td ></tr><tr class="ItemNotesTr" style="display:none;"><td class="tabledit-edit-mode"><label class="ItemNotes control-label form-control-sm">' +
+ ItemNotes + '</label></td></tr>';
+ $('#PointOfSaleDetails').append(tr);
+ if (ShowTaxPercentageAndValue == 'True') {
+ $('.ItemTax').show();
+ }
+ else {
+ $('.ItemTax').hide();
+ }
+ if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True')
+ $('.EnableAdditionalItemsOnPos').show();
+ else
+ $('.EnableAdditionalItemsOnPos').hide();
+ if ($('#DepartmentId').value == 28 && DisplayFactoryPrice != 'True' && '@ViewBag.ProjectName' == "Genoise") {
+ $('.price').last().closest('td').hide();
+ $('.total').last().closest('td').hide();
+ }
+ $('#PointOfSaleDetails tr:last select').select2({
+ matcher: matchCustom
+ });
+ $('#PointOfSaleDetails tr:last .money').inputmask({
+ alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+ });
+ getItemUnits(itemid).done(function (r) {
+ let units = '';
+ for (var i = 0; i < r.length; i++) {
+ units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+ }
+ $('.item-unit').last().empty().append(units).trigger('change');
+ });
+ CalculateTotals();
+ $("#PosCustomerId").trigger('change');
+ $(itemNameInput).val('');
+ }
+ }
+ });
+ });
+ // وظائف إضافية مفقودة من الكود الأصلي
+ function getSalesOrders() {
+ if ($('#DepartmentId').val() && $('#WarehouseId').val() && $('#CustomerType').val()) {
+ $('#salesOrdersModal').modal('show');
+ $('#salesOrdersModal').find('.modal-body').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+ $.get('/PointOfSale/SalesOrders?depId=' + $('#DepartmentId').val() + '&warehouseId=' + $('#WarehouseId').val() + '&customerType=' + $('#CustomerType').val()).done(function (r) {
+ let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.ReservationVoucherNo' + ' </th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Customer' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+ $('#salesOrdersModal').find('.modal-body').empty().append(table);
+ });
+ } else if ($('#DepartmentId').closest('.form-horizontal').find(".form-control:invalid").length > 0) {
+ $('#DepartmentId').closest('.form-horizontal').addClass('was-validated');
+ $('html, body').animate({
+ scrollTop: $('#DepartmentId').eq(0).offset().top - 120
+ }, 500);
+ }
+ }
+ let salesOrdersPaid = 0;
+ let salesOrderIds = [];
+ function getSalesOrderDetails() {
+ $('#preloader, #status').fadeIn();
+ cancelPurchaseRequest();
+ salesOrderIds = $.map($('.salesOrderId:checked'), function (i) { return $(i).val(); });
+ $.ajax({
+ type: "POST", contentType: "application/json",
+ url: "/PointOfSale/SalesOrdersDetails",
+ data: JSON.stringify({ salesOrderIds: salesOrderIds }),
+ success: function (r) {
+ $('#PointOfSaleDetails').empty().append(r.view);
+ $('#PointOfSaleDetails select').select2({
+ matcher: matchCustom
+ });
+ $('#PointOfSaleDetails .money').inputmask({
+ alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+ });
+ let docNums = $.map($('.salesOrderId:checked'), function (i) { return $(i).attr('doc-num'); });
+ $('#SalesOrderDocNum').text('@MyERP.Properties.Resources.NumberReservationVouchers' + ': ' + docNums);
+ $('#cancelSalesOrder').show();
+ $('#DepartmentId, #WarehouseId, #CustomerType').attr('disabled', 'disabled');
+ $('#VendorOrCustomerId').val($('.salesOrderId').first().attr('customer-id')).trigger('change').attr('disabled', 'disabled');
+ $('#VoucherDate').val(r.VoucherDate);
+ $('#Id').remove();
+ SystemPageId = 5194;
+ isLinked = true;
+ $('#PointOfSaleDetails').find('input, select').attr('disabled', 'disabled');
+ $('.tab-pane.fade').find('button').attr('disabled', 'disabled');
+ setDocNum();
+ $('#Paid').val('');
+ salesOrdersPaid = r.Paid;
+ $('#SalesInvoicePaymentMethods tr').each(function () {
+ var td = $(this);
+ if (td.find('.PaymentMethodId').val() == 3) {
+ td.find('.PaymentAmount').val(salesOrdersPaid);
+ }
+ });
+ CalculateTotals();
+ $('#preloader, #status').fadeOut();
+ },
+ error: function () {
+ $('#preloader, #status').fadeOut();
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.NotLinked !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ });
+ }
+ function cancelSalesOrder() {
+ $('#PointOfSaleDetails').empty();
+ $('#SalesOrderDocNum').text('');
+ $('#cancelSalesOrder').hide();
+ $('#DepartmentId, #WarehouseId').removeAttr('disabled');
+ $('#VendorOrCustomerId').removeAttr('disabled').trigger('change');
+ SystemPageId = null;
+ isLinked = false;
+ salesOrderIds = [];
+ salesOrdersPaid = 0;
+ $('.tab-pane.fade').find('button').removeAttr('disabled');
+ CalculateTotals();
+ }
+ $('#VoucherDate').on('change', function () {
+ GetCurrentTaxPercentage();
+ setDocNum();
+ });
+ function appendSalesInvoiceDetails(r) {
+ $('#PointOfSaleDetails').empty().append(r.view);
+ $('#PointOfSaleDetails select').select2({
+ matcher: matchCustom
+ });
+ $('#PointOfSaleDetails .money').inputmask({
+ alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+ });
+ getDocNum = false;
+ $('#DepartmentId').val(r.salesInvoice.DepartmentId).trigger('change').attr('disabled', 'disabled');
+ setWarehouseValues().then(function () {
+ $('#WarehouseId').empty().append(warehouseOptions).val(r.salesInvoice.WarehouseId).trigger('change').attr('disabled', 'disabled');
+ });
+ $('#PointOfSaleDetails').
+ $('#PointOfSaleDetails').closest('div').append('<input type="hidden" id="Id" value="' + r.salesInvoice.Id + '"/>');
+ SystemPageId = r.salesInvoice.SystemPageId;
+ isLinked = r.salesInvoice.IsLinked;
+ salesOrderIds = r.salesInvoice.SalesOrdersSalesInvoices;
+ $('#VoucherDate').val(r.VoucherDate);
+ $('#DocumentNumber').val(r.salesInvoice.DocumentNumber);
+ $('#DiscountValue').val(r.salesInvoice.DiscountValue);
+ $('#VoucherDiscountPercentage').val(r.salesInvoice.VoucherDiscountPercentage);
+ $('#ServiceFees').val(r.salesInvoice.ServiceFees);
+ $('#Total').val(r.salesInvoice.Total);
+ $('#NetTotal').val(r.salesInvoice.NetTotal);
+ $('#TotalAfterTaxes').val(r.salesInvoice.TotalAfterTaxes);
+ $('#Paid').val(r.salesInvoice.Paid);
+ $('#Remaining').val(($('#Paid').inputmask('unmaskedvalue') * 1 - r.salesInvoice.TotalAfterTaxes).toFixed(2));
+ }
+ function getPurchaseRequests() {
+ $('#purchaseRequestModal').modal('show');
+ $('#purchaseRequestModal').find('.modal-body').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+ $.get('/PointOfSale/PurchaseRqeusts').done(function (r) {
+ let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.PurchaseRequestNo' + '</th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Branch' + '</th><th>' + '@MyERP.Properties.Resources.ItemsGroup' + '</th><th>' + '@MyERP.Properties.Resources.Details' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+ $('#purchaseRequestModal').find('.modal-body').empty().append(table);
+ });
+ }
+ let purchaseReqeustIds = [];
+ function getPurchaseRqeustsDetails() {
+ $('#preloader, #status').fadeIn();
+ purchaseReqeustIds = $.map($('.purchaseRequestId:checked'), function (i) { return $(i).val(); });
+ cancelSalesOrder();
+ $.ajax({
+ type: "POST", contentType: "application/json",
+ url: "/PointOfSale/PurchaseRqeustsDetails",
+ data: JSON.stringify({ purchaseReqeustIds: purchaseReqeustIds }),
+ success: function (r) {
+ $('#PointOfSaleDetails').empty().append(r.view);
+ $('#PointOfSaleDetails select').select2({
+ matcher: matchCustom
+ });
+ $('#PointOfSaleDetails .money').inputmask({
+ alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+ });
+ let docNums = $.map($('.purchaseRequestId:checked'), function (i) { return $(i).attr('doc-num'); });
+ $('#PurchaseRequestDocNum').text('@MyERP.Properties.Resources.NumberPurchaseRequests' + ': ' + docNums);
+ $('#cancelPurchaseRequest').show();
+ $('#VoucherDate').val(r.VoucherDate);
+ $('#Id').remove();
+ SystemPageId = null;
+ isLinked = true;
+ $('#CustomerType').val(4).trigger('change');
+ $('#DepartmentId')[0].value == 28;
+ $('#DepartmentId').trigger('change');
+ $('#Paid').val('');
+ CalculateTotals();
+ $('#preloader, #status').fadeOut();
+ },
+ error: function () {
+ $('#preloader, #status').fadeOut();
+ Swal.fire({
+ title: '@MyERP.Properties.Resources.NotLinked !',
+ text: " ",
+ icon: 'error',
+ showCancelButton: false,
+ confirmButtonText: '@MyERP.Properties.Resources.Ok',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ });
+ }
+ function cancelPurchaseRequest() {
+ $('#PointOfSaleDetails').empty();
+ $('#PurchaseRequestDocNum').text('');
+ $('#cancelPurchaseRequest').hide();
+ purchaseReqeustIds = [];
+ SystemPageId = null;
+ isLinked = false;
+ CalculateTotals();
+ }
+ // وظائف إضافية للجداول والعملاء
+ function drawTablesRow(tables) {
+ for (var i = 0; i < tables.length; i++) {
+ var tableColor = tables[i].IsOccupied ? "dinning-table-red.svg" : "dinning-table-blue.svg";
+ var tableDiv = '<div class="col-sm-2" style="text-align:center">' +
+ '<img class="m-2 img-responsive" style="width:18vh;" src="~/assets/images/' + tableColor + '" />' +
+ '<div style="text-align:center; font-size:large;">' + tables[i].ArName + '</div>' +
+ '<div style="text-align:center;">' +
+ '<button class="btn btn-info printReceiptBtn col-sm-3" tableId="' + tables[i].Id + '" invoiceId="' + tables[i].InvoiceId + '" data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.PrintReceipt">' +
+ '<i class="remixicon-printer-fill"></i>' +
+ '</button>' +
+ '<button class="btn btn-success addOrderBtn col-sm-3" payInvoice="false" tableId="' + tables[i].Id + '" invoiceId="' + tables[i].InvoiceId + '" data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.AddOrder">' +
+ '<i class="fas fa-plus"></i>' +
+ '</button>' +
+ '<button class="btn btn-primary payTableInvoice col-sm-3" payInvoice="true" tableId="' + tables[i].Id + '" invoiceId="' + tables[i].InvoiceId + '" data-toggle="tooltip" data-placement="top" title="@MyERP.Properties.Resources.PayInvoice">' +
+ '<i class="fas fa-money-bill"></i>' +
+ '</button>' +
+ '</div>' +
+ '<div style="text-align:center;">' + '@MyERP.Properties.Resources.OccupancyTime' + ': ' + (tables[i].OccupancyTime || '') + '</div>' +
+ '<div style="text-align:center;">' + '@MyERP.Properties.Resources.Total' + ': ' + (tables[i].Total || 0) + '</div>' +
+ '</div>';
+ $("#TablesDiv").append(tableDiv);
+ }
+ }
+ function iterator(array, size) {
+ var start = 0;
+ return function() {
+ return array.slice(start, start += size);
+ };
+ }
+ function selectTable(tableName, tableId) {
+ $('#tableName').val(tableName);
+ $('#selectedTableId').val(tableId);
+ $('#tablesModal').modal('hide');
+ }
+ $(document).on('click', '.addOrderBtn', function() {
+ var tableId = $(this).attr('tableId');
+ var invoiceId = $(this).attr('invoiceId');
+ var payInvoice = $(this).attr('payInvoice') === 'true';
+ if (invoiceId && invoiceId != '0') {
+ if (payInvoice) {
+ window.location.href = '/PointOfSale/AddEdit?Id=' + invoiceId + '&payInvoice=true';
+ } else {
+ window.location.href = '/PointOfSale/AddEdit?Id=' + invoiceId;
+ }
+ } else {
+ var tableName = $(this).closest('.col-sm-2').find('div').first().text();
+ selectTable(tableName, tableId);
+ }
+ });
+ $(document).on('click', '.payTableInvoice', function() {
+ var tableId = $(this).attr('tableId');
+ var invoiceId = $(this).attr('invoiceId');
+ if (invoiceId && invoiceId != '0') {
+ window.location.href = '/PointOfSale/AddEdit?Id=' + invoiceId + '&payInvoice=true';
+ }
+ });
+ $(document).on('click', '.printReceiptBtn', function() {
+ var invoiceId = $(this).attr('invoiceId');
+ if (invoiceId && invoiceId != '0') {
+ print(invoiceId);
+ }
+ });
+ // وظائف العملاء والمناطق
+ function getGovernorates() {
+ $.get('/Helper/GetGovernorates').done(function (r) {
+ $('#GovernorateId').empty().append('<option value="">اختر المحافظة</option>');
+ for (var i = 0; i < r.length; i++) {
+ $('#GovernorateId').append('<option value="' + r[i].Id + '">' + r[i].ArName + '</option>');
+ }
+ });
+ }
+ function getCities() {
+ $(document).on('change', '#GovernorateId', function() {
+ var governorateId = $(this).val();
+ if (governorateId) {
+ $.get('/Helper/GetCities?governorateId=' + governorateId).done(function (r) {
+ $('#CityId').empty().append('<option value="">اختر المدينة</option>');
+ for (var i = 0; i < r.length; i++) {
+ $('#CityId').append('<option value="' + r[i].Id + '">' + r[i].ArName + '</option>');
+ }
+ });
+ } else {
+ $('#CityId').empty().append('<option value="">اختر المدينة</option>');
+ $('#AreaId').empty().append('<option value="">اختر المنطقة</option>');
+ }
+ });
+ }
+ function getAreas() {
+ $(document).on('change', '#CityId', function() {
+ var cityId = $(this).val();
+ if (cityId) {
+ $.get('/Helper/GetAreas?cityId=' + cityId).done(function (r) {
+ $('#AreaId').empty().append('<option value="">اختر المنطقة</option>');
+ for (var i = 0; i < r.length; i++) {
+ $('#AreaId').append('<option value="' + r[i].Id + '">' + r[i].ArName + '</option>');
+ }
+ });
+ } else {
+ $('#AreaId').empty().append('<option value="">اختر المنطقة</option>');
+ }
+ });
+ }
+ function showPosCustomerModal(customer, isNew, mobileNo) {
+ if (isNew) {
+ $('#posCustomerIdInput').val('');
+ $('#posCustomerCodeInput').val('');
+ $('#PosCustomerArName').val('');
+ $('#PosCustomerEnName').val('');
+ $('#PosCustomerAddress').val('');
+ $('#Mobile1').val(mobileNo || '');
+ $('#Mobile2').val('');
+ $('#PosCustomerNotes').val('');
+ $('#GovernorateId').val('');
+ $('#CityId').val('');
+ $('#AreaId').val('');
+ $('#PosLinkedCustomerId').val('');
+ } else if (customer) {
+ $('#posCustomerIdInput').val(customer.Id);
+ $('#posCustomerCodeInput').val(customer.Code);
+ $('#PosCustomerArName').val(customer.ArName);
+ $('#PosCustomerEnName').val(customer.EnName);
+ $('#PosCustomerAddress').val(customer.Address);
+ $('#Mobile1').val(customer.Mobile1);
+ $('#Mobile2').val(customer.Mobile2);
+ $('#PosCustomerNotes').val(customer.Notes);
+ $('#GovernorateId').val(customer.GovernorateId);
+ $('#CityId').val(customer.CityId);
+ $('#AreaId').val(customer.AreaId);
+ $('#PosLinkedCustomerId').val(customer.CustomerId);
+ }
+ $('#pos-customer-modal').modal('show');
+ }
+ // وظائف السائقين والفواتير غير المدفوعة
+ function getDrivers() {
+ return requestData('/Helper/GetDrivers').done(function (r) {
+ $('#DriverId').empty();
+ for (var i = 0; i < r.length; i++) {
+ $('#DriverId').append('<option value="' + r[i].Id + '">' + r[i].ArName + '</option>');
+ }
+ });
+ }
+ function showDriversModal() {
+ $('#DriversModal').modal('show');
+ $('#DriversModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+ $.get('/PointOfSale/Drivers').done(function (r) {
+ $('#DriversModalTable').empty().append(r);
+ });
+ }
+ function showUnpaidInvoicesModal() {
+ $('#UnpaidInvoicesModal').modal('show');
+ $('#UnpaidInvoicesModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+ $.get('/PointOfSale/UnpaidInvoices').done(function (r) {
+ $('#UnpaidInvoicesModalTable').empty().append(r);
+ });
+ }
+ function showPaymentMethodsModal() {
+ $('#paymentMethodsModal').modal('show');
+ }
+ function showInvoiceTypeModal() {
+ $('#invoiceTypeModal').modal('show');
+ }
+ function showTablesModal() {
+ if ($('#DepartmentId').val()) {
+ GetTableByHallId();
+ } else {
+ Swal.fire({
+
+ title: 'يرجى اختيار القسم أولاً',
+
+
+ text: " ",
+ icon: 'warning',
+ showCancelButton: false,
+ confirmButtonText: 'موافق',
+ confirmButtonColor: '#3085d6'
+ });
+ }
+ }
+ $('.invoiceInfoBtn').on('click', function() {
+ $('#invoiceInfoModal').modal('show');
+ });
+ $(document).on('click', '.getForm', function() {
+ var customerType = $(this).attr('customerType');
+ $('#CustomerType').val(customerType).trigger('change');
+ $('#invoiceTypeModal').modal('hide');
+ });
+ // وظائف مساعدة للكاش والطلبات
+ var requestCache = {};
+ function requestData(url) {
+ if (requestCache[url]) {
+ return $.Deferred().resolve(requestCache[url]).promise();
+ }
+ return $.get(url).done(function(data) {
+ requestCache[url] = data;
+ });
+ }
+ function matchCustom(params, data) {
+ if ($.trim(params.term) === '') {
+ return data;
+ }
+ if (typeof data.text === 'undefined') {
+ return null;
+ }
+ if (data.text.indexOf(params.term) > -1) {
+ var modifiedData = $.extend({}, data, true);
+ modifiedData.text += ' (matched)';
+ return modifiedData;
+ }
+ return null;
+ }
+ function refreshItems(groupId) {
+ $.get('/Helper/ItemsByGroupId?groupId=' + groupId + '&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+ $('#items-' + groupId).empty().append(r);
+ });
+ }
+ // وظائف الطباعة الحرارية
+ function easynum() {
+ // تنفيذ وظيفة الأرقام السهلة
+ }
+ function easy_numpad_del() {
+ if (selectedPaymentMethodInput) {
+ var currentValue = selectedPaymentMethodInput.val();
+ selectedPaymentMethodInput.val(currentValue.slice(0, -1));
+ }
+ }
+ function easy_numpad_clear() {
+ if (selectedPaymentMethodInput) {
+ selectedPaymentMethodInput.val('');
+ }
+ }
+ function easy_numpad_cancel() {
+ selectedPaymentMethodInput = null;
+ $('#paymentMethodsModal').modal('hide');
+ }
+ function easy_numpad_done() {
+ if (selectedPaymentMethodInput) {
+ selectedPaymentMethodInput.trigger('change');
+ }
+ selectedPaymentMethodInput = null;
+ }
+ // إضافة أحداث النقر للأرقام
+ $(document).on('click', '.easy-numpad-number-container a', function(e) {
+ e.preventDefault();
+ var value = $(this).attr('href');
+ if (selectedPaymentMethodInput && value !== 'Del' && value !== 'Clear' && value !== 'Cancel' && value !== 'Done') {
+ var currentValue = selectedPaymentMethodInput.val() || '';
+ selectedPaymentMethodInput.val(currentValue + value);
+ }
+ });
+ // تهيئة النظام عند تحميل الصفحة
+ $(document).ready(function() {
+ // تطبيق inputmask على جميع العناصر المالية
+ $('.money').inputmask({
+ alias: 'numeric', 
+ groupSeparator: ',', 
+ autoGroup: true, 
+ digits: 2, 
+ 'allowMinus': false, 
+ digitsOptional: false, 
+ 'placeholder': '0'
+ });
+ // تطبيق select2 على جميع القوائم المنسدلة
+ $('select').select2({
+ matcher: matchCustom
+ });
+ // إخفاء/إظهار العناصر حسب الإعدادات
+ if ('@ViewBag.EnableAdditionalItemsOnPos' == 'True') {
+ $('.EnableAdditionalItemsOnPos').show();
+ } else {
+ $('.EnableAdditionalItemsOnPos').hide();
+ }
+ // تطبيق التحسينات المتجاوبة
+ 
+ });
+ // إضافة أحداث إضافية
+ 
+ // تنظيف الذاكرة عند مغادرة الصفحة
+ $(window).on('beforeunload', function() {
+ requestCache = {};
+ });
+</script>

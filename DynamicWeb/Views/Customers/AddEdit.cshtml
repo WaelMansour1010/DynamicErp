@@ -1,0 +1,720 @@
+﻿@model MyERP.Models.Customer
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Customers;
+
+}
+
+@*@{
+    ViewBag.Title = "العملاء";
+}*@
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">
+                @MyERP.Properties.Resources.Customers:
+            </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @Html.ValidationSummary()
+            @*<form action="/Customers/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">*@
+            <div class="form-horizontal needs-validation" role="form">
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    @Html.AntiForgeryToken()
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                    }
+                                    <label for="Code" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-2">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.Code, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.ArNameRequired
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="EnName" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                        @*<div class="invalid-feedback">
+                    الاسم الانجليزى مطلوب
+                </div>*@
+                                    </div>
+
+                                    <label for="CustomersGroupId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Group</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CustomersGroupId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.GroupRequired
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Notes" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+
+                                    </div>
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.DepartmentRequired
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="IncludeFees" class="control-label col-sm-2"> @MyERP.Properties.Resources.AddServiceFees</label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" value="true" class="custom-control-input" name="IncludeFees" id="IncludeFees" @Html.Raw(Model == null ? "" : Model.IncludeFees == null ? "" : (bool)Model.IncludeFees ? "checked" : "") />
+
+                                            <label class="custom-control-label" for="IncludeFees"></label>
+                                        </div>
+                                    </div>
+
+                                    <label for="IsBranch" class="control-label col-sm-2"> @MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" value="true" class="custom-control-input" name="IsBranch" id="IsBranch" @Html.Raw(Model == null ? "" : Model.IsBranch == null ? "" : (bool)Model.IsBranch ? "checked" : "") />
+                                            <label class="custom-control-label" for="IsBranch"></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="InsuranceCompany" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.InsuranceCompany
+                                    </label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="InsuranceCompany" id="InsuranceCompany" @Html.Raw(Model != null && Model.InsuranceCompany == true ? "checked" : "") value="true" />
+
+                                            <label class="custom-control-label" for="InsuranceCompany"></label>
+                                        </div>
+                                    </div>
+
+                                    <label style="display:none;" for="InsuranceCompanyPercentage" class="InsuranceCompanyPercentage col-sm-2 control-label">@MyERP.Properties.Resources.InsuranceCompanyPercentage</label>
+                                    <div style="display:none;" class="InsuranceCompanyPercentage col-sm-3">
+                                        @Html.EditorFor(model => model.InsuranceCompanyPercentage, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <span style="display:none;" class="InsuranceCompanyPercentage col-sm-1"> % </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.ContactData
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="Mobile" class="col-sm-2 control-label">@MyERP.Properties.Resources.WhatsappMobile</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Mobile, new { htmlAttributes = new { @class = "form-control" } })
+
+                                    </div>
+                                    <label for="ContactPerson" class="col-sm-2 control-label">@MyERP.Properties.Resources.ContactPersonName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ContactPerson, new { htmlAttributes = new { @class = "form-control" } })
+                                        @*<input class="form-control" />*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Email" class="col-sm-2 control-label">@MyERP.Properties.Resources.Email</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", type = "email" } })
+                                    </div>
+                                    <label for="NationalId" class="col-sm-2 control-label">@MyERP.Properties.Resources.NationalID</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NationalId, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="CountryId"> @MyERP.Properties.Resources.Country </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.CountryId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="CityId"> @MyERP.Properties.Resources.City </label>
+                                    <div class="col-sm-4">
+                                        @*<select class="form-control" id="CityId" name="CityId"></select>*@
+
+                                        @Html.DropDownListFor(a => a.CityId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label for="CellPhone" class="col-sm-2 control-label">@MyERP.Properties.Resources.CellPhone</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.PhoneNo, new { htmlAttributes = new { @class = "form-control" } })
+                                        @*<input class="form-control" />*@
+
+                                    </div>
+                                    <label for="Email" class="col-sm-2 control-label">@MyERP.Properties.Resources.BuildingNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.BuildingNo, new { htmlAttributes = new { @class = "form-control" } })
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="AllowCreditLimit" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.Blocked
+                                    </label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="IsBlocked" id="IsBlocked" @Html.Raw(Model != null && Model.IsBlocked == true ? "checked" : "") value="true" />
+
+                                            <label class="custom-control-label" for="IsBlocked"></label>
+                                        </div>
+                                    </div>
+
+                                    <label for="Address" class="col-sm-2 control-label">@MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Address" name="Address" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Address; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.OfficialData
+                                </h5>
+                                @*<div class="form-group row">
+            <label for="IdentityIssueDate" class="col-sm-2 control-label">@MyERP.Properties.Resources.ReleaseDate</label>
+            <div class="col-sm-4">
+                <input id="IdentityIssueDate" name="IdentityIssueDate" class="form-control" type="date" value="@ViewBag.IdentityIssueDate" />
+            </div>
+
+            <label for="IdentityExpireDate" class="col-sm-2 control-label">@MyERP.Properties.Resources.ExpiryDate</label>
+            <div class="col-sm-4">
+                <input id="IdentityIssueDate" name="IdentityIssueDate" class="form-control" type="date" value="@ViewBag.IdentityExpireDate" />
+            </div>
+        </div>*@
+                                <div class="form-group row">
+                                    <label for="TaxNumber" class="col-sm-2 control-label">@MyERP.Properties.Resources.TaxRegistrationNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TaxNumber, new { htmlAttributes = new { @class = "form-control" } })
+
+                                    </div>
+                                    <label for="VATNumber" class="col-sm-2 control-label">@MyERP.Properties.Resources.VATNO</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.VATNumber, new { htmlAttributes = new { @class = "form-control" } })
+                                        @*<input class="form-control" />*@
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="PostOfficeBox" class="col-sm-2 control-label">@MyERP.Properties.Resources.PostOfficeBox</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.PostOfficeBox, new { htmlAttributes = new { @class = "form-control" } })
+
+                                    </div>
+                                   
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.CreditLimit
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="AllowCreditLimit" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.AllowCreditLimit
+                                    </label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="AllowCreditLimit" id="AllowCreditLimit" @Html.Raw(Model != null && Model.AllowCreditLimit == true ? "checked" : "") value="true" />
+
+                                            <label class="custom-control-label" for="AllowCreditLimit"></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CreditLimitAmount" class="col-sm-2 control-label">@MyERP.Properties.Resources.CreditLimit</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CreditLimitAmount, new { htmlAttributes = new { @class = "money form-control" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row" @*style="display:none"*@>
+                                    <label for="CreditLimitPeriod" class="col-sm-2 control-label">@MyERP.Properties.Resources.CreditLimitPeriod </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CreditLimitPeriod, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <span> @MyERP.Properties.Resources.Day </span>
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" style="display:none;">
+                                    <label for="WorkNature" class="col-sm-3 control-label">@MyERP.Properties.Resources.ContractNatureOfWork</label>
+                                    <div class="col-sm-9">
+                                        @Html.EditorFor(model => model.WorkNature, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--CustomerRep-->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title"> @MyERP.Properties.Resources.Representatives </h5>
+                                <div class="form-horizontal needs-validation" role="form">
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th> @MyERP.Properties.Resources.Representative</th>
+                                                    <th>@MyERP.Properties.Resources.Default</th>
+                                                    <th>@MyERP.Properties.Resources.Active</th>
+                                                    <th>@MyERP.Properties.Resources.Delete</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="CustomerReps">
+                                                @if (Model != null)
+                                                {
+                                                    foreach (var item in Model.CustomerReps)
+                                                    {
+                                                        <tr>
+                                                            <td hidden>
+                                                                <input value="@item.Id" />
+                                                            </td>
+                                                            <td class="p-0 tabledit-edit-mode" style="width:15%">
+                                                                <input type="hidden" class="EmployeeId form-control tabledit-input form-control-sm" value="@item.Employee.Id" />
+                                                                <select style="height:40px" class=" p-0 form-control"><option value="@item.EmployeeId">@item.Employee.Code - @item.Employee.ArName</option></select>
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input class="isDefault" name="isDefault" type="radio" @Html.Raw(item.IsDefault == null ? "" : (bool)item.IsDefault==true ? "checked" : "") />
+                                                            </td>
+                                                            <td>
+                                                                <input type="checkbox" class="IsActiveRep" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") @*onchange="ActivateAndDeactivateRep(@item.Id)"*@ />
+                                                            </td>
+                                                            <td>
+                                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!------------------------------------------------------------->
+
+                <div class="row">
+                    @*<input id="new" name="newBtn" type="hidden" />*@
+                    <div class="col-sm-offset-2">
+                        @if (Model == null)
+                        {
+                        <button type="button" onclick="addEdit('new')" id="newbtn" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button type="button" onclick="addEdit()" id="save" class="btn btn-success">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else if (Model.IsDeleted == false)
+                        {
+                    <button type="button" onclick="addEdit()" id="save" class="btn btn-success">
+                        @MyERP.Properties.Resources.Save
+                    </button>
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                        }
+                    </div>
+                </div>
+            </div>
+            @*</form>*@
+
+
+        </div>
+    </div>
+</div>
+
+<script>
+    let Employees = [];
+    let Customers = [];
+
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        if (!$('#AllowCreditLimit').prop('checked')) {
+            $('#CreditLimitAmount').prop('readonly', 'readonly');
+        }
+
+        // Get Employees To Use it In Rows appended in Details Table
+        $.get('/Helper/GetAllEmployees').done(function (e) {
+            Employees = e;
+            addToCustomerReps();
+        });
+        if (!$('#Id').val()) {
+            setCodeNum();
+            $('#DepartmentId').attr('disabled', 'disabled');
+        } else {
+            $('#FieldsCodingId').prop('disabled', true);
+
+            if ($('#IsBranch').prop('checked')) {
+                $('#DepartmentId').attr('required', 'required');
+                $('#DepartmentId').removeAttr('disabled');
+            } else {
+                $('#DepartmentId').attr('disabled', 'disabled');
+            }
+
+            if ($('#InsuranceCompany').prop('checked') == true) {
+                $('.InsuranceCompanyPercentage').show();
+            }
+        }
+
+    });
+    //------------------------------------------------------------//
+    function setCodeNum() {
+        $.get('/Customers/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+    });
+    $('#IsBranch').on('change', function () {
+        if ($(this).prop('checked')) {
+            $('#DepartmentId').attr('required', 'required');
+            $('#DepartmentId').removeAttr('disabled');
+        } else
+            $('#DepartmentId').attr('disabled', 'disabled');
+    });
+
+    $(document).on('click', '#AllowCreditLimit', function () {
+        if ($(this).prop('checked')) {
+            $('#CreditLimitAmount').removeAttr('readonly');
+        } else {
+            $('#CreditLimitAmount').prop('readonly', 'readonly');
+            $('#CreditLimitAmount').val(0);
+        }
+    });
+
+    $(document).on('click', '#InsuranceCompany', function () {
+        if ($(this).prop('checked')==true) {
+            $('.InsuranceCompanyPercentage').show();
+            $('#InsuranceCompanyPercentage').prop("required",true);
+
+        } else {
+            $('.InsuranceCompanyPercentage').hide();
+            $('#InsuranceCompanyPercentage').prop("required", false);
+            $('#InsuranceCompanyPercentage').val(0);
+        }
+    });
+
+
+
+
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Customers/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Customers');
+                        }
+                        else if (r == 'False') {
+                                    $('#preloader, #status').fadeOut();
+                                    alert('@MyERP.Properties.Resources.DeleteDoesNotSucceededBecauseCustomerUsedInOtherTransactions');
+                                }
+                        else if (r == 'hasBalance') {
+                          alert('@MyERP.Properties.Resources.CanNotDeleteCustomerAsHeHasOB');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+
+        if ($(tr).index() > 0) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length > 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).children("input[type|='text']").each(function () {
+                $(this).empty();
+            });
+        }
+    }
+
+    //---------------------------------------- Add New ROw---------------------------
+    function addToCustomerReps() {
+        if ($('#Id').val() > 0) {
+          //  $('#CustomerReps').find('.isDefault').attr('checked', true);
+        }
+        else {
+            $('#CustomerReps tr:first').find('.isDefault').attr('checked', true);
+        }
+
+        if ($('.EmployeeId').last().val()) {
+            $('#CustomerReps').find().prop('required', 'required');
+        }
+
+        if ($('#CustomerReps .form-control:invalid').length > 0) {
+            $('#CustomerReps').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#CustomerReps").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        }
+
+        if ($('#CustomerReps .EmployeeId:last').val() != 0) {
+            let tr = '<tr><td class="p-0 tabledit-edit-mode" style="width:15%"><select style="height:40px" class=" p-0 form-control EmployeeId" required="required"></select></td><td class="tabledit-edit-mode"><input class="isDefault" name="isDefault" type="radio" /></td><td><input type="checkbox"  class="IsActiveRep" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small"  /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            $('#CustomerReps').append(tr);
+            let EmployeesDropdown = $('#CustomerReps tr:last').find('.EmployeeId');
+
+            EmployeesDropdown.append(new Option('@MyERP.Properties.Resources.Select', '0'));
+            for (var i = 0; i < Employees.length; i++) {
+
+                var EmpOption = $('<option></option>').attr("value", Employees[i].Id).text(Employees[i].ArName);
+                EmployeesDropdown.append(EmpOption);
+            }
+            EmployeesDropdown.select2();
+        }
+    };
+
+    $(document).on('change', '.EmployeeId', function () {
+        addToCustomerReps();
+        $(this).closest('tr').find('.IsActiveRep').prop('checked', true);
+    });
+
+    $('#CountryId').on('change', function () {
+        getCities($(this).val()).then(function () {
+            $("#CityId").empty().append(CitiesOptions);
+        });
+    });
+
+    var CitiesOptions = '';
+
+    function getCities(governorateId) {
+        // $('#CityId').empty();
+
+        if (governorateId != "" && governorateId != null) {
+            CitiesOptions = '';
+
+            return requestData('/Helper/getCitiesInGovernorate?governorateId=' + governorateId).done(function (r) {
+
+                for (var i = 0; i < r.length; i++) {
+                    CitiesOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+
+                    //$('#CityId').append($('<option>', {
+                    //    value: r[i].Id,
+                    //    text: r[i].ArName
+                    //}));
+                }
+
+                // $('#CityId').trigger('change');
+            });
+        }
+    }
+
+    //--------------------------------------- ADD EDIT---------------------------//
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+
+            var Reps = [];
+
+            $('#CustomerReps tr').each(function () {
+                var td = $(this);
+                if (td.find('.EmployeeId').val() > 0) {
+                    var Rep = {
+                        CustomerId: $('#Id').val(),
+                        IsActive: td.find('.IsActiveRep').prop('checked'),
+                        IsDefault: td.find('.isDefault').prop('checked'),
+                        EmployeeId: td.find('.EmployeeId').val()
+                    };
+                    Reps.push(Rep);
+                }
+            });
+
+            var Customers =
+            {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                ArName: $('#ArName').val(),
+                EnName: $('#EnName').val(),
+                CustomersGroupId: $('#CustomersGroupId').val(),
+                IsActive: true,
+                IsDeleted: false,
+                Mobile: $('#Mobile').val(),
+                PhoneNo: $('#PhoneNo').val(),
+                Email: $('#Email').val(),
+                Address: $('#Address').val(),
+                NationalId: $('#NationalId').val(),
+                IsBlocked: $('#IsBlocked').prop('checked'),
+                BuildingNo: $('#BuildingNo').val(),
+                Notes: $('#Notes').val(),
+                TaxNumber: $('#TaxNumber').val(),
+                WorkNature: $('#WorkNature').val(),
+                AllowCreditLimit: $('#AllowCreditLimit').prop('checked'),
+                CreditLimitAmount: $('#CreditLimitAmount').inputmask('unmaskedvalue'),
+                CreditLimitPeriod: $('#CreditLimitPeriod').val(),
+                IncludeFees: $('#IncludeFees').prop('checked'),
+                IsBranch: $('#IsBranch').prop('checked'),
+                DepartmentId: $('#DepartmentId').val(),
+                CountryId: $('#CountryId').val(),
+                CityId: $('#CityId').val(),
+                PostOfficeBox: $('#PostOfficeBox').val(),
+                VATNumber: $('#VATNumber').val(),
+                ContactPerson: $('#ContactPerson').val(),
+                CustomerReps: Reps,
+                FieldsCodingId: $('#FieldsCodingId').val(),
+                InsuranceCompanyPercentage: $('#InsuranceCompanyPercentage').inputmask('unmaskedvalue'),
+                InsuranceCompany: $('#InsuranceCompany').prop('checked'),
+            };
+
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                $('#newbtn').prop('disabled', true);
+                $('#save').prop('disabled', true);
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    type: "POST",
+                    url: "/Customers/AddEdit",
+                    data: Customers,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/Customers/AddEdit");
+                            } else {
+                                window.location.replace("/Customers");
+                            }
+                        }
+                        else {
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        $('#newbtn').prop('disabled', false);
+                        $('#save').prop('disabled', false);
+                        alert(' @MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+
+            }
+        }
+    }
+
+</script>

@@ -1,0 +1,193 @@
+﻿@model MyERP.Models.BankAccount
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.BankAccount;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.BankAccount:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/BankAccount/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input type="hidden" name="Id" id="hdnobjID" value="@Model.Id" />
+                                @Html.HiddenFor(model => model.IsActive)
+                                @Html.AntiForgeryToken()
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.AccountNo</label>
+                                    <div class="col-sm-3">
+                                        <input type="text" class="form-control" value="@Model.AccountNumber" name="AccountNumber" id="txtAccountNumber" placeholder=@MyERP.Properties.Resources.AccountNo  required>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">
+                                        @MyERP.Properties.Resources.BankAccountPayment
+                                    </label>
+                                    <div class="col-sm-3">
+                                        @Html.DropDownList("BankAccountPaymentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", name = "BankAccountPaymentId", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Account</label>
+                                    <div class="col-sm-3">
+                                        @Html.DropDownList("AccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", name = "AccountId" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.OpeningBalance</label>
+                                    <div class="col-sm-3">
+                                        <input type="text" class="money form-control" value="@Model.OpeningBalance" name="OpeningBalance" id="txtOpeningBalance" placeholder=@MyERP.Properties.Resources.OpeningBalance>
+
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="BankAccountReceiptId" class="col-sm-2 control-label"> @MyERP.Properties.Resources.BankAccountReceipt</label>
+                                    <div class="col-sm-3">
+                                        @Html.DropDownList("BankAccountReceiptId", null, @MyERP.Properties.Resources.Select , htmlAttributes: new { @class = "form-control", @required = "required", name = "BankAccountReceiptId" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Bank</label>
+                                    <div class="col-sm-3">
+                                        @Html.DropDownList("BankId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", name = "BankId" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+
+                                    <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-3">
+                                        <input type="text" class="form-control" value="@Model.Branch" name="Branch" id="txtBranch" placeholder=@MyERP.Properties.Resources.Branch>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" style="float: unset;">
+                                    <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-3">
+                                        <textarea class="form-control" rows="3" cols="5" id="Notes" name="Notes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                                    </div>
+                                </div>
+
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model.Id == 0)
+                                    {
+                                    <button type="submit" id="newbtn" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    if ($('#hdnobjID').val() == 0) {
+        function setCodeNum() {
+            var doc = $.get('/BankAccount/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        $("#OpeningBalance").val(0).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'placeholder': '0'
+        });
+        setCodeNum();
+    }
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/BankAccount/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/BankAccount');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+</script>
+

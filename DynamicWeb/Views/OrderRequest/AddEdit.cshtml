@@ -1,0 +1,179 @@
+﻿@model MyERP.Models.OrderRequest
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+@{
+    ViewBag.Title = "الطلبات المحتملة";
+    List<SelectListItem> Status = new List<SelectListItem>();
+    Status.Add(new SelectListItem
+    {
+        Text = "مفتوح",
+        Value = "false"
+    });
+   Status.Add(new SelectListItem
+    {
+        Text = "مغلق",
+        Value = "true",
+
+    });
+ }
+
+@Html.AntiForgeryToken()
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model.Id > 0)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info" >الأول</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info" >الأخير</a>
+                        }
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>}
+            </div>
+            <div class="page-title">بيانات الطلبات المحتملة :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/OrderRequest/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input type="hidden" id="hdnobjID" value="@Model.Id" />
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">رقم الطلب</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" value="@Model.OrderNumber" name="OrderNumber" id="OrderNumber" readonly required />
+                                        <div class="invalid-feedback">
+                                            رقم الطلب مطلوب
+                                        </div>
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">الإسم </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CustomerName, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الإسم مطلوب
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.CustomerName, "", new { @class = "text-danger" })
+        <span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">رقم الموبيل </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CustomerPhone, new { htmlAttributes = new { @class = "form-control", type = "number" , @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            رقم الطلب مطلوب
+                                        </div>
+    @*@Html.ValidationMessageFor(model => model.CustomerPhone, "", new { @class = "text-danger" })*@
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">الخدمة المطلوبة</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Service, new { htmlAttributes = new { @class = "form-control" } })
+                                        @*@Html.ValidationMessageFor(model => model.Service, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الموظفين</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, "اختر", htmlAttributes: new { @class = "form-control", name = "EmployeeId" })
+
+                                    </div>
+                                    <label for="inputtext3" class="col-sm-2 control-label">الحالة</label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownListFor(model => model.Status, Status, new { @class = "form-control", id = "Status" })
+                                        @*@Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">العنوان</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="CustomerAddress" name="CustomerAddress" class="form-control" rows="2" cols="5">@if (Model != null) { @Model.CustomerAddress; }</textarea>
+
+                                        @*   @Html.TextAreaFor(model => model.CustomerAddress, new { htmlAttributes = new { @class = "form-control" } })*@
+                                        @*@Html.ValidationMessageFor(model => model.CustomerAddress, "", new { @class = "text-danger" })*@
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">رسالة</label>
+                                    <div class="col-md-4">
+                                        <textarea id="Message" name="Message" class="form-control" rows="2" cols="5">@if (Model != null) { @Model.Message; }</textarea>
+
+                                        @*@Html.TextAreaFor(model => model.Message, new {htmlAttributes = new {@class = "form-control"}})*@
+                                        @*@Html.ValidationMessageFor(model => model.Message, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>  <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">ملاحظات</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+
+                                        @*  @Html.TextAreaFor(model => model.Notes, new {htmlAttributes = new {@class = "form-control"}})*@
+                                        @*@Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+                              
+                                <input id="new" name="newBtn" hidden />
+                                <div class="form-group">
+                                    <div class="col-md-offset-2 col-md-10">
+                                        @if (Model.Id == 0)
+                                        {
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left">رجوع</a>
+                                            <input type="submit" value="حفظ" class="btn btn-success" style="float:left;margin-left:2%" />
+                                            <input type="submit" value="حفظ و جديد" id="newbtn" class="btn btn-success" style="float:left;margin-left:2%" />
+                                        }
+                                        else
+                                        {
+                                            if (Model.IsDeleted == false)
+                                            {
+                                                <a class="btn btn-danger" onclick="Delete(@Model.Id,'OrderRequest')" style="float:left;margin-left:2%" role="button">حذف</a>
+
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left;margin-left:2%">رجوع</a>
+
+                                                <input type="submit" value="حفظ" class="btn btn-success" style="float:left;margin-left:2%" />
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    <script>
+        if ($('#hdnobjID').val() == 0) {
+            function setCodeNum() {
+                var doc = $.get('/OrderRequest/SetOrderNum').done(function (r) {
+                    $('#OrderNumber').val(r);
+                });
+
+            }
+
+            setCodeNum();
+        }
+        $(document).on('change', '#Status', function () {
+            console.log($('#Status').val());
+
+    </script>

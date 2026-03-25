@@ -1,0 +1,22 @@
+﻿@model IEnumerable<MyERP.Models.FixedAsset_DepreciationValues_Result>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td class="tabledit-edit-mode"><input type="hidden" class="fixed-asset" value="@item.Id" />@item.Code - @item.ArName</td>
+        <td class="tabledit-edit-mode">
+            <input class="form-control tabledit-input form-control-sm money fixed-asset-value" value="@item.ValueOfAsset" readonly />
+            <input type="hidden" class="HistoricalValueOfAsset" value="@item.HistoricalValueOfAsset" />
+        </td>
+        <td class="tabledit-edit-mode"><input class="form-control tabledit-input form-control-sm money current-fixed-asset-value" value="@item.CurrentValue" readonly /></td>
+        <td class="tabledit-edit-mode"><input class="form-control tabledit-input form-control-sm money current-depreciation-value" value="@item.CurrentDepreciationValue" readonly /></td>
+        <td class="tabledit-edit-mode"><input class="form-control tabledit-input form-control-sm money fixedAsset-value-after-depreciation" value="@item.AssetValueAfterDepreciation" readonly /></td>
+        <td class="tabledit-edit-mode"><input type="datetime-local" class="form-control tabledit-input form-control-sm money last-depreciation-date" value="@Html.Raw(item.LastDepreciationDate.HasValue?item.LastDepreciationDate.Value.ToString("yyyy-MM-ddTHH:mm"):"")" readonly /></td>
+        <td class="tabledit-edit-mode">
+            <a href="javascript:void(0);" onclick="deleteRow(this)">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </td>
+    </tr>
+}
+

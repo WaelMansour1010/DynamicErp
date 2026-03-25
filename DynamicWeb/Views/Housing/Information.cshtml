@@ -1,0 +1,156 @@
+﻿@model  MyERP.Models.Housing
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Information;
+    Layout = "~/Views/Shared/_HousingLayout.cshtml";
+}
+
+@*<div class="row"style="padding-left:25px;padding-right:25px;">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+            </div>
+            <div class="page-title">@MyERP.Properties.Resources.Information</div>
+        </div>
+    </div>
+</div>*@
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group row">
+                            <label for="inputtext3" class=" col-sm-2  control-label"> @MyERP.Properties.Resources.PleaseEnterNationalID</label>
+                            <div class=" col-sm-4 ">
+                                <input type="text" class="form-control" id="NationalID" placeholder="@MyERP.Properties.Resources.PleaseEnterNationalID">
+                            </div>
+                            <div class="col-sm-3">
+                                <button type="button" class="btn btn-success" onclick="Search();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        <label id="Code" class="control-label">  </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Name</label>
+                                    <div class="col-sm-4">
+                                        <label id="ArName" class="control-label">  </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.IdentityNumber</label>
+                                    <div class="col-sm-4">
+                                        <label id="NationalNo" class="control-label">  </label>
+
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Mobile</label>
+                                    <div class="col-sm-4">
+                                        <label id="Mobile" class="control-label">  </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.RoomNo</label>
+                                    <div class="col-sm-4">
+                                        <label id="RoomNo" class="control-label">  </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.RoomContents</label>
+                                    <div class="col-sm-4">
+                                        <label id="RoomContent" class="control-label">  </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div>
+                                    <input type="checkbox" class="form-control" hidden id="IsConfirmed" />
+                                    <input type="checkbox" class="form-control" hidden id="Id" value="0" />
+                                    <button type="button" class="btn btn-success IsConfirmed" onclick="IsConfirmed(true);">
+                                        @MyERP.Properties.Resources.Confirm
+                                    </button>
+                                    <button type="button" class="btn btn-danger IsConfirmed" onclick="IsConfirmed(false);">
+                                        @MyERP.Properties.Resources.Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function IsConfirmed(val) {
+        $('#IsConfirmed').prop('checked', val);
+        if ($('#Id').val()>0) {
+            $.get('/Housing/ChangeIsConfirmedState?IsConfirmed=' + val + '&Id=' + $('#Id').val()).done(function (r) {
+                if (r == true) {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.Confirmed',
+                        text: " ",
+                        icon: 'success',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+    $('.IsConfirmed').prop('disabled',true);
+                }
+              else if (r == false) {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.Canceled',
+                        text: " ",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+        $('.IsConfirmed').prop('disabled',true);
+                }
+                else {
+                  Swal.fire({
+                        title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+        $('.IsConfirmed').prop('disabled',false);
+                }
+            });
+        }
+    }
+
+    function Search() {
+        var NationalID = $('#NationalID').val();
+        $('#Info').empty();
+        $.get('/Housing/SearchHousingInformation?NationalID=' + NationalID).done(function (r) {
+            if (r) {
+                $('#IsConfirmed').prop('checked', r.IsConfirmed);
+                $('#Id').val(r.Id);
+                $('#ArName').text(r.ArName);
+                $('#Code').text(r.Code);
+                $('#Mobile').text(r.Mobile);
+                $('#RoomNo').text(r.RoomNo);
+                $('#RoomContent').text(r.RoomContent);
+                $('#NationalNo').text(r.NationalNo);
+            }
+        });
+    }
+</script>
+

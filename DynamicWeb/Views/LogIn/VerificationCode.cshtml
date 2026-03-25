@@ -1,0 +1,50 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.VerificationCode;
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            
+            <h4 class="page-title"> @MyERP.Properties.Resources.VerificationCode </h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/LogIn/VerificationCode" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @ViewBag.msg
+                                </h5>
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.VerificationCode</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" id="code" name="code" class="form-control" required placeholder="@MyERP.Properties.Resources.Enter6DigitVerificationCode" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="submit" id="Sendbtn" class="btn btn-success" value="@MyERP.Properties.Resources.Send"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

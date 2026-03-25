@@ -1,0 +1,14 @@
+﻿@model IEnumerable<MyERP.Models.DepartmentItem>
+
+<div class="form-group row mb-0">
+    @foreach (var item in Model)
+    {
+    <div class="col-sm-3 mb-1">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input item-department-id" id="dep-@item.DepartmentId"  value="@item.DepartmentId" @Html.Raw(item.Included==true?"checked":"")/>
+
+            <label class="custom-control-label" for="dep-@item.DepartmentId">@item.DepartmentArName</label>
+        </div>
+    </div>
+    }
+</div>

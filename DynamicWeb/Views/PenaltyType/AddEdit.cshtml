@@ -1,0 +1,397 @@
+﻿@model MyERP.Models.PenaltyType
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.PenaltyTypes;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.PenaltyTypes:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/PenaltyType/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.Code)
+                                    @Html.HiddenFor(model => model.IsActive)
+
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-5">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control ", placeholder = @MyERP.Properties.Resources.Code, required = "required", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-5">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-5">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="Year">@MyERP.Properties.Resources.LinkedAccount</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownListFor(model => Model.ChartOfAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="CalculationMethodId">@MyERP.Properties.Resources.CalculationMethod</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownListFor(model => Model.CalculationMethodId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <input type="checkbox"  name="IsAbsence" value="true" @Html.Raw(Model!=null&&Model.IsAbsence == true ? "checked" : "") id="IsAbsence" />
+                                    <label class="control-label col-sm-2" for="IsAbsence">
+                                        @MyERP.Properties.Resources.AbsencePenalty
+                                    </label>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-horizontal needs-validation" role="form">
+                                            <div class="card">
+                                                <div class="card-body">
+
+
+
+                                                    @* panal 7 *@
+
+                                                    <div id="accordion">
+                                                        <h5 class=" pb-3 header-title">
+                                                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse7">
+                                                                @MyERP.Properties.Resources.PenaltyTypeDetails
+                                                            </a>
+                                                        </h5>
+                                                    </div>
+                                                    <div id="collapse7">
+                                                        <div class="form-group row">
+                                                            <label class=" col-sm-2 control-label" for="SalaryItemId">@MyERP.Properties.Resources.SalaryItem</label>
+                                                            <div class="col-sm-4">
+                                                                @Html.DropDownList("SalaryItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+
+                                                            </div>
+                                                            <div class="col-sm-offset-2">
+                                                                <button id="EndOfServices" class="btn btn-success AddSalaryItem">
+                                                                    @MyERP.Properties.Resources.Add
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="table-responsive">
+                                                        <table class="table table-centered mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <td>@MyERP.Properties.Resources.SalaryItemName</td>
+                                                                    <td>
+                                                                        @MyERP.Properties.Resources.Equi
+                                                                    </td>
+                                                                    <td>@MyERP.Properties.Resources.Notes</td>
+                                                                    <td>@MyERP.Properties.Resources.Delete</td>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="PenaltyTypeDetails">
+                                                                @if (Model != null)
+                                                                {
+                                                                    foreach (var item in Model.PenaltyTypeDetails)
+                                                                    {
+                                                                        <tr>
+                                                                            <td hidden><input class="SalaryItemId form-control" value="@item.SalaryItemId"></td>
+                                                                            <td><label>@item.SalaryItem.ArName</label></td>
+
+                                                                            <td class="tabledit-edit-mode">
+                                                                                <input type="number" step="any" class="equivalent form-control tabledit-input form-control-sm" value="@item.Equivalent" required />
+                                                                            </td>
+                                                                            <td class="tabledit-edit-mode">
+                                                                                <input type="text" class="Notes form-control tabledit-input form-control-sm" value="@item.Notes" />
+                                                                            </td>
+                                                                            <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                                                        </tr>
+                                                                    }
+                                                                }
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="row">
+                                    <div class="col-sm-offset-2">
+                                        @if (Model == null)
+                                        {
+                                            <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                                                @MyERP.Properties.Resources.SaveAndNew
+                                            </button>
+                                            <button onclick="addEdit();" class="btn btn-success" id="save">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                        }
+                                        else if (Model.IsDeleted == false)
+                                        {
+                                            <button onclick="addEdit();" class="btn btn-success" id="save">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*</form>*@
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    //--------------- Variables Declarations -------------------//
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if (!$('#Id').val() > 0) {
+            setCodeNum();
+        }
+        else {
+            if ($('#IsAbsence').prop('checked') == true) {
+                $('#CalculationMethodId').prop('disabled', true);
+            }
+            else {
+                $('#CalculationMethodId').prop('disabled', false);
+            }
+        }
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+     // add item in Employee salary item table
+        $('.AddSalaryItem').on('click', function () {
+        if (!$('#SalaryItemId').val()) {
+            alert('@MyERP.Properties.Resources.SelectSalaryItem')
+        }
+        else {
+            let valid = true;
+            $('#PenaltyTypeDetails tr').each(function () {
+                var td = $(this);
+                if ($('#SalaryItemId').val() == td.find('.SalaryItemId').val())
+                    valid = false;
+            });
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.SalaryItem' + ' ' + '@MyERP.Properties.Resources.ExistsBefore');
+            else
+            {
+                appendPenaltyTypeDetails();
+            }
+        }
+        });
+    $('#IsAbsence').on('change', function () {
+        if ($('#IsAbsence').prop('checked') == true) {
+            $('#CalculationMethodId').val(2)
+            $('#CalculationMethodId').select2();
+            $('#CalculationMethodId').prop('disabled', true);
+        }
+        else {
+            $('#CalculationMethodId').prop('selectedIndex',0);
+            $('#CalculationMethodId').select2();
+            $('#CalculationMethodId').prop('disabled', false);
+        }
+    })
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setCodeNum() {
+        $.get('/PenaltyType/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function appendPenaltyTypeDetails() {
+        if ($('#PenaltyTypeDetails .form-control:invalid').length > 0) {
+            $('#PenaltyTypeDetails').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#PenaltyTypeDetails").find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        } else {
+            let tr = '<tr><td hidden><input class="SalaryItemId form-control" value=' + $('#SalaryItemId').val() + '></td ><td><label >' + $('#SalaryItemId option:selected').text() + '</label ></td><td class="tabledit-edit-mode"><input type="number" step="any" class="equivalent form-control tabledit-input form-control-sm" required /></td><td class="tabledit-edit-mode"><input type="text" class="Notes form-control tabledit-input form-control-sm"/></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td ></tr > ';
+
+            $('#PenaltyTypeDetails').append(tr);
+            $('#PenaltyTypeDetails input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+        }
+    }
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        $(tr).find("input").val('');
+        $(tr).find("label").text('');
+    }
+
+ //*********************************************************//
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PenaltyType/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/PenaltyType');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+            function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+            let PenaltyTypeDetails = [];
+            if (valid && $('#PenaltyTypeDetails').find('tr').not(':last').find('.form-control:invalid').length == 0) {
+                $('#PenaltyTypeDetails').find('tr').each(function () {
+                if ($(this).find('.equivalent').val()) {
+                    PenaltyTypeDetails.push({
+                        Notes: $(this).find('.Notes').val(),
+                        Equivalent: $(this).find('.equivalent').inputmask('unmaskedvalue') * 1,
+                        SalaryItemId: $(this).find('.SalaryItemId').val(),
+                        IsDeleted:false
+                    });
+                }
+            });
+        } else {
+                $('#PenaltyTypeDetails').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#PenaltyTypeDetails").find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+            if (valid && PenaltyTypeDetails.length == 0) {
+            alert('@MyERP.Properties.Resources.AllDetailsRequired');
+            valid = false;
+        }
+        if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            $('#newbtn').prop('disabled', true);
+            $('#save').prop('disabled', true);
+            $.ajax({
+                type: "POST",
+                contentType: "application/json",
+                url: "/PenaltyType/AddEdit",
+                data: JSON.stringify({
+                    Id: $('#Id').val(),
+                    Code: $('#Code').val(),
+                    ArName: $('#ArName').val(),
+                    EnName: $('#EnName').val(),
+                    IsActive: true,
+                    IsDeleted: false,
+                    ChartOfAccountId: $('#ChartOfAccountId').val(),
+                    CalculationMethodId: $('#CalculationMethodId').val(),
+                    IsAbsence: $('#IsAbsence').prop('checked'),
+                    PenaltyTypeDetails: PenaltyTypeDetails
+                }),
+                success: function (r) {
+                    if (r.success == true) {
+                        if (n == "new") {
+                            window.location.replace("/PenaltyType/AddEdit");
+                        } else {
+
+                            window.location.replace("/PenaltyType");
+                        }
+                        alert("@MyERP.Properties.Resources.Saved");
+                    } else
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                },
+                error: function (r) {
+                    alert("@MyERP.Properties.Resources.NotSaved");
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                }
+            });
+        }
+    }
+
+</script>

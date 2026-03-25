@@ -1,0 +1,539 @@
+﻿@model MyERP.Models.RewardIssue
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.RewardIssue;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.RewardIssue:</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" readonly id="DocumentNumber" value="@ViewBag.DocumentNumber" />
+                                    </div>
+
+                                    <label class=" col-sm-1 control-label" for="EmployeeId">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="Year">@MyERP.Properties.Resources.Year</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("Year", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+                                    <label class=" col-sm-1 control-label" for="Month">@MyERP.Properties.Resources.Month</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("Month", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.MonthlySalary</label>
+                                    <div class="col-sm-5">
+                                        <input class="form-control money" readonly id="TotalMonthSalary" />
+                                        @*<input hidden class="form-control money" readonly id="monthlySalary" />*@
+                                    </div>
+                                    <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.HourlySalary</label>
+                                    <div class="col-sm-5">
+                                        <input class="form-control money" readonly id="TotalHourSalary" />
+                                        @*<input hidden class="form-control money" readonly id="hourlySalary" />*@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="header-title">
+                                    @MyERP.Properties.Resources.RewardIssueDetials
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <td>@MyERP.Properties.Resources.Date</td>
+                                                <td>@MyERP.Properties.Resources.Type</td>
+                                                <td>@MyERP.Properties.Resources.NoOfDaysOrHrs</td>
+                                                <td>@MyERP.Properties.Resources.Total</td>
+                                                <td>@MyERP.Properties.Resources.Value</td>
+                                                <td>@MyERP.Properties.Resources.Notes</td>
+                                                <td>@MyERP.Properties.Resources.Delete</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="RewardIssueDetials">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.RewardIssueDetials)
+                                                {
+                                            <tr>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="date" class="rewardDate form-control tabledit-input form-control-sm" value="@item.Date.ToString("yyyy-MM-dd")" required />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <select class="rewardTypeId form-control tabledit-input form-control-sm" required>
+                                                        <option value="@item.RewardTypeId"> </option>
+                                                    </select>
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="number" step="any" class="equivalent form-control tabledit-input form-control-sm" value="@item.Equivalent" required />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="total money form-control tabledit-input form-control-sm" value="@item.Total" required />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <label class="value col-form-label" value=""></label>
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="Notes form-control tabledit-input form-control-sm" value="@item.Notes"  />
+                                                </td>
+                                                <td>
+                                                    <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                                }
+                                            }
+                                        <tr>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="date" class="rewardDate form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                @Html.DropDownList("rewardTypeId", null, htmlAttributes: new { @class = "rewardTypeId form-control tabledit-input form-control-sm", id = "", name = "" })
+
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="number" step="any" class="equivalent form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="total money form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <label class="value col-form-label" value=""></label>
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="Notes form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td>
+                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button"> @MyERP.Properties.Resources.Delete</a>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    let rewardOptions = '';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        getRewardTypes();
+
+        if ($('#Id').val()) {
+            $('.rewardTypeId').not(':last').each(function () {
+                let selectedItem = $(this).val();
+                $(this).empty().append(rewardOptions).val(selectedItem);
+            });
+            $('#Year, #Month, #EmployeeId').attr('disabled', 'disabled');
+            getEmployeeSalary().done(function (r) {
+                //$('#monthlySalary').val(r.monthlySalary);
+                //$('#hourlySalary').val(r.hourlySalary);
+                $('#TotalMonthSalary').val(r.TotalMonthSalary);
+                $('#TotalHourSalary').val(r.TotalHourSalary);
+            });
+            $('#RewardIssueDetials tr').each(function () {
+                let e = $(this);
+                e.closest('tr').find('.value').text(e.closest('tr').find('.equivalent').inputmask('unmaskedvalue') * e.closest('tr').find('.total').inputmask('unmaskedvalue'));
+            });
+        }
+        setRewardDateMinMax();
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $('#Year').on('change', function () {
+        setRewardDateMinMax();
+        getPreviousRewardMonths();
+    });
+    $('#Month').on('change', function () {
+        setRewardDateMinMax();
+    });
+    $('#EmployeeId').on('change', function () {
+        $('#preloader, #status').fadeIn();
+        getEmployeeSalary().done(function (r) {
+            //$('#monthlySalary').val(r.monthlySalary);
+            //$('#hourlySalary').val(r.hourlySalary);
+            $('#TotalMonthSalary').val(r.TotalMonthSalary);
+            $('#TotalHourSalary').val(r.TotalHourSalary);
+            $('#preloader, #status').fadeOut();
+        });
+        getPreviousRewardMonths();
+    });
+    $(document).on('change', '.rewardDate, .total', function (e) {
+        appendPenaltyIssueDetails();
+    });
+    $(document).on('change , keyup', '.equivalent', function (e) {
+        if ($('#EmployeeId').val() > 0 && $(this).closest('tr').find('.rewardTypeId').val() > 0) {
+        //$(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $('#hourlySalary').val());
+            appendPenaltyIssueDetails();
+            GetTypeSalary(this);
+        }
+        else {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.SelectAnEmployee',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            $(this).val('0');
+        }
+    });
+    $(document).on('change', '.rewardTypeId', function (e) {
+        GetTypeSalary(this);
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function getRewardTypes() {
+        rewardOptions = '';
+        $('.rewardTypeId').last().find('option').each(function () {
+            rewardOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+    }
+    function setRewardDateMinMax() {
+        var d = new Date($('#Year').val() * 1, $('#Month').val(), 0);
+        $('.rewardDate').attr('min', $('#Year').val() + '-' + ($('#Month').val() > 9 ? $('#Month').val() : '0' + $('#Month').val()) + '-01');
+        $('.rewardDate').attr('max', $('#Year').val() + '-' + ($('#Month').val() > 9 ? $('#Month').val() : '0' + $('#Month').val()) + '-' + d.getDate());
+    }
+    function getPreviousRewardMonths() {
+        if ($('#EmployeeId').val()) {
+            $('#preloader, #status').fadeIn();
+            $('#Month').find('option').removeAttr('disabled').select2();
+            $.get('/RewardIssue/PreviousRewardMonths?employeeId=' + $('#EmployeeId').val() + '&year=' + $('#Year').val()).done(function (r) {
+                for (var i = 0; i < r.length; i++) {
+                    $('#Month').find('option').eq(r[i] - 1).attr('disabled', 'disabled');
+                }
+                let firstAvailableMonth = $('#Month').find('option').not(':disabled').eq(0).text();
+                $('#Month').val(firstAvailableMonth).select2();
+                setRewardDateMinMax();
+                $('#preloader, #status').fadeOut();
+            });
+        }
+    }
+    function getEmployeeSalary() {
+        return $.get('/RewardIssue/EmployeeSalary?employeeId=' + $('#EmployeeId').val());
+    }
+    function GetTypeSalary(e) {
+        $.get('/RewardIssue/GetTypeSalary?employeeId=' + $('#EmployeeId').val() + '&id=' + $(e).closest('tr').find('.rewardTypeId').val()).done(function (r) {
+            $(e).closest('tr').find('.total').val($(e).closest('tr').find('.equivalent').inputmask('unmaskedvalue') * r.hourlySalary);
+            $(e).closest('tr').find('.value').text(r.monthlySalary)
+            if (r.CalculationMethodId == 3) {
+                $(e).closest('tr').find('.total').prop('disabled', false);
+            }
+            else {
+                $(e).closest('tr').find('.total').prop('disabled', true);
+            }
+        });
+    }
+    function appendPenaltyIssueDetails() {
+        if ($('#RewardIssueDetials .form-control:invalid').length > 0) {
+            $('#RewardIssueDetials').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#RewardIssueDetials").find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        } else if ($('#RewardIssueDetials .rewardDate:last').val() && $('#RewardIssueDetials .total:last').val()) {
+            let tr = '<tr><td class="tabledit-edit-mode"><input type="date" class="rewardDate form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode"><select class = "rewardTypeId form-control tabledit-input form-control-sm"></select></td><td class="tabledit-edit-mode"><input type="number" step="any" class="equivalent form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode"><input type="number" step="any" class="total form-control tabledit-input form-control-sm"/></td> <td class="tabledit-edit-mode"><label  class="value col-form-label" value = "" ></label ></td><td class="tabledit-edit-mode"><input type = "text" class="Notes form-control tabledit-input form-control-sm" /></td ><td><a href = "javascript:void(0);" onclick = "deleteElement(this)" ><i class="fas fa-trash-alt"></i></a></td></tr>';
+            if (!rewardOptions.length) {
+                getRewardTypes();
+            }
+            $('#RewardIssueDetials').append(tr);
+            $('.rewardTypeId').last().append(rewardOptions).select2();
+            $('#RewardIssueDetials input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+
+            setRewardDateMinMax();
+        }
+        if($('#RewardIssueDetials .rewardDate:last').val()) {
+            $('#RewardIssueDetials').find('.rewardDate, .rewardTypeId, .equivalent').prop('required', 'required');
+        }
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find('.Add-Button').prop('hidden', false);
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find("label").text('');
+            $(tr).find('.Add-Button').prop('hidden', false);
+        }
+        CalculateTotals();
+    }
+
+    //*********************************************************//
+    function DeleteFunc(id) {
+
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/RewardIssue/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/RewardIssue');
+                            } else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        if ($('#RewardIssueDetials .rewardDate:last').val() && !$('#RewardIssueDetials .equivalent:last').val()) {
+            valid = false;
+            $('#RewardIssueDetials').find('.rewardDate, .rewardTypeId, .equivalent').prop('required', true);
+        }
+
+        let RewardIssueDetials = [];
+        if (valid && $('#RewardIssueDetials').find('tr').not(':last').find('.form-control:invalid').length == 0) {
+            $('#RewardIssueDetials').find('tr').each(function () {
+                if ($(this).find('.rewardDate').val() && $(this).find('.total').val()) {
+                    RewardIssueDetials.push({
+                        Date: $(this).find('.rewardDate').val(),
+                        RewardTypeId: $(this).find('.rewardTypeId').val(),
+                        Total: $(this).find('.total').inputmask('unmaskedvalue') * 1,
+                        Equivalent: $(this).find('.equivalent').inputmask('unmaskedvalue') * 1,
+                        Notes: $(this).find('.Notes').val(),
+                        IsDeleted: false,
+                    });
+                }
+            });
+        } else {
+            $('#RewardIssueDetials').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#RewardIssueDetials").find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        if (valid && RewardIssueDetials.length == 0) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.EnterRewardIssueDetials',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            valid = false;
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/RewardIssue/AddEdit",
+                        data: JSON.stringify({
+                            Id: $('#Id').val(),
+                            DocumentNumber: $('#DocumentNumber').val(),
+                            Month: $('#Month').val(),
+                            Year: $('#Year').val(),
+                            EmployeeId: $('#EmployeeId').val(),
+                            RewardIssueDetials
+                        }),
+                        success: function (r) {
+                            if (r.success == true) {
+                                if (n == "new") {
+                                    window.location.replace("/RewardIssue/AddEdit");
+                                } else {
+                                    window.location.replace("/RewardIssue");
+                                }
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+</script>

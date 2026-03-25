@@ -1,0 +1,168 @@
+﻿
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.SalaryItems;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+
+            <h4 class="page-title">@MyERP.Properties.Resources.SalaryItems </h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form" method="post">
+                <div class="form-group row">
+                    <label class=" col-sm-1 control-label" for="EmployeeId">@MyERP.Properties.Resources.Employee</label>
+                    <div class="col-sm-4">
+                        @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="header-title">
+                                    @MyERP.Properties.Resources.Dues
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <td>@MyERP.Properties.Resources.Code</td>
+                                                <td>@MyERP.Properties.Resources.Name</td>
+                                                <td>@MyERP.Properties.Resources.Value</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="due">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="header-title">
+                                    @MyERP.Properties.Resources.Deduction
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <td>@MyERP.Properties.Resources.Code</td>
+                                                <td>@MyERP.Properties.Resources.Name</td>
+                                                <td>@MyERP.Properties.Resources.Value</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="deduction">
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.NetSalary </label>
+                    <div class="col-sm-3">
+                        <input class="money form-control" id="netSalary" readonly/>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-offset-2">
+
+                        <button id="save" onclick="addEdit()" class="btn btn-success">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#EmployeeId').on('change', function () {
+        $('#due').empty();
+        $('#deduction').empty();
+        calculateNetSalary();
+        if ($('#EmployeeId').val()) {
+            $('#preloader, #status').fadeIn();
+            $.get('/EmployeeSalaryItem/GetSalaryItems?employeeId=' + $('#EmployeeId').val()).done((r) => {
+                $('#due').empty().append(r.due);
+                $('#deduction').empty().append(r.deduction);
+                $('.money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+                calculateNetSalary();
+                $('#preloader, #status').fadeOut();
+            }).fail(() => {
+                $('#preloader, #status').fadeOut();
+
+            });
+        }
+    });
+
+    function addEdit() {
+        $('#preloader, #status').fadeIn();
+        $('#save').prop('disabled', true);
+        let employeeSalaryItems = $.map($('.amount'), (i) => {
+            return {
+                EmployeeId: $('#EmployeeId').val()*1,
+                SalaryItemId: $(i).siblings('.salary-item-id').val()*1,
+                Amount: $(i).inputmask('unmaskedvalue') * 1
+            }
+        });
+
+        $.ajax({
+            type: "POST", contentType: "application/json",
+            url: "/EmployeeSalaryItem/AddEdit",
+            data:
+                JSON.stringify({
+                    employeeSalaryItems
+                }),
+            success: function (r) {
+                if (r == 'true')
+                        alert('@MyERP.Properties.Resources.Saved');
+                else
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                $('#preloader, #status').fadeOut();
+                $('#save').prop('disabled', false);
+            },
+            error: function () {
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                $('#preloader, #status').fadeOut();
+                $('#save').prop('disabled', false);
+            }
+        });
+    }
+
+    $(document).on('change', '.amount', () => {
+        calculateNetSalary();
+    });
+
+    function calculateNetSalary() {
+        let due = 0, deduction = 0;
+        $('#due').find('.amount').each(function() {
+            due += $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#deduction').find('.amount').each(function() {
+            deduction += $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#netSalary').val(due - deduction);
+    }
+</script>

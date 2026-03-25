@@ -1,0 +1,11 @@
+﻿@model IEnumerable<MyERP.Models.SystemPage>
+@foreach (var item in Model)
+{
+
+    <div class="panel panel-heading">
+        
+    @Html.DisplayFor(modelItem => item.ArName)
+       
+    </div>
+
+}

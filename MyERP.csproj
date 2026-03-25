@@ -435,6 +435,7 @@
     <Compile Include="Controllers\ActivityManagement\CompetitorController.cs" />
     <Compile Include="Controllers\ActivityManagement\CompetitorQuestionController.cs" />
     <Compile Include="Controllers\AdditionalItemController.cs" />
+    <Compile Include="Controllers\AiTestController.cs" />
     <Compile Include="Controllers\AssemblyVoucherController.cs" />
     <Compile Include="Controllers\CarColorController.cs" />
     <Compile Include="Controllers\CarEntranceController.cs" />
@@ -3307,6 +3308,7 @@
     <Compile Include="Utils\Serializer.cs" />
     <Compile Include="Utils\SmsService.cs" />
     <Compile Include="Utils\StockIssueAuthorize.cs" />
+    <Compile Include="Utils\ZhipuAiService.cs" />
     <Compile Include="ViewModels\PropertyBillRegisterationViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -4998,6 +5000,7 @@
     <Folder Include="images\ServiceCategoriesImages\" />
     <Folder Include="Properties\.cr\personal\FavoritesList\" />
     <Folder Include="Views\AccountSettings\" />
+    <Folder Include="Views\AiTest\" />
     <Folder Include="Views\DeptAgesTypes\" />
     <Folder Include="Views\DueBatch\" />
     <Folder Include="Views\SystemSettings\Branch\" />

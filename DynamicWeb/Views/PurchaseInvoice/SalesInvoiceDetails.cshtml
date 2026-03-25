@@ -1,0 +1,48 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoiceDetail>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" value="@Html.Raw(item.ItemPrice!=null?item.ItemPrice.Barcode:"")" readonly /></td>
+        <td class="tabledit-edit-mode">
+            <input type="hidden" class="item form-control tabledit-input form-control-sm" value="@item.ItemPriceId" required />
+            @if (Session["lang"].ToString() == "en" && item.Item.EnName != null)
+            {
+                <input type="text" class="item-name form-control tabledit-input form-control-sm" value="@item.Item.EnName - @item.ItemPrice.Barcode" required readonly />
+            }
+            else
+            {
+                <input type="text" class="item-name form-control tabledit-input form-control-sm" value="@item.Item.ArName - @item.ItemPrice.Barcode" required readonly />
+            }
+        </td>
+        <td class="tabledit-edit-mode">
+            <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Qty" required readonly />
+
+        </td>
+        <td class="tabledit-edit-mode"><select class="item-unit form-control tabledit-input form-control-sm" required disabled>
+    @if (Session["lang"].ToString() == "en" && item.ItemUnit.EnName != null)
+    {
+        <option value="@item.ItemUnitId">@item.ItemUnit.EnName</option>
+    }
+    else
+    {
+        <option value="@item.ItemUnitId">@item.ItemUnit.ArName</option>
+    }
+
+</select></td>
+        <td class="tabledit-edit-mode"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" value="@item.UnitEquivalent" required readonly /></td>
+        <td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm" required value="@item.Price" readonly /></td>
+        <td class="tabledit-edit-mode"><input type="text" class="money lastPrice form-control tabledit-input form-control-sm" readonly required /></td>
+        <td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly value="0" /></td>
+        <td><button class="btn btn-info item-details-btn" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button></td>
+        <td>
+            <a href="javascript:void(0);">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </td>
+    </tr>
+}

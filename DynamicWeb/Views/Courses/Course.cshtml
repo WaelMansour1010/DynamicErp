@@ -1,0 +1,85 @@
+﻿@*@model IEnumerable<MyERP.Models.Lesson>*@
+
+@{
+    Layout = "~/Views/Shared/_CoursesLayout.cshtml";
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Courses;
+}
+
+
+<!-- Preloader Start -->
+<main class="details-main">
+    <section class="slider-area slider-area2">
+        <div class="slider-active">
+            <div class="single-slider slider-height2">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-xl-8 col-lg-11 col-md-12">
+                            <div class="hero__caption hero__caption2">
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb">
+                                        <li class="breadcrumb-item"><a href="/Courses/Index">@MyERP.Properties.Resources.Home</a></li>
+                                        <li class="breadcrumb-item"><a href="/Courses/Index/#all_courses"> @MyERP.Properties.Resources.AllCourses </a></li>
+                                    </ol>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Course Details Section -->
+    <section class="course-details-container">
+        <figure class="course-image-container">
+            @if (@ViewBag.EducationalSubjectImage != null)
+            {
+                <img src="@ViewBag.EducationalSubjectImage" alt="@ViewBag.EducationalSubjectName" style="width:300px;height:300px;"/>
+            }
+            else
+            {
+                <img src="~/assets/images/users/Avatar_User.png" alt="@ViewBag.EducationalSubjectName" style="width:300px;height:300px;"/>
+            }
+        </figure>
+        <div class="course-name">
+            <h1> @ViewBag.EducationalSubjectName </h1>
+        </div>
+        <div class="episode-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>@MyERP.Properties.Resources.Course</th>
+                        <th>@MyERP.Properties.Resources.Video</th>
+                        <th>PDF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Count > 0)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <h3> @item.ArName </h3>
+                                </td>
+
+                                <td>
+                                    @if (item.VideoLink != null)
+                                    {
+                                        <a href="@item.VideoLink"><i class="fa fa-play"></i></a>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.PDFLink != null)
+                                    {
+                                        <a href="@item.PDFLink"><i class="fa fa-file-pdf"></i></a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>

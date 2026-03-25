@@ -1,0 +1,700 @@
+﻿
+
+@model MyERP.Models.UpdatedTransaction
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.UpdatedTransactions;
+}
+<script src="~/js/CalcTotalDebitAndCredit.js"></script>
+@Html.AntiForgeryToken()
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    @if (Model.Id > 0)
+                    {
+                        if (Model.IsDeleted == false)
+                        {
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+                            if (ViewBag.Previous > 0)
+                            {
+                <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                                <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                            }
+                            if (ViewBag.Next > 0)
+                            {
+                                <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                                <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                            }
+                        }
+                    }
+                    else
+                    {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>}
+                    <h4>@Model.SystemPage.ArName</h4>
+                </div>
+                <div class="form-body">
+                    <div class="form-horizontal">
+                        <hr />
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        <input value="@ViewBag.SystemPageId" id="SystemPageId" hidden />
+                        <input type="text" class="money" id="TotalPaymentMethods" hidden />
+                        @if (Model.Id > 0)
+                        {
+                            @Html.HiddenFor(model => model.Id, new { id = "Id" })
+                            @Html.HiddenFor(model => model.IsActive)
+                            @Html.HiddenFor(model => model.UserId)
+                            @Html.HiddenFor(model => model.IsLinked)
+                            @Html.HiddenFor(model => model.IsPosted)
+                            @Html.HiddenFor(model => model.IsDeleted)
+                            @Html.HiddenFor(model => model.IsAccepted)
+                            @Html.HiddenFor(model => model.IsCompleted)
+                            @Html.HiddenFor(model => model.Image)
+                        }
+                        <div class="panel-group">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    @MyERP.Properties.Resources.MainData
+                                </div>
+                                <div class="panel-body ">
+                                    <div class="form-group">
+                                        <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                        <div class="col-sm-5">
+                                            @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo } })
+                                            @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger" })
+                                            <span class="Asterisks">*</span>
+                                        </div>
+                                        <label for="DepartmentId" class="col-sm-1 control-label">@MyERP.Properties.Resources.Branch</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
+                                            <span class="Asterisks">*</span>
+                                        </div>
+                                        @*<label class="col-sm-1 control-label" for="BranchId">الفرع</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("BranchId", null, "إختر الفرع", htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
+                                            @Html.ValidationMessageFor(model => model.BranchId, "", new { @class = "text-danger" })
+                                            <span class="Asterisks">*</span>
+                                        </div>*@
+                                    </div>
+
+                                    <div class="form-group">
+
+                                        <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.InvoiceDate</label>
+                                        <div class="col-sm-5">
+
+                                            @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control", type = "datetime-local", @required = "required", @readonly = "readonly" } })
+                                            <span class="Asterisks">*</span>
+                                            @Html.ValidationMessageFor(model => model.VoucherDate, "", new { @class = "text-danger" })
+                                        </div>
+                                        <label for="WarehouseId" class="col-sm-1 control-label">@MyERP.Properties.Resources.WareHouse</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("WarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
+                                            @Html.ValidationMessageFor(model => model.WarehouseId, "", new { @class = "text-danger" })
+                                            <span class="Asterisks">*</span>
+                                        </div>
+                                    </div>
+
+
+                                        <div class="form-group" hidden>
+                                            <label class="control-label col-sm-1" for="CurrencyId"> @MyERP.Properties.Resources.Currency</label>
+                                            <div class="col-sm-5">
+                                                @Html.DropDownList("CurrencyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", @disabled="disabled"})
+                                                @Html.ValidationMessageFor(model => model.CurrencyId, "", new { @class = "text-danger" })
+                                                <span class="Asterisks">*</span>
+                                            </div>
+
+
+                                            <label for="CurrencyEquivalent" class="control-label col-sm-1">@MyERP.Properties.Resources.ExchangeRate</label>
+                                            <div class="col-sm-5">
+                                                @Html.EditorFor(model => model.CurrencyEquivalent, new { htmlAttributes = new { @class = "form-control", oninput = "validity.valid||(value='');", type = "number", placeholder = @MyERP.Properties.Resources.ExchangeRate, @required = "required", @readonly = "readonly" } })
+                                                <span class="Asterisks">*</span>
+                                                @Html.ValidationMessageFor(model => model.CurrencyEquivalent, "", new { @class = "text-danger" })
+                                            </div>
+
+                                        </div>
+                                        <div class="form-group">
+        
+                                            <div class="div">
+                                                <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.Customer </label>
+                                                <div class="col-sm-5">
+                                                    @Html.DropDownList("CustomerId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control invoice", @required = "required", @disabled = "disabled" })
+                                                    @Html.ValidationMessageFor(model => model.CurrencyId, "", new { @class = "text-danger" })
+                                                    <span class="Asterisks">*</span>
+                                                </div>
+                                            </div>
+                                                <div class="div">
+                                                    <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.Supplier </label>
+
+                                                    <div class="col-sm-5">
+                                                        @Html.DropDownList("VendorId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control invoice", @required = "required", @disabled = "disabled" })
+                                                        <span class="Asterisks">*</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        <div class="form-group">
+                                            <label class="control-label col-sm-1" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                            <div class="col-sm-5">
+                                                <textarea id="Notes" name="Notes" class="form-control col-sm-11" rows="5" cols="5" readonly>@Model.Notes</textarea>
+
+                                                @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+                                    
+                                </div>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                            @MyERP.Properties.Resources.Details
+                                    
+                                </div>
+                                <div class="panel-body ">
+                                        <div class="form-group">
+                                            <table class="table table-hover table-condensed">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="col-sm-1">@MyERP.Properties.Resources.Barcode</th>
+                                                        <th class="col-sm-2">@MyERP.Properties.Resources.Item</th>
+                                                        <th class="col-sm-1">@MyERP.Properties.Resources.Qty</th>
+                                                        @*<th class="col-sm-2">الوحدة</th>
+                                                            <th class="col-sm-1">معامل التحويل</th>*@
+                                                    <th class="col-sm-1">@MyERP.Properties.Resources.SellingPrice</th>
+
+                                                    <th class="col-sm-1">@MyERP.Properties.Resources.Total</th>
+                                                       
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="SalesInvoiceDetails">
+                                                    @if (Model.Id > 0)
+                                                    {
+                                                        foreach (var item in Model.UpdatedTransactionDetails)
+                                                        {
+                                                            <tr>
+                                                                @if (item.ItemPriceId != null)
+                                                                {
+                                                                    <td class="col-sm-1"><input class="barcode form-control" value="@item.ItemPrice.Barcode" readonly/></td>
+
+                                                                }
+                                                                else
+                                                                {
+                                                                    <td class="col-sm-1"><input class="barcode form-control" /></td>
+
+                                                                }
+                                                                <td class="col-sm-2"><select class="item form-control" disabled onchange=" setItemPrice(this)"><option value="@item.ItemId">@item.Item.ArName</option></select><span class="Asterisks">*</span></td>
+
+                                                                <td class="col-sm-1">
+                                                                    <input class="quantity form-control" oninput="validity.valid||(value='');" type="number" step="any" readonly value="@item.Qty" /><span class="Asterisks">*</span>
+                                                                    <input type="hidden" class="quantityOnSystem" />
+                                                                </td>
+                                                                <td class="col-sm-1"><input type="text" class="money cost form-control" readonly value="@item.Price" /><span class="Asterisks">*</span></td>
+
+
+                                                                <td class="col-sm-1"><input class="total form-control" type="text" readonly value="0" /></td>
+                                                              
+                                                            </tr>
+                                                        }
+                                                    }
+                                                
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <hr />
+                                        <div class="form-group">
+                                            <label for="Total" class="control-label col-sm-2">@MyERP.Properties.Resources.Total:</label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control money", type = "text", id = "Total", @disabled = "disabled " } })
+                                                @Html.ValidationMessageFor(model => model.Total, "", new { @class = "text-danger" })
+                                            </div>
+                                            <label for="VoucherDiscountValue" class="control-label col-sm-2">@MyERP.Properties.Resources.DiscountValue: </label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.VoucherDiscountValue, new { htmlAttributes = new { @class = "form-control money", id = "DiscountValue", type = "text", @readonly = "readonly", onchange = "DiscountValueChange()", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.VoucherDiscountValue, "", new { @class = "text-danger" })
+                                            </div>
+                                            <label for="VoucherDiscountPercentage" class="control-label col-sm-2">@MyERP.Properties.Resources.DiscountPercentage: </label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.VoucherDiscountPercentage, new { htmlAttributes = new { @class = "form-control", id = "percentage", type = "number", @readonly = "readonly", onchange = "PrecChange()", oninput = "validity.valid||(value='');", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.VoucherDiscountPercentage, "", new { @class = "text-danger" })
+                                            </div>
+
+
+
+
+                                        </div>
+                                        <div class="form-group">
+
+                                            <label for="NetTotal" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalAfterDiscount:</label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled ", id = "NetTotal", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.NetTotal, "", new { @class = "text-danger" })
+                                            </div>
+                                            @if (Model.SalesTaxes > 0)
+                                            {
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" checked id="check" />@MyERP.Properties.Resources.IncludeValueAddedTax
+
+                                        </div>
+
+                                            }
+                                            else
+                                            {
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" id="check" />@MyERP.Properties.Resources.IncludeValueAddedTax
+                                        </div>
+                                            }
+
+                                        </div>
+                                        @if (Model.SalesTaxes > 0)
+                                        {
+                                            <div class="form-group">
+
+                                                <label for="SalesTaxes" class="control-label  col-sm-2  taxesLabel">@MyERP.Properties.Resources.ValueAddedTax:</label>
+                                                <div class="col-sm-2">
+                                                    @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money taxes ", @readonly = "readonly", id = "SalesTaxes", type = "text", onchange = "calcTotalAfterTaxes()", value = "0" } })
+                                                    @Html.ValidationMessageFor(model => model.SalesTaxes, "", new { @class = "text-danger" })
+                                                </div>
+                                                <label for="Paid" class="control-label col-sm-2 taxesLabel  ">@MyERP.Properties.Resources.TotalAfterTaxes:</label>
+                                                <div class="col-sm-2">
+                                                    @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "TotalAfterTaxes", @disabled = "disabled ", value = "0" } })
+                                                    @Html.ValidationMessageFor(model => model.TotalAfterTaxes, "", new { @class = "text-danger" })
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="form-group">
+
+                                                <label for="SalesTaxes" class="control-label  col-sm-2 hidden taxesLabel">@MyERP.Properties.Resources.ValueAddedTax:</label>
+                                                <div class="col-sm-2">
+                                                    @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money taxes hidden", @readonly = "readonly", id = "SalesTaxes", type = "text", onchange = "calcTotalAfterTaxes()", value = "0" } })
+                                                    @Html.ValidationMessageFor(model => model.SalesTaxes, "", new { @class = "text-danger" })
+                                                </div>
+                                                <label for="Paid" class="control-label col-sm-2 taxesLabel  hidden">@MyERP.Properties.Resources.TotalAfterTaxes:</label>
+                                                <div class="col-sm-2">
+                                                    @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control taxes money hidden", type = "text", id = "TotalAfterTaxes", @disabled = "disabled ", value = "0" } })
+                                                    @Html.ValidationMessageFor(model => model.TotalAfterTaxes, "", new { @class = "text-danger" })
+                                                </div>
+                                            </div>
+
+                                        }
+
+                                </div>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    @MyERP.Properties.Resources.PaymentMethods
+                                </div>
+                                <div class="panel-body">
+                                        <div class="form-group">
+                                            <table class="table table-hover table-condensed">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="col-sm-2">@MyERP.Properties.Resources.PaymentMethod</th>
+                                                        <th class="col-sm-2">@MyERP.Properties.Resources.Amount</th>
+                                                        <th class="col-sm-3">@MyERP.Properties.Resources.CashBox/@MyERP.Properties.Resources.Bank</th>
+                                                        <th class="col-sm-3">@MyERP.Properties.Resources.BankAccount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="PaiedWay">
+                                                        @if (Model.Id > 0)
+                                                        {
+                                                            foreach (var method in Model.UpdatedTransactionPaymentMethods)
+                                                            {
+
+                                                    <tr>
+                                                        <td hidden><input value="@method.PaymentMethod.Id" class="methodId" hidden /></td>
+                                                        <td>
+                                                            <label>@method.PaymentMethod.ArName</label>
+                                                        </td>
+                                                        @if (method.PaymentMethod.Id == 1)
+                                                        {
+                                                            <td><input class=" money Amount form-control" type="text" value="@method.Amount" id="Amount1" /></td>
+                                                            <td>
+                                                                @Html.DropDownList("CashBoxId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "CashBoxId form-control" })
+
+
+                                                            </td>
+                                                            <td></td>
+                                                        }
+                                                        else if (method.PaymentMethod.Id == 2)
+                                                        {
+                                                            <td><input class=" money Amount form-control" type="text" id="Amount2" value="@method.Amount" /></td>
+                                                            <td></td>
+                                                            <td></td>
+                                                        }
+                                                        else if (method.PaymentMethod.Id == 3)
+                                                        {
+                                                            <td><input class=" money Amount form-control" type="text" value="@method.Amount" id="Amount3" /></td>
+                                                            <td>
+                                                                @Html.DropDownList("BankIdForCheque", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "BankId form-control", id = "BankIdForCheque" })
+                                                            </td>
+                                                            <td>
+                                                                @Html.DropDownList("BankAccountIdForCheque", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "BankAccountId form-control", id = "BankAccountIdForCheque" })
+                                                            </td>
+                                                        }
+                                                        else if (method.PaymentMethod.Id == 4)
+                                                        {
+                                                            <td><input class=" money Amount form-control" type="text" value="@method.Amount" id="Amount4" /></td>
+                                                            <td>
+                                                                @Html.DropDownList("BankIdForVisa", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "BankId form-control", id = "BankIdForVisa" })
+                                                            </td>
+                                                            <td>
+                                                                @Html.DropDownList("BankAccountIdForVisa", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "BankAccountId form-control", id = "BankAccountIdForVisa" })
+                                                            </td>
+                                                        }
+
+
+                                                    </tr>
+                                                            }
+                                                        }
+                                                       
+                                                    </tbody>
+
+                                            </table>
+                                        </div>
+
+                                </div>
+                            </div>
+                            @*<div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                            السريال
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse5" class="panel-collapse collapse">
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label" for="selectedItems">الصنف</label>
+                                        <select id="selectedItems" class="form-control"></select>
+                                        <div class="panel-group" id="accordion1" role="tablist" aria-multiselectable="true">
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </div>*@
+                        </div>
+
+
+                    </div>
+
+                    
+
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.invoice').each(function () {
+
+        if ($(this).val() > 0) {
+            $(this).show();
+        }
+        else {
+            $(this).closest('.div').hide();
+        }
+    });
+
+    serialpanels();
+     //calc total after discountValue
+    function DiscountValueChange() {
+
+        var discountValue = $('#DiscountValue').inputmask('unmaskedvalue');
+        var total = $('#Total').inputmask('unmaskedvalue');
+        //total after discount
+        $('#NetTotal').val(total - discountValue);
+
+        //prec
+        var calcPerc = (discountValue * 100 / total).toFixed(2);
+        $("#percentage").val(calcPerc);
+
+    }
+    function calculateTotal() {
+        var sum = 0;
+        $('.total').each(function () {
+            sum = sum + $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#Total').val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+    //calc Taxes issu
+    function Taxes() {
+        if ($('#check').prop('checked')) {
+            var total = $('#Total').inputmask('unmaskedvalue');
+            var percentage = 14;
+
+            var calcPrice = (total * percentage / 100).toFixed(2);
+            $('#SalesTaxes').val(calcPrice).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+
+        }
+        calcTotalAfterTaxes();
+    }
+    //calc discount from prec
+    function PrecChange() {
+        var discountValue = $('#DiscountValue').inputmask('unmaskedvalue');
+        var total = $('#Total').inputmask('unmaskedvalue');
+        var percentage = $("#percentage").val();
+
+        var calcPrice = (total * percentage / 100).toFixed(2);
+        $('#DiscountValue').val(calcPrice).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        DiscountValueChange();
+    }
+    //calc total after taxes
+    function calcTotalAfterTaxes() {
+        var Taxes = $('#SalesTaxes').inputmask('unmaskedvalue');
+        var totalAfterDis = $('#NetTotal').inputmask('unmaskedvalue');
+        var TotalAfterTaxes = (totalAfterDis * 1) + (Taxes * 1)
+        $('#TotalAfterTaxes').val(TotalAfterTaxes);
+
+        $('#Amount2').val('0');
+        $('#Amount3').val('0');
+        $('#Amount4').val('0');
+        $('#Amount1').val($('#TotalAfterTaxes').val());
+    }
+
+    function calcTotalPaymentMethods() {
+        var sum = 0;
+        $('.Amount').each(function () {
+            sum += $(this).inputmask('unmaskedvalue') * 1;
+
+        });
+        $('#TotalPaymentMethods').val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+
+
+
+    function addSerialNumbers(rows, itemName, itemId) {
+        var div = '<div class="panel panel-default" hidden><div class="panel-heading" role="tab" id="heading' + itemId + '"><h4 class="panel-title"><a role="button" data-toggle="collapse" data-parent="#accordion1" href="#coll' + itemId + '" aria-expanded="false" aria-controls="coll' + itemId + '">' + itemName + '</a></h4></div ><div id="coll' + itemId + '" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading' + itemId + '"><div class="panel-body"><table class="table table-hover table-condensed"><thead><tr><th class="col-sm-1">#</th><th class="col-sm-11">السريال</th><th hidden></th></tr></thead><tbody class="serialNumbers"></tbody></table></div></div></div>'
+
+        $('#accordion1').append(div);
+        for (var i = 1; i <= rows; i++) {
+            $('#accordion1 tbody:last').append('<tr><td class="col-sm-1"><label">' + i + '</label></td><td class="col-sm-11"><input type="text" class="serialNumber form-control" readonly/>' + '</td><td hidden> <input type="hidden" class="itemId" value="' + itemId + '" hidden/></td></tr>');
+
+        }
+    }
+    function ItemQuantityOnSystem(item) {
+        var qty = $.get('/Helper/ItemQuantityOnSystem?warehouseId=' + $('#WarehouseId').val() + '&itemId=' + $(item).val()).done(function () {
+            $(item).closest('tr').find('.quantityOnSystem').val(qty.responseJSON);
+            $(item).closest('tr').find('.quantity').val(qty.responseJSON * 1 > 0 ? 1 : 0);
+            $(item).closest('tr').find('.total').val(($(item).closest('tr').find('.quantity').val() * $(item).closest('tr').find('.cost').inputmask('unmaskedvalue')).toFixed(2));
+            calculateTotal();
+            DiscountValueChange();
+            Taxes();
+            serialpanels();
+        });
+    }
+
+
+
+
+
+    function serialpanels() {
+
+        var details = [];
+        $('#SalesInvoiceDetails tr').each(function () {
+            var tr = $(this);
+            var sum = 0;
+            $(".item option:selected[value=" + tr.find('.item').val()+"]").each(function () {
+                sum += $(this).closest('tr').find('.quantity').val() * 1;
+            });
+            details.push({
+                quantity: sum,
+                itemName: tr.find('.item option:selected').text(),
+                itemId: tr.find('.item').val()
+            });
+        });
+
+        $('#selectedItems').empty();
+        details.some(function (detail) {
+            if (detail.itemId) {
+                var serials = [];
+                if ($('#heading' + detail.itemId).length) {
+                    $('#heading' + detail.itemId).closest('.panel').find('tbody').children('tr').each(function () {
+                        serials.push({
+                            serialNumber: $(this).find('.serialNumber').val(),
+                            itemId: $(this).find('.itemId').val()
+                        });
+                    });
+
+                    $('#heading' + detail.itemId).closest('.panel').remove();
+                    addSerialNumbers(detail.quantity , detail.itemName, detail.itemId);
+                    serials.some(function (serial, i) {
+                        var tr = $('#heading' + detail.itemId).closest('.panel').find('tbody').children('tr').eq(i);
+                        tr.find('.itemId').val(serial.itemId);
+                        tr.find('.serialNumber').val(serial.serialNumber);
+                    });
+                } else {
+                    addSerialNumbers(detail.quantity, detail.itemName, detail.itemId);
+                }
+
+                $('#selectedItems').append($('<option>', {
+                    value: detail.itemId,
+                    text: detail.itemName
+                }));
+                var selectedItems = [];
+                $('#selectedItems').each(function () {
+                    $(this).children('option').each(function () {
+                        if ($.inArray(this.value, selectedItems) > -1) {
+                            $(this).remove()
+                        } else {
+                            selectedItems.push(this.value);
+                        }
+                    });
+                    selectedItems = [];
+                });
+            }
+        });
+
+        $('#heading' + details[0].itemId).closest('.panel').prevAll().remove();
+        $('#heading' + details[0].itemId).closest('.panel').show();
+        $('#heading' + details[0].itemId).closest('.panel').nextAll().hide();
+    }
+
+
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            serialpanels();
+            var i = 0;
+            $('#accordion1').children('.panel').each(function () {
+                $(this).find('tbody').children('tr').each(function () {
+                    $(this).find('.itemId').val(ItemSerialsNumbers[i].ItemId);
+                    $(this).find('.serialNumber').val(ItemSerialsNumbers[i].SerialNumber);
+                    i++;
+                });
+            });
+        }
+    });
+
+
+
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+
+        $('#VoucherDate').val('@ViewBag.VoucherDate');
+        $('#dtDate').val($('#VoucherDate').val());
+        $('#SalesInvoiceDetails tr').each(function () {
+            var tr = $(this);
+            tr.find('.total').val((tr.find('.quantity').val() * tr.find('.cost').inputmask('unmaskedvalue')).toFixed(2));
+        });
+
+    //doc Num
+    function setDocNum() {
+        var doc = $.get('/SalesInvoice/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+            $('#DocumentNumber').val(r);
+        });
+    }
+    //last Price
+    function setlastPrice(e) {
+        var itemDDL = $(e).closest('tr').find('.item').val();
+        var doc = $.get('/SalesInvoice/SetLastPrice?itemId=' + itemDDL).done(function (r) {
+            if (r == 0) {
+                $(e).closest('tr').find('.lastPrice').val(0).inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+
+            }
+            $(e).closest('tr').find('.lastPrice').val(r);
+        });
+    }
+    //Item Prices
+    function setItemPrice(e) {
+        var itemDDL = $(e).closest('tr').find('.item').val();
+        var itemPrices = $.get('/SalesInvoice/GetItemPrice?customerId=' + $('#CustomerId').val()+'&itemId=' + itemDDL).done(function (r) {
+            if (r > 0) {
+                $(e).closest('tr').find('.cost').val(r);
+            }
+            else {
+                $(e).closest('tr').find('.cost').val(0);
+            }
+        })
+    }
+
+
+
+    function fillItems() {
+        if (!$('#Id').val() > 0) {
+            $('.item').empty();
+            $('.item').append($('<option>', {
+
+                text: "@MyERP.Properties.Resources.Select"
+            }));
+            for (var i = 0; i < items.length; i++) {
+                $('.item').append($('<option>', {
+                    value: items[i].Id,
+                    text: items[i].ArName
+                }));
+            }
+        } else {
+            var selectedItem;
+            var itemBarcode;
+            $('.item').each(function () {
+                selectedItem = $(this).val();
+                itemBarcode = $(this).closest('tr').find('.barcode').val();
+                $(this).empty();
+                for (var i = 0; i < items.length; i++) {
+                    $(this).append($('<option>', {
+                        value: items[i].Id,
+                        text: items[i].ArName
+                    }));
+                }
+                $(this).val(selectedItem);
+                $(this).closest('tr').find('.barcode').val(itemBarcode);
+            });
+        }
+    }
+
+
+
+
+
+
+    @*var ItemUnitId = JSON.parse('@Html.Raw(ViewBag.ItemUnitId)');*@
+    var ItemId = JSON.parse('@Html.Raw(ViewBag.ItemId)');
+    var ItemPriceId = JSON.parse('@Html.Raw(ViewBag.ItemPriceId)');
+    var currencies = @ViewBag.Currencies;
+    var ItemSerialsNumbers = $('#Id').val()? JSON.parse('@Html.Raw(ViewBag.SerialNumbers)'):'';
+    //Get Currency Equivalent
+    function SetEquivalent() {
+        var i = document.getElementById('CurrencyId').selectedIndex;
+        $('#CurrencyEquivalent').val(currencies[i-1])
+    }
+
+    // remove duplicate options
+    var optionValues = [];
+    $('select').each(function () {
+        $(this).children('option').each(function () {
+            if ($.inArray(this.value, optionValues) > -1) {
+                $(this).remove()
+            } else {
+                optionValues.push(this.value);
+            }
+        });
+        optionValues = [];
+    });
+      @*var DirectExpenses = JSON.parse('@Html.Raw(ViewBag.DirectExpenses)');*@
+
+  //save insert or edit
+
+
+
+</script>

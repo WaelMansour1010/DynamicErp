@@ -1,0 +1,1610 @@
+﻿@model MyERP.Models.Item
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    var EnterItemCodeManually = ViewBag.EnterItemCodeManually;
+
+}
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Items;
+    bool isECommerce = System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true" ? true : false;
+    bool PricingDependOnCustGroups = ViewBag.PricingDependOnCustGroups==true?true:false;
+    string AmazonS3Server = string.IsNullOrEmpty(System.Web.Configuration.WebConfigurationManager.AppSettings["AmazonS3Server"]) ? "" : System.Web.Configuration.WebConfigurationManager.AppSettings["AmazonS3Server"];
+    bool ProjectName= System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Genoise";
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Items :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    @Html.HiddenFor(model => model.Id)
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsLinked)
+    @Html.HiddenFor(model => model.IsPosted)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.Image)
+}
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-2">
+                                        @if (EnterItemCodeManually == true)
+                                        {
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, required = "required" } })
+                                        }
+                                        else
+                                        {
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required", onkeyup = "itemAutoComplete()" } })
+
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.EnterItemName
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @(isECommerce ?
+                   Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", required = "required", placeholder = @MyERP.Properties.Resources.EnName } }) :
+                                       Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } }))
+                                        @(isECommerce ? Html.Raw("<div class='invalid-feedback'>"+ @MyERP.Properties.Resources.EnterItemName+ "</div>") : null)
+                                    </div>
+
+
+                                    <label class=" col-sm-2 control-label" for="EnName">@(isECommerce ? @MyERP.Properties.Resources.KurdishName : @MyERP.Properties.Resources.ReOrderLimit)</label>
+                                    <div class="col-sm-4">
+                                        @(isECommerce ? Html.EditorFor(model => model.KrName, new { htmlAttributes = new { @class = "form-control", required = "required", placeholder = @MyERP.Properties.Resources.KurdishName } })
+:
+Html.EditorFor(model => model.OrderLimit, new { htmlAttributes = new { @class = "form-control", value = "0", @placeholder = @MyERP.Properties.Resources.ReOrderLimit} })
+
+                                        )
+                                        @(isECommerce ? Html.Raw("<div class='invalid-feedback'>"+ @MyERP.Properties.Resources.EnterItemName+ "</div>") : null)
+                                    </div>
+
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="ItemGroupId" class="control-label col-sm-2">@MyERP.Properties.Resources.Group</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ItemGroupId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+                                    <label for="ItemTypeId" class="control-label col-sm-2">@MyERP.Properties.Resources.Type</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ItemTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="HasWarranty" class="control-label col-sm-2">@MyERP.Properties.Resources.HasGuarantee</label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="HasWarranty" id="HasWarranty" @Html.Raw(Model == null ? "" : Model.HasWarranty == null ? "" : (bool)Model.HasWarranty ? "checked" : "") />
+                                            <label class="custom-control-label" for="HasWarranty"></label>
+                                        </div>
+                                    </div>
+
+                                    <label for="HasExpiry" class="control-label col-sm-2">@MyERP.Properties.Resources.HasExpirationDate</label>
+                                    <div class="col-sm-4">
+
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="HasExpiry" id="HasExpiry" @Html.Raw(Model == null ? "" : Model.HasExpiry == null ? "" : (bool)Model.HasExpiry ? "checked" : "") />
+                                            <label class="custom-control-label" for="HasExpiry"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="HasAccessory" class="control-label col-sm-2">@MyERP.Properties.Resources.HasAccessory</label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="HasAccessory" id="HasAccessory" @Html.Raw(Model == null ? "" : Model.HasAccessory == null ? "" : (bool)Model.HasAccessory ? "checked" : "") />
+                                            <label class="custom-control-label" for="HasAccessory"></label>
+                                        </div>
+                                    </div>
+
+                                    <label for="IsAccessory" class="control-label col-sm-2">@MyERP.Properties.Resources.IsAccessory</label>
+                                    <div class="col-sm-4">
+
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="IsAccessory" id="IsAccessory" @Html.Raw(Model == null ? "" : Model.IsAccessory == null ? "" : (bool)Model.IsAccessory ? "checked" : "") />
+                                            <label class="custom-control-label" for="IsAccessory"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="NotIncludeValueAddedTax" class="control-label col-sm-2">@MyERP.Properties.Resources.NotIncludeValueAddedTax</label>
+                                    <div class="col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="NotIncludeValueAddedTax" id="NotIncludeValueAddedTax" @Html.Raw(Model == null ? "" : Model.NotIncludeValueAddedTax == null ? "" : (bool)Model.NotIncludeValueAddedTax ? "checked" : "") />
+                                            <label class="custom-control-label" for="NotIncludeValueAddedTax"></label>
+                                        </div>
+                                    </div>
+
+                                    <label style="display:none;" class="control-label col-sm-2 TaxPercentage">@MyERP.Properties.Resources.TaxPercentage</label>
+                                    <div class="col-sm-3 TaxPercentage" style="display:none;">
+                                        @Html.EditorFor(model => model.TaxPercentage, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <span class="TaxPercentage control-label" style="display:none;"> % </span>
+                                </div>
+
+                                <div class="form-group WarrantyDetails" id="WarrantyDetails">
+                                    <div class="panel panel-default WarrantyDetails">
+                                        <div class="panel-heading WarrantyDetails">@MyERP.Properties.Resources.WarrantyInformation</div>
+                                        <div class="panel-body WarrantyDetails">
+                                            <label for="WarrantyDays" class="control-label col-sm-1">@MyERP.Properties.Resources.Days</label>
+                                            <div class="col-sm-3">
+                                                @Html.EditorFor(model => model.WarrantyDays, new { htmlAttributes = new { @class = "form-control", @min = "0" } })
+
+                                            </div>
+
+                                            <label for="WarrantyMonths" class="control-label col-sm-1 WarrantyDetails">@MyERP.Properties.Resources.Months</label>
+                                            <div class="col-sm-3 WarrantyDetails">
+                                                @Html.EditorFor(model => model.WarrantyMonths, new { htmlAttributes = new { @class = "form-control", @min = "0" } })
+                                            </div>
+
+                                            <label for="WarrantyYears" class="control-label col-sm-1 WarrantyDetails">@MyERP.Properties.Resources.Years</label>
+                                            <div class="col-sm-3 WarrantyDetails">
+                                                @Html.EditorFor(model => model.WarrantyYears, new { htmlAttributes = new { @class = "form-control", @min = "0" } })
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ItemCategoryId" class="control-label col-sm-2">@MyERP.Properties.Resources.ItemCategory</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ItemCategoryId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.ArNotes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+
+                                    </div>
+
+                                    @if (isECommerce)
+                                    {
+                                        <label for="OrderLimit" class="control-label col-sm-2">@MyERP.Properties.Resources.ReOrderLimit</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.OrderLimit, new { htmlAttributes = new { @class = "form-control", value = "0", @placeholder = @MyERP.Properties.Resources.ReOrderLimit } })
+                                        </div>
+                                    }
+                                </div>
+                                @if (isECommerce)
+                                {
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.EnNotes</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="ArNotes" name="ArNotes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.ArNotes; }</textarea>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.KrNotes</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="KrNotes" name="KrNotes" class="form-control" rows="5" cols="5">@if (Model != null)
+                                            { @Model.KrNotes;
+                                            }</textarea>
+                                        </div>
+
+
+                                    </div>
+
+
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.ArDetails</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="ArDetails" name="ArDetails" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.ArDetails; }</textarea>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.EnDetails</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="EnDetails" name="EnDetails" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.EnDetails; }</textarea>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.KrDetails</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="KrDetails" name="KrDetails" class="form-control" rows="5" cols="5">@if (Model != null){@Model.KrDetails;}</textarea>
+
+                                        </div>
+
+
+                                    </div>
+                                }
+
+
+                                <div class="tab-pane" id="5">
+                                    <div id="gallery" style="width: 100%;margin: 20px;">
+
+                                        @{ if (Model != null)
+                                            {
+                                                if (isECommerce == true && Model.ItemImages != null)
+                                                {
+                                                    foreach (MyERP.Models.ItemImage img in Model.ItemImages)
+                                                    {
+                                                        <img src="@AmazonS3Server/items/@img.Image" alt="" class="img_@img.Id" style="max-width: 200px;max-height: 200px;" />
+                                                        <i class="fas fa-trash-alt img_@img.Id" style="cursor:pointer;" onclick="DeleteIMG('@img.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (Model.Image != null)
+                                                    {
+                                                        <img src="@Model.Image" alt="" class="img_@Model.Id" style="max-width: 200px;max-height: 200px;" />
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    </div>
+
+
+                                    <input type="file" id="BrowseImage" onchange="previewFile()" value="Browse" @*multiple*@ />
+                                    @*<input type="button" id="GetImage" value="GetImage" />*@
+
+                                    <div style="display:none;">
+                                        @Html.ListBoxFor(i => i.ItemURLImages, new SelectList(Model == null ? new List<MyERP.Models.ItemImage>() : Model.ItemImages, "Id", "Image", Model == null ? null : Model.ItemURLImages), new { @class = "form-control1", placeholder = "Item Photos" })
+                                    </div>
+                                    @*<div id="UploadImage" style="height:600px;width:600px;">
+
+                                </div>*@
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.Prices</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Barcode</th>
+                                                @*@if (isECommerce)
+                                            {*@
+                                                <th class="PriceBeforeDiscountTd" style="display:none;">@MyERP.Properties.Resources.PriceBeforeDiscount</th>
+                                                @*}*@
+                                                <th>@(isECommerce? @MyERP.Properties.Resources.Price: @MyERP.Properties.Resources.SellingPriceOfBranches) </th>
+                                                <th>@MyERP.Properties.Resources.Unit</th>
+                                                <th>@MyERP.Properties.Resources.Equivalent</th>
+                                                <th class="price-toleranceQty-th" style="display:@Html.Raw(Model!=null && (Model.ItemTypeId==2 || Model.ItemTypeId==3)? "block;":"none;")"> @MyERP.Properties.Resources.AllowAmount</th>
+
+                                                @if (isECommerce)
+                                                {
+                                                    <th>@MyERP.Properties.Resources.Supplier</th>
+
+                                                }
+                                                else if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Genoise")
+                                                {
+                                                    <th>@MyERP.Properties.Resources.FactorySalePrice</th>
+                                                }
+                                                @if (PricingDependOnCustGroups == true)
+                                                {
+                                                    <th>@MyERP.Properties.Resources.CustomersGroups</th>
+                                                }
+                                                <th>@MyERP.Properties.Resources.Default</th>
+                                                <th>@MyERP.Properties.Resources.Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemPrices">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.ItemPrices)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="barcode form-control tabledit-input form-control-sm" type="text" value="@item.Barcode" />
+                                                            <input type="hidden" class="item-price-id" value="@item.Id" />
+                                                        </td>
+                                                        @*@if (isECommerce)
+                                                    {*@
+                                                        <td class="tabledit-edit-mode PriceBeforeDiscountTd" style="display:none;"><input type="text" class="money PriceBeforeDiscount form-control tabledit-input form-control-sm" value="@item.PriceBeforeDiscount" /></td>
+                                                        @*}*@
+                                                        <td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm" value="@item.Price" required /></td>
+                                                        <td class="tabledit-edit-mode"><select class="itemUnit form-control tabledit-input form-control-sm" required><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select></td>
+                                                        <td class="tabledit-edit-mode"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Equivalent" required @Html.Raw(item.IsDefault == true ? "readonly" : "") /></td>
+                                                        <td class="tabledit-edit-mode" style="display:@Html.Raw(Model.ItemTypeId==2 || Model.ItemTypeId==3? "block;":"none;")"><input class="price-toleranceQty form-control tabledit-input form-control-sm" type="number" step="any" value="@item.ToleranceQty" style="display:@Html.Raw(Model.ItemTypeId==2 || Model.ItemTypeId==3? "block;":"none;")" @Html.Raw(Model.ItemTypeId == 2 || Model.ItemTypeId == 3 ? "required" : "") /></td>
+
+
+
+                                                        @if (isECommerce == true)
+                                                        {
+                                                            <td class="tabledit-edit-mode">
+                                                                <select id="VendorPrice" class="vendor form-control tabledit-input form-control-sm" required>
+                                                                    <option value="@item.VendorId">@(item.Vendor == null ? "" : item.Vendor.ArName) </option>
+                                                                </select>
+                                                            </td>
+                                                        }
+                                                        else if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Genoise")
+                                                        {
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="money factory-price form-control tabledit-input form-control-sm" value="@item.FactoryPrice" required />
+                                                            </td>
+                                                        }
+                                                        @if (PricingDependOnCustGroups == true)
+                                                        {
+                                                            <td class="tabledit-edit-mode">
+
+                                                                <select id="customersgroups" class="customersgroups form-control tabledit-input form-control-sm" required><option value="@item.CustomerGroupId">@(item.CustomersGroup == null ? "" : item.CustomersGroup.ArName) </option></select>
+                                                            </td>
+                                                        }
+                                                        <td class="tabledit-edit-mode"><input class="isDefault" name="isDefault" type="radio" @Html.Raw(item.IsDefault == null ? "" : (bool)item.IsDefault ? "checked" : "") /></td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" type="text" /></td>
+                                                    @*  @if (isECommerce)
+                                                {*@
+                                                    <td class="tabledit-edit-mode PriceBeforeDiscountTd" style="display:none;"><input type="text" class="money PriceBeforeDiscount form-control tabledit-input form-control-sm" /></td>
+                                                    @*}*@
+                                                    <td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm" required /></td>
+                                                    <td class="tabledit-edit-mode"><select class="itemUnit form-control tabledit-input form-control-sm" required></select></td>
+                                                    <td class="tabledit-edit-mode"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="number" step="any" required readonly value="1" /></td>
+                                                    <td class="tabledit-edit-mode" style="display:none;"><input class="price-toleranceQty form-control tabledit-input form-control-sm" type="number" step="any" style="display:none;" /></td>
+
+                                                    @if (isECommerce == true)
+                                                    {
+                                                        <td class="tabledit-edit-mode">
+
+                                                            <select id="VendorPrice" class="vendor form-control tabledit-input form-control-sm" required></select>
+                                                        </td>
+                                                    }
+                                                    else if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Genoise")
+                                                    {
+                                                        <td class="tabledit-edit-mode">
+
+                                                            <input type="text" class="money factory-price form-control tabledit-input form-control-sm" required />
+                                                        </td>
+                                                    }
+                                                    @if (PricingDependOnCustGroups == true)
+                                                    {
+                                                        <td class="tabledit-edit-mode">
+
+                                                            <select id="customersgroups" class="customersgroups form-control tabledit-input form-control-sm" required></select>
+
+                                                        </td>
+                                                    }
+                                                    <td class="tabledit-edit-mode"><input class="isDefault" name="isDefault" type="radio" checked /></td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row justify-content-end">
+                                <button class="btn btn-success" onclick="addToItemPrices()">
+                                    @MyERP.Properties.Resources.AddPrice
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (!isECommerce)
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">@MyERP.Properties.Resources.Branches</h5>
+                                <div class="form-horizontal needs-validation" role="form">
+
+                                    @{ Html.RenderAction("ItemDepartments", new { itemId = Model != null ? (int?)Model.Id : null });}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!isECommerce)
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">@MyERP.Properties.Resources.Suppliers</h5>
+                                <div class="form-horizontal needs-validation" role="form">
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <tbody id="itemVendors">
+                                                @if (Model != null && Model.ItemVendors.Count() > 0)
+                                                {
+                                                    foreach (var item in Model.ItemVendors)
+                                                    {
+                                                        <tr>
+                                                            <td>@MyERP.Properties.Resources.Supplier</td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <select class="vendor form-control tabledit-input form-control-sm"><option value="@item.VendorId">@item.Vendor.ArName</option></select>
+                                                            </td>
+                                                            <td>
+                                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @MyERP.Properties.Resources.Supplier
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <select class="vendor form-control tabledit-input form-control-sm"></select>
+                                                        </td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="row justify-content-end">
+                                    <button class="btn btn-success" onclick="addToItemVendors()">
+                                        @MyERP.Properties.Resources.AddSupplier
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.Ingredients</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                @if (Model != null && Model.Id > 0 && ViewBag.FactoryPrivilege == true)
+                                {
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.FactoryAverageCost</label>
+                                        <div class="col-sm-3">
+                                            <input class="form-control-sm form-control money" readonly value="@ViewBag.AvgCost" />
+                                        </div>
+                                    </div>
+                                }
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th> @MyERP.Properties.Resources.Item</th>
+                                                <th> @MyERP.Properties.Resources.DefaultQty</th>
+                                                <th>@MyERP.Properties.Resources.Qty</th>
+                                                <th>@MyERP.Properties.Resources.Unit</th>
+                                                <th>@MyERP.Properties.Resources.Equivalent</th>
+                                                <th>@MyERP.Properties.Resources.AllowAmount</th>
+                                                <th>@MyERP.Properties.Resources.Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemComponents">
+
+                                            @if (Model != null && Model.ItemComponents.Count() > 0)
+                                            {
+                                                foreach (var item in Model.ItemComponents)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode"><select class="componentItem form-control tabledit-input form-control-sm" required><option value="@item.ChildItemId"></option></select></td>
+                                                        <td class="tabledit-edit-mode"><input class="comp-virtual-qty form-control tabledit-input form-control-sm small-number" type="number" step="any" required /></td>
+                                                        <td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm small-number" type="text" value="@item.Quantity" required /></td>
+                                                        <td class="tabledit-edit-mode"><select class="item-componenet-unit form-control tabledit-input form-control-sm" required><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select></td>
+                                                        <td class="tabledit-edit-mode"><input class="component-unit-equav form-control tabledit-input form-control-sm small-number" value="@item.UnitEquivalent" required /></td>
+                                                        <td class="tabledit-edit-mode"><input class="component-tolerance form-control tabledit-input form-control-sm small-number" value="@item.ToleranceQty" required /></td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td class="tabledit-edit-mode"><select class="componentItem form-control tabledit-input form-control-sm" required></select></td>
+                                                    <td class="tabledit-edit-mode"><input class="comp-virtual-qty form-control tabledit-input form-control-sm small-number" type="number" step="any" required /></td>
+                                                    <td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm small-number" type="number" step="any" required /></td>
+                                                    <td class="tabledit-edit-mode"><select class="item-componenet-unit form-control tabledit-input form-control-sm" required></select></td>
+                                                    <td class="tabledit-edit-mode"><input class="component-unit-equav form-control tabledit-input form-control-sm small-number" required /></td>
+                                                    <td class="tabledit-edit-mode"><input class="component-tolerance form-control tabledit-input form-control-sm small-number" required /></td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="row justify-content-end">
+                                    <button class="btn btn-success" onclick="addToItemComponents()">
+                                        @MyERP.Properties.Resources.AddComponent
+                                    </button>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="VirtualQuantity" class="control-label">@MyERP.Properties.Resources.DefaultQty</label>
+                                    <div class="col-sm-3">
+                                        @Html.EditorFor(model => model.VirtualQuantity, new { htmlAttributes = new { @class = "form-control", type = "number" } })
+                                    </div>
+                                    <button class="btn btn-success" onclick="calculateComponentQuantities();">
+                                        @MyERP.Properties.Resources.Compute
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!------------------------------------------ Alternative Items  --------------------------------------------------->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.AlternativeItems</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+
+                                <div class="form-group row">
+                                    @*<label class="control-label col-sm-2"> @MyERP.Properties.Resources.AlternativeItem</label>*@
+                                    <div class="col-sm-3">
+                                        @Html.DropDownList("AlternativeItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <button class="btn btn-success" onclick="AddToAlternativeItem();">
+                                        @MyERP.Properties.Resources.Add
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th> @MyERP.Properties.Resources.Item</th>
+                                                <th>@MyERP.Properties.Resources.Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="AlternativeItems">
+                                            @*@if (Model != null && Model.AlternativeItems1.Count() > 0)*@
+                                            @if (Model != null && ViewBag.AlternativeItem!=null)
+                                            {
+                                                //foreach (var item in Model.AlternativeItems1)
+                                                foreach (var item in ViewBag.AlternativeItem)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="ItemId form-control tabledit-input form-control-sm" hidden value="@item.ItemId" /> 
+                                                            <label class="control-label form-control-sm"> @item.ArName</label>
+                                                        </td>
+                                                         <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!------------------------------------------ End Of Alternative Items  --------------------------------------------------->
+
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+
+                        <button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button class="btn btn-success" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button class="btn btn-success" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-success" id="repeatLink" href="@Url.Action("AddEdit",new { id=Model.Id, repeat=true})" target="_blank">@MyERP.Properties.Resources.Repetition</a>
+                        <a class="btn btn-danger" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>
+                        <button class="btn btn-danger" onclick="Delete(@Model.Id)">@MyERP.Properties.Resources.Delete</button>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="itemDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">@MyERP.Properties.Resources.ItemDetails</h4>
+            </div>
+            <div class="modal-body" id="itemDetailsBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@*<style>
+        .ui-menu {
+            width: 92% !important;
+            max-width: 279px !important;
+        }
+    </style>*@
+<script src="/Content/photobooth_min.js"></script>
+<script>
+    $(document).on('click', '#NotIncludeValueAddedTax', function () {
+        if ($('#NotIncludeValueAddedTax').prop('checked') == true) {
+            $('.TaxPercentage').hide();
+            $('#TaxPercentage').val(0);
+        }
+        else {
+            $('.TaxPercentage').show();
+            $('#TaxPercentage').val(taxPercentage);
+        }
+
+    });
+
+    function GetLastTaxPercentage() {
+        $.get('/Item/GetLastTaxPercentage').done(function (r) {
+            taxPercentage = r/*/100*/;
+            if (!$('#Id').val()) {
+                $('#TaxPercentage').val(taxPercentage);
+            }
+        });
+    }
+    GetLastTaxPercentage();
+
+
+    //-------------- Variable Declaration ----------------------//
+    let isRepeat = '@ViewBag.IsRepeat';
+    let CanChangeBarcode ='@ViewBag.CanChangeBarcode';
+    let CanChangeItemName ='@ViewBag.CanChangeItemName';
+    let CanChangeProductNumber = '@ViewBag.CanChangeProductNumber';
+    let itemUnits=[];
+    let itemUnitsOptionString = '';
+    let vendors;
+    let customersgroups;
+    let vendorsOptionString = '';
+    let customersgroupsOptionString = '';
+    let ComponentItemId;
+    let ComponentItemOptionString = '';
+    let fetchComponentUnits = true;
+    let imageData = "";
+    var taxPercentage = 0.15;
+    var AddItemBarcodeBasedOnItemCode = '@ViewBag.AddItemBarcodeBasedOnItemCode';
+    var EnterItemCodeManually = '@ViewBag.EnterItemCodeManually';
+    //----------------- Ready ---------------------
+    $(document).ready(function () {
+        //------- Item CustomersGroup ------------------//
+     //  getcustomersgroups();
+        //----------------------------------------------//
+        if ($('#Id').val()) {
+            if (EnterItemCodeManually != 'True') {
+                $('#FieldsCodingId').prop('disabled', true);
+            }
+        }
+        else {
+            if (EnterItemCodeManually != 'True') {
+                setCodeNum();
+            }
+        }
+        if ($('#NotIncludeValueAddedTax').prop('checked') == true) {
+            $('.TaxPercentage').hide();
+        }
+        else {
+            $('.TaxPercentage').show();
+            if (!$('#TaxPercentage').val()) {
+                $('#TaxPercentage').val(taxPercentage)
+            }
+        }
+        if ($('#Id').val() || isRepeat == 'True') {
+            GetComponentItems().then(function () {
+                $('.componentItem').each(function () {
+                    fetchComponentUnits = false;
+                    let selectedItem = $(this).val();
+                    let unit = $(this).closest('tr').find('.item-componenet-unit');
+                    $(this).empty().append(ComponentItemOptionString).val(selectedItem).trigger('change');
+                    getItemUnits().then(function () {
+                        let unitId = unit.val();
+                        unit.empty().append(itemUnitsOptionString).val(unitId).trigger('change');
+                    })
+                });
+            });
+            getItemUnits().then(function () {
+                $('.itemUnit:valid').each(function () {
+                    let precedingUnitsString = '<option value>' + '@MyERP.Properties.Resources.Select' + '</option>';
+                    let succeedingUnitsString = '';
+                    let selectedItem = $(this).val();
+                    for (var i = 0; i < itemUnits.length; i++) {
+                        if (itemUnits[i].Id < selectedItem)
+                            precedingUnitsString += '<option value="' + itemUnits[i].Id + '">' + itemUnits[i].ArName + '</option>';
+                        else if (itemUnits[i].Id > selectedItem)
+                            succeedingUnitsString += '<option value="' + itemUnits[i].Id + '">' + itemUnits[i].ArName + '</option>';
+                    }
+                    $(this).prepend(precedingUnitsString);
+                    $(this).append(succeedingUnitsString);
+                });
+            });
+            getVendors().then(function () {
+                $('.vendor').each(function () {
+                    let selectedVendor = $(this).val();
+                    $(this).empty().append(vendorsOptionString).val(selectedVendor).trigger('change');
+                });
+            });
+            getcustomersgroups().then(function () {
+                $('.customersgroups').append(customersgroupsoptionstring);
+            })
+             /*getcustomersgroups().then(function () {
+                 $('.customersgroups').each(function () {
+                     let selectedcustomersgroups = $(this).val();
+                     $(this).empty().append(customersgroupsOptionString).val(selectedcustomersgroups).trigger('change');
+                 });
+        });*/
+        } else {
+            GetComponentItems().then(function () {
+                $('.componentItem').empty().append(ComponentItemOptionString);
+            });
+            getItemUnits().done(function () {
+                $('.itemUnit').empty().append(itemUnitsOptionString);
+            });
+            getVendors().done(function () {
+                $('.vendor').empty().append(vendorsOptionString);
+            });
+            getcustomersgroups().then(function () {
+                $('.customersgroups').append(customersgroupsoptionstring);
+            })
+            /*getcustomersgroups().done(function () {
+                $('.customersgroups').empty().append(customersgroupsOptionString);
+
+            });*/
+        }
+        let virtualQty = $('#VirtualQuantity').inputmask('unmaskedvalue') * 1;
+
+        $('.quantity').each(function () {
+            $(this).closest('tr').find('.comp-virtual-qty').val($(this).inputmask('unmaskedvalue') * virtualQty);
+        });
+    });
+//----------------------------------------------------------------------------------------//
+ //----------------------------- Set Code Number ----------------------------//
+    function setCodeNum() {
+        $.get('/Item/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+            if (AddItemBarcodeBasedOnItemCode == 'True') {
+                $('#itemPrices tr:first').find('.barcode').val(r)
+                $('#Code').val($(this).val());
+            }
+        });
+
+
+    }
+
+    //-----------------------------------------------------------//
+
+    //-------------------------------- if Checks --------------------------//
+    if ('@isECommerce' == 'True') {
+        $('.PriceBeforeDiscountTd').show();
+        $('.VendorTd').show();
+        $('.vendor').attr('required', 'required');
+    }
+
+    if ('@ProjectName' == 'True') {
+        $('.FactoryPriceTd').show();
+        $('.factory-price').attr('required','required');
+    }
+
+    if (isRepeat == 'True') {
+        $('#Id, #repeatLink, button.btn.btn-danger').remove();
+    }
+
+    if (CanChangeItemName == 'False') {
+        $('#ArName, #EnName').prop('readonly', 'readonly');
+    }
+
+    if (CanChangeProductNumber == 'False') {
+        $('#ProductNo').prop('readonly', 'readonly');
+    }
+
+    if (CanChangeBarcode == 'False') {
+        $('.barcode').prop('readonly', 'readonly');
+    }
+
+    $("#ItemURLImages option").attr('selected', 'selected');
+    $("#ItemURLImages").hide();
+    ItemTypeChange();
+    chechHasWarranty();
+    //---------------------------------------------------------------//
+
+    //---------------- On Change -----------------------//
+
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            if (EnterItemCodeManually != 'True') {
+                setCodeNum();
+            }
+        }
+    });
+
+    $('#DepartmentId').on('change', function () {
+        GetComponentItems().then(function () {
+            $('.componentItem').empty().append(ComponentItemOptionString);
+        });
+    });
+    $("#GetImage").click(function () {
+        $("#GetImage").fadeOut();
+        $('#UploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteIMG("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#ItemURLImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+    $('#HasWarranty').on('change', function () {
+        chechHasWarranty();
+    });
+    $('#ItemTypeId').on('change', function () {
+        ItemTypeChange();
+    });
+
+    $(document).on('change', '.itemUnit', function () {
+        let unit = $(this);
+        let isDefault = $(this).closest('tr').find('.isDefault').is(':checked');
+        if (unit.val() && itemUnits.length && !isDefault) {
+            getItemUnits().then(function () {
+                let equiv = itemUnits.filter(function (i) { return i.Id == unit.val(); })[0].Equivalent;
+                unit.closest('tr').find('.unit-equavalent').val(equiv);
+            });
+        } else if (isDefault)
+            unit.closest('tr').find('.unit-equavalent').val(1);
+        else {
+            unit.closest('tr').find('.unit-equavalent').val('');
+        }
+
+        @* //-------- to prevent repetetion of CustomerGp and ItemUnit ---------------//
+        let unitId = $(this).val();
+        let index = $(this).index('.itemUnit');
+        let customerGroup = $(this).closest('tr').find('.customersgroups').val();
+        let vendor = $(this).closest('tr').find('.vendor').val();
+
+        if (customerGroup > 0)
+            $('.itemUnit').each(function (i, elem) {
+                if (index != i && $(this).val() == unitId && $(this).closest('tr').find('.customersgroups').val() == customerGroup) {
+                    $('.itemUnit').eq(index).val(0).trigger('change');
+                    alert('@MyERP.Properties.Resources.ItIsNotPossibleToChooseTheSameUnitWithTheSameGroupOfClientsMoreThanOnce'+'!');
+                }
+            });*@
+
+        @*//-------- to prevent repetetion of Vendors and ItemUnit ---------------//
+        if (vendor > 0)
+            $('.itemUnit').each(function (i, elem) {
+                if (index != i && $(this).val() == unitId && $(this).closest('tr').find('.vendor').val() == vendor) {
+                    $('.itemUnit').eq(index).val(0).trigger('change');
+                    alert('@MyERP.Properties.Resources.ItIsNotPossibleToChooseTheSameUnitWithTheSameGroupOfSuppliersMoreThanOnce'+'!');
+                }
+            });
+        //-------------------------------------------------------------//*@
+
+        //-------------------------------------------------------------//
+    });
+
+    @*$(document).on('change', '.customersgroups', function () {
+        //-------- to prevent repetetion of CustomerGp and ItemUnit ---------------//
+        let customerGroup = $(this).val();
+        let index = $(this).index('.customersgroups');
+        let itemUnit = $(this).closest('tr').find('.itemUnit').val();
+        let vendor = $(this).closest('tr').find('.vendor').val();
+        if ($(this).val() > 0)
+            $('.customersgroups').each(function (i, elem) {
+                if (index != i && $(this).val() == customerGroup && $(this).closest('tr').find('.itemUnit').val() == itemUnit) {
+                    $('.customersgroups').eq(index).val(0).trigger('change');
+                    alert('@MyERP.Properties.Resources.ItIsNotPossibleToSelectTheSameGroupOfClientsWithTheSameUnitMoreThanOnce'+'!');
+                }
+            });
+
+        //-------- to prevent repetetion of Vendors and ItemUnit ---------------//
+        if (vendor > 0)
+            $('.itemUnit').each(function (i, elem) {
+                if (index != i && $(this).val() == itemUnit && $(this).closest('tr').find('.vendor').val() == vendor) {
+                    $('.itemUnit').eq(index).val(0).trigger('change');
+                    alert('@MyERP.Properties.Resources.ItIsNotPossibleToChooseTheSameGroupOfSuppliersWithTheSameUnitMoreThanOnce'+'!');
+                }
+            });
+        //-------------------------------------------------------------//
+
+    });*@
+
+    @*$(document).on('change', '.vendor', function (e) {
+        //------------- To Prevent Repetition of Vendors And ItemUnits
+        var vendor = $(this).val();
+        var index = $(this).index('.vendor');
+        let itemUnit = $(this).closest('tr').find('.itemUnit').val();
+        if ($(this).val() > 0)
+            $('.vendor').each(function (i, elem) {
+                if (index != i && $(this).val() == vendor && $(this).closest('tr').find('.itemUnit').val() == itemUnit) {
+                    $('.vendor').eq(index).val(0).trigger('change');
+                    alert('@MyERP.Properties.Resources.ItIsNotPossibleToChooseTheSameGroupOfSuppliersWithTheSameUnitMoreThanOnce'+'!');
+                }
+            });
+    });*@
+
+    @*$(document).on('change', '.vendor,.customersgroups,.itemUnit ', function (e) {
+        var selectedselect = this;
+        // console.log(selectedselect, "selectedselect");
+        $("#itemPrices tr").each(function (i, elem) {
+            var sel = $(this);
+            $("#itemPrices tr").each(function (j, elem) {
+                if (j <= i) return;
+                if (
+                    i != j
+                    &&
+                    $(this).find("td").eq(6).find('select').val() == sel.find("td").eq(6).find('select').val()
+                    &&
+                    $(this).find("td").eq(3).find('select').val() == sel.find("td").eq(3).find('select').val()
+                    &&
+                    $(this).find("td").eq(7).find('select').val() == sel.find("td").eq(7).find('select').val()) {
+
+                    $(selectedselect).val(0).trigger('change');
+                    alert("@MyERP.Properties.Resources.TheSameResourceCannotBeSelectedTwice"+"!!");
+                    return false;
+                }
+            });
+        });
+    });*@
+
+    $(document).on('change', '.componentItem', function () {
+        if ($(this).val() && fetchComponentUnits == true) {
+            let compItem = this;
+            getItemUnits().then(function () {
+                $(compItem).closest('tr').find('.item-componenet-unit').empty().append(itemUnitsOptionString);
+            });
+        } else if (!$(this).val())
+            $(this).closest('tr').find('.item-componenet-unit').empty();
+        fetchComponentUnits = true;
+    });
+
+    $(document).on('change', '.component-unit-equav, .unit-equavalent', function () {
+        if ($(this).inputmask('unmaskedvalue') * 1 == 0) {
+            $(this).val('');
+        }
+    });
+
+    $(document).on('keydown paste', '#itemComponents .quantity', function (e) {
+        e.preventDefault();
+    });
+
+    $(document).on('click', '.isDefault', function () {
+        $('.unit-equavalent').removeAttr('readonly');
+        if ($(this).is(':checked'))
+            $(this).closest('tr').find('.unit-equavalent').attr('readonly', 'readonly').val(1);
+    });
+    //---------------------------------------------------------------//
+    //---------------- functions ----------------//
+
+    function DeleteSingleIMG(url)
+    {
+        //$("#ItemURLImages option[value='" + url + "']").remove();
+        $("#BrowseImage").val('')
+        //$("img[src='" + url + "']").remove();
+    }
+
+    function DeleteIMG(url)
+    {
+         for (var i = 0; i < $('#ItemURLImages option').length; i++) {
+             if ($('#ItemURLImages option')[0].value == url)
+                    $('#ItemURLImages option')[0].remove();
+         }
+        //$("img[src='" + url + "']").remove();
+         $("#BrowseImage").val('');
+    }
+
+    function previewFile() {
+
+        var reader = new FileReader();
+
+        reader.addEventListener("load", function ()
+        {
+            if ('@isECommerce' == 'False')
+            {
+                $("#gallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteSingleIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+                imageData = reader.result;
+                console.log(imageData)
+            }
+            else
+            {
+                $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+                $("#ItemURLImages").append("<option style='float: left;' selected=selected>" + reader.result + "</option>");
+            }
+
+        }, false);
+
+        for (var i = 0; i < $("#BrowseImage")[0].files.length; i++) {
+            if ($("#BrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#BrowseImage")[0].files[i]);
+            }
+        }
+    }
+
+    function getItemUnits(itemId) {
+        return requestData('/Helper/ItemUnits?itemId=' + itemId).done(function (r) {
+            itemUnits = r;
+            itemUnitsOptionString = '<option value>' + '@MyERP.Properties.Resources.Select' + '</option>';
+            for (var i = 0; i < r.length; i++) {
+                itemUnitsOptionString += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+            }
+        });
+    }
+
+    function getVendors() {
+        return requestData('/Helper/Vendors').done(function (r) {
+            vendors = r;
+            vendorsOptionString = '<option value>' + '@MyERP.Properties.Resources.Select' + '</option>';
+                for (var i = 0; i < r.length; i++) {
+                    vendorsOptionString += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+        });
+    }
+
+    function getcustomersgroups() {
+        return requestData('/Helper/customersgroups').done(function (r) {
+            customersgroups = r;
+            customersgroupsoptionstring = '<option value>' + '@MyERP.Properties.Resources.Select' + '</option>';
+            for (var i = 0; i < r.length; i++) {
+                customersgroupsoptionstring += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+            }
+        });
+    }
+
+    function GetComponentItems() {
+        return requestData('/Item/GetComponentItems').done(function (r) {
+            ComponentItemId = r;
+            ComponentItemOptionString = '<option value>' + '@MyERP.Properties.Resources.Select' + '</option>';
+            for (var i = 0; i < r.length; i++) {
+                ComponentItemOptionString += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+            }
+        });
+    }
+
+    function itemAutoComplete() {
+        if ($('#ArName').val()) {
+            $.get('/Item/ItemSearch?searchWord=' + $('#ArName').val()).done(function (r) {
+                $('#ArName').autocomplete({
+                    source: r
+                });
+            });
+        }
+    }
+
+    function ItemTypeChange() {
+        if ($('#ItemTypeId').val() && $('#ItemTypeId').val() == 2 || $('#ItemTypeId').val() == 3) {
+            $('#itemComponents').closest('.row').show();
+            $('#itemComponents select, #itemComponents input').attr('required', 'required');
+            $('.price-toleranceQty').show().attr('required', 'required');
+            $('.price-toleranceQty').closest('td').show();
+            $('.price-toleranceQty-th').show();
+        } else {
+            $('#itemComponents').closest('.row').hide();
+            $('#itemComponents select, #itemComponents input').removeAttr('required');
+            $('.price-toleranceQty').val('').hide().removeAttr('required');
+            $('.price-toleranceQty').closest('td').hide();
+            $('.price-toleranceQty-th').hide();
+        }
+    }
+
+    function addToItemPrices() {
+        if ($('#itemPrices .form-control:invalid').length > 0) {
+            $('#itemPrices').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#itemPrices").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        }
+        else {
+            let ip = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" type = "text" /></td><td class="tabledit-edit-mode PriceBeforeDiscountTd" style="display:none;" ><input type="text" class="money PriceBeforeDiscount form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm" required /></td> <td class="tabledit-edit-mode"><select class="itemUnit form-control tabledit-input form-control-sm" required></select></td> <td class="tabledit-edit-mode"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="number" step="any" required value="1"  /></td> <td class="tabledit-edit-mode" style="display:none;"><input class="price-toleranceQty form-control tabledit-input form-control-sm" type="number" step="any" style="display:none;" /></td><td class="tabledit-edit-mode VendorTd" style="display:none;"><select id="VendorPrice" class="vendor form-control tabledit-input form-control-sm"></select></td><td class="tabledit-edit-mode FactoryPriceTd" style="display:none"><input type="text" class="money factory-price form-control tabledit-input form-control-sm" />' +
+                @*'@Html.Raw(isECommerce ? "<select id=VendorPrice class=vendor form-control tabledit-input form-control-sm required></select>" : "<input type=text class=money factory-price form-control tabledit-input form-control-sm style=display: none; required />")' +*@
+                '</td><td class="tabledit-edit-mode"><select id="customersgroups" class="customersgroups form-control tabledit-input form-control-sm" required></select></td><td class="tabledit-edit-mode"><input class="isDefault" name="isDefault" type="radio" /></td> <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr > ';
+
+            $('#itemPrices').append(ip);
+
+            if ('@isECommerce' == 'True') {
+                $('.PriceBeforeDiscountTd').show();
+                $('.VendorTd').show();
+                $('.vendor').attr('required', 'required');
+            }
+
+            if ('@ProjectName' == 'True') {
+                $('.FactoryPriceTd').show();
+                $('.factory-price').attr('required', 'required');
+            }
+
+            getItemUnits().then(function () {
+                $('#itemPrices .itemUnit:last').append(itemUnitsOptionString);
+            });
+
+            getVendors().then(function () {
+                $('#itemPrices .vendor:last').append(vendorsOptionString);
+            });
+            getcustomersgroups().then(function () {
+                // $('#itemPrices .customersgroups:last').append(customersgroupsOptionString);
+                $('#itemPrices tr:last').find('.customersgroups').append(customersgroupsoptionstring);
+            });
+
+            $('.money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+            });
+            $('#itemPrices input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#itemPrices tr:last select').select2();
+
+            if ($('#ItemTypeId').val() && $('#ItemTypeId').val() == 2 || $('#ItemTypeId').val() == 3) {
+                $('.price-toleranceQty').show().attr('required', 'required');
+                $('.price-toleranceQty').closest('td').show();
+                $('.price-toleranceQty-th').show();
+            }
+            if (CanChangeBarcode == 'False')
+                $('.barcode').prop('readonly', 'readonly');
+        }
+    }
+
+    function addToItemVendors() {
+        if ($('#itemVendors').find('.form-control:invalid').length > 0) {
+            $('#itemVendors').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#itemVendors").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        }
+        else {
+            var iv = '<tr><td >' +@MyERP.Properties.Resources.Supplier+'</td><td ><select class="vendor form-control tabledit-input form-control-sm" required></select></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            $('#itemVendors').append(iv);
+            $('#itemVendors .vendor:last').append(vendorsOptionString);
+        }
+        $('#itemVendors select:last').select2();
+    }
+
+    function AddToAlternativeItem() {
+        var Id = $('#AlternativeItemId').val();
+        if (Id > 0) {
+            var Name = $('#AlternativeItemId option:selected').text();
+            if ($('#AlternativeItems').find('.form-control:invalid').length > 0) {
+                $('#AlternativeItems').closest('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $("#AlternativeItems").find(".form-control:invalid").eq(0).offset().top - 80
+                }, 500);
+            }
+            else {
+                let valid = true;
+                $('#AlternativeItems tr').each(function () {
+                    var td = $(this);
+                    if ($('#AlternativeItemId').val() == td.find('.ItemId').val())
+                        valid = false;
+                });
+                if (valid == false)
+                    alert('@MyERP.Properties.Resources.ExistsBefore')
+                else {
+                    let tr = '<tr><td class="tabledit-edit-mode"><input class="ItemId form-control tabledit-input form-control-sm" hidden value="' +
+                        Id + '" /><label class="control-label form-control-sm">' +
+                        Name + '</label></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                    $('#AlternativeItems').append(tr);
+                }
+            }
+        }
+        else {
+            alert('@MyERP.Properties.Resources.AlternativeItem @MyERP.Properties.Resources.Required')
+        }
+        $('#AlternativeItemId').prop('selectedIndex', 0);
+        $('#AlternativeItemId').select2();
+    }
+
+    function addToItemComponents() {
+        if ($('#itemComponents').find('.form-control:invalid').length > 0) {
+            $('#itemComponents').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#itemComponents").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        } else {
+            var ic = '<tr><td class="tabledit-edit-mode"> <select class="componentItem form-control tabledit-input form-control-sm" required></select></td><td class="tabledit-edit-mode"><input class="comp-virtual-qty form-control tabledit-input form-control-sm" type="number" step="any"  required /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm small-number" type="number" step="any" required/></td><td class="tabledit-edit-mode"><select class="item-componenet-unit form-control tabledit-input form-control-sm" required></select></td><td class="tabledit-edit-mode"><input class="component-unit-equav form-control tabledit-input form-control-sm small-number" required /></td><td class="tabledit-edit-mode"><input class="component-tolerance form-control tabledit-input form-control-sm small-number" required /></td><td ><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr >';
+            $('#itemComponents').append(ic);
+
+            $('#itemComponents .componentItem:last').append(ComponentItemOptionString);
+            //$('#itemComponents .itemUnit:last').append(itemUnitsOptionString);
+            $('#itemComponents input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#itemComponents input.small-number').prop('type', 'text').inputmask({
+                alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#itemComponents tr:last select').select2();
+        }
+    }
+
+    function calculateComponentQuantities() {
+        let virtualQty = $('#VirtualQuantity').inputmask('unmaskedvalue') * 1;
+        $('.comp-virtual-qty').each(function () {
+            $(this).closest('tr').find('.quantity').val($(this).inputmask('unmaskedvalue') / virtualQty);
+        });
+    }
+
+    function chechHasWarranty() {
+        if ($('#HasWarranty').prop('checked')) {
+            $('.WarrantyDetails').show();
+        } else {
+            $('.WarrantyDetails').hide();
+            $('#WarrantyDays').val('');
+            $('#WarrantyMonths').val('');
+            $('#WarrantyYears').val('');
+        }
+    }
+
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+
+        if ($(tr).index() > 0) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length > 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).children("input[type|='text']").each(function () {
+                $(this).empty();
+            });
+        }
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+        }
+        else if ($(".form-control:invalid").length == 0) {
+                            let valid = true;
+                            var itemPrices = [];
+                            var itemVendors = [];
+            var itemComponents = [];
+            var AlternativeItems = [];
+            $('#itemPrices tr').each(function () {
+                                var td = $(this);
+                                var itemPrice = {
+                    Id: td.find('.item-price-id').val(),
+                    Barcode: td.find('.barcode').val() != '' ? td.find('.barcode').val() : null,
+                    Price: td.find('.price').inputmask('unmaskedvalue') ? td.find('.price').inputmask('unmaskedvalue') : 0,
+                    PriceBeforeDiscount: td.find('.PriceBeforeDiscount').inputmask('unmaskedvalue') ? td.find('.PriceBeforeDiscount').inputmask('unmaskedvalue') : 0,
+                    ItemUnitId: td.find('.itemUnit').val(),
+                    Equivalent:td.find('.unit-equavalent').val(),
+                    IsDefault: td.find('.isDefault').prop("checked"),
+                    ToleranceQty:td.find('.price-toleranceQty').inputmask('unmaskedvalue')*1,
+                    IsActive: true,
+                    IsDeleted: false,
+                    FactoryPrice: td.find('.factory-price').inputmask('unmaskedvalue') ? td.find('.factory-price').inputmask('unmaskedvalue') : 0,
+                    VendorId: td.find('#VendorPrice').val(),
+                    CustomerGroupId: td.find('#customersgroups').val()
+                };
+                            itemPrices.push(itemPrice);
+                        });
+                        if (itemPrices.filter(function (i) { return i.IsDefault == true }).length == 0) {
+                            valid = false;
+                            alert('@MyERP.Properties.Resources.ThereIsNoDefaultPrice'+'!');
+                        }
+            $('#itemVendors tr').each(function () {
+                var td = $(this);
+                var itemVendor = {
+                    VendorId: td.find('.vendor').val(),
+                    IsActive: true,
+                    IsDeleted: false
+                };
+                if (td.find('.vendor').val() > 0) {
+                    itemVendors.push(itemVendor);
+                }
+            });
+            $('#AlternativeItems tr').each(function () {
+                var td = $(this);
+                var AlternativeItem = {
+                    MainItemId: $('#Id').val(),
+                    ItemId: td.find('.ItemId').val(),
+                    IsDeleted: false
+                };
+                if (td.find('.ItemId').val() > 0) {
+                    AlternativeItems.push(AlternativeItem);
+                }
+            });
+
+            $('#itemComponents tr').each(function () {
+                        var td = $(this);
+                        var itemComponent = {
+                    ChildItemId: td.find('.componentItem').val(),
+                    ItemUnitId: td.find('.item-componenet-unit').val(),
+                    Quantity: td.find('.quantity').val(),
+                    UnitEquivalent: td.find('.component-unit-equav').val(),
+                    ToleranceQty: td.find('.component-tolerance').val(),
+                    IsActive: true,
+                    IsDeleted: false
+                };
+                if (td.find('.componentItem').val() > 0 && td.find('.quantity').val() > 0) {
+                    itemComponents.push(itemComponent);
+                }
+            });
+
+                //if (valid)
+                //    $('.vendor').each(function (i, elem) {
+                //        var sel = $(this);
+                //        $('.vendor').each(function (j, elem) {
+                //            if (j <= i) return;
+                //            if ($(this).val() != sel.val() ) {
+                //                valid = true;
+                //            }
+                //            else {
+                //                valid = false;
+                //                alert("لا يمكن اختيار نفس المورد مرتين!")
+                //                return false;
+                //            }
+                //        });
+                //    });
+
+
+                if (valid)
+
+                $("#itemPrices tr").each(function (i, elem) {
+
+                    var sel = $(this);
+
+                    //$("#itemPrices tr").each(function (j, elem) {
+                    //    if (j <= i) return;
+                    //    if (
+                    //        i != j
+                    //        &&
+                    //        $(this).find("td").eq(6).find('select').val() == sel.find("td").eq(6).find('select').val()
+                    //        &&
+                    //        $(this).find("td").eq(3).find('select').val() == sel.find("td").eq(3).find('select').val()
+                    //        &&
+                    //        $(this).find("td").eq(7).find('select').val() == sel.find("td").eq(7).find('select').val()) {
+
+                    //        alert("لا يمكن اختيار نفس المورد ومجموعة العملاء والوحدة مرتين!!");
+
+                    //        valid = false;
+
+                    //        return false;
+                    //    } else
+                    //        valid = true;
+
+                    //});
+                });
+
+
+                if (valid && $('#ItemTypeId').val() ==2 || $('#ItemTypeId').val() ==3)
+                itemComponents.some(function (itemComponent) {
+                    if (itemComponent.ChildItemId && itemComponent.Quantity) {
+                        valid = true;
+                    } else {
+                        valid = false;
+                        alert("@MyERP.Properties.Resources.PleaseEnsureThatAllItemComponentDataIsComplete"+"!");
+                        return true;
+                    }
+                });
+                let departmentItems = [];
+                if (valid)
+                    departmentItems = $.map($('.item-department-id:checked'), function (n) {
+                    return { ItemId: $('#Id').val(), DepartmentId: $(n).val() };
+                });
+               // console.log(data,"data");
+                if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                        type: "POST", contentType: "application/json",
+                    url: "/Item/AddEdit",
+                    data: JSON.stringify({
+                            Id: $('#Id').val(),
+                        Code: $('#Code').val(),
+                        ArName: $('#ArName').val(),
+                        EnName: $('#EnName').val(),
+                        OrderLimit: $('#OrderLimit').inputmask('unmaskedvalue') * 1,
+                        ItemGroupId: $('#ItemGroupId').val(),
+                        ItemTypeId: $('#ItemTypeId').val(),
+                        HasWarranty: $('#HasWarranty').prop("checked"),
+                        HasExpiry: $('#HasExpiry').prop("checked"),
+                        WarrantyDays: $('#WarrantyDays').inputmask('unmaskedvalue') * 1,
+                        WarrantyMonths: $('#WarrantyMonths').inputmask('unmaskedvalue') * 1,
+                        WarrantyYears: $('#WarrantyYears').inputmask('unmaskedvalue') * 1,
+                        DepartmentId: $('#DepartmentId').val(),
+                        ItemPrices: itemPrices,
+                        ItemVendors: itemVendors,
+                        ItemComponents: itemComponents,
+                        DepartmentItems: departmentItems,
+                        AlternativeItems: AlternativeItems,
+                        IsActive: $('#IsActive').val(),
+                        IsDeleted: $('#IsDeleted').val(),
+                        ProductNo: $('#ProductNo').val(),
+                        Notes: $('#Notes').val(),
+                        VirtualQuantity: $('#VirtualQuantity').inputmask('unmaskedvalue') * 1,
+                        ItemURLImages: $('#ItemURLImages').val(),
+                        ArNotes: $('#ArNotes').val(),
+                        KrNotes: $('#KrNotes').val(),
+                        EnDetails: $('#EnDetails').val(),
+                        ArDetails: $('#ArDetails').val(),
+                        KrDetails: $('#KrDetails').val(),
+                        KrName: $('#KrName').val(),
+                        Image: imageData,
+                        HasAccessory: $('#HasAccessory').prop("checked"),
+                        IsAccessory: $('#IsAccessory').prop("checked"),
+                        ItemCategoryId: $('#ItemCategoryId').val(),
+                        FieldsCodingId: $('#FieldsCodingId').val(),
+                        TaxPercentage: $('#TaxPercentage').val(),
+                        NotIncludeValueAddedTax: $('#NotIncludeValueAddedTax').prop("checked"),
+                    }),
+                    success: function (r) {
+                            if (r.success == true) {
+                                if (n == "new") {
+                                    window.location.replace("/Item/AddEdit");
+                                } else {
+
+                                    window.location.replace("/Item/Index");
+                                }
+                                //  console.log(data,"data");
+                                alert("@MyERP.Properties.Resources.Saved");
+                            } else if (r.success == false && r.barcodes) {
+                                var barcodesStr = '';
+                                for (var i = 0; i < r.barcodes.length; i++) {
+                                barcodesStr += r.barcodes[i] + ' ';
+                                }
+                                alert('@MyERP.Properties.Resources.Barcode ' + barcodesStr + ' @MyERP.Properties.Resources.Taken'+'!');
+                            }
+                            else if (r.success == "Item Code Is Used Before") {
+                                alert("@MyERP.Properties.Resources.CodeExistsBefore"+"!");
+                            }
+                            else
+                                alert("@MyERP.Properties.Resources.NotSaved"+"!");
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        alert("@MyERP.Properties.Resources.NotSaved"+"!");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+            }
+        }
+    }
+
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Item/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace("/Item/Index");
+                        }
+                        else if (r == 'False') {
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceededBecauseItemUsedInOtherTransactions');
+                            $('#preloader, #status').fadeOut();
+                        }
+                        else
+                            alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+</script>

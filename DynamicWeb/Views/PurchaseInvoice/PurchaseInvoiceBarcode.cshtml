@@ -1,0 +1,314 @@
+﻿@model MyERP.Models.PurchaseInvoice
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.PatchesBarcodeInPurchaseInvoice;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">
+                @MyERP.Properties.Resources.PatchesBarcodeInPurchaseInvoice
+            </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class=" card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-horizontal">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @if (Model != null && Model.Id > 0)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                    }
+                                    <div class="panel-group" id="accordion">
+                                        <div class="panel panel-default">
+                                            <div class="panel-body">
+                                                <div class="form-group row">
+                                                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                                    <div class="col-sm-5">
+                                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, @disabled = "disabled" } })
+                                                        <div class="invalid-feedback">
+                                                            @MyERP.Properties.Resources.Required
+                                                        </div>
+                                                    </div>
+
+                                                    <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.VoucherDate</label>
+                                                    <div class="col-sm-5">
+                                                        @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", @disabled = "disabled" } })
+
+                                                        <div class="invalid-feedback">
+                                                            @MyERP.Properties.Resources.Required
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group row">
+                                                    <label for="DepartmentId" class="col-sm-1 control-label">@MyERP.Properties.Resources.Department</label>
+                                                    <div class="col-sm-5">
+                                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
+                                                        <div class="invalid-feedback">
+                                                            @MyERP.Properties.Resources.Required
+                                                        </div>
+                                                    </div>
+
+                                                    <label for="WarehouseId" class="col-sm-1 control-label">@MyERP.Properties.Resources.WareHouse</label>
+                                                    <div class="col-sm-5">
+                                                        @Html.DropDownList("WarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required", @disabled = "disabled" })
+                                                        <div class="invalid-feedback">
+                                                            @MyERP.Properties.Resources.Required
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @*<hr />*@
+                                                @*<div class="form-group row">
+                                                        <label class="col-sm-1 control-label" for="selectedItems">الصنف</label>
+                                                        <div class="col-sm-5">
+                                                            <select id="selectedItems" class=" form-control"></select>
+                                                        </div>
+
+                                                        <hr />
+                                                    </div>*@
+                                                <hr />
+
+                                                @*<div style="display:none" class="panel panel-default">
+                                                    <div class="panel-body">
+                                                        <div class="scr">*@
+                                                @if (Model != null && Model.Id > 0)
+                                                {
+                                                    <input hidden id="selectedId" value="@Model.Id" />
+                                                }
+                                                @*<table class="table table-hover table-condensed">
+                                                                        <tbody id="PurchaseInvoiceDetails">
+
+                                                                            @foreach (var item in Model.PurchaseInvoiceDetails)
+                                                                            {
+                                                                                <tr class="scr">
+                                                                                    <td class="col-sm-3">
+                                                                                        <input type="hidden" class="item form-control" value="@item.ItemId" />
+                                                                                        <input type="hidden" class="item form-control" value="@item.ItemPrice.Barcode" />
+                                                                                        <label class="item-name">@item.Item.ArName</label>
+                                                                                    </td>
+
+                                                                                    <td class="width">
+                                                                                        <input class="quantity b" oninput="validity.valid||(value='');" type="number" step="any" value="@item.Qty" />
+                                                                                        <input type="hidden" class="quantityOnSystem" />
+                                                                                    </td>
+
+                                                                                </tr>
+                                                                            }
+
+                                                                        </tbody>
+                                                                    </table>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>*@
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="table-responsive">
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+
+                                    <table id="patchTable" class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Item</th>
+                                                <th>@MyERP.Properties.Resources.Patch</th>
+                                                <th>@MyERP.Properties.Resources.Qty </th>
+                                                <th>@MyERP.Properties.Resources.Print </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="item-patches"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    var generalItemId = @ViewBag.GeneralItemId;
+
+    $(document).ready(function () {
+       // $("#selectedItems").select2({ width: '60%' });
+        //$('#VoucherDiscountPercentage').inputmask({
+        //    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 5, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        //});
+        //$('.addtd').addClass('hidden');
+        //$('.addtd').removeClass('hidden');
+
+        showPatch();
+    });
+
+    async function fillDDLs() {
+        if ($('#DepartmentId').val()) {
+            $('#Id').val() ? null : setDocNum();
+            let warehouseId = $('#WarehouseId').val();
+            setWarehouseValues(warehouseId);
+         //   await getItemsByDepId();
+           // fillDirectExpenses();
+        }
+    }
+
+    fillDDLs();
+
+    let Warehouses;
+    //getDetails();
+
+    function setWarehouseValues(warehouseId) {
+        $('#WarehouseId').empty();
+        $.get('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function (r) {
+                Warehouses = r;
+                $('#WarehouseId').append($('<option>', {
+                    value:0,
+                    text: "@MyERP.Properties.Resources.Select"
+                }));
+                for (var i = 0; i < Warehouses.length; i++) {
+                    $('#WarehouseId').append($('<option>', {
+                        value: Warehouses[i].Id,
+                        text: Warehouses[i].ArName
+                    }));
+                }
+                warehouseId > 0 ? $('#WarehouseId').val(warehouseId).trigger('change') : null;
+                $('.WarehouseId').each(function () {
+                    var selectedWarehouse = $(this).val();
+                    $(this).empty();
+                    $(this).append($('<option>', {
+                        value: 0,
+                        text: "@MyERP.Properties.Resources.Select"
+                    }));
+                    for (var i = 0; i < Warehouses.length; i++) {
+                        $(this).append($('<option>', {
+                            value: Warehouses[i].Id,
+                            text: Warehouses[i].ArName
+                        }));
+                    }
+                    selectedWarehouse > 0 ? $(this).val(selectedWarehouse).trigger('change') : null;
+                });
+            });
+    }
+
+
+    @*async function getDetails() {
+        var details = [];
+        $('#PurchaseInvoiceDetails tr').each(function () {
+            var tr = $(this);
+
+            details.push({
+                itemName: tr.find('.item-name').text(),
+                itemId: tr.find('.item').val()
+            });
+        });
+
+        console.log(details,"DETAILSSS in serialpanels")
+
+        $('#selectedItems').empty();
+        details.some(function (detail) {
+            if (detail.itemId) {
+
+                $('#selectedItems').append($('<option>', {
+                    value: detail.itemId,
+                    text: detail.itemName
+                }));
+                var selectedItems = [];
+                $('#selectedItems').each(function () {
+                    $(this).children('option').each(function () {
+                        if ($.inArray(this.value, selectedItems) > -1) {
+                            $(this).remove()
+                        } else {
+                            selectedItems.push(this.value);
+                        }
+                    });
+                    selectedItems = [];
+                });
+            }
+            $('#selectedItems').val(@ViewBag.GeneralItemId);
+        });
+    }*@
+
+    //$('#selectedItems').on('change', function () {
+    //    showPatch($(this).val());
+    //});
+
+    // Patch table
+    function showPatch() {
+
+        let itemPatches = [];
+        let selectedId = $("#selectedId").val() !== "" ? $("#selectedId").val() : null;
+
+        $.get('/Helper/PatchesPerDoc?systemPageId=57' + '&selectedId=' + selectedId).done(function (r) {
+                itemPatches = r;
+            let tr = '';
+            for (var i = 0; i < itemPatches.length; i++) {
+                tr += ('<tr><td><label>' + itemPatches[i].ItemArName + '</label></td><td><input hidden class="itemId" value="' + itemPatches[i].ItemId + '" /><input hidden class="itemPatchId" value="' + itemPatches[i].PatchId + '" /><input hidden class="itemBarcode" value="' + itemPatches[i].ItemBarcode + '" /><label class="itemPatchExpireDate">' + (itemPatches[i].ExpiryDate != null ? convertToJavaScriptDate(itemPatches[i].ExpiryDate) : '') + '</label></td ><td>' + itemPatches[i].Qty + '</td><td><button class="btn btn-info js-patch">'+'@MyERP.Properties.Resources.Print'+'</button></td></tr > ');
+                    }
+
+                $('#item-patches').empty().append(tr);
+            });
+    }
+
+    //------------------- ConvertDate-------------
+    function convertToJavaScriptDate(value) {
+        console.log(value)
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+        // return (dt)
+    }
+
+    $("#patchTable").on('click', ".js-patch", function () {
+        var button = $(this);
+        var tr = button.closest("tr");
+        var itemBarcode = tr.find(".itemBarcode").val();
+        var expireDate = tr.find(".itemPatchExpireDate").text();
+        var barcode = itemBarcode +"-*-"+ expireDate;
+        var url = "/PurchaseInvoice/Barcode?barcode=" + barcode;
+        window.open(url, '_blank');
+
+    });
+
+</script>

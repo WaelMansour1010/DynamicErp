@@ -1,0 +1,17 @@
+﻿@model IEnumerable<MyERP.Models.CustomModels.SalaryItemDto>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @Html.DisplayFor(x => item.Code)
+        </td>
+        <td>
+            @Html.DisplayFor(x => item.ArName)
+        </td>
+        <td class="tabledit-edit-mode">
+            <input type="text" class="money amount form-control tabledit-input form-control-sm" value="@item.Amount" required />
+           <input type="hidden" class="salary-item-id" value="@item.SalaryItemId" />
+        </td>
+    </tr>
+}
