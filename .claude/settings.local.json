@@ -29,7 +29,10 @@
       "Bash(git -C \"F:/Source Code/DynamicErp/.claude/worktrees/flamboyant-bartik\" status --short)",
       "Bash(git -C \"F:/Source Code/DynamicErp/.claude/worktrees/flamboyant-bartik\" diff .claude/settings.local.json)",
       "Bash(git -C \"F:/Source Code/DynamicErp/.claude/worktrees/flamboyant-bartik\" add .claude/settings.local.json)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(gh pr:*)",
+      "Bash(where gh:*)",
+      "Bash(powershell -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object Source\")"
     ]
   }
 }
