@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "HRProject (http)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "HRProject/HRServices.csproj", "--launch-profile", "http"],
+      "port": 5208
+    },
+    {
+      "name": "HRProject (https)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "HRProject/HRServices.csproj", "--launch-profile", "https"],
+      "port": 7028
+    },
+    {
+      "name": "MyERP (IIS Express)",
+      "runtimeExecutable": "iisexpress",
+      "runtimeArgs": ["/config:.vs/MyERP/config/applicationhost.config", "/site:MyERP", "/apppool:Clr4IntegratedAppPool"],
+      "port": 44370
+    }
+  ]
+}
