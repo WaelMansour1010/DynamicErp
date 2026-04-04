@@ -330,6 +330,16 @@
                                                 </table>
                                             </div>
                                             <!------------------------------------------------------------------------------------>
+                                            <!------------------ تفاصيل الدفعة الجزئية (Pro-Rata) ------------------>
+                                            <div id="PartialBatchInfoPanel" class="card SearchResult" style="display:none;">
+                                                <div class="card-body">
+                                                    <div class="alert alert-info mb-0" style="font-size:0.9em; line-height:2;">
+                                                        <strong>تفاصيل احتساب الدفعة الجزئية:</strong><br/>
+                                                        <span id="PartialBatchInfoText"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!------------------------------------------------------------------------------------>
                                             <!------------------ Increase / Decrease Days ------------------>
                                             <div class="card SearchResult" style="display:none;">
                                                 <div class="card-body">
@@ -824,6 +834,9 @@ $(document).ready(function () {
         // Disable the select and update Select2 UI
         $('#selectedMergedUnits').prop('disabled', true).trigger('change.select2');
 
+        // ✅ جلب بيانات الدفعة الجزئية للعرض التوضيحي فقط (بدون إعادة حساب باقي الحقول)
+        UpdatePartialBatchInfo();
+
     } else {
         setDocNum();
         GetCurrentTaxPercentage();
@@ -881,9 +894,7 @@ $(document).ready(function () {
     $(document).on('change', '.Price', function () {
         CalculateDamageTotals();
     });
-    $(document).on('change', '#TerminationDate', function () {
-        CalculateDeficiencyAndExtraDaysTotals();
-    });
+    // تمت إزالة handler مكرر لـ #TerminationDate - يُعالج الآن عبر onchange="OnTerminationDateChange()" فقط
     //*********************************************************//
      //--------------- Other Functions -------------------//
     function setDocNum() {
@@ -977,19 +988,43 @@ $(document).ready(function () {
             $('#UnitTypeId').val(contract.UnitTypeId);
             $('#UnitType').val(contract.UnitType);
 
-            // ✅ ملء خانات أيام الزيادة/النقص (بدلاً من إضافة دفعة)
-            $('#IncreaseDaysNo').val(contract.IncreaseDays || 0);
-            $('#IncreaseDayValue').val((contract.IncreaseDayValue || contract.DailyRate || 0).toFixed(2));
-            $('#IncreaseDaysTotalValue').val((contract.IncreaseDaysTotalValue || contract.IncreaseAmount || 0).toFixed(2));
+            // ✅ ملء خانات أيام الزيادة/النقص
+            var incDays = contract.IncreaseDays || 0;
+            var decDays = contract.DecreaseDays || 0;
 
-            $('#DecreaseDaysNo').val(contract.DecreaseDays || 0);
-            $('#DecreaseDayValue').val((contract.DecreaseDayValue || contract.DailyRate || 0).toFixed(2));
-            $('#DecreaseDaysTotalValue').val((contract.DecreaseDaysTotalValue || contract.DecreaseAmount || 0).toFixed(2));
+            $('#IncreaseDaysNo').val(incDays);
+            $('#IncreaseDayValue').val(incDays > 0 ? (contract.IncreaseDayValue || contract.DailyRate || 0).toFixed(2) : '0.00');
+            $('#IncreaseDaysTotalValue').val(incDays > 0 ? (contract.IncreaseDaysTotalValue || contract.IncreaseAmount || 0).toFixed(2) : '0.00');
+
+            $('#DecreaseDaysNo').val(decDays > 0 ? decDays : '0');
+            $('#DecreaseDayValue').val(decDays > 0 ? (contract.DecreaseDayValue || contract.DailyRate || 0).toFixed(2) : '0.00');
+            $('#DecreaseDaysTotalValue').val(decDays > 0 ? (contract.DecreaseDaysTotalValue || contract.DecreaseAmount || 0).toFixed(2) : '0.00');
 
             // ✅ ملء الحقول الجديدة
             $('#TotalUnpaidAmount').val((contract.TotalUnpaidAmount || 0).toFixed(2));
             $('#InsuranceAmount').val((contract.InsuranceAmount || 0).toFixed(2));
             $('#RenterBalance').val((contract.RenterBalance || 0).toFixed(2));
+
+            // ✅ عرض تفاصيل الدفعة الجزئية (للمستخدم)
+            if (contract.PartialBatchDaysUsed > 0) {
+                var pDays    = contract.PartialBatchDaysUsed;
+                var pPeriod  = contract.PartialBatchPeriodDays;
+                var pRate    = (contract.PartialBatchDailyRate || 0).toFixed(2);
+                var pOrig    = (contract.PartialBatchOriginalTotal || 0).toFixed(2);
+                var pAmount  = (pDays * (contract.PartialBatchDailyRate || 0)).toFixed(2);
+
+                var infoHtml =
+                    'مدة الإقامة في آخر دفعة: <strong>' + pDays + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; من أصل: <strong>' + pPeriod + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; قيمة اليوم: <strong>' + pRate + '</strong>' +
+                    '&nbsp;|&nbsp; قيمة الدفعة الأصلية: <strong>' + pOrig + '</strong>' +
+                    '&nbsp;|&nbsp; المبلغ المستحق (نسبي): <strong>' + pAmount + '</strong>';
+
+                $('#PartialBatchInfoText').html(infoHtml);
+                $('#PartialBatchInfoPanel').show();
+            } else {
+                $('#PartialBatchInfoPanel').hide();
+            }
 
             // تاريخ آخر دفعة
             if (contract.LastBatchDueDate) {
@@ -1033,6 +1068,7 @@ $(document).ready(function () {
                         '<td class="tabledit-edit-mode">' +
                         '<input hidden class="PropertyContractBatchId" value="' + (detail.PropertyContractBatchId || 0) + '"/>' +
                         '<input hidden class="PropertyContractId" value="' + (detail.PropertyContractId || 0) + '"/>' +
+                        '<input hidden class="OriginalTotal" value="' + (detail.OriginalTotal || 0) + '"/>' +
                         '<label class="DetailSequenceNo control-label">' + (detail.BatchNo || '') + '</label>' +
                         '</td>' +
                         '<td class="tabledit-edit-mode">' +
@@ -1209,6 +1245,55 @@ $(document).ready(function () {
     // ========== 6. إضافة دالتي OnCalculationMethodChange و OnTerminationDateChange ===========
     // أضف هاتين الدالتين:
 
+
+    // ✅ جلب بيانات الدفعة الجزئية فقط (للعرض التوضيحي في Edit mode)
+    function UpdatePartialBatchInfo() {
+        if (!selectedContractId) { $('#PartialBatchInfoPanel').hide(); return; }
+        var searchText = $('#ContractNo').val() || '';
+        if (!searchText) { $('#PartialBatchInfoPanel').hide(); return; }
+        var terminationDateInput = $('#TerminationDate').val();
+        if (!terminationDateInput) { $('#PartialBatchInfoPanel').hide(); return; }
+        var dateObj = new Date(terminationDateInput);
+        if (isNaN(dateObj.getTime())) { $('#PartialBatchInfoPanel').hide(); return; }
+        var terminationDate = dateObj.getFullYear() + '-' +
+            String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+            String(dateObj.getDate()).padStart(2, '0');
+        var useContractEndDate = ($('#CalculationMethod').val() === '2');
+        var currentTerminationId = parseInt($('#Id').val()) || 0;
+
+        $.ajax({
+            url: '/PropertyContractTermination/GetPropertyContractTerminationDetails',
+            type: 'GET',
+            data: {
+                searchText: searchText,
+                terminationDate: terminationDate,
+                useContractEndDate: useContractEndDate,
+                excludeTerminationId: currentTerminationId
+            },
+            success: function (data) {
+                if (!data || data.length === 0) { $('#PartialBatchInfoPanel').hide(); return; }
+                var contract = data.find(function (c) { return c.ContractId == selectedContractId; });
+                if (!contract || !(contract.PartialBatchDaysUsed > 0)) {
+                    $('#PartialBatchInfoPanel').hide();
+                    return;
+                }
+                var pDays   = contract.PartialBatchDaysUsed;
+                var pPeriod = contract.PartialBatchPeriodDays;
+                var pRate   = (contract.PartialBatchDailyRate || 0).toFixed(2);
+                var pOrig   = (contract.PartialBatchOriginalTotal || 0).toFixed(2);
+                var pAmount = (pDays * (contract.PartialBatchDailyRate || 0)).toFixed(2);
+                var infoHtml =
+                    'مدة الإقامة في آخر دفعة: <strong>' + pDays + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; من أصل: <strong>' + pPeriod + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; قيمة اليوم: <strong>' + pRate + '</strong>' +
+                    '&nbsp;|&nbsp; قيمة الدفعة الأصلية: <strong>' + pOrig + '</strong>' +
+                    '&nbsp;|&nbsp; المبلغ المستحق (نسبي): <strong>' + pAmount + '</strong>';
+                $('#PartialBatchInfoText').html(infoHtml);
+                $('#PartialBatchInfoPanel').show();
+            },
+            error: function () { $('#PartialBatchInfoPanel').hide(); }
+        });
+    }
 
     function OnCalculationMethodChange() {
         var method = $('#CalculationMethod').val();
@@ -1511,7 +1596,7 @@ $(document).ready(function () {
                 visibleBatches.push({
                     date: new Date(batchDateStr),
                     remain: remain,
-                    originalTotal: originalTotal > 0 ? originalTotal : 13500
+                    originalTotal: originalTotal
                 });
             }
         });

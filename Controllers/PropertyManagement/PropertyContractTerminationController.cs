@@ -919,9 +919,67 @@ namespace MyERP.Controllers.PropertyManagement
                 }
 
 
-                // ✅ تفاصيل الدفعات بدون إضافة دفعة جديدة
-                var detailsList = relevantBatches.Select(b =>
+                // ✅ كشف الدفعة الجزئية الأخيرة واحتساب Pro-Rata
+                bool isLastBatchPartial = false;
+                decimal proRataFactorForLastBatch = 1m;
+                int lastBatchPeriodForProRata = 30;
+
+                if (relevantBatches.Count > 0)
                 {
+                    var lastRelevantBatch = relevantBatches.Last();
+                    if (lastRelevantBatch.BatchDate.HasValue)
+                    {
+                        var lastBatchStart = lastRelevantBatch.BatchDate.Value;
+                        int lastBatchPeriodDays = 30;
+
+                        // تحديد مدة الدفعة الأخيرة
+                        var nextAfterLast = allBatches
+                            .Where(b => b.BatchDate.HasValue && b.BatchDate.Value > lastBatchStart)
+                            .OrderBy(b => b.BatchDate)
+                            .FirstOrDefault();
+
+                        if (nextAfterLast != null && nextAfterLast.BatchDate.HasValue)
+                        {
+                            lastBatchPeriodDays = (nextAfterLast.BatchDate.Value.Date - lastBatchStart.Date).Days;
+                        }
+                        else
+                        {
+                            var sortedForPeriod = allBatches
+                                .Where(b => b.BatchDate.HasValue)
+                                .OrderBy(b => b.BatchDate)
+                                .ToList();
+                            if (sortedForPeriod.Count >= 2)
+                            {
+                                int li = sortedForPeriod.Count - 1;
+                                lastBatchPeriodDays = (sortedForPeriod[li].BatchDate.Value.Date - sortedForPeriod[li - 1].BatchDate.Value.Date).Days;
+                            }
+                        }
+                        if (lastBatchPeriodDays <= 0) lastBatchPeriodDays = 30;
+                        lastBatchPeriodForProRata = lastBatchPeriodDays;
+
+                        var lastBatchEnd = lastBatchStart.AddDays(lastBatchPeriodDays);
+
+                        // تاريخ التصفية ضمن فترة الدفعة الأخيرة → دفعة جزئية
+                        if (calculationEndDate.Date < lastBatchEnd.Date)
+                        {
+                            isLastBatchPartial = true;
+                            int daysUsed = (calculationEndDate.Date - lastBatchStart.Date).Days;
+                            if (daysUsed < 0) daysUsed = 0;
+                            proRataFactorForLastBatch = lastBatchPeriodDays > 0
+                                ? (decimal)daysUsed / lastBatchPeriodDays
+                                : 1m;
+
+                            // ✅ إلغاء أيام الزيادة - التصفية ضمن فترة دفعة موجودة (تُحتسب ضمن Pro-Rata)
+                            increaseDays = 0;
+                            increaseAmount = 0m;
+                        }
+                    }
+                }
+
+                // ✅ تفاصيل الدفعات بدون إضافة دفعة جديدة
+                var detailsList = relevantBatches.Select((b, index) =>
+                {
+                    bool isLastBatch = (index == relevantBatches.Count - 1);
                     var payment = payments.FirstOrDefault(p => p.PropertyContractBatchId == b.Id);
                     decimal totalPaid = payment?.TotalPaid ?? 0;
                     bool isFullyPaid = payment?.IsFullyDelivered == true;
@@ -936,6 +994,12 @@ namespace MyERP.Controllers.PropertyManagement
 
                     decimal remain = batchTotalOriginal - totalPaid;
                     remain = remain < 0 ? 0 : remain;
+
+                    // ✅ Pro-Rata للدفعة الجزئية الأخيرة (فقط إذا لم تُسدَّد)
+                    if (isLastBatch && isLastBatchPartial && !isFullyPaid && remain > 0)
+                    {
+                        remain = Math.Round(remain * proRataFactorForLastBatch, 2);
+                    }
 
                     return new
                     {
@@ -974,9 +1038,28 @@ namespace MyERP.Controllers.PropertyManagement
 
                 // ✅ حساب التأمين من العقد
                 decimal insuranceAmount = (a.InsuranceValue ?? 0);
-                DateTime? lastCompletedBatchDueDate = null;
+                // ✅ تاريخ آخر دفعة = تاريخ بداية آخر دفعة ذات صلة
+                DateTime? lastCompletedBatchDueDate = relevantBatches.LastOrDefault()?.BatchDate;
                 // ✅ حساب رصيد المستأجر (إن وجد)
-                decimal renterBalance = 0m; // يمكن حسابه من جدول آخر إذا لزم
+                decimal renterBalance = 0m;
+
+                // ✅ بيانات الدفعة الجزئية للعرض التوضيحي
+                int partialBatchDaysUsed = 0;
+                int partialBatchPeriodDays = 0;
+                decimal partialBatchDailyRate = 0m;
+                decimal partialBatchOriginalTotal = 0m;
+
+                if (isLastBatchPartial && relevantBatches.Count > 0)
+                {
+                    var lastBatchForInfo = relevantBatches.Last();
+                    partialBatchOriginalTotal = lastBatchForInfo.BatchTotal ?? 0m;
+                    partialBatchDaysUsed = (calculationEndDate.Date - (lastBatchForInfo.BatchDate?.Date ?? calculationEndDate.Date)).Days;
+                    if (partialBatchDaysUsed < 0) partialBatchDaysUsed = 0;
+                    partialBatchPeriodDays = lastBatchPeriodForProRata;
+                    partialBatchDailyRate = partialBatchPeriodDays > 0
+                        ? Math.Round(partialBatchOriginalTotal / partialBatchPeriodDays, 2)
+                        : 0m;
+                }
 
                 return new
                 {
@@ -1030,6 +1113,12 @@ namespace MyERP.Controllers.PropertyManagement
                     TotalUnpaidAmount = totalUnpaidAmount,
                     InsuranceAmount = insuranceAmount,
                     RenterBalance = renterBalance,
+
+                    // ✅ بيانات الدفعة الجزئية (للعرض التوضيحي فقط - لا تدخل في الإجمالي)
+                    PartialBatchDaysUsed = partialBatchDaysUsed,
+                    PartialBatchPeriodDays = partialBatchPeriodDays,
+                    PartialBatchDailyRate = partialBatchDailyRate,
+                    PartialBatchOriginalTotal = partialBatchOriginalTotal,
 
                     // ✅ تفاصيل الدفعات (بدون دفعة إضافية)
                     Details = detailsList
