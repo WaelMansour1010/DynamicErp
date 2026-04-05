@@ -1,0 +1,24 @@
+@{
+    if (ViewBag.ShowReport == true) { Layout = null; } else { Layout = "~/Views/Shared/_Layout.cshtml"; }
+    ViewBag.Title = "تقرير عروض أسعار السيارات";
+}
+<meta name="viewport" content="width=device-width" />
+@if (ViewBag.ShowReport == true)
+{
+    @Html.DevExpress().GetStyleSheets(new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout }, new StyleSheet { ExtensionSuite = ExtensionSuite.Editors }, new StyleSheet { ExtensionSuite = ExtensionSuite.Report })
+    @Html.DevExpress().GetScripts(new Script { ExtensionSuite = ExtensionSuite.NavigationAndLayout }, new Script { ExtensionSuite = ExtensionSuite.Editors }, new Script { ExtensionSuite = ExtensionSuite.Report })
+    @Html.DevExpress().WebDocumentViewer(settings => { settings.Name = "WebDocumentViewer"; }).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(new MyERP.Reporting.Reports.CarQuotationReport_Report(ViewBag.FromDate, ViewBag.ToDate, ViewBag.CustomerId, ViewBag.CarTypeId, ViewBag.CarModelId))).GetHtml()
+}
+else
+{
+    <div class="card-box"><div class="form-group row"><label class="col-sm-2">من</label><div class="col-sm-4"><input id="FromDate" type="date" class="form-control" /></div><label class="col-sm-2">إلى</label><div class="col-sm-4"><input id="ToDate" type="date" class="form-control" /></div></div>
+    <div class="form-group row"><label class="col-sm-2">العميل</label><div class="col-sm-4">@Html.DropDownList("CustomerId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+    <label class="col-sm-2">نوع السيارة</label><div class="col-sm-4">@Html.DropDownList("CarTypeId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div></div>
+    <div class="form-group row"><label class="col-sm-2">موديل السيارة</label><div class="col-sm-4">@Html.DropDownList("CarModelId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div></div>
+    <button class="btn btn-success" onclick="showReport()">@MyERP.Properties.Resources.ShowReport</button></div>
+}
+<script>
+function showReport(){
+window.open('/Report/CarQuotationReport?showReport=true&FromDate='+$('#FromDate').val()+'&ToDate='+$('#ToDate').val()+'&CustomerId='+$('#CustomerId').val()+'&CarTypeId='+$('#CarTypeId').val()+'&CarModelId='+$('#CarModelId').val(),'_blank');
+}
+</script>
