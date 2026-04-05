@@ -68,14 +68,14 @@
     </td>
     <td><input class="IsAltItem" type="checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td>
     <td class="tabledit-edit-mode">
-        <input type="hidden" class="car-type-id" />
-        <input type="hidden" class="car-model-id" />
-        <input type="hidden" class="car-color-id" />
-        <input type="hidden" class="chassis-no" />
-        <input type="hidden" class="engine-no" />
-        <input type="hidden" class="manufacturing-year" />
-        <input type="hidden" class="plate-no" />
-        <input type="hidden" class="vehicle-notes" />
+        <input type="hidden" class="car-type-id" value="@item.CarTypeId" />
+        <input type="hidden" class="car-model-id" value="@item.CarModelId" />
+        <input type="hidden" class="car-color-id" value="@item.CarColorId" />
+        <input type="hidden" class="chassis-no" value="@item.ChassisNo" />
+        <input type="hidden" class="engine-no" value="@item.EngineNo" />
+        <input type="hidden" class="manufacturing-year" value="@item.ManufacturingYear" />
+        <input type="hidden" class="plate-no" value="@item.PlateNo" />
+        <input type="hidden" class="vehicle-notes" value="@item.VehicleNotes" />
         <button class="btn btn-secondary vehicle-details-btn" data-toggle="modal" data-target="#vehicleDetailsModal" onclick="showVehicleDetails(this)">بيانات السيارة</button>
     </td>
     <td>

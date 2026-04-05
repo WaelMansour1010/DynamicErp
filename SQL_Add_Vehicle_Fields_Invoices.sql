@@ -34,6 +34,23 @@ IF COL_LENGTH('dbo.SalesInvoiceDetails', 'PlateNo') IS NULL
 IF COL_LENGTH('dbo.SalesInvoiceDetails', 'VehicleNotes') IS NULL
     ALTER TABLE dbo.SalesInvoiceDetails ADD VehicleNotes NVARCHAR(500) NULL;
 
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'CarTypeId') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD CarTypeId INT NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'CarModelId') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD CarModelId INT NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'CarColorId') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD CarColorId INT NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'ChassisNo') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD ChassisNo NVARCHAR(100) NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'EngineNo') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD EngineNo NVARCHAR(100) NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'ManufacturingYear') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD ManufacturingYear INT NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'PlateNo') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD PlateNo NVARCHAR(50) NULL;
+IF COL_LENGTH('dbo.SalesQuotationDetails', 'VehicleNotes') IS NULL
+    ALTER TABLE dbo.SalesQuotationDetails ADD VehicleNotes NVARCHAR(500) NULL;
+
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_PurchaseInvoiceDetails_CarType')
     ALTER TABLE dbo.PurchaseInvoiceDetails WITH NOCHECK ADD CONSTRAINT FK_PurchaseInvoiceDetails_CarType FOREIGN KEY (CarTypeId) REFERENCES dbo.CarType(Id);
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_PurchaseInvoiceDetails_CarModel')
@@ -48,12 +65,21 @@ IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SalesInvoiceDetai
 IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SalesInvoiceDetails_CarColor')
     ALTER TABLE dbo.SalesInvoiceDetails WITH NOCHECK ADD CONSTRAINT FK_SalesInvoiceDetails_CarColor FOREIGN KEY (CarColorId) REFERENCES dbo.CarColor(Id);
 
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SalesQuotationDetails_CarType')
+    ALTER TABLE dbo.SalesQuotationDetails WITH NOCHECK ADD CONSTRAINT FK_SalesQuotationDetails_CarType FOREIGN KEY (CarTypeId) REFERENCES dbo.CarType(Id);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SalesQuotationDetails_CarModel')
+    ALTER TABLE dbo.SalesQuotationDetails WITH NOCHECK ADD CONSTRAINT FK_SalesQuotationDetails_CarModel FOREIGN KEY (CarModelId) REFERENCES dbo.CarModel(Id);
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_SalesQuotationDetails_CarColor')
+    ALTER TABLE dbo.SalesQuotationDetails WITH NOCHECK ADD CONSTRAINT FK_SalesQuotationDetails_CarColor FOREIGN KEY (CarColorId) REFERENCES dbo.CarColor(Id);
+
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PurchaseInvoiceDetails_ChassisNo' AND object_id = OBJECT_ID('dbo.PurchaseInvoiceDetails'))
     CREATE NONCLUSTERED INDEX IX_PurchaseInvoiceDetails_ChassisNo ON dbo.PurchaseInvoiceDetails(ChassisNo) WHERE ChassisNo IS NOT NULL;
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_SalesInvoiceDetails_ChassisNo' AND object_id = OBJECT_ID('dbo.SalesInvoiceDetails'))
     CREATE NONCLUSTERED INDEX IX_SalesInvoiceDetails_ChassisNo ON dbo.SalesInvoiceDetails(ChassisNo) WHERE ChassisNo IS NOT NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_SalesQuotationDetails_ChassisNo' AND object_id = OBJECT_ID('dbo.SalesQuotationDetails'))
+    CREATE NONCLUSTERED INDEX IX_SalesQuotationDetails_ChassisNo ON dbo.SalesQuotationDetails(ChassisNo) WHERE ChassisNo IS NOT NULL;
 
 /* IMPORTANT:
-   If PurchaseInvoice_Insert/Update and SalesInvoice_Insert/Update SPs parse detail XML with explicit field list,
+   If PurchaseInvoice_Insert/Update, SalesInvoice_Insert/Update, and SalesQuotation_Insert/Update SPs parse detail XML with explicit field list,
    add the new XML nodes there as well (CarTypeId, CarModelId, CarColorId, ChassisNo, EngineNo, ManufacturingYear, PlateNo, VehicleNotes).
 */
