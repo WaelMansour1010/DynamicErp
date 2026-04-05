@@ -188,12 +188,12 @@
                                                 <td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Area form-control tabledit-input form-control-sm" disabled type="text" value="@item.Area" /></td>
                                                 <td><button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button></td>
                                                 <td class="tabledit-edit-mode">
-                                                    <input type="hidden" class="car-type-id" value="@item.CarTypeId" />
-                                                    <input type="hidden" class="car-model-id" value="@item.CarModelId" />
-                                                    <input type="hidden" class="car-color-id" value="@item.CarColorId" />
+                                                    <input type="hidden" class="car-type-id" value="@(item.CarType != null ? item.CarType.Id.ToString() : "")" />
+                                                    <input type="hidden" class="car-model-id" value="@(item.CarModel != null ? item.CarModel.Id.ToString() : "")" />
+                                                    <input type="hidden" class="car-color-id" value="@(item.CarColor != null ? item.CarColor.Id.ToString() : "")" />
                                                     <input type="hidden" class="chassis-no" value="@item.ChassisNo" />
                                                     <input type="hidden" class="engine-no" value="@item.EngineNo" />
-                                                    <input type="hidden" class="manufacturing-year" value="@item.ManufacturingYear" />
+                                                    <input type="hidden" class="manufacturing-year" value="@(item.ManufacturingYear.HasValue ? item.ManufacturingYear.Value.ToString("0") : "")" />
                                                     <input type="hidden" class="plate-no" value="@item.PlateNo" />
                                                     <input type="hidden" class="vehicle-notes" value="@item.VehicleNotes" />
                                                     <button class="btn btn-secondary vehicle-details-btn" data-toggle="modal" data-target="#vehicleDetailsModal" onclick="showVehicleDetails(this)">بيانات السيارة</button>
@@ -1211,7 +1211,9 @@
                         CarColorId: td.find('.car-color-id').val() || null,
                         ChassisNo: td.find('.chassis-no').val(),
                         EngineNo: td.find('.engine-no').val(),
-                        ManufacturingYear: td.find('.manufacturing-year').val() || null,
+                        ManufacturingYear: td.find('.manufacturing-year').val() === ''
+                            ? null
+                            : parseInt(td.find('.manufacturing-year').val(), 10),
                         PlateNo: td.find('.plate-no').val(),
                         VehicleNotes: td.find('.vehicle-notes').val(),
                     };
