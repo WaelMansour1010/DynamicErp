@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System.Data.Entity.Core.Objects;
 using System.Threading.Tasks;
 using MyERP.Repository;
+using System.Text.RegularExpressions;
 
 namespace MyERP.Controllers
 {
@@ -67,6 +68,8 @@ namespace MyERP.Controllers
         // GET: SalesQuotation/Edit/5
         public async Task<ActionResult> AddEdit(int? id)
         {
+            var session = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+            FillVehicleLookupData(session);
             SystemSetting systemSetting = await db.SystemSettings.AnyAsync() ? await db.SystemSettings.FirstOrDefaultAsync() : new SystemSetting();
             ViewBag.ServiceFeesPercentage = systemSetting.ServiceFeesPercentage.HasValue ? systemSetting.ServiceFeesPercentage : 0;
             ViewBag.ShowItemWidthAndHeightAndAreaInTransactions = systemSetting.ShowItemWidthAndHeightAndAreaInTransactions;
@@ -190,6 +193,9 @@ namespace MyERP.Controllers
         {
             try
             {
+                var chassisValidationMessage = ValidateVehicleChassisNumbers(SalesQuotation.SalesQuotationDetails, SalesQuotation.Id);
+                if (!string.IsNullOrEmpty(chassisValidationMessage))
+                    return Json(new { success = "false", message = chassisValidationMessage });
                 int userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
                 SalesQuotation.UserId = userId;
                 if (ModelState.IsValid)
@@ -278,6 +284,50 @@ namespace MyERP.Controllers
                 return Json(new { success = "false" });
             }
 
+        }
+
+        private void FillVehicleLookupData(string session)
+        {
+            ViewBag.CarTypesJson = JsonConvert.SerializeObject(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarModelsJson = JsonConvert.SerializeObject(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                b.CarTypeId,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarColorsJson = JsonConvert.SerializeObject(db.CarColors.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+        }
+        private string ValidateVehicleChassisNumbers(ICollection<SalesQuotationDetail> details, int quotationId)
+        {
+            if (details == null) return null;
+            var normalizedInQuotation = new HashSet<string>();
+            foreach (var detail in details)
+            {
+                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                var chassis = (detail.ChassisNo ?? "").Trim();
+                if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
+                    return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
+                if (!string.IsNullOrWhiteSpace(chassis))
+                {
+                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+                    if (normalizedInQuotation.Contains(normalized))
+                        return "رقم الشاسيه مكرر داخل نفس عرض السعر.";
+                    normalizedInQuotation.Add(normalized);
+                    var existsInQuotation = db.SalesQuotationDetails.Where(x => !x.IsDeleted && x.MainDocId != quotationId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInQuotation)
+                        return "رقم الشاسيه مستخدم مسبقاً في عرض سعر آخر.";
+                }
+            }
+            return null;
         }
 
         // POST: SalesQuotation/Delete/5

@@ -3073,6 +3073,15 @@
     <Compile Include="Reporting\Reports\CarEntrance_Report.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Reporting\Reports\CarCurrentStock_Report.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Reporting\Reports\CarSalesHistory_Report.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Reporting\Reports\CarQuotationReport_Report.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Reporting\Reports\PosClosing_Report.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -4585,6 +4594,9 @@
     <Content Include="Views\Report\StockTransferDetailsInPeriod.cshtml" />
     <Content Include="Views\Report\CashIssueAndReceipt.cshtml" />
     <Content Include="Views\Report\CarEntrance.cshtml" />
+    <Content Include="Views\Report\CarCurrentStock.cshtml" />
+    <Content Include="Views\Report\CarSalesHistory.cshtml" />
+    <Content Include="Views\Report\CarQuotationReport.cshtml" />
     <Content Include="Views\CarColor\AddEdit.cshtml" />
     <Content Include="Views\CarColor\Index.cshtml" />
     <Content Include="Views\CarModel\AddEdit.cshtml" />
