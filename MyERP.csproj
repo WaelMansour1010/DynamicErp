@@ -1121,9 +1121,6 @@
     <Compile Include="Models\DeleteAlternativeItemsByMainItemId_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
-    <Compile Include="Models\DelMe.cs">
-      <DependentUpon>ErpDBModel.tt</DependentUpon>
-    </Compile>
     <Compile Include="Models\Department.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>

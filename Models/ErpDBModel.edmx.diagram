@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>sp_GetPropertyReport
-      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="54">
+      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="16">
         <EntityTypeShape EntityType="MyERPModel.AdvertisingCompaign" Width="1.5" PointX="2.75" PointY="0.75" />
         <EntityTypeShape EntityType="MyERPModel.Area" Width="1.5" PointX="26.25" PointY="264.875" />
         <EntityTypeShape EntityType="MyERPModel.Bank" Width="1.5" PointX="24" PointY="256.25" />
@@ -1797,7 +1797,6 @@
         <AssociationConnector Association="MyERPModel.FK_PropertyBillRegisteration_PropertyContract" />
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsDueRevenueId" />
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsRevenueId" />
-        <EntityTypeShape EntityType="MyERPModel.DelMe" Width="1.5" PointX="15.375" PointY="21.75" />
         <EntityTypeShape EntityType="MyERPModel.PropertyPaymentHistory" Width="1.5" PointX="0.99386463360575239" PointY="6.0869795708390786" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_Property" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_PropertyBatch" />
@@ -1820,13 +1819,6 @@
         <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarModel" />
         <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarType" />
         <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarType" />
-        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarColor" />
-        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarColor" />
-        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarModel" />
-        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarModel" />
-        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarType" />
-        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarType" />
-        
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

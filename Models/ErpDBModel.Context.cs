@@ -454,7 +454,6 @@ namespace MyERP.Models
         public virtual DbSet<ItemInsertion> ItemInsertions { get; set; }
         public virtual DbSet<sysdiagram> sysdiagrams { get; set; }
         public virtual DbSet<PropertyBillRegisteration> PropertyBillRegisterations { get; set; }
-        public virtual DbSet<DelMe> DelMes { get; set; }
         public virtual DbSet<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
         public virtual DbSet<PropertyContractMergedUnit> PropertyContractMergedUnit { get; set; }
         public virtual DbSet<vw_PropertyBatchDetailed> vw_PropertyBatchDetailed { get; set; }
@@ -15437,7 +15436,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPrintItemsBarcode_Result>("GetPrintItemsBarcode", idParameter);
         }
     
-        public virtual ObjectResult<GetPropertyDueBatchDetails_Result> GetPropertyDueBatchDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> departmentId)
+        public virtual ObjectResult<GetPropertyDueBatchDetails_Result> GetPropertyDueBatchDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate)
         {
             var fromDateParameter = fromDate.HasValue ?
                 new ObjectParameter("FromDate", fromDate) :
@@ -15447,11 +15446,7 @@ namespace MyERP.Models
                 new ObjectParameter("ToDate", toDate) :
                 new ObjectParameter("ToDate", typeof(System.DateTime));
     
-            var departmentIdParameter = departmentId.HasValue ?
-                new ObjectParameter("DepartmentId", departmentId) :
-                new ObjectParameter("DepartmentId", typeof(int));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyDueBatchDetails_Result>("GetPropertyDueBatchDetails", fromDateParameter, toDateParameter, departmentIdParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyDueBatchDetails_Result>("GetPropertyDueBatchDetails", fromDateParameter, toDateParameter);
         }
     
         public virtual int PropertyDueBatch_Insert(ObjectParameter id, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, string details)

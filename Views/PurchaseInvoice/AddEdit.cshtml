@@ -296,7 +296,7 @@ else
                                                             <input type="hidden" class="car-color-id" value="@item.CarColorId" />
                                                             <input type="hidden" class="chassis-no" value="@item.ChassisNo" />
                                                             <input type="hidden" class="engine-no" value="@item.EngineNo" />
-                                                            <input type="hidden" class="manufacturing-year" value="@item.ManufacturingYear" />
+                                                            <input type="hidden" class="manufacturing-year" value="@(item.ManufacturingYear.HasValue ? item.ManufacturingYear.Value.ToString("0") : "")" />
                                                             <input type="hidden" class="plate-no" value="@item.PlateNo" />
                                                             <input type="hidden" class="vehicle-notes" value="@item.VehicleNotes" />
                                                             <button class="btn btn-secondary vehicle-details-btn" data-toggle="modal" data-target="#vehicleDetailsModal" onclick="showVehicleDetails(this)">بيانات السيارة</button>
@@ -1694,7 +1694,10 @@ else
                         CarColorId: td.find('.car-color-id').val() || null,
                         ChassisNo: td.find('.chassis-no').val(),
                         EngineNo: td.find('.engine-no').val(),
-                        ManufacturingYear: td.find('.manufacturing-year').val() || null,
+                        
+                        ManufacturingYear: td.find('.manufacturing-year').val() === ''
+                            ? null
+                            : parseInt(td.find('.manufacturing-year').val(), 10),
                         PlateNo: td.find('.plate-no').val(),
                         VehicleNotes: td.find('.vehicle-notes').val(),
                     };
