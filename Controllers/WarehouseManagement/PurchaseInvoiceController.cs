@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using MyERP.Repository;
 using Newtonsoft.Json;
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace MyERP.Controllers
 {
@@ -71,6 +72,7 @@ namespace MyERP.Controllers
         public async Task<ActionResult> AddEdit(int? id)
         {
             var session = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+            FillVehicleLookupData(session);
             //-- Check if this Purchase Invoice Exist In Cash Issue Voucher
             var check = db.CheckPurchaseInvoiceExistInCashIssueVoucher(id).FirstOrDefault();
             ViewBag.check = check;
@@ -295,6 +297,10 @@ namespace MyERP.Controllers
             
             if (ModelState.IsValid)
             {
+                var chassisValidationMessage = ValidateVehicleChassisNumbers(purchaseInvoice.PurchaseInvoiceDetails, purchaseInvoice.Id);
+                if (!string.IsNullOrEmpty(chassisValidationMessage))
+                    return Json(new { isValid = false, message = chassisValidationMessage }, JsonRequestBehavior.AllowGet);
+
                 db.Database.CommandTimeout = 300;
                 var id = purchaseInvoice.Id;
                 purchaseInvoice.IsDeleted = false;
@@ -439,6 +445,54 @@ namespace MyERP.Controllers
                     .ToArray();
 
             return Json(errors);
+        }
+
+        private void FillVehicleLookupData(string session)
+        {
+            ViewBag.CarTypesJson = JsonConvert.SerializeObject(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarModelsJson = JsonConvert.SerializeObject(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                b.CarTypeId,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarColorsJson = JsonConvert.SerializeObject(db.CarColors.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+        }
+        private string ValidateVehicleChassisNumbers(ICollection<PurchaseInvoiceDetail> details, int invoiceId)
+        {
+            if (details == null) return null;
+            var normalizedInInvoice = new HashSet<string>();
+            foreach (var detail in details)
+            {
+                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                var chassis = (detail.ChassisNo ?? "").Trim();
+                if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
+                    return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
+                if (!string.IsNullOrWhiteSpace(chassis))
+                {
+                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+                    if (normalizedInInvoice.Contains(normalized))
+                        return "رقم الشاسيه مكرر داخل نفس الفاتورة.";
+                    normalizedInInvoice.Add(normalized);
+                    var existsInPurchase = db.PurchaseInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInPurchase)
+                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة شراء أخرى.";
+                    var existsInSales = db.SalesInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInSales)
+                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة بيع.";
+                }
+            }
+            return null;
         }
 
 
