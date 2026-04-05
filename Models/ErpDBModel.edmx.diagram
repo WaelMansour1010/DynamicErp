@@ -1819,6 +1819,9 @@
         <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarModel" />
         <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarType" />
         <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarType" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
