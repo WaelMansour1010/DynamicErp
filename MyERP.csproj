@@ -1322,6 +1322,7 @@
     <Compile Include="Models\Extensions\Property.cs" />
     <Compile Include="Models\Extensions\PropertyBatch.cs" />
     <Compile Include="Models\Extensions\PropertyDetail.cs" />
+    <Compile Include="Models\Extensions\SalesQuotationDetail.Vehicle.cs" />
     <Compile Include="Models\E_Invoice_Get_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
