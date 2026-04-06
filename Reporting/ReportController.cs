@@ -1524,6 +1524,84 @@ namespace MyERP.Reporting
             return View(rpt);
 
         }
+        public ActionResult CarCurrentStock(DateTime? FromDate, DateTime? ToDate, int? WarehouseId, int? CarTypeId, int? CarModelId, bool? showReport, bool? print)
+        {
+            var report = new CarCurrentStock_Report(FromDate, ToDate, WarehouseId, CarTypeId, CarModelId);
+            ViewBag.ShowReport = showReport;
+            ViewBag.FromDate = FromDate;
+            ViewBag.ToDate = ToDate;
+            ViewBag.WarehouseId = WarehouseId;
+            ViewBag.CarTypeId = CarTypeId;
+            ViewBag.CarModelId = CarModelId;
+            if (showReport == true)
+            {
+                return View(report);
+            }
+            else if (print == true)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    report.ExportToPdf(ms, new PdfExportOptions() { ShowPrintDialogOnOpen = false });
+                    return File(ms.ToArray(), "application/pdf");
+                }
+            }
+            ViewBag.WarehouseId = new SelectList(db.Warehouses.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", WarehouseId);
+            ViewBag.CarTypeId = new SelectList(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarTypeId);
+            ViewBag.CarModelId = new SelectList(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarModelId);
+            return View();
+        }
+        public ActionResult CarSalesHistory(DateTime? FromDate, DateTime? ToDate, int? CarTypeId, int? CarModelId, int? CustomerId, bool? showReport, bool? print)
+        {
+            var report = new CarSalesHistory_Report(FromDate, ToDate, CarTypeId, CarModelId, CustomerId);
+            ViewBag.ShowReport = showReport;
+            ViewBag.FromDate = FromDate;
+            ViewBag.ToDate = ToDate;
+            ViewBag.CarTypeId = CarTypeId;
+            ViewBag.CarModelId = CarModelId;
+            ViewBag.CustomerId = CustomerId;
+            if (showReport == true)
+            {
+                return View(report);
+            }
+            else if (print == true)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    report.ExportToPdf(ms, new PdfExportOptions() { ShowPrintDialogOnOpen = false });
+                    return File(ms.ToArray(), "application/pdf");
+                }
+            }
+            ViewBag.CarTypeId = new SelectList(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarTypeId);
+            ViewBag.CarModelId = new SelectList(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarModelId);
+            ViewBag.CustomerId = new SelectList(db.Customers.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CustomerId);
+            return View();
+        }
+        public ActionResult CarQuotationReport(DateTime? FromDate, DateTime? ToDate, int? CustomerId, int? CarTypeId, int? CarModelId, bool? showReport, bool? print)
+        {
+            var report = new CarQuotationReport_Report(FromDate, ToDate, CustomerId, CarTypeId, CarModelId);
+            ViewBag.ShowReport = showReport;
+            ViewBag.FromDate = FromDate;
+            ViewBag.ToDate = ToDate;
+            ViewBag.CustomerId = CustomerId;
+            ViewBag.CarTypeId = CarTypeId;
+            ViewBag.CarModelId = CarModelId;
+            if (showReport == true)
+            {
+                return View(report);
+            }
+            else if (print == true)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    report.ExportToPdf(ms, new PdfExportOptions() { ShowPrintDialogOnOpen = false });
+                    return File(ms.ToArray(), "application/pdf");
+                }
+            }
+            ViewBag.CustomerId = new SelectList(db.Customers.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CustomerId);
+            ViewBag.CarTypeId = new SelectList(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarTypeId);
+            ViewBag.CarModelId = new SelectList(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarModelId);
+            return View();
+        }
 
         private FileResult ExportDocument(byte[] document, string format, string fileName, bool isInline)
         {

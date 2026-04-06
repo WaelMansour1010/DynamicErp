@@ -67,6 +67,18 @@
         <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button>
     </td>
     <td><input class="IsAltItem" type="checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td>
+    <td class="tabledit-edit-mode">
+        <input type="hidden" class="car-type-id" value="@item.CarTypeId" />
+        <input type="hidden" class="car-model-id" value="@item.CarModelId" />
+        <input type="hidden" class="car-color-id" value="@item.CarColorId" />
+        <input type="hidden" class="chassis-no" value="@item.ChassisNo" />
+        <input type="hidden" class="engine-no" value="@item.EngineNo" />
+        <input type="hidden" class="manufacturing-year" value="@item.ManufacturingYear" />
+        <input type="hidden" class="plate-no" value="@item.PlateNo" />
+        <input type="hidden" class="vehicle-notes" value="@item.VehicleNotes" />
+        <input type="hidden" class="vehicle-stock-id" value="@item.VehicleStockId" />
+        <button class="btn btn-secondary vehicle-details-btn" data-toggle="modal" data-target="#vehicleDetailsModal" onclick="showVehicleDetails(this)">بيانات السيارة</button>
+    </td>
     <td>
         <a href="javascript:void(0);" onclick="deleteElement(this)">
             <i class="fas fa-trash-alt"></i>
@@ -109,4 +121,3 @@
         }); 
     });
 </script>
-

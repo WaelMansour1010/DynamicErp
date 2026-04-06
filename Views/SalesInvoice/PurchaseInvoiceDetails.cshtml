@@ -68,6 +68,17 @@
         <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button>
     </td>
     <td><input class="IsAltItem" type="checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td>
+    <td class="tabledit-edit-mode">
+        <input type="hidden" class="car-type-id" />
+        <input type="hidden" class="car-model-id" />
+        <input type="hidden" class="car-color-id" />
+        <input type="hidden" class="chassis-no" />
+        <input type="hidden" class="engine-no" />
+        <input type="hidden" class="manufacturing-year" />
+        <input type="hidden" class="plate-no" />
+        <input type="hidden" class="vehicle-notes" />
+        <button class="btn btn-secondary vehicle-details-btn" data-toggle="modal" data-target="#vehicleDetailsModal" onclick="showVehicleDetails(this)">بيانات السيارة</button>
+    </td>
     <td>
         <a href="javascript:void(0);" onclick="deleteElement(this)">
             <i class="fas fa-trash-alt"></i>
@@ -139,4 +150,3 @@
         });
     });
 </script>
-

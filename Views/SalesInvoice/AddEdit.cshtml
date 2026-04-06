@@ -455,6 +455,7 @@
                                                 @*<th class="Warranty">@MyERP.Properties.Resources.Warranty</th>*@
                                                 <th>@MyERP.Properties.Resources.Details</th>
                                                 <th>@MyERP.Properties.Resources.AlternativeItems</th>
+                                                <th>بيانات السيارة</th>
                                                 <th>@MyERP.Properties.Resources.Delete</th>
                                             </tr>
                                         </thead>
@@ -545,6 +546,18 @@
                                                                 <i class="fe-refresh-ccw"></i>
                                                             </a>
                                                         </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="car-type-id" value="@item.CarTypeId" />
+                                                            <input type="hidden" class="car-model-id" value="@item.CarModelId" />
+                                                            <input type="hidden" class="car-color-id" value="@item.CarColorId" />
+                                                            <input type="hidden" class="chassis-no" value="@item.ChassisNo" />
+                                                            <input type="hidden" class="engine-no" value="@item.EngineNo" />
+                                                            <input type="hidden" class="manufacturing-year" value="@item.ManufacturingYear" />
+                                                            <input type="hidden" class="plate-no" value="@item.PlateNo" />
+                                                            <input type="hidden" class="vehicle-notes" value="@item.VehicleNotes" />
+                                                            <input type="hidden" class="vehicle-stock-id" value="@item.VehicleStockId" />
+                                                            <button class="btn btn-secondary vehicle-details-btn" type="button" onclick="openVehicleStockModal(this)">اختيار سيارة</button>
+                                                        </td>
                                                         <td>
                                                             <a href="javascript:void(0);" onclick="deleteElement(this)">
                                                                 <i class="fas fa-trash-alt"></i>
@@ -606,6 +619,18 @@
                                                     <a href="javascript:void(0);" onclick="AlternativeItems(this)">
                                                         <i class="fe-refresh-ccw"></i>
                                                     </a>
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="hidden" class="car-type-id" />
+                                                    <input type="hidden" class="car-model-id" />
+                                                    <input type="hidden" class="car-color-id" />
+                                                    <input type="hidden" class="chassis-no" />
+                                                    <input type="hidden" class="engine-no" />
+                                                    <input type="hidden" class="manufacturing-year" />
+                                                    <input type="hidden" class="plate-no" />
+                                                    <input type="hidden" class="vehicle-notes" />
+                                                    <input type="hidden" class="vehicle-stock-id" />
+                                                    <button class="btn btn-secondary vehicle-details-btn" type="button" onclick="openVehicleStockModal(this)">اختيار سيارة</button>
                                                 </td>
                                                 <td>
                                                     <a href="javascript:void(0);" onclick="deleteElement(this)" data-toggle="modal" @*data-target="#exampleModalCenter"*@>
@@ -1405,6 +1430,31 @@
         </div>
     </div>
 </div>
+<div id="vehicleDetailsModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">بيانات السيارة</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="vehicleCurrentRowIndex" />
+                <div class="form-group"><label>نوع السيارة</label><select id="vehicleCarTypeId" class="form-control"></select></div>
+                <div class="form-group"><label>موديل السيارة</label><select id="vehicleCarModelId" class="form-control"></select></div>
+                <div class="form-group"><label>لون السيارة</label><select id="vehicleCarColorId" class="form-control"></select></div>
+                <div class="form-group"><label>رقم الشاسيه</label><input id="vehicleChassisNo" class="form-control" maxlength="100" /></div>
+                <div class="form-group"><label>رقم المحرك</label><input id="vehicleEngineNo" class="form-control" maxlength="100" /></div>
+                <div class="form-group"><label>سنة الصنع</label><input id="vehicleManufacturingYear" class="form-control" type="number" min="1900" max="2100" /></div>
+                <div class="form-group"><label>رقم اللوحة</label><input id="vehiclePlateNo" class="form-control" maxlength="50" /></div>
+                <div class="form-group"><label>ملاحظات المركبة</label><textarea id="vehicleNotes" class="form-control" maxlength="500"></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="saveVehicleDetails()">حفظ</button>
+                <button type="button" class="btn btn-light" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div id="itemWarranty" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1635,6 +1685,26 @@
 <!-- End Of Alternative Items Modal -->
 
 
+
+<div id="vehicleStockModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">اختيار سيارة من المخزون</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered table-sm">
+                    <thead>
+                        <tr><th>الشاسيه</th><th>النوع/الموديل/اللون</th><th>سنة الصنع</th><th>المحرك</th><th>تاريخ الشراء</th><th>تكلفة الشراء</th><th>المخزن</th><th></th></tr>
+                    </thead>
+                    <tbody id="vehicleStockResults"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     //------- Variables Declaration ------- //
     var ShowSerialNumbers = '@Html.Raw(ViewBag.ShowSerialNumbers)';
@@ -1649,6 +1719,9 @@
     let items = [];
     let custIems = [];
     let itemsOptionString = '';
+    let carTypes = [];
+    let carModels = [];
+    let carColors = [];
     let includeFees = false;
     var fileReader;
     var imageURI = "";
@@ -1662,6 +1735,9 @@
     var currentItemTr;
     var selectedItemRowToEdit;
     var ItemSerialsNumbers = $('#Id').val()? '@Html.Raw(ViewBag.SerialNumbers)':'';
+    carTypes = @Html.Raw(ViewBag.CarTypesJson ?? "[]");
+    carModels = @Html.Raw(ViewBag.CarModelsJson ?? "[]");
+    carColors = @Html.Raw(ViewBag.CarColorsJson ?? "[]");
     var CustomerDebitBalance;
     var CreditLimitAmount;
     var AllowCreditLimit;
@@ -2901,7 +2977,7 @@
                 "@Html.Raw(Model != null ? "" : "required ")" + ' disabled readonly></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any"' +
                 "@Html.Raw(Model != null ? "" : "required ")" + ' /></td><td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm"' +
                 "@Html.Raw(Model != null ? "" : "required ")" + ' /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountPerc form-control tabledit-input form-control-sm" value="0" /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountValue form-control tabledit-input form-control-sm" value="0" /></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxPercentage form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxValue form-control tabledit-input form-control-sm money" /></td><td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly /></td><td class="tabledit-edit-mode showProfit"><input type="number" step="any" class="showProfit avgCost form-control form-control-sm" readonly /></td><td class="tabledit-edit-mode showProfit"><input type="text" class="showProfit avgCostProfit quantityInWarehouse form-control form-control-sm" readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td> <td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Width form-control tabledit-input form-control-sm" type="text" /></td><td class="tabledit-edit-mode ItemArea" style = "display:none;" > <input class="Height form-control tabledit-input form-control-sm" type="text" /></td ><td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Area form-control tabledit-input form-control-sm" type="text" disabled /></td><td class="tabledit-edit-mode"><button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">' +
-                "@MyERP.Properties.Resources.Details" + '</button></td><td><input class="IsAltItem" type = "checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td><td><a href="javascript:void(0);" onclick="deleteElement(this)" data-toggle="modal"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                "@MyERP.Properties.Resources.Details" + '</button></td><td><input class="IsAltItem" type = "checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td><td class="tabledit-edit-mode"><input type="hidden" class="car-type-id" /><input type="hidden" class="car-model-id" /><input type="hidden" class="car-color-id" /><input type="hidden" class="chassis-no" /><input type="hidden" class="engine-no" /><input type="hidden" class="manufacturing-year" /><input type="hidden" class="plate-no" /><input type="hidden" class="vehicle-notes" /><input type="hidden" class="vehicle-stock-id" /><button class="btn btn-secondary vehicle-details-btn" type="button" onclick="openVehicleStockModal(this)">اختيار سيارة</button></td><td><a href="javascript:void(0);" onclick="deleteElement(this)" data-toggle="modal"><i class="fas fa-trash-alt"></i></a></td></tr>';
             $('#SalesInvoiceDetails').append(tr);
             if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
                 $('.UnitClass').show();
@@ -3728,7 +3804,7 @@
             }
 
             let tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" /></td><td onclick="showSearchModal()" class="tabledit-edit-mode popupCell"><input type="hidden" class="item form-control tabledit-input form-control-sm"  /><input hidden type="text"  class="item-name form-control tabledit-input form-control-sm"  /><span  class="Add-Button" style="font-size: 25px; color: limegreen;margin-right:50%;"><i class="fas fa-plus"></i></span><label style="width:200px" class="name control-label tabledit-input"></label></td> <td class="tabledit-edit-mode expiry" style="display:none;"><input class="PatchCode form-control tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode expiry" style="display:none;"><input readonly class="ExpiryDate form-control tabledit-input form-control-sm" /><input class="PatchId form-control tabledit-input form-control-sm" hidden/> <input class="itemId form-control tabledit-input form-control-sm" hidden/></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" /><input type="hidden" class="quantityOnSystem form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" disabled></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent small-number form-control tabledit-input form-control-sm" type="number" step="any"  /></td><td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm"' + (CanChangeItemPrice != 'True' ? 'readonly' : '') + ' /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountPerc form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;" ><input type="number" step="any" class="DiscountValue form-control tabledit-input form-control-sm" /></td ><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxPercentage form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxValue form-control tabledit-input form-control-sm money"/></td><td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly /></td><td class="tabledit-edit-mode showProfit"  ><input type="number" step="any" class="showProfit avgCost form-control form-control-sm" readonly /></td><td class="tabledit-edit-mode showProfit" > <input type="text" class="showProfit avgCostProfit quantityInWarehouse form-control form-control-sm" readonly /></td ><td class="tabledit-edit-mode"><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode" style="display:' + state + ';"><select class="item-warehouseId form-control tabledit-input form-control-sm"></select></td> <td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Width form-control tabledit-input form-control-sm" type="text" /></td><td class="tabledit-edit-mode ItemArea" style = "display:none;" > <input class="Height form-control tabledit-input form-control-sm" type="text" /></td ><td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Area form-control tabledit-input form-control-sm" type="text" disabled /></td><td class="tabledit-edit-mode"> <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">' +
-                '@MyERP.Properties.Resources.Details' + '</button></td><td><input class="IsAltItem" type = "checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                '@MyERP.Properties.Resources.Details' + '</button></td><td><input class="IsAltItem" type = "checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td><td class="tabledit-edit-mode"><input type="hidden" class="car-type-id" /><input type="hidden" class="car-model-id" /><input type="hidden" class="car-color-id" /><input type="hidden" class="chassis-no" /><input type="hidden" class="engine-no" /><input type="hidden" class="manufacturing-year" /><input type="hidden" class="plate-no" /><input type="hidden" class="vehicle-notes" /><input type="hidden" class="vehicle-stock-id" /><button class="btn btn-secondary vehicle-details-btn" type="button" onclick="openVehicleStockModal(this)">اختيار سيارة</button></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
 
           //  let tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" /></td><td onclick="showSearchModal()" class="tabledit-edit-mode popupCell"><input type="hidden" class="item form-control tabledit-input form-control-sm"  /><input hidden type="text"  class="item-name form-control tabledit-input form-control-sm"  /><span  class="Add-Button" style="font-size: 25px; color: limegreen;margin-right:50%;" data-toggle="modal" data-target=".bs-example-modal-lg"><i class="fas fa-plus"></i></span><label style="width:200px" class="name control-label tabledit-input"></label></td><td class="tabledit-edit-mode expiry" style="display:none;"><input readonly class="ExpiryDate form-control tabledit-input form-control-sm" /><input class="PatchId form-control tabledit-input form-control-sm" hidden/> <input class="itemId form-control tabledit-input form-control-sm" hidden/></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" /><input type="hidden" class="quantityOnSystem form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" disabled></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent small-number form-control tabledit-input form-control-sm" type="number" step="any"  /></td><td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm"' + (CanChangeItemPrice != 'True' ? 'readonly' : '') + ' /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountPerc form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;" ><input type="number" step="any" class="DiscountValue form-control tabledit-input form-control-sm" /></td ><td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly /></td><td class="tabledit-edit-mode showProfit"  ><input type="number" step="any" class="showProfit avgCost form-control form-control-sm" readonly /></td><td class="tabledit-edit-mode showProfit" > <input type="text" class="showProfit avgCostProfit quantityInWarehouse form-control form-control-sm" readonly /></td ><td class="tabledit-edit-mode"><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td><td class="tabledit-edit-mode"> <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">تفاصيل</button></td><td ' + state + '><button type="button"  onclick="ShowWarehouses(this)" class="btn btn-primary" id="MoreThanOneStore" data-toggle="modal" data-target="#exampleModalCenter"><i class="fas fa-warehouse"></i></button></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
 
@@ -4162,6 +4238,133 @@
         var dt = new Date(parseFloat(results[1]));
         return dt.getFullYear() + "-" + zeroPadded((dt.getMonth() + 1)) + "-" + zeroPadded(dt.getDate());
     }
+
+    var vehicleSelectionRow = null;
+    var vehicleStockLookupCache = [];
+
+    function applyVehicleStockQuantityState(tr) {
+        let hasVehicleStock = (tr.find('.vehicle-stock-id').val() || '').trim() !== '';
+        if (hasVehicleStock) {
+            tr.find('.quantity').val(1).prop('readonly', true);
+        } else {
+            tr.find('.quantity').prop('readonly', false);
+        }
+    }
+
+    function openVehicleStockModal(btn) {
+        vehicleSelectionRow = $(btn).closest('tr');
+        let itemPriceId = vehicleSelectionRow.find('.item').val();
+        let item = items.filter(function (i) { return i.ItemPriceId == itemPriceId; })[0];
+        if (!item || !item.Id) {
+            Swal.fire({ title: 'اختر الصنف أولاً', text: ' ', icon: 'info', confirmButtonText: '@MyERP.Properties.Resources.Ok', confirmButtonColor: '#3085d6' });
+            return;
+        }
+        $('#vehicleStockResults').html('<tr><td colspan="8">...تحميل</td></tr>');
+        $.get('/SalesInvoice/GetAvailableVehicleStock?itemId=' + item.Id).done(function (rows) {
+            vehicleStockLookupCache = rows || [];
+            let html = '';
+            if (!rows || rows.length == 0) {
+                html = '<tr><td colspan="8">لا توجد سيارات متاحة لهذا الصنف</td></tr>';
+            } else {
+                rows.forEach(function (r) {
+                    let desc = (r.CarTypeName || '') + ' / ' + (r.CarModelName || '') + ' / ' + (r.CarColorName || '');
+                    html += '<tr>' +
+                        '<td>' + (r.ChassisNo || '') + '</td>' +
+                        '<td>' + desc + '</td>' +
+                        '<td>' + (r.ManufacturingYear || '') + '</td>' +
+                        '<td>' + (r.EngineNo || '') + '</td>' +
+                        '<td>' + (r.PurchaseDate ? ToJavaScriptDate(r.PurchaseDate) : '') + '</td>' +
+                        '<td>' + (r.PurchaseCost || '') + '</td>' +
+                        '<td>' + (r.WarehouseName || '') + '</td>' +
+                        '<td><button type="button" class="btn btn-sm btn-primary" onclick="selectVehicleStock(' + r.Id + ')">اختيار</button></td>' +
+                        '</tr>';
+                });
+            }
+            $('#vehicleStockResults').html(html);
+            $('#vehicleStockModal').modal('show');
+        });
+    }
+    function selectVehicleStock(id) {
+        let r = vehicleStockLookupCache.filter(function (x) { return x.Id == id; })[0];
+        if (!r) return;
+        vehicleSelectionRow.find('.vehicle-stock-id').val(r.Id);
+        vehicleSelectionRow.find('.chassis-no').val(r.ChassisNo || '');
+        vehicleSelectionRow.find('.engine-no').val(r.EngineNo || '');
+        vehicleSelectionRow.find('.car-type-id').val(r.CarTypeId || '');
+        vehicleSelectionRow.find('.car-model-id').val(r.CarModelId || '');
+        vehicleSelectionRow.find('.car-color-id').val(r.CarColorId || '');
+        vehicleSelectionRow.find('.manufacturing-year').val(r.ManufacturingYear || '');
+        vehicleSelectionRow.find('.plate-no').val(r.PlateNo || '');
+        vehicleSelectionRow.find('.vehicle-notes').val(r.VehicleNotes || '');
+        applyVehicleStockQuantityState(vehicleSelectionRow);
+        $('#vehicleStockModal').modal('hide');
+    }
+
+    $('#SalesInvoiceDetails tr').each(function () { applyVehicleStockQuantityState($(this)); });
+
+    $(document).on('input change', '#SalesInvoiceDetails .quantity', function () {
+        let tr = $(this).closest('tr');
+        if ((tr.find('.vehicle-stock-id').val() || '').trim() !== '') {
+            $(this).val(1);
+        }
+    });
+
+    function bindVehicleLookups() {
+        $('#vehicleCarTypeId').empty().append('<option value="">@MyERP.Properties.Resources.Select</option>');
+        carTypes.forEach(function (t) { $('#vehicleCarTypeId').append('<option value="' + t.Id + '">' + t.ArName + '</option>'); });
+        $('#vehicleCarColorId').empty().append('<option value="">@MyERP.Properties.Resources.Select</option>');
+        carColors.forEach(function (c) { $('#vehicleCarColorId').append('<option value="' + c.Id + '">' + c.ArName + '</option>'); });
+    }
+    function fillVehicleModels(typeId, selectedModelId) {
+        $('#vehicleCarModelId').empty().append('<option value="">@MyERP.Properties.Resources.Select</option>');
+        carModels.filter(function (m) { return m.CarTypeId == typeId; }).forEach(function (m) {
+            $('#vehicleCarModelId').append('<option value="' + m.Id + '">' + m.ArName + '</option>');
+        });
+        if (selectedModelId) { $('#vehicleCarModelId').val(selectedModelId); }
+    }
+    function showVehicleDetails(e) {
+        bindVehicleLookups();
+        let tr = $(e).closest('tr');
+        $('#vehicleCurrentRowIndex').val(tr.index());
+        $('#vehicleCarTypeId').val(tr.find('.car-type-id').val());
+        fillVehicleModels($('#vehicleCarTypeId').val(), tr.find('.car-model-id').val());
+        $('#vehicleCarColorId').val(tr.find('.car-color-id').val());
+        $('#vehicleChassisNo').val(tr.find('.chassis-no').val());
+        $('#vehicleEngineNo').val(tr.find('.engine-no').val());
+        $('#vehicleManufacturingYear').val(tr.find('.manufacturing-year').val());
+        $('#vehiclePlateNo').val(tr.find('.plate-no').val());
+        $('#vehicleNotes').val(tr.find('.vehicle-notes').val());
+    }
+    $('#vehicleCarTypeId').on('change', function () { fillVehicleModels($(this).val(), null); });
+    function saveVehicleDetails() {
+        let tr = $('#SalesInvoiceDetails tr').eq($('#vehicleCurrentRowIndex').val());
+        tr.find('.car-type-id').val($('#vehicleCarTypeId').val());
+        tr.find('.car-model-id').val($('#vehicleCarModelId').val());
+        tr.find('.car-color-id').val($('#vehicleCarColorId').val());
+        tr.find('.chassis-no').val($('#vehicleChassisNo').val());
+        tr.find('.engine-no').val($('#vehicleEngineNo').val());
+        tr.find('.manufacturing-year').val($('#vehicleManufacturingYear').val());
+        tr.find('.plate-no').val($('#vehiclePlateNo').val());
+        tr.find('.vehicle-notes').val($('#vehicleNotes').val());
+        $('#vehicleDetailsModal').modal('hide');
+    }
+    function validateChassisNumbersForSales() {
+        let map = {};
+        let valid = true;
+        $('#SalesInvoiceDetails tr').each(function () {
+            let chassisNo = ($(this).find('.chassis-no').val() || '').trim().toLowerCase();
+            let vehicleStockId = ($(this).find('.vehicle-stock-id').val() || "").trim();
+            if (chassisNo && !vehicleStockId) { valid = false; return false; }
+            if (chassisNo) {
+                if (map[chassisNo]) { valid = false; return false; }
+                map[chassisNo] = true;
+            }
+        });
+        if (!valid) {
+            Swal.fire({ title: 'رقم الشاسيه مكرر داخل نفس الفاتورة', text: ' ', icon: 'info', confirmButtonText: '@MyERP.Properties.Resources.Ok', confirmButtonColor: '#3085d6' });
+        }
+        return valid;
+    }
     function showItemDetials(e) {
         let itemPrice = $(e).closest('tr').find('.item');
        // console.log(itemPrice);
@@ -4546,6 +4749,15 @@
                         Area: td.find('.Area').val(),
                         ItemTaxPercentage: td.find('.ItemTaxPercentage').val(),
                         ItemTaxValue: td.find('.ItemTaxValue').inputmask('unmaskedvalue'),
+                        CarTypeId: td.find('.car-type-id').val() || null,
+                        CarModelId: td.find('.car-model-id').val() || null,
+                        CarColorId: td.find('.car-color-id').val() || null,
+                        ChassisNo: td.find('.chassis-no').val(),
+                        EngineNo: td.find('.engine-no').val(),
+                        ManufacturingYear: td.find('.manufacturing-year').val() || null,
+                        PlateNo: td.find('.plate-no').val(),
+                        VehicleNotes: td.find('.vehicle-notes').val(),
+                        VehicleStockId: td.find('.vehicle-stock-id').val() || null,
 
                     };
                     if ($('#UseMultiWarehousesInSalesInvoice').prop('checked') && td.find('.item-warehouseId').val() == 0) {
@@ -4566,6 +4778,9 @@
             });
             if (valid) {
                 valid = SalesInvoiceDetails.length > 0 ? true : false;
+                if (valid) {
+                    valid = validateChassisNumbersForSales();
+                }
                 !valid ? Swal.fire({
                     title: '@MyERP.Properties.Resources.AllDetailsRequired',
                     text: " ", icon: 'info', showCancelButton: false,
