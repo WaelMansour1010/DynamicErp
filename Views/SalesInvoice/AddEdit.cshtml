@@ -4240,6 +4240,7 @@
     }
 
     var vehicleSelectionRow = null;
+    var vehicleStockLookupCache = [];
     function openVehicleStockModal(btn) {
         vehicleSelectionRow = $(btn).closest('tr');
         let itemPriceId = vehicleSelectionRow.find('.item').val();
@@ -4250,6 +4251,7 @@
         }
         $('#vehicleStockResults').html('<tr><td colspan="8">...تحميل</td></tr>');
         $.get('/SalesInvoice/GetAvailableVehicleStock?itemId=' + item.Id).done(function (rows) {
+            vehicleStockLookupCache = rows || [];
             let html = '';
             if (!rows || rows.length == 0) {
                 html = '<tr><td colspan="8">لا توجد سيارات متاحة لهذا الصنف</td></tr>';
@@ -4273,20 +4275,18 @@
         });
     }
     function selectVehicleStock(id) {
-        $.get('/SalesInvoice/GetAvailableVehicleStock?itemId=' + items.filter(function (i) { return i.ItemPriceId == vehicleSelectionRow.find('.item').val(); })[0].Id).done(function (rows) {
-            let r = rows.filter(function (x) { return x.Id == id; })[0];
-            if (!r) return;
-            vehicleSelectionRow.find('.vehicle-stock-id').val(r.Id);
-            vehicleSelectionRow.find('.chassis-no').val(r.ChassisNo || '');
-            vehicleSelectionRow.find('.engine-no').val(r.EngineNo || '');
-            vehicleSelectionRow.find('.car-type-id').val(r.CarTypeId || '');
-            vehicleSelectionRow.find('.car-model-id').val(r.CarModelId || '');
-            vehicleSelectionRow.find('.car-color-id').val(r.CarColorId || '');
-            vehicleSelectionRow.find('.manufacturing-year').val(r.ManufacturingYear || '');
-            vehicleSelectionRow.find('.plate-no').val(r.PlateNo || '');
-            vehicleSelectionRow.find('.vehicle-notes').val(r.VehicleNotes || '');
-            $('#vehicleStockModal').modal('hide');
-        });
+        let r = vehicleStockLookupCache.filter(function (x) { return x.Id == id; })[0];
+        if (!r) return;
+        vehicleSelectionRow.find('.vehicle-stock-id').val(r.Id);
+        vehicleSelectionRow.find('.chassis-no').val(r.ChassisNo || '');
+        vehicleSelectionRow.find('.engine-no').val(r.EngineNo || '');
+        vehicleSelectionRow.find('.car-type-id').val(r.CarTypeId || '');
+        vehicleSelectionRow.find('.car-model-id').val(r.CarModelId || '');
+        vehicleSelectionRow.find('.car-color-id').val(r.CarColorId || '');
+        vehicleSelectionRow.find('.manufacturing-year').val(r.ManufacturingYear || '');
+        vehicleSelectionRow.find('.plate-no').val(r.PlateNo || '');
+        vehicleSelectionRow.find('.vehicle-notes').val(r.VehicleNotes || '');
+        $('#vehicleStockModal').modal('hide');
     }
 
     function bindVehicleLookups() {

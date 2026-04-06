@@ -1743,6 +1743,8 @@ ORDER BY vs.PurchaseDate DESC, vs.Id DESC";
 
                 if (!detail.VehicleStockId.HasValue)
                     return "يجب اختيار السيارة من مخزون السيارات المتاح.";
+                if (detail.Qty > 1)
+                    return "لا يمكن بيع أكثر من سيارة واحدة بنفس السطر عند اختيار سيارة من المخزون.";
 
                 string sql = @"SELECT COUNT(1) FROM dbo.VehicleStock WHERE Id = @Id AND IsDeleted = 0 AND VehicleStatusId = 1 AND ItemId = @ItemId";
                 var valid = db.Database.SqlQuery<int>(sql, new SqlParameter("@Id", detail.VehicleStockId.Value), new SqlParameter("@ItemId", detail.ItemId)).FirstOrDefault() > 0;
@@ -1765,7 +1767,7 @@ SET VehicleStatusId = 3, SalesInvoiceId = @SalesInvoiceId, SalesInvoiceDetailId 
     UpdatedDate = GETDATE(), ItemId = @ItemId, EngineNo = @EngineNo, CarTypeId=@CarTypeId, CarModelId=@CarModelId, CarColorId=@CarColorId,
     ManufacturingYear=@ManufacturingYear, PlateNo=@PlateNo, VehicleNotes=@VehicleNotes
 WHERE Id = @VehicleStockId AND IsDeleted = 0 AND VehicleStatusId = 1";
-                var rows = db.Database.ExecuteSqlCommand(sql,
+                db.Database.ExecuteSqlCommand(sql,
                     new SqlParameter("@SalesInvoiceId", salesInvoiceId),
                     new SqlParameter("@SalesInvoiceDetailId", detail.Id),
                     new SqlParameter("@SalesDate", (object)invoice.VoucherDate ?? DBNull.Value),
