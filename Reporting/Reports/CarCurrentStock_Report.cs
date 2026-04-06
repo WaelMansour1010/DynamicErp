@@ -36,6 +36,8 @@ namespace MyERP.Reporting.Reports
             DataSource = sqlDataSource;
             DataMember = "CarCurrentStock_Get";
 
+            TopMargin.HeightF = 20;
+            BottomMargin.HeightF = 20;
             //TopMargin.HeightF = 20;
             //BottomMargin.HeightF = 20;
 
