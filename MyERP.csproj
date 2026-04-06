@@ -760,6 +760,9 @@
     <Compile Include="Models\CarColor.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\CarCurrentStock_Get_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\CarEntrance.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -773,6 +776,12 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\CarModel.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CarQuotationReport_Get_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CarSalesHistory_Get_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\CarSalesInvoice.cs">
@@ -5035,11 +5044,20 @@
     <EmbeddedResource Include="Reporting\Reports\BalanceReview2_Report.resx">
       <DependentUpon>BalanceReview2_Report.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\CarCurrentStock_Report.resx">
+      <DependentUpon>CarCurrentStock_Report.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\CarEntranceWorkOrder_Report.resx">
       <DependentUpon>CarEntranceWorkOrder_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\AllCustomersSales.resx">
       <DependentUpon>AllCustomersSales.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\CarQuotationReport_Report.resx">
+      <DependentUpon>CarQuotationReport_Report.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\CarSalesHistory_Report.resx">
+      <DependentUpon>CarSalesHistory_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\DueOwnersPaymentsReport.resx">
       <DependentUpon>DueOwnersPaymentsReport.cs</DependentUpon>

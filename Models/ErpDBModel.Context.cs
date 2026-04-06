@@ -19251,5 +19251,80 @@ namespace MyERP.Models
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("GetGeneralLedgerByParent", parentAccountIdParameter, fromDateParameter, toDateParameter, departmentIdParameter);
         }
+    
+        public virtual ObjectResult<CarCurrentStock_Get_Result> CarCurrentStock_Get(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> warehouseId, Nullable<int> carTypeId, Nullable<int> carModelId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var warehouseIdParameter = warehouseId.HasValue ?
+                new ObjectParameter("WarehouseId", warehouseId) :
+                new ObjectParameter("WarehouseId", typeof(int));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarCurrentStock_Get_Result>("CarCurrentStock_Get", fromDateParameter, toDateParameter, warehouseIdParameter, carTypeIdParameter, carModelIdParameter);
+        }
+    
+        public virtual ObjectResult<CarQuotationReport_Get_Result> CarQuotationReport_Get(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> customerId, Nullable<int> carTypeId, Nullable<int> carModelId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var customerIdParameter = customerId.HasValue ?
+                new ObjectParameter("CustomerId", customerId) :
+                new ObjectParameter("CustomerId", typeof(int));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarQuotationReport_Get_Result>("CarQuotationReport_Get", fromDateParameter, toDateParameter, customerIdParameter, carTypeIdParameter, carModelIdParameter);
+        }
+    
+        public virtual ObjectResult<CarSalesHistory_Get_Result> CarSalesHistory_Get(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> carTypeId, Nullable<int> carModelId, Nullable<int> customerId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            var customerIdParameter = customerId.HasValue ?
+                new ObjectParameter("CustomerId", customerId) :
+                new ObjectParameter("CustomerId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarSalesHistory_Get_Result>("CarSalesHistory_Get", fromDateParameter, toDateParameter, carTypeIdParameter, carModelIdParameter, customerIdParameter);
+        }
     }
 }
