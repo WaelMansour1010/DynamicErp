@@ -4241,6 +4241,16 @@
 
     var vehicleSelectionRow = null;
     var vehicleStockLookupCache = [];
+
+    function applyVehicleStockQuantityState(tr) {
+        let hasVehicleStock = (tr.find('.vehicle-stock-id').val() || '').trim() !== '';
+        if (hasVehicleStock) {
+            tr.find('.quantity').val(1).prop('readonly', true);
+        } else {
+            tr.find('.quantity').prop('readonly', false);
+        }
+    }
+
     function openVehicleStockModal(btn) {
         vehicleSelectionRow = $(btn).closest('tr');
         let itemPriceId = vehicleSelectionRow.find('.item').val();
@@ -4286,8 +4296,18 @@
         vehicleSelectionRow.find('.manufacturing-year').val(r.ManufacturingYear || '');
         vehicleSelectionRow.find('.plate-no').val(r.PlateNo || '');
         vehicleSelectionRow.find('.vehicle-notes').val(r.VehicleNotes || '');
+        applyVehicleStockQuantityState(vehicleSelectionRow);
         $('#vehicleStockModal').modal('hide');
     }
+
+    $('#SalesInvoiceDetails tr').each(function () { applyVehicleStockQuantityState($(this)); });
+
+    $(document).on('input change', '#SalesInvoiceDetails .quantity', function () {
+        let tr = $(this).closest('tr');
+        if ((tr.find('.vehicle-stock-id').val() || '').trim() !== '') {
+            $(this).val(1);
+        }
+    });
 
     function bindVehicleLookups() {
         $('#vehicleCarTypeId').empty().append('<option value="">@MyERP.Properties.Resources.Select</option>');
