@@ -2793,6 +2793,12 @@
     <Compile Include="Models\VacationRequest.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\VehicleStatu.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\VehicleStock.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Vendor.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2815,6 +2821,9 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Vendor_Get_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\vw_AvailableVehicleStock.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\vw_PropertyBatchDetailed.cs">

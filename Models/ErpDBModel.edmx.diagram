@@ -1822,6 +1822,22 @@
         <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarColor" />
         <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarModel" />
         <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarType" />
+        <EntityTypeShape EntityType="MyERPModel.VehicleStatu" Width="1.5" PointX="0.31105799242437726" PointY="0.72700698707579026" />
+        <EntityTypeShape EntityType="MyERPModel.VehicleStock" Width="1.5" PointX="5.8135522053640116" PointY="27.431398285288083" />
+        <EntityTypeShape EntityType="MyERPModel.vw_AvailableVehicleStock" Width="1.5" PointX="2.6250101545010738" PointY="12.109961694157665" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_Items" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_PurchaseInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_PurchaseInvoiceDetails" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_VehicleStock" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_SalesInvoiceDetails" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_VehicleStock" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_VehicleStatus" />
+        <AssociationConnector Association="MyERPModel.FK_VehicleStock_Warehouse" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

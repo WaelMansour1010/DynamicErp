@@ -14,6 +14,12 @@ namespace MyERP.Models
     
     public partial class PurchaseInvoiceDetail
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public PurchaseInvoiceDetail()
+        {
+            this.VehicleStocks = new HashSet<VehicleStock>();
+        }
+    
         public int Id { get; set; }
         public int MainDocId { get; set; }
         public int ItemId { get; set; }
@@ -40,14 +46,6 @@ namespace MyERP.Models
         public Nullable<int> UpdatedId { get; set; }
         public string Notes { get; set; }
         public string PatchCode { get; set; }
-        public Nullable<int> CarTypeId { get; set; }
-        public Nullable<int> CarModelId { get; set; }
-        public Nullable<int> CarColorId { get; set; }
-        public string ChassisNo { get; set; }
-        public string EngineNo { get; set; }
-        public Nullable<int> ManufacturingYear { get; set; }
-        public string PlateNo { get; set; }
-        public string VehicleNotes { get; set; }
         public string ChassisNo { get; set; }
         public string VehicleNotes { get; set; }
         public Nullable<int> CarTypeId { get; set; }
@@ -66,5 +64,7 @@ namespace MyERP.Models
         public virtual CarColor CarColor { get; set; }
         public virtual CarModel CarModel { get; set; }
         public virtual CarType CarType { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<VehicleStock> VehicleStocks { get; set; }
     }
 }

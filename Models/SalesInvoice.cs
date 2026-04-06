@@ -28,6 +28,7 @@ namespace MyERP.Models
             this.SalesOrdersSalesInvoices = new HashSet<SalesOrdersSalesInvoice>();
             this.SalesReturns = new HashSet<SalesReturn>();
             this.SalesInvoicePrintQueues = new HashSet<SalesInvoicePrintQueue>();
+            this.VehicleStocks = new HashSet<VehicleStock>();
         }
     
         public int Id { get; set; }
@@ -154,5 +155,7 @@ namespace MyERP.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<SalesInvoicePrintQueue> SalesInvoicePrintQueues { get; set; }
         public virtual ERPUser ERPUser2 { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<VehicleStock> VehicleStocks { get; set; }
     }
 }

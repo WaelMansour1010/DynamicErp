@@ -460,6 +460,9 @@ namespace MyERP.Models
         public virtual DbSet<vw_PropertyPaymentSummary> vw_PropertyPaymentSummary { get; set; }
         public virtual DbSet<transactionsVatDetail> transactionsVatDetails { get; set; }
         public virtual DbSet<CashReceiptSourceType> CashReceiptSourceTypes { get; set; }
+        public virtual DbSet<VehicleStatu> VehicleStatus { get; set; }
+        public virtual DbSet<VehicleStock> VehicleStocks { get; set; }
+        public virtual DbSet<vw_AvailableVehicleStock> vw_AvailableVehicleStock { get; set; }
     
         public virtual ObjectResult<CashBox_Balances_Result> CashBox_Balances(Nullable<int> cashBoxId)
         {

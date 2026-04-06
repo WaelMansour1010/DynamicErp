@@ -47,6 +47,7 @@ namespace MyERP.Models
             this.PurchaseRequests = new HashSet<PurchaseRequest>();
             this.Customers = new HashSet<Customer>();
             this.SalesInvoices = new HashSet<SalesInvoice>();
+            this.VehicleStocks = new HashSet<VehicleStock>();
         }
     
         public int Id { get; set; }
@@ -133,5 +134,7 @@ namespace MyERP.Models
         public virtual ICollection<Customer> Customers { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<SalesInvoice> SalesInvoices { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<VehicleStock> VehicleStocks { get; set; }
     }
 }

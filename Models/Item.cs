@@ -59,6 +59,7 @@ namespace MyERP.Models
             this.ItemsPrintBarcodeQueues = new HashSet<ItemsPrintBarcodeQueue>();
             this.AlternativeItems = new HashSet<AlternativeItem>();
             this.AlternativeItems1 = new HashSet<AlternativeItem>();
+            this.VehicleStocks = new HashSet<VehicleStock>();
         }
     
         public int Id { get; set; }
@@ -184,5 +185,7 @@ namespace MyERP.Models
         public virtual ICollection<AlternativeItem> AlternativeItems { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<AlternativeItem> AlternativeItems1 { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<VehicleStock> VehicleStocks { get; set; }
     }
 }
