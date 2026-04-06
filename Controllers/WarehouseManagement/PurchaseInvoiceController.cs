@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using MyERP.Repository;
 using Newtonsoft.Json;
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 
 namespace MyERP.Controllers
 {
@@ -71,6 +72,7 @@ namespace MyERP.Controllers
         public async Task<ActionResult> AddEdit(int? id)
         {
             var session = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+            FillVehicleLookupData(session);
             //-- Check if this Purchase Invoice Exist In Cash Issue Voucher
             var check = db.CheckPurchaseInvoiceExistInCashIssueVoucher(id).FirstOrDefault();
             ViewBag.check = check;
@@ -295,6 +297,10 @@ namespace MyERP.Controllers
             
             if (ModelState.IsValid)
             {
+                var chassisValidationMessage = ValidateVehicleChassisNumbers(purchaseInvoice.PurchaseInvoiceDetails, purchaseInvoice.Id);
+                if (!string.IsNullOrEmpty(chassisValidationMessage))
+                    return Json(new { isValid = false, message = chassisValidationMessage }, JsonRequestBehavior.AllowGet);
+
                 db.Database.CommandTimeout = 300;
                 var id = purchaseInvoice.Id;
                 purchaseInvoice.IsDeleted = false;
@@ -363,6 +369,7 @@ namespace MyERP.Controllers
                     MyXML.xPathName = "DirectExpenses";
                     var DirectExpenses = MyXML.GetXML(purchaseInvoice.PurchaseInvoiceDirectExpenses);
                     db.PurchaseInvoice_Update(purchaseInvoice.Id, purchaseInvoice.DocumentNumber, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, purchaseInvoice.IsPosted, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
+                    SyncVehicleStockForPurchaseInvoice(purchaseInvoice.Id);
                     Notification.GetNotification("PurchaseInvoice", "Edit", "AddEdit", id, null, " فواتير المشتريات");
                 }
                 else
@@ -389,6 +396,8 @@ namespace MyERP.Controllers
 
 
                     db.PurchaseInvoice_Insert(idResult, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, false, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
+
+                    SyncVehicleStockForPurchaseInvoice((int)idResult.Value);
 
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("PurchaseInvoice", "Add", "AddEdit", id, null, " فواتير المشتريات");
@@ -441,6 +450,106 @@ namespace MyERP.Controllers
             return Json(errors);
         }
 
+        private void FillVehicleLookupData(string session)
+        {
+            ViewBag.CarTypesJson = JsonConvert.SerializeObject(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarModelsJson = JsonConvert.SerializeObject(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                b.CarTypeId,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarColorsJson = JsonConvert.SerializeObject(db.CarColors.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+        }
+        private string ValidateVehicleChassisNumbers(ICollection<PurchaseInvoiceDetail> details, int invoiceId)
+        {
+            if (details == null) return null;
+            var normalizedInInvoice = new HashSet<string>();
+            foreach (var detail in details)
+            {
+                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                var chassis = (detail.ChassisNo ?? "").Trim();
+                if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
+                    return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
+                if (!string.IsNullOrWhiteSpace(chassis))
+                {
+                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+                    if (normalizedInInvoice.Contains(normalized))
+                        return "رقم الشاسيه مكرر داخل نفس الفاتورة.";
+                    normalizedInInvoice.Add(normalized);
+                    var existsInPurchase = db.PurchaseInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInPurchase)
+                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة شراء أخرى.";
+                    var existsInSales = db.SalesInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInSales)
+                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة بيع.";
+                }
+            }
+            return null;
+        }
+
+
+
+        private bool VehicleStockTableExists()
+        {
+            return db.Database.SqlQuery<int>("SELECT CASE WHEN OBJECT_ID('dbo.VehicleStock','U') IS NULL THEN 0 ELSE 1 END").FirstOrDefault() == 1;
+        }
+
+        private void SyncVehicleStockForPurchaseInvoice(int purchaseInvoiceId)
+        {
+            if (!VehicleStockTableExists()) return;
+            var invoice = db.PurchaseInvoices.FirstOrDefault(x => x.Id == purchaseInvoiceId);
+            if (invoice == null) return;
+            var details = db.PurchaseInvoiceDetails.Where(x => x.MainDocId == purchaseInvoiceId && !x.IsDeleted && x.ChassisNo != null && x.ChassisNo.Trim() != "").ToList();
+            foreach (var detail in details)
+            {
+                var sql = @"DECLARE @VehicleId INT;
+SELECT TOP 1 @VehicleId = Id FROM dbo.VehicleStock WHERE IsDeleted = 0 AND LOWER(LTRIM(RTRIM(ChassisNo))) = LOWER(LTRIM(RTRIM(@ChassisNo)));
+IF @VehicleId IS NULL
+BEGIN
+    INSERT INTO dbo.VehicleStock(ItemId, ChassisNo, EngineNo, CarTypeId, CarModelId, CarColorId, ManufacturingYear, PlateNo, VehicleNotes,
+        PurchaseInvoiceId, PurchaseInvoiceDetailId, PurchaseDate, PurchaseCost, WarehouseId, BranchId, VehicleStatusId, IsDeleted, UserId, CreatedDate, UpdatedDate)
+    VALUES(@ItemId, LTRIM(RTRIM(@ChassisNo)), @EngineNo, @CarTypeId, @CarModelId, @CarColorId, @ManufacturingYear, @PlateNo, @VehicleNotes,
+        @PurchaseInvoiceId, @PurchaseInvoiceDetailId, @PurchaseDate, @PurchaseCost, @WarehouseId, @BranchId, 1, 0, @UserId, GETDATE(), GETDATE());
+END
+ELSE
+BEGIN
+    UPDATE dbo.VehicleStock SET
+        ItemId=@ItemId, EngineNo=@EngineNo, CarTypeId=@CarTypeId, CarModelId=@CarModelId, CarColorId=@CarColorId, ManufacturingYear=@ManufacturingYear,
+        PlateNo=@PlateNo, VehicleNotes=@VehicleNotes, PurchaseInvoiceId=@PurchaseInvoiceId, PurchaseInvoiceDetailId=@PurchaseInvoiceDetailId,
+        PurchaseDate=@PurchaseDate, PurchaseCost=@PurchaseCost, WarehouseId=@WarehouseId, BranchId=@BranchId, VehicleStatusId=1, IsDeleted=0,
+        SalesInvoiceId=NULL, SalesInvoiceDetailId=NULL, SalesDate=NULL, SalePrice=NULL, UpdatedDate=GETDATE()
+    WHERE Id=@VehicleId;
+END";
+                db.Database.ExecuteSqlCommand(sql,
+                    new System.Data.SqlClient.SqlParameter("@ChassisNo", (object)(detail.ChassisNo ?? "").Trim()),
+                    new System.Data.SqlClient.SqlParameter("@ItemId", detail.ItemId),
+                    new System.Data.SqlClient.SqlParameter("@EngineNo", (object)detail.EngineNo ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@CarTypeId", (object)detail.CarTypeId ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@CarModelId", (object)detail.CarModelId ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@CarColorId", (object)detail.CarColorId ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@ManufacturingYear", (object)detail.ManufacturingYear ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@PlateNo", (object)detail.PlateNo ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@VehicleNotes", (object)detail.VehicleNotes ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@PurchaseInvoiceId", purchaseInvoiceId),
+                    new System.Data.SqlClient.SqlParameter("@PurchaseInvoiceDetailId", detail.Id),
+                    new System.Data.SqlClient.SqlParameter("@PurchaseDate", (object)invoice.VoucherDate ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@PurchaseCost", (object)detail.CostPrice ?? (object)detail.Price),
+                    new System.Data.SqlClient.SqlParameter("@WarehouseId", (object)invoice.WarehouseId ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@BranchId", (object)invoice.BranchId ?? DBNull.Value),
+                    new System.Data.SqlClient.SqlParameter("@UserId", (object)invoice.UserId ?? DBNull.Value));
+            }
+        }
 
         [SkipERPAuthorize]
         public JsonResult GetSerialNumber(int? invoiceId, int? itemId)

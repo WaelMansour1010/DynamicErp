@@ -13,6 +13,8 @@ using System.Data.Entity.Core.Objects;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using DevExpress.XtraPrinting;
+using System.Text.RegularExpressions;
+using System.Data.SqlClient;
 
 
 namespace MyERP.Controllers
@@ -94,6 +96,8 @@ namespace MyERP.Controllers
         // GET: SalesInvoice/Edit/5
         public async Task<ActionResult> AddEdit(int? id, int? salesOrderId, int? OrderId)
         {
+            var session = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+            FillVehicleLookupData(session);
             ViewBag.OrderId = OrderId;
             //-- Check if this Sales Invoice Exist In Cash Receipt Voucher
             var check = db.CheckSalesInvoiceExistInCashReceiptVoucher(id).FirstOrDefault();
@@ -418,6 +422,12 @@ namespace MyERP.Controllers
         //[ValidateAntiForgeryToken]
         public JsonResult AddEdit(SalesInvoice salesInvoice, ICollection<PurchaseSaleSerialNumber> serialNumbers, int? OrderId, string Status, bool? IsPos/*, string WaitersName*/,string DocName,int? DocId)
         {
+            var chassisValidationMessage = ValidateVehicleChassisNumbers(salesInvoice.SalesInvoiceDetails, salesInvoice.Id);
+            var vehicleStockValidationMessage = ValidateVehicleStockSelection(salesInvoice.SalesInvoiceDetails);
+            if (!string.IsNullOrEmpty(vehicleStockValidationMessage))
+                return Json(new { isValid = false, message = vehicleStockValidationMessage }, JsonRequestBehavior.AllowGet);
+            if (!string.IsNullOrEmpty(chassisValidationMessage))
+                return Json(new { isValid = false, message = chassisValidationMessage }, JsonRequestBehavior.AllowGet);
             bool IsUpdated = false;
             var systemSetting = db.SystemSettings.FirstOrDefault();
             int userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
@@ -612,6 +622,7 @@ namespace MyERP.Controllers
                     MyXML.xPathName = "PurchaseRequests";
                     var PurchaseRequestsXml = MyXML.GetXML(salesInvoice.SalesInvoicePurchaseRequests);
                     db.SalesInvoice_Update(salesInvoice.Id, salesInvoice.DocumentNumber, salesInvoice.BranchId, salesInvoice.WarehouseId, salesInvoice.DepartmentId, salesInvoice.VoucherDate, salesInvoice.VendorOrCustomerId, salesInvoice.CurrencyId, salesInvoice.CurrencyEquivalent, salesInvoice.Total, salesInvoice.TotalItemsDiscount, salesInvoice.SalesTaxes, salesInvoice.TotalAfterTaxes, salesInvoice.VoucherDiscountValue, salesInvoice.VoucherDiscountPercentage, salesInvoice.NetTotal, salesInvoice.Paid, salesInvoice.ValidityPeriod, salesInvoice.DeliveryPeriod, salesInvoice.CostCenterId, salesInvoice.CurrentQuantity, salesInvoice.DestinationWarehouseId, salesInvoice.SystemPageId, salesInvoice.SelectedId, salesInvoice.TotalCostPrice, salesInvoice.TotalItemDirectExpenses, salesInvoice.CommercialRevenueTaxAmount, salesInvoice.IsDelivered, salesInvoice.IsAccepted, salesInvoice.IsLinked, salesInvoice.IsCompleted, salesInvoice.IsPosted, userId, salesInvoice.IsActive, salesInvoice.IsDeleted, salesInvoice.AutoCreated, salesInvoice.Notes, salesInvoice.Image, salesInvoice.UpdatedId, salesInvoice.CarNumber, salesInvoice.DeliveredTo, salesInvoice.InstallmentAdvance, salesInvoice.TotalInstallmentBeforeProfit, salesInvoice.TotalInstallmentAfterProfit, salesInvoice.InsallmentProfitPercentage, salesInvoice.InstallmentProfitAmount, salesInvoice.InstallmentPaymentAmount, salesInvoice.InstallmentPaymentCount, salesInvoice.TotalAfterTotalInstallment, salesInvoice.FirstInstallmentPaymentDueDate, salesInvoice.IsInstallmentPlan, salesInvoice.DaysBetweenInstallments, SalesInvoiceDetails, InvoicePaymentMethods, SerialNumbersXML, SalesOrdersXml, salesInvoice.ServiceFees, salesInvoice.CustomerType, PurchaseRequestsXml, posId, cashierUserId, shiftId, false, false, salesInvoice.CustomerRepId, salesInvoice.WarehouseItemDistribution, salesInvoice.RefundableInsurance, salesInvoice.DueDate, salesInvoice.PosCustomerId, salesInvoice.IsCollectedByCashier, salesInvoice.TableId, salesInvoice.DeliveryCost, salesInvoice.DeliveryDate, salesInvoice.DeliveryStartDate, salesInvoice.DeliveryEndDate, salesInvoice.DriverId, salesInvoice.CarId, salesInvoice.PaymentType, salesInvoice.IssueMethodId, salesInvoice.SmokingTax/*, WaitersName*/, salesInvoice.WaiterId);
+                    SyncVehicleStockForSalesInvoice(salesInvoice.Id);
                     Notification.GetNotification("SalesInvoice", "Edit", "AddEdit", id, null, "فواتير البيع");
                     //if (systemSetting.UsePrintingAssistantProgram == true)
                     //{
@@ -694,6 +705,8 @@ namespace MyERP.Controllers
                     //    db.SaveChanges();
                     //    salesInvoicePrintQueueId = salesInvoicePrintQueue.Id;
                     //}
+                    SyncVehicleStockForSalesInvoice((int)idResult.Value);
+
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("SalesInvoice", "Add", "AddEdit", id, null, "فواتير البيع");
                 }
@@ -1626,6 +1639,28 @@ namespace MyERP.Controllers
             }
             return Json(new { success = "true", ids });
         }
+
+        [SkipERPAuthorize]
+        public JsonResult GetAvailableVehicleStock(int itemId)
+        {
+            if (!VehicleStockTableExists())
+                return Json(new List<object>(), JsonRequestBehavior.AllowGet);
+
+            string sql = @"SELECT vs.Id, vs.ItemId, vs.ChassisNo, vs.EngineNo, vs.CarTypeId, vs.CarModelId, vs.CarColorId, vs.ManufacturingYear, vs.PlateNo, vs.VehicleNotes,
+COALESCE(ct.ArName, '') AS CarTypeName, COALESCE(cm.ArName, '') AS CarModelName, COALESCE(cc.ArName, '') AS CarColorName,
+vs.PurchaseDate, vs.PurchaseCost, COALESCE(w.ArName, '') AS WarehouseName
+FROM dbo.VehicleStock vs
+LEFT JOIN dbo.CarType ct ON ct.Id = vs.CarTypeId
+LEFT JOIN dbo.CarModel cm ON cm.Id = vs.CarModelId
+LEFT JOIN dbo.CarColor cc ON cc.Id = vs.CarColorId
+LEFT JOIN dbo.Warehouse w ON w.Id = vs.WarehouseId
+WHERE vs.IsDeleted = 0 AND vs.VehicleStatusId = 1 AND vs.ItemId = @ItemId
+ORDER BY vs.PurchaseDate DESC, vs.Id DESC";
+
+            var data = db.Database.SqlQuery<VehicleStockLookupRow>(sql, new SqlParameter("@ItemId", itemId)).ToList();
+            return Json(data, JsonRequestBehavior.AllowGet);
+        }
+
         [SkipERPAuthorize]
         [ERPAuthorize]
         public JsonResult AddToSalesInvoicePrintQueue(int? SalesInvoiceId, string Status, bool? IsUpdated)
@@ -1670,6 +1705,129 @@ namespace MyERP.Controllers
             {
                 return Json(false, JsonRequestBehavior.AllowGet);
             }
+        }
+
+
+        private class VehicleStockLookupRow
+        {
+            public int Id { get; set; }
+            public int ItemId { get; set; }
+            public string ChassisNo { get; set; }
+            public string EngineNo { get; set; }
+            public int? CarTypeId { get; set; }
+            public int? CarModelId { get; set; }
+            public int? CarColorId { get; set; }
+            public int? ManufacturingYear { get; set; }
+            public string PlateNo { get; set; }
+            public string VehicleNotes { get; set; }
+            public string CarTypeName { get; set; }
+            public string CarModelName { get; set; }
+            public string CarColorName { get; set; }
+            public DateTime? PurchaseDate { get; set; }
+            public decimal? PurchaseCost { get; set; }
+            public string WarehouseName { get; set; }
+        }
+
+        private bool VehicleStockTableExists()
+        {
+            return db.Database.SqlQuery<int>("SELECT CASE WHEN OBJECT_ID('dbo.VehicleStock','U') IS NULL THEN 0 ELSE 1 END").FirstOrDefault() == 1;
+        }
+
+        private string ValidateVehicleStockSelection(ICollection<SalesInvoiceDetail> details)
+        {
+            if (!VehicleStockTableExists() || details == null) return null;
+            foreach (var detail in details)
+            {
+                var hasVehicleData = !string.IsNullOrWhiteSpace(detail.ChassisNo) || detail.VehicleStockId.HasValue || detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                if (!hasVehicleData) continue;
+
+                if (!detail.VehicleStockId.HasValue)
+                    return "يجب اختيار السيارة من مخزون السيارات المتاح.";
+
+                string sql = @"SELECT COUNT(1) FROM dbo.VehicleStock WHERE Id = @Id AND IsDeleted = 0 AND VehicleStatusId = 1 AND ItemId = @ItemId";
+                var valid = db.Database.SqlQuery<int>(sql, new SqlParameter("@Id", detail.VehicleStockId.Value), new SqlParameter("@ItemId", detail.ItemId)).FirstOrDefault() > 0;
+                if (!valid)
+                    return "السيارة المختارة غير متاحة بالمخزون أو لا تطابق الصنف.";
+            }
+            return null;
+        }
+
+        private void SyncVehicleStockForSalesInvoice(int salesInvoiceId)
+        {
+            if (!VehicleStockTableExists()) return;
+            var invoice = db.SalesInvoices.FirstOrDefault(x => x.Id == salesInvoiceId);
+            if (invoice == null) return;
+            var details = db.SalesInvoiceDetails.Where(x => x.MainDocId == salesInvoiceId && !x.IsDeleted && x.VehicleStockId != null).ToList();
+            foreach (var detail in details)
+            {
+                string sql = @"UPDATE dbo.VehicleStock
+SET VehicleStatusId = 3, SalesInvoiceId = @SalesInvoiceId, SalesInvoiceDetailId = @SalesInvoiceDetailId, SalesDate = @SalesDate, SalePrice = @SalePrice,
+    UpdatedDate = GETDATE(), ItemId = @ItemId, EngineNo = @EngineNo, CarTypeId=@CarTypeId, CarModelId=@CarModelId, CarColorId=@CarColorId,
+    ManufacturingYear=@ManufacturingYear, PlateNo=@PlateNo, VehicleNotes=@VehicleNotes
+WHERE Id = @VehicleStockId AND IsDeleted = 0 AND VehicleStatusId = 1";
+                var rows = db.Database.ExecuteSqlCommand(sql,
+                    new SqlParameter("@SalesInvoiceId", salesInvoiceId),
+                    new SqlParameter("@SalesInvoiceDetailId", detail.Id),
+                    new SqlParameter("@SalesDate", (object)invoice.VoucherDate ?? DBNull.Value),
+                    new SqlParameter("@SalePrice", (object)detail.Price),
+                    new SqlParameter("@ItemId", detail.ItemId),
+                    new SqlParameter("@EngineNo", (object)detail.EngineNo ?? DBNull.Value),
+                    new SqlParameter("@CarTypeId", (object)detail.CarTypeId ?? DBNull.Value),
+                    new SqlParameter("@CarModelId", (object)detail.CarModelId ?? DBNull.Value),
+                    new SqlParameter("@CarColorId", (object)detail.CarColorId ?? DBNull.Value),
+                    new SqlParameter("@ManufacturingYear", (object)detail.ManufacturingYear ?? DBNull.Value),
+                    new SqlParameter("@PlateNo", (object)detail.PlateNo ?? DBNull.Value),
+                    new SqlParameter("@VehicleNotes", (object)detail.VehicleNotes ?? DBNull.Value),
+                    new SqlParameter("@VehicleStockId", detail.VehicleStockId.Value));
+            }
+        }
+
+        private void FillVehicleLookupData(string session)
+        {
+            ViewBag.CarTypesJson = JsonConvert.SerializeObject(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarModelsJson = JsonConvert.SerializeObject(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                b.CarTypeId,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+            ViewBag.CarColorsJson = JsonConvert.SerializeObject(db.CarColors.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
+            {
+                b.Id,
+                ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
+            }).ToList());
+        }
+        private string ValidateVehicleChassisNumbers(ICollection<SalesInvoiceDetail> details, int invoiceId)
+        {
+            if (details == null) return null;
+            var normalizedInInvoice = new HashSet<string>();
+            foreach (var detail in details)
+            {
+                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                var chassis = (detail.ChassisNo ?? "").Trim();
+                if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
+                    return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
+                if (!string.IsNullOrWhiteSpace(chassis))
+                {
+                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+                    if (normalizedInInvoice.Contains(normalized))
+                        return "رقم الشاسيه مكرر داخل نفس الفاتورة.";
+                    normalizedInInvoice.Add(normalized);
+                    var existsInSales = db.SalesInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInSales)
+                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة بيع أخرى.";
+                    var existsInPurchase = db.PurchaseInvoiceDetails.Where(x => !x.IsDeleted && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (!existsInPurchase)
+                        return "رقم الشاسيه غير موجود في فواتير المشتريات.";
+                }
+            }
+            return null;
         }
 
         protected override void Dispose(bool disposing)
