@@ -1,0 +1,120 @@
+﻿@model IEnumerable<MyERP.Models.AllowedModule_Get_Result>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = "AllowedModule";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <h4 class="page-title"> AllowedModule </h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        
+                        <div class="card">
+                            <div class="card-body">
+                             
+                                <div class="form-group">
+                                    <table class="table table-hover table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-sm-8"> @MyERP.Properties.Resources.Page</th>
+                                                <th class="col-sm-4"> @MyERP.Properties.Resources.IsSelected</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="AllowedModule">
+                                            <tr>
+                                                <td> @MyERP.Properties.Resources.All  </td>
+                                                <td>
+                                                    <input id="AllPages" type="checkbox" onclick="checkAll(this)"/>
+                                                    <input id="UserId" hidden value="@ViewBag.UserId"/>
+                                                </td>
+                                            </tr>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @Html.DisplayFor(modelItem => item.SystemPageName)
+                                                        <input hidden class="SystemPageId" value="@item.SystemPageId" />
+                                                    </td>
+                                                    <td>
+                                                       <input class="IsSelected" type="checkbox" @Html.Raw(Model!=null&& item.IsSelected==true?"checked":"") />
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                               
+                                <div class="col-sm-offset-2">
+                                    <button class="btn btn-success" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    function checkAll(e) {
+        if ($(e).prop('checked')) {
+            $('input[type="checkbox"]').prop('checked', 'checked');
+        } else {
+            $('input[type="checkbox"]').prop('checked',false);
+        }
+    }
+
+        function addEdit(n) {
+            var allowedModules = [];
+            $("#AllowedModule tr").each(function () {
+            var td = $(this);
+                if (td.find('.IsSelected').prop('checked') == true) {
+                    var allowedModule = {
+                        SystemPageId: td.find('.SystemPageId').val(),
+                        UserId: $('#UserId').val(),
+                        IsSelected: td.find('.IsSelected').prop('checked'),
+                    };
+                    allowedModules.push(allowedModule);
+                }
+            });
+            $.ajax({
+                type: "POST",
+                contentType: "application/json",
+                url: '/SystemSetting/AllowedModule/',
+                data: JSON.stringify({
+                    allowedModules: allowedModules
+                }),
+                success: function (r) {
+                    if (r == 'true') {
+                        alert('@MyERP.Properties.Resources.Saved'+'!');
+                    } else {
+                        alert('@MyERP.Properties.Resources.NotSaved'+'!');
+                    }
+                    $('#preloader, #status').fadeOut();
+                    window.location.reload();
+                },
+                error: function (r) {
+                    alert('@MyERP.Properties.Resources.NotSaved'+'!');
+                    console.log(r);
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+    }
+
+</script>

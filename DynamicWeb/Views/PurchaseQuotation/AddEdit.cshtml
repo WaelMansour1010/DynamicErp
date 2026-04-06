@@ -1,0 +1,1188 @@
+﻿@model MyERP.Models.PurchaseQuotation
+<script src="~/js/CalcTotalDebitAndCredit.js"></script>
+
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+@{
+    ViewBag.Title = "عروض أسعار الشراء";
+    var OpenReportAfterEdit = (bool)ViewData["AfterEdit"] ? "true" : "false";
+    var OpenReportAfterAdd = (bool)ViewData["AfterAdd"] ? "true" : "false";
+
+    bool ShowSalesPrices = (bool)ViewData["ShowSalesPrices"] ? true : false;
+    var ShowSalesPricesForScript = (bool)ViewData["ShowSalesPrices"] ? "true" : "false";
+
+}
+@Html.AntiForgeryToken()
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    @if (Model.Id > 0)
+                    {
+                        if (Model.IsDeleted == false)
+                        {
+                            <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>
+                            if (ViewBag.Previous > 0)
+                            {
+                                <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info" >الأول</a>
+                                <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                            }
+                            if (ViewBag.Next > 0)
+                            {
+                                <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                                <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info" >الأخير</a>
+                            }
+                        }
+                    }
+                    else
+                    {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>}
+                    <div class="hed">عرض سعر شراء</div>
+                </div>
+                <div class="form-body">
+                    <div class="form-horizontal">
+                        <hr />
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        <input value="@ViewBag.SystemPageId" id="SystemPageId" hidden />
+                        <input type="text" class="money" id="TotalPaymentMethods" hidden />
+                        @if (Model.Id > 0)
+                        {
+                            @Html.HiddenFor(model => model.Id)
+                            @Html.HiddenFor(model => model.IsActive)
+                            @Html.HiddenFor(model => model.IsLinked)
+                            @Html.HiddenFor(model => model.IsPosted)
+                            @Html.HiddenFor(model => model.IsDeleted)
+                            @Html.HiddenFor(model => model.IsAccepted)
+                            @Html.HiddenFor(model => model.IsCompleted)
+                            @Html.HiddenFor(model => model.Image)
+                        }
+                        <div class="panel-group" id="accordion">
+                            <div class="panel panel-default">
+                                <div>
+
+                                    <a data-parent="#accordion">
+                                        البيانات الاساسية
+                                    </a>
+
+                                </div>
+
+                                <div>
+                                    <div class="form-group">
+                                        <label class=" col-sm-1 control-label" for="DocumentNumber">رقم المستند</label>
+                                        <div class="col-sm-5">
+                                            @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @disabled = "disabled", placeholder = "رقم المستند" } })
+                                            @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger" })
+                                            <span class="Asterisks">*</span>
+                                        </div>
+                                        <label for="VoucherDate" class="control-label col-sm-1">تاريخ المستند</label>
+                                        <div class="col-sm-5">
+
+                                            @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control", type = "datetime-local", @required = "required" } })
+                                            <span class="Asterisks">*</span>
+                                            @Html.ValidationMessageFor(model => model.VoucherDate, "", new { @class = "text-danger" })
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="DepartmentId" class="col-sm-1 control-label">الفرع</label>
+                                        <div class="col-sm-5">
+
+                                            @Html.DropDownList("DepartmentId", null, "إختر الفرع", htmlAttributes: new { @class = "form-control", @required = "required" })
+                                            @Html.ValidationMessageFor(model => model.DepartmentId, "", new { @class = "text-danger" })
+                                            <span class="Asterisks">*</span>
+                                        </div>
+                                        <label class="control-label col-sm-1">المورد </label>
+
+
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("VendorId", null, "إختر المورد", htmlAttributes: new { @class = "form-control", @required = "required" })
+                                            @Html.ValidationMessageFor(model => model.CurrencyId, "", new { @class = "text-danger" })
+                                            <span class="Asterisks">*</span>
+                                        </div>
+
+
+                                    </div>
+
+                                  
+
+                                    <div class="form-group">
+                                        <label class="control-label col-sm-1" for="Notes">ملاحظات</label>
+                                        <div class="col-sm-5">
+                                            <textarea id="Notes" name="Notes" class="form-control col-sm-11" rows="5" cols="5">@Model.Notes</textarea>
+
+                                            @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <hr />
+                                <div>
+
+                                    <a data-parent="#accordion">
+                                        تفاصيل عرض الشراء
+                                    </a>
+
+                                </div>
+
+                                <div>
+                                    <div class=" scr">
+                                        <table class="table  table-hover table-condensed">
+                                            <thead>
+                                                <tr>
+                                                    <th>الباركود</th>
+                                                    <th></th>
+                                                    <th class="col-sm-3"> الصنف </th>
+
+                                                    <th class="th">الكمية</th>
+
+                                                    @*<th class=col-sm-2>الوحدة</th>
+                                                        <th class=col-sm-1>معامل التحويل</th>*@
+                                                    <th class="th">سعر الشراء</th>
+                                                    @if (ShowSalesPrices == true)
+                                                    {
+                                                        <th class="th">Customer</th>
+                                                        <th class="th">Dealer</th>
+                                                        <th class="th">Top</th>
+                                                    }
+
+                                                    <th class="th">اخر سعر شراء</th>
+                                                    <th class="th">متوسط التكلفة</th>
+                                                    @*<th class="th">المصروفات المباشرة</th>*@
+                                                    @*<th class="th"> تكلفة الصنف</th>*@
+                                                    <th class="th">الاجمالي</th>
+                                                    <th class="col-sm-1">ملاحظات</th>
+                                                    <th class="th">تفاصيل</th>
+                                                    <th class="th">حذف</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="PurchaseQuotationDetails">
+                                                @if (Model.Id > 0)
+                                                {
+                                                    foreach (var item in Model.PurchaseQuotationDetails)
+                                                    {
+                                                        <tr class="scr">
+                                                            @if (item.ItemPriceId != null)
+                                                            {
+                                                                <td class="width"><input class="barcode " value="@item.ItemPrice.Barcode" /></td>
+
+                                                            }
+                                                            else
+                                                            {
+                                                                <td class="width"><input class="barcode " /></td>
+
+                                                            }
+                                                            <td class="col-sm-3"><select class="item "><option value="@item.ItemId">@item.Item.ArName</option></select></td>
+
+                                                            <td class="width"><input class="quantity b" oninput="validity.valid||(value='');" type="number" step="any" value="@item.Qty" /></td>
+                                                            <td class="width"><input type="text" class="money cost b" value="@item.Price" /></td>
+                                                            @if (ShowSalesPrices == true)
+                                                            {
+                                                                <td class="width"><input type="text" class="money price1 b" value="0" /></td>
+                                                                <td class="width"><input type="text" class="money price2 b" value="0" /></td>
+                                                                <td class="width"><input type="text" class="money price3 b" value="0" /></td>
+                                                            }
+                                                            <td class="width"><input type="text" class="money lastPrice b" value="0" /></td>
+                                                            <td class="width"><input type="text" class="money avg b" disabled /></td>
+                                                            @*<td class="width"><input type="text" class="money dir b" disabled value="@item.ItemDirectExpenses" /></td>*@
+                                                            @*<td class="width"><input type="text" class="money itemcost b" value="@item.CostPrice" disabled /></td>*@
+                                                            <td class="width"><input class="total money b" type="text" disabled value="0" /></td>
+                                                            <td class="width"> @Html.TextAreaFor(model => model.Notes, new { style = "height: 26px;", @class = "Notes n form-control", type = "text" })</td>
+
+                                                            <td class="width"><button class="btn-info detail" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">تفاصيل</button></td>
+                                                            <td class="width">
+                                                                <a class="b" href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                    <i class="fas fa-trash-alt"></i>
+                                                                </a>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <tr>
+                                                        <td class="width"><input class="barcode  " /></td>
+                                                        <td class="col-sm-3"><select class="item "><option value="0">إختر الصنف</option></select></td>
+
+                                                        <td class="width"><input class="quantity b" oninput="validity.valid||(value='');" type="number" step="any" value="0" /></td>
+
+                                                        <td class="width"><input type="text" class="money cost b" value="0" /></td>
+                                                        @if (ShowSalesPrices == true)
+                                                        {
+                                                            <td class="width"><input type="text" class="money price1 b" value="0" /></td>
+                                                            <td class="width"><input type="text" class="money price2 b" value="0" /></td>
+                                                            <td class="width"><input type="text" class="money price3 b" value="0" /></td>
+                                                        }
+                                                        <td class="width"><input type="text" class="money lastPrice b" value="0" /></td>
+                                                        <td class="width"><input type="text" class="money avg b" value="0" disabled /></td>
+                                                        @*<td class="width"><input type="text" class="money dir b" disabled value="0" /></td>*@
+                                                        @*<td class="width"><input type="text" class="money itemcost b" disabled value="0" /></td>*@
+                                                        <td class="width"><input class="total money b" type="text" disabled value="0" /></td>
+                                                        <td class="width"><textarea style="height: 26px;" class="Notes n form-control" type="text"></textarea></td>
+
+                                                        <td><button class="btn-info b" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">تفاصيل</button></td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" class="b" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+
+                                    @*<div class="col-sm-offset-2">
+                                        <button class="btn btn-success" onclick="addToPurchaseQuotationDetails()">
+                                            إضافة بيانات
+                                        </button>
+                                    </div>*@
+
+                                    <hr />
+                                    <div class="form-group">
+                                        <label for="Total" class="control-label col-sm-2">الإجمالى:</label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control money", type = "text", id = "Total", @disabled = "disabled " } })
+                                            @Html.ValidationMessageFor(model => model.Total, "", new { @class = "text-danger" })
+                                        </div>
+                                        <label for="VoucherDiscountValue" class="control-label col-sm-2">قيمة الخصم: </label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.VoucherDiscountValue, new { htmlAttributes = new { @class = "form-control money", id = "DiscountValue", type = "text", onchange = "DiscountValueChange()", value = "0" } })
+                                            @Html.ValidationMessageFor(model => model.VoucherDiscountValue, "", new { @class = "text-danger" })
+                                        </div>
+                                        <label for="VoucherDiscountPercentage" class="control-label col-sm-2">نسبة الخصم: </label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.VoucherDiscountPercentage, new { htmlAttributes = new { @class = "form-control", id = "percentage", type = "number", onchange = "PrecChange()", oninput = "validity.valid||(value='');", value = "0" } })
+                                            @Html.ValidationMessageFor(model => model.VoucherDiscountPercentage, "", new { @class = "text-danger" })
+                                        </div>
+
+
+
+
+                                    </div>
+                                    <div class="form-group">
+
+                                        <label for="NetTotal" class="control-label col-sm-2">الإجمالي بعد الخصم:</label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.NetTotal, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled ", id = "NetTotal", value = "0" } })
+                                            @Html.ValidationMessageFor(model => model.NetTotal, "", new { @class = "text-danger" })
+                                        </div>
+                                        @if (Model.SalesTaxes > 0)
+                                        {
+                                            <div class="col-sm-4">
+                                                <input type="checkbox" checked id="check" />إدراج ضريبة القيمة المضافة
+
+                                            </div>
+
+                                        }
+                                        else
+                                        {
+                                            <div class="col-sm-4">
+                                                <input type="checkbox" id="check" />إدراج ضريبة القيمة المضافة
+                                            </div>
+                                        }
+
+                                    </div>
+                                    @if (Model.SalesTaxes > 0)
+                                    {
+                                        <div class="form-group">
+
+                                            <label for="SalesTaxes" class="control-label  col-sm-2  taxesLabel">ضريبة القيمة المضافة:</label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money taxes ", id = "SalesTaxes", type = "text", onchange = "calcTotalAfterTaxes()", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.SalesTaxes, "", new { @class = "text-danger" })
+                                            </div>
+                                            <label for="Paid" class="control-label col-sm-2 taxesLabel  ">الإجمالى بعد الضرائب:</label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "TotalAfterTaxes", @disabled = "disabled ", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.TotalAfterTaxes, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="form-group">
+
+                                            <label for="SalesTaxes" class="control-label  col-sm-2 hidden taxesLabel">ضريبة القيمة المضافة:</label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.SalesTaxes, new { htmlAttributes = new { @class = "form-control money taxes hidden", id = "SalesTaxes", type = "text", onchange = "calcTotalAfterTaxes()", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.SalesTaxes, "", new { @class = "text-danger" })
+                                            </div>
+                                            <label for="Paid" class="control-label col-sm-2 taxesLabel  hidden">الإجمالى بعد الضرائب:</label>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.TotalAfterTaxes, new { htmlAttributes = new { @class = "form-control taxes money hidden", type = "text", id = "TotalAfterTaxes", @disabled = "disabled ", value = "0" } })
+                                                @Html.ValidationMessageFor(model => model.TotalAfterTaxes, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+
+                                    }
+
+
+
+
+
+                                </div>
+
+
+
+                                <hr />
+
+
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+                    <div class="col-sm-offset-2">
+
+                        @if (Model.Id == 0)
+                        {
+                            @*if (ShowSalesPrices == true)
+                                {
+                                    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Kimo")
+                                    {
+                                        <label class="control-label">تعديل اسعار البيع</label>
+                                        <input type="checkbox" id="alterPrices" name="alterPrices" />
+                                    }
+                                }*@
+                            <button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                                حفظ و جديد
+                            </button>
+                            <button class="btn btn-success" onclick="addEdit()">
+                                حفظ
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                        }
+                        else
+                        {
+                            if (Model.IsDeleted == false)
+                            {
+                                @*if (ShowSalesPrices == true)
+                                    {
+                                        if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Kimo")
+                                        {
+                                            <label class="control-label">تعديل اسعار البيع</label>
+                                            <input type="checkbox" id="alterPrices" name="alterPrices" />
+                                        }
+                                    }*@
+                                <button class="btn btn-success" onclick="addEdit()">
+                                    حفظ
+                                </button>
+                                @*<a class="btn btn-default" target="_blank" href="@Url.Action("PurchaseQuotation","Report",new { id=Model.Id})" role="button">طباعة</a>*@
+
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                <button class="btn btn-danger" onclick="Delete(@Model.Id,'PurchaseQuotation')">
+                                    حذف
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="itemDetails" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">تفاصيل الصنف</h4>
+            </div>
+            <div class="modal-body" id="itemDetailsBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input hidden value="@OpenReportAfterAdd" id="AfterAdd" />
+<input hidden value="@OpenReportAfterEdit" id="AfterEdit" />
+<input hidden value="@ShowSalesPricesForScript" id="ShowSalesPrices" />
+<script>
+    var items;
+    var ItemPriceId = JSON.parse('@Html.Raw(ViewBag.ItemPriceId)');
+    if ($('#Id').val() > 0) {
+        $('#PurchaseQuotationDetails tr').each(function () {
+            setItemPrices(this);
+            setlastPriceForEdit(this);
+
+
+        });
+
+    }
+    //date
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    if (!$('#Id').val() > 0) {
+
+            $('.itemcost').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#DiscountValue').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#SalesTaxes').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#Total').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#TotalAfterTaxes').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $('#NetTotal').val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $(".price1").val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $(".price2").val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $(".price3").val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $(".lastPrice").val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $(".avg").val(0).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            $("#percentage").val(0);
+
+    }
+
+
+    $(document).ready(function () {
+
+        $('input[type="checkbox"]').click(function () {
+            if ($(this).prop("checked") == true) {
+                $('.taxesLabel').each(function () {
+                    $(this).removeClass('hidden');
+                });
+                $('.taxes').each(function () {
+                    $(this).removeClass('hidden');
+                });
+                calcTotalAfterTaxes();
+                Taxes();
+
+
+            }
+            else if ($(this).prop("checked") == false) {
+                $('.taxesLabel').each(function () {
+                    $(this).addClass('hidden');
+                });
+
+                $('.taxes').each(function () {
+                    $(this).val(0).inputmask({
+                        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                    });
+                    $(this).addClass('hidden');
+                });
+
+            }
+        });
+        addToPurchaseQuotationDetails();
+    });
+
+
+
+     //calc total after discountValue
+    function DiscountValueChange() {
+        var total = $('#Total').inputmask('unmaskedvalue') * 1;
+        var disc = $('#DiscountValue').inputmask('unmaskedvalue') * 1;
+        //check value of DiscountValue  !>  Total
+        if (disc > total) {
+            $('#DiscountValue').val(total).inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+        }
+        var discountValue = $('#DiscountValue').inputmask('unmaskedvalue');
+        //total after discount
+        $('#NetTotal').val(total - discountValue).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        //prec
+        var calcPerc = (discountValue * 100 / total).toFixed(2);
+        $("#percentage").val(calcPerc);
+
+        if ($('input[type="checkbox"]').prop("checked") == true) {
+            calcTotalAfterTaxes();
+            Taxes();
+
+        }
+    }
+
+    function calculateTotal() {
+        var sum = 0;
+        $('.total').each(function () {
+            sum += $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#Total').val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+
+
+    }
+    //calc Taxes issu
+    function Taxes() {
+
+        var total = $('#NetTotal').inputmask('unmaskedvalue');
+        var percentage = 14;
+
+        var calcPrice = (total * percentage / 100).toFixed(2);
+        $('#SalesTaxes').val(calcPrice).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        calcTotalAfterTaxes();
+    }
+    //calc discount from prec
+    function PrecChange() {
+        if ($('#percentage').val() > 100) {
+
+            $('#percentage').val(100);
+
+        }
+        var discountValue = $('#DiscountValue').inputmask('unmaskedvalue');
+        var total = $('#Total').inputmask('unmaskedvalue');
+        var percentage = $("#percentage").val();
+
+        var calcPrice = (total * percentage / 100).toFixed(2);
+        $('#DiscountValue').val(calcPrice).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        DiscountValueChange();
+    }
+    //calc total after taxes
+    function calcTotalAfterTaxes() {
+        var Taxes = $('#SalesTaxes').inputmask('unmaskedvalue');
+        var totalAfterDis = $('#NetTotal').inputmask('unmaskedvalue');
+        var TotalAfterTaxes = (totalAfterDis * 1) + (Taxes * 1)
+        $('#TotalAfterTaxes').val(TotalAfterTaxes);
+
+    }
+
+    //--------------------------------- calc item cost after adding item cost issu---
+ //   function calcItemCost() {
+
+ //       var issuValue = $('#AddedPrecentageCost').inputmask('unmaskedvalue') * 1;
+ //       $('#PurchaseQuotationDetails tr').each(function () {
+ //           var td = $(this);
+
+ //           var itemCost = (td.find('.dir').inputmask('unmaskedvalue') * 1 / td.find('.quantity').val())+ td.find('.cost').inputmask('unmaskedvalue')* 1;
+ //           var issu = issuValue * 1 / 100;
+
+ //           td.find('.itemcost').val(itemCost * 1 + (issu * itemCost)).inputmask({
+ //               alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+ //           });
+ //       });
+
+ //};
+    //$(document).on('click', '#CostIss', function () {
+    //    calcItemCost();
+    //});
+
+    //calc NetTotal=sum of totals of items + total of direct expenses
+
+    //function GetTotal() {
+
+
+
+    //    var sum = 0;
+    //    $('.total').each(function () {
+    //        sum = sum + $(this).inputmask('unmaskedvalue') * 1 + $(this).closest('tr').find('.dir').inputmask('unmaskedvalue') * 1;
+
+    //    });
+
+    //    $('#Total').val(sum).inputmask({
+    //        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+    //    });
+    //}
+
+    $(document).on('change', '.quantity, .cost', function () {
+        var elem = $(this);
+        var tr = elem.closest('tr');
+        tr.find('.total').val(tr.find('.quantity').val() * tr.find('.cost').inputmask('unmaskedvalue')*1);
+
+        //calcItemCost();
+
+        var sum = 0;
+        $('.total').each(function () {
+            sum = sum + $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#Total').val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+
+        DiscountValueChange();
+
+        if ($('input[type="checkbox"]').prop("checked") == true) {
+            $('.taxesLabel').each(function () {
+                $('input[type="checkbox"]').removeClass('hidden');
+            });
+            $('.taxes').each(function () {
+                $('input[type="checkbox"]').removeClass('hidden');
+            });
+            calcTotalAfterTaxes();
+            Taxes();
+
+
+        }
+        addToPurchaseQuotationDetails();
+    });
+
+     // add new row on Purchase Invoice Details table
+    function addToPurchaseQuotationDetails() {
+
+        if ($('#PurchaseQuotationDetails .quantity:last').val() != 0  && $('#PurchaseQuotationDetails .item:last').val() != 0) {
+            var tr = '<tr><td class="width" ><input class="barcode "/></td><td><select class="item "><option value="0">إختر الصنف</option></select></td><td class="width"><input class="quantity b" oninput="validity.valid ? this.save = value : value = this.save;" type="number" step="any" value="0"/></td><td class="width" > <input type="text" class="money cost b" value="0" /></td >'
+
+            if ($('#ShowSalesPrices').val() == 'true')
+            {
+
+                tr+='<td class="width" > <input type="text" class="money price1 b" value="0" /></td >\
+                 <td class="width"><input type="text" class="money price2 b" value="0" /></td>\
+                 <td class="width"><input type="text" class="money price3 b" value="0" /></td>'
+            }
+              tr+='<td class="width"><input type="text" class="money lastPrice b" value="0" /></td>\
+                <td class="width"><input class="dir money b " type="text"  disabled value="0" /></td>\
+                 <td class="width" > <input class="total money b" type="text" disabled value="0" /></td >\
+                 <td class="width"><textarea style="height: 26px;" class="Notes n form-control" type="text"></textarea></td>\
+                 <td class="col-sm-1"><button class="btn-info b" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">تفاصيل</button></td> <td class="col-sm-1"><a href="javascript:void(0);" class="b" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i ></a ></td></tr > '
+            $('#PurchaseQuotationDetails').append(tr);
+
+            $('.money, .total').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            for (var i = 0; i < items.length; i++) {
+                $('#PurchaseQuotationDetails .item:last').append($('<option>', {
+                    value: items[i].Id,
+                    text: items[i].ArName
+                }));
+            }
+            $('#PurchaseQuotationDetails tr:last select').select2();
+
+            $('#PurchaseQuotationDetails tr:last .select2').css('max-width', '800px').css('width', '200%');
+
+        }
+
+        }
+
+     $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+            var d = new Date();
+            var now = '@ViewBag.VoucherDate';
+            var min = $('#VoucherDate').prop('min');
+            var max = $('#VoucherDate').prop('max');
+            if ($('#Id').val() > 0) {
+                $('#VoucherDate').val('@ViewBag.VoucherDate');
+
+                if (now < min || now > max) {
+                    $('#VoucherDate').prop('disabled', 'disabled');
+                }
+                $('#dtDate').val($('#VoucherDate').val());
+                $('#PurchaseQuotationDetails tr').each(function () {
+                    var tr = $(this);
+                    tr.find('.total').val(tr.find('.quantity').val() * tr.find('.cost').inputmask('unmaskedvalue')*1);
+                });
+            } else {
+
+                if (now > $('#VoucherDate').prop('min') && now < $('#VoucherDate').prop('max')) {
+                    $('#VoucherDate').val('@ViewBag.VoucherDate');
+                }
+            }
+        });
+    });
+
+        $(document).ready(function () {
+            if ($('#Id').val() > 0) {
+                $('.item').each(function () {
+                    SetAVGCost(this);
+
+                })
+
+
+            }
+        });
+    //delete element from PurchaseQuotationDetails table
+    function deleteElement(e) {
+
+        var tr = $(e).closest('tr');
+
+        if ($(tr).index() > 0) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length > 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).children("input[type|='text']").each(function () {
+                $(this).empty();
+            });
+        }
+
+        calculateTotal();
+        DiscountValueChange();
+
+        var itemId = $(e).closest('tr').find('.item').val();
+        $('#heading' + itemId).closest('.panel').remove();
+
+        $("#selectedItems option[value|='" + itemId + "']").remove();
+        }
+
+
+
+
+
+
+    //doc Num
+    function setDocNum() {
+        var doc = $.get('/PurchaseQuotation/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+            $('#DocumentNumber').val(r);
+        });
+    }
+    //last Price
+
+        function setlastPriceForEdit(e) {
+            var itemDDL = $(e).closest('tr').find('.item').val();
+            var doc = $.get('/PurchaseQuotation/SetLastPriceForEdit?itemId=' + itemDDL + '&mainDocid=' + $('#Id').val()).done(function (r) {
+                if (r == 0) {
+                    $(e).closest('tr').find('.lastPrice').val(0).inputmask({
+                        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                    });
+
+                }
+                else {
+                    $(e).closest('tr').find('.lastPrice').val(r);
+
+                }
+            });
+        }
+
+
+        function setlastPrice(e) {
+            var itemDDL = $(e).closest('tr').find('.item').val();
+            var doc = $.get('/PurchaseQuotation/SetLastPrice?itemId=' + itemDDL).done(function (r) {
+                if (r == 0) {
+                    $(e).closest('tr').find('.lastPrice').val(0).inputmask({
+                        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                    });
+
+                }
+                else {
+                    $(e).closest('tr').find('.lastPrice').val(r);
+
+                }
+            });
+        }
+
+    //Item Prices
+    function setItemPrices(e) {
+        $('#preloader, #status').fadeIn();
+        var itemDDL = $(e).closest('tr').find('.item').val();
+        var itemPrices = $.get('/PurchaseQuotation/GetItemPrices?itemId=' + itemDDL).done(function (r) {
+            if (r.length > 0) {
+
+                $.each(r, function (index, value) {
+                    if (index == 0) {
+                        $(e).closest('tr').find('.price1').val(value['Price']);
+                    }
+                    else if (index == 1) {
+                        $(e).closest('tr').find('.price2').val(value['Price']);
+                    }
+                    else {
+                        $(e).closest('tr').find('.price3').val(value['Price']);
+
+                    }
+                    $('#preloader, #status').fadeOut();
+                })
+            }
+
+             else {
+                $(e).closest('tr').find('.price1').val(0).inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+                $(e).closest('tr').find('.price2').val(0).inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+                $(e).closest('tr').find('.price3').val(0).inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+                $('#preloader, #status').fadeOut();
+            }
+        });
+    }
+    if (!$('#Id').val() > 0) {
+        setDocNum();
+        setlastPrice();
+        setItemPrices()
+    };
+
+    $(document).on('change', '.item', function () {
+
+        $(this).closest('tr').find('.barcode').val(barcode);
+        $(this).closest('tr').find('.cost').val(0).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $(this).closest('tr').find('.quantity').val(0).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $(this).closest('tr').find('.itemcost').val(0).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        var elem = $(this);
+        var tr = elem.closest('tr');
+        tr.find('.total').val((tr.find('.quantity').val() * tr.find('.cost').inputmask('unmaskedvalue')*1) + tr.find('.dir').inputmask('unmaskedvalue') * 1);
+
+        var sum = 0;
+        $('.total').each(function () {
+            sum = sum + $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#Total').val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        DiscountValueChange();
+
+        SetAVGCost(this);
+        barcode = '';
+        setItemPrices(this);
+        if ($('#Id').val() > 0) {
+            setlastPriceForEdit(this);
+
+        }
+        else {
+            setlastPrice(this);
+
+        }
+        addToPurchaseQuotationDetails();
+    });
+    function fillItems() {
+        if (!$('#Id').val() > 0) {
+            $('.item').empty();
+            $('.item').append($('<option>', {
+
+                text: "            إختر الصنف              ",
+                value:0
+            }));
+            for (var i = 0; i < items.length; i++) {
+                $('.item').append($('<option>', {
+                    value: items[i].Id,
+                    text: items[i].ArName
+                }));
+            }
+        } else {
+            var selectedItem;
+            var itemBarcode;
+            $('.item').each(function () {
+                selectedItem = $(this).val();
+                itemBarcode = $(this).closest('tr').find('.barcode').val();
+                $(this).empty();
+                for (var i = 0; i < items.length; i++) {
+                    $(this).append($('<option>', {
+                        value: items[i].Id,
+                        text: items[i].ArName
+                    }));
+                }
+                $(this).val(selectedItem);
+                $(this).closest('tr').find('.barcode').val(itemBarcode);
+            });
+
+        }
+    }
+
+
+
+
+    function departmentChange() {
+        items = $.get('/Helper/ItemsByDepId?id=' + $('#DepartmentId').val()).done(function () {
+            items = items.responseJSON;
+            fillItems();
+        });
+    }
+
+    departmentChange();
+
+    $('#DepartmentId').on('change', function () {
+        departmentChange();
+
+        setDocNum();
+        if ($('#PurchaseQuotationDetails tr').length > 1) {
+            alert("  تم إزالة جميع البيانات الخاصة بالفرع السابق !");
+        }
+        $('#PurchaseQuotationDetails tr').each(function () {
+            $(this).find('a').trigger('click');
+        });
+    });
+
+    var optionValues = [];
+    $('select').each(function () {
+        $(this).children('option').each(function () {
+            if ($.inArray(this.value, optionValues) > -1) {
+                $(this).remove()
+            } else {
+                optionValues.push(this.value);
+            }
+        });
+        optionValues = [];
+    });
+
+    var barcode;
+    $(document).on('change', '.barcode', function () {
+        var elem = $(this);
+        var itemId = $.get('/Helper/ItemIdByBarcode?barcode=' + $(elem).closest('tr').find('.barcode').val()).done(function () {
+            itemId = itemId.responseJSON;
+            barcode = $(elem).val();
+            if (itemId.itemBarcode > 0) {
+                $(elem).closest('tr').find('.item').val(itemId.itemBarcode).trigger('change');
+            } else {
+                $(elem).closest('tr').find('.item').val(itemId.itemSerialNumber ? itemId.itemSerialNumber : 0).trigger('change');
+            }
+        }).fail(function () {
+            $(elem).closest('tr').find('.item').val(0).trigger('change');
+        });
+    });
+  //save insert or edit
+
+
+
+
+    function addEdit(n) {
+
+
+
+        var serialNumbers = [];
+        var totalafterTaxes = $('#TotalAfterTaxes').inputmask('unmaskedvalue');
+
+        var totalPaied = $('#TotalPaymentMethods').inputmask('unmaskedvalue');
+        var NetTotal = $('#NetTotal').inputmask('unmaskedvalue');
+        var valid = true;
+
+
+        if ($('#VoucherDate').val() == 0 || $('.cost').val() == 0 || $('.quantity').val() == 0 || $('#BranchId').val() == 0 || $('#VendorId').val() == 0 || $('#DepartmentId').val() == 0 || $("#PurchaseQuotationDetails").children().length == 0) {
+            alert(" أدخل الحقول المطلوبة");
+            valid = false;
+        }
+
+
+        // CHECK IF TOTAL DIRECT EXP EQUAL SUM OF ITEMS DIR EXP ---------
+
+        if (valid) {
+            var PurchaseQuotationDetails = [];
+            var alteredPrices = [];
+            $('#PurchaseQuotationDetails tr').each(function () {
+                var td = $(this);
+                var PurchaseQuotationDetail = {
+                    ItemPriceId: td.find('.barcode').val() ? ItemPriceId.filter(function (e) { return e.Barcode === td.find('.barcode').val() })[0].Id : null,
+                    ItemId: td.find('.item').val(),
+                    CostPrice: td.find('.itemcost').inputmask('unmaskedvalue'),
+                    Price: td.find('.cost').inputmask('unmaskedvalue'),
+                    Qty: td.find('.quantity').val(),
+
+                    IsActive: true,
+                    IsDeleted: false,
+                    Notes: td.find('.Notes').val()
+                };
+                if (td.find('.quantity').val() != 0 && td.find('.item').val() != 0) {
+
+                    PurchaseQuotationDetails.push(PurchaseQuotationDetail);
+                }
+
+
+                $('#alterPrices').prop('checked') ? alteredPrices.push({
+                    ItemId: td.find('.item').val(),
+                    Price1: td.find('.price1').inputmask('unmaskedvalue'),
+                    Price2: td.find('.price2').inputmask('unmaskedvalue'),
+                    Price3: td.find('.price3').inputmask('unmaskedvalue')
+                }) : "";
+            });
+
+        }
+
+
+
+        var SalesTaxes;
+        var TotalAfterTaxes;
+        if ($('input[type="checkbox"]').prop("checked") == true) {
+
+            SalesTaxes = $('#SalesTaxes').inputmask('unmaskedvalue');
+            TotalAfterTaxes = $('#TotalAfterTaxes').inputmask('unmaskedvalue');
+        }
+        else {
+            SalesTaxes = 0;
+            TotalAfterTaxes = $('#NetTotal').inputmask('unmaskedvalue');
+        }
+
+        if (valid) {
+            DataValid();
+        }
+        function DataValid() {
+             if (valid && confirm('هل تريد الحفظ؟')) {
+                            $('#preloader, #status').fadeIn();
+                            var projectName = '@Html.Raw(System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"])';
+                            $.ajax({
+                                type: "POST", contentType: "application/json",
+                                url: "/PurchaseQuotation/AddEdit",
+                                data:
+                                    JSON.stringify({
+                                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').eq(0).val(),
+                                        Id: $('#Id').val(),
+                                        DocumentNumber: $('#DocumentNumber').val(),
+                                        BranchId: $('#BranchId').val(),
+                                        VoucherDate: $('#VoucherDate').val(),
+                                        VendorOrCustomerId: $('#VendorId').val(),
+                                        //CurrencyId: $('#CurrencyId').val(),
+                                        //CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                                        Total: $('#Total').inputmask('unmaskedvalue'),
+                                        SalesTaxes: SalesTaxes,
+                                        TotalAfterTaxes: TotalAfterTaxes,
+                                        VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+                                        VoucherDiscountPercentage: $('#percentage').val(),
+                                        NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                                        SystemPageId: $('#SystemPageId').val(),
+                                        DepartmentId: $('#DepartmentId').val(),
+                                        PurchaseQuotationDetails: PurchaseQuotationDetails,
+                                        IsActive: $('#IsActive').val(),
+                                        IsDeleted: $('#IsDeleted').val(),
+                                        Notes: $('#Notes').val(),
+                                    }),
+
+                                success: function (r) {
+                                    if (r == "true") {
+                                        //if ($('#Id').val() > 0) {
+
+                                        //    if ($('#AfterEdit').val() == 'true') {
+
+
+                                        //        $('#preloader, #status').fadeOut();
+                                        //        window.location.replace("/PurchaseQuotation");
+                                        //        window.open("/Report/PurchaseQuotation?id=" + $('#Id').val())
+
+
+                                        //    }
+                                        //    else {
+                                        //        $('#preloader, #status').fadeOut();
+                                        //        window.location.replace("/PurchaseQuotation");
+                                        //    }
+                                        //}
+
+                                        //else {
+
+                                        //    if ($('#AfterAdd').val() == 'true') {
+
+                                        //        if (n == "new") {
+                                        //            $('#preloader, #status').fadeOut();
+                                        //            window.location.replace("/PurchaseQuotation/AddEdit");
+
+                                        //            //window.open("/Report/PurchaseQuotation?id=" + null + "&deptId=" + $('#DepartmentId').val() + "&docNo=" + $('#DocumentNumber').val())
+
+                                        //        } else {
+                                        //            $('#preloader, #status').fadeOut();
+                                        //            window.location.replace("/PurchaseQuotation");
+                                        //            window.open("/Report/PurchaseQuotation?id=" + null + "&deptId=" + $('#DepartmentId').val() + "&docNo=" + $('#DocumentNumber').val())
+
+
+
+                                        //        }
+                                        //    }
+                                        //    else {
+                                                if (n == "new") {
+                                                    $('#preloader, #status').fadeOut();
+                                                    window.location.replace("/PurchaseQuotation/AddEdit");
+
+
+                                                } else {
+                                                    $('#preloader, #status').fadeOut();
+                                                    window.location.replace("/PurchaseQuotation");
+
+
+
+                                                }
+                                            //}
+
+                                        //}
+                                    }
+                                },
+                                error: function (r) {
+                                    $('#preloader, #status').fadeOut();
+                                    console.log(r.response)
+                                    alert("لم يتم الحفظ!");
+                                }
+                            });
+                        }
+        }
+
+
+    }
+
+    function showItemDetials(e) {
+        $('#preloader, #status').fadeIn();
+        var tr = $(e).closest('tr');
+        $.get('/Item/GetItemQuantityInEachWarehouse?itemId=' + tr.find('.item').val() + '&depId=' + $('#DepartmentId').val()).done(function (r) {
+            $('#itemDetailsBody').empty();
+            $('#itemDetailsBody').append(r);
+            $('#preloader, #status').fadeOut();
+        });
+    }
+        //var sum1 = 0;
+        //$(".txtDebit").each(function () {
+
+        //    sum1 += $(this).inputmask('unmaskedvalue');
+
+        //});
+
+        //$(".TotalDebit").val('hjgh');
+
+        //var sum = 0;
+
+        //$(".txtCredit").each(function () {
+
+        //    sum += $(this).maskMoney('unmasked')[0];
+
+        //});
+
+        //$(".TotalCredit").val(12);
+
+
+
+
+
+
+
+    $(document).ready(function () {
+
+        $('#PurchaseQuotationDetails tr td .select2').css('max-width', '800px').css('width', '200%');
+
+
+    })
+     //add new row on Direct Table Details
+
+    function SetAVGCost(e) {
+
+        var itemDDL = $(e).closest('tr').find('.item').val();
+        var doc = $.get('/PurchaseQuotation/AVGCost?itemId=' + itemDDL).done(function (r) {
+            if (r == 0) {
+                $(e).closest('tr').find('.avg ').val(0).inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                });
+
+            }
+            else {
+                $(e).closest('tr').find('.avg ').val(r);
+            }
+        });
+
+    }
+</script>

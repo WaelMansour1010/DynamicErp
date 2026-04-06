@@ -1,0 +1,150 @@
+═══════════════════════════════════════════════════════════════════════════
+سجل التعديلات - إصلاح حساب قيمة اليوم في تصفية العقد (بدون السعي)
+═══════════════════════════════════════════════════════════════════════════
+
+📅 التاريخ: 2025-12-31
+
+📝 الملفات المعدلة:
+1. Views\PropertyContractTermination\AddEdit.cshtml (السطور: 1490-1516)
+2. Controllers\PropertyManagement\PropertyContractTerminationController.cs (السطور: 726-754, 823-832, 888-903)
+
+═══════════════════════════════════════════════════════════════════════════
+المشكلة:
+═══════════════════════════════════════════════════════════════════════════
+
+عند حساب معدل اليوم في تصفية العقد، كان النظام يستخدم BatchTotal (الذي يتضمن
+السعي/العمولة) لحساب معدل اليوم، مما يؤدي لحساب خاطئ خصوصاً عندما:
+- الدفعة المسددة فيها سعي
+- والدفعة الجديدة (غير المسددة) بدون سعي
+
+مثال المشكلة:
+- الدفعة الأولى: 2000 ريال إيجار + 200 ريال سعي = 2200 ريال (مسددة بالكامل)
+- الدفعة الثانية: 2000 ريال إيجار فقط (بدون سعي، غير مسددة)
+- ❌ الحساب الخاطئ: النظام كان بياخد 2200 من الدفعة الأولى ويطبقها على الثانية
+  معدل اليوم = 2200 / 30 = 73.33 ريال
+- ✅ الحساب الصحيح: معدل اليوم = 2000 / 30 = 66.67 ريال
+
+═══════════════════════════════════════════════════════════════════════════
+التعديل المطبق:
+═══════════════════════════════════════════════════════════════════════════
+
+تم إصلاح الحساب في موضعين:
+
+**1️⃣ في Controller (PropertyContractTerminationController.cs):**
+   - السطور 726-754: إضافة حقل BatchTotalWithoutCommission يحسب المجموع بدون السعي
+   - السطور 823-832: تعديل حساب dailyRate ليستخدم BatchTotalWithoutCommission
+   - السطور 888-903: تعديل حساب dailyRate للحالة الثانية (لما مفيش دفعات مسددة)
+
+**2️⃣ في View (AddEdit.cshtml) - JavaScript:**
+   - السطور 1490-1516: تعديل طريقة حساب originalTotal لكل دفعة
+
+**المنطق الجديد:**
+1. يجمع فقط: BatchRentValue + BatchWaterValue + BatchElectricityValue
+              + BatchServicesValue + BatchInsuranceValue
+2. ❌ لا يضيف BatchCommissionValue (السعي/العمولة)
+
+═══════════════════════════════════════════════════════════════════════════
+الكود القديم (السطور 1490-1503):
+═══════════════════════════════════════════════════════════════════════════
+
+            if (batchDateStr) {
+                var remainText = tr.find('label.Remain').text().trim();
+                var remain = parseFloat(remainText || 0);
+
+                var originalTotal = parseFloat(tr.find('.OriginalTotal').val()) ||
+                    parseFloat(tr.find('label.BatchTotal').text()) ||
+                    (parseFloat(tr.find('label.BatchRentValue').text()) || 0);
+
+                visibleBatches.push({
+                    date: new Date(batchDateStr),
+                    remain: remain,
+                    originalTotal: originalTotal > 0 ? originalTotal : 13500
+                });
+            }
+
+═══════════════════════════════════════════════════════════════════════════
+الكود الجديد (السطور 1490-1516):
+═══════════════════════════════════════════════════════════════════════════
+
+            if (batchDateStr) {
+                var remainText = tr.find('label.Remain').text().trim();
+                var remain = parseFloat(remainText || 0);
+
+                // ✅ حساب المجموع بدون السعي (BatchCommissionValue)
+                var batchRentValue = parseFloat(tr.find('label.BatchRentValue').text()) || 0;
+                var batchWaterValue = parseFloat(tr.find('label.BatchWaterValue').text()) || 0;
+                var batchElectricityValue = parseFloat(tr.find('label.BatchElectricityValue').text()) || 0;
+                var batchServicesValue = parseFloat(tr.find('label.BatchServicesValue').text()) || 0;
+                var batchInsuranceValue = parseFloat(tr.find('label.BatchInsuranceValue').text()) || 0;
+                // لا نضيف BatchCommissionValue (السعي)
+
+                var originalTotal = batchRentValue + batchWaterValue + batchElectricityValue
+                                  + batchServicesValue + batchInsuranceValue;
+
+                // إذا كان المجموع = 0، نستخدم القيمة من الحقل المخفي أو BatchTotal
+                if (originalTotal === 0) {
+                    originalTotal = parseFloat(tr.find('.OriginalTotal').val()) ||
+                                  parseFloat(tr.find('label.BatchTotal').text()) || 0;
+                }
+
+                visibleBatches.push({
+                    date: new Date(batchDateStr),
+                    remain: remain,
+                    originalTotal: originalTotal > 0 ? originalTotal : 13500
+                });
+            }
+
+═══════════════════════════════════════════════════════════════════════════
+تفاصيل التعديلات في Controller:
+═══════════════════════════════════════════════════════════════════════════
+
+**الموضع الأول (السطور 726-754):**
+إضافة حساب BatchTotalWithoutCommission في tempDetailsList:
+
+    decimal batchTotalWithoutCommission = (b.BatchRentValue ?? 0) + (b.BatchRentValueTaxes ?? 0)
+                                        + (b.BatchWaterValue ?? 0) + (b.BatchWaterValueTaxes ?? 0)
+                                        + (b.BatchElectricityValue ?? 0) + (b.BatchElectricityValueTaxes ?? 0)
+                                        + (b.BatchServicesValue ?? 0) + (b.BatchServicesValueTaxes ?? 0)
+                                        + (b.BatchInsuranceValue ?? 0) + (b.BatchInsuranceValueTaxes ?? 0);
+
+**الموضع الثاني (السطور 823-832):**
+تعديل حساب dailyRate:
+
+    if (lastFullyPaidBatch.BatchTotalWithoutCommission > 0)
+    {
+        dailyRate = lastFullyPaidBatch.BatchTotalWithoutCommission / (decimal)batchPeriodDays;
+    }
+
+**الموضع الثالث (السطور 888-903):**
+تعديل حساب dailyRate للحالة الثانية (بدون دفعات مسددة):
+
+    decimal firstBatchTotalWithoutCommission = (firstBatch.BatchRentValue ?? 0) + ...
+
+    if (firstBatchTotalWithoutCommission > 0)
+    {
+        dailyRate = firstBatchTotalWithoutCommission / (decimal)batchPeriodDays;
+    }
+
+═══════════════════════════════════════════════════════════════════════════
+طريقة التراجع عن التعديل:
+═══════════════════════════════════════════════════════════════════════════
+
+**باستخدام Git (الأسهل):**
+git checkout HEAD -- Views/PropertyContractTermination/AddEdit.cshtml
+git checkout HEAD -- Controllers/PropertyManagement/PropertyContractTerminationController.cs
+
+**يدوياً:**
+1. افتح الملفات المذكورة أعلاه
+2. ابحث عن السطور المعدلة (مكتوب عليها ✅)
+3. احذف التعديلات الجديدة
+4. أرجع الكود القديم من النسخة الاحتياطية
+
+═══════════════════════════════════════════════════════════════════════════
+اختبار التعديل:
+═══════════════════════════════════════════════════════════════════════════
+
+1. افتح شاشة تصفية العقد
+2. اختر عقد له دفعات مسددة فيها سعي ودفعات بدون سعي
+3. تأكد من أن معدل اليوم يحسب بناءً على قيمة الإيجار فقط بدون السعي
+
+═══════════════════════════════════════════════════════════════════════════

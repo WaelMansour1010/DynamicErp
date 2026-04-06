@@ -1,0 +1,271 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.AccountsOpeningBalance;
+}
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.common-material.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.material.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.material.mobile.min.css" />
+<script src="https://kendo.cdn.telerik.com/2018.2.516/js/kendo.all.min.js"></script>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+                <button class="btn btn-success" id="treeCollapse">@MyERP.Properties.Resources.Total</button>
+
+                <button class="btn btn-success" id="treeExpand">@MyERP.Properties.Resources.Detailed</button>
+
+            </div>
+            <div class="page-title hed ">@MyERP.Properties.Resources.AccountsOpeningBalance</div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="form-group row">
+            <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.TotalDebit</label>
+            <div class="col-sm-2">
+                <input value="@ViewBag.Debit" class="form-control" disabled />
+            </div>
+            <label class=" col-sm-2 control-label"> @MyERP.Properties.Resources.TotalCredit</label>
+            <div class="col-sm-2">
+                <input value="@ViewBag.Credit" class="form-control" disabled />
+            </div>
+            <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Subtraction </label>
+            <div class="col-sm-2">
+                <input id="Diff" class="form-control" disabled />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="treelist"></div>
+
+<div id="itemDetails" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">@MyERP.Properties.Resources.AccountsOpeningBalance</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body" id="itemDetailsBody">
+                
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+<script>
+    $(document).ready(function () {
+        var diff = Math.abs('@ViewBag.Debit' - '@ViewBag.Credit');
+        $('#Diff').val(diff);
+    });
+
+    function GetChartOfAccountOB() {
+        $("#treelist").kendoTreeList({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/ChartOfAccountOB/GetChartOfAccountOB",
+                        dataType: "json"
+                    },
+                    //update: {
+                    //    url: "/ChartOfAccountOB/Save",
+                    //    type: "POST",
+                    //    dataType: "jsonp", // "jsonp" is required for cross-domain requests; use "json" for same-domain requests
+                    //    // send the updated data items as the "models" service parameter encoded in JSON
+                    //    data: kendo.data,
+                    //},
+                    parameterMap: function (options, operation) {
+                        if (operation !== "read" && options.models) {
+                            return { models: kendo.stringify(options.models) };
+                        }
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "Id",
+                        parentId: "ParentId",
+                        fields: {
+                            ParentId: { field: "ParentId", nullable: true, editable: false },
+                            Code: { field: "Code", nullable: true, editable: false },
+                            ArName: { field: "ArName", nullable: true, editable: false },
+                            EnName: { field: "EnName", nullable: true, editable: false },
+                            ObDebit: { field: "ObDebit", type: "number" },
+                            ObCredit: { field: "ObCredit", type: "number" },
+                        },
+                        expanded: true
+                    }
+                },
+            },dataBound: function (e) {
+                var data = this.dataSource.view();
+                for (var i = 0; i < data.length; i++) {
+                   if (data[i].ClassificationId != 3) {
+                        var currenRow = this.tbody.find("tr[data-uid='" + data[i].uid + "']");
+                    var editButton = $(currenRow).find(".btn-Edit");
+                        editButton.prop('hidden', true);
+                    }
+                }
+
+            },
+            columns: [{
+                field: "Code", title: "@MyERP.Properties.Resources.Code", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d;font-weight: 500;"
+                }
+            },
+            {
+                field: "ArName", title: "@MyERP.Properties.Resources.ArName", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d; font-weight: 500;"
+                }
+            },
+            {
+                field: "EnName", title: "@MyERP.Properties.Resources.EnName", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d; font-weight: 500;"
+                }
+            },
+            {
+                field: "ObDebit", title: "@MyERP.Properties.Resources.DebitOB", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d; font-weight: 500;"
+                }
+            },
+            {
+                field: "ObCredit", title: "@MyERP.Properties.Resources.CreditOB", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d;font-weight: 500;"
+                },
+                },
+            {
+
+                command: [
+                    {
+                        name: "@MyERP.Properties.Resources.Edit",
+                        text: "@MyERP.Properties.Resources.Edit",
+                        className: "btn-Edit",
+                        click: function (e) {
+                            $('#itemDetailsBody').empty();
+                            var CurrentNodeData = $(e.target).parents('.k-treelist').data('kendoTreeList').dataItem(e.target);
+                            if (CurrentNodeData.ClassificationId == 3) {
+                                let tr = '<input id="Id0" name="Id" class="form-control" hidden value="' +
+                                    CurrentNodeData.Id + '" required /><input id="ClassificationId0" name="ClassificationId" class="form-control" hidden value="' +
+                                    CurrentNodeData.ClassificationId + '" required /><div class="form-group row"><label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Code</label><div class="col-sm-4" > <label class="control-label" id="Code0">' +
+                                    CurrentNodeData.Code + ' </label></div><label class="control-label col-sm-2"> @MyERP.Properties.Resources.ArName </label><div class="col-sm-4"><label class="control-label" id = "ArName0" > ' +
+                                    CurrentNodeData.ArName + ' </label></div></div> <div class="form-group row"><label class=" col-sm-2 control-label" for="DebitOB">@MyERP.Properties.Resources.DebitOB</label><div class="col-sm-4"> <input id="DebitOB0" name="DebitOB" class="form-control" type="number" step="any" value="' +
+                                    CurrentNodeData.ObDebit + '" required /></div><label for="VoucherDate" class="control-label col-sm-2"> @MyERP.Properties.Resources.CreditOB </label><div class="col-sm-4" > <input id="CreditOB0" name="CreditOB" class="form-control" type="number" step="any" value="' +
+                                    CurrentNodeData.ObCredit + '" required /></div ></div><div class="modal-footer"><button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button><button type="button" onclick="Edit()" class="btn btn-success">@MyERP.Properties.Resources.Edit</button></div> ';
+                                $('#itemDetailsBody').append(tr);
+                                $('#itemDetails').modal('show');
+                            }
+                            else {
+                                Swal.fire({
+                            title: '@MyERP.Properties.Resources.OnlySubAccountsCanBeModified',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                            }
+                        }
+                    },
+                ]
+            }
+            ],
+
+        });
+
+    }
+    $(document).ready(function () {
+        GetChartOfAccountOB();
+    });
+
+
+    $("#treeCollapse").click(function () {
+        var treeList = $("#treelist").data("kendoTreeList");
+        treeList.collapse($("#treelist tbody tr"));
+    });
+
+    $("#treeExpand").click(function () {
+        var treeList = $("#treelist").data("kendoTreeList");
+        treeList.expand($("#treelist tbody tr"));
+    });
+
+    function Edit() {
+        var chartOfAccount0 = {
+            Id: $('#Id0').val(),
+            Code: $('#Code0').text(),
+            ArName: $('#ArName0').text(),
+            ClassificationId: $('#ClassificationId0').val(),
+            ObCredit: $('#CreditOB0').val(),
+            ObDebit: $('#DebitOB0').val(),
+        }
+        if ($('#ClassificationId0').val() == 3) {
+            $.ajax({
+                url: '/ChartOfAccountOB/Save',
+                type: 'POST',
+                data:  chartOfAccount0 ,
+                error: function (e) {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotSaved',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    $('#preloader, #status').fadeOut();
+                },
+                success: function (r) {
+                    if (r == "true") {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.Saved',
+                            text: " ",
+                            icon: 'success',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        window.location.reload();
+                    }
+                    else if (r == "nullAccount") {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.NotFound',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    else {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.NotSaved',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    $('#itemDetails').modal('hide');
+                    $('#preloader, #status').fadeOut();
+                }
+            }
+            );
+        }
+        else {
+             Swal.fire({
+                            title: '@MyERP.Properties.Resources.OnlySubAccountsCanBeModified',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+        }
+
+    }
+</script>

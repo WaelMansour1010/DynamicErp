@@ -1,0 +1,45 @@
+﻿@model IEnumerable<MyERP.Models.GetDriversWithInvoicesByDepId_Result>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+<div class="table-responsive">
+    <table class="table table-centered table-sm mb-0">
+        <thead><tr><th>@MyERP.Properties.Resources.Driver</th><th>@MyERP.Properties.Resources.OrdersCount</th><th>@MyERP.Properties.Resources.Total</th><th>@MyERP.Properties.Resources.Areas</th></tr></thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+            <tr>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.DriverName)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.OrderCount)
+                </td>
+                <!--<td>-->
+                @* @Html.DisplayFor(modelItem => item.SalesInvoices.Sum(s => s.TotalAfterTaxes))*@
+                <!--</td>-->
+                <!--<td>-->
+                @*@{
+        string x = "";
+        foreach (var salesInvoice in item.SalesInvoices)
+        {
+            x += salesInvoice.AreaId!=null ?salesInvoice.Area.ArName + "-" :"";
+        }
+        Html.Label(x);
+            }*@
+                <!--</td>-->
+                <td>
+                    @item.TotalAfterTaxes
+                </td>
+                <td>
+                    @item.areas
+                </td>
+
+            </tr>
+            }
+        </tbody>
+    </table>
+</div>
+

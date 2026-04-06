@@ -1,0 +1,27 @@
+﻿@model IEnumerable<MyERP.Models.GetAccountStatementDetails_Result>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Debit)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Credit)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ArName)
+        </td>
+       
+        <td>
+            @Html.DisplayFor(modelItem => item.JournalDocNum)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Date)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.DocumentNumber)
+        </td>
+        
+    </tr>
+}

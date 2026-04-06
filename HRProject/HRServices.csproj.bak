@@ -1,0 +1,79 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="Views\Shared\_Layout2.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Views\Shared\_Layout2.cshtml.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Views\Shared\Components\Menu\_Navigation.cshtml" />
+    <None Include="wwwroot\assets\LESS\badges_labels.less" />
+    <None Include="wwwroot\assets\LESS\base.less" />
+    <None Include="wwwroot\assets\LESS\buttons.less" />
+    <None Include="wwwroot\assets\LESS\chat.less" />
+    <None Include="wwwroot\assets\LESS\custom.less" />
+    <None Include="wwwroot\assets\LESS\elements.less" />
+    <None Include="wwwroot\assets\LESS\glyphicons.less" />
+    <None Include="wwwroot\assets\LESS\landing.less" />
+    <None Include="wwwroot\assets\LESS\md-skin.less" />
+    <None Include="wwwroot\assets\LESS\media.less" />
+    <None Include="wwwroot\assets\LESS\metismenu.less" />
+    <None Include="wwwroot\assets\LESS\mixins.less" />
+    <None Include="wwwroot\assets\LESS\navigation.less" />
+    <None Include="wwwroot\assets\LESS\pages.less" />
+    <None Include="wwwroot\assets\LESS\rtl.less" />
+    <None Include="wwwroot\assets\LESS\sidebar.less" />
+    <None Include="wwwroot\assets\LESS\skins.less" />
+    <None Include="wwwroot\assets\LESS\spinners.less" />
+    <None Include="wwwroot\assets\LESS\style.less" />
+    <None Include="wwwroot\assets\LESS\theme-config.less" />
+    <None Include="wwwroot\assets\LESS\top_navigation.less" />
+    <None Include="wwwroot\assets\LESS\typography.less" />
+    <None Include="wwwroot\assets\LESS\variables.less" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.0.143" />
+    <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+    <PackageReference Include="DevExpress.AspNetCore.Reporting" Version="21.2.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="7.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="7.0.9" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Data\DapperPoco.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>DapperPoco.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Data\DapperPoco.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>DapperPoco.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

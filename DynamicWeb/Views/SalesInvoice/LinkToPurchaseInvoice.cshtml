@@ -1,0 +1,204 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequest>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.DocumentNumber)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.VoucherDate)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Department.ArName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ItemGroup.ArName)
+        </td>
+        <td>
+            <a href="@Url.Action("AddEdit","PurchaseRequest",new { id=item.Id })" target="_blank">
+                <i class="fa fa-edit"></i>
+            </a>
+        </td>
+        <td>
+            <input type="checkbox" class="purchaseRequestId" value="@item.Id" doc-num="@item.DocumentNumber" />
+
+        </td>
+    </tr>
+
+}
+<script>
+
+    function PurchaseInvoiceDetails()
+    {
+        $('#preloader, #status').fadeIn();
+        purchaseReqeustIds = $.map($('.purchaseRequestId:checked'), function (i) { return $(i).val(); });
+        var Path = window.location.pathname;
+        $.ajax({
+            type: "POST", contentType: "application/json",
+            url: "/SalesInvoice/PurchaseInvoiceDetails",
+            data:
+                JSON.stringify({ purchaseReqeustIds: purchaseReqeustIds }),
+            success: function (r) {
+                //$('#SalesInvoiceDetails').empty().append(r.view);
+                //$('#SalesInvoiceDetails select').select2({
+                //    matcher: matchCustom
+                //});
+                //$('#SalesInvoiceDetails .money').inputmask({
+                //    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                //});
+
+
+                if (Path.search('SalesOrder') > -1) { //Exist
+                $('#SalesOrderDetails').empty().append(r.view);
+                $('#SalesOrderDetails select').select2({
+                    matcher: matchCustom
+                });
+                $('#SalesOrderDetails .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+            }
+            else if (Path.search('StockIssueVoucher') > -1) { //Exist
+                $('#StockIssueVoucherDetails').empty().append(r.view);
+                $('#StockIssueVoucherDetails select').select2({
+                    matcher: matchCustom
+                });
+                $('#StockIssueVoucherDetails .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+            }
+            else {
+                $('#SalesInvoiceDetails').empty().append(r.view);
+                $('#SalesInvoiceDetails select').select2({
+                    matcher: matchCustom
+                });
+                $('#SalesInvoiceDetails .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+            }
+
+                let docNums = $.map($('.purchaseRequestId:checked'), function (i) { return $(i).attr('doc-num'); });
+                $('#PurchaseRequestDocNum').text('@MyERP.Properties.Resources.PurchaseRequestNo' + ': ' + docNums);
+
+                $('#cancelPurchaseRequest').show();
+                $('#VoucherDate').val(r.VoucherDate);
+                $('#Id').remove();
+                SystemPageId = null;
+                isLinked = true;
+                $('#DepartmentId')[0].value == 28;
+                $('#Total').val('');
+                details = [];
+                $('#selectedItems').empty();
+                //$('.price').each(function () {
+                //    $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+                //    AddToSerialNumberTable($(this).closest('tr'));
+                //});
+                if (Path.search('SalesOrder') > -1 || Path.search('StockIssueVoucher') > -1) { //Exist
+                    $('.price').each(function () {
+                        $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+                    });
+                }
+                else {
+                    $('.price').each(function () {
+                        $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+                        AddToSerialNumberTable($(this).closest('tr'));
+                    });
+                }
+
+                CalculateTotals();
+                $('#preloader, #status').fadeOut();
+            },
+            error: function () {
+                $('#preloader, #status').fadeOut();
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotLinked' + ' !',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+    }
+    @*function cancelPurchaseRequest() {
+        $('#SalesInvoiceDetails').empty();
+        $('#PurchaseRequestDocNum').text('');
+        $('#cancelPurchaseRequest').hide();
+        purchaseReqeustIds = [];
+        SystemPageId = null;
+        isLinked = false;
+        details = [];
+        $('#selectedItems').empty();
+        $('#serialTable tr').each(function () {
+            $(this).remove();
+        });
+
+        if ($('#SalesInvoiceDetails tr').length == 0) {
+            let tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" /></td><td onclick="showSearchModal()" class="tabledit-edit-mode popupCell"><input type="hidden" class="item form-control tabledit-input form-control-sm"' +
+                "@Html.Raw(Model != null ? "" : "required ")" + ' /><input hidden type="text" class="item-name form-control tabledit-input form-control-sm"' +
+                "@Html.Raw(Model != null ? "" : "required ")" + ' /><span class="Add-Button" style="font-size: 25px; color: limegreen;margin-right:50%;"><i class="fas fa-plus"></i></span><label style="width:200px" class="name control-label tabledit-input"></label></td><td class="tabledit-edit-mode expiry" style="display:none;"><input class="ExpiryDate form-control tabledit-input form-control-sm" readonly /><input class="PatchId form-control tabledit-input form-control-sm" hidden /><input class="itemId form-control tabledit-input form-control-sm" hidden /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" ' +
+                "@Html.Raw(Model != null ? "" : "required ")" + ' /><input type="hidden" class="quantityOnSystem form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm"' +
+                "@Html.Raw(Model != null ? "" : "required ")" + ' disabled readonly></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any"' +
+                "@Html.Raw(Model != null ? "" : "required ")" + ' /></td><td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm"' +
+                "@Html.Raw(Model != null ? "" : "required ")" + ' /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountPerc form-control tabledit-input form-control-sm" value="0" /></td><td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountValue form-control tabledit-input form-control-sm" value="0" /></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxPercentage form-control tabledit-input form-control-sm"/></td><td class="tabledit-edit-mode ItemTax" style="display:none;"><input type="text" class="ItemTaxValue form-control tabledit-input form-control-sm money" /></td><td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly /></td><td class="tabledit-edit-mode showProfit"><input type="number" step="any" class="showProfit avgCost form-control form-control-sm" readonly /></td><td class="tabledit-edit-mode showProfit"><input type="text" class="showProfit avgCostProfit quantityInWarehouse form-control form-control-sm" readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td> <td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Width form-control tabledit-input form-control-sm" type="text" /></td><td class="tabledit-edit-mode ItemArea" style = "display:none;" > <input class="Height form-control tabledit-input form-control-sm" type="text" /></td ><td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Area form-control tabledit-input form-control-sm" type="text" disabled /></td><td class="tabledit-edit-mode"><button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">' +
+                "@MyERP.Properties.Resources.Details" + '</button></td><td><input class="IsAltItem" type="checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td><td><a href="javascript:void(0);" onclick="deleteElement(this)" data-toggle="modal"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            $('#SalesInvoiceDetails').append(tr);
+
+            if (Path.search('SalesOrder') > -1) { //Exist
+                $('#SalesOrderDetails').empty().append(r.view);
+                $('#SalesOrderDetails select').select2({
+                    matcher: matchCustom
+                });
+                $('#SalesOrderDetails .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+            }
+            else if (Path.search('StockIssueVoucher') > -1) { //Exist
+                $('#StockIssueVoucherDetails').empty().append(r.view);
+                $('#StockIssueVoucherDetails select').select2({
+                    matcher: matchCustom
+                });
+                $('#StockIssueVoucherDetails .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+            }
+            else {
+                $('#SalesInvoiceDetails').empty().append(r.view);
+                $('#SalesInvoiceDetails select').select2({
+                    matcher: matchCustom
+                });
+                $('#SalesInvoiceDetails .money').inputmask({
+                    alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                });
+            }
+
+
+
+            if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+                $('.UnitClass').show();
+                $('.UnitEquivClass').show();
+            }
+            if (AllowDiscountPerItemInSalesInvoice == 'True') {
+                $('.IsDiscountTrue').show();
+            }
+            if (UseExpiryDateForItems == 'True') {
+                $('.expiry').show();
+            }
+            if (ShowItemWidthAndHeightAndAreaInTransactions == 'True') {
+                $('.ItemArea').show();
+            }
+            if ($('#hasTaxes').prop('checked') == true) {
+                $('.ItemTax').show();
+            }
+            else {
+                $('.ItemTax').hide();
+            }
+        }
+        CalculateTotals();
+        //CalculateTotalRefundableInsurance();
+    }*@
+
+</script>

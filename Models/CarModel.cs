@@ -20,6 +20,9 @@ namespace MyERP.Models
             this.CarEntrances = new HashSet<CarEntrance>();
             this.CarSalesInvoices = new HashSet<CarSalesInvoice>();
             this.CarWorkOrders = new HashSet<CarWorkOrder>();
+            this.PurchaseInvoiceDetails = new HashSet<PurchaseInvoiceDetail>();
+            this.SalesInvoiceDetails = new HashSet<SalesInvoiceDetail>();
+            this.SalesQuotationDetails = new HashSet<SalesQuotationDetail>();
         }
     
         public int Id { get; set; }
@@ -41,5 +44,11 @@ namespace MyERP.Models
         public virtual ICollection<CarSalesInvoice> CarSalesInvoices { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<CarWorkOrder> CarWorkOrders { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<PurchaseInvoiceDetail> PurchaseInvoiceDetails { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<SalesInvoiceDetail> SalesInvoiceDetails { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<SalesQuotationDetail> SalesQuotationDetails { get; set; }
     }
 }

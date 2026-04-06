@@ -1,0 +1,274 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <metadata name="sqlDataSource1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <data name="sqlDataSource1.ResultSchemaSerializable" xml:space="preserve">
+    <value>PERhdGFTZXQgTmFtZT0ic3FsRGF0YVNvdXJjZTEiPjxWaWV3IE5hbWU9IkVtcGxveWVlc0NvbnRyYWN0X0dldCI+PEZpZWxkIE5hbWU9IkVtcGxveWVlTmFtZSIgVHlwZT0iU3RyaW5nIiAvPjxGaWVsZCBOYW1lPSJFbXBsb3llZUVuTmFtZSIgVHlwZT0iU3RyaW5nIiAvPjxGaWVsZCBOYW1lPSJOYXRpb25hbElkIiBUeXBlPSJTdHJpbmciIC8+PEZpZWxkIE5hbWU9Ik5hdGlvbmFsaXR5IiBUeXBlPSJTdHJpbmciIC8+PEZpZWxkIE5hbWU9Ik5hdGlvbmFsaXR5RW5OYW1lIiBUeXBlPSJTdHJpbmciIC8+PEZpZWxkIE5hbWU9IkxpdmluZ0FkZHJlc3MiIFR5cGU9IlN0cmluZyIgLz48RmllbGQgTmFtZT0iSm9iTmFtZSIgVHlwZT0iU3RyaW5nIiAvPjxGaWVsZCBOYW1lPSJKb2JFbk5hbWUiIFR5cGU9IlN0cmluZyIgLz48RmllbGQgTmFtZT0iQ29udHJhY3RQZXJpb2QiIFR5cGU9IlN0cmluZyIgLz48RmllbGQgTmFtZT0iQ29udHJhY3RQZXJpb2RFbiIgVHlwZT0iU3RyaW5nIiAvPjxGaWVsZCBOYW1lPSJDb250cmFjdFN0YXJ0VGltZSIgVHlwZT0iRGF0ZVRpbWUiIC8+PEZpZWxkIE5hbWU9IkNvbnRyYWN0RW5kVGltZSIgVHlwZT0iRGF0ZVRpbWUiIC8+PEZpZWxkIE5hbWU9Ik5vdGljZVBlcmlvZCIgVHlwZT0iSW50MzIiIC8+PEZpZWxkIE5hbWU9IkNvbXBhbnlBck5hbWUiIFR5cGU9IlN0cmluZyIgLz48RmllbGQgTmFtZT0iQ29tcGFueUVuTmFtZSIgVHlwZT0iU3RyaW5nIiAvPjxGaWVsZCBOYW1lPSJDb21tZXJjaWFsUmVnaXN0cmF0aW9uTm8iIFR5cGU9IlN0cmluZyIgLz48RmllbGQgTmFtZT0iQmFzaWNTYWxhcnlJdGVtIiBUeXBlPSJEZWNpbWFsIiAvPjxGaWVsZCBOYW1lPSJIb21lU2FsYXJ5SXRlbSIgVHlwZT0iRGVjaW1hbCIgLz48RmllbGQgTmFtZT0iVHJhbnNwb3J0YXRpb25TYWxhcnlJdGVtIiBUeXBlPSJJbnQzMiIgLz48RmllbGQgTmFtZT0iQW5udWFsVmFjYXRpb24iIFR5cGU9IlN0cmluZyIgLz48RmllbGQgTmFtZT0iQW5udWFsVmFjYXRpb25FbiIgVHlwZT0iU3RyaW5nIiAvPjwvVmlldz48L0RhdGFTZXQ+</value>
+  </data>
+  <data name="xrTableCell169.Text" xml:space="preserve">
+    <value>تتم الإخطارات والإشعارات النظامية والتي تسلم عن طريق الاستلام المباشر أو البريد المسجل أو البريد الممتاز أو البريد العاجل أو البريد الالكتروني الخاص بالطرفين، وتـوجه المراسلات علـى العـنوان الموضـح لـكل مـن الطرفين فـي العقد، ويلتزم كلا الطرفين بإخطار الطرف الآخر كتابياً في حال قيامه بتغيير عنوانه أو مكان إقامته أو بريده الالكتروني أواي من أرقام الاتصال الخاصة به المسجلة بهذا العقد أو أي من الوثائق لدى الطرف الأول ويعتبر الاخطار نافذ في </value>
+  </data>
+  <data name="xrTableCell170.Text" xml:space="preserve">
+    <value>All the regulatory notices between the parties shall be in written and shall be delivered directly or by registered mail, express mail, e-mail or couriers. Daily &amp; procedural correspondences shall be sent to the address of Both Parties stated in this Contract. Each party undertakes to notify the other in writing of any change of address or place of residence or change of each of its communication numbers registered in this Contract or in any of its documents with the First Party. Notices shall be effective if it is not received due to the employee</value>
+  </data>
+  <data name="xrTableCell172.Text" xml:space="preserve">
+    <value>This Contract of (2) original counterparts. Each party has one copy to work accordingly.
+Contract language (Arabic) and in case of any conflict between the two parties, Arabic text will be rec-organized as per provisions of the Labor Law
+</value>
+  </data>
+  <data name="xrTableCell163.Text" xml:space="preserve">
+    <value>يقر الموظف انه أتيح له الاطلاع حين التعاقد وقبل توقيع هـذا العقد على الأنظمة واللوائح والتعليمات السارية المعمول بها لدى الطرف الأول وأخذ علماً بكل ما جاء فيها من نصوص وأحكام تتعلق بالحقوق والمزايا التي تخصه نتيجة مزاولة العمل الموكل إليه وما يترتب عليه من واجبات وما يخضع له من ضوابط وإجراءات ووافق على الالتزام بأحكامها وما يطرأ عليها من تعديلات من وقت لآخر في كل ما لم يرد به نص في هـذا العقد كما يحق له الاطلاع على هذه الأنظمة واللوائح في أي وقت يشاء</value>
+  </data>
+  <data name="xrTableCell164.Text" xml:space="preserve">
+    <value>The Employee shall acknowledge that he/she has been given access to the applicable regulations, rules and instructions in force at First Party and has Apprised of all the provisions relating to the rights and benefits that belong to the employee as a result of the exercise of the work entrusted to him/her and the consequent duties and subjected controls and procedures, and has agreed to be bound by its provisions and amendments made from time to time and not provided for in this contract and is entitled to access these regulations at any time.</value>
+  </data>
+  <data name="xrTableCell165.Text" xml:space="preserve">
+    <value>يخضع هذا العقد لنظام العمل ولائحته التنفيذية والقرارات الصادرة تنفيذا له في كل مالم يرد به نص في هذا العقد ويحل هذا العقد محل كافة الاتفاقيات والعقود السابقة الشفهية أو الكتابية إن وجدت وفي حالة الخلاف بين الطرفين فإنه يتم التقاضي لدى الجهات المختصة في المملكة العربية السعودية مدينة الرياض فقط</value>
+  </data>
+  <data name="xrTableCell166.Text" xml:space="preserve">
+    <value>This contract shall be subject to the Labor Law, its executive regulations and the decisions issued to implement it in all of the provisions not stated in this Contract. This contract supersedes all previous agreements and oral or written contracts, if any. Any dispute that may arise between the parties shall be referred to concerned court in the </value>
+  </data>
+  <data name="xrTableCell157.Text" xml:space="preserve">
+    <value>يستحق الموظف عند انهاء العلاقة التعاقدية من قبل الطرف الأول او باتفاق الطرفين او بانتهاء مدة العقد او نتيجة قوة قاهرة مكافأة وقدرها أجر خمسة عشر يوماً عن كل سنة من السنوات الخمس الاولي وأجر شهر عن كل سنة من السنوات التالية ويستحق الموظف مكافأة عن أجزاء السنة التي قضاها في العمل وتحسب المكافأة على أساس الاجر الاخير</value>
+  </data>
+  <data name="xrTableCell158.Text" xml:space="preserve">
+    <value>In case of termination of the contractual relationship by the First Party or by the agreement of the parties, by the end of the contract term, or as a result of force majeure, the Employee shall be entitled to 15 days of monthly salary for each year of the first five years, and One-month salary for following years.
+The end-of-service award shall be calculated on the basis of the last wage and the worker shall be entitled to an end-of-service award for the portions of the year in proportion to the time spent on the job.
+</value>
+  </data>
+  <data name="xrTableCell159.Text" xml:space="preserve">
+    <value>في حال انتهاء علاقة العمل بسبب استقالة الموظف يستحق ثلث المكافأة بعد خدمة لا تقل مدتها عن سنتين متتاليتين ولأتزيد على خمس سنوات ويستحق ثلثيها إذا زادت على خمس سنوات متتالية ولم تبلغ عشرة ويستحق المكافأة كاملة إذا بلغت مدة خدمته عشر سنوات فأكثر</value>
+  </data>
+  <data name="xrTableCell160.Text" xml:space="preserve">
+    <value>In the case of termination of the employment relationship due to the resignation of the employee, the Employee is entitled to one third of the award after a service of not less than two consecutive years and not more than five years; and entitled to two thirds if the Employee service is in excess of five successive years but less than ten years; and to the full award if the Employee service amounts to ten years or more.</value>
+  </data>
+  <data name="xrTableCell150.Text" xml:space="preserve">
+    <value>Both parties herein agree in case of contract is terminated by either party without legitimate reason. In return for the termination, the other party shall be entitled of a compensation of two-month of the Employee salary.</value>
+  </data>
+  <data name="xrTableCell124.Text" xml:space="preserve">
+    <value>The Employee shall perform the work assigned to in accordance with the principles of the profession, and in accordance with the instructions of the First Party, unless this instruction do not violate the contract, order or public morals, and the implementation thereof </value>
+  </data>
+  <data name="xrTableCell125.Text" xml:space="preserve">
+    <value>أن يعتني عناية كافية بالأدوات، والمهمات المسندة إليه، والخامات المملوكة للطرف الأول الموضوعة تحت تصرفه، أو التي تكون في عهدته، وأن يعيد الى الطرف الأول المواد غير المستهلكة ويحق للطرف الأول حسم قيمة ما أتلفه أو دمره أو فقده الطرف الثاني من عهد أو آلات أو منتجات يملكها الطرف الأول</value>
+  </data>
+  <data name="xrTableCell126.Text" xml:space="preserve">
+    <value>The Employee shall take adequate care of the tools, the tasks assigned to, and the materials owned by the First Party at his disposal or in his custody and shall return non-expendable materials to the First Party. The first party has the right to charge materials, tools or products if </value>
+  </data>
+  <data name="xrTableCell129.Text" xml:space="preserve">
+    <value>أن يخضع وفقاً لطلب الطرف الأول للفحوص الطبية التي يرغب في اجرائها عليه قبل الالتحاق بالعمل، أو أثناءه للتحقق من خلوه من الأمراض المهنية، أو السارية والافصاح عن الامراض المزمنة أو المعدية أو كل ما يؤثر في اداءه للمهام المطلوبة منه</value>
+  </data>
+  <data name="xrTableCell130.Text" xml:space="preserve">
+    <value>The Employee shall comply with the request of First Party for the medical examinations before filling the job position or during the contract to verify that the Employee is being free from occupational or existent diseases and disclose chronic or contagious diseases or anything that may affect the performance of the assigned </value>
+  </data>
+  <data name="xrTableCell131.Text" xml:space="preserve">
+    <value>يلتزم الموظف بحسن السلوك، والأخلاق أثناء العمل، وفي جميع الأوقات يلتزم بالأنظمة، والأعراف، والعادات، والآداب المرعية في المملكة العربية السعودية، وكذلك بالقواعد، واللوائح، والتعليمات المعمول بها لدى الطرف الأول، ويتحمل كافة الغرامات المالية الناتجة عن مخالفته لتلك الأنظمة</value>
+  </data>
+  <data name="xrTableCell132.Text" xml:space="preserve">
+    <value>The employee shall be committed to good conduct and ethics at work and at all times abide by the regulations, customs, traditions and public order or morals practiced in the Kingdom of Saudi Arabia. As well as the rules, regulations and instructions in force at first party, and shall bear all financial fines resulting from violating any </value>
+  </data>
+  <data name="xrTableCell136.Text" xml:space="preserve">
+    <value>The employee shall not work to third party with remuneration or without remuneration either directly or indirectly during the period of execution of this contract without written consent of the First Party.</value>
+  </data>
+  <data name="xrTableCell142.Text" xml:space="preserve">
+    <value>The Employee shall not disclose any information, secrets, documents and / or other materials that the Employee has acquired or the still in the Employee possession or any briefed information during the period of working with the First Party after the termination of the employment contract, </value>
+  </data>
+  <data name="xrTableCell137.Text" xml:space="preserve">
+    <value>مع عدم الاخلال باي حقوق اخري للطرف الأول بما في ذلك على سبيل المثال وليس الحصر، (الحق بمطالبة بالتعويض عن الاضرار الفعلية او امر قضائي مؤقت او دائم)، يوافق الموظف على انه في حال انتهاك أي من البنود اعلاه فانه يحق للطرف الأول مطالبته بتعويض شهرين من الاجر كتعويض متفق عليه.</value>
+  </data>
+  <data name="xrTableCell138.Text" xml:space="preserve">
+    <value>Without prejudice to any other rights of First Party, including but not limited to, (the right to claim compensation for actual damage or a temporary or permanent judicial order). The Employee shall agree that in the event of any breach of any of the above, the First Party has the right to claim compensation of two months from the wage as agreed compensation.</value>
+  </data>
+  <data name="xrTableCell134.Text" xml:space="preserve">
+    <value>The First Party has the right to transfer the Second Party to work in any of the First Party’s departments or branches in the same job scale in the Kingdom of Saudi Arabia depending on work requirements</value>
+  </data>
+  <data name="xrTableCell119.Text" xml:space="preserve">
+    <value>- يستحق الطـرف الثاني تذاكر سفـر على الدرجة السياحية له مرة واحدة في السنه وعند طلبه التمتع بإجازة سنوية على أن يتم إصدار التذاكرحسب سياسة المؤسسة.
+
+-  لا يستحق الطرف الثاني تذاكر عودة لبلده في الحالات التالية: 
+-  إذا وافق الطرف الأول على التنازل عن كفالته لأي جهة أخرى.
+- إذا استقال الطرف الثاني من عمله أو تركه لأسباب شخصية قبل نهاية العقد.
+
+ يتحمل الطرف الأول رسوم الاستقدام ورخصة العمل ورسوم الاقامة ورسوم الخروج والعودة ورسوم تغيير المهنة، وتذكرة عودة الموظف الى موطنه بالوسيلة التي قدم بها بعد انتهاء العلاقة بين الطرفين.
+
+يلتزم الطرف الأول بنفقات تجهيز جثمان الموظف، ونقله الى الجهة التي ابرم فيها العقد، او استقدم الموظف منها، مالم يدفن بموافقة ذويه داخل المملكة، أو تلتزم المؤسسة العامة للتأمينات بذلك.
+</value>
+  </data>
+  <data name="xrTableCell120.Text" xml:space="preserve">
+    <value>The Second Party travel tickets will be entitled to have a ticket (economy class) To the employee one time in one contractual year When requested to enjoy annual leave.  The tickets are issued according to the institution’s policy
+- The Second Party shall not be entitled for return tickets to his home for the following circumstances:
+
+-If the First Party approved the request of Second Party to transfer the sponsorship (Iqama) to an-other company.
+- If the Second Party resigned for personal rea-sons before the contract expires.
+
+the First Party shall bear recruitment fees, work permit, Iqama card fees, exit and reentry fees, change of profession fees, and The Employee's return ticket to his home country by any means provided after the end of the relationship between the both parties
+the First Party shall bear expenses of processing the Employee's cadaver, and transfer it to the local where the contract was concluded or the local where Employee is recruited from, unless it is buried with the consent of the Employee's family within the Kingdom, or the General Organization of Social 
+</value>
+  </data>
+  <data name="xrTableCell109.Text" xml:space="preserve">
+    <value>يستحق الطرف الثاني إجازة سنوية قدرها واحد وعشرون (21) يوماً عن كل سنة تعاقدية مدفوعة الأجر، ويحدد الطرف الأول تاريخها خلال سنة الاستحقاق، وفقاً لظروف العمل، على ان يتم دفع أجر الإجازة مقدماً عند استحقاقها، وللطرف الأول تأجيل الإجازة بعد نهاية سنة استحقاقها لمدة لا تزيد عن (90) يومياً، كما له بموافقة الموظف كتابة، تأجيلها إلى نهاية السنة التالية لسنة الاستحقاق، وذلك حسب </value>
+  </data>
+  <data name="xrTableCell110.Text" xml:space="preserve">
+    <value>The Second Party is eligible for an annual paid vacation of 21days every contractual year, paid and its period as shown above. First Party shall determine its date during the due year according to the working conditions, provided that the payment of the leave is paid in advance upon maturity. First Party has the right to postpone the leave after the end of the year of maturity for a period not exceeding 90 days, and with the employee's written consent, shall be postponed until the end of the year following the year of entitlement as per requirements of working conditions.</value>
+  </data>
+  <data name="xrTableCell116.Text" xml:space="preserve">
+    <value>the First Party shall provide Medical care for the employee health insurance: In accordance with the provisions of the Cooperative Health Insurance Law and the policy of First Party. Also, is committed via the registration of The Employee in the General Organization of Social Insurance and payment of contributions according to its regulations.</value>
+  </data>
+  <data name="xrTableCell113.Text" xml:space="preserve">
+    <value>يستحق الطرف الثاني إجازة سنوية قدرها واحد وعشرون (21) يوماً عن كل سنة تعاقدية مدفوعة الأجر، ويحدد الطرف الأول تاريخها خلال سنة الاستحقاق، وفقاً لظروف العمل، على ان يتم دفع أجر الإجازة مقدماً عند استحقاقها، وللطرف الأول تأجيل الإجازة بعد نهاية سنة استحقاقها لمدة لا تزيد عن (90) يومياً، كما له بموافقة الموظف كتابة، تأجيلها إلى نهاية السنة التالية لسنة الاستحقاق، وذلك حسب </value>
+  </data>
+  <data name="xrTableCell114.Text" xml:space="preserve">
+    <value>The Second Party is eligible for an annual paid vacation of 21days every contractual year, paid and its period as shown above. First Party shall determine its date during the due year according to the working conditions, provided that the payment of the leave is paid in advance upon maturity. First Party has the right to postpone the leave after the end of the year of maturity for a period not exceeding 90 days, and with the employee's written consent, shall be postponed until the end of the year following the year of entitlement as per requirements of working conditions.</value>
+  </data>
+  <data name="xrTableCell112.Text" xml:space="preserve">
+    <value>the First Party shall provide Medical care for the employee health insurance: In accordance with the provisions of the Cooperative Health Insurance Law and the policy of First Party. Also, is committed via the registration of The Employee in the General Organization of Social Insurance and payment of contributions according to its regulations.</value>
+  </data>
+  <data name="xrTableCell105.Text" xml:space="preserve">
+    <value>ساعات العمل: يعتمد المعيار الأسبوعي وفقا لنظام العمل
+السعودي.
+أيام العمل: (6) ايام في الاسبوع (يوم الجمعة هو يوم
+العطلة الرسمي.
+العمل الاضافي: أجره + (50%) من أجره الاساسي .
+يتم التكليف بالعمل الإضافي كتابيا، ولا يشمل أجر العمل الإضافي أي بدل يمنح للطرف الثاني لم يذكر في هذا العقد ضمن الأجر عند احتساب مكافئة نهاية الخدمة
+</value>
+  </data>
+  <data name="xrTableCell106.Text" xml:space="preserve">
+    <value>Hours of work: (The Weekly Standard is based 
+on the Saudi Labour System.
+Days of work:  6 days per week.
+     Friday is the official holiday.
+Additional work: its wage + (50%) of the basic
+salary.
+The assignment for overtime work must be in writing. Any overtime or other allowances not mentioned here in this employment contract will not be included in the final service indemnity calculation.
+</value>
+  </data>
+  <data name="xrTableCell101.Text" xml:space="preserve">
+    <value>إن مدة هذا العقد (12 شهرا) ميلادية قابلة للتجديد تبدأ اعتباراً من اليوم الذي يصل فيه الموظف إلى مكان العمل ويزاول المهنة المطلوبة.ويخضع الموظف لفترة تجربة لمدة (90) يوم من تاريخ مباشرته للعمل، ويجوز تمديدها بموجب اتفاق مكتوب بين الطرفين لفترة لا تتجاوز (90) يوم اضافية، ويحق للطرفين خلال أي منهما إنهاء العقد دون التزامات تجاه الطرف الاخر وفقا لنظام العمل السعودي و "يتجدد العقد تلقائيا"عند انتهائه في كل مرة ولمدة اخرى مماثلة للمدة المنصوص عليها من هذا العقد بنفس بنود العقد وشروطه ومميزاته وذلك ان لم يخطر احد الطرفين الآخر خطيأ بعدم الرغبة في تجديد العقد قبل شهر على الأقل من تاريخ مدة انتهاء العقد الحالي</value>
+  </data>
+  <data name="xrTableCell102.Text" xml:space="preserve">
+    <value>This Contract shall be (12 month) Renewable Starting from the day which the employee arrives at the place of work and commence work at the employer request. And the employee shall subject to a probation period of (90) days, starting from the beginning of the day of work; And may be extended by written agreement between the both parties for a period not exceeding (90) days, during such periods the parties may terminate the contract without obligations to the other party in accordance with the Saudi Labor Law.  The contract is automatically renewed upon its expiry each time and for another period as stated in this contract with the same terms, conditions and features of the contract If no one of the parties notified the other by writing about the unwillingness to renew the contract. If one of the parties does not notify the other by writing about the unwillingness to renew the contract at least one month before the end of the current contract. </value>
+  </data>
+  <data name="xrTableCell49.Text" xml:space="preserve">
+    <value>بعد ان أقر الطرفان بأهليتهما المعتبرة شرعاً، ونظاماً لإبرام مثل هذا العقد، اتفق الطرفان على ان يعمل الموظف لدى الطرف الأول تحت ادارتها وإشرافها ومباشرة الاعمال التي يكلف بها بما يتناسب مع قدراته العملية والعلمية والفنية ووفقا لاحتياجات العمل وبما لا يتعارض مع الضوابط المنصوص عليها في المواد (58-59-60) من نظام العمل السعودي فقد اتفقا على ما يلي</value>
+  </data>
+  <data name="xrTableCell50.Text" xml:space="preserve">
+    <value>In consideration of parties full legal capacity, both Parties agree that the Employee shall work to the First Party under its administration and supervision, and undertake the tasks assigned to her\his in proportion to her\his practical, academic and technical capabilities; and in accordance with the needs of work and not be inconsistent with regulations stipulated in Articles (58-59-60) of the Saudi Arabia Labor Law.Both Parties agree upon the following</value>
+  </data>
+</root>

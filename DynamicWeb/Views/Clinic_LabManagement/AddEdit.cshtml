@@ -1,0 +1,431 @@
+﻿@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.LabManagement;
+}
+
+
+
+<h3 class="control-label">@MyERP.Properties.Resources.LabManagement</h3>
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                @MyERP.Properties.Resources.WorkNameAssociatedWithLab
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Date
+                            </th>
+
+                            <th>
+                                @MyERP.Properties.Resources.TreatmentStageName
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Sender
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Proceeded
+                                
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.ArName)*@
+                                قطعة خزف م1/للسن
+                            </td>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.EnName)*@
+                                14/11/2018
+                            </td>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.Notes)*@
+                                تنفيذ في المعمل - lab work
+                            </td>
+                            <td>
+                                @*<input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateDeactivate(@item.Id)" />*@
+                                نعم
+                            </td>
+                            <td>
+                                @*<a href="" onclick="$('#preloader, #status').fadeIn();">
+                                        <i class="fa fa-edit"></i>
+                                    </a>*@
+                                لا
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.ArName)*@
+                                قطعة خزف م1/للضرس
+                            </td>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.EnName)*@
+                                20/2/2020
+                            </td>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.Notes)*@
+                                تنفيذ في المعمل - lab work
+                            </td>
+                            <td>
+                                @*<input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateDeactivate(@item.Id)" />*@
+                                لا
+                            </td>
+                            <td>
+                                @*<a href="" onclick="$('#preloader, #status').fadeIn();">
+                                        <i class="fa fa-edit"></i>
+                                    </a>*@
+                                لا
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+    <hr />
+    <div style="position:center">
+        <input type="radio" name="to" value="bank" checked="checked" />@MyERP.Properties.Resources.All
+        <input type="radio" name="to" value="cashbox" />@MyERP.Properties.Resources.NotSended
+        <input type="radio" name="to" value="cashbox" />@MyERP.Properties.Resources.NotProceeded
+    </div>
+</div>
+<div class="d-flex justify-content-between">
+    <div class="card-box col-6 m-1">
+        @Html.Partial("_TeethChart")
+        <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-between">
+                <input type="checkbox" value="true" checked id="inProgressAndReceive" />
+                <label style="margin-right:1%" for="inProgressAndReceive">
+                    @MyERP.Properties.Resources.InProgressAndReceive
+                </label>
+                <input type="checkbox" value="true" id="sendToLab" />
+                <label style="margin-right:1%" for="sendToLab">
+                    @MyERP.Properties.Resources.SendToLabStatus
+                </label>
+            </div>
+
+        </div>
+
+    </div>
+    <div class="card-box col-6 m-1">
+        <div class="row">
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @MyERP.Properties.Resources.LabStatus
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.TreatmentName
+                                </th>
+
+                                <th>
+                                    @MyERP.Properties.Resources.Count
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.Price
+                                    
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.Total
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    @*@Html.DisplayFor(modelItem => item.ArName)*@
+                                    مرسل للمعمل
+                                </td>
+                                <td>
+                                    @*@Html.DisplayFor(modelItem => item.EnName)*@
+                                    قطعة خزف م1/للسن
+                                </td>
+                                <td>
+                                    @*@Html.DisplayFor(modelItem => item.Notes)*@
+                                    10
+                                </td>
+                                <td>
+                                    @*<input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateDeactivate(@item.Id)" />*@
+                                    2500
+                                </td>
+                                <td>
+                                    @*<a href="" onclick="$('#preloader, #status').fadeIn();">
+                                            <i class="fa fa-edit"></i>
+                                        </a>*@
+                                    25000
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    @*@Html.DisplayFor(modelItem => item.ArName)*@
+                                    مرسل للمعمل
+                                </td>
+                                <td>
+                                    @*@Html.DisplayFor(modelItem => item.EnName)*@
+                                    قطعة خزف م1/للضرس
+                                </td>
+                                <td>
+                                    @*@Html.DisplayFor(modelItem => item.Notes)*@
+                                    5
+                                </td>
+                                <td>
+                                    @*<input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateDeactivate(@item.Id)" />*@
+                                    2000
+                                </td>
+                                <td>
+                                    @*<a href="" onclick="$('#preloader, #status').fadeIn();">
+                                            <i class="fa fa-edit"></i>
+                                        </a>*@
+                                    10000
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+        <hr />
+
+    </div>
+
+</div>
+
+
+<hr />
+
+<hr />
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                @MyERP.Properties.Resources.SendToLabDate
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.InProceededDate
+                            </th>
+
+                            <th>
+                                @MyERP.Properties.Resources.Material
+                                
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.ColorClassification
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Neck
+                                
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Body
+                                
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Crown
+                                
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.ArName)*@
+                                14/11/2018
+                            </td>
+                            <td>
+                                @*@Html.DisplayFor(modelItem => item.EnName)*@
+                                17/11/2018
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                20/2/2020
+                            </td>
+                            <td>
+                                25/2/2020
+                            </td>
+                            <td>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                            <td>
+                                <select>
+                                    <option></option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+    <hr />
+
+</div>
+
+<hr />
+<div class="card-box">
+    <div class="row">
+        <div class="col-8">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                @MyERP.Properties.Resources.WorkQuality
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.ReceivedDate
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <tr>
+                            <td>
+                                <select>
+                                    <option selected>
+                                        جيد
+                                    </option>
+                                    <option>
+                                        جيد جدا
+                                    </option>
+                                    <option>
+                                        متوسط
+                                    </option>
+                                </select>
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <div class="col-3 pt-4">
+            <input type="checkbox" value="true" checked id="inProgressAndReceive" />
+            <label style="margin-right:1%" for="inProgressAndReceive">
+                @MyERP.Properties.Resources.InProceededDateReminder
+            </label>
+        </div>
+      
+    </div>
+    <hr />
+    <div class="form-group row">
+        <label class="col-sm-1 control-label" style="margin-right:1%">
+            @MyERP.Properties.Resources.Notes
+        </label>
+        <div class="col-sm-4">
+            <input type="text" class="form-control" value="تجربة معدن" />
+        </div>
+    </div>
+    <hr />
+
+    <div class="form-group row">
+        <label class="col-sm-1 control-label" style="margin-right:1%">
+            @MyERP.Properties.Resources.Name
+        </label>
+        <div class="col-sm-4">
+            <input type="text" class="form-control" value=" أحمد محمد العليي" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-1 control-label" style="margin-right:1%">
+            @MyERP.Properties.Resources.FaceShape
+        </label>
+        <div class="col-sm-4">
+            <select>
+                <option>@MyERP.Properties.Resources.Select</option>
+                <option>شكل1</option>
+                <option>شكل2</option>
+            </select>
+        </div>
+        <label class="col-sm-1 control-label" style="margin-right:1%">
+            @MyERP.Properties.Resources.LipLine
+        </label>
+        <div class="col-sm-4">
+            <select>
+                <option>@MyERP.Properties.Resources.Select</option>
+                <option>شكل1</option>
+                <option>شكل2</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-sm-1 control-label" style="margin-right:1%">
+            @MyERP.Properties.Resources.TeethShape
+        </label>
+        <div class="col-sm-4">
+            <select>
+                <option>@MyERP.Properties.Resources.Select</option>
+                <option>شكل1</option>
+                <option>شكل2</option>
+            </select>
+        </div>
+        <label class="col-sm-1 control-label" style="margin-right:1%">
+            @MyERP.Properties.Resources.PotentialDistortions
+        </label>
+        <div class="col-sm-4">
+            <select>
+                <option>@MyERP.Properties.Resources.Select</option>
+                <option>شكل1</option>
+                <option>شكل2</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+

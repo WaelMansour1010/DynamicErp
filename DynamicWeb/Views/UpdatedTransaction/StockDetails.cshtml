@@ -1,0 +1,600 @@
+﻿@model MyERP.Models.UpdatedTransaction
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = "Edit";
+}
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/js/CalcTotalDebitAndCredit.js"></script>
+@Html.AntiForgeryToken()
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    @if (Model != null)
+                    {
+                        if (Model.IsDeleted == false)
+                        {
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+                            if (ViewBag.Previous > 0)
+                            {
+                <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                                <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                            }
+                            if (ViewBag.Next > 0)
+                            {
+                                <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                                <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                            }
+                        }
+                    }
+                    else
+                    {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>}
+                    <h4>@Model.SystemPage.ArName</h4>
+                </div>
+                <div class="form-body">
+                    <div class="form-horizontal">
+                        <hr />
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                        @if (Model != null)
+                        {
+                            @Html.HiddenFor(model => model.Id)
+                            @Html.HiddenFor(model => model.IsActive)
+                            @Html.HiddenFor(model => model.UserId)
+                            @Html.HiddenFor(model => model.IsLinked)
+                            @Html.HiddenFor(model => model.IsPosted)
+                            @Html.HiddenFor(model => model.IsDeleted)
+                            @Html.HiddenFor(model => model.IsAccepted)
+                            @Html.HiddenFor(model => model.IsCompleted)
+                            @Html.HiddenFor(model => model.Image)
+                            @Html.HiddenFor(model => model.AutoCreated)
+                        }
+                        <div class="panel-group">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    @MyERP.Properties.Resources.MainData
+
+                                </div>
+                                <div class="panel-body">
+                                        <div class="form-group">
+                                            <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                            <div class="col-sm-5">
+                                                @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo } })
+                                                @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger" })
+                                            </div>
+
+                                            <label class="col-sm-1 control-label" for="BranchId">@MyERP.Properties.Resources.Branch</label>
+                                            <div class="col-sm-5">
+                                                @Html.DropDownList("BranchId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required", disabled = "disabled" })
+                                                <span class="Asterisks">*</span>
+
+                                                @Html.ValidationMessageFor(model => model.BranchId, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="DepartmentId" class="col-sm-1 control-label">@MyERP.Properties.Resources.Branch</label>
+                                            <div class="col-sm-5">
+                                                @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required", disabled = "disabled" })
+                                                <span class="Asterisks">*</span>
+
+                                            </div>
+
+                                            <label for="WarehouseId" class="col-sm-1 control-label">@MyERP.Properties.Resources.WareHouse</label>
+                                            <div class="col-sm-5">
+                                                @Html.DropDownList("WarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required", disabled = "disabled" })
+                                                <span class="Asterisks">*</span>
+
+                                                @Html.ValidationMessageFor(model => model.WarehouseId, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+                                        @if (Model.CurrencyId != null)
+                                        {
+                                            <div class="form-group">
+                                                <label class="control-label col-sm-1" for="CurrencyId"> @MyERP.Properties.Resources.Currency</label>
+                                                <div class="col-sm-5">
+                                                    @Html.DropDownList("CurrencyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required", disabled = "disabled" })
+                                                    <span class="Asterisks">*</span>
+
+                                                    @Html.ValidationMessageFor(model => model.CurrencyId, "", new { @class = "text-danger" })
+                                                </div>
+
+                                                <label for="CurrencyEquivalent" class="control-label col-sm-1">@MyERP.Properties.Resources.ExchangeRate</label>
+                                                <div class="col-sm-5">
+                                                    @Html.EditorFor(model => model.CurrencyEquivalent, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ExchangeRate, required = "required", disabled = "disabled" } })
+                                                    <span class="Asterisks">*</span>
+
+                                                    @Html.ValidationMessageFor(model => model.CurrencyEquivalent, "", new { @class = "text-danger" })
+                                                </div>
+
+                                            </div>
+                                        }
+                              
+                                        @if (Model != null && Model.Id > 0 && Model.AutoCreated == true)
+                                        {
+                                            <div class="form-group">
+                                                <label class="control-label col-sm-1" for="SystemPage">@MyERP.Properties.Resources.MainDoc</label>
+                                                <div class="col-sm-5">
+                                                    <input id="SystemPage" class="form-control" type="text" readonly value="@ViewBag.SystemPage" />
+                                                </div>
+                                                <label class="control-label col-sm-1" for="SelectedId">@MyERP.Properties.Resources.MainDocNo</label>
+                                                <div class="col-sm-5">
+                                                    <input id="SelectedId" class="form-control" type="text" readonly value="@Model.SelectedId" />
+                                                </div>
+                                            </div>
+                                        }
+                                        <div class="form-group">
+                                            <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.DocumentDate</label>
+                                            <div class="col-sm-5">
+                                                @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", disabled = "disabled" } })
+                                                <span class="Asterisks">*</span>
+
+                                                @Html.ValidationMessageFor(model => model.VoucherDate, "", new { @class = "text-danger" })
+                                            </div>
+                                            @if (Model.DestinationWarehouseId != null)
+                                            {
+                                        <label for="DestinationWarehouseId" class="col-sm-1 control-label">@MyERP.Properties.Resources.ToWarehouse</label>
+                                                <div class="col-sm-5">
+                                                    @Html.DropDownList("DestinationWarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", disabled = "disabled" })
+                                                    @Html.ValidationMessageFor(model => model.DestinationWarehouseId, "", new { @class = "text-danger" })
+                                                </div>
+                                            }
+
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label col-sm-1" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                            <div class="col-sm-5">
+                                                <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5" readonly>@if (Model != null) { @Model.Notes; }</textarea>
+
+                                                @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+
+                                </div>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    @MyERP.Properties.Resources.DocumentData
+                                </div>
+                                <div class="panel-body">
+                                        @if (Model.CurrencyId != null)
+                                        {
+                                            <div class="form-group">
+                                                <table class="table table-hover table-condensed">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="col-sm-2">@MyERP.Properties.Resources.Barcode</th>
+                                                            <th class="col-sm-2">@MyERP.Properties.Resources.Item</th>
+                                                            <th class="col-sm-1">@MyERP.Properties.Resources.Qty</th>
+                                                            <th hidden>@MyERP.Properties.Resources.Unit</th>
+                                                            <th hidden>@MyERP.Properties.Resources.Equivalent</th>
+                                                            <th class="col-sm-1">@MyERP.Properties.Resources.Cost</th>
+                                                            <th class="col-sm-2">@MyERP.Properties.Resources.Total</th>
+
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="StockReceiptVoucherDetails">
+
+                                                        @if (Model != null)
+                                                        {
+                                                            foreach (var item in Model.UpdatedTransactionDetails)
+                                                            {
+                                                        <tr>
+                                                            <td class="col-sm-2"><input class="barcode form-control" readonly value="@Html.Raw(item.ItemPrice!=null?item.ItemPrice.Barcode:"")" /></td>
+                                                            <td class="col-sm-2"><select class="item form-control" disabled><option value="@item.ItemId">@item.Item.ArName</option></select></td>
+                                                            <td class="col-sm-1"><input class="quantity form-control" readonly type="number" step="any" min="1" oninput="validity.valid ? this.save = value : value = this.save;" value="@item.Qty" /></td>
+                                                            <td hidden><select class="itemUnit form-control"></select></td>
+                                                            <td hidden><input class="unitEquavalent form-control" type="number" step="any" min="1" value="1" /></td>
+                                                            <td class="col-sm-1"><input type="text" readonly class="money cost form-control" value="@item.CostPrice" /></td>
+                                                            <td class="col-sm-2"><input class="total money form-control" type="text" readonly value="0" /></td>
+
+                                                        </tr>
+                                                            }
+                                                        }
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="form-group">
+                                                <table class="table table-hover table-condensed">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="col-sm-2">@MyERP.Properties.Resources.Barcode</th>
+                                                            <th class="col-sm-2">@MyERP.Properties.Resources.Item</th>
+                                                            <th class="col-sm-2">@MyERP.Properties.Resources.InventoryQuantity</th>
+                                                            <th class="col-sm-1">@MyERP.Properties.Resources.ActualQuantity</th>
+                                                            <th hidden>@MyERP.Properties.Resources.Unit</th>
+                                                            <th hidden>@MyERP.Properties.Resources.Equivalent</th>
+                                                           
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="InventoryVoucherDetails">
+
+                                                        @if (Model != null)
+                                                        {
+                                                            foreach (var item in Model.UpdatedTransactionDetails)
+                                                            {
+                                                                <tr>
+                                                                    <td class="col-sm-2"><input class="barcode form-control" value="@Html.Raw(item.ItemPrice!=null?item.ItemPrice.Barcode:"")" readonly /></td>
+                                                                    <td class="col-sm-2"><select class="item form-control" disabled><option value="@item.ItemId">@item.Item.ArName</option></select></td>
+                                                                    <td class="col-sm-1"><input type="number" step="any" min="0" class="quantityOnSystem form-control" value="@item.QtyOnSystem" readonly /></td>
+                                                                    <td class="col-sm-1"><input class="quantity form-control" type="number" step="any"  readonly value="@item.Qty" /></td>
+                                                                    <td hidden><select class="itemUnit form-control"></select></td>
+                                                                    <td hidden><input class="unitEquavalent form-control" type="number" step="any" min="1" value="1" /></td>
+                                                                   
+                                                                </tr>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <tr>
+                                                                <td class="col-sm-2"><input class="barcode form-control" /></td>
+                                                                <td class="col-sm-2"><select class="item form-control"></select></td>
+                                                                <td class="col-sm-1"><input type="number" step="any" min="0" class="quantityOnSystem form-control" readonly /></td>
+                                                                <td class="col-sm-1"><input class="quantity form-control" type="number" step="any" min="0" oninput="validity.valid ? this.save = value : value = this.save;" /></td>
+                                                                <td hidden><select class="itemUnit form-control"></select></td>
+                                                                <td hidden><input class="unitEquavalent form-control" type="number" step="any" min="1" value="1" /></td>
+                                                                
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (Model.CurrencyId != null)
+                                    {
+                                        <div class="form-group">
+                                            <label for="TotalCostPrice" class="control-label col-sm-1">@MyERP.Properties.Resources.TotalCost</label>
+                                            <div class="col-sm-5">
+                                                @Html.EditorFor(model => model.TotalCostPrice, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.TotalCost, @readonly = "readonly" } })
+                                                @Html.ValidationMessageFor(model => model.TotalCostPrice, "", new { @class = "text-danger" })
+                                            </div>
+
+                                        </div>
+                                    }
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input value="@ViewBag.SystemPageId" id="SystemPageId" hidden />
+
+
+
+<script>
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    $(document).on('change', '.item', function () {
+        $(this).closest('tr').find('.barcode').val(barcode);
+        barcode = '';
+
+        ItemQuantityOnSystem($(this));
+    });
+
+    function ItemQuantityOnSystem(item) {
+        var qty = $.get('/Helper/ItemQuantityOnSystem?warehouseId=' + $('#WarehouseId').val() + '&itemId=' + $(item).val()).done(function () {
+            $(item).closest('tr').find('.quantityOnSystem').val(qty.responseJSON);
+            $(item).closest('tr').find('.quantity').val(qty.responseJSON);
+        });
+    }
+    if ($('#Id').val() > 0) {
+        $('#VoucherDate').val('@ViewBag.VoucherDate');
+        $('#dtDate').val($('#VoucherDate').val());
+        $('#StockReceiptVoucherDetails tr').each(function () {
+            var tr = $(this);
+            tr.find('.total').val((tr.find('.quantity').val() * tr.find('.cost').inputmask('unmaskedvalue') * tr.find('.unitEquavalent').val()).toFixed(2));
+        });
+    } else {
+        var d = new Date();
+        $('#VoucherDate').val('@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")');
+        $('#VoucherDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+    }
+    function setDocNum() {
+        var doc = $.get('/StockReceiptVoucher/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+            $('#DocumentNumber').val(r);
+        });
+    }
+
+    if (!$('#Id').val() > 0) {
+        setDocNum();
+    };
+
+     var ItemUnitId = JSON.parse('@Html.Raw(ViewBag.ItemUnitId)');
+    var items;
+    var ItemPriceId = JSON.parse('@Html.Raw(ViewBag.ItemPriceId)');
+    var currencies = @ViewBag.Currencies;
+
+    function fillItems() {
+        if (!$('#Id').val() > 0) {
+            $('.item').empty();
+            $('.item').append($('<option>', {
+                value:0,
+                text:"إختر"
+            }));
+            for (var i = 0; i < items.length; i++) {
+                $('.item').append($('<option>', {
+                    value: items[i].Id,
+                    text: items[i].ArName
+                }));
+            }
+        } else {
+            var selectedItem;
+            var itemBarcode;
+            $('.item').each(function () {
+                selectedItem = $(this).val();
+                itemBarcode = $(this).closest('tr').find('.barcode').val();
+                $(this).empty();
+
+                for (var i = 0; i < items.length; i++) {
+                    $(this).append($('<option>', {
+                        value: items[i].Id,
+                        text: items[i].ArName
+                    }));
+                }
+                $(this).val(selectedItem).trigger('change');
+                $(this).closest('tr').find('.barcode').val(itemBarcode);
+            });
+        }
+    }
+
+    function departmentChange() {
+        items = $.get('/Helper/ItemsByDepId?id=' + $('#DepartmentId').val()).done(function () {
+            items = items.responseJSON;
+            fillItems();
+        });
+    }
+
+    departmentChange();
+
+    function setWarehouseValues(warehouseId) {
+        $('#WarehouseId').empty();
+        var Warehouses = $.get('/StockReceiptVoucher/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function () {
+                Warehouses = Warehouses.responseJSON;
+                for (var i = 0; i < Warehouses.length; i++) {
+                    $('#WarehouseId').append($('<option>', {
+                        value: Warehouses[i].Id,
+                        text: Warehouses[i].ArName
+                    }));
+                }
+
+                if ($('#Id').val() > 0 && warehouseId) {
+                    $('#WarehouseId').val(warehouseId).trigger('change');
+                }
+            });
+    }
+
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            var warehouseId = $('#WarehouseId').val();
+            setWarehouseValues(warehouseId);
+        }
+    });
+
+    $('#DepartmentId').on('change', function () {
+        departmentChange();
+        setWarehouseValues();
+        setDocNum();
+
+        if ($('#StockReceiptVoucherDetails tr').length > 1) {
+            alert("@MyERP.Properties.Resources.AllDataHasBeenRemoved"+"!");
+        }
+        $('#StockReceiptVoucherDetails tr').each(function () {
+            $(this).find('a').trigger('click');
+        });
+    });
+
+    function SetEquivalent() {
+        var i = document.getElementById('CurrencyId').selectedIndex;
+        $('#CurrencyEquivalent').val(currencies[i-1])
+    }
+
+    SetEquivalent();
+
+    $('#CurrencyId').on('change', function () {
+        SetEquivalent();
+    });
+
+    for (var i = 0; i < ItemUnitId.length; i++) {
+        $('.itemUnit').append($('<option>', {
+            value: ItemUnitId[i].Id,
+            text: ItemUnitId[i].ArName
+        }));
+    }
+
+    // remove duplicate options
+    var optionValues = [];
+    $('select').each(function () {
+        $(this).children('option').each(function () {
+            if ($.inArray(this.value, optionValues) > -1) {
+                $(this).remove()
+            } else {
+                optionValues.push(this.value);
+            }
+        });
+        optionValues = [];
+    });
+
+
+    var barcode;
+    $(document).on('change', '.barcode', function () {
+        var elem = $(this);
+        var itemId = $.get('/Helper/ItemIdByBarcode?barcode=' + $(this).val()).done(function () {
+            itemId = itemId.responseJSON;
+            barcode = $(elem).val();
+            if (itemId.itemBarcode > 0) {
+                $(elem).closest('tr').find('.item').val(itemId.itemBarcode).trigger('change');
+            } else {
+                $(elem).closest('tr').find('.item').val(itemId.itemSerialNumber ? itemId.itemSerialNumber : 0).trigger('change');
+            }
+        }).fail(function () {
+            $(elem).closest('tr').find('.item').val(0).trigger('change');
+        });
+    });
+
+    $(document).on('change', '.quantity, .cost, .itemUnit', function () {
+        var elem = $(this);
+        var tr = elem.closest('tr');
+        tr.find('.total').val((tr.find('.quantity').val() * tr.find('.cost').inputmask('unmaskedvalue') * tr.find('.unitEquavalent').val()).toFixed(2));
+
+        calculateTotal();
+    });
+
+    $(document).on('change', '.item', function () {
+        $(this).closest('tr').find('.barcode').val(barcode);
+        barcode = '';
+    });
+
+    function addToStockReceiptVoucherDetails() {
+        if ($('#StockReceiptVoucherDetails .quantity:last').val() && $('#StockReceiptVoucherDetails .cost:last').val()) {
+            var tr = '<tr><td class="col-sm-2" > <input class="barcode form-control" /></td><td class="col-sm-2"><select class="item form-control"><option value="0"> ' + '@MyERP.Properties.Resources.Select' + '</option></select></td><td class="col-sm-1"><input class="quantity form-control" type="number" step="any" min="1" oninput="validity.valid ? this.save = value : value = this.save;" /></td><td hidden><select class="itemUnit form-control"></select></td><td hidden><input class="unitEquavalent form-control" type="number" step="any" min="1" value="1"/></td><td class="col-sm-1"><input type="text" class="money cost form-control" /></td><td class="col-sm-2"><input class="total money form-control" type="text" readonly value="0" /></td><td class="col-sm-1"><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>'
+
+            $('#StockReceiptVoucherDetails').append(tr);
+            $('.money, .total').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+            });
+            for (var i = 0; i < ItemUnitId.length; i++) {
+                $('#StockReceiptVoucherDetails .itemUnit:last').append($('<option>', {
+                    value: ItemUnitId[i].Id,
+                    text: ItemUnitId[i].ArName
+                }));
+            }
+
+            for (var i = 0; i < items.length; i++) {
+                $('#StockReceiptVoucherDetails .item:last').append($('<option>', {
+                    value: items[i].Id,
+                    text: items[i].ArName
+                }));
+            }
+
+            $('#StockReceiptVoucherDetails tr:last select').select2();
+
+            $('#StockReceiptVoucherDetails tr:last .select2').css('max-width', '280px').css('width', '92%');
+        }
+        else {
+            alert("@MyERP.Properties.Resources.PleaseEnsureThatAllDocumentInformationIsComplete"+"!")
+        }
+    }
+
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+
+        if ($(tr).index() > 0) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length > 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).children("input[type|='text']").each(function () {
+                $(this).empty();
+            });
+        }
+
+        calculateTotal();
+    }
+
+
+    function calculateTotal() {
+        var sum = 0;
+        $('.total').each(function () {
+            sum = sum + $(this).inputmask('unmaskedvalue') * 1;
+        });
+        $('#TotalCostPrice').val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+
+    function addEdit(n) {
+        if ($('#DocumentNumber').val() == 0 || $('#BranchId').val() == 0 || $('#ArName').val() == 0 || $('#WarehouseId').val() == 0 || $('#DepartmentId').val() == 0 || $('#CurrencyId').val() == 0 || $('#CurrencyEquivalent').val() == 0 || $('#Date').val() == 0) {
+            alert("@MyERP.Properties.Resources.PleaseEnsureThatAllBasicInformationIsComplete"+"!")
+
+        }
+        else {
+            var stockReceiptVoucherDetails = [];
+            $('#StockReceiptVoucherDetails tr').each(function () {
+                var td = $(this);
+                var stockReceiptVoucherDetail = {
+                    ItemPriceId: td.find('.barcode').val() ? ItemPriceId.filter(function (e) { return e.Barcode === td.find('.barcode').val() })[0].Id : null,
+                    ItemUnitId: td.find('.itemUnit').val(),
+                    ItemId: td.find('.item').val(),
+                    UnitEquivalent: td.find('.unitEquavalent').val(),
+                    CostPrice: td.find('.cost').inputmask('unmaskedvalue'),
+                    Qty: td.find('.quantity').val(),
+                    IsActive: true,
+                    IsDeleted: false
+                };
+                stockReceiptVoucherDetails.push(stockReceiptVoucherDetail);
+            });
+
+            var valid = false;
+
+
+            if ($('#AutoCreated').val() == "True") {
+                alert('@MyERP.Properties.Resources.TheAutomaticDocumentCannotBeModified'+'!');
+                valid = false;
+            } else {
+                if ($('#DocumentNumber').val() && $('#VoucherDate').val()) {
+                    stockReceiptVoucherDetails.some(function (stockReceiptVoucherDetail) {
+                        if (stockReceiptVoucherDetail.ItemId && stockReceiptVoucherDetail.CostPrice && stockReceiptVoucherDetail.Qty) {
+                            valid = true;
+                        } else {
+                            valid = false;
+                            alert("@MyERP.Properties.Resources.PleaseMakeSureThatAllVoucherDetailsAreComplete"+"!");
+                            return true;
+                        }
+                    });
+                }
+            }
+            if (valid) {
+                $.ajax({
+                    type: "POST", contentType: "application/json",
+                    url: "/StockReceiptVoucher/AddEdit",
+                    data: JSON.stringify({
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').eq(0).val(),
+                        Id: $('#Id').val(),
+                        SystemPageId: $('#SystemPageId').val() ,
+                        DocumentNumber: $('#DocumentNumber').val(),
+                        BranchId: $('#BranchId').val(),
+                        WarehouseId: $('#WarehouseId').val(),
+                        VoucherDate: $('#VoucherDate').val(),
+                        CurrencyId: $('#CurrencyId').val(),
+                        CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                        TotalCostPrice: $('#TotalCostPrice').inputmask('unmaskedvalue'),
+                        DepartmentId: $('#DepartmentId').val(),
+                        StockReceiptVoucherDetails: stockReceiptVoucherDetails,
+                        IsActive: $('#IsActive').val(),
+                        IsDeleted: $('#IsDeleted').val()
+                    }),
+                    success: function (r) {
+                        if (r == "true") {
+                            if (n == "new") {
+                                window.location.replace("/StockReceiptVoucher/AddEdit");
+                            } else {
+                                window.location.replace("/StockReceiptVoucher");
+                            }
+                        }
+                    },
+                    error: function (r) { alert("@MyERP.Properties.Resources.NotSaved"+"!"); }
+                });
+            }
+        }
+    }
+</script>

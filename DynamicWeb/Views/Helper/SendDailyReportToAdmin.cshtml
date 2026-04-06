@@ -1,0 +1,43 @@
+﻿<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.SendDailyReportToAdmin;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.SendDailyReportToAdmin </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <button type="button" onclick="SendDailyReportToAdmin()" class="btn btn-success">
+                        @MyERP.Properties.Resources.SendDailyReportToAdmin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function SendDailyReportToAdmin() {
+        $.get('/Helper/SendDailyReportToAdmin?sendReport=true').done(function (r) {
+            if (r == true) {
+                alert('@MyERP.Properties.Resources.Sended');
+            }
+
+        });
+    }
+
+</script>

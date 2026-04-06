@@ -1,0 +1,177 @@
+﻿@model MyERP.Models.CarColor
+
+@{
+    ViewBag.Title = "الوان السيارات";
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">الأول</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">الأخير</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>}
+            </div>
+            <h4 class="page-title">الوان السيارات</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/CarColor/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @Html.HiddenFor(model => model.UserId)
+                        @Html.HiddenFor(model => model.Image)
+
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    البيانات الاساسية
+                                </h5>
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">الكود</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = "الكود", @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الكود مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label class=" col-sm-2 control-label" for="ArName">الاسم بالعربية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = "الاسم بالعربية", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الاسم بالعربية مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="EnName">الاسم بالانجليزية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = "الاسم بالانجليزية" } })
+                                        <div class="invalid-feedback">
+                                            الاسم بالانجليزية مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">ملاحظات</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <button type="submit" id="newbtn" class="btn btn-success">
+                                            حفظ و جديد
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success">
+                                                حفظ
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                            <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">حذف</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            var doc = $.get('/CarColor/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    function DeleteFunc(id) {
+        if (confirm('هل تريد الحذف؟')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/CarColor/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('لم يتم الحذف!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/CarColor');
+                        } else
+                            alert('لم يتم الحذف!');
+                    }
+                });
+        }
+    }
+</script>
+
+

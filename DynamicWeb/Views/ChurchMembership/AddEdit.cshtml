@@ -1,0 +1,1430 @@
+﻿@model MyERP.Models.ChurchMembership
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ChurchMembership;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.ChurchMembership </h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.FamilyCode</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.FamilyCode, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.BirthDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.BirthDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ConfessionFather</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.ChurchFatherId, null, MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    @*<label for="ConfessionFather" class="control-label col-sm-2">@MyERP.Properties.Resources.Visiting </label>
+            <div class="col-sm-4">
+                @Html.EditorFor(model => model.ConfessionFather, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Visiting } })
+                <div class="invalid-feedback">
+                    @MyERP.Properties.Resources.Required
+                </div>
+            </div>*@
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Email" class="control-label col-sm-2">@MyERP.Properties.Resources.Email </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Email } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Area</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.AreaId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    @*<label class="col-sm-2 control-label">@MyERP.Properties.Resources.PassWord</label>
+            <div class="col-sm-4">
+                @if (Model != null && Model.Id > 0 && Model.Password != null)
+                {
+                    <input type="text" class="form-control" name="Password" id="Password" value="@Model.Password" hidden  />
+                }
+                else
+                {
+                    <input type="text" class="form-control" name="Password" id="Password"  />
+                }
+                <div class="invalid-feedback">
+                    @MyERP.Properties.Resources.Required
+                </div>
+            </div>*@
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="PhoneNumber" class="control-label col-sm-2">@MyERP.Properties.Resources.Tel </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Phone, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Tel } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="MobileNumber" class="control-label col-sm-2"> @MyERP.Properties.Resources.Mobile</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Mobile, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Mobile } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-6">
+                                        <input type="checkbox" name="IsUseApplication" @Html.Raw(Model != null && Model.IsUseApplication == true ? "checked" : "") id="IsUseApplication" />
+                                        <label class="col-sm-10 control-label" for="IsUseApplication">
+                                            @MyERP.Properties.Resources.IsUseApplication
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <input type="checkbox" name="FollowUp" @Html.Raw(Model != null && Model.FollowUp == true ? "checked" : "") id="FollowUp" />
+                                        <label class="col-sm-10 control-label" for="FollowUp">
+                                            @MyERP.Properties.Resources.FollowUp
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-6">
+                                        <input type="checkbox" name="IsAlive" @Html.Raw(Model != null && Model.IsAlive == true ? "checked" : Model == null ? "checked" : "") id="IsAlive" />
+                                        <label class="col-sm-10 control-label" for="IsAlive">
+                                            @MyERP.Properties.Resources.IsAlive
+                                        </label>
+                                    </div>
+                                    <div class="row">
+                                        @* مكان الصورة *@
+                                        <div class="col-sm-6">
+                                            <div class="tab-pane" id="5">
+                                                <label class="col-sm-8 control-label">@MyERP.Properties.Resources.Image</label>
+                                                <div id="gallery" style="width: 100%;margin: 20px;">
+
+                                                    @if (Model != null && Model.Image != null)
+                                                    {
+                                                        <img src="@Model.Image" alt="" class="img_@Model.Id" style="max-width: 200px;max-height: 200px;" />
+                                                        <i class="fas fa-trash-alt img_@Model.Id" style="cursor:pointer;" onclick="DeleteIMG('@Model.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                    }
+                                                </div>
+                                                <input type="file" id="BrowseImage" onchange="previewImage()" value="Browse" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Address">@MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Address" name="Address" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Address; }</textarea>
+                                    </div>
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label class="control-label col-sm-2" for="TopicsForDiscussion">@MyERP.Properties.Resources.TopicsForDiscussion</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="TopicsForDiscussion" name="TopicsForDiscussion" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.TopicsForDiscussion; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Member Panel -->
+            <div class="card">
+                <div class="card-body">
+                    <div id="accordion row">
+                        <h5 class=" pb-3 header-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                @MyERP.Properties.Resources.FamilyMembers
+                            </a>
+                            <button class="btn btn-primary" style="float:left;" id="AddFamilyMemberBtn" data-toggle="modal">@MyERP.Properties.Resources.AddFamilyMember</button>
+                        </h5>
+                    </div>
+                    <div id="collapse1">
+                        <div @*id="ChurchMembershipFamilyMembers"*@>
+
+
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+
+
+                                            <th>
+                                                @MyERP.Properties.Resources.ArName
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Relative
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.BirthDate
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Mobile
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Email
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Father
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.IsAlive
+                                            </th> 
+                                            <th>
+                                                @MyERP.Properties.Resources.FollowUp
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Notes
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Image
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Edit
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Delete
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ChurchMembershipFamilyMembers">
+                                        @if (Model != null)
+                                        {
+                                            foreach (var item in Model.ChurchMembership1.OrderBy(a=>int.Parse(a.Code)))
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <input hidden class="MemberId" value="@item.Id" />
+                                                        <input hidden class="MemberCode" value="@item.Code" />
+                                                        <input hidden class="MemberArNameVal" value="@item.ArName" />
+                                                        <input hidden class="MemberRelativeVal" value="@item.Relative" />
+                                                        <input hidden class="MemberMobileVal" value="@item.Mobile" />
+                                                        <input hidden class="MemberNotesVal" value="@item.Notes" />
+                                                        <label class="control-label MemberArName"> @item.ArName </label>
+                                                    </td>
+                                                    <td>
+                                                        <label class="control-label Relative"> @item.Relative </label>
+                                                    </td>
+                                                    <td>
+                                                        <label class="control-label MemberBirthDate">@item.BirthDate.Value.ToString("MM/dd/yyyy") </label>
+                                                    </td>
+                                                    <td>
+                                                        <label class="control-label MemberMobile"> @item.Mobile </label>
+                                                    </td>
+                                                    <td>
+                                                        <label class="control-label MemberEmail"> @item.Email </label>
+                                                        <input hidden class="MemberEmailVal" value="@item.Email" />
+                                                        <input hidden class="MemberPasswordVal" value="@item.Password" />
+                                                    </td>
+                                                    <td>
+                                                        <label class="control-label MemberChurchFatherName"> @(item.ChurchFather!=null?item.ChurchFather.ArName:"") </label>
+                                                        <input hidden class="MemberChurchFatherId" value="@item.ChurchFatherId" />
+                                                    </td>
+                                                    <td>
+                                                        <input type="checkbox" class="MemberIsAlive" disabled @Html.Raw(item.IsAlive != null && item.IsAlive == true ? "checked" : "") />
+                                                    </td> 
+                                                    <td>
+                                                        <input type="checkbox" class="MemberFollowUp" disabled @Html.Raw(item.FollowUp != null && item.FollowUp == true ? "checked" : "") />
+                                                    </td>
+                                                    <td>
+                                                        <label class="control-label MemberNotes"> @item.Notes </label>
+                                                    </td>
+                                                    <td>
+                                                        <img src="@item.Image" alt="" class="MemberImage" style="max-width:100px;max-height:100px;border-radius:50px;" />
+                                                        <input hidden class="MemberImageVal" value="@item.Image" />
+                                                    </td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="EditMember(this)">
+                                                            <i class="fa fa-edit"></i>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="DeleteMember(this)">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+
+                            <!--if (Model != null)
+                            {
+                                foreach (var item in Model.ChurchMembershipFamilyMembers)
+                                {
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="form-group row">
+                                                <label class="control-label col-3 col-sm-3" for="MemberArName">MyERP.Properties.Resources.ArName</label>
+                                                <div class="col-3 col-sm-3">
+                                                    <input hidden class="MemberId" value="item.Id" />
+                                                    <label class="control-label MemberArName"> item.ArName </label>
+                                                </div>
+                                                <label class="control-label col-3 col-sm-3" for="Relative">MyERP.Properties.Resources.Relative</label>
+                                                <div class="col-3 col-sm-3">
+                                                    <label class="control-label Relative"> item.Relative </label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-3 col-sm-3" for="MemberBirthDate">MyERP.Properties.Resources.BirthDate</label>
+                                                <div class="col-3 col-sm-3">
+                                                    <label class="control-label MemberBirthDate">item.BirthDate.Value.ToString("MM/dd/yyyy") </label>
+                                                </div>-->
+                            @*<label class="control-label col-3 col-sm-3" for="MemberConfessionFather">@MyERP.Properties.Resources.Visiting</label>
+                                <div class="col-3 col-sm-3">
+                                    <label class="control-label MemberConfessionFather"> @item.ConfessionFather </label>
+                                </div>*@
+                            <!--</div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-3 col-sm-3" for="MemberMobile">MyERP.Properties.Resources.Mobile</label>
+                                                <div class="col-3 col-sm-3">
+                                                    <label class="control-label MemberMobile"> item.Mobile </label>
+                                                </div>
+                                                <label class="control-label col-3 col-sm-3" for="MemberIsAlive">MyERP.Properties.Resources.IsAlive</label>
+                                                <div class="col-3 col-sm-3">
+                                                    <input type="checkbox" class="MemberIsAlive" disabled Html.Raw(item.IsAlive != null && item.IsAlive == true ? "checked" : "") />
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-3 col-sm-3" for="MemberNotes">@MyERP.Properties.Resources.Notes</label>
+                                                <div class="col-3 col-sm-3">
+                                                    <label class="control-label MemberNotes"> item.Notes </label>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <button class="btn btn-primary" onclick="EditMember(this)">MyERP.Properties.Resources.Edit</button>
+                                                    <button class="btn btn-danger" onclick="DeleteMember(this)">MyERP.Properties.Resources.Delete</button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }-->
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!----------------End of  Family Member Panel ------------------------------------->
+            <!-- افراد الاسرة -->
+            @*<div class="row">
+                    <div class="col-12">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="header-title">
+                                        @MyERP.Properties.Resources.FamilyMembers
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <td>@MyERP.Properties.Resources.ArName</td>
+                                                    <td>@MyERP.Properties.Resources.Relative</td>
+                                                    <td>@MyERP.Properties.Resources.BirthDate</td>
+                                                    <td>@MyERP.Properties.Resources.Visiting</td>
+                                                    <td>@MyERP.Properties.Resources.Mobile</td>
+                                                    <td>@MyERP.Properties.Resources.IsAlive</td>
+                                                    <td>@MyERP.Properties.Resources.Notes</td>
+                                                    <td>@MyERP.Properties.Resources.Delete</td>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="ChurchMembershipFamilyMembers">
+                                                @if (Model != null)
+                                                {
+                                                    foreach (var item in Model.ChurchMembershipFamilyMembers)
+                                                    {
+                                                        <tr>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="MemberArName form-control tabledit-input form-control-sm" value="@item.ArName" />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="Relative form-control tabledit-input form-control-sm" value="@item.Relative" />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="datetime-local" class="MemberBirthDate form-control tabledit-input form-control-sm" value="@item.BirthDate.Value.ToString("yyyy-MM-ddTHH:mm")" />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="MemberConfessionFather form-control tabledit-input form-control-sm" value="@item.ConfessionFather" />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="MemberMobile form-control tabledit-input form-control-sm" value="@item.Mobile" />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="checkbox" class="MemberIsAlive" @(item.IsAlive == true ? "checked" : "") />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="MemberNotes form-control tabledit-input form-control-sm" value="@item.Notes" />
+                                                            </td>
+                                                            <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                <tr>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="MemberArName form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="Relative form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="datetime-local" class="MemberBirthDate form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="MemberConfessionFather form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="MemberMobile form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="checkbox" class="MemberIsAlive" />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="MemberNotes form-control tabledit-input form-control-sm" />
+                                                    </td>
+                                                    <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>*@
+            <!------------------------------------------------------------------------------------------------------->
+            <!-- الزيارات -->
+            <!-- Visits Panel -->
+            <div class="card">
+                <div class="card-body">
+                    <div id="accordion row">
+                        <h5 class=" pb-3 header-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                @MyERP.Properties.Resources.Visits
+                            </a>
+                            <button class="btn btn-primary" style="float:left;" id="AddVisitBtn" data-toggle="modal">@MyERP.Properties.Resources.AddVisit</button>
+                        </h5>
+                    </div>
+                    <div id="collapse2">
+                        <div class="table-responsive">
+                            <table class="table table-centered mb-0">
+                                <thead>
+                                    <tr>
+                                        <td>@MyERP.Properties.Resources.Date</td>
+                                        <td>@MyERP.Properties.Resources.Visiting</td>
+                                        <td>@MyERP.Properties.Resources.Notes</td>
+                                        <td>@MyERP.Properties.Resources.Delete</td>
+                                    </tr>
+                                </thead>
+                                <tbody id="ChurchMembershipVisits">
+                                    @if (Model != null)
+                                    {
+                                        foreach (var item in Model.ChurchMembershipVisits)
+                                        {
+                                            <tr>
+                                                <td class="tabledit-edit-mode">
+                                                    <input hidden class="VisitId" value="@item.Id" />
+                                                    <label class="VisitDate control-label"> @item.Date</label>
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <label class="VisitConfessionFather control-label"> @item.ConfessionFather </label>
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <label class="VisitNotes control-label"> @item.Notes </label>
+                                                </td>
+                                                <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                            </tr>
+                                        }
+                                    }
+                                    @*<tr>
+                                            <td class="tabledit-edit-mode"><input type="datetime-local" class="VisitDate form-control tabledit-input form-control-sm" /></td>
+                                            <td class="tabledit-edit-mode"><input type="text" class="VisitConfessionFather form-control tabledit-input form-control-sm" /></td>
+                                            <td class="tabledit-edit-mode"><input type="text" class="VisitNotes form-control tabledit-input form-control-sm" /></td>
+                                            <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                        </tr>*@
+                                </tbody>
+                            </table>
+                        </div>
+                        @*<div class="row">
+                                <div class="col-12">
+                                    <div class="form-horizontal needs-validation" role="form">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="header-title">
+                                                    @MyERP.Properties.Resources.Visits
+                                                </div>
+                                                <div class="table-responsive">
+                                                    <table class="table table-centered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <td>@MyERP.Properties.Resources.Date</td>
+                                                                <td>@MyERP.Properties.Resources.Visiting</td>
+                                                                <td>@MyERP.Properties.Resources.Notes</td>
+                                                                <td>@MyERP.Properties.Resources.Delete</td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="ChurchMembershipVisits">
+                                                            @if (Model != null)
+                                                            {
+                                                                foreach (var item in Model.ChurchMembershipVisits)
+                                                                {
+                                                                    <tr>
+                                                                        <td class="tabledit-edit-mode"><input type="datetime-local" class="VisitDate form-control tabledit-input form-control-sm" value="@item.Date.Value.ToString("yyyy-MM-ddTHH:mm")" /></td>
+                                                                        <td class="tabledit-edit-mode"><input type="text" class="VisitConfessionFather form-control tabledit-input form-control-sm" value="@item.ConfessionFather" /></td>
+                                                                        <td class="tabledit-edit-mode"><input type="text" class="VisitNotes form-control tabledit-input form-control-sm" value="@item.Notes" /></td>
+                                                                        <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                            <tr>
+                                                                <td class="tabledit-edit-mode"><input type="datetime-local" class="VisitDate form-control tabledit-input form-control-sm" /></td>
+                                                                <td class="tabledit-edit-mode"><input type="text" class="VisitConfessionFather form-control tabledit-input form-control-sm" /></td>
+                                                                <td class="tabledit-edit-mode"><input type="text" class="VisitNotes form-control tabledit-input form-control-sm" /></td>
+                                                                <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>*@
+                    </div>
+                </div>
+            </div>
+            <!----------------End of Visits Panel ------------------------------------->
+            <!-------------------------------------------------------------------------------------------------------->
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal Section -->
+<!----------------- Family Member Modal ----------------->
+<div id="AddFamilyMemberModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.FamilyMember</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <input hidden Id="MemberIdPopUp" />
+                                <input hidden Id="MemberCodePopUp" />
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="MemberArNamePopUp" placeholder="@MyERP.Properties.Resources.ArName">
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Relative" class="control-label">@MyERP.Properties.Resources.Relative</label>
+                                <input type="text" class="form-control" id="RelativePopUp" placeholder="@MyERP.Properties.Resources.Relative">
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="MemberBirthDatePopUp" class="control-label">@MyERP.Properties.Resources.BirthDate</label>
+                                <input type="datetime-local" class="form-control" id="MemberBirthDatePopUp" value="@ViewBag.BirthDate">
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        @*<div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="MemberConfessionFatherPopUp" class="control-label">@MyERP.Properties.Resources.Visiting</label>
+                                    <input type="text" class="form-control" id="MemberConfessionFatherPopUp" placeholder="@MyERP.Properties.Resources.Visiting" />
+                                </div>
+                                <div class="invalid-feedback">
+                                    @MyERP.Properties.Resources.Required
+                                </div>
+                            </div>*@
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Mobile</label>
+                                <input type="text" class="form-control" id="MemberMobilePopUp" placeholder=@MyERP.Properties.Resources.Mobile>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <input type="checkbox" id="MemberIsAlivePopUp" checked>
+                                <label for="Relative" class="control-label">@MyERP.Properties.Resources.IsAlive</label>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <input type="checkbox" id="MemberFollowUpPopUp" checked>
+                                <label for="FollowUp" class="control-label">@MyERP.Properties.Resources.FollowUp</label>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Email" class="control-label">@MyERP.Properties.Resources.Email </label>
+                                <input class="form-control" id="MemberEmailPopUp" placeholder=@MyERP.Properties.Resources.Email />
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile" class="control-label">@MyERP.Properties.Resources.PassWord</label>
+                                <input type="text" class="form-control" id="MemberPasswordPopUp" placeholder=@MyERP.Properties.Resources.PassWord  />
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Father</label>
+                                @Html.DropDownList("PopUpMemberChurchFatherId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @id = "PopUpMemberChurchFatherId" })
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea type="text" class="form-control" id="MemberNotesPopUp" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="tab-pane" id="5">
+                                <label for="ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.Image</label>
+                                <input hidden id="PopUpMemberImage" />
+
+                                <div id="Membergallery" style="width: 100%;margin: 20px;">
+
+                                </div>
+
+                                <input type="file" id="MemberBrowseImage" onchange="MemberpreviewImage()" value="Browse" />
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="AddFamilyMember()">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!----------------- End Of Family Member Modal ----------------->
+<!----------------- Family Member Modal ----------------->
+<div id="AddVisitModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.Visit</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="form-group row">
+                        <input hidden class="VisitIdPopUp" />
+                        <label for="VisitDatePopUp" class="control-label col-sm-4">@MyERP.Properties.Resources.Date</label>
+                        <div class="col-sm-8">
+                            <input type="datetime-local" class="form-control" id="VisitDatePopUp" value="@ViewBag.BirthDate" />
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="VisitConfessionFatherPopUp" class="control-label col-sm-4">@MyERP.Properties.Resources.Visiting</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="VisitConfessionFatherPopUp" placeholder="@MyERP.Properties.Resources.Visiting" />
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="VisitNotesPopUp" class="control-label col-sm-4">@MyERP.Properties.Resources.Notes</label>
+                        <div class="col-sm-8">
+                            <textarea type="text" class="form-control" id="VisitNotesPopUp" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="AddVisit()">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!----------------- End Of Family Member Modal ----------------->
+<!----------------------------------------------------------------------------------------------->
+<input hidden id="MemberCodeRes" type="text" class="form-control" value="@ViewBag.MemberCodeRes" />
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    var Imgdata = "";
+    var FamilyMembers = [];
+    //*********************************************************//
+
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#BirthDate').val('@ViewBag.BirthDate');
+        GetMembers();
+        if ($('#Id').val() > 0) {
+        }
+        else {
+            setCodeNum();
+        }
+    });
+    //*********************************************************//
+
+    //--------------- Event Functions -------------------//
+    //$(document).on('change', ".MemberArName:last,  .Relative:last, .MemberConfessionFather:last, .MemberMobile:last, .MemberBirthDate:last", function () {
+    //    AddToChurchMembershipFamilyMembers();
+    //});
+    //$(document).on('change', ".VisitDate:last,  .VisitConfessionFather:last", function () {
+    //    AddToChurchMembershipVisits();
+    //});
+    $(document).on('click', '#AddFamilyMemberBtn', function () {
+        $('#AddFamilyMemberModal').modal("show");
+    });
+    $(document).on('click', '#AddVisitBtn', function () {
+        $('#AddVisitModal').modal("show");
+    });
+    $(document).on('keydown', '#Mobile', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            $.get('/ChurchMembership/SearchByMobileNo?Mobile=' + $(this).val()).done(function (r) {
+                if (r > 0 && confirm('@MyERP.Properties.Resources.ThisMemberExistBeforeDoYouWantToRedirect ?')) {
+                    window.location.replace("/ChurchMembership/AddEdit?id=" + r);
+                }
+                else {
+                    $('#Mobile').val('');
+                }
+
+            });
+        }
+    });
+
+    $(document).on('keydown', '#MemberMobilePopUp', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            $.get('/ChurchMembership/SearchFamilyMemberByMobileNo?Mobile=' + $(this).val()).done(function (r) {
+                if (r) {
+                    r = r[0];
+                    r.BirthDate = r.BirthDate != null ? convertToJavaScriptDate(r.BirthDate) : null;
+                    $("#Membergallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + r.Image + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteMemberIMG(\'' + r.Image + '\');$(this).prev().remove();$(this).remove();"></i>');
+                    $('#PopUpMemberImage').val(r.Image);
+                    $('#MemberIdPopUp').val(r.Id);
+                    $('#MemberCodePopUp').val(r.Code);
+                    $('#MemberArNamePopUp').val(r.ArName);
+                    $('#RelativePopUp').val(r.Relative);
+                    $('#MemberBirthDatePopUp').val(r.BirthDate);
+                    $('#MemberConfessionFatherPopUp').val(r.ConfessionFather);
+                   // $('#MemberMobilePopUp').val(r.Mobile);
+                    $('#MemberEmailPopUp').val(r.Email);
+                    $('#MemberPasswordPopUp').val(r.Password);
+                    $('#MemberNotesPopUp').val(r.Notes);
+                    $('#MemberIsAlivePopUp').prop('checked', r.IsAlive);
+                    $('#MemberFollowUpPopUp').prop('checked', r.FollowUp);
+                }
+            });
+        }
+    });
+    //*********************************************************//
+
+     //--------------- Other Functions -------------------//
+    function GetMembers() {
+        return requestData('/ChurchMeeting/GetMembers').done(function (r) {
+            FamilyMembers = r;
+        });
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+
+    function previewImage() {
+        var reader = new FileReader();
+        let valid = true;
+
+        reader.addEventListener("load", function () {
+
+            $("#gallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#Image").val(reader.result);
+            Imgdata = reader.result;
+        }, false);
+        for (var i = 0; i < $("#BrowseImage")[0].files.length; i++) {
+            if ($("#BrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#BrowseImage")[0].files[i]);
+                if ($("#BrowseImage")[0].files[i].size > 1000000) {
+                    alert('@MyERP.Properties.Resources.PictureSizeIsTooLargeChooseAnotherOne');
+                    valid = false;
+                }
+            }
+           
+        }
+        reader.addEventListener("loadend", function () {
+            if (valid == false) {
+                DeleteIMG();
+            }
+        });
+       
+    }
+    function DeleteIMG(url) {
+        $("#gallery").empty();
+        $("#BrowseImage").val('');
+        $("#Image").val('');
+    }
+    function DeleteMemberIMG(url) {
+        $("#Membergallery").empty();
+        $("#PopUpMemberImage").val('');
+    }
+    function MemberpreviewImage() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#Membergallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteMemberIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#PopUpMemberImage").val(reader.result);
+        }, false);
+
+        for (var i = 0; i < $("#MemberBrowseImage")[0].files.length; i++) {
+            if ($("#MemberBrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#MemberBrowseImage")[0].files[i]);
+            }
+        }
+    }
+
+    function setCodeNum() {
+        var doc = $.get('/ChurchMembership/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    function ChangeDateFormat(value) {
+        if (value === null) {
+            return null;
+        }
+        //var dt = new Date(parseFloat(value));
+        var dt = new Date(value);
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+
+    function DeleteMember(e) {
+        //let DivElement = $(e).closest('.card-body');
+        //DivElement.remove();
+        deleteElement(e);
+    }
+
+    function EditMember(e) {
+        //let DivElement = $(e).closest('.card-body');
+        let DivElement = $(e).closest('tr');
+        let MemberId = DivElement.find('.MemberId').val();
+        let MemberCode = DivElement.find('.MemberCode').val();
+        let MemberArName = DivElement.find('.MemberArNameVal').val();
+        let Relative = DivElement.find('.MemberRelativeVal').val();
+        let MemberBirthDate = DivElement.find('.MemberBirthDate').text();
+        MemberBirthDate = MemberBirthDate != null ? ChangeDateFormat(MemberBirthDate.replace('T', ' ')) : "";
+        let MemberConfessionFather = DivElement.find('.MemberConfessionFather').text();
+        let MemberMobile = DivElement.find('.MemberMobileVal').val();
+        let MemberNotes = DivElement.find('.MemberNotesVal').val();
+        let MemberIsAlive = DivElement.find('.MemberIsAlive').prop('checked') == true ? true : false;
+        let MemberFollowUp = DivElement.find('.MemberFollowUp').prop('checked') == true ? true : false;
+        let MemberImage = DivElement.find('.MemberImageVal').val();
+        let MemberEmail = DivElement.find('.MemberEmailVal').val();
+        let MemberPassword = DivElement.find('.MemberPasswordVal').val();
+        let MemberChurchFatherId = DivElement.find('.MemberChurchFatherId').val();
+
+        $('#AddFamilyMemberModal').modal("show");
+        if (MemberId > 0) {
+            $('#MemberPasswordPopUp').attr('hidden', true);
+        }
+        $("#Membergallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + MemberImage + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteMemberIMG(\'' + MemberImage + '\');$(this).prev().remove();$(this).remove();"></i>');
+        $('#PopUpMemberImage').val(MemberImage);
+        $('#MemberIdPopUp').val(MemberId);
+        $('#MemberCodePopUp').val(MemberCode);
+        $('#MemberArNamePopUp').val(MemberArName);
+        $('#RelativePopUp').val(Relative);
+        $('#MemberBirthDatePopUp').val(MemberBirthDate);
+        $('#MemberConfessionFatherPopUp').val(MemberConfessionFather);
+        $('#MemberMobilePopUp').val(MemberMobile);
+        $('#MemberEmailPopUp').val(MemberEmail);
+        $('#MemberPasswordPopUp').val(MemberPassword);
+        $('#MemberNotesPopUp').val(MemberNotes);
+        $('#PopUpMemberChurchFatherId').val(MemberChurchFatherId).select2();
+        $('#MemberIsAlivePopUp').prop('checked', MemberIsAlive);
+        $('#MemberFollowUpPopUp').prop('checked', MemberFollowUp);
+        // To Replace Old Div With New Edited in Case Of Save
+        $('#AddFamilyMemberModal .modal-footer button').on('click', function (event) {
+            var $button = $(event.target); // The clicked button
+            // Fire if the button element To check Which btn is clicked
+            if ($button.text() == '@MyERP.Properties.Resources.Save') {
+                DivElement.remove();
+            }
+        });
+    }
+
+
+    function AddFamilyMember() {
+        let i = 0;
+        if ($('#Id').val() > 0 && $('#MemberCodePopUp').val() > 0) {
+            i = $('#MemberCodePopUp').val();
+        }
+        else {
+            if ($('#ChurchMembershipFamilyMembers tr').length == 0) {
+
+                i = $('#MemberCodeRes').val();
+            }
+            else {
+                i = parseInt($('#ChurchMembershipFamilyMembers tr:last').find('.MemberCode').val()) + 1;
+            }
+        }
+
+        let MemberIdPopUp =$('#MemberIdPopUp').val()>0? parseInt( $('#MemberIdPopUp').val()):0;
+        let MemberArName = $('#MemberArNamePopUp').val();
+        let Relative = $('#RelativePopUp').val();
+        let MemberBirthDate = $('#MemberBirthDatePopUp').val();
+        MemberBirthDate = MemberBirthDate != null ? (new Date(MemberBirthDate)).toLocaleString().split(',')[0] : null;
+        let MemberConfessionFather = $('#MemberConfessionFatherPopUp').val();
+        let MemberMobile = $('#MemberMobilePopUp').val();
+        let MemberEmail = $('#MemberEmailPopUp').val();
+        let MemberPassword = $('#MemberPasswordPopUp').val();
+        let MemberNotes = $('#MemberNotesPopUp').val();
+        let MemberImage = $('#PopUpMemberImage').val();
+        let MemberChurchFatherId = $('#PopUpMemberChurchFatherId').val();
+        let MemberChurchFatherName = $('#PopUpMemberChurchFatherId').val()>0?$('#PopUpMemberChurchFatherId option:selected').text():"";
+        let MemberIsAlive = $('#MemberIsAlivePopUp').prop('checked') == true ? "checked" : "checked";
+        let MemberFollowUp = $('#MemberFollowUpPopUp').prop('checked') == true ? "checked" : "";
+
+        let valid = true;
+        if ($('#MemberArNamePopUp').val()=="" || $('#RelativePopUp').val()=="" || $('#MemberConfessionFatherPopUp').val()=="" || $('#MemberMobilePopUp').val()=="" || $('#MemberBirthDatePopUp').val()=="") {
+
+            $('#MemberArNamePopUp').prop('required', 'required');
+           // $('#RelativePopUp').prop('required',  'required');
+           // $('#MemberMobilePopUp').prop('required',  'required');
+           // $('#MemberBirthDatePopUp').prop('required',  'required');
+           // $('#MemberConfessionFatherPopUp').prop('required',  'required');
+        }
+
+        var member = FamilyMembers.filter(function (i) { return i.Mobile == $('#MemberMobilePopUp').val(); })[0];
+        if (member && MemberIdPopUp !== member.Id) {
+                alert('@MyERP.Properties.Resources.ThisMobileNoExistsBefore');
+                $('#MemberMobilePopUp').val('');
+                valid = false;
+            }
+
+        if ($('#AddFamilyMemberModal').find(".form-control:invalid").length > 0) {
+            $('#AddFamilyMemberModal').find('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+                }, 500);
+            valid = false;
+        }
+        else {
+            if (valid == true) {
+                @*let _div = '<div class="card"><div class="card-body"><div class="form-group row"><input hidden class="MemberId" value="' +
+                    MemberIdPopUp + '"/><label class="control-label col-3 col-sm-3" for="MemberArName">@MyERP.Properties.Resources.ArName</label><div class="col-3 col-sm-3"><label class="control-label MemberArName"> ' +
+                    MemberArName + ' </label></div><label class="control-label col-3 col-sm-3" for="Relative">@MyERP.Properties.Resources.Relative</label><div class="col-3 col-sm-3"><label class="control-label Relative">' +
+                    Relative + ' </label></div></div><div class="form-group row"><label class="control-label col-3 col-sm-3" for="MemberBirthDate">@MyERP.Properties.Resources.BirthDate</label><div class="col-3 col-sm-3"><label class="control-label MemberBirthDate">' +
+                    MemberBirthDate + ' </label></div></div> <div class="form-group row"><label class="control-label col-3 col-sm-3" for="MemberMobile">@MyERP.Properties.Resources.Mobile</label><div class="col-3 col-sm-3"><label class="control-label MemberMobile">' +
+                    MemberMobile + ' </label></div><label class="control-label col-3 col-sm-3" for="MemberIsAlive">@MyERP.Properties.Resources.IsAlive</label><div class="col-3 col-sm-3" ><input type = "checkbox" class="MemberIsAlive" disabled ' +
+                    MemberIsAlive + ' /> </div> </div><div class="form-group row"><label class="control-label col-3 col-sm-3" for="MemberNotes">@MyERP.Properties.Resources.Notes</label><div class="col-3 col-sm-3"><label class="control-label MemberNotes">' +
+                    MemberNotes + ' </label></div><div class="col-3 col-sm-6"><button class="btn btn-primary" onclick="EditMember(this)">@MyERP.Properties.Resources.Edit</button><button class="btn btn-danger" style="margin-right: 0.2rem;" onclick="DeleteMember(this)">@MyERP.Properties.Resources.Delete</button></div></div ></div ></div > ';*@
+                @*<label class="control-label col-3 col-sm-3" for="MemberConfessionFather">@MyERP.Properties.Resources.Visiting</label> <div class="col-3 col-sm-3" > <label class="control-label MemberConfessionFather">' +MemberConfessionFather + ' </label></div >*@
+                let tr = '<tr><td><input hidden class="MemberId" value="' +
+                    MemberIdPopUp + '" /><input hidden class="MemberCode" value="' +
+                    i + '" /><input hidden class="MemberArNameVal" value="' +
+                    MemberArName + '" /><input hidden class="MemberRelativeVal" value ="' +
+                    Relative + '" /><input hidden class="MemberMobileVal" value="' +
+                    MemberMobile + '" /><input hidden class="MemberNotesVal" value="' +
+                    MemberNotes + '" /><label class="control-label MemberArName">' +
+                    MemberArName + '</label></td><td> <label class="control-label Relative">' +
+                    Relative + '</label></td><td> <label class="control-label MemberBirthDate">' +
+                    MemberBirthDate + ' </label></td><td><label class="control-label MemberMobile">' +
+                    MemberMobile + '</label></td><td><label class="control-label MemberEmail">' +
+                    MemberEmail + ' </label><input hidden class="MemberEmailVal" value="' +
+                    MemberEmail + '" /><input hidden class="MemberPasswordVal" value="' +
+                    MemberPassword + '" /></td><td><label class="control-label MemberChurchFatherName">' +
+                    MemberChurchFatherName + ' </label><input hidden class="MemberChurchFatherId" value="' +
+                    MemberChurchFatherId + '" /></td><td><input type="checkbox" class="MemberIsAlive" disabled ' +
+                    MemberIsAlive + ' /></td><td><input type="checkbox" class="MemberFollowUp" disabled ' +
+                    MemberFollowUp + ' /></td><td><label class="control-label MemberNotes">' +
+                    MemberNotes + '</label></td> <td><input hidden class="MemberImageVal" value="'+
+                    MemberImage + '"/><img src ="'+
+                    MemberImage + '" alt="" class="MemberImage" style="max-width:100px;max-height:100px;border-radius:50px;" /></td><td><a href="javascript:void(0);"  onclick="EditMember(this)"><i class="fa fa-edit"></i></a></td><td><a href="javascript:void(0);" onclick="DeleteMember(this)"><i class="fas fa-trash-alt"></i></a></td></tr>'
+
+                $('#ChurchMembershipFamilyMembers').append(tr);
+                $('#MemberIdPopUp').val('');
+                $('#MemberCodePopUp').val('');
+                $('#MemberArNamePopUp').val('');
+                $('#RelativePopUp').val('');
+                $('#MemberBirthDatePopUp').val('@ViewBag.BirthDate');
+                $('#MemberConfessionFatherPopUp').val('');
+                $('#MemberMobilePopUp').val('');
+                $('#MemberEmailPopUp').val('');
+                $('#MemberPasswordPopUp').val('');
+                $('#MemberNotesPopUp').val('');
+                $('#PopUpMemberImage').val('');
+                $('#Membergallery').empty();
+                $("#MemberBrowseImage").empty();
+                $('#MemberIsAlivePopUp').prop('checked', true);
+                $('#MemberFollowUpPopUp').prop('checked', true);
+                $('#AddFamilyMemberModal').modal("hide");
+            }
+        }
+    }
+
+    function AddVisit() {
+
+        let VisitIdPopUp = $('#VisitIdPopUp').val();
+        let VisitDatePopUp =$('#VisitDatePopUp').val();
+        let VisitConfessionFatherPopUp = $('#VisitConfessionFatherPopUp').val();
+        let VisitNotesPopUp = $('#VisitNotesPopUp').val();
+        let valid = true;
+        if ($('#VisitDatePopUp').val() == "" /*|| $('#VisitConfessionFatherPopUp').val() == ""*/) {
+
+            $('#VisitDatePopUp').prop('required', 'required');
+            //$('#VisitConfessionFatherPopUp').prop('required',  'required');
+        }
+
+        if ($("#AddVisitModal").find(".form-control:invalid").length > 0) {
+            $("#AddVisitModal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        }
+        else {
+            if (valid == true) {
+                let tr = ' <tr><td class="tabledit-edit-mode"><input hidden class="VisitId" value="' +
+                    VisitIdPopUp + '" /><label class="VisitDate control-label">' +
+                    VisitDatePopUp + '</label></td><td class="tabledit-edit-mode"><label class="VisitConfessionFather control-label">' +
+                    VisitConfessionFatherPopUp + '</label></td><td class="tabledit-edit-mode"><label class="VisitNotes control-label"> ' +
+                    VisitNotesPopUp + ' </label></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+                $('#ChurchMembershipVisits').append(tr);
+
+                $('#VisitIdPopUp').val('');
+                $('#VisitDatePopUp').val('@ViewBag.BirthDate');
+                $('#VisitConfessionFatherPopUp').val('');
+                $('#VisitNotesPopUp').val('');
+                $('#AddVisitModal').modal("hide");
+            }
+        }
+
+    }
+
+
+
+    //function AddToChurchMembershipFamilyMembers() {
+    //    let valid = true;
+    //    if ($('#ChurchMembershipFamilyMembers .MemberArName:last').val() || $('#ChurchMembershipFamilyMembers .Relative:last').val() || $('#ChurchMembershipFamilyMembers .ItemSelection:last').val() || $('#ChurchMembershipFamilyMembers .MemberMobile:last').val() || $('#ChurchMembershipFamilyMembers .MemberBirthDate:last').val()) {
+    //        $('#ChurchMembershipFamilyMembers').find('.MemberArName,  .Relative, .MemberConfessionFather, .MemberMobile,.MemberBirthDate').prop('required', true);
+    //        }
+    //    if ($('#ChurchMembershipFamilyMembers .form-control:invalid').length > 0) {
+    //        $('#ChurchMembershipFamilyMembers').closest('.form-horizontal').addClass('was-validated');
+    //        $('html, body').animate({
+    //            scrollTop: $("#ChurchMembershipFamilyMembers").find(".form-control:invalid").eq(0).offset().top - 80
+    //        }, 500);
+    //        valid = false;
+    //    }
+    //    else {
+    //        if (valid = true) {
+    //            let tr = '<tr><td class="tabledit-edit-mode" ><input type="text" class="MemberArName form-control tabledit-input form-control-sm" /></td ><td class="tabledit-edit-mode"><input type="text" class="Relative form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="MemberBirthDate form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="MemberConfessionFather form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="MemberMobile form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="checkbox" class="MemberIsAlive" /></td><td class="tabledit-edit-mode"><input type="text" class="MemberNotes form-control tabledit-input form-control-sm" /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr >';
+    //            $('#ChurchMembershipFamilyMembers').append(tr);
+    //        }
+
+    //    }
+    //}
+    //function AddToChurchMembershipVisits() {
+    //    let valid = true;
+    //    if ($('#ChurchMembershipVisits .VisitDate:last').val() || $('#ChurchMembershipVisits .VisitConfessionFather:last').val()) {
+    //        $('#ChurchMembershipVisits').find('.VisitDate, .VisitConfessionFather').prop('required', true);
+    //    }
+    //    if ($('#ChurchMembershipVisits .form-control:invalid').length > 0) {
+    //        $('#ChurchMembershipVisits').closest('.form-horizontal').addClass('was-validated');
+    //        $('html, body').animate({
+    //            scrollTop: $("#ChurchMembershipVisits").find(".form-control:invalid").eq(0).offset().top - 80
+    //        }, 500);
+    //        valid = false;
+    //    }
+    //    else {
+    //        if (valid = true) {
+    //            let tr = '<tr><td class="tabledit-edit-mode" > <input type="datetime-local" class="VisitDate form-control tabledit-input form-control-sm" /></td ><td class="tabledit-edit-mode"><input type="text" class="VisitConfessionFather form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="VisitNotes form-control tabledit-input form-control-sm" /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr >';
+    //            $('#ChurchMembershipVisits').append(tr);
+    //        }
+
+    //    }
+    //}
+
+    function deleteElement(e) {
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        //let tr = $(e).closest('tr');
+        //if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+        //    $(tr).find("input").val('');
+        //    $(tr).find("label").text('');
+        //    $(tr).find('input, select').removeAttr('required');
+        //    // $(tr).find('select').empty();
+        //    $(tr).find('select').prop('selectedIndex', 0);
+        //    $(tr).find('select').select2();
+        //}
+        //else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+        //    e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        //else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+        //    $(tr).find("input").val('');
+        //    $(tr).find('input, select').removeAttr('required');
+        //   // $(tr).find('select').empty();
+        //    $(tr).find('select').prop('selectedIndex', 0);
+        //    $(tr).find('select').select2();
+        //    $(tr).find("label").text('');
+       // }
+    }
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        var member = FamilyMembers.filter(function (i) { return i.Mobile == $('#Mobile').val(); })[0];
+        if (member && parseInt($('#Id').val()) !== member.Id) {
+                alert('@MyERP.Properties.Resources.ThisMobileNoExistsBefore');
+                $('#Mobile').val('');
+                valid = false;
+            }
+
+        let churchMemberships = [];
+        $('#ChurchMembershipFamilyMembers tr').each(function () {
+            var td = $(this);
+            var ChurchMembershipFamilyMember = {
+                Id: td.find('.MemberId').val(),
+                Code: td.find('.MemberCode').val(),
+                ParentId: $('#Id').val(),
+                ArName: td.find('.MemberArNameVal').val(),
+                BirthDate: td.find('.MemberBirthDate').text(),
+                Relative: td.find('.MemberRelativeVal').val(),
+                ConfessionFather: td.find('.MemberConfessionFather').text(),
+                Mobile: td.find('.MemberMobileVal').val(),
+                IsAlive: td.find('.MemberIsAlive').prop('checked'),
+                FollowUp: td.find('.MemberFollowUp').prop('checked'),
+                Notes: td.find('.MemberNotesVal').val(),
+                IsDeleted: false,
+                IsActive: true,
+                UserId: $('#UserId').val(),
+                Image: td.find('.MemberImageVal').val(),
+                Email: td.find('.MemberEmailVal').val(),
+                Password: td.find('.MemberPasswordVal').val(),
+                ChurchFatherId: td.find('.MemberChurchFatherId').val(),
+                AreaId: $('#AreaId').val(),
+                Address: $('#Address').val(),
+
+            };
+            churchMemberships.push(ChurchMembershipFamilyMember);
+        });
+
+        @*if ($('#ChurchMembershipFamilyMembers .card-body').length == 0 ) {
+             alert('@MyERP.Properties.Resources.InsertFamilyMembers');
+            valid = false;
+        }*@
+
+        let ChurchMembershipVisits = [];
+        $('#ChurchMembershipVisits tr').each(function () {
+            var td = $(this);
+            var ChurchMembershipVisit = {
+                MainDocId: $('#Id').val(),
+                Date: td.find('.VisitDate').text(),
+                ConfessionFather: td.find('.VisitConfessionFather').text(),
+                Notes: td.find('.VisitNotes').text(),
+                IsDeleted: false,
+                IsActive: true,
+                UserId: $('#UserId').val(),
+
+            };
+            if (td.find('.VisitDate').text() /*&& td.find('.VisitConfessionFather').text()*/) {
+                ChurchMembershipVisits.push(ChurchMembershipVisit);
+            }
+        });
+        @*if ($('#ChurchMembershipVisits tr').length == 0) {
+            alert('@MyERP.Properties.Resources.InsertVisit');
+            valid = false;
+        }*@
+        var churchMembership = {
+            Id: $('#Id').val(),
+            Code: $('#Code').val(),
+            ArName: $('#ArName').val(),
+            EnName: $('#EnName').val(),
+            BirthDate: $('#BirthDate').val(),
+            ConfessionFather: $('#ConfessionFather').val(),
+            ChurchFatherId: $('#ChurchFatherId').val(),
+            AreaId: $('#AreaId').val(),
+            Address: $('#Address').val(),
+            Phone: $('#Phone').val(),
+            Email: $('#Email').val(),
+            Password: $('#Password').val(),
+            Mobile: $('#Mobile').val(),
+            IsAlive: $('#IsAlive').prop('checked'),
+            UserId: $('#UserId').val(),
+            IsActive: $('#IsActive').val(),
+            IsDeleted: $('#IsDeleted').val(),
+            Notes: $('#Notes').val(),
+            Image: Imgdata == "" ? $('#Image').val() : Imgdata,
+            ParentId: null,
+            Relative: null,
+            IsUseApplication: $('#IsUseApplication').prop('checked'),
+            FollowUp: $('#FollowUp').prop('checked'),
+            TopicsForDiscussion: $('#TopicsForDiscussion').val(),
+            //ChurchMembershipFamilyMembers: ChurchMembershipFamilyMembers,
+            ChurchMembership1: churchMemberships,
+            ChurchMembershipVisits: ChurchMembershipVisits,
+        }
+        if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            $('#newbtn').prop('disabled', true);
+            $('#save').prop('disabled', true);
+            $.ajax({
+                type: "POST",
+                contentType: "application/json",
+                url: "/ChurchMembership/AddEdit",
+                data: JSON.stringify(churchMembership ),
+                success: function (r) {
+                    if (r.success == true) {
+                        alert("@MyERP.Properties.Resources.Saved");
+                        if (n == "new") {
+                            window.location.replace("/ChurchMembership/AddEdit");
+                        } else {
+                            window.location.replace("/ChurchMembership");
+                        }
+                    }
+                    else {
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                    }
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                },
+                error: function (r) {
+                    alert("@MyERP.Properties.Resources.NotSaved");
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                }
+            });
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/ChurchMembership/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/ChurchMembership');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+</script>
+
+

@@ -1,0 +1,42 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.Barcode;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title> @MyERP.Properties.Resources.Barcode </title>
+    <script src="~/Scripts/JsBarcode.all.min.js"></script>
+</head>
+<body>
+    <div style="width:135px;max-height:80px">
+        <p style="width:auto;text-align:center;margin-bottom:3px;margin-top:3px;padding:0px;font-size:10px;font-weight:bold; max-height:20px">@ViewBag.Name</p>
+        <svg id="barcode" style="width:135px;max-height:60px;"></svg>
+
+        @*<div id="BarcodeDiv">
+            <svg class="barcode" style="width:135px;max-height:60px;"></svg>
+
+        </div>*@
+    </div>
+    <script>
+       var Barcodes = @Html.Raw(Json.Encode(((List<MyERP.Models.ItemPrice>)ViewBag.BarCodes).Select(a=>new { a.Barcode })));
+        for (var i = 0; i < Barcodes.length; i++) {
+            if (Barcodes[i].Barcode != null) {
+                //$('#BarcodeDiv').append('<svg class="barcode" style="width:135px;max-height:60px;"></svg>');
+                //JsBarcode('.barcode', Barcodes[i].Barcode);
+                JsBarcode("#barcode", Barcodes[i].Barcode);
+                window.print();
+                //JsBarcode("#barcode", Barcodes[i].Barcode);
+              //  window.open("/Item/Barcode?ItemId=" + null + "&barcode="+Barcodes[i].Barcode +"&name="+'@ViewBag.Name');
+            }
+        }
+
+        @*JsBarcode("#barcode", "@ViewBag.Barcode");
+        window.print();*@
+    </script>
+</body>
+</html>

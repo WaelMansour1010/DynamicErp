@@ -1,0 +1,194 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model HRServices.Models.VisitModel
+@{
+}
+
+<div class="ibox" id="ibox1">
+    <div class="ibox-title">
+        <h5>Customer Visit</h5>
+    </div>
+    <div class="ibox-content">
+
+        <form asp-action="Visit" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group ">
+               @* <div class="row">
+                    <button class="btn btn-primary " onclick="showItemlist();" type="button">Add Customer</button>
+                   
+                </div>*@
+                <div class="row">
+                    <div class="col-sm">
+                        <div class="form-group">
+                            <label class="col-form-label" for="date_added">Customer Code</label>
+                            <div class="input-group">
+                                <input id="txtSearch" type="text" class="form-control">
+                                <input id="txtId" asp-for="CustomerId" type="hidden"/>
+                                <input id="txtCode" asp-for="FullCode" type="hidden"/>
+                                <input id="id" asp-for="OrderId" type="hidden"/>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </div>
+            <div class="hr-line-dashed"></div>
+
+
+            <div class="hr-line-dashed"></div>
+            <div>
+                <button  class="btn btn-info  btn-w-m btn-h-m btn1" type="button" aria-activedescendant="">
+                    <i class="fa fa-map-marker"></i>
+                    <span class="d-inline-block    text-left">
+                        SIGN IN
+                    </span>
+                </button>
+
+                <button class="btn btn-danger btn-w-m btn-h-m  btn2"  type="button">
+                    <i class="fa fa-map-marker"></i>
+                    <span class="  text-left">
+                        SIGN OUT
+                    </span>
+                </button>
+
+
+            </div>
+            @*<div class="form-group row">
+
+
+
+
+
+            </div>*@
+
+            <div class="hr-line-dashed"></div>
+
+
+            <div class="hr-line-dashed"></div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Notes</label>
+
+                <div class="col-sm-10"><input type="text" class="form-control"></div>
+            </div>
+
+        @*    <div class="ibox-footer">
+                <button type="submit" class="btn-danger  btn-lg">Send</button>
+            </div>*@
+        </form>
+
+      
+
+    </div>
+    <div class="ibox-footer">
+        <table class="display nowrap" style="width:100% !important" id="tbldata">
+            <thead>
+                <tr>
+
+                    <th>Order ID </th>
+                    <th>SING IN Date </th>
+                    <th>SING OUT Date </th>
+                    <th>Customer  Code </th>
+                    <th> Customer Name</th>
+                    <th>MAP IN</th>
+                    <th>MAP OUT</th>
+
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+            <tfoot>
+            </tfoot>
+        </table>
+    </div>
+
+
+
+</div>
+
+
+@section scripts
+{
+    <script src="~/assets/js/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <script>
+        const x = document.getElementById("test");
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+
+
+            } else {
+                x.innerHTML = "  not supported by this browser.";
+            }
+        }
+
+        function showPosition(position) {
+
+            x.innerHTML = "Latitude: " +
+                position.coords.latitude +
+                "<br>Longitude: " +
+                position.coords.longitude;
+        }
+
+
+        function setUpAutoCompleate() {
+
+
+            var $elem = $('#txtSearch').autocomplete({
+                source: function(request, response) {
+
+                    $.ajax({
+                        url: "@Url.Action("SearchAutoCompleteCustomer")",
+                        type: "get",
+                        dataType: "json",
+                        minLength: 3,
+                        data: { word: request.term },
+                        success: function(data) {
+                            response($.map(data,
+                                function(item) {
+                                    return {
+                                        label: `${item.fullcode}-${item.namee}`,
+                                        value: item.namee,
+                                        id: item.id,
+                                        code: item.fullcode,
+                                        name: item.name,
+                                        namee: item.namee
+                                    };
+                                }
+                            ));
+                        }
+                    });
+                },
+                select: function(event, ui) {
+
+                    //var obj2 = {
+                    //    rowId: genid(),
+                    //    itemId: ui.item.id,
+                    //    itemCode: ui.item.code,
+                    //    itemName: ui.item.itemname,
+                    //    itemNamee: ui.item.itemnamee,
+                    //    qty: 1,
+                    //    notes: ''
+                    //};
+                    //addrow(obj2);
+                    $('#txtSearch').val(`${ui.item.code}-${ui.item.namee}`);
+                    $('#txtId').val(ui.item.id);
+                    return false;
+                },
+                close: function() {
+                   // $('#txtSearch').val('');
+                }
+            });
+
+
+        }
+
+        $(document).ready(() => {
+            setUpAutoCompleate();
+        });
+    </script>
+
+
+}

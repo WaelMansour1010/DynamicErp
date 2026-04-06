@@ -3,7 +3,14 @@
     "allow": [
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nتعديل شاشة العقد: السماح بتعديل الفرع والوحدة بعد الحفظ\n\nالتعديلات المطبقة:\n\n1. إلغاء قفل حقل الفرع (DepartmentId) بعد الحفظ\n   - إزالة disabled من JavaScript\n   - السماح بتغيير الفرع وتحديث السيريال تلقائياً\n\n2. إلغاء قفل حقل نوع الوحدة (PropertyUnitTypeId)\n   - إزالة الشرط disabled من Razor view\n   - السماح بتعديل نوع الوحدة في أي وقت\n\n3. إلغاء قفل حقل الوحدة (PropertyUnitId)\n   - إزالة الشرط disabled من Razor view\n   - إضافة تحذير للمستخدم عند تغيير الوحدة\n   - السماح بإلغاء التغيير والعودة للوحدة القديمة\n\n4. تحديث السيريال تلقائياً عند تغيير الفرع\n   - تعديل دالة DepartmentId change handler\n   - إزالة شرط (!$(''#Id'').val())\n   - تحديث السيريال في وضع الإضافة والتعديل\n\n5. إضافة ملفات داعمة:\n   - PropertyContract_Update_Fixed.sql: Stored Procedure محدث\n   - PropertyContract_Update_Instructions.md: دليل التطبيق الكامل\n\nالملفات المعدلة:\n- Views/PropertyContract/AddEdit.cshtml\n\nالملفات الجديدة:\n- PropertyContract_Update_Fixed.sql\n- PropertyContract_Update_Instructions.md\n\n🤖 Generated with Claude Code\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(cd:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(if exist \"Models\\\\CashTransferPartial.cs\" del \"Models\\\\CashTransferPartial.cs\")",
+      "Bash(dir:*)",
+      "Bash(dotnet clean:*)"
     ]
   }
 }

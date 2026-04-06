@@ -1,0 +1,187 @@
+﻿
+
+@model IEnumerable<MyERP.Models.GetCustomerSalesItems_Result>
+@{
+    ViewBag.Title = "مبيعات صنف لعميل";
+}
+
+<div style="text-align: left;padding-bottom: 23px;">
+</div>
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <div class="form-title">
+
+                        <div class="hed">مبيعات صنف لعميل</div>
+                    </div>
+
+                    <div class="form-body">
+
+                        <form class="form-horizontal">
+                            <div class="form-group col-sm-3">
+                                <label for="SystemPages" class="control-label col-sm-3">الفرع</label>
+                                <div class="col-sm-9">
+                                    @Html.DropDownList("DepartmentId", null, "اختر الفرع", htmlAttributes: new { @class = "form-control" ,@required="required"})
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label for="SystemPages" class="control-label col-sm-3">الصنف</label>
+                                <div class="col-sm-9">
+                                    @Html.DropDownList("ItemId", null, "اختر الصنف", htmlAttributes: new { @class = "form-control" })
+                               
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label for="inputtext3" class="col-sm-3 control-label"> العميل:</label>
+                                <div class="col-sm-9">
+                                    @Html.DropDownList("CustomerId", null, "اختر العميل", htmlAttributes: new { @class = "form-control", @required = "required" })
+                                 
+
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <label for="inputtext3" class="col-sm-3 control-label"> نوع المستند:</label>
+                                <div class="col-sm-9">
+                                    <select name="TypeId" id="TypeId" required>
+                                        <option value="0"> إختر نوع المستند</option>
+                                        <option value="1">فواتير البيع</option>
+                                        <option value="2">مرتجعات البيع</option>
+                                    </select>
+
+
+                                </div>
+                            </div>
+                            <button type="submit" class=" btn btn-info search" id="Go">بحث</button>
+
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+
+                                @if (ViewBag.TypeId == 1)
+                                {
+                                    <th>
+                                        رقم فاتورة البيع
+                                    </th>
+                                }
+                                else
+                                {
+                                    <th>
+
+                                        رقم مرتجع البيع
+                                    </th>
+                                }
+
+
+                                <th>
+                                    التاريخ
+                                </th>
+                                <th>
+                                    الإجمالى
+                                </th>
+                                <th>
+                                    عرض
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.DocumentNumber)
+                                </td>
+                               
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.VoucherDate)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.TotalAfterTaxes)
+                                </td>
+                                <td>
+
+                                    <a href="@Url.Action("AddEdit",@ViewBag.TypeId==1?"SalesInvoice":"SalesReturn",new {id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+
+
+
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+
+        $('#TypeId').val(@ViewBag.TypeId ).trigger('change');
+        
+    })
+    if ($('#DepartmentId').val() == 0) {
+
+        $('#ItemId').empty();
+        $('#ItemId').append($('<option>', {
+            value: 0,
+            text: "إختر الفرع أولا"
+        }));
+    }
+
+    function getItemsByDepId() {
+        $.get('/Helper/ItemsByDepId/' + $('#DepartmentId').val()).done(function (r) {
+            items = r;
+            fillItems();
+        });
+    }
+    function fillItems() {
+
+            $('#ItemId').empty();
+            $('#ItemId').append($('<option>', {
+                value: 0,
+                text: "إختر الصنف"
+            }));
+            for (var i = 0; i < items.length; i++) {
+                $('#ItemId').append($('<option>', {
+                    value: items[i].Id,
+                    text: items[i].ArName
+                }));
+            }
+        
+    }
+
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val() == 0) {
+
+            $('#ItemId').empty();
+            $('#ItemId').append($('<option>', {
+                value: 0,
+                text: "إختر الفرع أولا"
+            }));
+        } else {
+            getItemsByDepId();
+
+        }
+    });
+</script>

@@ -1,0 +1,244 @@
+﻿
+@{
+    if (ViewBag.ShowReport == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.InventoryEvaluation;
+}
+
+
+<meta name="viewport" content="width=device-width" />
+<title> @MyERP.Properties.Resources.InventoryEvaluation </title>
+@if (ViewBag.ShowReport == true)
+{
+    @Html.DevExpress().GetStyleSheets(
+                new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+                new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },
+                new StyleSheet { ExtensionSuite = ExtensionSuite.Report }
+            )
+    @Html.DevExpress().GetScripts(
+                new Script { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+                new Script { ExtensionSuite = ExtensionSuite.Editors },
+                new Script { ExtensionSuite = ExtensionSuite.Report }
+            )
+
+    <div>
+        @Html.DevExpress().WebDocumentViewer(settings =>
+   {
+       settings.Name = "WebDocumentViewer";
+   }).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(new InventoryEvaluation_Report(ViewBag.DepartmentId, ViewBag.WarehouseId, ViewBag.GroupId, ViewBag.ActivityId, ViewBag.CompanyId))).GetHtml()
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card-box">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.InventoryEvaluation
+                                    </h5>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-1 control-label" for="Code">@MyERP.Properties.Resources.Department</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",
+                                                required = "required"
+                                            })
+                                        </div>
+                                        <label class=" col-sm-1 control-label" for="Code">@MyERP.Properties.Resources.WareHouse</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("WarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",
+                                                required = "required"
+                                            })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-1 control-label" for="Code">@MyERP.Properties.Resources.Group</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("GroupId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",
+                                                required = "required"
+                                            })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Activity</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("ActivityId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                       {
+                                           @class = "form-control"
+                                       })
+                                        </div>
+                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Company</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("CompanyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                       {
+                                           @class = "form-control"
+                                       })
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-offset-2">
+                        <button class="btn btn-success" onclick="DownloadReport()">
+                            @MyERP.Properties.Resources.ShowReport
+                        </button>
+                        <button class="btn btn-success" onclick="ShowData()">
+                            @MyERP.Properties.Resources.ShowData
+                        </button>
+                        <button class="btn btn-success" onclick="ShowReport()">
+                            @MyERP.Properties.Resources.ShowDesign
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!--------------------------------ShowData Table --------------------------------------->
+    <div class="row" id="AllTable" style="display:none">
+        <div class="col-12">
+            <div class="card-box">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.ReportData
+                                    </h5>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Code
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.ItemName
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Qty
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Unit
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.LastPurchasePrice
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.AverageCost
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.SalePrice
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="ShowDataTable">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-group row">
+                            <label for="TotalLastPurchasePrice" class="control-label col-sm-1">@MyERP.Properties.Resources.TotalLastPurchasePrice</label>
+                            <div class="col-sm-5">
+                                <input id="TotalLastPurchasePrice" class="form-control" disabled />
+                            </div>
+                            <label for="TotalAverageCost" class="control-label col-sm-1">@MyERP.Properties.Resources.TotalAverageCost</label>
+                            <div class="col-sm-5">
+                                <input id="TotalAverageCost" class="form-control" disabled />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="TotalSalePrice" class="control-label col-sm-1">@MyERP.Properties.Resources.TotalSalePrice</label>
+                            <div class="col-sm-5">
+                                <input id="TotalSalePrice" class="form-control" disabled />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!--***********************************************************************************************-->
+}
+<script>
+    function ShowReport() {
+        window.open('/Report/InventoryEvaluation?DepartmentId=' + $('#DepartmentId').val() + '&WarehouseId=' + $('#WarehouseId').val() + '&GroupId=' + $('#GroupId').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&showReport=' + true + '&print=' + false, "blank");
+    }
+    function DownloadReport() {
+        window.open('/Report/InventoryEvaluation?DepartmentId=' + $('#DepartmentId').val() + '&WarehouseId=' + $('#WarehouseId').val() + '&GroupId=' + $('#GroupId').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + '&showReport=' + false + '&print=' + true, "blank");
+    }
+
+    function ShowData() {
+        var TotalLastPurchasePrice = 0;
+        var TotalAverageCost = 0;
+        var TotalSalePrice = 0;
+        
+       
+        $('#ShowDataTable').empty();
+        $('#preloader, #status').fadeIn();
+
+        $.get('/Helper/GetInventoryEvaluation?DepartmentId=' + $('#DepartmentId').val() + '&WarehouseId=' + $('#WarehouseId').val() + '&GroupId=' + $('#GroupId').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val()).done(function (r) {
+            $('#AllTable').show();
+            for (var i = 0; i < r.length; i++) {
+                r[i].ItemCode = r[i].ItemCode == null ? "" : r[i].ItemCode;
+                r[i].ItemName = r[i].ItemName == null ? "" : r[i].ItemName;
+                r[i].Quantity = r[i].Quantity == null ? 0 : r[i].Quantity;
+                r[i].UnitName = r[i].UnitName == null ? "" : r[i].UnitName;
+                r[i].LastPrice = r[i].LastPrice == null ? 0 : r[i].LastPrice;
+                r[i].AvgCost = r[i].AvgCost == null ? 0 : r[i].AvgCost;
+                r[i].SellingPrice1 = r[i].SellingPrice1 == null ? 0 : r[i].SellingPrice1;
+
+                let tr = '<tr><td><label class="control-label Debit">' +
+                    r[i].ItemCode + '</label></td><td><label class="control-label ArName">' +
+                    r[i].ItemName + '</label></td><td><label class="control-label Credit">' +
+                    r[i].Quantity + '</label></td><td><label class="control-label DebitBalance">' +
+                    r[i].UnitName + '</label></td><td><label class="control-label CreditBalance">' +
+                    r[i].LastPrice + '</label></td><td><label class="control-label ArName">' +
+                    r[i].AvgCost + '</label></td><td><label class="control-label ArName">' +
+                    r[i].SellingPrice1 + '</label></td></tr>';
+                $('#ShowDataTable').append(tr);
+                TotalLastPurchasePrice += (r[i].LastPrice * r[i].Quantity);
+                TotalAverageCost += r[i].AvgCost;
+                TotalSalePrice += r[i].SellingPrice1;
+            }
+            $('#TotalLastPurchasePrice').val(parseFloat(TotalLastPurchasePrice).toFixed(2));
+            $('#TotalAverageCost').val(parseFloat(TotalAverageCost).toFixed(2));
+            $('#TotalSalePrice').val(parseFloat(TotalSalePrice).toFixed(2));
+            $('#preloader, #status').fadeOut();
+        });
+    }
+
+</script>

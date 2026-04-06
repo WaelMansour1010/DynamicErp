@@ -1,0 +1,101 @@
+﻿@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.AddItemInInvoice ;
+}
+
+
+<!-- بتاع البحث عن الصنف وإضافته Modal -->
+<div id="itemSearchModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row pb-2">
+                    <div class="col-sm-6">
+                        <input class="form-control" id="search-items" placeholder="@MyERP.Properties.Resources.Search" type="text" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>@MyERP.Properties.Resources.Code</th>
+                                    <th>@MyERP.Properties.Resources.Barcode</th>
+                                    <th>@MyERP.Properties.Resources.ItemName</th>
+                                    <th>@MyERP.Properties.Resources.Price</th>
+
+@if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Kimo")
+{
+                                <th>@MyERP.Properties.Resources.Qty</th>
+}
+                                <th>@MyERP.Properties.Resources.Add</th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-prices-quantities"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+    function showSearchModal()
+    {
+        $('#itemSearchModal').modal('show');
+    }
+
+    //// ---- دى الفانكشن المسئولة عن البحث فى البوب اب بتاع إضافة الصنف ------ //
+    $('#search-items').on('change', function () {
+        $('#pleasewait').fadeIn();
+        let searchTxt = $(this).val().trim().toUpperCase().split(' ');
+        let filteredItems = items.filter(function (e) {
+            let arName = e.ArName.toUpperCase();
+            let termCount = searchTxt.length;
+            let matchCount = 0;
+            for (var i = 0; i < termCount; i++) {
+                let term = searchTxt[i];
+                for (var j = 0; j < arName.split(' ').length; j++) {
+                    if (arName.split(' ')[j].indexOf(term) > -1) {
+                        matchCount++;
+                        if (matchCount == termCount)
+                            return true;
+                    }
+                }
+            }
+            return false;
+        });
+        let tr = '';
+        let hidden = 'hidden';
+        if ('@Html.Raw(System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"])' == "Kimo")
+            hidden = '';
+        for (var i = 0; i < filteredItems.length; i++) {
+            tr += ('<tr><td>' + (filteredItems[i].Code ? filteredItems[i].Code : '') + '</td><td>' + (filteredItems[i].Barcode ? filteredItems[i].Barcode : '') + '</td><td><input hidden class="item-id" value="' + filteredItems[i].Id + '" /><input hidden class="items-prices-quantities-id" value="' + filteredItems[i].ItemPriceId + '" /><label class="nameOfItem">' + filteredItems[i].ArName + '</label></td><td>' + filteredItems[i].Price + '</td><td class="item-current-qty"' + hidden + '>' + filteredItems[i].Quantity + '</td><td><button class="btn btn-info" onclick="chooseItem(this)" >'+'@MyERP.Properties.Resources.Add'+'</button></td></tr>');
+            //جزء الكمية
+            ///*<td class="item-current-qty">' + filteredItems[i].Quantity + '</td>*
+
+        }
+        $('#items-prices-quantities').empty().append(tr);
+        $('#pleasewait').fadeOut();
+    });
+
+
+    $('.bs-example-modal-lg').on('hidden.bs.modal', function (e) {
+        $('#items-prices-quantities').empty();
+        $('#search-items').val('');
+    });
+
+    $('.bs-example-modal-lg').on('shown.bs.modal', function (e) {
+        $('#search-items').focus();
+    });
+
+</script>

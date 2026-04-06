@@ -1,0 +1,474 @@
+﻿@model IEnumerable<MyERP.Models.Item>
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.Items;
+}
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.common-material.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.material.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.material.mobile.min.css" />
+<script src="https://kendo.cdn.telerik.com/2018.2.516/js/kendo.all.min.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("AddEdit")" role="button" style="float:left; margin-right:4px">@MyERP.Properties.Resources.AddNew</a>
+                @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Kimo")
+                {
+                    <a class="btn btn-info" href="@Url.Action("ImportItems")" role="button" style="float:left; margin-right:4px">@MyERP.Properties.Resources.ImportingAndModifyingQuantitiesOfItems</a>
+                    @*<button class="btn btn-info" role="button" style="float:left;" onclick="UpdateBestSeller()">تحديث الأكثر مبيعاً</button>*@
+                }
+                @*<a class="btn btn-info" href="@Url.Action("AdjustPrice")" role="button" style="float:left; margin-right:4px">تعديل اسعار مجموعة الاصناف</a>*@
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Items</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group row">
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+                                <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder=@MyERP.Properties.Resources.Search>
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                @Html.DropDownList("ItemGroupId", null, @MyERP.Properties.Resources.ItemGroups, htmlAttributes: new { @class = "form-control", required = "required" })
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Department, htmlAttributes: new { @class = "form-control", required = "required" })
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                                <a class="btn btn-info" href="/Item/Index" role="button"><i class="fe-refresh-ccw"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-6">
+                    <button class="btn btn-success" id="treeCollapse"> @MyERP.Properties.Resources.Menu</button>
+
+                    <button class="btn btn-success" id="treeExpand"> @MyERP.Properties.Resources.Tree</button>
+                </div>
+            </div>
+
+
+            <!-------------------- Kendo Tree List --------------------------->
+            <div class="row" id="treelist">
+                <div class="col-12">
+                    <div class="card-box">
+                        <div class="row">
+                            <div class="col-12">
+                                <div @*id="treelist"*@></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!----------------End of  Kendo Tree List --------------------->
+
+
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @MyERP.Properties.Resources.Code
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.ArName
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.EnName
+                                    </th>
+                                    <th>@MyERP.Properties.Resources.Group</th>
+                                    <th>
+                                        @MyERP.Properties.Resources.DemandLimit
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Active
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Edit
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Delete
+                                    </th>
+                                    @*<th>
+                                            تفاصيل
+                                        </th>*@
+                                    <th>
+                                        @MyERP.Properties.Resources.ItemMovement
+                                    </th>
+                                    <th>
+                                        @if (ViewBag.UseExpiryDateForItems != null && ViewBag.UseExpiryDateForItems == true)
+                                        {
+
+                                            @MyERP.Properties.Resources.Patches
+                                        }
+                                    </th>
+                                    <th> @MyERP.Properties.Resources.PrintBarcode </th>
+
+                                </tr>
+                            </thead>
+                            <tbody id="ItemsTable">
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.Code)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.ArName)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.EnName)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.ItemGroup.ArName)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(modelItem => item.OrderLimit)
+                                        </td>
+                                        <td>
+                                            <input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateDeactivate(@item.Id)" />
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("AddEdit","Item",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                        </td>
+
+                                        <td>
+                                            <a href="javascript:void(0);" onclick="DeleteFunc(@item.Id)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </td>
+                                        @*<td>
+                                                <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(@item.Id)">تفاصيل</button>
+                                            </td>*@
+
+                                        <td>
+                                            <a href="@Url.Action("ItemTransaction","Report",new { ItemId=item.Id})" role="button" class="btn btn-info" target="_blank">@MyERP.Properties.Resources.ItemMovement</a>
+                                        </td>
+                                        <td>
+                                            @if (ViewBag.UseExpiryDateForItems != null && ViewBag.UseExpiryDateForItems == true && item.HasExpiry != null && item.HasExpiry.HasValue == true && item.HasExpiry == true)
+                                            {
+                                                <button class="btn btn-info js-show-item-patches" data-item-id=@item.Id>@MyERP.Properties.Resources.Patches</button>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @*<a href="@Url.Action("Barcode",new { ItemId=item.Id,barcode="",name=item.ArName})" role="button" class="btn btn-info" target="_blank">طباعة</a>*@
+                                            <a role="button" href="javascript:void(0);" onclick="EncodeId(@item.Id)">
+                                                <i class="remixicon-printer-fill"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Patch Modal-->
+<div id="patchModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="row">
+                    <div class="col-sm-12">
+                        <table class="table table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>@MyERP.Properties.Resources.PatchCode</th>
+                                    <th>@MyERP.Properties.Resources.ExpirationDate</th>
+                                    <th>@MyERP.Properties.Resources.Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="item-patches"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" onclick=" $('.bs-example-modal-lg').modal('hide');" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<div id="itemDetails" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">@MyERP.Properties.Resources.ItemDetails</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body" id="itemDetailsBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+@*<div style="text-align:center;margin-bottom: 50px;">
+
+        <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+            <option value="10">10</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="@ViewBag.Count">الكل</option>
+        </select>
+
+        <ul class="pagination pagination-rounded justify-content-center"></ul>
+
+        <span style="font-size:12px;float:right;"> عدد النتائج : <span id="RowsCount">@ViewBag.Count</span></span>
+    </div>*@
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">@MyERP.Properties.Resources.All</option>
+            </select>
+            <span style="font-size:12px;float:right;"> @MyERP.Properties.Resources.NoOfResults : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> @MyERP.Properties.Resources.PageNo: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+//------------------------------- Kendo Tree List ------------------------------//
+    function GetItemsWithItemGroup() {
+
+        $("#treelist").kendoTreeList({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Item/GetItemsWithItemGroup",
+                        dataType: "json",
+                    },
+                },
+                schema: {
+                    model: {
+                        id: "Id",
+                        parentId: "ParentItemGroupId",
+                        fields: {
+                            ParentItemGroupId: { field: "ParentItemGroupId", nullable: true },
+                            Code: { field: "Code", nullable: true },
+                            ArName: { field: "ArName", nullable: true },
+                            EnName: { field: "EnName", nullable: true },
+                           // ArType: { field: "ArType", nullable: true }
+                        },
+                        expanded: true
+                    }
+                }
+            },
+            columns: [{
+                field: "Code", title:"@MyERP.Properties.Resources.Code", width: 160, headerAttributes: {
+                    style: "text-align: right; color:black;"
+                } },
+                {
+                    field: "ArName", title: "@MyERP.Properties.Resources.ArName", width: 160, headerAttributes: {
+                        style: "text-align: right; color:black;"
+                    } },
+                {
+                    field: "EnName", title: "@MyERP.Properties.Resources.EnName", width: 160, headerAttributes: {
+                        style: "text-align: right; color:black;"
+                    }
+                }
+                @*,
+                {
+                    field: "ArType", title: "@MyERP.Properties.Resources.ArType", width: 160, headerAttributes: {
+                        style: "text-align: right; color:black;"
+                    }
+                }*@
+            ]
+        });
+
+    }
+    $('#treeExpand').click(function () {
+        $('#treelist').empty();
+        GetItemsWithItemGroup();
+        $('#treelist').show();
+    });
+
+    $('#treeCollapse').click(function () {
+        $('#treelist').hide();
+    });
+   //------------------------------- End Of Kendo Tree List ------------------------------//
+
+   let UseExpiryDateForItems = '@ViewBag.UseExpiryDateForItems';
+    var pageNo = 1;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function paging() {
+
+        var link = '/Item/Index?pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord + '&itemGroupId=' + $('#ItemGroupId').val() + '&departmentId=' + $('#DepartmentId').val();
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+           // $('.pagination').append('<li class="pageNo page-item" id="pg' + (i + 1) + '"><a class="page-link" href="javascript:void(0);" onclick="pageNo=' + (i + 1) + '; paging();">' + (i + 1) + '</a></li>');
+    $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+
+    })
+  //  $('#pg' +ViewBag.PageIndex).addClass('disabled active');
+
+            function DeleteFunc(id) {
+                if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+                    $('#preloader, #status').fadeIn();
+                    $.ajax(
+                        {
+                            url: '/Item/Delete',
+                            type: 'POST',
+                            data: {
+                                "Id": id,
+                            },
+                            error: function (e) {
+                                $('#preloader, #status').fadeOut();
+                            },
+                            success: function (r) {
+                                $('#preloader, #status').fadeOut();
+                                if (r == 'true') {
+                                    window.location.reload();
+                                }
+                                else if (r == 'False') {
+                                    $('#preloader, #status').fadeOut();
+                                    alert('@MyERP.Properties.Resources.DeleteDoesNotSucceededBecauseItemUsedInOtherTransactions');
+                                    window.location.reload();
+                                }
+                            }
+                        });
+                }
+            }
+
+    function ActivateDeactivate(id) {
+        $('#preloader, #status').fadeIn();
+        $.ajax({
+            url: '/Item/ActivateDeactivate',
+            type: 'POST',
+            data: {
+                "Id": id,
+            },
+            error: function (e) {
+                alert('@MyERP.Properties.Resources.TheActivationStateNotChanged'+'!');
+                $('#preloader, #status').fadeOut();
+            },
+            success: function (r) {
+                $('#preloader, #status').fadeOut();
+                if (r == 'true') {
+                    alert('@MyERP.Properties.Resources.TheActivationStateHasChanged'+'!')
+                }
+            }
+        });
+    }
+
+    //stop the function becuase no departmentId in view -- when add department it can be working
+    function showItemDetials(itemId) {
+        $('#itemDetailsBody').empty();
+            $('#itemDetailsBody').append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+            $.get('/Item/GetItemQuantityInEachWarehouse?itemId=' + itemId + '&depId=28' ).done(function (r) {
+                $('#itemDetailsBody').empty().append(r);
+            });
+
+    }
+
+    $(document).on('click', '.js-show-item-patches', function () {
+        var button = $(this);
+        var itemId = button.attr('data-item-id');
+        showPatchModal(itemId,true);
+    });
+
+    // Patch modal
+    function showPatchModal(itemId,getZeroQunatity) {
+        $('#patchModal').modal('show');
+        let itemPatches = [];
+        //let itemId = $(item).closest('tr').find('.item-id').val();
+
+        $.get('/Helper/PatchesByItemId?itemId=' + itemId + '&getZeroQunatity=' + getZeroQunatity).done(function (r) {
+            itemPatches = r;
+            let tr = '';
+
+            for (var i = 0; i < itemPatches.length; i++) {
+                tr += ('<tr><td>' + (itemPatches[i].PatchCode ? itemPatches[i].PatchCode : '') + '</td><td><input hidden class="itemId" value="' + itemId + '" /><input hidden class="itemPatchId" value="' + itemPatches[i].PatchId + '" /><label class="itemPatchExpireDate">' + (itemPatches[i].ExpiryDate != null ? convertToJavaScriptDate(itemPatches[i].ExpiryDate) : '') + '</label></td ><td>' + itemPatches[i].Qty + '</td></tr > ');
+            }
+
+            $('#item-patches').empty().append(tr);
+            $('#pleasewait').fadeOut();
+        });
+    }
+    //------------------- ConvertDate-------------
+    function convertToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+        // return (dt)
+    }
+
+    function EncodeId(id, mobile) {
+        $.get('/Helper/EncodeId?id=' + id).done(function (r) {
+            var report = "/Report/PrintItemsBarcode?id=" + r + "&print=True";
+            window.open(report, "_blank");
+        });
+    }
+
+</script>

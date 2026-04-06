@@ -1,0 +1,556 @@
+﻿<script src="~/Scripts/SaveAndNew.js"></script>
+@model MyERP.Models.Shift
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Shifts;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.Shifts :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsDeleted)
+
+
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="Code" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-2">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", required = "required", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                @MyERP.Properties.Resources.Day
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.Vacation
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.From
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.To
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.ShiftStartTime
+                            </th>
+
+                            <th>
+                                @MyERP.Properties.Resources.ShiftEndTime
+                            </th>
+                            @*<th>
+                                    عدد ساعات العمل
+                                </th>*@
+
+
+                        </tr>
+                    </thead>
+                    <tbody id="ShiftDetails">
+                        @if (Model != null)
+                        {
+                            foreach (var shiftDetail in Model.ShiftDetails)
+                            {
+                                <tr>
+                                    <td hidden><input class="EnDay" value="@shiftDetail.EnDay" /></td>
+                                    <td>
+                                        <label class="ArDay">@shiftDetail.ArDay</label>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" class="IsVacation" @Html.Raw(Model != null && shiftDetail.IsVacation == true ? "checked" : "") />
+                                    </td>
+                                    <td>
+                                        <input class="From-Time form-control" type="time" value="@shiftDetail.FromTime" />
+                                    </td>
+                                    <td>
+                                        <input class="To-Time form-control" type="time" value="@shiftDetail.ToTime" />
+                                    </td>
+                                    <td>
+                                        <input class="Start-Time form-control" type="time" value="@shiftDetail.StartTime" />
+                                    </td>
+                                    <td>
+                                        <input type="time" class="End-Time form-control" value="@shiftDetail.EndTime" />
+                                    </td>
+                                    @*<td><input class="WorkHours" value="@shiftDetail.WorkHours"/></td>>*@
+
+
+
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            foreach (var shiftDetail in (List<MyERP.Controllers.Shift_Detail>)ViewBag.ShiftDetail)
+                            {
+                                <tr>
+                                    <td hidden><input class="EnDay" value="@shiftDetail.EnDay" /></td>
+                                    <td>
+                                        <label class="ArDay">@shiftDetail.ArDay</label>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" class="IsVacation" />
+                                    </td>
+                                    <td>
+                                        <input class="From-Time form-control" type="time" value="12:00:00" />
+                                    </td>
+                                    <td>
+                                        <input class="To-Time form-control" type="time" value="12:00:00" />
+                                    </td>
+                                    <td>
+                                        <input class="Start-Time form-control" type="time" value="12:00:00" />
+                                    </td>
+                                    <td>
+                                        <input type="time" class="End-Time form-control" value="12:00:00" />
+                                    </td>
+                                    @*<td ><input class="WorkHours" /></td>*@
+
+
+
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+
+            <hr />
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-group row">
+
+                        <label for="EmployeeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Employee</label>
+                        <div class="col-sm-4">
+                            @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Select
+                            </div>
+                        </div>
+                        <div class="col-sm-offset-2">
+                            <button class="btn btn-success" onclick="addEmp()">
+                                @MyERP.Properties.Resources.Add
+                            </button>
+                            <button class="btn btn-success" onclick="addAllEmp()">
+                                @MyERP.Properties.Resources.AddAll
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @MyERP.Properties.Resources.Employee
+                                </th>
+
+                                <th>
+                                    @MyERP.Properties.Resources.Delete
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody id="ShiftEmployees">
+                            @if (Model != null)
+                            {
+                                foreach (var item in Model.ShiftEmployees)
+                                {
+                                    <tr>
+                                        <td hidden><input class="empId" value="@item.EmployeeId" /></td>
+                                        <td>
+                                            <label>@item.Employee.ArName</label>
+                                        </td>
+
+                                        <td>
+                                            <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                        </td>
+
+
+
+                                    </tr>
+                                }
+                            }
+
+
+                        </tbody>
+                    </table>
+                </div>
+                <hr />
+
+
+                <!-- Official Vacation -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>
+                                    @MyERP.Properties.Resources.Vacation
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.From
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.To
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="ShiftOfficialVacation">
+                            @if (Model != null)
+                            {
+                                foreach (var ShiftOfficialVacations in ViewBag.ShiftOfficialVacations)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input hidden class="OfficialVacationId" value="@ShiftOfficialVacations.OfficialVacationId" />
+                                            <label class="OfficialVacationArName"> @ShiftOfficialVacations.OfficialVacation.ArName </label>
+                                        </td>
+                                        <td>
+                                            <input type="datetime-local" class="form-control OfficialVacationDateFrom" value="@ShiftOfficialVacations.DateFrom.ToString("yyyy-MM-ddTHH:mm")" />
+                                        </td>
+                                        <td>
+                                            <input type="datetime-local" class="form-control OfficialVacationDateTo" value="@ShiftOfficialVacations.DateTo.ToString("yyyy-MM-ddTHH:mm")" />
+                                        </td>
+                                    </tr>
+                                }
+
+                            }
+                            else
+                            {
+                                foreach (var OfficialVacation in ViewBag.OfficialVacation)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input hidden class="OfficialVacationId" value="@OfficialVacation.Id" />
+                                            <label class="OfficialVacationArName"> @OfficialVacation.ArName </label>
+                                        </td>
+                                        <td>
+                                            <input type="datetime-local" class="form-control OfficialVacationDateFrom" value="@OfficialVacation.StartDate.ToString("yyyy-MM-ddTHH:mm")" />
+                                        </td>
+                                        <td>
+                                            <input type="datetime-local" class="form-control OfficialVacationDateTo" value="@OfficialVacation.EndDate.ToString("yyyy-MM-ddTHH:mm")" />
+                                        </td>
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+                <hr />
+
+                <!-- ******************* -->
+
+                <div class="row">
+                    <div class="col-sm-offset-2">
+                        @if (Model == null)
+                        {
+
+
+                            <button type="button" onclick="addEdit('new')" class="btn btn-success">
+                                @MyERP.Properties.Resources.SaveAndNew
+                            </button>
+                            <button class="btn btn-success" onclick="addEdit()">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else if (Model.IsDeleted == false)
+                        {
+
+
+                            <button class="btn btn-success" onclick="addEdit()">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            <button class="btn btn-danger" onclick="Delete(@Model.Id)">@MyERP.Properties.Resources.Delete</button>
+
+
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    function addEmp() {
+        if (!$('#EmployeeId').val()) {
+            alert(' @MyERP.Properties.Resources.SelectAnEmployee')
+        }
+        else {
+            let valid = true;
+            $('#ShiftEmployees tr').each(function () {
+                var td = $(this);
+                if ($('#EmployeeId').val() == td.find('.empId').val())
+                    valid = false;
+            });
+
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.ThisEmployeeWasPreviouslyAdded')
+            else {
+                $('#ShiftEmployees').append('<tr><td hidden><input class="empId" value=' + $('#EmployeeId').val() + '></td ><td><label >' + $('#EmployeeId option:selected').text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+            }
+        }
+
+    }
+
+
+    function addAllEmp() {
+        $("#EmployeeId > option").each(function () {
+            let emp = $(this);
+            if (emp.val() > 0) {
+                let valid = true;
+                $('#ShiftEmployees tr').each(function () {
+                    var td = $(this);
+                    if (emp.val() == td.find('.empId').val())
+                        valid = false;
+                });
+                if (valid == true) {
+                    $('#ShiftEmployees').append('<tr><td hidden><input class="empId" value=' + emp.val() + '></td ><td><label >' + emp.text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+                }
+            }
+        });
+
+
+    }
+
+
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var shiftDetails = [];
+            $('#ShiftDetails tr').each(function () {
+                var td = $(this);
+                var shiftDetail = {
+                    ShiftId: $('#Id').val(),
+                    EnDay: td.find('.EnDay').val(),
+                    ArDay: td.find('.ArDay').text(),
+                    IsVacation: td.find('.IsVacation').prop('checked'),
+                    FromTime: td.find('.From-Time').val(),
+                    ToTime: td.find('.To-Time').val(),
+                    StartTime: td.find('.Start-Time').val(),
+                    EndTime: td.find('.End-Time').val(),
+                    IsDeleted: false
+                };
+                shiftDetails.push(shiftDetail);
+            });
+            var shiftEmployees = [];
+            $('#ShiftEmployees tr').each(function () {
+                var td = $(this);
+                var shiftEmployee = {
+                    ShiftId: $('#Id').val(),
+                    EmployeeId: td.find('.empId').val()
+                };
+                shiftEmployees.push(shiftEmployee);
+            });
+            // Edit Shift Official Vacation
+            var ShiftOfficialVacations = [];
+            $('#ShiftOfficialVacation tr').each(function () {
+                var td = $(this);
+                var ShiftOfficialVacation = {
+                    ShiftId: $('#Id').val(),
+                    OfficialVacationId: td.find('.OfficialVacationId').val(),
+                    DateFrom: td.find('.OfficialVacationDateFrom').val(),
+                    DateTo: td.find('.OfficialVacationDateTo').val(),
+                };
+                ShiftOfficialVacations.push(ShiftOfficialVacation);
+            });
+            //-------------------------------------------//
+            var shift =
+            {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                ArName: $('#ArName').val(),
+                EnName: $('#EnName').val(),
+                DepartmentId: $('#DepartmentId').val(),
+                FieldsCodingId: $('#FieldsCodingId').val(),
+                IsActive: true,
+                ShiftDetails: shiftDetails,
+                ShiftEmployees: shiftEmployees,
+                ShiftOfficialVacations: ShiftOfficialVacations
+            };
+
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                $.ajax({
+                    type: "POST",
+                    url: "/Shift/AddEdit",
+                    data: shift,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/Shift/AddEdit");
+                            } else {
+                               window.location.replace("/Shift");
+                            }
+                        }
+                        else
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+        }
+    }
+
+
+   
+    function setCodeNum() {
+        $.get('/Shift/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+
+            $('#Code').val(r);
+        });
+
+    }
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+    });
+    $(document).ready(function () {
+       
+        if ($('#Id').val()) {
+            $('#FieldsCodingId').prop('disabled', true);
+        }
+        else {
+            setCodeNum();
+        }
+    });
+        function Delete(id) {
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Shift/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Shift');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+    function Remove() {
+        if ($('#StartDate').val() >= $('#EndDate').val()) {
+            document.getElementById("erDiv").style.visibility = "visible";
+            $("#erDiv").text("@MyERP.Properties.Resources.TheShiftEndTimeShouldBeGreaterThanTheShiftStartTime");
+        }
+        else
+            $("#erDiv").remove();
+    }
+</script>
+

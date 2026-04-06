@@ -124,7 +124,7 @@
                                                 <label class="control-label col-sm-2">@MyERP.Properties.Resources.UnitNo </label>
                                                 <div class="col-sm-4">
                                                     @*<input type="text" class="form-control" required id="UnitId" hidden value="@(Model!=null&&Model.Id>0?Model.PropertyContract.PropertyUnitId:0)" />*@
-                                                    <input type ="hidden" id="UnitId"  value="@(Model!=null&&Model.Id>0?Model.PropertyContract.PropertyUnitId:0)"/>
+                                                    <input type="hidden" id="UnitId" value="@(Model!=null&&Model.Id>0?Model.PropertyContract.PropertyUnitId:0)" />
                                                     <input type="text" class="form-control" required id="UnitCode" value="@(Model!=null&&Model.Id>0?ViewBag.UnitCode:"")" />
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
@@ -134,7 +134,7 @@
                                             <div class="form-group row SearchResult" style="display:none;">
                                                 <label class="control-label col-sm-2 MergedUnitsDiv">@MyERP.Properties.Resources.MergedUnits</label>
                                                 <div class="col-sm-4 MergedUnitsDiv">
-                                                    @{ 
+                                                    @{
                                                         if ((Model?.Id ?? 0) > 0)
                                                         {
                                                             @Html.ListBox("selectedMergedUnits", (MultiSelectList)ViewBag.selectedMergedUnits, new { @class = "form-control", size = 6, style = "width: 200px;" })
@@ -166,22 +166,56 @@
                                                     </div>
                                                 </div>
                                             </div>
+
                                             <div class="form-group row SearchResult" style="display:none;">
-                                                <label class=" col-sm-2 control-label" for="TerminationDate">@MyERP.Properties.Resources.TerminationDate</label>
+                                                <label class="col-sm-2 control-label" for="TerminationDate">@MyERP.Properties.Resources.TerminationDate</label>
                                                 <div class="col-sm-4">
-                                                    @Html.EditorFor(model => model.TerminationDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                                    @Html.EditorFor(model => model.TerminationDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required", onchange = "OnTerminationDateChange()" } })
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
                                                 </div>
-                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.LastBatchDate</label>
+
+                                                <label class="control-label col-sm-2">طريقة الحساب</label>
                                                 <div class="col-sm-4">
-                                                    @Html.EditorFor(model => model.LastBatchDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                                    <select id="CalculationMethod" name="CalculationMethod" class="form-control" onchange="OnCalculationMethodChange()">
+                                                        <option value="1" @(Model != null && Model.CalculationMethod == 1 ? "selected" : "")>بتاريخ التصفية</option>
+                                                        <option value="2" @(Model != null && Model.CalculationMethod == 2 ? "selected" : "")>بنهاية العقد</option>
+                                                    </select>
                                                     <div class="invalid-feedback">
                                                         @MyERP.Properties.Resources.Required
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="form-group row SearchResult" style="display:none;">
+                                                <div class="col-sm-12">
+                                                    <div class="alert alert-info">
+                                                        <i class="fa fa-info-circle"></i>
+                                                        <span id="CalculationMethodInfo">سيتم الحساب بناءً على تاريخ التصفية</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group row SearchResult" style="display:none;">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.LastBatchDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.LastBatchDate, new
+                                                    {
+                                                        htmlAttributes = new
+                                                        {
+                                                            @class = "form-control Gregorian",
+                                                            @type = "date",
+                                                            @required = "required"
+                                                        }
+                                                    })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                          
+
 
 
                                             <!-------------- PropertyContractTerminationDetails Table ---------------->
@@ -239,7 +273,7 @@
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchDate.Value.ToString("yyyy-MM-dd")" disabled readonly />
+                                                                        <input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value="@(item.PropertyContractBatch?.BatchDate?.ToString("yyyy-MM-dd") ?? "")" disabled readonly />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="HijryBatchDate control-label control-label">
@@ -248,32 +282,32 @@
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="BatchRentValue control-label control-label">
-                                                                            @(item.Remain==0?0:item.PropertyContractBatch.BatchRentValue + item.PropertyContractBatch.BatchRentValueTaxes)
+                                                                            @(item.Remain==0?0:((item.PropertyContractBatch?.BatchRentValue ?? 0) + (item.PropertyContractBatch?.BatchRentValueTaxes ?? 0)))
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="BatchWaterValue control-label control-label">
-                                                                            @(item.Remain==0?0:item.PropertyContractBatch.BatchWaterValue + item.PropertyContractBatch.BatchWaterValueTaxes)
+                                                                            @(item.Remain==0?0:((item.PropertyContractBatch?.BatchWaterValue ?? 0) + (item.PropertyContractBatch?.BatchWaterValueTaxes ?? 0)))
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="BatchElectricityValue control-label control-label">
-                                                                            @(item.Remain==0?0:item.PropertyContractBatch.BatchElectricityValue + item.PropertyContractBatch.BatchElectricityValueTaxes)
+                                                                            @(item.Remain==0?0:((item.PropertyContractBatch?.BatchElectricityValue ?? 0) + (item.PropertyContractBatch?.BatchElectricityValueTaxes ?? 0)))
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="BatchCommissionValue control-label control-label">
-                                                                            @(item.Remain==0?0:item.PropertyContractBatch.BatchCommissionValue + item.PropertyContractBatch.BatchCommissionValueTaxes)
+                                                                            @(item.Remain==0?0:((item.PropertyContractBatch?.BatchCommissionValue ?? 0) + (item.PropertyContractBatch?.BatchCommissionValueTaxes ?? 0)))
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="BatchServicesValue control-label control-label">
-                                                                            @(item.Remain==0?0:item.PropertyContractBatch.BatchServicesValue + item.PropertyContractBatch.BatchServicesValueTaxes)
+                                                                            @(item.Remain==0?0:((item.PropertyContractBatch?.BatchServicesValue ?? 0) + (item.PropertyContractBatch?.BatchServicesValueTaxes ?? 0)))
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <label class="BatchInsuranceValue control-label control-label">
-                                                                            @(item.Remain==0?0:item.PropertyContractBatch.BatchInsuranceValue + item.PropertyContractBatch.BatchInsuranceValueTaxes)
+                                                                            @(item.Remain==0?0:((item.PropertyContractBatch?.BatchInsuranceValue ?? 0) + (item.PropertyContractBatch?.BatchInsuranceValueTaxes ?? 0)))
                                                                         </label>
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
@@ -291,8 +325,19 @@
                                                                 </tr>
                                                             }
                                                         }
+
                                                     </tbody>
                                                 </table>
+                                            </div>
+                                            <!------------------------------------------------------------------------------------>
+                                            <!------------------ تفاصيل الدفعة الجزئية (Pro-Rata) ------------------>
+                                            <div id="PartialBatchInfoPanel" class="card SearchResult" style="display:none;">
+                                                <div class="card-body">
+                                                    <div class="alert alert-info mb-0" style="font-size:0.9em; line-height:2;">
+                                                        <strong>تفاصيل احتساب الدفعة الجزئية:</strong><br/>
+                                                        <span id="PartialBatchInfoText"></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <!------------------------------------------------------------------------------------>
                                             <!------------------ Increase / Decrease Days ------------------>
@@ -301,31 +346,79 @@
                                                     <h5 class="header-title">
                                                         @MyERP.Properties.Resources.DeficiencyDays
                                                     </h5>
+
                                                     <div class="form-group row">
-                                                        <label class=" col-sm-1 control-label" for="IncreaseDayValue">@MyERP.Properties.Resources.DayValue</label>
+
+                                                        <!-- Day Value -->
+                                                        <label class="col-sm-1 control-label">@MyERP.Properties.Resources.DayValue</label>
                                                         <div class="col-sm-2">
-                                                            @Html.EditorFor(model => model.DecreaseDayValue, new { htmlAttributes = new { @class = "form-control" } })
-                                                            <div class="invalid-feedback">
-                                                                @MyERP.Properties.Resources.Required
-                                                            </div>
+                                                            @Html.EditorFor(model => model.DecreaseDayValue,
+                                                                new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                                                            <div class="invalid-feedback">@MyERP.Properties.Resources.Required</div>
                                                         </div>
-                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.DaysNo</label>
+
+                                                        <!-- Days No -->
+                                                        <label class="col-sm-1 control-label">@MyERP.Properties.Resources.DaysNo</label>
                                                         <div class="col-sm-2">
-                                                            @Html.EditorFor(model => model.DecreaseDaysNo, new { htmlAttributes = new { @type = "text", @class = "form-control" } })
-                                                            <div class="invalid-feedback">
-                                                                @MyERP.Properties.Resources.Required
-                                                            </div>
+                                                            @Html.EditorFor(model => model.DecreaseDaysNo,
+                                                                new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                                                            <div class="invalid-feedback">@MyERP.Properties.Resources.Required</div>
                                                         </div>
-                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.DeficiencyDaysValue</label>
+
+                                                        <!-- Deficiency Amount -->
+                                                        <label class="col-sm-1 control-label">@MyERP.Properties.Resources.DeficiencyDaysValue</label>
                                                         <div class="col-sm-2">
-                                                            @Html.EditorFor(model => model.DecreaseDaysTotalValue, new { htmlAttributes = new { @class = "form-control" } })
-                                                            <div class="invalid-feedback">
-                                                                @MyERP.Properties.Resources.Required
-                                                            </div>
+                                                            @Html.EditorFor(model => model.DecreaseDaysTotalValue,
+                                                                new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                                                            <div class="invalid-feedback">@MyERP.Properties.Resources.Required</div>
                                                         </div>
                                                     </div>
-                                                </div>
+
+
+
+
+                                                    <!-- ================= Extra Fields (Under the first row) ================= -->
+                                                    <!-- ================= Extra Fields (Under the first row) ================= -->
+                                                    <div class="form-group row mt-3">
+
+                                                        <!-- Total Unpaid Amount -->
+                                                        <label class="col-sm-1 control-label">إجمالي الدفعات غير المسددة</label>
+                                                        <div class="col-sm-2">
+                                                            <input type="text"
+                                                                   id="TotalUnpaidAmount"
+                                                                   name="TotalUnpaidAmount"
+                                                                   class="form-control"
+                                                                   readonly="readonly"
+                                                                   value="@(Model != null ? Model.TotalUnpaidAmount : (decimal?)null)" />
+                                                        </div>
+
+                                                        <!-- Renter Balance -->
+                                                        <label class="col-sm-1 control-label">رصيد المستأجر</label>
+                                                        <div class="col-sm-2">
+                                                            <input type="text"
+                                                                   id="RenterBalance"
+                                                                   name="RenterBalance"
+                                                                   class="form-control"
+                                                                   readonly="readonly"
+                                                                   value="@(Model != null ? Model.RenterBalance : (decimal?)null)" />
+                                                        </div>
+
+                                                        <!-- Insurance -->
+                                                        <label class="col-sm-1 control-label">التأمين</label>
+                                                        <div class="col-sm-2">
+                                                            <input type="text"
+                                                                   id="InsuranceAmount"
+                                                                   name="InsuranceAmount"
+                                                                   class="form-control"
+                                                                   readonly="readonly"
+                                                                   value="@(Model != null ? Model.InsuranceAmount : (decimal?)null)" />
+                                                        </div>
+
+                                                    </div>
+
+                                                    
                                             </div>
+
                                             <div class="card SearchResult" style="display:none;">
                                                 <div class="card-body">
                                                     <h5 class="header-title">
@@ -587,7 +680,7 @@
     </div>
 </div>
 <!---------------------------------------- Modal Section ------------------------------------------------->
-<div class="modal fade" id="SearchModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" >
+<div class="modal fade" id="SearchModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:700px;" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -602,21 +695,21 @@
                     <div class="form-group row">
                         <div class="col-sm-6">
                             <input id="SearchText" class="form-control" type="text" placeholder="@MyERP.Properties.Resources.Search" />
-                        </div> 
+                        </div>
                         <div class="col-sm-6">
                             <button type="button" onclick="GetPropertyContractTerminationDetails()" class="btn btn-primary"><i class="fa fa-search"></i></button>
                         </div>
                     </div>
-                    <div class="table-responsive"  style="overflow-y:scroll">
+                    <div class="table-responsive" style="overflow-y:scroll">
                         <table class="table table-centered mb-0">
                             <thead>
                                 <tr>
                                     <td>
                                         @MyERP.Properties.Resources.Renter
-                                    </td> 
+                                    </td>
                                     <td>
                                         @MyERP.Properties.Resources.Mobile
-                                    </td> 
+                                    </td>
                                     <td>
                                         @MyERP.Properties.Resources.ContractNo
                                     </td>
@@ -633,7 +726,6 @@
                                 </tr>
                             </thead>
                             <tbody id="ShowResultDetails">
-                              
                             </tbody>
                         </table>
                     </div>
@@ -657,7 +749,7 @@ var PropertyComponentDetailOption = [];
     var _searchXhr = null;
     var _searchTimer = null;
 
-
+    var selectedContractId = null;
 //*********************************************************//
 //--------------- Ready Function -------------------//
     @*$(document).ready(function () {
@@ -714,6 +806,10 @@ $(document).ready(function () {
     //     $('#Hijry' + $(this).attr('id') + '').val(Hijry);
     // });
 
+
+
+        // ... باقي الكود ...
+
     $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
         $("input[type|='datetime-local']").not('#FromDate,#ToDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
     });
@@ -726,7 +822,7 @@ $(document).ready(function () {
         $('#DocumentNumbers').val(code.replaceAll("-", ""))
         $("#DepartmentId").prop('disabled', true);
         $("#VoucherDate").prop('disabled', true);
-
+        selectedContractId = parseInt($('#ContractId').val()) || null;
         $('.BatchDate').each(function () {
             var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
             $(this).closest('tr').find('.HijryBatchDate').text(Hijry);
@@ -737,6 +833,9 @@ $(document).ready(function () {
         $('#selectedMergedUnits').val(allValues).trigger('change');
         // Disable the select and update Select2 UI
         $('#selectedMergedUnits').prop('disabled', true).trigger('change.select2');
+
+        // ✅ جلب بيانات الدفعة الجزئية للعرض التوضيحي فقط (بدون إعادة حساب باقي الحقول)
+        UpdatePartialBatchInfo();
 
     } else {
         setDocNum();
@@ -795,9 +894,7 @@ $(document).ready(function () {
     $(document).on('change', '.Price', function () {
         CalculateDamageTotals();
     });
-    $(document).on('change', '#TerminationDate', function () {
-        CalculateDeficiencyAndExtraDaysTotals();
-    });
+    // تمت إزالة handler مكرر لـ #TerminationDate - يُعالج الآن عبر onchange="OnTerminationDateChange()" فقط
     //*********************************************************//
      //--------------- Other Functions -------------------//
     function setDocNum() {
@@ -859,14 +956,22 @@ $(document).ready(function () {
                 else
                     return '0' + val;
     }
+
+
     function AddToDetails(contractId) {
         $('#preloader, #status').fadeIn();
         $('#PropertyContractTerminationDetails').empty();
+
+        selectedContractId = contractId;
+        $('#SelectedContractId').val(contractId);
+
         var contract = ContractDetails.filter(function (i) { return i.ContractId == contractId })[0];
         if (contract != null) {
             console.log(contract);
             $('#SearchModal').modal('hide');
             $('.SearchResult').show();
+
+            // ملء البيانات الأساسية
             $('#ContractId').val(contract.ContractId);
             contract.ContractEndDate = contract.ContractEndDate != null ? convertToJavaScriptDate(contract.ContractEndDate) : '';
             contract.ContractStartDate = contract.ContractStartDate != null ? convertToJavaScriptDate(contract.ContractStartDate) : '';
@@ -882,56 +987,370 @@ $(document).ready(function () {
             $('#UnitCode').val(contract.UnitCode);
             $('#UnitTypeId').val(contract.UnitTypeId);
             $('#UnitType').val(contract.UnitType);
-            // Fill merged units select as multi-select and select all
+
+            // ✅ ملء خانات أيام الزيادة/النقص
+            var incDays = contract.IncreaseDays || 0;
+            var decDays = contract.DecreaseDays || 0;
+
+            $('#IncreaseDaysNo').val(incDays);
+            $('#IncreaseDayValue').val(incDays > 0 ? (contract.IncreaseDayValue || contract.DailyRate || 0).toFixed(2) : '0.00');
+            $('#IncreaseDaysTotalValue').val(incDays > 0 ? (contract.IncreaseDaysTotalValue || contract.IncreaseAmount || 0).toFixed(2) : '0.00');
+
+            $('#DecreaseDaysNo').val(decDays > 0 ? decDays : '0');
+            $('#DecreaseDayValue').val(decDays > 0 ? (contract.DecreaseDayValue || contract.DailyRate || 0).toFixed(2) : '0.00');
+            $('#DecreaseDaysTotalValue').val(decDays > 0 ? (contract.DecreaseDaysTotalValue || contract.DecreaseAmount || 0).toFixed(2) : '0.00');
+
+            // ✅ ملء الحقول الجديدة
+            $('#TotalUnpaidAmount').val((contract.TotalUnpaidAmount || 0).toFixed(2));
+            $('#InsuranceAmount').val((contract.InsuranceAmount || 0).toFixed(2));
+            $('#RenterBalance').val((contract.RenterBalance || 0).toFixed(2));
+
+            // ✅ عرض تفاصيل الدفعة الجزئية (للمستخدم)
+            if (contract.PartialBatchDaysUsed > 0) {
+                var pDays    = contract.PartialBatchDaysUsed;
+                var pPeriod  = contract.PartialBatchPeriodDays;
+                var pRate    = (contract.PartialBatchDailyRate || 0).toFixed(2);
+                var pOrig    = (contract.PartialBatchOriginalTotal || 0).toFixed(2);
+                var pAmount  = (pDays * (contract.PartialBatchDailyRate || 0)).toFixed(2);
+
+                var infoHtml =
+                    'مدة الإقامة في آخر دفعة: <strong>' + pDays + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; من أصل: <strong>' + pPeriod + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; قيمة اليوم: <strong>' + pRate + '</strong>' +
+                    '&nbsp;|&nbsp; قيمة الدفعة الأصلية: <strong>' + pOrig + '</strong>' +
+                    '&nbsp;|&nbsp; المبلغ المستحق (نسبي): <strong>' + pAmount + '</strong>';
+
+                $('#PartialBatchInfoText').html(infoHtml);
+                $('#PartialBatchInfoPanel').show();
+            } else {
+                $('#PartialBatchInfoPanel').hide();
+            }
+
+            // تاريخ آخر دفعة
+            if (contract.LastBatchDueDate) {
+                var lastBatchDate = convertToJavaScriptDate(contract.LastBatchDueDate);
+                $('#LastBatchDate').val(lastBatchDate);
+            }
+
+            // ملء الوحدات المدمجة
             var mergedUnitsSelect = $('#selectedMergedUnits');
-            mergedUnitsSelect.empty(); // Clear previous options
-            contract.MergedUnits.forEach(function (item) {
-                mergedUnitsSelect.append(
-                    $('<option>', {
-                        value: item.PropertyUnitNo,
-                        text: item.PropertyUnitNo,
-                        selected: true
-                    })
-                );
-            });
+            mergedUnitsSelect.empty();
+            if (contract.MergedUnits && contract.MergedUnits.length > 0) {
+                contract.MergedUnits.forEach(function (item) {
+                    mergedUnitsSelect.append(
+                        $('<option>', {
+                            value: item.PropertyUnitNo,
+                            text: item.PropertyUnitNo,
+                            selected: true
+                        })
+                    );
+                });
+            }
             mergedUnitsSelect.prop('disabled', true).trigger('change.select2');
 
-            for (var i = 0; i < contract.Details.length; i++) {
-                contract.Details[i].BatchDate = contract.Details[i].BatchDate != null ? convertToJavaScriptDate(contract.Details[i].BatchDate) : "";
-                var HijryBatchDate = new Intl.DateTimeFormat('ar-sa').format(new Date(contract.Details[i].BatchDate)).toString();
-                contract.Details[i].UnitNo = contract.Details[i].UnitNo != null ? contract.Details[i].UnitNo : "";
-                let tr = '<tr><td class="tabledit-edit-mode"><input hidden class="PropertyContractBatchId" value="' +
-                    contract.Details[i].PropertyContractBatchId + '"/><input hidden class="PropertyContractId" value="' +
-                    contract.Details[i].PropertyContractId + '"/><label class="DetailSequenceNo control-label control-label">' +
-                    contract.Details[i].BatchNo + '</label></td><td class="tabledit-edit-mode"><input type = "date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" value = "' +
-                    contract.Details[i].BatchDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><label class="HijryBatchDate control-label control-label">' +
-                    HijryBatchDate + '</label></td><td class="tabledit-edit-mode"><label class="BatchRentValue control-label control-label">' +
-                    contract.Details[i].BatchRentValue + '</label></td><td class="tabledit-edit-mode"><label class="BatchWaterValue control-label control-label">' +
-                    contract.Details[i].BatchWaterValue + '</label></td><td class="tabledit-edit-mode"><label class="BatchElectricityValue control-label control-label">' +
-                    contract.Details[i].BatchElectricityValue + '</label></td><td class="tabledit-edit-mode"><label class="BatchCommissionValue control-label control-label">' +
-                    contract.Details[i].BatchCommissionValue + ' </label></td><td class="tabledit-edit-mode"><label class="BatchServicesValue control-label control-label">' +
-                    contract.Details[i].BatchServicesValue + '</label></td><td class="tabledit-edit-mode"><label class="BatchInsuranceValue control-label control-label">' +
-                    contract.Details[i].BatchInsuranceValue + '</label></td><td class="tabledit-edit-mode"><label class="Remain control-label control-label">' +
-                    contract.Details[i].Remain + '</label></td><td class="tabledit-edit-mode"><label class="Remain control-label control-label">' +
-                    contract.Details[i].Remain + '</label></td></tr>';
-                $('#PropertyContractTerminationDetails').append(tr);
+            // ✅ ملء جدول الدفعات (بدون الدفعة الإضافية)
+            if (contract.Details && contract.Details.length > 0) {
+                for (var i = 0; i < contract.Details.length; i++) {
+                    var detail = contract.Details[i];
+
+                    // ⚠️ نتجاهل الدفعات الجزئية (IsPartialBatch)
+                    // لأن أيام الزيادة/النقص هتكون في الهيدر
+                    if (detail.IsPartialBatch === true) {
+                        console.log('تم تجاهل الدفعة الجزئية رقم: ' + detail.BatchNo);
+                        continue; // نتخطى هذه الدفعة
+                    }
+
+                    detail.BatchDate = detail.BatchDate != null ? convertToJavaScriptDate(detail.BatchDate) : "";
+                    var HijryBatchDate = new Intl.DateTimeFormat('ar-sa').format(new Date(detail.BatchDate)).toString();
+                    detail.UnitNo = detail.UnitNo != null ? detail.UnitNo : "";
+
+                    let tr = '<tr>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<input hidden class="PropertyContractBatchId" value="' + (detail.PropertyContractBatchId || 0) + '"/>' +
+                        '<input hidden class="PropertyContractId" value="' + (detail.PropertyContractId || 0) + '"/>' +
+                        '<input hidden class="OriginalTotal" value="' + (detail.OriginalTotal || 0) + '"/>' +
+                        '<label class="DetailSequenceNo control-label">' + (detail.BatchNo || '') + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<input type="date" class="BatchDate Gregorian form-control tabledit-input form-control-sm" ' +
+                        'value="' + detail.BatchDate + '" disabled readonly />' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="HijryBatchDate control-label">' + HijryBatchDate + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="BatchRentValue control-label">' + (detail.BatchRentValue || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="BatchWaterValue control-label">' + (detail.BatchWaterValue || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="BatchElectricityValue control-label">' + (detail.BatchElectricityValue || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="BatchCommissionValue control-label">' + (detail.BatchCommissionValue || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="BatchServicesValue control-label">' + (detail.BatchServicesValue || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="BatchInsuranceValue control-label">' + (detail.BatchInsuranceValue || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="Remain control-label">' + (detail.Remain || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '<td class="tabledit-edit-mode">' +
+                        '<label class="TotalRemain control-label">' + (detail.Remain || 0).toFixed(2) + '</label>' +
+                        '</td>' +
+                        '</tr>';
+
+                    $('#PropertyContractTerminationDetails').append(tr);
+                }
             }
         }
         else {
             $('.SearchResult').hide();
-            $('.SearchResult').find("input")./*not('type=date').*/val('');
+            $('.SearchResult').find("input").val('');
         }
-        CalculateDeficiencyAndExtraDaysTotals();
-        $('#preloader, #status').fadeOut();
 
+        $('#preloader, #status').fadeOut();
     }
+
+
+
+
+    function RefreshContractData() {
+        // تأكد من وجود عقد مختار
+        if (!selectedContractId) {
+            return Promise.reject('لا يوجد عقد مختار');
+        }
+
+        // ✅ الإصلاح: نستخدم رقم العقد المحفوظ بدل searchText الفاضي
+        var searchText = $('#ContractNo').val() || $('#searchText').val() || '';
+        
+        // لو لسه فاضي، نجرب نجيب من ContractDetails
+        if (!searchText && ContractDetails && ContractDetails.length > 0) {
+            var contract = ContractDetails.find(function(c) { return c.ContractId == selectedContractId; });
+            if (contract) {
+                searchText = contract.ContractNo || contract.Renter || '';
+            }
+        }
+        
+        // ✅ جيب ID التصفية الحالية (لو موجودة) عشان نستثنيها من الفلتر
+        var currentTerminationId = parseInt($('#Id').val()) || 0;
+        
+        console.log('RefreshContractData - Using searchText:', searchText);
+        console.log('RefreshContractData - currentTerminationId:', currentTerminationId);
+        
+        // ✅ الإصلاح: تنسيق التاريخ بشكل صحيح (yyyy-MM-dd)
+        var terminationDateInput = $('#TerminationDate').val();
+        var terminationDate = '';
+        
+        if (terminationDateInput) {
+            // تحويل التاريخ للصيغة الصحيحة
+            var dateObj = new Date(terminationDateInput);
+            if (!isNaN(dateObj.getTime())) {
+                var year = dateObj.getFullYear();
+                var month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                var day = String(dateObj.getDate()).padStart(2, '0');
+                terminationDate = year + '-' + month + '-' + day;
+            }
+        }
+        
+        var calculationMethod = $('#CalculationMethod').val();
+        var useContractEndDate = (calculationMethod === '2');
+
+        console.log('RefreshContractData - searchText:', searchText);
+        console.log('RefreshContractData - terminationDate (formatted):', terminationDate);
+        console.log('RefreshContractData - useContractEndDate:', useContractEndDate);
+
+        // تحديث الـ loader
+        $('#preloader, #status').fadeIn();
+
+        return $.ajax({
+            url: '/PropertyContractTermination/GetPropertyContractTerminationDetails',
+            type: 'GET',
+            data: {
+                searchText: searchText,
+                terminationDate: terminationDate,
+                useContractEndDate: useContractEndDate,
+                excludeTerminationId: currentTerminationId  // ✅ استثناء التصفية الحالية
+            },
+            error: function (xhr, status, error) {
+                console.error('خطأ في AJAX:', error);
+                console.error('Response:', xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ',
+                    text: 'حدث خطأ أثناء تحديث البيانات: ' + error,
+                    timer: 3000
+                });
+                return Promise.reject(error);
+            }
+        }).then(function (data) {
+            console.log('RefreshContractData - Response:', data);
+            
+            if (data && data.length > 0) {
+                ContractDetails = data;
+                
+                // ✅ حفظ البيانات من الـ Response
+                
+                var contract = data.find(function (c) { return c.ContractId == selectedContractId; });
+                if (contract) {
+                    window.loadedRenterBalance = contract.RenterBalance || 0;
+
+                    // ✅ نحفظ إن القيم جات من الـ Controller
+                    window.daysCalculatedByController = true;
+
+                    // تحديث حقول الأيام من البيانات المرجعة
+                    if (contract.IncreaseDays > 0) {
+                        $('#IncreaseDaysNo').val(contract.IncreaseDays);
+                        $('#IncreaseDayValue').val((contract.IncreaseDayValue || 0).toFixed(2));
+                        $('#IncreaseDaysTotalValue').val((contract.IncreaseDaysTotalValue || 0).toFixed(2));
+                        $('#DecreaseDaysNo').val(0);
+                        $('#DecreaseDayValue').val('0.00');
+                        $('#DecreaseDaysTotalValue').val('0.00');
+                    } else if (contract.DecreaseDays > 0) {
+                        $('#DecreaseDaysNo').val(contract.DecreaseDays);
+                        $('#DecreaseDayValue').val((contract.DecreaseDayValue || 0).toFixed(2));
+                        $('#DecreaseDaysTotalValue').val((contract.DecreaseDaysTotalValue || 0).toFixed(2));
+                        $('#IncreaseDaysNo').val(0);
+                        $('#IncreaseDayValue').val('0.00');
+                        $('#IncreaseDaysTotalValue').val('0.00');
+                    } else {
+                        // لا زيادة ولا نقص
+                        $('#IncreaseDaysNo').val(0);
+                        $('#IncreaseDayValue').val('0.00');
+                        $('#IncreaseDaysTotalValue').val('0.00');
+                        $('#DecreaseDaysNo').val(0);
+                        $('#DecreaseDayValue').val('0.00');
+                        $('#DecreaseDaysTotalValue').val('0.00');
+                    }
+                }
+                
+                AddToDetails(selectedContractId);
+                console.log('تم تحديث بيانات العقد بنجاح');
+                return data;
+            } else {
+                console.warn('لم يتم إرجاع بيانات - سيتم الحساب من البيانات الموجودة');
+                // ✅ لا نعرض رسالة خطأ مزعجة - نحسب من البيانات الموجودة
+                return Promise.resolve([]);
+            }
+        }).always(function () {
+            $('#preloader, #status').fadeOut();
+        });
+    }
+
+
+    // ========== 6. إضافة دالتي OnCalculationMethodChange و OnTerminationDateChange ===========
+    // أضف هاتين الدالتين:
+
+
+    // ✅ جلب بيانات الدفعة الجزئية فقط (للعرض التوضيحي في Edit mode)
+    function UpdatePartialBatchInfo() {
+        if (!selectedContractId) { $('#PartialBatchInfoPanel').hide(); return; }
+        var searchText = $('#ContractNo').val() || '';
+        if (!searchText) { $('#PartialBatchInfoPanel').hide(); return; }
+        var terminationDateInput = $('#TerminationDate').val();
+        if (!terminationDateInput) { $('#PartialBatchInfoPanel').hide(); return; }
+        var dateObj = new Date(terminationDateInput);
+        if (isNaN(dateObj.getTime())) { $('#PartialBatchInfoPanel').hide(); return; }
+        var terminationDate = dateObj.getFullYear() + '-' +
+            String(dateObj.getMonth() + 1).padStart(2, '0') + '-' +
+            String(dateObj.getDate()).padStart(2, '0');
+        var useContractEndDate = ($('#CalculationMethod').val() === '2');
+        var currentTerminationId = parseInt($('#Id').val()) || 0;
+
+        $.ajax({
+            url: '/PropertyContractTermination/GetPropertyContractTerminationDetails',
+            type: 'GET',
+            data: {
+                searchText: searchText,
+                terminationDate: terminationDate,
+                useContractEndDate: useContractEndDate,
+                excludeTerminationId: currentTerminationId
+            },
+            success: function (data) {
+                if (!data || data.length === 0) { $('#PartialBatchInfoPanel').hide(); return; }
+                var contract = data.find(function (c) { return c.ContractId == selectedContractId; });
+                if (!contract || !(contract.PartialBatchDaysUsed > 0)) {
+                    $('#PartialBatchInfoPanel').hide();
+                    return;
+                }
+                var pDays   = contract.PartialBatchDaysUsed;
+                var pPeriod = contract.PartialBatchPeriodDays;
+                var pRate   = (contract.PartialBatchDailyRate || 0).toFixed(2);
+                var pOrig   = (contract.PartialBatchOriginalTotal || 0).toFixed(2);
+                var pAmount = (pDays * (contract.PartialBatchDailyRate || 0)).toFixed(2);
+                var infoHtml =
+                    'مدة الإقامة في آخر دفعة: <strong>' + pDays + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; من أصل: <strong>' + pPeriod + ' يوم</strong>' +
+                    '&nbsp;|&nbsp; قيمة اليوم: <strong>' + pRate + '</strong>' +
+                    '&nbsp;|&nbsp; قيمة الدفعة الأصلية: <strong>' + pOrig + '</strong>' +
+                    '&nbsp;|&nbsp; المبلغ المستحق (نسبي): <strong>' + pAmount + '</strong>';
+                $('#PartialBatchInfoText').html(infoHtml);
+                $('#PartialBatchInfoPanel').show();
+            },
+            error: function () { $('#PartialBatchInfoPanel').hide(); }
+        });
+    }
+
+    function OnCalculationMethodChange() {
+        var method = $('#CalculationMethod').val();
+
+        // تحديث النص التوضيحي
+        if (method == '1') {
+            $('#CalculationMethodInfo').text('سيتم الحساب بناءً على تاريخ التصفية');
+        } else if (method == '2') {
+            $('#CalculationMethodInfo').text('سيتم الحساب بناءً على نهاية العقد');
+        }
+
+        // إعادة تحميل البيانات إذا كان هناك عقد مختار
+        if (selectedContractId) {
+            RefreshContractData()
+                .then(function () {
+                    setTimeout(function () {
+                        CalculateDeficiencyAndExtraDaysTotals();
+                    }, 150);
+                })
+                .catch(function (error) {
+                    console.warn('خطأ في تحديث البيانات:', error);
+                    // ✅ حتى لو فيه خطأ، نحسب من البيانات الموجودة
+                    CalculateDeficiencyAndExtraDaysTotals();
+                });
+        }
+    }
+
+    function OnTerminationDateChange() {
+        console.log('تم تغيير تاريخ التصفية إلى: ' + $('#TerminationDate').val());
+
+        if (selectedContractId) {
+            // استنى لحد ما البيانات تتحدث، بعدين احسب
+            RefreshContractData()
+                .then(function () {
+                    // دي timeout صغير عشان نتأكد إن الجريد اتملا
+                    setTimeout(function () {
+                        CalculateDeficiencyAndExtraDaysTotals();
+                    }, 150);
+                })
+                .catch(function (error) {
+                    console.warn('خطأ في تحديث البيانات:', error);
+                    // ✅ حتى لو فيه خطأ، نحسب من البيانات الموجودة
+                    CalculateDeficiencyAndExtraDaysTotals();
+                });
+        } else {
+            CalculateDeficiencyAndExtraDaysTotals();
+        }
+    }
+
+
 
    function GetPropertyContractTerminationDetails() {
     var q = $('#SearchText').val().trim();
 
     // شرط بسيط لتقليل الضغط
     if (q.length < 2) {
-        $('#ShowResultDetails').html('<tr><td colspan="6" class="text-muted">اكتب حرفين على الأقل…</td></tr>');
+        $('#ShowResultDetails').html('<tr><td colspan="7" class="text-muted">اكتب حرفين على الأقل…</td></tr>');
         return;
     }
 
@@ -941,24 +1360,32 @@ $(document).ready(function () {
     }
 
     // شكل تحميل مبدئي
-    $('#ShowResultDetails').html('<tr><td colspan="6">...جارِ التحميل</td></tr>');
+    $('#ShowResultDetails').html('<tr><td colspan="7">...جارِ التحميل</td></tr>');
+
+    // جلب البيانات مع الـ parameters
+    var terminationDate = $('#TerminationDate').val();
+    var calculationMethod = $('#CalculationMethod').val();
+    var useContractEndDate = (calculationMethod === 'ContractEndDate');
 
     _searchXhr = $.ajax({
         url: '/PropertyContractTermination/GetPropertyContractTerminationDetails',
         type: 'GET',
         cache: false,
-        // خليك على نفس اسم البارامتر في الكنترولر (searchText)
-        data: { searchText: q }
+        data: {
+            searchText: q,
+            terminationDate: terminationDate,
+            useContractEndDate: useContractEndDate
+        }
     })
     .done(function (r) {
         var rows = Array.isArray(r) ? r : [];
         if (!rows.length) {
-            $('#ShowResultDetails').html('<tr><td colspan="6" class="text-muted">لا توجد نتائج</td></tr>');
+            $('#ShowResultDetails').html('<tr><td colspan="7" class="text-muted">لا توجد نتائج</td></tr>');
             return;
         }
 
         $('#ShowResultDetails').empty();
-        ContractDetails = rows; // لو باقي الصفحة بيعتمد عليها
+        ContractDetails = rows; // حفظ البيانات للاستخدام لاحقاً
 
         for (var i = 0; i < rows.length; i++) {
             var x = rows[i];
@@ -969,26 +1396,22 @@ $(document).ready(function () {
             var unitType     = x.UnitType || '';
             var unitCode     = x.UnitCode || '';
 
-            // نفس الـ markup اللي كان موجود عندك (labels + زر الإضافة)
             var tr =
                 '<tr>' +
-                    '<td class="tabledit-edit-mode"><label class="PopUpRenter control-label control-label">' + renter     + '</label></td>' +
-                    '<td class="tabledit-edit-mode"><label class="PopUpRenterMobile control-label control-label">' + mobile     + '</label></td>' +
-                    '<td class="tabledit-edit-mode"><label class="PopUpContractNo control-label control-label">' + contractNo + '</label></td>' +
-                    '<td class="tabledit-edit-mode"><label class="PopUpProperty control-label control-label">' + property   + '</label></td>' +
-                    '<td class="tabledit-edit-mode"><label class="PopUpPropertyUnitType control-label control-label">' + unitType   + '</label></td>' +
-                    '<td class="tabledit-edit-mode"><label class="PopUpUnitNo control-label control-label">' + unitCode   + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpRenter control-label">' + renter     + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpRenterMobile control-label">' + mobile     + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpContractNo control-label">' + contractNo + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpProperty control-label">' + property   + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpPropertyUnitType control-label">' + unitType   + '</label></td>' +
+                    '<td class="tabledit-edit-mode"><label class="PopUpUnitNo control-label">' + unitCode   + '</label></td>' +
                     '<td class="tabledit-edit-mode"><button class="btn btn-primary" onclick="AddToDetails(' + x.ContractId + ')">@MyERP.Properties.Resources.Add</button></td>' +
                 '</tr>';
-
-            // لو حابب تظهر فقط اللي ليه UnitCode، أضف الشرط هنا:
-            // if (unitCode) { $('#ShowResultDetails').append(tr); }
 
             $('#ShowResultDetails').append(tr);
         }
     })
     .fail(function () {
-        $('#ShowResultDetails').html('<tr><td colspan="6" class="text-danger">حدث خطأ في البحث</td></tr>');
+        $('#ShowResultDetails').html('<tr><td colspan="7" class="text-danger">حدث خطأ في البحث</td></tr>');
     });
 }
 
@@ -1083,7 +1506,242 @@ $(document).ready(function () {
         $('#TotalDamages').val(sum);
     }
 
+
+
+
+
     function CalculateDeficiencyAndExtraDaysTotals() {
+
+        // 0) إجمالى المتبقى والتأمين من الصفوف الظاهرة فقط
+        // =========================================
+        var totalRemain = 0;
+        var totalInsurance = 0;
+
+        $('#PropertyContractTerminationDetails tr:visible').each(function () {
+            var tr = $(this);
+
+            var remainText = tr.find('label.Remain').text().trim();
+            var remain = parseFloat(remainText || 0);
+            if (!isNaN(remain)) totalRemain += remain;
+
+            var insuranceText = tr.find('label.BatchInsuranceValue').text().trim();
+            var insurance = parseFloat(insuranceText || 0);
+            if (!isNaN(insurance)) totalInsurance += insurance;
+        });
+
+        $('#TotalUnpaidAmount').val(totalRemain.toFixed(2));
+        $('#InsuranceAmount').val(totalInsurance.toFixed(2));
+
+        var renterBalance = parseFloat($('#RenterBalance').val()) || 0;
+        if (typeof window.loadedRenterBalance !== 'undefined') {
+            renterBalance = window.loadedRenterBalance;
+        }
+        $('#RenterBalance').val(renterBalance.toFixed(2));
+
+        // =========================================
+        // ✅ لو القيم جات من الـ Controller، منحسبش تاني
+        // =========================================
+        if (window.daysCalculatedByController === true) {
+            console.log('=== القيم محسوبة من الـ Controller - لن يتم إعادة الحساب ===');
+            window.daysCalculatedByController = false;
+            calculateTotals();
+            return;
+        }
+
+        // =========================================
+        // 1) لو مفيش تاريخ تصفية → صفّر الأيام وارجع
+        // =========================================
+        var termStr = $('#TerminationDate').val();
+        if (!termStr) {
+            $('#IncreaseDaysNo').val(0);
+            $('#IncreaseDaysTotalValue').val(0);
+            $('#DecreaseDaysNo').val(0);
+            $('#DecreaseDaysTotalValue').val(0);
+            return;
+        }
+
+        var terminationDate = new Date(termStr);
+        var ONE_DAY = 1000 * 60 * 60 * 24;
+
+        // =========================================
+        // 2) نجمع كل الدفعات الظاهرة في مصفوفة
+        // =========================================
+        var visibleBatches = [];
+
+        $('#PropertyContractTerminationDetails tr:visible').each(function () {
+            var tr = $(this);
+            var batchDateStr = tr.find('.BatchDate').val();
+
+            if (batchDateStr) {
+                var remainText = tr.find('label.Remain').text().trim();
+                var remain = parseFloat(remainText || 0);
+
+                // ✅ حساب المجموع بدون السعي (BatchCommissionValue)
+                var batchRentValue = parseFloat(tr.find('label.BatchRentValue').text()) || 0;
+                var batchWaterValue = parseFloat(tr.find('label.BatchWaterValue').text()) || 0;
+                var batchElectricityValue = parseFloat(tr.find('label.BatchElectricityValue').text()) || 0;
+                var batchServicesValue = parseFloat(tr.find('label.BatchServicesValue').text()) || 0;
+                var batchInsuranceValue = parseFloat(tr.find('label.BatchInsuranceValue').text()) || 0;
+                // لا نضيف BatchCommissionValue (السعي)
+
+                var originalTotal = batchRentValue + batchWaterValue + batchElectricityValue
+                                  + batchServicesValue + batchInsuranceValue;
+
+                // إذا كان المجموع = 0، نستخدم القيمة من الحقل المخفي أو BatchTotal
+                if (originalTotal === 0) {
+                    originalTotal = parseFloat(tr.find('.OriginalTotal').val()) ||
+                                  parseFloat(tr.find('label.BatchTotal').text()) || 0;
+                }
+
+                visibleBatches.push({
+                    date: new Date(batchDateStr),
+                    remain: remain,
+                    originalTotal: originalTotal
+                });
+            }
+        });
+
+        visibleBatches.sort(function (a, b) {
+            return a.date - b.date;
+        });
+
+        if (visibleBatches.length === 0) {
+            $('#IncreaseDaysNo').val(0);
+            $('#IncreaseDaysTotalValue').val(0);
+            $('#DecreaseDaysNo').val(0);
+            $('#DecreaseDaysTotalValue').val(0);
+            return;
+        }
+
+        // =========================================
+        // 3) ✅ نجيب آخر دفعة مسددة (المتبقي = 0)
+        // =========================================
+        var lastPaidBatch = null;
+        var lastPaidBatchIndex = -1;
+
+        for (var i = visibleBatches.length - 1; i >= 0; i--) {
+            if (visibleBatches[i].remain === 0) {
+                lastPaidBatch = visibleBatches[i];
+                lastPaidBatchIndex = i;
+                break;
+            }
+        }
+
+        if (!lastPaidBatch) {
+            lastPaidBatch = visibleBatches[0];
+            lastPaidBatchIndex = 0;
+        }
+
+        // =========================================
+        // 4) ✅ حساب تاريخ نهاية آخر دفعة مسددة + فترة الدفعة
+        // =========================================
+        var lastPaidBatchEndDate;
+        var batchPeriodDays = 30; // قيمة افتراضية
+
+        if (lastPaidBatchIndex < visibleBatches.length - 1) {
+            // لو فيه دفعة بعدها
+            lastPaidBatchEndDate = visibleBatches[lastPaidBatchIndex + 1].date;
+
+            // ✅ حساب فترة الدفعة من الفرق
+            batchPeriodDays = Math.round((lastPaidBatchEndDate - lastPaidBatch.date) / ONE_DAY);
+        } else {
+            // لو هي آخر دفعة
+            if (visibleBatches.length >= 2) {
+                // نحسب الفترة من الفرق بين أول دفعتين
+                batchPeriodDays = Math.round((visibleBatches[1].date - visibleBatches[0].date) / ONE_DAY);
+            } else {
+                // لو دفعة واحدة بس، نحاول من تاريخ العقد
+                var contractStartStr = $('#ContractStartDate').val();
+                var contractEndStr = $('#ContractEndDate').val();
+
+                if (contractStartStr && contractEndStr) {
+                    var contractStart = new Date(contractStartStr);
+                    var contractEnd = new Date(contractEndStr);
+                    var contractDays = Math.round((contractEnd - contractStart) / ONE_DAY);
+
+                    // نحاول نحدد عدد الدفعات من قيمة الإيجار
+                    // لو الإيجار السنوي مثلاً 54000 والدفعة 13500، يبقى 4 دفعات
+                    // لكن كـ fallback نفترض 4 دفعات
+                    batchPeriodDays = Math.round(contractDays / 4);
+                } else {
+                    batchPeriodDays = 90; // افتراضي 3 شهور
+                }
+            }
+
+            lastPaidBatchEndDate = new Date(lastPaidBatch.date);
+            lastPaidBatchEndDate.setDate(lastPaidBatchEndDate.getDate() + batchPeriodDays);
+        }
+
+        // التأكد إن فترة الدفعة منطقية
+        if (batchPeriodDays <= 0) batchPeriodDays = 30;
+        if (batchPeriodDays > 366) batchPeriodDays = 365;
+
+        // التأكد إن تاريخ النهاية مش بعد تاريخ نهاية العقد
+        var contractEndStr = $('#ContractEndDate').val();
+        if (contractEndStr) {
+            var contractEnd = new Date(contractEndStr);
+            if (lastPaidBatchEndDate > contractEnd) {
+                lastPaidBatchEndDate = contractEnd;
+            }
+        }
+
+        // =========================================
+        // 5) ✅ حساب سعر اليوم بناءً على فترة الدفعة الفعلية
+        // =========================================
+        var dailyRate = lastPaidBatch.originalTotal / batchPeriodDays;
+
+        // ✅ الفرق بين تاريخ التصفية وتاريخ نهاية آخر دفعة مسددة
+        var daysDiff = Math.round((terminationDate - lastPaidBatchEndDate) / ONE_DAY);
+
+        console.log('=== حساب أيام الزيادة/النقص ===');
+        console.log('آخر دفعة مسددة (بداية):', lastPaidBatch.date.toDateString());
+        console.log('آخر دفعة مسددة (نهاية):', lastPaidBatchEndDate.toDateString());
+        console.log('فترة الدفعة (أيام):', batchPeriodDays);
+        console.log('قيمة الدفعة:', lastPaidBatch.originalTotal);
+        console.log('سعر اليوم:', dailyRate.toFixed(2));
+        console.log('تاريخ التصفية:', terminationDate.toDateString());
+        console.log('الفرق بالأيام:', daysDiff);
+
+        // =========================================
+        // 6) ✅ إما أيام زيادة أو أيام نقص - مش الاتنين!
+        // =========================================
+        if (daysDiff > 0) {
+            $('#IncreaseDaysNo').val(daysDiff);
+            $('#IncreaseDayValue').val(dailyRate.toFixed(2));
+            $('#IncreaseDaysTotalValue').val((daysDiff * dailyRate).toFixed(2));
+
+            $('#DecreaseDaysNo').val(0);
+            $('#DecreaseDayValue').val('0.00');
+            $('#DecreaseDaysTotalValue').val('0.00');
+
+        } else if (daysDiff < 0) {
+            var defDays = Math.abs(daysDiff);
+
+            $('#DecreaseDaysNo').val(defDays);
+            $('#DecreaseDayValue').val(dailyRate.toFixed(2));
+            $('#DecreaseDaysTotalValue').val((defDays * dailyRate).toFixed(2));
+
+            $('#IncreaseDaysNo').val(0);
+            $('#IncreaseDayValue').val('0.00');
+            $('#IncreaseDaysTotalValue').val('0.00');
+
+        } else {
+            $('#IncreaseDaysNo').val(0);
+            $('#IncreaseDayValue').val('0.00');
+            $('#IncreaseDaysTotalValue').val('0.00');
+            $('#DecreaseDaysNo').val(0);
+            $('#DecreaseDayValue').val('0.00');
+            $('#DecreaseDaysTotalValue').val('0.00');
+        }
+
+        calculateTotals();
+    }
+
+
+
+
+
+    function CalculateDeficiencyAndExtraDaysTotalsOld() {
         var TerminationDate = new Date( $('#TerminationDate').val());
         var ContractEndDate = new Date($('#ContractEndDate').val());
         var ContractStartDate = new Date($('#ContractStartDate').val());
@@ -1146,53 +1804,60 @@ $(document).ready(function () {
                 confirmButtonColor: '#3085d6'
             });
         }
-        var PropertyContractTerminationDetails = [];
-        if (valid) {
-            $('#PropertyContractTerminationDetails tr').each(function () {
-                var td = $(this);
-                var PropertyContractTerminationDetail = {
-                    PropertyContractId: td.find('.PropertyContractId').val(),
-                    PropertyContractBatchId: td.find('.PropertyContractBatchId').val(),
-                    IsDeleted: false,
-                    UserId: $('#UserId').val(),
-                    Notes: td.find('.Notes').val(),
-                    Image: td.find('.Image').val(),
-                    SequenceNo: td.find('.DetailSequenceNo').text(),
-                    Remain: parseFloat(td.find('.Remain').text()),
-                };
-                    PropertyContractTerminationDetails.push(PropertyContractTerminationDetail);
-            });
-            if (PropertyContractTerminationDetails.length == 0) {
-                valid = false;
-                Swal.fire({
-                    title: '@MyERP.Properties.Resources.AllDetailsRequired',
-                    text: " ",
-                    icon: 'success',
-                    showCancelButton: false,
-                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
-                    confirmButtonColor: '#3085d6'
-                });
-            }
-        }
+   var PropertyContractTerminationDetails = [];
+if (valid) {
+    $('#PropertyContractTerminationDetails tr').each(function () {
+        var td = $(this);
+        var PropertyContractTerminationDetail = {
+            PropertyContractId: td.find('.PropertyContractId').val(),
+            PropertyContractBatchId: td.find('.PropertyContractBatchId').val(),
+
+            // ⭐ إضافة جميع قيم الدفعات
+            BatchRentValue: parseFloat(td.find('.BatchRentValue').text()) || 0,
+            BatchWaterValue: parseFloat(td.find('.BatchWaterValue').text()) || 0,
+            BatchElectricityValue: parseFloat(td.find('.BatchElectricityValue').text()) || 0,
+            BatchCommissionValue: parseFloat(td.find('.BatchCommissionValue').text()) || 0,
+            BatchServicesValue: parseFloat(td.find('.BatchServicesValue').text()) || 0,
+            BatchInsuranceValue: parseFloat(td.find('.BatchInsuranceValue').text()) || 0,
+            Remain: parseFloat(td.find('.Remain').text()) || 0,
+
+            IsDeleted: false,
+            UserId: $('#UserId').val(),
+            Notes: td.find('.Notes').val() || '',
+            Image: td.find('.Image').val() || '',
+            SequenceNo: td.find('.DetailSequenceNo').text()
+        };
+        PropertyContractTerminationDetails.push(PropertyContractTerminationDetail);
+    });
+
+    if (PropertyContractTerminationDetails.length == 0) {
+        valid = false;
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AllDetailsRequired',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: false,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            confirmButtonColor: '#3085d6'
+        });
+    }
+}
+
         var PropertyContractTerminationDamages = [];
-        if (valid) {
-            $('#PropertyContractTerminationDamages tr').each(function () {
-                var td = $(this);
-                var PropertyContractTerminationDamage = {
-                    PropertyContractTerminationId: $('#Id').val(),
-                    PropertyComponentId: td.find('.PropertyComponentId').val(),
-                    IsDeleted: false,
-                    UserId: $('#UserId').val(),
-                    Notes: td.find('.Notes').val(),
-                    Image: td.find('.Image').val(),
-                    SequenceNo: td.find('.DamageSequenceNo').text(),
-                    PropertyComponentDetailId: td.find('.PropertyComponentDetailId').val(),
-                    Qty: td.find('.Qty').val(),
-                    Price: td.find('.Price').inputmask('unmaskedvalue')
-                };
-                PropertyContractTerminationDamages.push(PropertyContractTerminationDamage);
-            });
-        }
+        $('#PropertyContractTerminationDamages tr').each(function () {
+            var td = $(this);
+            var PropertyContractTerminationDamage = {
+                PropertyComponentId: td.find('.PropertyComponentId').val(),
+                PropertyComponentDetailId: td.find('.PropertyComponentDetailId').val(),
+                Price: parseFloat(td.find('.Price').val()) || 0,
+                Qty: parseFloat(td.find('.Qty').val()) || 0,
+                Notes: td.find('.Notes').val() || '',
+                SequenceNo: td.find('.DamageSequenceNo').text(),
+                IsDeleted: false,
+                UserId: $('#UserId').val()
+            };
+            PropertyContractTerminationDamages.push(PropertyContractTerminationDamage);
+        });
 
         var PropertyContractTermination = {
             Id: $('#Id').val(),
@@ -1214,6 +1879,11 @@ $(document).ready(function () {
             DecreaseDaysNo: $('#DecreaseDaysNo').inputmask('unmaskedvalue')>0? parseInt($('#DecreaseDaysNo').inputmask('unmaskedvalue')):0,
             DecreaseDaysTotalValue: $('#DecreaseDaysTotalValue').val() ,
             IsDeleted: $('#IsDeleted').val(),
+            // ✅ الحقول الجديدة
+            TotalUnpaidAmount: parseFloat($('#TotalUnpaidAmount').val()) || 0,
+            InsuranceAmount: parseFloat($('#InsuranceAmount').val()) || 0,
+            RenterBalance: parseFloat($('#RenterBalance').val()) || 0,
+            CalculationMethod: parseInt($('#CalculationMethod').val()) || 0,
             UserId: $('#UserId').val(),
             Notes: $('#Notes').val(),
             Image: $('#Image').val(),
@@ -1312,4 +1982,297 @@ $(document).ready(function () {
         }
     }
 
+
+    //function OnCalculationMethodChange() {
+    //    var searchText = $('#searchText').val();
+    //    if (searchText && searchText.trim().length >= 2) {
+    //        // إعادة تحميل البيانات بناءً على طريقة الحساب الجديدة
+    //        SearchPropertyContract();
+    //    }
+    //}
+
+    //// 2) إضافة دالة جديدة لتحديث البيانات عند تغيير تاريخ التصفية
+    //function OnTerminationDateChange() {
+    //    var searchText = $('#searchText').val();
+    //    if (searchText && searchText.trim().length >= 2) {
+    //        // إعادة تحميل البيانات بناءً على تاريخ التصفية الجديد
+    //        SearchPropertyContract();
+    //    }
+    //}
+
+    function SearchPropertyContract() {
+        var searchText = $('#searchText').val();
+
+        // الحصول على تاريخ التصفية وطريقة الحساب
+        var terminationDate = $('#TerminationDate').val();
+        var calculationMethod = $('#CalculationMethod').val();
+        var useContractEndDate = (calculationMethod === 'ContractEndDate');
+
+        if (!searchText || searchText.trim().length < 2) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'تنبيه',
+                text: 'من فضلك أدخل على الأقل حرفين للبحث'
+            });
+            return;
+        }
+
+        $.ajax({
+            url: '/PropertyContractTermination/GetPropertyContractTerminationDetails',
+            type: 'GET',
+            data: {
+                searchText: searchText,
+                terminationDate: terminationDate,
+                useContractEndDate: useContractEndDate
+            },
+            success: function (data) {
+                if (data && data.length > 0) {
+                    $('.SearchResult').show();
+
+                    var result = data[0]; // أول نتيجة
+
+                    // ملء البيانات الأساسية
+                    $('#ContractNo').val(result.ContractNo);
+                    $('#ContractId').val(result.ContractId);
+                    $('#UnifiedContractNumber').val(result.UnifiedContractNumber);
+                    $('#Renter').val(result.Renter);
+                    $('#RenterId').val(result.RenterId);
+                    $('#Property').val(result.Property);
+                    $('#PropertyId').val(result.PropertyId);
+                    $('#UnitType').val(result.UnitType);
+                    $('#UnitTypeId').val(result.UnitTypeId);
+                    $('#UnitCode').val(result.UnitCode);
+                    $('#UnitId').val(result.UnitId);
+
+                    // عرض معلومات الأيام الزيادة والنقص
+                    $('#IncreaseDaysNo').val(result.IncreaseDays);
+                    $('#IncreaseDayValue').val(result.DailyRate.toFixed(2));
+                    $('#IncreaseDaysTotalValue').val(result.IncreaseAmount.toFixed(2));
+
+                    $('#DecreaseDaysNo').val(result.DecreaseDays);
+                    $('#DecreaseDayValue').val(result.DailyRate.toFixed(2));
+                    $('#DecreaseDaysTotalValue').val(result.DecreaseAmount.toFixed(2));
+
+                    // ملء جدول الدفعات
+                    $('#PropertyContractTerminationDetails').empty();
+
+                    if (result.Details && result.Details.length > 0) {
+                        result.Details.forEach(function (batch, index) {
+                            var row = '<tr>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<input type="hidden" class="PropertyContractBatchId" value="' + batch.PropertyContractBatchId + '" />' +
+                                '<input type="hidden" class="PropertyContractId" value="' + batch.PropertyContractId + '" />' +
+                                '<label class="DetailSequenceNo control-label">' + (index + 1) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<input type="date" class="BatchDate Gregorian form-control form-control-sm" value="' + formatDate(batch.BatchDate) + '" disabled readonly />' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="HijryBatchDate control-label"></label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="BatchRentValue control-label">' + batch.BatchRentValue.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="BatchWaterValue control-label">' + batch.BatchWaterValue.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="BatchElectricityValue control-label">' + batch.BatchElectricityValue.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="BatchCommissionValue control-label">' + batch.BatchCommissionValue.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="BatchServicesValue control-label">' + batch.BatchServicesValue.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="BatchInsuranceValue control-label">' + batch.BatchInsuranceValue.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="Remain control-label">' + batch.Remain.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '<td class="tabledit-edit-mode">' +
+                                '<label class="TotalRemain control-label">' + batch.Remain.toFixed(2) + '</label>' +
+                                '</td>' +
+                                '</tr>'
+                            if (result.IncreaseDays > 0 || result.DecreaseDays > 0) {
+                                var adjustmentType = result.IncreaseDays > 0 ? 'أيام زيادة' : 'أيام نقص';
+                                var adjustmentDays = result.IncreaseDays > 0 ? result.IncreaseDays : result.DecreaseDays;
+                                var adjustmentAmount = result.IncreaseDays > 0 ? result.IncreaseAmount : (-1 * result.DecreaseAmount);
+
+                                var adjustmentRow = '<tr style="background-color: #fff3cd;">' +
+                                    '<td class="tabledit-edit-mode">' +
+                                    // ⭐ PropertyContractBatchId = 0 للسطر المحسوب
+                                    '<input type="hidden" class="PropertyContractBatchId" value="0" />' +
+                                    '<input type="hidden" class="PropertyContractId" value="' + result.ContractId + '" />' +
+                                    '<label class="DetailSequenceNo control-label">' + (result.Details.length + 1) + '</label>' +
+                                    '</td>' +
+                                    '<td class="tabledit-edit-mode">' +
+                                    '<input type="date" class="BatchDate Gregorian form-control form-control-sm" value="' + formatDate(result.CalculationEndDate) + '" disabled readonly />' +
+                                    '</td>' +
+                                    '<td class="tabledit-edit-mode">' +
+                                    '<label class="HijryBatchDate control-label"></label>' +
+                                    '</td>' +
+                                    '<td class="tabledit-edit-mode" colspan="6">' +
+                                    '<label class="control-label text-center" style="width:100%; font-weight:bold;">' +
+                                    adjustmentType + ' (' + adjustmentDays + ' يوم × ' + result.DailyRate.toFixed(2) + ')' +
+                                    '</label>' +
+                                    '</td>' +
+                                    '<td class="tabledit-edit-mode">' +
+                                    // ⭐ labels مخفية للقيم الصفرية
+                                    '<label class="BatchRentValue control-label" style="display:none;">0</label>' +
+                                    '<label class="BatchWaterValue control-label" style="display:none;">0</label>' +
+                                    '<label class="BatchElectricityValue control-label" style="display:none;">0</label>' +
+                                    '<label class="BatchCommissionValue control-label" style="display:none;">0</label>' +
+                                    '<label class="BatchServicesValue control-label" style="display:none;">0</label>' +
+                                    '<label class="BatchInsuranceValue control-label" style="display:none;">0</label>' +
+                                    '<label class="Remain control-label">' + adjustmentAmount.toFixed(2) + '</label>' +
+                                    '</td>' +
+                                    '<td class="tabledit-edit-mode">' +
+                                    '<label class="TotalRemain control-label">' + adjustmentAmount.toFixed(2) + '</label>' +
+                                    '</td>' +
+                                    '</tr>';
+
+                                $('#PropertyContractTerminationDetails').append(adjustmentRow);
+                            }
+                        
+                                //;
+
+
+                            $('#PropertyContractTerminationDetails').append(row);
+                        });
+                    }
+
+                    // حساب الإجماليات
+                    calculateTotals();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'تم العثور على العقد',
+                        text: 'تم تحميل بيانات العقد بنجاح',
+                        timer: 2000
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'لا توجد نتائج',
+                        text: 'لم يتم العثور على أي عقد يطابق البحث'
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ',
+                    text: 'حدث خطأ أثناء البحث: ' + error
+                });
+            }
+        });
+    }
+
+    // دالة مساعدة لتنسيق التاريخ
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        var date = new Date(dateString);
+        var day = ('0' + date.getDate()).slice(-2);
+        var month = ('0' + (date.getMonth() + 1)).slice(-2);
+        var year = date.getFullYear();
+        return year + '-' + month + '-' + day;
+    }
+
+    // دالة لحساب الإجماليات
+    function calculateTotals() {
+        var totalRent = 0;
+        var totalWater = 0;
+        var totalElectricity = 0;
+        var totalServices = 0;
+        var totalCommission = 0;
+        var totalInsurance = 0;
+        var grandTotal = 0;
+
+        $('#PropertyContractTerminationDetails tr').each(function () {
+            var rent = parseFloat($(this).find('.BatchRentValue').text()) || 0;
+            var water = parseFloat($(this).find('.BatchWaterValue').text()) || 0;
+            var electricity = parseFloat($(this).find('.BatchElectricityValue').text()) || 0;
+            var commission = parseFloat($(this).find('.BatchCommissionValue').text()) || 0;
+            var services = parseFloat($(this).find('.BatchServicesValue').text()) || 0;
+            var insurance = parseFloat($(this).find('.BatchInsuranceValue').text()) || 0;
+            var remain = parseFloat($(this).find('.Remain').text()) || 0;
+
+            totalRent += rent;
+            totalWater += water;
+            totalElectricity += electricity;
+            totalServices += services;
+            totalCommission += commission;
+            totalInsurance += insurance;
+
+            var rowTotal = remain;
+            $(this).find('.TotalRemain').text(rowTotal.toFixed(2));
+            grandTotal += rowTotal;
+        });
+
+        // تحديث الإجماليات في الفوتر
+        $('#TotalRent').text(totalRent.toFixed(2));
+        $('#TotalWater').text(totalWater.toFixed(2));
+        $('#TotalElectricity').text(totalElectricity.toFixed(2));
+        $('#TotalServices').text(totalServices.toFixed(2));
+        $('#TotalCommission').text(totalCommission.toFixed(2));
+        $('#TotalInsurance').text(totalInsurance.toFixed(2));
+        $('#GrandTotal').text(grandTotal.toFixed(2));
+    }
+
+
+
+
+
+    $('#CalculationMethod').on('change', function () {
+        var method = $(this).val();
+
+        var text = method === '2'
+            ? 'سيتم الحساب بناءً على نهاية العقد'
+            : 'سيتم الحساب بناءً على تاريخ التصفية';
+        $('#CalculationMethodInfo').text(text);
+
+        if (method === '2') {
+            var contractEndDate = $('#ContractEndDate').val();
+            if (contractEndDate) {
+                $('#TerminationDate').val(contractEndDate);
+                if (selectedContractId) {
+                    RefreshContractData()
+                        .then(function () {
+                            setTimeout(function () {
+                                CalculateDeficiencyAndExtraDaysTotals();
+                            }, 150);
+                        })
+                        .catch(function (error) {
+                            console.error('خطأ في تحديث البيانات:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'خطأ',
+                                text: 'لقد حدث خطأ أثناء تحديث البيانات. الرجاء المحاولة مرة أخرى.',
+                                timer: 3000
+                            });
+                        });
+                }
+            }
+        } else {
+            if (selectedContractId) {
+                RefreshContractData()
+                    .then(function () {
+                        setTimeout(function () {
+                            CalculateDeficiencyAndExtraDaysTotals();
+                        }, 150);
+                    })
+                    .catch(function (error) {
+                        console.error('خطأ في تحديث البيانات:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: 'لقد حدث خطأ أثناء تحديث البيانات. الرجاء المحاولة مرة أخرى.',
+                            timer: 3000
+                        });
+                    });
+            }
+        }
+    });
 </script>

@@ -1,0 +1,355 @@
+﻿@model MyERP.Models.Vendor
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Vendors;
+}
+@*@{
+        ViewBag.Title = "الموردين";
+    }*@
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">
+                @MyERP.Properties.Resources.Vendors
+            </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Vendor/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.Code)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.Image)
+
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="Code" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-2">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", required = "required", @readonly = "readonly" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    @*<div class="col-sm-1"></div>*@
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+
+                                    @*<div class="col-sm-1"></div>*@
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Group</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("VendorsGroupId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", name = "VendorsGroupId", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.GroupRequired
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.DealingDate</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" name="DealingDate" type="datetime-local" id="dtDealingDate" required="required" value="@ViewBag.DealingDate" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.DealingDateRequired
+                                        </div>
+
+                                    </div>
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Currency </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CurrencyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                   
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null){ @Model.Notes;}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.ContactData
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Mobile 1</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Tel1, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">  @MyERP.Properties.Resources.Mobile 2</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Tel2, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Email</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", type = "email" } })
+                                    </div>
+                                    <label for="Address" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Address" name="Address" class="form-control" rows="5" cols="5">
+@if (Model != null)
+{
+    @Model.Address;
+}
+                                        </textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.OfficialData
+                                </h5>
+                                <div id="collapse3">
+                                    <div class="form-group row">
+                                        <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.ArName</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ContactPerson, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.ContactPerson, "", new { @class = "text-danger" })
+                                        </div>
+
+                                        <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.NationalID</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.IdentityNumber, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.IdentityNumber, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    @*<div class="form-group row">
+                                            <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ReleaseDate</label>
+                                            <div class="col-sm-4">
+                                                <input type="datetime-local" class="form-control" name="IdentityIssueDate" id="dtIdentityIssueDate" value="@ViewBag.IdentityIssueDate" placeholder= @MyERP.Properties.Resources.ReleaseDate />
+
+                                            </div>
+
+                                            <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.ExpiryDate </label>
+                                            <div class="col-sm-4">
+                                                <input type="datetime-local" class="form-control" name="IdentityExpireDate" id="dtIdentityExpireDate" value="@ViewBag.IdentityExpireDate" placeholder=@MyERP.Properties.Resources.ExpiryDate />
+
+                                            </div>
+                                        </div>*@
+                                    <div class="form-group row">
+                                        <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.TaxRegistrationNumber  </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.TaxNumber, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.TaxNumber, "", new { @class = "text-danger" })
+                                        </div>
+
+                                        <label for="VATNumber" class="col-sm-2 control-label">@MyERP.Properties.Resources.VATNO</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.VATNumber, new { htmlAttributes = new { @class = "form-control" } })
+                                            @*<input class="form-control" />*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.CreditLimit
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="chkAllowCreditLimit" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.AllowCreditLimit
+                                    </label>
+                                    <div class="col-sm-5">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="AllowCreditLimit" id="chkAllowCreditLimit" @Html.Raw(Model != null && Model.AllowCreditLimit == true ? "checked" : "") value="true" />
+
+                                            <label class="custom-control-label" for="chkAllowCreditLimit"></label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CreditLimitAmount" class="col-sm-2 control-label">@MyERP.Properties.Resources.CreditLimit</label>
+                                    <div class="col-sm-9">
+                                        @Html.EditorFor(model => model.CreditLimitAmount, new { htmlAttributes = new { @class = "money form-control" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row" @*style="display:none"*@>
+                                    <label for="CreditLimitPeriod" class="col-sm-2 control-label">@MyERP.Properties.Resources.CreditLimitPeriod </label>
+                                    <div class="col-sm-9">
+                                        @Html.EditorFor(model => model.CreditLimitPeriod, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <div class="col-sm-1">
+                                        <span> @MyERP.Properties.Resources.Day </span>
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" style="display:none;">
+                                    <label for="WorkNature" class="col-sm-3 control-label">@MyERP.Properties.Resources.ContractNatureOfWork</label>
+                                    <div class="col-sm-9">
+                                        @Html.EditorFor(model => model.WorkNature, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <input id="new" name="newBtn" hidden />
+                    <div class="col-sm-offset-2">
+                        @if (Model == null)
+                        {
+                            <button type="submit" id="newbtn" class="btn btn-success">
+                                @MyERP.Properties.Resources.SaveAndNew
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else if (Model.IsDeleted == false)
+                        {
+                            <button type="submit" class="btn btn-success">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                        }
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Vendor/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Vendor');
+                        }
+                        else if (r == 'False') {
+                                    $('#preloader, #status').fadeOut();
+                                    alert('@MyERP.Properties.Resources.DeleteDoesNotSucceededBecauseVendorUsedInOtherTransactions');
+                                }
+                        else if (r == 'hasBalance') {
+                            alert('@MyERP.Properties.Resources.VendorHasOB');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+    function setCodeNum() {
+        $.get('/Vendor/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    if (!$('#Id').val()) {
+        setCodeNum();
+    }
+    else {
+        $('#FieldsCodingId').prop('disabled', true);
+    }
+
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+    });
+
+    //date
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+</script>

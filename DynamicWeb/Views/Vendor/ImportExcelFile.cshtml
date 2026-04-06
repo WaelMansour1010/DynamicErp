@@ -1,0 +1,85 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ImportExcelSheet;
+}
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">
+                @MyERP.Properties.Resources.ImportExcelSheet:
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <h3 id="Message"></h3>
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+                        <form class="p-3" id="excel-upload-form" enctype="multipart/form-data" @*style="display:none;"*@>
+                            <h3>@ViewBag.Error</h3>
+                            <label class="control-label col-sm-2">@MyERP.Properties.Resources.SelectFile </label>
+                            <input type="file" id="file" @*style="visibility:hidden;" *@ name="excelfile" />
+                            <button type="button" id="Load" class="btn btn-secondary" @*data-toggle="modal" data-target="#exampleModalCenter" *@ onclick="GetFileData()"> @MyERP.Properties.Resources.UploadFile</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function GetFileData() {
+        $('#preloader, #status').fadeIn();
+        var formData = new FormData($('#excel-upload-form')[0]);
+        $.ajax({
+            type: "POST",
+            data: formData,
+            contentType: "application/json",
+            cache: false,
+            contentType: false,
+            processData: false,
+            url: "/Vendor/ImportExcelFile",
+            success: function (r) {
+                if (r == "نوع الملف غير صحيح" || r == "من فضلك اختر ملف") {
+                    $('#Message').text(r);
+                    alert(r)
+                    $('#preloader, #status').fadeOut();
+                }
+                else {
+                    $('#Message').text("");
+                    $('#Load').attr('disabled', 'true');
+                    if (r == "success") {
+                        alert('@MyERP.Properties.Resources.Saved');
+                        window.location.replace("/Vendor");
+                    }
+                    else {
+                        alert('@MyERP.Properties.Resources.FileNotUploaded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                    $('#preloader, #status').fadeOut();
+                }
+            },
+            error: function (r) {
+                alert('@MyERP.Properties.Resources.FileNotUploaded');
+            }
+        });
+    }
+
+
+</script>

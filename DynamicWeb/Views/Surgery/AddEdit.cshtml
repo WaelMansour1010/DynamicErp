@@ -1,0 +1,1424 @@
+﻿@model MyERP.Models.Surgery
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Surgeries;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                }
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.Surgeries </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+
+
+                                <!-- Panel 1 -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                                    @MyERP.Properties.Resources.MainData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse1">
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.Code</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.Code, required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.BookingDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.BookingDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.SurgeryDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.SurgeryDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12" style=" padding:1px;background-color: white;">
+                                                <div style="background-color:white;">
+                                                    <div class="row form-group">
+                                                        <label class="control-label col-sm-2 PosCustomerIdDiv">@MyERP.Properties.Resources.Patient </label>
+                                                        <div class="col-sm-4 PosCustomerIdDiv">
+                                                            <div class="row ">
+                                                                <div class="col-sm-10">
+                                                                    @Html.DropDownListFor(model => model.PatientId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                                    <div class="invalid-feedback">
+                                                                        @MyERP.Properties.Resources.Required
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-sm-2 pos-customer-model-btn" style="padding: 0;margin-right: -10px;">
+                                                                    <button class="btn btn-success  btn-sm" id="AddPatient" data-toggle="modal"><i class="remixicon-user-add-fill"></i></button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <label class="PosCustomerDetailsDiv col-sm-2 control-label" for="Phone">@MyERP.Properties.Resources.PatientMobile</label>
+                                                        <div class="PosCustomerDetailsDiv col-sm-4">
+                                                            <input type="text" class="form-control" id="PatientMobile" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.MedicalSpecialty</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.MedicalSpecialtyId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Doctor</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.DoctorId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.AssistantDoctor</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.AssistantDoctorId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.AssistantNurse</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.AssistantNurseId, null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.TotalPrice </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.TotalPrice, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled", @readonly = "readonly" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.DoctorPrice </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.DoctorPrice, new { htmlAttributes = new { @class = "form-control money", type = "text" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.AssistantPrice </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.AssistantPrice, new { htmlAttributes = new { @class = "form-control money", type = "text" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.NursePrice </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.NursePrice, new { htmlAttributes = new { @class = "form-control money", type = "text" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Video</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.Video, new
+                                                    {
+                                                        htmlAttributes = new
+                                                        {
+                                                            @class = "form-control",
+                                                            placeholder = @MyERP.Properties.Resources.Video,@*required = "required",*@type = "text"
+                                                        }
+                                                    })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.InsuranceCompany</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.InsuranceCompanyId, null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.InsuranceRatio </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.InsuranceRatio, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled", @readonly = "readonly" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="col-sm-2 control-label"> @MyERP.Properties.Resources.PatientRatio </label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.PatientRatio, new { htmlAttributes = new { @class = "form-control money", type = "text", @disabled = "disabled", @readonly = "readonly" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                                <div class="col-sm-4">
+                                                    <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                                </div>
+                                            </div>
+                                            @* مكان صور الجراحة *@
+                                            <div class="form-group row">
+                                                <div id="Surgerygallery" style="width: 100%;margin: 20px;">
+                                                    @{ if (Model != null && Model.SurgeryImages != null)
+                                                        {
+                                                            foreach (MyERP.Models.SurgeryImage img in Model.SurgeryImages)
+                                                            {
+                                                                <img onclick="SurgeryShowModal(this)" data-toggle="modal" data-target="#ImageModal" src="@img.Image" alt="" class="img_@img.Id" style="max-width: 200px;max-height: 200px;" />
+                                                                <i class="fas fa-trash-alt img_@img.Id" style="cursor:pointer;" onclick="DeleteSurgery('@img.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                            }
+                                                        }
+                                                    }
+                                                </div>
+                                                <input type="file" id="SurgeryBrowseImage" onchange="SurgerypreviewFile()" value="Browse" multiple />
+                                                <div style="display:none;">
+                                                    @Html.ListBoxFor(i => i.SurgeryImages, new SelectList(Model == null ? new List<MyERP.Models.SurgeryImage>() : Model.SurgeryImages, "Id", "Image", Model == null ? null : Model.SurgeryImages), new { @class = "form-control1", placeholder = "Surgery" })
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Of Panel 1 -->
+                                <!-- Panel 2 -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                                    @MyERP.Properties.Resources.MedicalRadiology
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse2">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.MedicalRadiology </label>
+                                                <div class="col-sm-4">
+                                                    <input class="form-control" type="text" id="Ray" />
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <input type="button" value="@MyERP.Properties.Resources.Add" onclick="AddRays()" class="add-row b btn btn-success" />
+                                                </div>
+                                            </div>
+                                            @* مكان صور الأشعة *@
+                                            <div class="form-group row">
+                                                <div id="SurgeryRaysgallery" style="width: 100%;margin: 20px;">
+                                                    @{ if (Model != null && Model.SurgeryRayImages != null)
+                                                        {
+                                                            foreach (MyERP.Models.SurgeryRayImage img in Model.SurgeryRayImages)
+                                                            {
+                                                                <img onclick="SurgeryRaysShowModal(this)" data-toggle="modal" data-target="#ImageModal" src="@img.Image" alt="" class="img_@img.Id" style="max-width: 200px;max-height: 200px;" />
+                                                                <i class="fas fa-trash-alt img_@img.Id" style="cursor:pointer;" onclick="DeleteSurgeryRays('@img.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                            }
+                                                        }
+                                                    }
+                                                </div>
+                                                <input type="file" id="SurgeryRaysBrowseImage" onchange="SurgeryRayspreviewFile()" value="Browse" multiple />
+                                                <div style="display:none;">
+                                                    @Html.ListBoxFor(i => i.SurgeryRayImages, new SelectList(Model == null ? new List<MyERP.Models.SurgeryRayImage>() : Model.SurgeryRayImages, "Id", "Image", Model == null ? null : Model.SurgeryRayImages), new { @class = "form-control1", placeholder = "Surgery Rays" })
+                                                </div>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>@MyERP.Properties.Resources.Name</th>
+                                                            <th>@MyERP.Properties.Resources.Delete</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="SurgeryRaysTable">
+                                                        @if (Model != null && Model.Id > 0)
+                                                        {
+                                                            foreach (var item in Model.SurgeryRays)
+                                                            {
+                                                                <tr>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="hidden" class="RayId form-control tabledit-input form-control-sm" value="@item.Id" />
+                                                                        <label class="RayArName control-label tabledit-input form-control-sm"> @item.ArName </label>
+                                                                    </td>
+                                                                    <td>
+                                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Of Panel 2 -->
+                                <!-- Panel 3 -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                                    @MyERP.Properties.Resources.MedicalAnalysis
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse3">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.MedicalAnalysis </label>
+                                                <div class="col-sm-4">
+                                                    <input class="form-control" type="text" id="Analysis" />
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <input type="button" value="@MyERP.Properties.Resources.Add" onclick="AddAnalysis()" class="add-row b btn btn-success" />
+                                                </div>
+                                            </div>
+                                            @* مكان صور التحاليل *@
+                                            <div class="form-group row">
+                                                <div id="SurgeryAnalysisgallery" style="width: 100%;margin: 20px;">
+                                                    @{ if (Model != null && Model.SurgeryAnalysisImages != null)
+                                                        {
+                                                            foreach (MyERP.Models.SurgeryAnalysisImage img in Model.SurgeryAnalysisImages)
+                                                            {
+                                                                <img onclick="SurgeryAnalysisShowModal(this)" data-toggle="modal" data-target="#ImageModal" src="@img.Image" alt="" class="img_@img.Id" style="max-width: 200px;max-height: 200px;" />
+                                                                <i class="fas fa-trash-alt img_@img.Id" style="cursor:pointer;" onclick="DeleteSurgeryAnalysis('@img.Id');$(this).prev().remove();$(this).remove();"></i>
+                                                            }
+                                                        }
+                                                    }
+                                                </div>
+                                                <input type="file" id="SurgeryAnalysisBrowseImage" onchange="SurgeryAnalysispreviewFile()" value="Browse" multiple />
+                                                <div style="display:none;">
+                                                    @Html.ListBoxFor(i => i.SurgeryAnalysisImages, new SelectList(Model == null ? new List<MyERP.Models.SurgeryAnalysisImage>() : Model.SurgeryAnalysisImages, "Id", "Image", Model == null ? null : Model.SurgeryAnalysisImages), new { @class = "form-control1", placeholder = "Surgery Analysis" })
+                                                </div>
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>@MyERP.Properties.Resources.Name</th>
+                                                            <th>@MyERP.Properties.Resources.Delete</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="SurgeryAnalysisTable">
+                                                        @if (Model != null && Model.Id > 0)
+                                                        {
+                                                            foreach (var item in Model.SurgeryAnalysis)
+                                                            {
+                                                                <tr>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="hidden" class="AnalysisId form-control tabledit-input form-control-sm" value="@item.Id" />
+                                                                        <label class="AnalysisArName control-label tabledit-input form-control-sm"> @item.ArName </label>
+                                                                    </td>
+                                                                    <td>
+                                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Of Panel 3 -->
+                                <!-- Panel 4 -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                                    @MyERP.Properties.Resources.Medicines
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse4">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Medicines </label>
+                                                <div class="col-sm-3">
+                                                    @Html.DropDownList("ItemId", null, null, htmlAttributes: new { @class = "form-control" })
+                                                </div>
+                                                <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Description </label>
+                                                <div class="col-sm-3">
+                                                    <input class="form-control" type="text" id="Description" />
+                                                </div>
+                                                <div class="col-sm-2">
+                                                    <input type="button" value="@MyERP.Properties.Resources.Add" onclick="AddMedicine()" class="add-row b btn btn-success" />
+                                                </div>
+                                            </div>
+
+                                            <div class="table-responsive">
+                                                <table class="table table-centered mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>@MyERP.Properties.Resources.Name</th>
+                                                            <th>@MyERP.Properties.Resources.Description</th>
+                                                            <th>@MyERP.Properties.Resources.Delete</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="SurgeryMedicines">
+                                                        @if (Model != null && Model.Id > 0)
+                                                        {
+                                                            foreach (var item in Model.SurgeryMedicines)
+                                                            {
+                                                                <tr>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <input type="hidden" class="MedicineId form-control tabledit-input form-control-sm" value="@item.Id" />
+                                                                        <input type="hidden" class="MedicineItemId form-control tabledit-input form-control-sm" value="@item.ItemId" />
+                                                                        <label class="MedicineArName control-label tabledit-input form-control-sm"> @item.Item.ArName </label>
+                                                                    </td>
+                                                                    <td class="tabledit-edit-mode">
+                                                                        <label class="MedicineDescription control-label tabledit-input form-control-sm"> @item.Description </label>
+                                                                    </td>
+                                                                    <td>
+                                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                            <i class="fas fa-trash-alt"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Of Panel 4 -->
+                                <!-- Panel 5 -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                                    @MyERP.Properties.Resources.OrganAppliedSurgery
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse5">
+                                            <div class="form-group row">
+                                                <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.OrganName </label>
+                                                <div class="col-sm-3">
+                                                    @Html.EditorFor(model => model.OrganName, new { htmlAttributes = new { @class = "form-control", type = "text", @disabled = "disabled", @readonly = "readonly" } })
+                                                </div>
+                                               
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            @*<div id="accordion">
+                            <h5 class="header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.OrganAppliedSurgery
+                                </a>
+                            </h5>
+                        </div>  <br />*@
+                                                            <div @*id="collapse3"*@>
+                                                                <div class="form-group row">
+                                                                    <div class="col-sm-3">
+                                                                        @Html.Partial("_FaceChart")
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-8">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            @*<div id="accordion">
+                            <h5 class="header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.OrganAppliedSurgery
+                                </a>
+                            </h5>
+                        </div>
+                        <br />*@
+                                                            <div id="collapse3">
+                                                                <div class="form-group row">
+                                                                    <div class="col-sm-3">
+                                                                        @Html.Partial("_BodyChart")
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Of Panel 5 -->
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-------------------------------------------------------------------------------------------------------->
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!------------------------------------------------------------------------------------------------------------------------------>
+<!---------- Modal Section ----------------->
+<div id="AddPatientModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.PatientData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="PatientPopUpArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="PatientPopUpArName" placeholder="@MyERP.Properties.Resources.ArName" />
+                                <input type="text" class="form-control" id="PatientPopUpId" hidden />
+                                <input type="text" class="form-control" id="PatientPopUpCode" hidden />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="PatientPopUpBirthDate" class="control-label">@MyERP.Properties.Resources.BirthDate</label>
+                                <input type="datetime-local" class="form-control" id="PatientPopUpBirthDate" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Age" class="control-label">@MyERP.Properties.Resources.Age </label>
+                                <input type="text" class="form-control" disabled id="PatientPopUpAge" placeholder="@MyERP.Properties.Resources.Age">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="PatientPopUpChronicDisease" class="control-label">@MyERP.Properties.Resources.ChronicDisease</label>
+                                @*<input type="text" class="form-control" id="PatientPopUpChronicDisease" disabled placeholder=@MyERP.Properties.Resources.ChronicDisease>
+                                    <input type="text" class="form-control" id="PatientPopUpChronicDiseaseId" hidden />*@
+                                @Html.DropDownList("PatientPopUpChronicDiseaseId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="PatientPopUpMobile" class="control-label">@MyERP.Properties.Resources.Mobile </label>
+                                <input type="text" class="form-control" id="PatientPopUpMobile" placeholder="@MyERP.Properties.Resources.Mobile">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="PatientPopUpAddress" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="PatientPopUpAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="PatientPopUpNotes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="PatientPopUpNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="AddPatient();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PatientModel -->
+<div id="PatientModel" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.Details</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <hr />
+                <div class=" table-responsive">
+                    <table class="table table-striped table-centered mb-0">
+                        <thead>
+                            <tr>
+                                <th>@MyERP.Properties.Resources.BookingNo</th>
+                                <th>@MyERP.Properties.Resources.ExaminationDate</th>
+                                <th>@MyERP.Properties.Resources.FromTime</th>
+                                <th>@MyERP.Properties.Resources.ToTime</th>
+                                <th>@MyERP.Properties.Resources.Price</th>
+                            </tr>
+                        </thead>
+                        <tbody id="PatientDetails">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!---------- End Of PatientModel ---------->
+<!----------------------------------------------------------------------------------->
+<script>
+    //------------------ Chart Function ----------------//
+    function CheckPart(e) {
+        var part = $(e).attr('part');
+        var id = $(e).attr('id');
+        var OrganName = $('#OrganName').val()
+        var arr = id.split("");
+        if (OrganName) {
+            var _Prevobj = jQuery("." + OrganName + "," + arr.slice().join(""));
+            _Prevobj.css({ "fill": "none" });
+        }
+        if (anaconfig[id] != null && anaconfig[id].enabled === true) {
+            var _obj = jQuery("#" + id + "," + arr.slice().join(""));
+            _obj.css({ "fill": "rgba(255, 0, 0, 0.3)" });
+            $('#OrganName').val(part);
+        }
+        else if (frt_config[id]!=null&&frt_config[id].enabled != 0) {
+            $('#' + id).css({ 'fill': frt_config[id].downColor, 'fill-opacity': frt_config[id].downOpacity, 'stroke': frt_config[id].outlineDownColor, 'stroke-opacity': frt_config[id].outlineDownOpacity })
+            $('#OrganName').val(part);
+        }
+        else if (bck_config[id]!=null&&bck_config[id].enable ===true) {
+            $('#' + id).css({ 'fill': bck_config[id].downColor, 'fill-opacity': bck_config[id].downOpacity, 'stroke': bck_config[id].outlineDownColor, 'stroke-opacity': bck_config[id].outlineDownOpacity })
+            $('#OrganName').val(part);
+        }
+
+    }
+    //------------------------------------------------------------------//
+
+    //--------------- Variables Declarations -------------------//
+    let Patients = [];
+    let DoctorOptions = '';
+    var InsuranceCompanyPercentage = 0;
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        //$.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+        //    $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        //});
+         $('#BookingDate').val('@ViewBag.BookingDate');
+        $('#SurgeryDate').val('@ViewBag.SurgeryDate');
+
+       
+
+        if ($('#Id').val()) {
+            // // To get Organ Name by Class
+            var part = $('#OrganName').val();
+            if (part) {
+                $('.' + part).each(function () {
+                    if ($(this).attr("id").split('_')[0] == "bck") {
+                        $('.go_bck').trigger('click')
+                    }
+                    $(this).css({ 'fill': "rgba(255, 0, 0, 0.3)" });
+                })
+            }
+            //----------------------------------------------------------------------//
+        }
+        else {
+            SetDocNum();
+            GetPatients();
+            GetSpecialtyDoctor().then(function () {
+                $("#DoctorId").empty().append(DoctorOptions);
+            });
+        }
+    });
+    //*********************************************************//
+   //--------------- Event Functions -------------------//
+    $(document).on('change', '#PatientId', function () {
+        let Patient = Patients.filter(function (i) { return i.Id == $('#PatientId').val() })[0];
+        if (Patient) {
+            $('#PatientMobile').val(Patient.Mobile);
+        }
+    });
+    $(document).on('change', '#MedicalSpecialtyId', function () {
+        GetSpecialtyDoctor().then(function () {
+            $("#DoctorId").empty().append(DoctorOptions);
+            $('#DoctorId').trigger('change');
+        });
+    });
+    $(document).on('change', '#DoctorPrice', function () {
+        CalculateTotalPrice();
+        GetInsuranceCompanyPercentage();
+    });
+    $(document).on('change', '#AssistantPrice', function () {
+        CalculateTotalPrice();
+        GetInsuranceCompanyPercentage();
+    });
+    $(document).on('change', '#NursePrice', function () {
+        CalculateTotalPrice();
+        GetInsuranceCompanyPercentage();
+    });
+    $(document).on('change', '#PatientPopUpBirthDate', function () {
+        var age = CalculateAge($(this).val());
+        $('#PatientPopUpAge').val(age)
+    });
+    $(document).on('change', '#InsuranceCompanyId', function () {
+        GetInsuranceCompanyPercentage();
+    });
+    //----------------------------------------------------------------------------------------------------------//
+    //--------------- Other Functions -------------------//
+    function GetInsuranceCompanyPercentage() {
+        if ($('#InsuranceCompanyId').val() > 0) {
+            $.get('/Surgery/GetInsuranceCompanyPercentage?InsuranceCompanyId=' + $('#InsuranceCompanyId').val()).done(function (r) {
+                InsuranceCompanyPercentage = r / 100;
+            }).done(function () {
+                CalculateInsuranceAndPatientRatio();
+            });
+        }
+        else {
+            $('#InsuranceRatio').val(0);
+            $('#PatientRatio').val(0);
+        }
+    }
+    function CalculateInsuranceAndPatientRatio() {
+        if ($('#TotalPrice').inputmask('unmaskedvalue') != "") {
+            var TotalPrice = $('#TotalPrice').inputmask('unmaskedvalue') != "" ? parseFloat($('#TotalPrice').inputmask('unmaskedvalue')) : 0.0;
+            var InsuranceRatio = parseFloat(TotalPrice) * InsuranceCompanyPercentage;
+            var PatientRatio = TotalPrice - InsuranceRatio;
+
+            $('#InsuranceRatio').val(InsuranceRatio);
+            $('#PatientRatio').val(PatientRatio);
+        }
+        else {
+            alert('@MyERP.Properties.Resources.TotalPriceRequired')
+        }
+
+    }
+    function SetDocNum() {
+        var doc = $.get('/Surgery/SetDocNum').done(function (r) {
+            $('#DocumentNumber').val(r);
+        });
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+            $(tr).find("label").text('');
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+    }
+    function GetSpecialtyDoctor() {
+        DoctorOptions = '';
+        if ($('#MedicalSpecialtyId').val() > 0) {
+            return requestData('/Surgery/GetSpecialtyDoctor?MedicalSpecialtyId=' + $('#MedicalSpecialtyId').val()).done(function (r) {
+                for (var i = 0; i < r.length; i++) {
+                    DoctorOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+            });
+        }
+    }
+    function AddRays() {
+        let Rays = $('#Ray').val();
+        let tr = '<tr><td class="tabledit-edit-mode"><input type="hidden" class="RayId form-control tabledit-input form-control-sm" /><label class="RayArName control-label tabledit-input form-control-sm">' + Rays + '</label></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+        $("#SurgeryRaysTable").append(tr);
+        $('#Ray').val('');
+    }
+    function AddAnalysis() {
+        let Analysis = $('#Analysis').val();
+        let tr = ' <tr><td class="tabledit-edit-mode"><input type="hidden" class="AnalysisId form-control tabledit-input form-control-sm" /><label class="AnalysisArName control-label tabledit-input form-control-sm"> ' + Analysis + '</label></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+        $('#SurgeryAnalysisTable').append(tr);
+        $('#Analysis').val('');
+    }
+    function AddMedicine() {
+        let ItemId = $('#ItemId').val();
+        let ItemName = $('#ItemId option:selected').text();
+        let Description = $('#Description').val();
+        let tr = ' <tr><td class="tabledit-edit-mode"><input type="hidden" class="MedicineId form-control tabledit-input form-control-sm" /><input type="hidden" class="MedicineItemId form-control tabledit-input form-control-sm" value="' + ItemId + '" /><label class="MedicineArName control-label tabledit-input form-control-sm">' + ItemName + ' </label></td><td class="tabledit-edit-mode"><label class="MedicineDescription control-label tabledit-input form-control-sm"> ' + Description + ' </label></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+        $('#SurgeryMedicines').append(tr);
+        $('#Description').val('');
+        $('#ItemId').prop('selectedIndex', 0);
+        $('#ItemId').select2();
+    }
+    function CalculateTotalPrice() {
+        var DoctorPrice = $('#DoctorPrice').inputmask('unmaskedvalue') != "" ? $('#DoctorPrice').inputmask('unmaskedvalue') : 0.00;
+        var AssistantPrice = $('#AssistantPrice').inputmask('unmaskedvalue') != "" ? $('#AssistantPrice').inputmask('unmaskedvalue') : 0.00;
+        var NursePrice = $('#NursePrice').inputmask('unmaskedvalue') != "" ? $('#NursePrice').inputmask('unmaskedvalue') : 0.00;
+
+        var TotalPrice = parseFloat(DoctorPrice) + parseFloat(AssistantPrice) + parseFloat(NursePrice);
+        $('#TotalPrice').val(TotalPrice);
+    }
+    //**************************------------------------*******************************//
+
+    //------------ Patient Data -------------------------//
+    function GetPatients(refill) {
+        if (refill == true)
+            requestCache['/Surgery/GetPatients'] = null;
+        return requestData('/Surgery/GetPatients').done(function (r) {
+            Patients = r;
+        });
+    }
+     $(document).on('click', '#AddPatient', function () {
+        $('#AddPatientModal').modal("show");
+    });
+    $(document).on('keydown', '#PatientMobile', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            let elem = $(this);
+            let mobileNo = elem.val();
+            GetPatientByMobile(mobileNo);
+        }
+    });
+    function GetPatientByMobile(MobileNo) {
+        let Patient = Patients.filter(function (i) { return i.Mobile == MobileNo })[0];
+        if (Patient) {
+            $("#PatientId").val(Patient.Id).trigger('change');
+            ShowPatientModal(Patient, false, null);
+        }
+        else {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.ThereIsNoPatientWithThisNoDoYouWantToAdd',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    ShowPatientModal(null, true, MobileNo);
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+    function CalculateAge(birthDate)
+    {
+        var now = new Date().getFullYear();
+        var Age = parseInt(now) - parseInt(birthDate);
+        return Age;
+    }
+    function ShowPatientModal(patient, isNew, mobileNo) {
+        if (patient != null && isNew == false) {
+            $("#PatientPopUpId").val(patient.Id);
+            $("#PatientPopUpCode").val(patient.Code);
+            $("#PatientPopUpArName").val(patient.ArName);
+            var birthdate = convertToJavaScriptDate(patient.BirthDate)
+            $("#PatientPopUpBirthDate").val(birthdate);
+            var Age = CalculateAge(new Date(birthdate).getFullYear());
+            $("#PatientPopUpAge").val(Age);
+            //$("#PatientPopUpChronicDiseaseId").val(patient.ChronicDiseaseId);
+            //$("#PatientPopUpChronicDisease").val(patient.ChronicDiseaseName);
+            $("#PatientPopUpChronicDiseaseId").val(patient.ChronicDiseaseId).select2();
+            $("#PatientPopUpNotes").val(patient.Notes);
+            $("#PatientPopUpMobile").val(patient.Mobile);
+            $("#PatientPopUpAddress").val(patient.Address);
+        }
+        else {
+            if (mobileNo != "" && mobileNo != null)
+                $("#PatientPopUpMobile").val(mobileNo);
+            else
+                $("#PatientPopUpMobile").val("");
+
+            $("#PatientPopUpAge").val('');
+            $("#PatientPopUpChronicDiseaseId").val(0);
+            $("#PatientPopUpChronicDiseaseId").select2();
+            $("#PatientPopUpBirthDate").val('');
+            $("#PatientPopUpChronicDisease").val('');
+            $("#PatientPopUpNotes").val('');
+            $("#PatientPopUpMobile").val('');
+            $("#PatientPopUpAddress").val('');
+        }
+        $('#AddPatientModal').modal("show");
+    }
+    function appendPatientOptions(refill) {
+        return GetPatients(refill).then(function () {
+            let PatientOptions = '';
+
+            for (var i = 0; i < Patients.length; i++) {
+                PatientOptions += '<option value="' + Patients[i].Id + '">' + Patients[i].ArName + ' - ' + Patients[i].Code + '</option>';
+            }
+            $('#PatientId').empty().append(PatientOptions);
+            $('#PatientId').trigger('change');
+        });
+    }
+    function AddPatient() {
+        let valid = true;
+        if ($("#PatientPopUpArName").val() == "") {
+            $("#PatientPopUpArName").prop('required', true);
+        }
+        if ($("#AddPatientModal").find(".form-control:invalid").length > 0) {
+            $("#AddPatientModal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        } else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Patient/AddEdit', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Id: $("#PatientPopUpId").val() != "" ? $("#PatientPopUpId").val() : 0,
+                        Code: $('#PatientPopUpCode').val(),
+                        ArName: $("#PatientPopUpArName").val(),
+                        Address: $('#PatientPopUpAddress').val(),
+                        Mobile: $('#PatientPopUpMobile').val(),
+                        Notes: $('#PatientPopUpNotes').val(),
+                        ChronicDiseaseId: $('#PatientPopUpChronicDiseaseId').val(),
+                        BirthDate: $('#PatientPopUpBirthDate').val(),
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        appendPatientOptions(true).then(function () { $('#PatientId').val($('#PatientId option:last-child').val()).trigger('change'); });
+                        $('#AddPatientModal').modal('hide');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+    //------------------------ End of Patient Data --------------------------------//
+
+    //---------------------------------------------------------------- Surgery images gallery  --------------------------------------------------------------//
+    function DeleteSurgery(url) {
+        $("#SurgeryImages option[value='" + url + "']").remove();
+    }
+    function SurgerypreviewFile() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#Surgerygallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /></a><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteSurgery(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#SurgeryImages").append("<option style='float: left;' selected=selected>" + reader.result + "</option>");
+        }, false);
+
+        for (var i = 0; i < $("#SurgeryBrowseImage")[0].files.length; i++) {
+            if ($("#SurgeryBrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#SurgeryBrowseImage")[0].files[i]);
+            }
+        }
+    }
+    $("#SurgeryImages option").attr('selected', 'selected');
+    $("#SurgeryImages").hide();
+    $("#SurgeryGetImage").click(function () {
+        $("#SurgeryGetImage").fadeOut();
+        $('#SurgeryUploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#Surgerygallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteSurgery("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#SurgeryImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+    function SurgeryShowModal(img) {
+        let ImageSelected = $(img);
+        let ImageSrc = ImageSelected[0].currentSrc;
+        $('#Surgeryimagepreview').attr('src', ImageSrc);
+    }
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+    //---------------------------------------------------------------- SurgeryRays images gallery  --------------------------------------------------------------//
+    function DeleteSurgeryRays(url) {
+        $("#SurgeryRayImages option[value='" + url + "']").remove();
+    }
+    function SurgeryRayspreviewFile() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#SurgeryRaysgallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /></a><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteSurgeryRays(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#SurgeryRayImages").append("<option style='float: left;' selected=selected>" + reader.result + "</option>");
+        }, false);
+
+        for (var i = 0; i < $("#SurgeryRaysBrowseImage")[0].files.length; i++) {
+            if ($("#SurgeryRaysBrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#SurgeryRaysBrowseImage")[0].files[i]);
+            }
+        }
+    }
+    $("#SurgeryRayImages option").attr('selected', 'selected');
+    $("#SurgeryRayImages").hide();
+    $("#SurgeryRaysGetImage").click(function () {
+        $("#SurgeryRaysGetImage").fadeOut();
+        $('#SurgeryRaysUploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#SurgeryRaysgallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteSurgeryRays("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#SurgeryRayImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+    function SurgeryRaysShowModal(img) {
+        let ImageSelected = $(img);
+        let ImageSrc = ImageSelected[0].currentSrc;
+        $('#SurgeryRaysimagepreview').attr('src', ImageSrc);
+    }
+
+    //---------------------------------------------------------------- SurgeryAnalysis images gallery  --------------------------------------------------------------//
+    function DeleteSurgeryAnalysis(url) {
+        $("#SurgeryAnalysisImages option[value='" + url + "']").remove();
+    }
+    function SurgeryAnalysispreviewFile() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#SurgeryAnalysisgallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /></a><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteSurgeryAnalysis(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#SurgeryAnalysisImages").append("<option style='float: left;' selected=selected>" + reader.result + "</option>");
+        }, false);
+
+        for (var i = 0; i < $("#SurgeryAnalysisBrowseImage")[0].files.length; i++) {
+            if ($("#SurgeryAnalysisBrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#SurgeryAnalysisBrowseImage")[0].files[i]);
+            }
+        }
+    }
+    $("#SurgeryAnalysisImages option").attr('selected', 'selected');
+    $("#SurgeryAnalysisImages").hide();
+    $("#SurgeryAnalysisGetImage").click(function () {
+        $("#SurgeryAnalysisGetImage").fadeOut();
+        $('#SurgeryAnalysisUploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#SurgeryAnalysisgallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteSurgeryAnalysis("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#SurgeryAnalysisImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+    function SurgeryAnalysisShowModal(img) {
+        let ImageSelected = $(img);
+        let ImageSrc = ImageSelected[0].currentSrc;
+        $('#SurgeryAnalysisimagepreview').attr('src', ImageSrc);
+    }
+
+    //--------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+
+    //-------------------------- Time And Date ------------------------//
+    function convertToTime(time) {
+        if (time === null)
+            return null;
+        var hours = time.Hours;
+        var minutes = time.Minutes;
+        var seconds = time.Seconds;
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds */+ ' ' + ampm;
+        return strTime
+
+        //2022 - 01 - 18T20: 23
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+    function convertToJavaScriptDate2(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day));
+
+        //2022 - 01 - 18T20: 23
+    }
+    //------------------------------------------------------------------------------------------//
+
+
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+
+        var SurgeryImages = [];
+        if (valid) {
+            $('#SurgeryImages option').each(function () {
+                var option = $(this);
+                var SurgeryImage =
+                {
+                    MainDocId: $('#Id').val(),
+                    Image: option.text()
+                };
+                SurgeryImages.push(SurgeryImage);
+            });
+        }
+
+        var SurgeryAnalysisImages = [];
+        if (valid) {
+            $('#SurgeryAnalysisImages option').each(function () {
+                var option = $(this);
+                var SurgeryAnalysisImage =
+                {
+                    MainDocId: $('#Id').val(),
+                    Image: option.text()
+                };
+                SurgeryAnalysisImages.push(SurgeryAnalysisImage);
+            });
+        }
+        var SurgeryRayImages = [];
+        if (valid) {
+            $('#SurgeryRayImages option').each(function () {
+                var option = $(this);
+                var SurgeryRayImage =
+                {
+                    MainDocId: $('#Id').val(),
+                    Image: option.text()
+                };
+                SurgeryRayImages.push(SurgeryRayImage);
+            });
+        }
+        var SurgeryAnalysis = [];
+        if (valid) {
+            $('#SurgeryAnalysisTable tr').each(function () {
+                var td = $(this);
+                if (td.find('.AnalysisArName').text()) {
+                    var OneSurgeryAnalysis = {
+                        MainDocId: $('#Id').val(),
+                        ArName: td.find('.AnalysisArName').text(),
+                        UserId: $('#UserId').val(),
+                        IsDeleted: $('#IsDeleted').val(),
+                    };
+                    SurgeryAnalysis.push(OneSurgeryAnalysis);
+                }
+            });
+        }
+        var SurgeryRays = [];
+        if (valid) {
+            $('#SurgeryRaysTable tr').each(function () {
+                var td = $(this);
+                if (td.find('.RayArName').text()) {
+                    var SurgeryRay = {
+                        MainDocId: $('#Id').val(),
+                        ArName: td.find('.RayArName').text(),
+                        UserId: $('#UserId').val(),
+                        IsDeleted: $('#IsDeleted').val(),
+                        Image: $('#Image').val(),
+                    };
+                    SurgeryRays.push(SurgeryRay);
+                }
+            });
+        }
+        var SurgeryMedicines = [];
+        if (valid) {
+            $('#SurgeryMedicines tr').each(function () {
+                var td = $(this);
+                if (td.find('.MedicineItemId').val()>0) {
+                    // let itemId = items.filter(function (i) { return i.ItemPriceId == td.find('.item').val(); })[0].Id;
+                    var SurgeryMedicine = {
+                        MainDocId: $('#Id').val(),
+                        ItemId: td.find('.MedicineItemId').val(),
+                        Description: td.find('.MedicineDescription').text(),
+                        UserId: $('#UserId').val(),
+                        IsDeleted: $('#IsDeleted').val(),
+                    };
+                    SurgeryMedicines.push(SurgeryMedicine);
+                }
+            });
+        }
+        var Surgery = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            BookingDate: $('#BookingDate').val(),
+            SurgeryDate: $('#SurgeryDate').val(),
+            PatientId: $('#PatientId').val(),
+            MedicalSpecialtyId: $('#MedicalSpecialtyId').val(),
+            DoctorId: $('#DoctorId').val(),
+            AssistantDoctorId: $('#AssistantDoctorId').val(),
+            AssistantNurseId: $('#AssistantNurseId').val(),
+            UserId: $('#UserId').val(),
+            IsDeleted: $('#IsDeleted').val(),
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            Video: $('#Video').val(),
+            TotalPrice: $('#TotalPrice').inputmask('unmaskedvalue'),
+            DoctorPrice: $('#DoctorPrice').inputmask('unmaskedvalue'),
+            AssistantPrice: $('#AssistantPrice').inputmask('unmaskedvalue'),
+            NursePrice: $('#NursePrice').inputmask('unmaskedvalue'),
+            FromTime: $('#FromTime').val(),
+            ToTime: $('#ToTime').val(),
+            TurnNo: $('#TurnNo').val(),
+            Diagnosis: $('#Diagnosis').val(),
+            InsuranceRatio: $('#InsuranceRatio').inputmask('unmaskedvalue'),
+            PatientRatio: $('#PatientRatio').inputmask('unmaskedvalue'),
+            InsuranceCompanyId: $('#InsuranceCompanyId').val(),
+            OrganName: $('#OrganName').val(),
+            SurgeryImages: SurgeryImages,
+            SurgeryAnalysis: SurgeryAnalysis,
+            SurgeryMedicines: SurgeryMedicines,
+            SurgeryRays: SurgeryRays,
+            SurgeryRayImages: SurgeryRayImages,
+            SurgeryAnalysisImages: SurgeryAnalysisImages,
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/Surgery/AddEdit",
+                        data: JSON.stringify(Surgery),
+                        success: function (r) {
+                            if (r.success == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); if (n == "new") {
+                                    window.location.replace("/Surgery/AddEdit");
+                                } else {
+                                    window.location.replace("/Surgery");
+                                }
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/Surgery/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/Surgery');
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+</script>

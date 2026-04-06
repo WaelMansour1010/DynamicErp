@@ -442,11 +442,18 @@ namespace MyERP.Controllers
                 }
                 return Json(new { success = "true", id = purchaseInvoice.Id });
             }
-            var errors = ModelState
-                    .Where(x => x.Value.Errors.Count > 0)
-                    .Select(x => new { x.Key, x.Value.Errors })
-                    .ToArray();
+            //var errors = ModelState
+            //        .Where(x => x.Value.Errors.Count > 0)
+            //        .Select(x => new { x.Key, x.Value.Errors })
+            //        .ToArray();
 
+            var errors = ModelState
+    .Where(x => x.Value.Errors.Count > 0)
+    .Select(x => new
+    {
+        Field = x.Key,
+        Errors = x.Value.Errors.Select(e => e.ErrorMessage).ToList()
+    }).ToList();
             return Json(errors);
         }
 

@@ -1,0 +1,88 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequestHistory>
+@{
+    ViewBag.Title = "طلبات الشراء";
+}
+<link href="~/assets/libs/treeview/style.css" rel="stylesheet" type="text/css">
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+            </div>
+            <h4 class="page-title">تتبع حركات طلبات الشراء:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card-box">
+            <h4 class="header-title mb-3">طلبات الشراء</h4>
+            <div id="basicTree">
+                <ul>
+                    @foreach (var item in Model)
+                    {
+                        <li data-jstree='{"opened":true}'>
+                            <b>
+                                @Html.Raw("طلب شراء رقم " + item.DocumentNumber
+                           + " بواسطة مستخدم " + item.User
+                           + " بتاريخ " + item.VoucherDate.ToString("yyyy-MM-dd HH:mm")
+                            + (item.IsApproved ? " تم اعتماده بواسطة " + item.ApprovalUserName + " بتاريخ " + (item.ApprovalDate.HasValue ? item.ApprovalDate.Value.ToString("yyyy-MM-dd HH:mm") : "") : ""))
+                            </b>
+                            <ul>
+                                <li data-jstree='{"opened":true}'>
+                                    طلب التصنيع
+                                    <ul>
+                                        @foreach (var manufacturingRequest in item.ManufacturingRequests)
+                                        {
+                                            <li data-jstree='{"opened":true,"type":"file"}'>
+                                                @Html.Raw(" رقم " + manufacturingRequest.DocumentNumber)
+                                                <ul>
+                                                    @foreach (var manufacturingOrder in manufacturingRequest.ManufacturingOrders)
+                                                    {
+                                                        <li data-jstree='{"opened":true,"type":"file"}'>
+                                                            @Html.Raw(" امر تصنيع رقم " + manufacturingOrder.DocumentNumber
+                                                            + " بواسطة مستخدم " + manufacturingOrder.CreatedByUser
+                               + " بتاريخ " + manufacturingOrder.OrderDate.ToString("yyyy-MM-dd HH:mm")
+                                + (manufacturingOrder.IsCompleted == true ? " تم انهائه بتاريخ " + (manufacturingOrder.CompletionDate.HasValue ? manufacturingOrder.CompletionDate.Value.ToString("yyyy-MM-dd HH:mm") : "") : "")
+                                + (manufacturingOrder.IsAccepted == true ? " تمت الموافقة بتاريخ "
+                               + (manufacturingOrder.AcceptanceDate.HasValue ? manufacturingOrder.AcceptanceDate.Value.ToString("yyyy-MM-dd HH:mm") : "") : ""))
+                                                            @if (manufacturingOrder.IsAccepted == true)
+                                                            {
+                                                                <ul>
+                                                                    @foreach (var stockIssueDocNum in manufacturingOrder.StockIssueDocNum)
+                                                                    {
+                                                                    <li data-jstree='{"icon":"mdi mdi-view-list","opened":true}'>
+                                                                        @Html.Raw("سند صرف رقم " + stockIssueDocNum)
+                                                                    </li>
+                                                                    }
+                                                                    @foreach (var stockReceiptDocNum in manufacturingOrder.StockReceiptDocNum)
+                                                                    {
+                                                                <li data-jstree='{"icon":"mdi mdi-view-list","opened":true}'>
+                                                                    @Html.Raw("سند توريد رقم " + stockReceiptDocNum)
+                                                                </li>
+                                                                    }
+                                                                    
+                                                                </ul>
+                                                            }
+
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                </ul>
+              
+            </div>
+        </div> <!-- end card-box -->
+    </div> <!-- end col-->
+
+</div>
+<script src="~/assets/libs/treeview/jstree.min.js"></script>
+<script src="~/assets/js/pages/treeview.init.js"></script>

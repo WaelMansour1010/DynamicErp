@@ -1,0 +1,212 @@
+﻿@model MyERP.Models.Currency
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Currency;
+}
+
+   
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Currency  :</h4>
+        </div>
+    </div>
+</div>       
+
+            
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Currency/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body ">
+                                <div class="form-group">
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        
+                                    }
+                                </div>
+
+
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                        <div class="col-md-4">
+                                            @if (Model.Id != 0)
+                                            {
+                                                @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly" } })
+                                            }
+                                            else
+                                            {
+                                                @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+                                            }
+                                            @*@Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @required = "required" } })*@
+                                            @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+                                        </div>
+                                   </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                        <div class="col-md-4">
+                                            @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+
+                                            @Html.ValidationMessageFor(model => model.ArName, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                        <div class="col-md-4">
+                                            @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.EnName, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.CoinFractionInArabic</label>
+                                        <div class="col-md-4">
+                                            @Html.EditorFor(model => model.FractionArName, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+
+                                            @Html.ValidationMessageFor(model => model.FractionArName, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.CoinFractionInEn</label>
+                                        <div class="col-md-4">
+                                            @Html.EditorFor(model => model.FractionEnName, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.FractionEnName, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Default</label>
+                                        <div class="col-md-4">
+                                            @if (Model.IsDefault == true)
+                                            {
+                                                <input type="checkbox" value="true" class="form-control IsDefault" name="IsDefault" style="width:15px;" checked onclick="test_fn(this)">
+
+                                            }
+                                            else if (Model.IsDefault == false)
+                                            {
+                                                <input type="checkbox" value="false" class="form-control IsDefault" name="IsDefault" style="width:15px;" onclick="test_fn(this)">
+
+                                            }
+                                            else
+                                            {
+                                                <input type="checkbox" value="false" class="form-control IsDefault" name="IsDefault" style="width:15px;" onclick="test_fn(this)">
+
+                                            }
+
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.ExchangeRate</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="money form-control" value="@Model.Equivalent" name="Equivalent" id="txtEquivalent">
+
+                                            @Html.ValidationMessageFor(model => model.Equivalent, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+
+                                    <input id="new" name="newBtn" hidden />
+
+                                    <div class="text-left form-group">
+                                        <div class="col-md-offset-2 col-md-3">
+                                            @if (Model.Id == 0)
+                                            {
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left">@MyERP.Properties.Resources.Back</a>
+                                                <input type="submit" value=@MyERP.Properties.Resources.Save class="btn btn-success" style="float:left;margin-left:2%" />
+
+                                                <input type="submit" value=@MyERP.Properties.Resources.SaveAndNew id="newbtn" class="btn btn-success" style="float:left;margin-left:2%" />
+
+
+                                            }
+                                            else
+                                            {
+                                                if (Model.IsDeleted == false)
+                                                {
+                                        <a class="btn btn-danger" onclick="Delete(@Model.Id,'Currency')" style="float:left;margin-left:2%" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left;margin-left:2%">@MyERP.Properties.Resources.Back</a>
+
+                                                    <input type="submit" value=@MyERP.Properties.Resources.Save class="btn btn-success" style="float:left;margin-left:2%" />
+                                                }
+                                            }
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 
+      
+<script>
+            function test_fn(elem) {
+
+                if (elem.checked == true) {
+                    $('.IsDefault').val(true);
+                }
+                else {
+                    $('.IsDefault').val(false);
+                }
+            }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Currency/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded' + '!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Currency');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded' + '!');
+                    }
+                });
+        }
+    }
+
+</script>

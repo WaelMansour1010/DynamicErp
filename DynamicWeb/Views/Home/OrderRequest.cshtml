@@ -1,0 +1,60 @@
+﻿   <div class="col-md-3 widget">
+    <div class="stats-left ">
+        <h5>
+            <a style=" color: #89dff2;text-decoration: none" href="~/orderrequest/addedit" target="_blank"> الطلبات المحتملة</a>
+          
+
+            <div style="text-align: center">
+                <a id="open" class="btn btn-successs" role="button" style="float: left;
+                                                                   width: 51px;    padding: 5px;
+                                                                                       height: 32px;">مفتوح</a>
+                <a id="closed" class="btn btn-successs" role="button" style="float: left;
+                              width: 51px;
+                          height: 32px;    padding: 5px;">مغلق</a>
+            </div>
+        
+            </h5></div>
+       <div class="stats-center" style="height: 88px;" id="Countt">
+
+           @ViewBag.count
+       </div>
+       <div class="stats-center" style="height: 88px;" hidden="" id="Counttt">
+
+           <div class="countorders"></div>
+       </div>
+    <div class="clearfix"> </div>
+</div>
+<style>
+    .btn-successs:hover  {
+        border-color: #f7941d !important;
+        background: #f7941d !important;
+    }
+    .btn-successs {
+        border-color: #1c2947 !important;
+        background: #1c2947 !important;
+    }
+</style>
+<script>
+    $( "#open" ).click(function() {
+ 
+        $('#Countt').hide();
+        $('#Counttt').show();
+        $.get('/home/OrderRequestopen',
+            function (result) {
+                $('.countorders').text(result);
+            
+               });
+    });
+    $("#closed").click(function () {
+
+        $('#Countt').hide();
+        $('#Counttt').show(); 
+        $.get('/home/OrderRequestclose',
+            function (resultt) {
+              
+                $('.countorders').text(resultt);
+              
+                   }); 
+    });
+   
+</script>

@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>sp_GetPropertyReport
-      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="54">
+      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="16">
         <EntityTypeShape EntityType="MyERPModel.AdvertisingCompaign" Width="1.5" PointX="2.75" PointY="0.75" />
         <EntityTypeShape EntityType="MyERPModel.Area" Width="1.5" PointX="26.25" PointY="264.875" />
         <EntityTypeShape EntityType="MyERPModel.Bank" Width="1.5" PointX="24" PointY="256.25" />
@@ -13,7 +13,6 @@
         <EntityTypeShape EntityType="MyERPModel.CashBox" Width="1.5" PointX="18.75" PointY="244.625" />
         <EntityTypeShape EntityType="MyERPModel.CashIssueSourceType" Width="1.5" PointX="27.75" PointY="255.875" />
         <EntityTypeShape EntityType="MyERPModel.CashIssueVoucher" Width="1.5" PointX="30" PointY="242.25" />
-        <EntityTypeShape EntityType="MyERPModel.CashReceiptSourceType" Width="1.5" PointX="24.75" PointY="230.875" />
         <EntityTypeShape EntityType="MyERPModel.CashTransfer" Width="1.5" PointX="13.5" PointY="244.875" />
         <EntityTypeShape EntityType="MyERPModel.CashTransferType" Width="1.5" PointX="11.25" PointY="240.125" />
         <EntityTypeShape EntityType="MyERPModel.ChartOfAccount" Width="1.5" PointX="14.25" PointY="231" />
@@ -989,7 +988,6 @@
         <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_BankAccount" />
         <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_Branch" />
         <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_CashBox" />
-        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_ReceiptAndPaymentSourceType" />
         <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_ChartOfAccount" />
         <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_CostCenter" />
         <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_Department" />
@@ -1799,7 +1797,6 @@
         <AssociationConnector Association="MyERPModel.FK_PropertyBillRegisteration_PropertyContract" />
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsDueRevenueId" />
         <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsRevenueId" />
-        <EntityTypeShape EntityType="MyERPModel.DelMe" Width="1.5" PointX="15.375" PointY="21.75" />
         <EntityTypeShape EntityType="MyERPModel.PropertyPaymentHistory" Width="1.5" PointX="0.99386463360575239" PointY="6.0869795708390786" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_Property" />
         <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_PropertyBatch" />
@@ -1811,7 +1808,20 @@
         <EntityTypeShape EntityType="MyERPModel.transactionsVatDetail" Width="1.5" PointX="2.288284902595116" PointY="12.423661044064751" />
         <AssociationConnector Association="MyERPModel.FK_PropertyRenter_ChartOfAccount_AccountId" />
         <AssociationConnector Association="MyERPModel.FK_JED_Vendor" />
-        <EntityTypeShape EntityType="MyERPModel.JED_AccountFixLog" Width="1.5" PointX="7.9425132497877415" PointY="7.6404447889143814" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_PropertyContractTermination" />
+        <EntityTypeShape EntityType="MyERPModel.CashReceiptSourceType" Width="1.5" PointX="4.9181257546498092" PointY="3.3520241395346932" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_ReceiptAndPaymentSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ChartOfAccount_From" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ChartOfAccount_To" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_CarType" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

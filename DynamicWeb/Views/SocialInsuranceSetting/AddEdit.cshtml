@@ -1,0 +1,379 @@
+﻿@model MyERP.Models.SocialInsuranceSetting
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.SocialInsuranceSettings;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.SocialInsuranceSettings :</h4>
+        </div>
+    </div>
+</div>
+
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+
+            <!--Main Table-->
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Citizen
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Resident
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.DebitAccount
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.CreditAccount
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                <tr>
+                                    <td>
+                                        <label>@MyERP.Properties.Resources.EmployeeToleranceRate</label>
+                                    </td>
+                                    <td>
+                                        <div class=" form-group row">
+                                            @Html.EditorFor(a => a.CitizinEmployeePercentage, new { htmlAttributes = new { @class = "form-control col-sm-8", @required = "required" } })
+                                            <span class="ml-2"> % </span>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class=" form-group row">
+                                            @Html.EditorFor(a => a.ForeignEmployeePercentage, new { htmlAttributes = new { @class = "form-control col-sm-8", @required = "required" } })
+                                            <span class="ml-2"> % </span>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <lable style="color:blue;"> @MyERP.Properties.Resources.AccountOfTheWagesOwedToTheEmployee</lable>
+                                    </td>
+                                    <td>
+                                        @Html.DropDownListFor(a => a.EmployeeCreditAccId, null, @MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control col-sm-6", @required = "required" } })
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <label>
+                                            @MyERP.Properties.Resources.CompanyBearingRatio
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <div class=" form-group row">
+
+                                            @Html.EditorFor(a => a.CitizinCompanyPercentage, new { htmlAttributes = new { @class = "form-control col-sm-8", @required = "required" } })
+                                            <span class="ml-2"> % </span>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class=" form-group row">
+                                            @Html.EditorFor(a => a.ForeignCompanyPercentage, new { htmlAttributes = new { @class = "form-control col-sm-8", @required = "required" } })
+                                            <span class="ml-2"> % </span>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </td>
+                                    <td>
+
+
+                                        @Html.DropDownListFor(a => a.DebitAccId, null, @MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control col-sm-6", @required = "required" } })
+                                    </td>
+                                    <td>
+                                        @Html.DropDownListFor(a => a.CompanyCreditAccId, null, @MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control col-sm-6", @required = "required" } })
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <br />
+            <br />
+            <br />
+
+            <!--SalaryItem Table-->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card-box">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group row">
+
+                                    <label for="SalaryItemId" class="col-sm-1 control-label">@MyERP.Properties.Resources.SalaryComponent</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SalaryItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+
+                                    </div>
+                                    <div class="col-sm-offset-2">
+                                        <button class="btn btn-success" onclick="additem()">
+                                            @MyERP.Properties.Resources.Add
+                                        </button>
+                                        <button class="btn btn-success" onclick="addAllitems()">
+                                            @MyERP.Properties.Resources.AddAll
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.Name
+                                            </th>
+
+                                            <th>
+                                                @MyERP.Properties.Resources.Delete
+                                            </th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody id="SocialInsuranceSettingDetails">
+                                        @if (Model != null)
+                                        {
+                                            foreach (var item in Model.SocialInsuranceSettingDetails)
+                                            {
+                                                <tr>
+                                                    <td hidden><input class="salaryId" value="@item.SalaryItemId" /></td>
+                                                    <td>
+                                                        <label>@item.SalaryItem.ArName</label>
+                                                    </td>
+
+                                                    <td>
+                                                        <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                                    </td>
+
+                                                </tr>
+                                            }
+                                        }
+
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--  حفظ -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card-box">
+                        <div class="row">
+                            <div class="col-sm-offset-2">
+                                <button type="submit" onclick="addEdit()" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+    function additem() {
+        if (!$('#SalaryItemId').val()) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.SelectTheItem',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        else {
+            let valid = true;
+            $('#SocialInsuranceSettingDetails tr').each(function () {
+                var td = $(this);
+                console.log($('#SalaryItemId').val());
+                console.log(td.find('.salaryId').val());
+                if ($('#SalaryItemId').val() == td.find('.salaryId').val())
+                    valid = false;
+            });
+            if (valid == false)
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.ThisItemWasAddedBefore',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            else {
+                $('#SocialInsuranceSettingDetails').append('<tr><td hidden><input class="salaryId" value=' + $('#SalaryItemId').val() + '></td ><td><label >' + $('#SalaryItemId option:selected').text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+            }
+        }
+    }
+
+    function addAllitems() {
+        $("#SalaryItemId > option").each(function () {
+            let sal = $(this);
+            if (sal.val() > 0) {
+                let valid = true;
+                $('#SocialInsuranceSettingDetails tr').each(function () {
+                    var td = $(this);
+                    console.log(sal);
+                    if (sal.val() == td.find('.salaryId').val())
+                        valid = false;
+                });
+                if (valid == true) {
+                    $('#SocialInsuranceSettingDetails').append('<tr><td hidden><input class="salaryId" value=' + sal.val() + '></td ><td><label >' + sal.text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">' + '@MyERP.Properties.Resources.Delete' + '</button></td></tr>');
+                }
+            }
+        });
+
+
+    }
+
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var SocialInsuranceSettingDetails = [];
+            $('#SocialInsuranceSettingDetails tr').each(function () {
+                var td = $(this);
+                console.log(td);
+
+                var SocialInsuranceSettingDetail = {
+                    SocialInsuranceSettingId: $('#Id').val(),
+                    SalaryItemId: td.find('.salaryId').val()
+                };
+
+                SocialInsuranceSettingDetails.push(SocialInsuranceSettingDetail);
+            });
+            console.log(SocialInsuranceSettingDetails);
+            var SocialInsuranceSetting =
+            {
+                Id: $('#Id').val(),
+                DebitAccId: $('#DebitAccId').val(),
+                EmployeeCreditAccId: $('#EmployeeCreditAccId').val(),
+                CompanyCreditAccId: $('#CompanyCreditAccId').val(),
+                ForeignEmployeePercentage: $('#ForeignEmployeePercentage').val(),
+                ForeignCompanyPercentage: $('#ForeignCompanyPercentage').val(),
+                CitizinEmployeePercentage: $('#CitizinEmployeePercentage').val(),
+                CitizinCompanyPercentage: $('#CitizinCompanyPercentage').val(),
+                SocialInsuranceSettingDetails: SocialInsuranceSettingDetails
+            };
+            @*if (parseInt($('#CitizinCompanyPercentage').val()) + parseInt($('#CitizinEmployeePercentage').val()) != 100 || parseInt($('#ForeignEmployeePercentage').val()) + parseInt($('#ForeignCompanyPercentage').val()) != 100) {
+                alert("@MyERP.Properties.Resources.TotalPercentagesMustEqual100")
+            }
+            else {*@
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "POST",
+                        url: "/SocialInsuranceSetting/AddEdit",
+                        data: SocialInsuranceSetting,
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); window.location.replace("/SocialInsuranceSetting/AddEdit");
+                            }
+                            else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+            //}
+        }
+    }
+
+</script>

@@ -1,0 +1,975 @@
+﻿@model MyERP.Models.Project
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Project;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.Project </h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ContractNo, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.DepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ProjectStatus</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.ProjectStatusId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Currency</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.CurrencyId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ContractType</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.ContractTypeId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.ContractNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ContractNo, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ContractNo } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ProjectValue</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ProjectValue, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ProjectValue } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.DiscountValue</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DiscountValue, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.DiscountValue } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ProjectValueAfterDiscount</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ProjectValueAfterDiscount, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ProjectValueAfterDiscount } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.DiscountPercentage</label>
+                                    <div class="col-sm-3">
+                                        @Html.EditorFor(model => model.DiscountPerc, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.DiscountPercentage } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <span class="col-sm-1"> % </span>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.StartDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.StartDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.EndDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EndDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ProjectDuration</label>
+                                    <div class="col-sm-3">
+                                        @Html.EditorFor(model => model.ProjectDuration, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ProjectDuration, @type = "text" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <span class="col-sm-1"> @MyERP.Properties.Resources.Day</span>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.NearestEnd</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NearestEnd, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.EndCustomer</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.EndCustomerId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.SubCustomer</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.SubCustomerId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Representative</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.CustomerRepId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.SiteManager</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.SiteManagerId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.HrDepartment</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.HrDepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.BasedOn</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.BasedOn, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.BasedOn } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Executor</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Executor, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Executor } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ExecutorPerc</label>
+                                    <div class="col-sm-3">
+                                        @Html.EditorFor(model => model.ExecutorPerc, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ExecutorPerc } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <span class="col-sm-1"> % </span>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Paid</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Paid, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Paid } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Remain</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Remain, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Remain } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.RemainingTime</label>
+                                    <div class="col-sm-3">
+                                        @Html.EditorFor(model => model.RemainingTime, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.RemainingTime, @type = "text" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <span class="col-sm-1">  @MyERP.Properties.Resources.Day </span>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Time</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Time, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Time, @type = "text" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Secretarial</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.SecretarialId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Municipality</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.MunicipalityId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ExecutiveCharge</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.ExecutiveChargeId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.GuaranteeBank</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.GuaranteeBankId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.GuaranteeNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.GuaranteeNo, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.GuaranteeNo } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.GuaranteeValue</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.GuaranteeValue, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.GuaranteeValue } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.GuaranteeStartDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.GuaranteeStartDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label">@MyERP.Properties.Resources.GuaranteeEndDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.GuaranteeEndDate, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Extension</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.GuaranteeExtension, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Extension, @type = "text" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Total</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Total } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="header-title">
+                                    @MyERP.Properties.Resources.ProjectDetails
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <td>
+                                                    @MyERP.Properties.Resources.ItemNo
+                                                </td>
+                                                <td>
+                                                    @MyERP.Properties.Resources.ItemCode
+                                                </td>
+                                                <td>@MyERP.Properties.Resources.ItemSelection</td>
+                                                <td>@MyERP.Properties.Resources.ItemDescription</td>
+                                                <td>
+                                                    @MyERP.Properties.Resources.RelatedToItem
+                                                </td>
+                                                <td>@MyERP.Properties.Resources.Notes</td>
+                                                <td>@MyERP.Properties.Resources.ItemUnit</td>
+                                                <td>@MyERP.Properties.Resources.Delete</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ProjectDetails">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.ProjectDetails)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="ItemNo form-control tabledit-input form-control-sm" value="@item.ItemNo" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="ItemCode form-control tabledit-input form-control-sm" value="@item.ItemCode" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="ItemSelection form-control tabledit-input form-control-sm" value="@item.ItemSelection" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="ItemDescription form-control tabledit-input form-control-sm" value="@item.ItemDescription" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="RelatedToItem form-control tabledit-input form-control-sm" value="@item.RelatedToItem" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="Notes form-control tabledit-input form-control-sm" value="@item.Notes" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <select class="ItemUnitId form-control tabledit-input form-control-sm">
+                                                                <option value="@item.ItemUnitId"></option>
+                                                            </select>
+                                                        </td>
+                                                        <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                                    </tr>
+                                                }
+                                            }
+                                            <tr>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ItemNo form-control tabledit-input form-control-sm" value="" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ItemCode form-control tabledit-input form-control-sm" value="" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ItemSelection form-control tabledit-input form-control-sm" value="" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ItemDescription form-control tabledit-input form-control-sm" value="" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="RelatedToItem form-control tabledit-input form-control-sm" value="" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="Notes form-control tabledit-input form-control-sm" value="" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    @Html.DropDownList("ItemUnitId", null, htmlAttributes: new { @class = "ItemUnitId form-control tabledit-input form-control-sm", id = "", name = "" })
+                                                </td>
+                                                <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                    <button onclick="ItemOperation();" class="btn btn-primary">
+                        @MyERP.Properties.Resources.ItemOperation
+                    </button>
+                </div>
+            </div>
+
+            <!-- عمليات البند -->
+            <div class="row" id="operationDiv" style="display:none;">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="header-title">
+                                    @MyERP.Properties.Resources.ItemOperation
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <td>@MyERP.Properties.Resources.Operation</td>
+                                                <td>@MyERP.Properties.Resources.Count</td>
+                                                <td>@MyERP.Properties.Resources.Unit</td>
+                                                <td>@MyERP.Properties.Resources.IdealDuration</td>
+                                                <td>@MyERP.Properties.Resources.ActualDuration</td>
+                                                <td>@MyERP.Properties.Resources.PreviousActivity</td>
+                                                <td>@MyERP.Properties.Resources.GracePeriod</td>
+                                                <td>@MyERP.Properties.Resources.StartDate</td>
+                                                <td>@MyERP.Properties.Resources.EndDate</td>
+                                                <td>@MyERP.Properties.Resources.NearestStart</td>
+                                                <td>@MyERP.Properties.Resources.LastStart</td>
+                                                <td>@MyERP.Properties.Resources.NearestEnd</td>
+                                                <td>@MyERP.Properties.Resources.LastEnd</td>
+                                                <td>@MyERP.Properties.Resources.Position</td>
+                                                <td>@MyERP.Properties.Resources.Tool</td>
+                                                <td>@MyERP.Properties.Resources.Equipment</td>
+                                                <td>@MyERP.Properties.Resources.Employment</td>
+                                                <td>@MyERP.Properties.Resources.Expenses</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ProjectItemOperations">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.ProjectItemOperations)
+                                                {
+                                            <tr>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="Operation form-control tabledit-input form-control-sm" value="@item.Operation" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="Count form-control tabledit-input form-control-sm" value="@item.Count" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <select class="UnitId form-control tabledit-input form-control-sm">
+                                                        <option value="@item.UnitId"></option>
+                                                    </select>
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="IdealDuration form-control tabledit-input form-control-sm" value="@item.IdealDuration" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ActualDuration form-control tabledit-input form-control-sm" value="@item.ActualDuration" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="PreviousActivity form-control tabledit-input form-control-sm" value="@item.PreviousActivity" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="GracePeriod form-control tabledit-input form-control-sm" value="@item.GracePeriod" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                
+                                                    <input type="datetime-local" class="StartDate form-control tabledit-input form-control-sm" value="@(item.StartDate!=null?item.StartDate.Value.ToString("yyyy-MM-ddTHH:mm"):null)" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="datetime-local" class="EndDate form-control tabledit-input form-control-sm" value="@(item.EndDate!=null?item.EndDate.Value.ToString("yyyy-MM-ddTHH:mm"):null)" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="datetime-local" class="NearestStart form-control tabledit-input form-control-sm" value="@(item.NearestStart!=null?item.NearestStart.Value.ToString("yyyy-MM-ddTHH:mm"):null)" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="datetime-local" class="LastStart form-control tabledit-input form-control-sm" value="@(item.LastStart!=null?item.LastStart.Value.ToString("yyyy-MM-ddTHH:mm"):null)" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="datetime-local" class="NearestEnd form-control tabledit-input form-control-sm" value="@(item.NearestEnd!=null?item.NearestEnd.Value.ToString("yyyy-MM-ddTHH:mm"):null)" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="datetime-local" class="LastEnd form-control tabledit-input form-control-sm" value="@(item.LastEnd!=null?item.LastEnd.Value.ToString("yyyy-MM-ddTHH:mm"):null)" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="Position form-control tabledit-input form-control-sm" value="@item.Position" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ToolId form-control tabledit-input form-control-sm" value="@item.ToolId" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="EquipmentId form-control tabledit-input form-control-sm" value="@item.EquipmentId" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="EmploymentId form-control tabledit-input form-control-sm" value="@item.EmploymentId" />
+                                                </td>
+                                                <td class="tabledit-edit-mode">
+                                                    <input type="text" class="ExpensesId form-control tabledit-input form-control-sm" value="@item.ExpensesId" />
+                                                </td>
+                                                <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                            </tr>
+                                                }
+                                            }
+                                        <tr>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="Operation form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="Count form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                @Html.DropDownList("ItemUnitId", null, htmlAttributes: new { @class = "UnitId form-control tabledit-input form-control-sm", id = "", name = "" })
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="IdealDuration form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="ActualDuration form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="PreviousActivity form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="GracePeriod form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="datetime-local" class="StartDate form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="datetime-local" class="EndDate form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="datetime-local" class="NearestStart form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="datetime-local" class="LastStart form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="datetime-local" class="NearestEnd form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="datetime-local" class="LastEnd form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="Position form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="ToolId form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="EquipmentId form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="EmploymentId form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td class="tabledit-edit-mode">
+                                                <input type="text" class="ExpensesId form-control tabledit-input form-control-sm" />
+                                            </td>
+                                            <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-------------------------------------------------------------------------------------------------------->
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    let ItemUnitOptions = "";
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        getItemUnit();
+        if ($('#Id').val() > 0) {
+            $('.ItemUnitId').not(':last').each(function () {
+                let selectedItem = $(this).val();
+                $(this).empty().append(ItemUnitOptions).val(selectedItem);
+            });
+            $('.UnitId').not(':last').each(function () {
+                let selectedItem = $(this).val();
+                $(this).empty().append(ItemUnitOptions).val(selectedItem);
+            });
+        }
+        else {
+            setCodeNum();
+        }
+        $('#StartDate').val('@ViewBag.StartDate');
+        $('#EndDate').val('@ViewBag.EndDate');
+        $('#GuaranteeStartDate').val('@ViewBag.GuaranteeStartDate');
+        $('#GuaranteeEndDate').val('@ViewBag.GuaranteeEndDate');
+        $('#NearestEnd').val('@ViewBag.NearestEnd');
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+
+    //$(document).on('change', "DepartmentId", function () {
+    //    setCodeNum();
+    //});
+    $(document).on('change', ".ItemNo:last,  .ItemCode:last, .ItemSelection:last, .ItemDescription:last, .RelatedToItem:last,.ItemUnitId:last", function () {
+        AddToProjectDetails();
+    });
+    $(document).on('change', ".Operation:last,  .Count:last, .UnitId:last", function () {
+        AddToProjectItemOperations();
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setCodeNum() {
+        var doc = $.get('/Project/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function getItemUnit() {
+        ItemUnitOptions = '';
+        $('.ItemUnitId').last().find('option').each(function () {
+            ItemUnitOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+        $('.UnitId').last().find('option').each(function () {
+            ItemUnitOptions += '<option value="' + $(this).val() + '">' + $(this).text() + '</option>';
+        });
+    }
+    function AddToProjectDetails() {
+        let valid = true;
+        if ($('#ProjectDetails .ItemNo:last').val() || $('#ProjectDetails .ItemCode:last').val() || $('#ProjectDetails .ItemSelection:last').val() || $('#ProjectDetails .ItemDescription:last').val() || $('#ProjectDetails .RelatedToItem:last').val() || $('#ProjectDetails .ItemUnitId:last').val()) {
+                $('#ProjectDetails').find('.ItemNo,  .ItemCode, .ItemSelection, .ItemDescription, .RelatedToItem,.ItemUnitId').prop('required', true);
+            }
+        if ($('#ProjectDetails .form-control:invalid').length > 0) {
+            $('#ProjectDetails').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#ProjectDetails").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            valid = false;
+        }
+        else {
+            if (valid = true) {
+                let tr = '<tr><td class="tabledit-edit-mode" ><input type="text" class="ItemNo form-control tabledit-input form-control-sm" value="" /></td ><td class="tabledit-edit-mode"><input type="text" class="ItemCode form-control tabledit-input form-control-sm" value="" /></td><td class="tabledit-edit-mode"><input type="text" class="ItemSelection form-control tabledit-input form-control-sm" value="" /></td><td class="tabledit-edit-mode"><input type="text" class="ItemDescription form-control tabledit-input form-control-sm" value="" /></td><td class="tabledit-edit-mode"><input type="text" class="RelatedToItem form-control tabledit-input form-control-sm" value="" /></td><td class="tabledit-edit-mode"><input type="text" class="Notes form-control tabledit-input form-control-sm" value="" /></td><td class="tabledit-edit-mode"><select class="ItemUnitId form-control tabledit-input form-control-sm"></select></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                if (!ItemUnitOptions.length) {
+                    getItemUnit();
+                }
+                $('#ProjectDetails').append(tr);
+                $('.ItemUnitId').last().append(ItemUnitOptions).select2();
+            }
+
+        }
+    }
+    function ItemOperation() {
+        $('#operationDiv').show();
+    }
+    function AddToProjectItemOperations() {
+        let valid = true;
+        if ( $('#ProjectItemOperations .Operation:last').val() || $('#ProjectItemOperations .UnitId:last').val() || $('#ProjectItemOperations .Count:last').val()) {
+            $('#ProjectItemOperations').find('.Operation, .Count,.UnitId').prop('required', true);
+        }
+        if ($('#ProjectItemOperations .form-control:invalid').length > 0) {
+            $('#ProjectItemOperations').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#ProjectItemOperations").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            valid = false;
+        }
+        else {
+            if (valid = true) {
+                let tr = '<tr><td class="tabledit-edit-mode"><input type="text" class="Operation form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="Count form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><select class= "UnitId form-control tabledit-input form-control-sm"></select></td><td class="tabledit-edit-mode"><input type="text" class="IdealDuration form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="ActualDuration form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="PreviousActivity form-control tabledit-input form-control-sm" /></td> <td class="tabledit-edit-mode"><input type = "text" class="GracePeriod form-control tabledit-input form-control-sm" /></td ><td class="tabledit-edit-mode"><input type="datetime-local" class="StartDate form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="EndDate form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="NearestStart form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="LastStart form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="NearestEnd form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="datetime-local" class="LastEnd form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="Position form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="ToolId form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="EquipmentId form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="EmploymentId form-control tabledit-input form-control-sm" /></td><td class="tabledit-edit-mode"><input type="text" class="ExpensesId form-control tabledit-input form-control-sm" /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr > ';
+                if (!ItemUnitOptions.length) {
+                    getItemUnit();
+                }
+                $('#ProjectItemOperations').append(tr);
+                $('.UnitId').last().append(ItemUnitOptions).select2();
+            }
+
+        }
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+           // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+            $(tr).find("label").text('');
+        }
+    }
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+
+        let ProjectDetails = [];
+        $('#ProjectDetails tr').each(function () {
+                var td = $(this);
+            var ProjectDetail = {
+                MainDocId: $('#Id').val(),
+                ItemNo: td.find('.ItemNo').val(),
+                ItemCode: td.find('.ItemCode').val(),
+                ItemSelection: td.find('.ItemSelection').val(),
+                ItemDescription: td.find('.ItemDescription').val(),
+                RelatedToItem: td.find('.RelatedToItem').val(),
+                Notes: td.find('.Notes').val(),
+                ItemUnitId: td.find('.ItemUnitId').val(),
+                IsDeleted: $('#IsDeleted').val(),
+            };
+            if (td.find('.ItemNo').val() && td.find('.ItemCode').val() && td.find('.ItemUnitId').val() )
+            ProjectDetails.push(ProjectDetail);
+        });
+        if ($('#ProjectDetails tr').length ==1 && !$('#ProjectDetails tr:last input').val()>0) {
+            alert('@MyERP.Properties.Resources.AllDetailsRequired');
+            valid = false;
+        }
+
+        let ProjectItemOperations = [];
+        $('#ProjectItemOperations tr').each(function () {
+            var td = $(this);
+            var ProjectItemOperation = {
+                ProjectId: $('#Id').val(),
+                IsDeleted: $('#IsDeleted').val(),
+                Operation: td.find('.Operation').val(),
+                Count: td.find('.Count').val(),
+                UnitId: td.find('.UnitId').val(),
+                IdealDuration: td.find('.IdealDuration').val(),
+                ActualDuration: td.find('.ActualDuration').val(),
+                PreviousActivity: td.find('.PreviousActivity').val(),
+                GracePeriod: td.find('.GracePeriod').val(),
+                StartDate: td.find('.StartDate').val(),
+                EndDate: td.find('.EndDate').val(),
+                NearestStart: td.find('.NearestStart').val(),
+                LastStart: td.find('.LastStart').val(),
+                NearestEnd: td.find('.NearestEnd').val(),
+                LastEnd: td.find('.LastEnd').val(),
+                Position: td.find('.Position').val(),
+                ToolId: td.find('.ToolId').val(),
+                EquipmentId: td.find('.EquipmentId').val(),
+                EmploymentId: td.find('.EmploymentId').val(),
+                ExpensesId: td.find('.ExpensesId').val(),
+            };
+            if (td.find('.Operation').val() && td.find('.Count').val() && td.find('.UnitId').val())
+            ProjectItemOperations.push(ProjectItemOperation);
+        });
+
+        var Project = {
+            Id: $('#Id').val(),
+            Code: $('#Code').val(),
+            ArName: $('#ArName').val(),
+            EnName: $('#EnName').val(),
+            DepartmentId: $('#DepartmentId').val(),
+            CurrencyId: $('#CurrencyId').val(),
+            Total: $('#Total').val(),
+            UserId: $('#UserId').val(),
+            IsActive: $('#IsActive').val(),
+            IsDeleted: $('#IsDeleted').val(),
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            ProjectStatusId: $('#ProjectStatusId').val(),
+            ContractTypeId: $('#ContractTypeId').val(),
+            ContractNo: $('#ContractNo').val(),
+            ProjectValue: $('#ProjectValue').val(),
+            DiscountValue: $('#DiscountValue').val(),
+            DiscountPerc: $('#DiscountPerc').val(),
+            ProjectValueAfterDiscount: $('#ProjectValueAfterDiscount').val(),
+            StartDate: $('#StartDate').val(),
+            EndDate: $('#EndDate').val(),
+            NearestEnd: $('#NearestEnd').val(),
+            ProjectDuration: $('#ProjectDuration').val(),
+            BasedOn: $('#BasedOn').val(),
+            EndCustomerId: $('#EndCustomerId').val(),
+            SubCustomerId: $('#SubCustomerId').val(),
+            CustomerRepId: $('#CustomerRepId').val(),
+            SiteManagerId: $('#SiteManagerId').val(),
+            HrDepartmentId: $('#HrDepartmentId').val(),
+            Executor: $('#Executor').val(),
+            ExecutorPerc: $('#ExecutorPerc').val(),
+            Paid: $('#Paid').val(),
+            Remain: $('#Remain').val(),
+            RemainingTime: $('#RemainingTime').val(),
+            Time: $('#Time').val(),
+            MunicipalityId: $('#MunicipalityId').val(),
+            SecretarialId: $('#SecretarialId').val(),
+            ExecutiveChargeId: $('#ExecutiveChargeId').val(),
+            GuaranteeNo: $('#GuaranteeNo').val(),
+            GuaranteeValue: $('#GuaranteeValue').val(),
+            GuaranteeStartDate: $('#GuaranteeStartDate').val(),
+            GuaranteeEndDate: $('#GuaranteeEndDate').val(),
+            GuaranteeExtension: $('#GuaranteeExtension').val(),
+            GuaranteeBankId: $('#GuaranteeBankId').val(),
+            ProjectDetails: ProjectDetails,
+            ProjectItemOperations: ProjectItemOperations,
+        }
+
+        if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            $('#newbtn').prop('disabled', true);
+            $('#save').prop('disabled', true);
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/Project/AddEdit",
+                data: JSON.stringify( Project ),
+                success: function (r) {
+                    if (r.success == true) {
+                        alert("@MyERP.Properties.Resources.Saved");
+                        if (n == "new") {
+                            window.location.replace("/Project/AddEdit");
+                        } else {
+                            window.location.replace("/Project");
+                        }
+                    }
+                    else {
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                    }
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                },
+                error: function (r) {
+                    alert("@MyERP.Properties.Resources.NotSaved");
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                }
+            });
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Project/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Project');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+
+</script>
+
+

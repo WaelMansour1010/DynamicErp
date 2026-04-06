@@ -1,0 +1,231 @@
+﻿@model MyERP.Models.Qualification
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    else if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Qualifications;
+}
+
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.Qualifications :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/Qualification/AddEdit" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">*@
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+                        @* panal 1 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.Qualifications
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse1">
+                                    <div class="form-group row">
+                                        @if (Model != null)
+                                        {
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.HiddenFor(model => model.IsActive)
+                                            @Html.HiddenFor(model => model.UserId)
+                                            @Html.HiddenFor(model => model.Image)
+
+                                        }
+                                        <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.ArName @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="QualificationTypeId" class="control-label col-sm-2"> @MyERP.Properties.Resources.QualificationType</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("QualificationTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                        <div class="col-sm-4">
+                                            <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-offset-2">
+                                @if (Model == null)
+                                {
+                                    <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                }
+                                else if (Model.IsDeleted == false)
+                                {
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                                        @MyERP.Properties.Resources.Delete
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @*</form>*@
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+
+        }
+        else {
+            setCodeNum();
+        }
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setCodeNum() {
+        var doc = $.get('/Qualification/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    
+    //*********************************************************//
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Qualification/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            alert("@MyERP.Properties.Resources.Deleted");
+                            window.location.replace('/Qualification');
+                        }
+                        else {
+                            alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded");
+                            $('#preloader, #status').fadeOut();
+                        }
+
+                    }
+                });
+        }
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var qualification =
+            {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                ArName: $('#ArName').val(),
+                EnName: $('#EnName').val(),
+                IsActive: true,
+                IsDeleted: false,
+                QualificationTypeId: $('#QualificationTypeId').val(),
+            };
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/Qualification/AddEdit",
+                    data: qualification,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/Qualification/AddEdit");
+                            } else {
+                                window.location.replace("/Qualification");
+                            }
+                        }
+                        else {
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                            $('#preloader, #status').fadeOut();
+                        }
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+            }
+        }
+    }
+
+</script>
