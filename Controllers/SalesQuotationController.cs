@@ -13,6 +13,7 @@ using System.Data.Entity.Core.Objects;
 using System.Threading.Tasks;
 using MyERP.Repository;
 using System.Text.RegularExpressions;
+using System.Data.SqlClient;
 
 namespace MyERP.Controllers
 {
@@ -306,6 +307,12 @@ return Json(new
 
         }
 
+
+        private bool VehicleStockTableExists()
+        {
+            return db.Database.SqlQuery<int>("SELECT CASE WHEN OBJECT_ID('dbo.VehicleStock','U') IS NULL THEN 0 ELSE 1 END").FirstOrDefault() == 1;
+        }
+
         private void FillVehicleLookupData(string session)
         {
             ViewBag.CarTypesJson = JsonConvert.SerializeObject(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(b => new
@@ -325,6 +332,37 @@ return Json(new
                 ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
             }).ToList());
         }
+        private string ValidateVehicleChassisNumbers(ICollection<SalesQuotationDetail> details, int quotationId)
+        {
+            if (details == null) return null;
+            var normalizedInQuotation = new HashSet<string>();
+            foreach (var detail in details)
+            {
+                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                var chassis = (detail.ChassisNo ?? "").Trim();
+                if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
+                    return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
+                if (detail.VehicleStockId.HasValue && VehicleStockTableExists())
+                {
+                    var validStock = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.VehicleStock WHERE Id=@Id AND IsDeleted=0 AND VehicleStatusId=1", new SqlParameter("@Id", detail.VehicleStockId.Value)).FirstOrDefault() > 0;
+                    if (!validStock)
+                        return "السيارة المختارة غير متاحة بالمخزون.";
+                }
+                if (!string.IsNullOrWhiteSpace(chassis))
+                {
+                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+                    if (normalizedInQuotation.Contains(normalized))
+                        return "رقم الشاسيه مكرر داخل نفس عرض السعر.";
+                    normalizedInQuotation.Add(normalized);
+                    var existsInQuotation = db.SalesQuotationDetails.Where(x => !x.IsDeleted && x.MainDocId != quotationId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInQuotation)
+                        return "رقم الشاسيه مستخدم مسبقاً في عرض سعر آخر.";
+                }
+            }
+            return null;
+        }
+
         //  private string ValidateVehicleChassisNumbers(ICollection<SalesQuotationDetail> details, int quotationId)
         //  {
         //      if (details == null) return null;
