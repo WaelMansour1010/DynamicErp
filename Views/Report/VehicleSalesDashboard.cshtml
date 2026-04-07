@@ -1,0 +1,89 @@
+@{
+    if (ViewBag.ShowReport == true) { Layout = null; } else { Layout = "~/Views/Shared/_Layout.cshtml"; }
+    ViewBag.Title = "لوحة تحكم مبيعات السيارات";
+}
+<meta name="viewport" content="width=device-width" />
+@if (ViewBag.ShowReport == true)
+{
+    @Html.DevExpress().GetStyleSheets(
+        new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Report })
+    @Html.DevExpress().GetScripts(
+        new Script { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+        new Script { ExtensionSuite = ExtensionSuite.Editors },
+        new Script { ExtensionSuite = ExtensionSuite.Report })
+    @Html.DevExpress().WebDocumentViewer(settings => {
+        settings.Name = "WebDocumentViewer";
+    }).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(
+        new MyERP.Reporting.Reports.VehicleSalesDashboard_Report(
+            ViewBag.DateFrom,
+            ViewBag.DateTo,
+            ViewBag.BranchId,
+            ViewBag.WarehouseId,
+            ViewBag.CarTypeId,
+            ViewBag.CarModelId,
+            ViewBag.CarColorId,
+            ViewBag.ManufacturingYear,
+            ViewBag.VehicleStatusId,
+            ViewBag.ChassisNo,
+            ViewBag.VendorOrCustomerId
+    ))).GetHtml()
+}
+else
+{
+    <div class="card-box">
+        <div class="form-group row">
+            <label class="col-sm-2">من</label>
+            <div class="col-sm-4"><input id="DateFrom" type="date" class="form-control" /></div>
+            <label class="col-sm-2">إلى</label>
+            <div class="col-sm-4"><input id="DateTo" type="date" class="form-control" /></div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2">الفرع</label>
+            <div class="col-sm-4">@Html.DropDownList("BranchId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+            <label class="col-sm-2">المخزن</label>
+            <div class="col-sm-4">@Html.DropDownList("WarehouseId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2">نوع السيارة</label>
+            <div class="col-sm-4">@Html.DropDownList("CarTypeId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+            <label class="col-sm-2">موديل السيارة</label>
+            <div class="col-sm-4">@Html.DropDownList("CarModelId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2">اللون</label>
+            <div class="col-sm-4">@Html.DropDownList("CarColorId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+            <label class="col-sm-2">سنة الصنع</label>
+            <div class="col-sm-4"><input id="ManufacturingYear" type="number" class="form-control" placeholder="مثال: 2023" /></div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2">حالة المركبة</label>
+            <div class="col-sm-4">@Html.DropDownList("VehicleStatusId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+            <label class="col-sm-2">العميل / المورد</label>
+            <div class="col-sm-4">@Html.DropDownList("VendorOrCustomerId", null, MyERP.Properties.Resources.Select, new { @class = "form-control" })</div>
+        </div>
+        <div class="form-group row">
+            <label class="col-sm-2">رقم الشاسيه</label>
+            <div class="col-sm-4"><input id="ChassisNo" type="text" class="form-control" placeholder="بحث جزئي..." /></div>
+        </div>
+        <button class="btn btn-success" onclick="showReport()">@MyERP.Properties.Resources.ShowReport</button>
+    </div>
+}
+<script>
+function showReport() {
+    var url = '/Report/VehicleSalesDashboard?showReport=true'
+        + '&DateFrom='           + encodeURIComponent($('#DateFrom').val())
+        + '&DateTo='             + encodeURIComponent($('#DateTo').val())
+        + '&BranchId='           + encodeURIComponent($('#BranchId').val())
+        + '&WarehouseId='        + encodeURIComponent($('#WarehouseId').val())
+        + '&CarTypeId='          + encodeURIComponent($('#CarTypeId').val())
+        + '&CarModelId='         + encodeURIComponent($('#CarModelId').val())
+        + '&CarColorId='         + encodeURIComponent($('#CarColorId').val())
+        + '&ManufacturingYear='  + encodeURIComponent($('#ManufacturingYear').val())
+        + '&VehicleStatusId='    + encodeURIComponent($('#VehicleStatusId').val())
+        + '&VendorOrCustomerId=' + encodeURIComponent($('#VendorOrCustomerId').val())
+        + '&ChassisNo='          + encodeURIComponent($('#ChassisNo').val());
+    window.open(url, '_blank');
+}
+</script>

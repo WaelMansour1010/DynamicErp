@@ -151,3 +151,7 @@ VALUES ('CarSalesHistory', N'تاريخ مبيعات السيارات', 'CarSale
 IF NOT EXISTS(SELECT 1 FROM SystemPage WHERE EnName = 'CarQuotationReport')
 INSERT INTO SystemPage (Code, ArName, EnName, IsMasterFile, TableName, ControllerName, IsTransaction, IsUpdated, IsReport, ParentId, IsActive, IsDeleted, IsModule, PageCode, ShowInReportPage)
 VALUES ('CarQuotationReport', N'تقرير عروض أسعار السيارات', 'CarQuotationReport', 0, 'SalesQuotationDetails', 'Report', 0, 0, 1, @ReportsParentId, 1, 0, 0, 'RPT_CarQuotationReport', 1);
+
+IF NOT EXISTS(SELECT 1 FROM SystemPage WHERE EnName = 'VehicleSalesDashboard')
+INSERT INTO SystemPage (Code, ArName, EnName, IsMasterFile, TableName, ControllerName, IsTransaction, IsUpdated, IsReport, ParentId, IsActive, IsDeleted, IsModule, PageCode, ShowInReportPage)
+VALUES ('VehicleSalesDashboard', N'لوحة تحكم مبيعات السيارات', 'VehicleSalesDashboard', 0, 'VehicleStock', 'Report', 0, 0, 1, @ReportsParentId, 1, 0, 0, 'RPT_VehicleSalesDashboard', 1);
