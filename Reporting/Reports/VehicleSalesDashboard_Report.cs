@@ -328,56 +328,26 @@ namespace MyERP.Reporting.Reports
                 Borders     = DevExpress.XtraPrinting.BorderSide.All
             };
 
-            chart.Titles.Add(new ChartTitle {
-                Text      = "أفضل الموديلات مبيعاً  –  Top Models by Revenue",
-                TextColor = C_White,
-                Font      = new Font("Arial", 8f, FontStyle.Bold),
-                Alignment = System.Drawing.StringAlignment.Center
-            });
+            var title = new ChartTitle();
+            title.Text      = "أفضل الموديلات مبيعاً  –  Top Models by Revenue";
+            title.TextColor = C_White;
+            title.Font      = new Font("Arial", 8f, FontStyle.Bold);
+            title.Alignment = System.Drawing.StringAlignment.Center;
+            chart.Titles.Add(title);
 
-            var series = new Series("المبيعات", ViewType.Bar) {
-                ArgumentDataMember = "CarModelName",
-                DataSource         = dt,
-                DataSourceMember   = ""
-            };
+            // DataSource set on the series so it is independent of the report's
+            // main DataSource (the mode-1 detail DataTable).
+            var series = new Series("المبيعات", ViewType.Bar);
+            series.ArgumentDataMember = "CarModelName";
+            series.DataSource         = dt;
             series.ValueDataMembers.AddRange(new[] { "TotalSales" });
 
             var barView = (BarSeriesView)series.View;
-            barView.Color       = C_Blue;
-            barView.BorderColor = Color.Transparent;
+            barView.Color = C_Blue;
 
-            series.Label.Visible        = true;
-            series.Label.TextColor      = C_White;
-            series.Label.Font           = new Font("Arial", 6f);
-            series.Label.BackColor      = Color.Transparent;
-            series.Label.Border.Visible = false;
+            series.Label.Visible = false;
 
             chart.Series.Add(series);
-
-            // Style the auto-created XY diagram
-            if (chart.Diagram is XYDiagram d)
-            {
-                d.DefaultPane.BackColor   = Color.Transparent;
-                d.DefaultPane.BorderColor = Color.Transparent;
-
-                d.AxisX.Label.TextColor        = C_Gray;
-                d.AxisX.Label.Font             = new Font("Arial", 6f);
-                d.AxisX.LineColor              = C_Divider;
-                d.AxisX.Color                  = C_Divider;
-                d.AxisX.MajorGridlines.Visible = false;
-                d.AxisX.MinorGridlines.Visible = false;
-                d.AxisX.Tickmarks.Visible      = false;
-
-                d.AxisY.Label.TextColor        = C_Gray;
-                d.AxisY.Label.Font             = new Font("Arial", 6f);
-                d.AxisY.LineColor              = C_Divider;
-                d.AxisY.Color                  = C_Divider;
-                d.AxisY.MajorGridlines.Color   = Color.FromArgb(35, 50, 80);
-                d.AxisY.MajorGridlines.Visible = true;
-                d.AxisY.MinorGridlines.Visible = false;
-                d.AxisY.Tickmarks.Visible      = false;
-            }
-
             chart.Legend.Visible = false;
 
             return chart;
@@ -392,35 +362,27 @@ namespace MyERP.Reporting.Reports
                 Borders     = DevExpress.XtraPrinting.BorderSide.All
             };
 
-            chart.Titles.Add(new ChartTitle {
-                Text      = "توزيع المركبات حسب الحالة  –  Status Distribution",
-                TextColor = C_White,
-                Font      = new Font("Arial", 8f, FontStyle.Bold),
-                Alignment = System.Drawing.StringAlignment.Center
-            });
+            var title = new ChartTitle();
+            title.Text      = "توزيع المركبات حسب الحالة  –  Status Distribution";
+            title.TextColor = C_White;
+            title.Font      = new Font("Arial", 8f, FontStyle.Bold);
+            title.Alignment = System.Drawing.StringAlignment.Center;
+            chart.Titles.Add(title);
 
-            var series = new Series("الحالة", ViewType.Pie) {
-                ArgumentDataMember = "VehicleStatusName",
-                DataSource         = dt,
-                DataSourceMember   = ""
-            };
+            var series = new Series("الحالة", ViewType.Pie);
+            series.ArgumentDataMember = "VehicleStatusName";
+            series.DataSource         = dt;
             series.ValueDataMembers.AddRange(new[] { "CarsCount" });
-
-            var pieView = (PieSeriesView)series.View;
-            pieView.HoleRadiusPercent = 38;  // donut style
-            pieView.Border.Color      = C_PageBg;
-
-            series.Label.Visible        = false;  // legend handles labelling
+            series.Label.Visible = false;
 
             chart.Series.Add(series);
 
-            chart.Legend.Visible                = true;
-            chart.Legend.BackColor              = Color.Transparent;
-            chart.Legend.TextColor              = C_Gray;
-            chart.Legend.Font                   = new Font("Arial", 7f);
-            chart.Legend.Border.Color           = Color.Transparent;
-            chart.Legend.AlignmentHorizontal    = LegendAlignmentHorizontal.Right;
-            chart.Legend.AlignmentVertical      = LegendAlignmentVertical.Center;
+            chart.Legend.Visible             = true;
+            chart.Legend.BackColor           = Color.Transparent;
+            chart.Legend.TextColor           = C_Gray;
+            chart.Legend.Font                = new Font("Arial", 7f);
+            chart.Legend.AlignmentHorizontal = LegendAlignmentHorizontal.Right;
+            chart.Legend.AlignmentVertical   = LegendAlignmentVertical.Center;
 
             return chart;
         }
