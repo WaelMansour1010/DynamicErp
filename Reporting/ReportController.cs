@@ -1603,6 +1603,58 @@ namespace MyERP.Reporting
             return View();
         }
 
+        public ActionResult VehicleSalesDashboard(
+            DateTime? DateFrom, DateTime? DateTo,
+            int? BranchId, int? WarehouseId,
+            int? CarTypeId, int? CarModelId, int? CarColorId,
+            int? ManufacturingYear, int? VehicleStatusId,
+            string ChassisNo, int? VendorOrCustomerId,
+            bool? showReport, bool? print)
+        {
+            var report = new VehicleSalesDashboard_Report(
+                DateFrom, DateTo,
+                BranchId, WarehouseId,
+                CarTypeId, CarModelId, CarColorId,
+                ManufacturingYear, VehicleStatusId,
+                ChassisNo, VendorOrCustomerId);
+
+            ViewBag.ShowReport         = showReport;
+            ViewBag.DateFrom           = DateFrom;
+            ViewBag.DateTo             = DateTo;
+            ViewBag.BranchId           = BranchId;
+            ViewBag.WarehouseId        = WarehouseId;
+            ViewBag.CarTypeId          = CarTypeId;
+            ViewBag.CarModelId         = CarModelId;
+            ViewBag.CarColorId         = CarColorId;
+            ViewBag.ManufacturingYear  = ManufacturingYear;
+            ViewBag.VehicleStatusId    = VehicleStatusId;
+            ViewBag.ChassisNo          = ChassisNo;
+            ViewBag.VendorOrCustomerId = VendorOrCustomerId;
+
+            if (showReport == true)
+            {
+                return View(report);
+            }
+            else if (print == true)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    report.ExportToPdf(ms, new PdfExportOptions() { ShowPrintDialogOnOpen = false });
+                    return File(ms.ToArray(), "application/pdf");
+                }
+            }
+
+            // Filter drop-down lists
+            ViewBag.BranchId           = new SelectList(db.Branches.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", BranchId);
+            ViewBag.WarehouseId        = new SelectList(db.Warehouses.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", WarehouseId);
+            ViewBag.CarTypeId          = new SelectList(db.CarTypes.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarTypeId);
+            ViewBag.CarModelId         = new SelectList(db.CarModels.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarModelId);
+            ViewBag.CarColorId         = new SelectList(db.CarColors.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", CarColorId);
+            ViewBag.VehicleStatusId    = new SelectList(db.VehicleStatus.Select(a => new { a.Id, ArName = a.ArName }), "Id", "ArName", VehicleStatusId);
+            ViewBag.VendorOrCustomerId = new SelectList(db.Customers.Where(a => a.IsActive && !a.IsDeleted).Select(a => new { a.Id, ArName = a.Code + " - " + a.ArName }), "Id", "ArName", VendorOrCustomerId);
+            return View();
+        }
+
         private FileResult ExportDocument(byte[] document, string format, string fileName, bool isInline)
         {
             string contentType;

@@ -3096,6 +3096,9 @@
     <Compile Include="Reporting\Reports\CarQuotationReport_Report.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Reporting\Reports\VehicleSalesDashboard_Report.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Reporting\Reports\PosClosing_Report.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -4613,6 +4616,7 @@
     <Content Include="Views\Report\CarCurrentStock.cshtml" />
     <Content Include="Views\Report\CarSalesHistory.cshtml" />
     <Content Include="Views\Report\CarQuotationReport.cshtml" />
+    <Content Include="Views\Report\VehicleSalesDashboard.cshtml" />
     <Content Include="Views\CarColor\AddEdit.cshtml" />
     <Content Include="Views\CarColor\Index.cshtml" />
     <Content Include="Views\CarModel\AddEdit.cshtml" />
