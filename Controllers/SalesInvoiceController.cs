@@ -1759,7 +1759,14 @@ ORDER BY vs.PurchaseDate DESC, vs.Id DESC";
             if (!VehicleStockTableExists()) return;
             var invoice = db.SalesInvoices.FirstOrDefault(x => x.Id == salesInvoiceId);
             if (invoice == null) return;
-            var details = db.SalesInvoiceDetails.Where(x => x.MainDocId == salesInvoiceId && !x.IsDeleted && x.VehicleStockId != null).ToList();
+           // var details = db.SalesInvoiceDetails.Where(x => x.MainDocId == salesInvoiceId && !x.IsDeleted && x.VehicleStockId != null).ToList();
+
+            var details = db.SalesInvoiceDetails
+    .Where(x => x.MainDocId == salesInvoiceId && !x.IsDeleted)
+    .AsEnumerable()
+    .Where(x => x.VehicleStockId != null)
+    .ToList();
+
             foreach (var detail in details)
             {
                 string sql = @"UPDATE dbo.VehicleStock

@@ -410,7 +410,69 @@ namespace MyERP.Controllers
                     var AlteredPricesXML = MyXML.GetXML(AlteredPrices);
                     MyXML.xPathName = "DirectExpenses";
                     var DirectExpenses = MyXML.GetXML(purchaseInvoice.PurchaseInvoiceDirectExpenses);
-                    db.PurchaseInvoice_Update(purchaseInvoice.Id, purchaseInvoice.DocumentNumber, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, purchaseInvoice.IsPosted, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
+                    try
+                    {
+                        db.PurchaseInvoice_Update(
+                            purchaseInvoice.Id,
+                            purchaseInvoice.DocumentNumber,
+                            purchaseInvoice.BranchId,
+                            purchaseInvoice.WarehouseId,
+                            purchaseInvoice.DepartmentId,
+                            purchaseInvoice.VoucherDate,
+                            purchaseInvoice.VendorOrCustomerId,
+                            purchaseInvoice.CurrencyId,
+                            purchaseInvoice.CurrencyEquivalent,
+                            purchaseInvoice.Total,
+                            purchaseInvoice.TotalItemsDiscount,
+                            purchaseInvoice.SalesTaxes,
+                            purchaseInvoice.TotalAfterTaxes,
+                            purchaseInvoice.VoucherDiscountValue,
+                            purchaseInvoice.VoucherDiscountPercentage,
+                            purchaseInvoice.NetTotal,
+                            purchaseInvoice.Paid,
+                            purchaseInvoice.ValidityPeriod,
+                            purchaseInvoice.DeliveryPeriod,
+                            purchaseInvoice.CostCenterId,
+                            purchaseInvoice.CurrentQuantity,
+                            purchaseInvoice.DestinationWarehouseId,
+                            purchaseInvoice.SystemPageId,
+                            purchaseInvoice.SelectedId,
+                            purchaseInvoice.TotalCostPrice,
+                            purchaseInvoice.CommercialRevenueTaxAmount,
+                            purchaseInvoice.TotalItemDirectExpenses,
+                            purchaseInvoice.AddedPrecentageCost,
+                            purchaseInvoice.IsDelivered,
+                            purchaseInvoice.IsAccepted,
+                            purchaseInvoice.IsLinked,
+                            purchaseInvoice.IsCompleted,
+                            purchaseInvoice.IsPosted,
+                            purchaseInvoice.UserId,
+                            purchaseInvoice.IsActive,
+                            purchaseInvoice.IsDeleted,
+                            purchaseInvoice.AutoCreated,
+                            purchaseInvoice.Notes,
+                            purchaseInvoice.Image,
+                            purchaseInvoice.UpdatedId,
+                            PurchaseInvoiceDetails,
+                            InvoicePaymentMethods,
+                            DirectExpenses,
+                            SerialNumbersXML,
+                            alterPrices,
+                            AlteredPricesXML,
+                            distributeItemsOnWarehouses,
+                            purchaseInvoicePatchDetails,
+                            purchaseInvoice.DueDate,
+                            purchaseInvoice.VendorInvoiceNumber
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = ex.ToString();
+                        var inner = ex.InnerException != null ? ex.InnerException.ToString() : "";
+                        throw new Exception("PurchaseInvoice_Update failed.\r\n" + msg + "\r\nINNER:\r\n" + inner, ex);
+                    }
+
+                    //db.PurchaseInvoice_Update(purchaseInvoice.Id, purchaseInvoice.DocumentNumber, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, purchaseInvoice.IsPosted, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
                     SyncVehicleStockForPurchaseInvoice(purchaseInvoice.Id);
                     Notification.GetNotification("PurchaseInvoice", "Edit", "AddEdit", id, null, " فواتير المشتريات");
                 }

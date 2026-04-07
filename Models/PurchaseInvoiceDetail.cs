@@ -46,22 +46,19 @@ namespace MyERP.Models
         public Nullable<int> UpdatedId { get; set; }
         public string Notes { get; set; }
         public string PatchCode { get; set; }
-        public Nullable<int> CarTypeId { get; set; }
-        public Nullable<int> CarModelId { get; set; }
-        public Nullable<int> CarColorId { get; set; }
         public string ChassisNo { get; set; }
         public string EngineNo { get; set; }
         public Nullable<int> ManufacturingYear { get; set; }
         public string PlateNo { get; set; }
         public string VehicleNotes { get; set; }
-        public string ChassisNo { get; set; }
-        public string VehicleNotes { get; set; }
+        
+        
         public Nullable<int> CarTypeId { get; set; }
         public Nullable<int> CarModelId { get; set; }
         public Nullable<int> CarColorId { get; set; }
-        public string EngineNo { get; set; }
-        public Nullable<int> ManufacturingYear { get; set; }
-        public string PlateNo { get; set; }
+        
+        
+        
     
         public virtual Currency Currency { get; set; }
         public virtual ItemPrice ItemPrice { get; set; }
