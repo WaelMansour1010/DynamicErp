@@ -1,0 +1,65 @@
+﻿@model IEnumerable<EazyCash.Models.UserViewModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+</p>
+
+ 
+<div>
+    <div class="ibox-title">
+        <h5>Users</h5>
+    </div>
+    <div class="ibox-content">
+
+ 
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+          
+            
+            <th>
+                @Html.DisplayNameFor(model => model.BranchName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsAdmin)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsActive)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName)
+            </td>
+          
+            <td>
+                @Html.DisplayFor(modelItem => item.BranchName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsAdmin)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
+            </td>
+            <td>
+                <a asp-action="Edit" class="btn btn-success" asp-route-id="@item.Id">Edit</a> 
+             @*   <a asp-action="Details" asp-route-id="@item.Id">Details</a> |*@
+              
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
+    </div>
+</div>

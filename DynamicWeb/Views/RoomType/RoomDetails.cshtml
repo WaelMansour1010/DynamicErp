@@ -1,0 +1,160 @@
+﻿@model MyERP.Models.RoomType
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.RoomDetails;
+    Layout = "~/Views/Shared/_HotelBookingLayout.cshtml";
+}
+
+
+
+@*<div class="hero-wrap" style="background-image: url('../../assets/images//Hotel/images/bg_3.jpg');">
+        <div class="overlay"></div>
+        <div class="container">
+            <div class="row no-gutters slider-text d-flex align-itemd-center justify-content-center">
+                <div class="col-md-9 ftco-animate text-center d-flex align-items-end justify-content-center">
+                    <div class="text">
+                        <p class="breadcrumbs mb-2"><span class="mr-2"><a href="/HotelBooking">@MyERP.Properties.Resources.Home</a></span> <span class="mr-2"><a href="/Room">@MyERP.Properties.Resources.Rooms</a></span></p>
+                        <h1 class="mb-4 bread">@MyERP.Properties.Resources.RoomDetails</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>*@
+
+<section class="ftco-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="row no-gutters justify-content-center mb-5 pb-3">
+                    <div class="col-md-7 heading-section text-center ftco-animate">
+                        <span class="subheading" style="font-size:20px">@MyERP.Properties.Resources.FunTimesChalets</span>
+                        @*<h2 class="mb-4">@MyERP.Properties.Resources.HotelSubRooms</h2>*@
+                        <h2 class="mb-4">@Model.ArName</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 ftco-animate">
+                        <div class="single-slider owl-carousel">
+                            @foreach (var item in Model.RoomTypeImages)
+                            {
+                                <div class="item">
+                                    <div class="room-img" style="background-image: url(@item.Image);"></div>
+                                </div>
+                            }
+                            @*<div class="item">
+                                    <div class="room-img" style="background-image: url(images/room-4.jpg);"></div>
+                                </div>
+                                <div class="item">
+                                    <div class="room-img" style="background-image: url(images/room-5.jpg);"></div>
+                                </div>
+                                <div class="item">
+                                    <div class="room-img" style="background-image: url(images/room-6.jpg);"></div>
+                                </div>*@
+                        </div>
+                    </div>
+                    <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
+                        <h2 class="mb-4">@Model.ArName <span id="AvailableSpan">@*- (4 Available rooms)*@</span> </h2>
+                        <p>@Model.Notes</p>
+                        <input hidden id="RoomTypeId" value="@Model.Id" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md d-flex" id="RegistrationBtn" style="visibility: hidden;">
+                        <div class="form-group align-self-stretch d-flex align-items-end">
+                            <div class="wrap align-self-stretch py-3 px-4">
+                                @*<a href="/HotelBooking/Registration?RoomTypeId=@Model.Id" class="btn btn-primary py-5 py-md-3 px-4 align-self-stretch d-block"><span> @MyERP.Properties.Resources.CompleteRegistration </span></a>*@
+                                <button onclick="Registration()" class="btn btn-primary py-5 py-md-3 px-4 align-self-stretch d-block"><span> @MyERP.Properties.Resources.CompleteRegistration </span></button>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-lg-4 sidebar ftco-animate pl-md-5">
+
+                <div class="sidebar-box ftco-animate">
+                    <div class="row">
+                        <div class="col-md d-flex">
+                            <div class="form-group align-self-stretch d-flex align-items-end">
+                                <div class="wrap align-self-stretch py-3 px-4">
+                                    <label for="#">@MyERP.Properties.Resources.CheckInDate</label>
+                                    <input id="BookingStartDate" type="datetime-local" value="@ViewBag.CheckInDate" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md d-flex">
+                            <div class="form-group align-self-stretch d-flex align-items-end">
+                                <div class="wrap align-self-stretch py-3 px-4">
+                                    <label for="#">@MyERP.Properties.Resources.CheckOutDate</label>
+                                    <input id="BookingEndDate" type="datetime-local" value="@ViewBag.CheckOutDate" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md d-flex">
+                            <div class="form-group align-self-stretch d-flex align-items-end">
+                                <div class="wrap align-self-stretch py-3 px-4">
+                                    <button onclick="GetAvailableRooms()" class="btn btn-primary py-5 py-md-3 px-4 align-self-stretch d-block"><span> @MyERP.Properties.Resources.CheckAvailability </span></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        @*<div class="col-md d-flex">
+                                <div class="form-group d-flex align-self-stretch">
+                                    <a href="#" class="btn btn-primary py-5 py-md-3 px-4 align-self-stretch d-block"><span> @MyERP.Properties.Resources.CheckAvailability </span></a>
+                                </div>
+                            </div>*@
+                        @*<div class="categories">
+                                <h3>Categories</h3>
+                                <ul>
+                                    <li><a href="#">Properties <span>(12)</span></a></li>
+                                    <li><a href="#">Home <span>(22)</span></a></li>
+                                    <li><a href="#">House <span>(37)</span></a></li>
+                                    <li><a href="#">Villa <span>(42)</span></a></li>
+                                    <li><a href="#">Apartment <span>(14)</span></a></li>
+                                    <li><a href="#">Condominium <span>(140)</span></a></li>
+                                </ul>
+                            </div>*@
+                    </div>
+                </div>
+
+            </div>
+        </div> <!-- .col-md-8 -->
+
+    </div>
+</section> <!-- .section -->
+
+
+<script>
+var projectName = '@Html.Raw(System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"])';
+
+    function GetAvailableRooms() {
+        $.get('/RoomBooking/CheckReservedRoomByRoomId_RoomTypeId?RoomId=' + null + '&BookingStartDate=' + $('#BookingStartDate').val() + '&BookingEndDate=' + $('#BookingEndDate').val() + '&RoomTypeId=' + $('#RoomTypeId').val())
+            .done(function (r) {
+                if (projectName == "FunTime") {
+                    if (r.length == 0) {
+                        $('#AvailableSpan').text('- ( @MyERP.Properties.Resources.ThereAreAvailableChalets)');
+                        $('#RegistrationBtn').css('visibility', 'unset');
+                    }
+                    else {
+                        $('#AvailableSpan').text('- ( @MyERP.Properties.Resources.NoChaletsAvailable)');
+                        $('#RegistrationBtn').css('visibility', 'hidden');
+                    }
+                }
+                else {
+                    if (r.length == 0) {
+                        $('#AvailableSpan').text('- ( @MyERP.Properties.Resources.ThereAreAvailableRooms)');
+                        $('#RegistrationBtn').css('visibility', 'unset');
+                    }
+                    else {
+                        $('#AvailableSpan').text('- ( @MyERP.Properties.Resources.NoRoomsAvailable)');
+                        $('#RegistrationBtn').css('visibility', 'hidden');
+                    }
+                }
+            });
+    }
+    function Registration() {
+        window.open('/HotelBooking/Registration?RoomTypeId=' + $('#RoomTypeId').val() + '&From=' + $('#BookingStartDate').val() + '&To=' + $('#BookingEndDate').val());
+    }
+</script>

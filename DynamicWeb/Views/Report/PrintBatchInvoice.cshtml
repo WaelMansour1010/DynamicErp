@@ -1,0 +1,44 @@
+﻿@*
+    هذا السطر يخبر العارض أن "الموديل" القادم من الكنترولر
+    هو كلاس التقرير الذي أنشأته
+*@
+@model MyERP.Reporting.Reports.PropertyBatchInvoice
+
+@{
+    // هذا يمنع تحميل أي layout (مثل القوائم الجانبية) في صفحة الطباعة
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>طباعة فاتورة الدفعة</title>
+
+    @*
+        يجب تضمين ملفات الأنماط (CSS) الخاصة بـ DevExpress
+        (قد تحتاج لتعديل المسارات حسب مشروعك)
+    *@
+    @Html.DevExpress().GetStyleSheets(
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Report }
+    )
+</head>
+<body>
+    @*
+        يجب تضمين ملفات السكربت (JS) الخاصة بـ DevExpress
+        (قد تحتاج لتعديل المسارات حسب مشروعك)
+    *@
+    @Html.DevExpress().GetScripts(
+        new Script { ExtensionSuite = ExtensionSuite.Report }
+    )
+
+    @*
+        هذا هو "عارض التقارير" الذي سيعرض تقريرك
+        الأمر .Bind(Model) هو الذي يربط التقرير بالعارض
+    *@
+    @Html.DevExpress().WebDocumentViewer(settings =>
+    {
+        settings.Name = "BatchInvoiceViewer";
+    }).Bind(Model).GetHtml()
+
+</body>
+</html>

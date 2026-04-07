@@ -271,18 +271,38 @@ namespace MyERP.Controllers
                     });
                     return Json(new { success = "true", id });
                 }
-                var errors = ModelState
-                        .Where(x => x.Value.Errors.Count > 0)
-                        .Select(x => new { x.Key, x.Value.Errors })
-                        .ToArray();
+ var errors = ModelState
+    .Where(x => x.Value.Errors.Count > 0)
+    .Select(x => new
+    {
+        Field = x.Key,
+        Errors = x.Value.Errors.Select(e => e.ErrorMessage).ToList()
+    })
+    .ToList();
 
-                return Json(new { success = "false" });
+return Json(new
+{
+    success = "false",
+    message = "ModelState invalid",
+    errors
+});
 
             }
             catch (Exception ex)
             {
+                var msg = ex.Message;
 
-                return Json(new { success = "false" });
+                if (ex.InnerException != null)
+                    msg += " | " + ex.InnerException.Message;
+
+                if (ex.InnerException?.InnerException != null)
+                    msg += " | " + ex.InnerException.InnerException.Message;
+
+                return Json(new
+                {
+                    success = "false",
+                    message = msg
+                });
             }
 
         }

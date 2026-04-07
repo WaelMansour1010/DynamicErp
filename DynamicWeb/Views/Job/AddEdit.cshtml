@@ -1,0 +1,248 @@
+﻿@model MyERP.Models.Job
+
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Jobs;
+    }
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title"> @MyERP.Properties.Resources.Jobs :</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Job/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data" id="FormId">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                    }
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+
+                                        @if (Model != null)
+                                        {
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        }
+                                        else
+                                        {
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @Value = ViewBag.Code, placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        }
+
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            <input type="text" class="form-control" value="@Model.ArName" name="ArName" id="txtArName" placeholder=@MyERP.Properties.Resources.ArName required>
+                                        }
+                                        else
+                                        {
+                                            <input type="text" class="form-control" name="ArName" id="txtArName" placeholder=@MyERP.Properties.Resources.ArName required>
+                                        }
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.ArNameRequired
+                                    </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            <input type="text" class="form-control" value="@Model.EnName" name="EnName" placeholder=@MyERP.Properties.Resources.EnName id="txtEnName">
+                                        }
+                                        else
+                                        {
+                                            <input type="text" class="form-control" name="EnName" placeholder=@MyERP.Properties.Resources.EnName id="txtEnName">
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            //<input type="text" class="form-control" value="@Model.Notes" name="EnName" placeholder="الملاحظات" id="txtEnName">
+                                            @Html.TextAreaFor(a => a.Notes, new { @class = "form-control", value = "@Model.Notes" })
+                                        }
+                                        else
+                                        {
+                                            // <input type="text" class="form-control" name="Notes" placeholder="الملاحظات" id="txtEnName">
+                                            @Html.TextAreaFor(a => a.Notes, new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Notes})
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @*<div style="float:left;">
+            @if (Model != null)
+            {
+                if (Model.Id != 0)
+                {
+                    <button type="submit" class="btn btn-success">حفظ و جديد</button>
+                    <button type="submit" class="btn btn-success">حفظ</button>
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                }
+                else
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        <button type="submit" class="btn btn-success">حفظ</button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                        <a class="btn btn-danger" href="javascript:void(0);" onclick="Delete(@Model.Id)" role="button">حذف</a>
+                    }
+                }
+            }
+            else
+            {
+                <button type="submit" class="btn btn-success">حفظ و جديد</button>
+                <button type="submit" class="btn btn-success">حفظ</button>
+                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+            }
+        </div>*@
+
+
+                    <div class="row" style="float:left;">
+                        <input id="new" name="newBtn" hidden />
+                        <div>
+                            @if (Model == null)
+                            {
+                                <input id="new" name="newBtn" hidden />
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew 
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                        <button type="submit" class="btn btn-success">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+    //function AddEdit(n) {
+    //    if ($(".form-control:invalid").length > 0)
+    //    {
+    //        $('.form-horizontal').addClass('was-validated');
+    //        $('html, body').animate({
+    //            scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+    //        }, 500);
+    //    }
+    //    else
+    //    {
+
+    //    }
+    //}
+
+
+    // set code number
+    if ($('#Id').val() == 0) {
+        function setCodeNum() {
+            $.get('/Job/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+        setCodeNum();
+    }
+
+
+    // delete job call
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Job/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Job');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+</script>

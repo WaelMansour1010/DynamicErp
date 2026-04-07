@@ -1,0 +1,345 @@
+﻿@model MyERP.Models.ChartOfAccount
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = MyERP.Properties.Resources.ChartsOfAccounts;
+
+}
+
+@Html.AntiForgeryToken()
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="page-title">@MyERP.Properties.Resources.AccountDetails :</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ChartOfAccounts/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsSystem)
+                                    }
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.ArName, "", new { @class = "text-danger" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                        @*@Html.ValidationMessageFor(model => model.EnName, "", new { @class = "text-danger" })*@
+                                    </div>
+
+                                    <label for="ClassificationId" class="control-label col-sm-2">@MyERP.Properties.Resources.Category</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ClassificationId", null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.ClassificationId, "", new { @class = "text-danger" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group ParentId row">
+                                    <label for="ParentId" class="control-label col-sm-2 ParentId">@MyERP.Properties.Resources.MainAccount</label>
+                                    <div class="col-sm-4">
+                                        @*@if (Model != null)
+                {*@
+                                        @Html.DropDownList("ParentId", null, htmlAttributes: new { @class = "form-control ParentId" /*, disabled = "true" */})
+                                        @*}
+                else
+                {
+                    @Html.DropDownList("ParentId", null, htmlAttributes: new { @class = "form-control ParentId"})
+                }*@
+
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        @* @Html.ValidationMessageFor(model => model.ParentId, "", new { @class = "text-danger ParentId" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+
+                                    <label for="TypeId" class="control-label col-sm-2">@MyERP.Properties.Resources.Type</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("TypeId", null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.TypeId, "", new { @class = "text-danger" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CategoryId" class="control-label col-sm-2">@MyERP.Properties.Resources.Class</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CategoryId", null, htmlAttributes: new { @class = "form-control" })
+                                        @*@Html.ValidationMessageFor(model => model.CategoryId, "", new { @class = "text-danger" })*@
+                                        @*<input id="CategoryId" name="CategoryId" type="hidden" />*@
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+
+                                    <label class="control-label col-sm-2" for="IncludeValueAddedTax">@MyERP.Properties.Resources.IncludeValueAddedTax</label>
+                                    <div class="col-sm-4">
+                                        <input type="checkbox" name="IncludeValueAddedTax" value="true" @Html.Raw(Model!=null&&Model.IncludeValueAddedTax == true ? "checked" : "") id="IncludeValueAddedTax" style="width:15px;"/>
+                                    </div>
+
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ObDebit" class="ObDebit control-label col-sm-2">@MyERP.Properties.Resources.DebitOpeningBalance</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ObDebit, new { htmlAttributes = new { @class = "ObDebit form-control money" } })
+                                        @*@Html.ValidationMessageFor(model => model.ObDebit, "", new { @class = "ObDebit text-danger" })*@
+                                    </div>
+
+                                    <label for="ObCredit" class="ObCredit control-label col-sm-2">@MyERP.Properties.Resources.CreditOpeningBalance</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ObCredit, new { htmlAttributes = new { @class = "ObCredit form-control money" } })
+                                        @*@Html.ValidationMessageFor(model => model.ObCredit, "", new { @class = "ObCredit text-danger" })*@
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-offset-2">
+                                    @if (Model == null)
+                                    {
+                                        <input id="new" name="newBtn" hidden />
+                                        <button type="submit" id="newbtn" class="btn btn-success" onclick="return ValidateFrom();">
+                                            @MyERP.Properties.Resources.SaveAndNew
+                                        </button>
+                                        <button type="submit" class="btn btn-success" onclick="return ValidateFrom();">
+                                            @MyERP.Properties.Resources.Save
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success" onclick="return ValidateFrom();">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+//--------------- Variables Declarations -------------------//
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val()) {
+
+        }
+        else {
+            AccountsByClassificationId();
+            CategoryIdByAccount();
+        }
+
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $('#ObCredit').on('change', function () {
+        $('#ObDebit').val(0);
+    });
+    $('#ObCredit').on('keypress', function () {
+        $('#ObDebit').val(0);
+    });
+    $('#ObDebit').on('change', function () {
+        $('#ObCredit').val(0);
+    });
+    $('#ObDebit').on('keypress', function () {
+        $('#ObCredit').val(0);
+    });
+    $('#ClassificationId').on('change', function () {
+        AccountsByClassificationId();
+        CategoryIdByAccount();
+    });
+    $('#ParentId').on('change', function () {
+        CategoryIdByAccount();
+        if ($('#Id').val() == null) {
+            setTreeCode($('#ParentId option:selected').text(), $('#ParentId').val());
+        }
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+
+    function AccountsByClassificationId() {
+        var parentId;
+        if ($('#Id').val() > 0) {
+            parentId = $('#ParentId').val();
+            @*//S
+            if ('@ViewBag.ChildrenCount' > 0) {
+                $('#ClassificationId').prop('disabled', true);
+                $('#TypeId').prop('disabled', true);
+            }*@
+        }
+        $('#ParentId').empty();
+        var accounts = $.get('/ChartOfAccounts/AccountsByClassificationId?id=' + $('#ClassificationId').val())
+            .done(function () {
+                accounts = accounts.responseJSON;
+                for (var i = 0; i < accounts.length; i++) {
+
+                    $('#ParentId').append($('<option>', {
+                        value: accounts[i].Id,
+                        text: accounts[i].ArName
+                    }));
+                }
+                $('#Id').val() > 0 && parentId > 0 ? $('#ParentId').val(parentId) : document.getElementById("ParentId").selectedIndex = "0";
+                $('#ParentId').val() > 0 ? null : document.getElementById("ParentId").selectedIndex = "0";
+                $('#ParentId').trigger('change');
+            });
+
+
+        if ($('#ClassificationId').val() == 1) {
+            ////S
+            //$('#Categories').prop('disabled', false);
+            $('.ParentId').hide();
+            $('.ObCredit').hide();
+            $('.ObDebit').hide();
+            $('.ObCredit').val(0);
+            $('.ObDebit').val(0);
+        } else if ($('#ClassificationId').val() == 2) {
+            ////S
+            //$('#Categories').prop('disabled', true);
+            $('.ParentId').show();
+            $('.ObCredit').hide();
+            $('.ObDebit').hide();
+            $('.ObCredit').val(0);
+            $('.ObDebit').val(0);
+
+        } else if ($('#ClassificationId').val() == 3 && ($('#CategoryId').val() == 1 || $('#CategoryId').val() == 2)) {
+            ////S
+            //$('#Categories').prop('disabled', true);
+            $('.ParentId').show();
+            $('.ObCredit').show();
+            $('.ObDebit').show();
+        }
+    }
+    function CategoryIdByAccount() {
+        var id = $.get('/ChartOfAccounts/CategoryIdByAccount?id=' + $('#ParentId').val()).done(function (r) {
+            $('#CategoryId').val(r).trigger('change');
+            //$('#CategoryId').val(r);
+            if ((r == 1 || r == 2) && $('#ClassificationId').val() == 3) {
+                $('.ObCredit').show();
+                $('.ObDebit').show();
+            } else {
+                $('.ObCredit').hide();
+                $('.ObDebit').hide();
+                $('.ObCredit').val(0);
+                $('.ObDebit').val(0);
+            }
+        });
+
+    }
+    function ValidateFrom() {
+        if ($('#ObCredit').inputmask('unmaskedvalue') > 0 && $('#ObDebit').inputmask('unmaskedvalue') > 0) {
+            alert('@MyERP.Properties.Resources.ADebitAndCreditCannotBeEnteredTogether');
+            return false;
+        }
+    }
+    function setTreeCode(parentCode , parentId)
+    {
+        var separators = [' ', '-'];
+        var x = parentCode.split(new RegExp(separators.join('|')))[0];
+        var y = parentId;
+        $.ajax({
+            type: "GET",
+            //contentType: "application/json",
+            url: "/ChartOfAccounts/GetMaxChild/" + y,
+            success: function (r) {
+                var GeneratedCode =r==0?0: r.replace(x, '');
+                GeneratedCode = parseInt(GeneratedCode) + 1;
+                //if (parseInt(GeneratedCode) < 10) {
+                //    GeneratedCode = "0" + GeneratedCode;
+                //}
+
+                if ($('#ClassificationId').val() == 3) {
+                    for (var i = 0; GeneratedCode.toString().length < 3; i++) {
+                        GeneratedCode = "0" + GeneratedCode
+                    }
+                }
+
+                GeneratedCode = x + GeneratedCode;
+                $('#Code').val(GeneratedCode);
+            },
+            error: function () {
+                alert('@MyERP.Properties.Resources.TryAgain'+' !');
+            }
+        });
+
+    }
+    //*********************************************************//
+
+</script>

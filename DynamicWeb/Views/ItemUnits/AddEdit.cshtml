@@ -1,0 +1,194 @@
+﻿
+@model MyERP.Models.ItemUnit
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+}
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.ItemUnits;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.ItemUnits :</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ItemUnits/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input type="hidden" name="Id" id="hdnobjID" value="@Model.Id" />
+                                @Html.AntiForgeryToken()
+                                @Html.HiddenFor(model => model.IsActive)
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        @*@Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" value="@Model.ArName" name="ArName" id="txtArName" placeholder=@MyERP.Properties.Resources.ArName required>
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" value="@Model.EnName" name="EnName" placeholder=@MyERP.Properties.Resources.EnName>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.MainUnit </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ParentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "ParentId" })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Equivalent </label>
+                                    <div class="col-sm-4">
+                                        <input type="number" step="any" class="form-control" value="@Model.Equivalent" min="5" name="Equivalent" id="Equivalent" placeholder=@MyERP.Properties.Resources.Equivalent required>
+                                        @* <span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <input id="new" name="newBtn" hidden />
+                    <div class="col-sm-offset-2">
+                        @if (Model.Id == 0)
+                        {
+                        <button type="submit" id="newbtn" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else
+                        {
+                            if (Model.IsDeleted == false)
+                            {
+                    <button type="submit" class="btn btn-success">
+                        @MyERP.Properties.Resources.Save
+                    </button>
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                            }
+                        }
+
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    if ($('#ParentId').val() == 0) {
+        $('#Equivalent').attr('disabled', 'disabled')
+
+        $('#Equivalent').val(1);
+    }
+    $(document).on("change", "#ParentId", function () {
+
+        if ($('#ParentId').val() == 0) {
+            $('#Equivalent').attr('disabled', 'disabled')
+
+            $('#Equivalent').val(1);
+        }
+        else {
+            $('#Equivalent').removeAttr('disabled')
+
+            $('#Equivalent').val('')
+        }
+
+
+    })
+    if ($('#hdnobjID').val() == 0) {
+        function setCodeNum() {
+            var doc = $.get('/ItemUnits/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    $(function () {
+        $('#Equivalent').prop('type', 'text').inputmask({
+            min:
+                '0.0001',
+            alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    });
+
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/ItemUnits/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/ItemUnits');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!'');
+                    }
+                });
+        }
+    }
+</script>
+

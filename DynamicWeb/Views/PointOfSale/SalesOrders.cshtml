@@ -1,0 +1,20 @@
+﻿@model IEnumerable<MyERP.Models.SalesOrder>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.VoucherDate)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Customer.ArName)
+        </td>
+        <td>
+            <input type="checkbox" class="salesOrderId" value="@item.Id" doc-num="@item.DocumentNumber" customer-id="@item.VendorOrCustomerId" customer-type="@item.CustomerType" />
+            @*<button type="button" class="btn btn-primary btn-sm waves-effect waves-light" onclick="getSalesOrderDetails(@item.Id, @item.DocumentNumber, @item.DepartmentId, @item.WarehouseId, @item.VendorOrCustomerId)">اضف</button>*@
+        </td>
+    </tr>
+}

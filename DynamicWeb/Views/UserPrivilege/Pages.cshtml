@@ -1,0 +1,53 @@
+﻿@model IEnumerable<MyERP.Models.GetUserPriviledges_AllPages_Result>
+
+
+@foreach(var item in Model)
+    {<div class="panel">
+    <li id="PageId" hidden>@item.PageId </li>
+    <div class="panel panel-heading" id="HeadName">
+        @item.C_SystemPage_ArName
+    </div>
+
+    <input type="text" value="@item.C_SystemPage_ArName" hidden id="C_SystemPage_ArName" />
+
+
+    <div class="panel-body">
+        <input class="ActionId" type="hidden" value="@item.ActionId" />
+        @Html.DisplayFor(modelItem => item.actionsArName)
+
+        <input type="checkbox" class="Privileged" @Html.Raw(item.Privileged == 1 ? "checked" : "") />
+    </div>
+    <br />
+    
+</div>
+}
+
+<script>
+    debugger;
+    
+    $("li").each(function () {
+     
+        if ($('#pId').length) {
+            $('#HeadName').hide();
+        } else {
+            $('#HeadName').show();
+        }
+    });
+   
+
+
+    
+
+    //    function() {
+    //        alert("done");
+    //        if ($('#C_SystemPage_ArName').val() == $('#HeadName').val()) {
+    //            $('#HeadName').hide();
+    //            alert("doneH");
+    //        } else {
+    //            $('#HeadName').show();
+    //            alert("dones");
+    //        }
+    //    });
+
+
+</script>

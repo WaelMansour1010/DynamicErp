@@ -435,6 +435,7 @@
     <Compile Include="Controllers\ActivityManagement\CompetitorController.cs" />
     <Compile Include="Controllers\ActivityManagement\CompetitorQuestionController.cs" />
     <Compile Include="Controllers\AdditionalItemController.cs" />
+    <Compile Include="Controllers\AiTestController.cs" />
     <Compile Include="Controllers\AssemblyVoucherController.cs" />
     <Compile Include="Controllers\CarColorController.cs" />
     <Compile Include="Controllers\CarEntranceController.cs" />
@@ -759,6 +760,9 @@
     <Compile Include="Models\CarColor.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\CarCurrentStock_Get_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\CarEntrance.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -772,6 +776,12 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\CarModel.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CarQuotationReport_Get_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\CarSalesHistory_Get_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\CarSalesInvoice.cs">
@@ -1120,9 +1130,6 @@
     <Compile Include="Models\DeleteAlternativeItemsByMainItemId_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
-    <Compile Include="Models\DelMe.cs">
-      <DependentUpon>ErpDBModel.tt</DependentUpon>
-    </Compile>
     <Compile Include="Models\Department.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -1324,6 +1331,7 @@
     <Compile Include="Models\Extensions\Property.cs" />
     <Compile Include="Models\Extensions\PropertyBatch.cs" />
     <Compile Include="Models\Extensions\PropertyDetail.cs" />
+    <Compile Include="Models\Extensions\SalesQuotationDetail.Vehicle.cs" />
     <Compile Include="Models\E_Invoice_Get_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2016,9 +2024,6 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Item_TotalItemsProfit_Result.cs">
-      <DependentUpon>ErpDBModel.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Models\JED_AccountFixLog.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Job.cs">
@@ -2788,6 +2793,12 @@
     <Compile Include="Models\VacationRequest.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\VehicleStatu.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\VehicleStock.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Models\Vendor.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -2810,6 +2821,9 @@
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\Vendor_Get_Result.cs">
+      <DependentUpon>ErpDBModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Models\vw_AvailableVehicleStock.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\vw_PropertyBatchDetailed.cs">
@@ -3317,7 +3331,9 @@
     <Compile Include="Utils\ReportAuthorize.cs" />
     <Compile Include="Utils\SendNotifications.cs" />
     <Compile Include="Utils\Serializer.cs" />
+    <Compile Include="Utils\SmsService.cs" />
     <Compile Include="Utils\StockIssueAuthorize.cs" />
+    <Compile Include="Utils\ZhipuAiService.cs" />
     <Compile Include="ViewModels\PropertyBillRegisterationViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -5012,6 +5028,7 @@
     <Folder Include="images\ServiceCategoriesImages\" />
     <Folder Include="Properties\.cr\personal\FavoritesList\" />
     <Folder Include="Views\AccountSettings\" />
+    <Folder Include="Views\AiTest\" />
     <Folder Include="Views\DeptAgesTypes\" />
     <Folder Include="Views\DueBatch\" />
     <Folder Include="Views\SystemSettings\Branch\" />
@@ -5036,11 +5053,20 @@
     <EmbeddedResource Include="Reporting\Reports\BalanceReview2_Report.resx">
       <DependentUpon>BalanceReview2_Report.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\CarCurrentStock_Report.resx">
+      <DependentUpon>CarCurrentStock_Report.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\CarEntranceWorkOrder_Report.resx">
       <DependentUpon>CarEntranceWorkOrder_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\AllCustomersSales.resx">
       <DependentUpon>AllCustomersSales.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\CarQuotationReport_Report.resx">
+      <DependentUpon>CarQuotationReport_Report.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\CarSalesHistory_Report.resx">
+      <DependentUpon>CarSalesHistory_Report.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\DueOwnersPaymentsReport.resx">
       <DependentUpon>DueOwnersPaymentsReport.cs</DependentUpon>

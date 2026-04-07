@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33801.468
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HRServices", "HRServices.csproj", "{4121BEDB-3809-40E5-BC31-978567EDBDD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UploadCloudData", "..\UploadCloudData\UploadCloudData.csproj", "{B0DC3264-7067-49DE-BC95-2C39208A1BB6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HROnlineSyncService", "..\HROnlineSyncService\HROnlineSyncService.csproj", "{515C9AD9-3085-4CE9-A111-583DA8A91877}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateOnLineData", "..\UpdateOnLineData\UpdateOnLineData.csproj", "{84284785-4CB2-4732-902F-978C3944A0F5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4121BEDB-3809-40E5-BC31-978567EDBDD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4121BEDB-3809-40E5-BC31-978567EDBDD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4121BEDB-3809-40E5-BC31-978567EDBDD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4121BEDB-3809-40E5-BC31-978567EDBDD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0DC3264-7067-49DE-BC95-2C39208A1BB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0DC3264-7067-49DE-BC95-2C39208A1BB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0DC3264-7067-49DE-BC95-2C39208A1BB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0DC3264-7067-49DE-BC95-2C39208A1BB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{515C9AD9-3085-4CE9-A111-583DA8A91877}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{515C9AD9-3085-4CE9-A111-583DA8A91877}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{515C9AD9-3085-4CE9-A111-583DA8A91877}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{515C9AD9-3085-4CE9-A111-583DA8A91877}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84284785-4CB2-4732-902F-978C3944A0F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84284785-4CB2-4732-902F-978C3944A0F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84284785-4CB2-4732-902F-978C3944A0F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84284785-4CB2-4732-902F-978C3944A0F5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {13A8F8A0-AB15-44AC-A45B-EA546688451A}
+	EndGlobalSection
+EndGlobal

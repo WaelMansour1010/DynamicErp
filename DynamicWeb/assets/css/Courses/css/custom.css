@@ -1,0 +1,206 @@
+.courses-actives .properties__caption,
+.courses-actives .properties__caption p {
+    direction: rtl !important;
+    text-align: right;
+}
+.course-name {
+    text-align: center !important;
+}
+
+.properties__card {
+    min-height: 70vh;
+}
+
+.lecture-number {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.lecture-number h3 {
+    font-weight: bold !important;
+}
+
+.lecture-number p span {
+    font-size: 16px !important;
+    font-weight: normal !important;
+}
+
+.properties__caption a {
+    font-weight: bold !important;
+}
+
+.slider-area .hero__caption.hero__caption2, .slider-area2 .hero__caption.hero__caption2 {
+    padding-top: unset !important;
+    width: 100vw;
+}
+
+.slider-height2 {
+    min-height: unset !important;
+}
+
+.slider-area .hero__caption h1, .slider-area2 .hero__caption h1 {
+    margin-top: 22px;
+    text-align: center;
+}
+
+.breadcrumb {
+    padding: 1em;
+}
+
+.slider-area {
+    direction: rtl !important;
+}
+
+footer {
+    position: relative !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+main {
+    min-height: 100vh;
+}
+
+.slider-area .hero__caption h1 {
+    text-align: right;
+}   
+
+.courses-actives {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.courses-actives .properties {
+    flex: 0 0 30%;
+}
+
+@media (max-width: 755px) {
+    .courses-actives .properties {
+    flex: 0 0 100%;
+    margin: 20px auto;
+    }
+}
+
+@media (min-width: 600px) and (max-width: 1000px) {
+    .courses-actives .properties {
+    flex: 0 0 45%;
+    }
+}
+
+.course-details-container {
+    width: 60%;
+    margin: 30px auto;
+    background-color: #fff !important;
+    padding: 20px;
+    border-radius: 10px;
+    
+}
+
+@media (max-width: 1000px) {
+.course-details-container {
+    width: 90%;
+}
+}
+@media (max-width: 500px) {
+.course-details-container {
+    width: 100%;
+}
+.course-image-container img {
+    display: block;
+    width: 100%;
+}
+}
+
+.course-details-container:hover {
+    box-shadow: 2px 2px 20px 2px #ccc;
+    transition-property: box-shadow;
+    transition-duration: 1s;
+    transition-timing-function: ease-in-out;
+    
+}
+
+.course-image-container {
+    width: 100%;
+    text-align: center;
+}
+
+.course-image-container img {
+    border-radius: 10px;
+    
+}
+
+.details-main {
+    background-color: #eee;
+}
+
+.course-name {
+    margin: 20px auto;
+}
+
+.episode-container {
+    background-color: #eeeeee;
+    border-radius: 10px;
+    direction: rtl;
+    text-align: center;
+}
+
+.episode-container table {
+    width: 100%;
+}
+
+.episode-container table thead {
+    background-color: #ccc;
+    font-size: 2rem;
+    color: purple;
+}
+
+.episode-container table tbody {
+    font-size: 1.75rem;
+    color: slateblue;
+}
+
+.episode-container table thead tr {
+    border: 1px solid transparent;
+}
+
+.episode-container table tbody tr:hover {
+    border: 1px solid slateblue;
+    background-color: #fff;
+}
+
+.episode-container table tbody tr a i {
+    color: slateblue;
+    font-size: 2.5rem;
+}
+
+.episode-container table tbody tr a i:hover {
+    color: rgb(174, 162, 253);
+    transition: color 1s ease-in-out;
+}
+
+th, td {
+    padding-top: 10px;
+    padding-bottom: 20px;
+    padding-left: 30px;
+    padding-right: 40px;
+    }
+
+.details-body {
+    background-color: #eee;
+}
+
+.landing-section {
+    background-color: #4255a4;
+}
+
+.landing-section img {
+    width: 90vw;
+    height: auto;
+    display: block;
+    margin: auto;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}

@@ -1,0 +1,37 @@
+﻿@model IEnumerable<MyERP.Models.GetEmployeeOB_Result>
+
+@foreach (var item in Model)
+{
+<tr>
+    <td hidden>
+        <input class="id" value="@item.Id" />
+
+    </td>
+
+    <td>
+        @Html.DisplayFor(modelItem => item.Code)
+    </td>
+    <td>
+        @Html.DisplayFor(modelItem => item.ArName)
+    </td>
+    <td>
+        <input class="form-control PaidAllowancesAccumulated money" OBType="PaidAllowancesAccumulated" type="text" value="@item.PaidAllowancesAccumulated" />
+    </td>
+    <td>
+        <input class="form-control EmpVacationAccumulated money" OBType="EmpVacationAccumulated" type="text" value="@item.EmpVacationAccumulated" />
+    </td>
+    <td>
+        <input class="form-control TravelingTicketsAccumulated money" OBType="TravelingTicketsAccumulated"  type="text" value="@item.TravelingTicketsAccumulated" />
+    </td>
+    <td>
+        <input class="form-control EndOfServiceAccumulated money" OBType="EndOfServiceAccumulated" type="text" value="@item.EndOfServiceAccumulated" />
+    </td>
+    <td>
+        <input class="form-control EmployeeReceivableValue money" OBType="EmployeeReceivableValue" type="text" value="@item.EmployeeReceivableValue" />
+    </td>
+    <td>
+        <input class="form-control DueSalariesValue money" OBType="DueSalariesValue" type="text" value="@item.DueSalariesValue" />
+    </td>
+</tr>
+}
+

@@ -1,0 +1,636 @@
+﻿@model MyERP.Models.SocialInsurance
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title =MyERP.Properties.Resources.RegisterProofOfInsurance;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.RegisterProofOfInsurance:</h4>
+        </div>
+    </div>
+</div>
+
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.IsPosted)
+
+}
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+
+            <div class="row">
+                <div class="col-12">
+                    @* <form action="/SocialInsurance/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(a => a.Date, new { htmlAttributes = new { @class = "form-control", required = "required", type = "datetime-local" } })
+                                        @*<input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />*@
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.EnterDate
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Month" class="col-sm-2 control-label">@MyERP.Properties.Resources.Month</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.Month, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Year" class="col-sm-2 control-label">@MyERP.Properties.Resources.Year</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.Year, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.BranchOfTransaction</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.DepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card">
+
+                                            <div class="card-body">
+                                                <div class="form-group row" id="selectDept">
+                                                    <label for="EmployeeDepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.EmployeeDepartment</label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(a => a.EmployeeDepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                                        {
+                                                            @class = "form-control"@*, id = "SelectOneDept"*@})
+                                                    </div>
+
+                                                    @*<div style="float:right;">
+            <button type="button" id="show" class="btn btn-info" onclick="ShowDetails()">
+                عرض
+            </button>
+        </div>*@
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-striped table-centered mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th hidden></th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.Branch
+                                                                    </th>
+
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.EmployeeCode
+                                                                    </th>
+
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.EmployeeName
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.Nationality
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.WorkingFirstDate
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.NoOfWorkingDays
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.Citizen/@MyERP.Properties.Resources.Resident
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.CompanyRatio
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.EmployeePercentage
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.TotalSalarySubjectToInsurance
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.NetSalarySubjectToInsurance
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.CompanyAmount
+                                                                    </th>
+                                                                    <th>
+                                                                        @MyERP.Properties.Resources.EmployeeAmount
+                                                                    </th>
+
+
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="Detail">
+                                                                @if (Model != null)
+                                                                {
+                                                                    foreach (var item in Model.SocialInsuranceDetails)
+                                                                    {
+
+                                                                        <tr>
+                                                                            <td hidden>
+                                                                                <lable class="DepartmentId" id="DepartmentId">@item.DepartmentId </lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable class="DepartmentName" id="DepartmentName">@item.Department.ArName </lable>
+                                                                            </td>
+                                                                            <td hidden>
+                                                                                <lable class="EmployeeId" id="EmployeeId">@item.Employee.Id </lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable>@item.Employee.Code</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable>@item.Employee.ArName</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                @if (item.Employee.NationalityId != null)
+                                                                                {
+                                                                                    <lable>@item.Employee.Nationality.ArName </lable>
+                                                                                }
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable class="HireDate" id="">@item.Employee.HireDate</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="WorkDays" class="WorkDays">@item.WorkDays </lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="CitizineOrForeign" class="CitizineOrForeign">@item.CitizineOrForeign </lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="CitizineOrForeignCompanyPercentage" class="CitizineOrForeignCompanyPercentage">@item.CitizineOrForeignCompanyPercentage</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="CitizineOrForeignEmployeePercentage" class="CitizineOrForeignEmployeePercentage">@item.CitizineOrForeignEmployeePercentage</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="TotalSocialInsuranceSalary" class="TotalSocialInsuranceSalary">@item.TotalSocialInsuranceSalary</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="NetSocialInsuranceSalary" class="NetSocialInsuranceSalary">@item.NetSocialInsuranceSalary</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="CompanyPercentage" class="CompanyPercentage">@item.CompanyPercentage</lable>
+                                                                            </td>
+                                                                            <td>
+                                                                                <lable id="EmployeePercentage" class="EmployeePercentage">@item.EmployeePercentage</lable>
+                                                                            </td>
+                                                                        </tr>
+
+                                                                    }
+                                                                }
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <input id="new" name="newBtn" hidden />
+                                    <div style="float:right;">
+                                        <div class="row">
+                                            <div class="col-sm-offset-2">
+                                                @if (Model == null)
+                                                {
+                                                <button type="submit" onclick="addEdit('new')" class="btn btn-success" id="newbtn">
+                                                    @MyERP.Properties.Resources.SaveAndNew
+                                                </button>
+                                                <button class="btn btn-success" onclick="addEdit()" id="save">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                                }
+                                                else if (Model.IsDeleted == false)
+                                                {
+                                            <button class="btn btn-success" onclick="addEdit()" id="save">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                                                @MyERP.Properties.Resources.Delete
+                                            </button>    
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div style="float:left;">
+                                        <div class="row">
+                                            <div class="col-sm-offset-2">
+                                                <span style="font-size:12px;float:right;">
+                                                    @MyERP.Properties.Resources.CompanyTotalAmount :
+                                                    @if (Model != null)
+                                                    {
+                                                        <span id="TotalCompanyPercentage"> @Model.TotalCompanyPercentage </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span id="TotalCompanyPercentage"> </span>
+                                                    }
+
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @*  </form>*@
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+ $(document).ready(function () {
+        if (!$('#Id').val()) {
+            var d = new Date();
+            $('#Date').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+            setDocNum();
+        }
+        else {
+            $('#Date').val('@ViewBag.Date');
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        }
+    });
+        //-------------------------- DocNum---------------------------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/SocialInsurance/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+
+    //----------------------- Main Function-----------------------------//
+    function ShowDetails() {
+        let id = $('#EmployeeDepartmentId').val();
+        if ($('#Year').val() && $('#Month').val())
+            $.ajax({
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json",
+                url: "/SocialInsurance/GetSalaryValue/?" + id,
+                data: { id: id },
+                success: function (r) {
+                    $('#Detail').empty();
+                    var sum = 0;
+                    for (var i = 0; i < r.length; i++) {
+                        var month = $('#Month').val();
+                        var year = $('#Year').val();
+                    //   r[i].HireDate = convertToJavaScriptDate(r[i].HireDate);
+                       r[i].HireDate = convertToJavaScriptDate(r[i].FollowUpDate);
+                        var Hire = new Date(r[i].HireDate);
+                        if (Hire.getFullYear() == year) {
+                            if (Hire.getMonth() == month) { //نفس الشهر
+                                //عدد الايام فى شهر التعيين
+                                var StartMonthDays = new Date(Hire.getFullYear(), Hire.getMonth() + 1, 0).getDate();
+                                //اطرح عدد الايام لو مابداش شغل من اول الشهر لحد اخر الشهر
+                                WorkingDays = Math.abs(StartMonthDays - Hire.getDate() + 1)
+                                r[i].WorkDays = WorkingDays;
+                                //عدد ايام الشهر المختار
+                                var DaysOfMonth = new Date(year, parseInt(month) + 1, 0).getDate();
+                                //صافى الراتب هايكون على اساس عدد الايام اللى اشتغلها فقط مقارنه بعدد ايام الشهر المختار
+                                r[i].NetSocialInsuranceSalary = Math.round((r[i].TotalSocialInsuranceValue / DaysOfMonth) * WorkingDays);
+                            }
+                            else if (Hire.getMonth() < month) { //الشهر المختار اكبر من شهر لتعيين
+                                r[i].WorkDays = new Date(year, parseInt(month) + 1, 0).getDate();
+                                r[i].NetSocialInsuranceSalary = r[i].TotalSocialInsuranceValue;
+                            }
+                            else {
+                                r[i].WorkDays = 0;
+                                r[i].NetSocialInsuranceSalary = 0;
+                            }
+                        }
+                        else if (Hire.getFullYear() < year) //سنة التعيين اصغر من السنة المختارة
+                        {
+                            r[i].WorkDays = new Date(year, parseInt(month) + 1, 0).getDate();
+                            r[i].NetSocialInsuranceSalary = r[i].TotalSocialInsuranceValue;
+                        }
+                        else //السنة المختارة اصغر من سنة التعيين
+                        {
+                            r[i].WorkDays = 0;
+                            r[i].NetSocialInsuranceSalary = 0;
+                            r[i].TotalSocialInsuranceValue = 0;
+                        }
+                        //تحديد مواطن او مقيم و بالتالى تحديد النسبة و مبلغ الشركة و صافى الراتب
+                        if (r[i].NationalityId == r[i].CitizenNationality) {
+                            r[i].CitizineOrForeign = "مواطن";
+                            r[i].CitizineOrForeignCompanyPercentage = r[i].CitizinCompanyPercentage;//نسبة الشركة للمواطن
+                            r[i].CitizineOrForeignEmployeePercentage = r[i].CitizinEmployeePercentage;//نسبة الموظف للمواطن
+
+                            r[i].CompanyPercentage = Math.round((r[i].NetSocialInsuranceSalary * r[i].CitizinCompanyPercentage) / 100); //مبلغ الشركة للمواطن
+                            r[i].EmployeePercentage = Math.round((r[i].NetSocialInsuranceSalary * r[i].CitizinEmployeePercentage) / 100); // مبلغ الموظف للمواطن
+                        }
+                        else {
+                            r[i].CitizineOrForeign = "مقيم";
+                            r[i].CitizineOrForeignCompanyPercentage = r[i].ForeignCompanyPercentage;//نسبة الشركة للمقيم
+                            r[i].CitizineOrForeignEmployeePercentage = r[i].ForeignEmployeePercentage;//نسبة الموظف للمقيم
+
+                            r[i].CompanyPercentage = Math.round((r[i].NetSocialInsuranceSalary * r[i].ForeignCompanyPercentage) / 100);//مبلغ الشركة للمقيم
+                            r[i].EmployeePercentage = Math.round((r[i].NetSocialInsuranceSalary * r[i].ForeignEmployeePercentage) / 100);//مبلغ الموظف للمقيم
+                        }
+                        if (r[i].NationalityName == null) {
+                            r[i].NationalityName = "";
+                        }
+                        else {
+                            r[i].NationalityName = r[i].NationalityName;
+                        }
+                        $('#Detail').append('<tr><td hidden><lable id="DepartmentId" class="DepartmentId">' + r[i].DepartmentId + '</lable></td><td><lable id="DepartmentName" class="DepartmentName" >' + r[i].DepartmentName + '</lable></td><td hidden><lable id="EmployeeId" clas="EmployeeId">' + r[i].Id + '</lable></td><td><lable>' + r[i].Code + '</lable></td><td><lable>' + r[i].ArName + '</lable></td><td><lable>' + r[i].NationalityName + '</lable></td><td><lable class="HireDate">' + r[i].HireDate + '</lable></td><td><lable id="WorkDays" class="WorkDays">' + r[i].WorkDays + '</lable></td><td><lable id="CitizineOrForeign" class="CitizineOrForeign">' + r[i].CitizineOrForeign + '</lable></td><td><lable id="CitizineOrForeignCompanyPercentage" class="CitizineOrForeignCompanyPercentage">' + r[i].CitizineOrForeignCompanyPercentage + '</lable></td ><td><lable id="CitizineOrForeignEmployeePercentage" class="CitizineOrForeignEmployeePercentage">' + r[i].CitizineOrForeignEmployeePercentage + '</lable></td><td><lable id="TotalSocialInsuranceSalary" class="TotalSocialInsuranceSalary">' + r[i].TotalSocialInsuranceValue + '</lable></td><td><lable id="NetSocialInsuranceSalary" class="NetSocialInsuranceSalary">' + r[i].NetSocialInsuranceSalary + '</lable></td><td><lable id="CompanyPercentage" class="CompanyPercentage">' + r[i].CompanyPercentage + '</lable></td><td><lable id="EmployeePercentage" class="EmployeePercentage">' + r[i].EmployeePercentage + '</lable></td></tr >')
+                        sum += parseInt(r[i].CompanyPercentage);
+                    }
+                    //اجمالى مبلغ الشركة
+                    $('#TotalCompanyPercentage').text(sum);
+                },
+                error: function () {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            });
+    }
+    //**********************************************************************************************************************//
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+        }
+        ShowDetails()
+    });
+    $(document).on('change', '#Date', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+        }
+    });
+    $('#Month').on('change', function () {
+        ShowDetails()
+    });
+
+    $('#Year').on('change', function () {
+        ShowDetails()
+    });
+
+    $('#EmployeeDepartmentId').on('change', function () {
+        ShowDetails()
+    });
+    //********************************************************************************//
+    //// عشان كان مش بيغير اجمالى مبلغ الشركة فى حاله التعديل , فكان لازم اخليه يحسبها تانى كل مرة
+    //var sum1 = 0;
+    //$('#Detail tr').each(function () {
+    //    var td = $(this);
+    //    var CompanyPercentage1 = td.find('#CompanyPercentage').text()
+    //    sum1 += parseInt(CompanyPercentage1);
+    //    $('#TotalCompanyPercentage').text(sum1);
+    //});
+
+
+    //------------------------------- ShowDate------------------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+ //------------------------------------------------------------------//
+        //for date Converting
+    function convertToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return (dt.getMonth() + 1) + "/" + dt.getDate() + "/" + dt.getFullYear();
+    }
+    //--------------------------------------- ADD EDIT---------------------------//
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var SocialInsuranceDetails = [];
+            $('#Detail tr').each(function () {
+                var td = $(this);
+                var SocialInsuranceDetail = {
+                    SocialInsuranceId: $('#Id').val(),
+                    DepartmentId: td.find('#DepartmentId').text(),
+                    EmployeeId: td.find('#EmployeeId').text(),
+                    WorkDays: td.find('#WorkDays').text(),
+                    CitizineOrForeign: td.find('#CitizineOrForeign').text(),
+                    CompanyPercentage: td.find('#CompanyPercentage').text(),
+                    EmployeePercentage: td.find('#EmployeePercentage').text(),
+                    CitizineOrForeignEmployeePercentage: td.find('#CitizineOrForeignEmployeePercentage').text(),
+                    CitizineOrForeignCompanyPercentage: td.find('#CitizineOrForeignCompanyPercentage').text(),
+                    TotalSocialInsuranceSalary: td.find('#TotalSocialInsuranceSalary').text(),
+                    NetSocialInsuranceSalary: td.find('#NetSocialInsuranceSalary').text(),
+                    IsDeleted: false
+                };
+                SocialInsuranceDetails.push(SocialInsuranceDetail);
+            });
+            var SocialInsurance =
+            {
+                Id: $('#Id').val(),
+                DocumentNumber: $('#DocumentNumber').val(),
+                Date: $('#Date').val(),
+                Month: $('#Month').val(),
+                Year: $('#Year').val(),
+                DepartmentId: $('#DepartmentId').val(),
+                EmployeeDepartmentId: $('#EmployeeDepartmentId').val(),
+                IsDeleted: false,
+                TotalCompanyPercentage: $('#TotalCompanyPercentage').text(),
+                SocialInsuranceDetails: SocialInsuranceDetails,
+            };
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $('#preloader, #status').fadeIn();
+                    $.ajax({
+                        type: "POST",
+                        url: "/SocialInsurance/AddEdit",
+                        data: SocialInsurance,
+                        success: function (r) {
+                            if (r.success == "true") {
+                                if (n == "new") {
+                                    window.location.replace("/SocialInsurance/AddEdit");
+                                } else {
+                                    window.location.replace("/SocialInsurance");
+                                }
+                            }
+                            else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/SocialInsurance/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace("/SocialInsurance");
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+    //***************************************************************************//
+</script>

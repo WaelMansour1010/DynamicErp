@@ -1,0 +1,6 @@
+@Html.DevExpress().Chart(settings => {
+    settings.Name = "Chart1";
+	settings.Series.Add(s => {
+		s.SetDataMembers("", "");
+    });
+}).Bind(Model).GetHtml()

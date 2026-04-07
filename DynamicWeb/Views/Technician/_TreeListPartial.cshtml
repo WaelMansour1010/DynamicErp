@@ -1,0 +1,46 @@
+﻿@{
+    var treeList = Html.DevExpress().TreeList(settings => {
+        settings.Name = "TreeList";
+        settings.CallbackRouteValues = new { Controller = "Technician", Action = "TreeListPartial", id=ViewBag.id };
+        //    settings.Toolbars.Add(t => {
+        //    t.Items.Add(TreeListToolbarCommand.ExportToPdf);
+        //    t.Items.Add(TreeListToolbarCommand.ExportToXls);
+        //    t.Items.Add(TreeListToolbarCommand.ExportToXlsx);
+        //    t.Items.Add(TreeListToolbarCommand.ExportToDocx);
+        //    t.Items.Add(TreeListToolbarCommand.ExportToRtf);
+        //});
+        settings.KeyFieldName = "Id";
+        settings.ParentFieldName = "ParentId";
+        settings.AutoGenerateColumns = false;
+        settings.Columns.Add("Code", "الكود");
+        settings.Columns.Add("ArName", "الاسم");
+        settings.RightToLeft = DefaultBoolean.True;
+        settings.SettingsPager.Visible = true;
+        settings.SettingsSelection.Enabled = true;
+        settings.SettingsBehavior.ExpandCollapseAction = TreeListExpandCollapseAction.NodeDblClick;
+        settings.SettingsCookies.StoreExpandedNodes = true;
+        settings.SettingsBehavior.ExpandCollapseAction = TreeListExpandCollapseAction.NodeDblClick;
+        settings.SettingsExport.EnableClientSideExportAPI = true;
+        settings.SettingsExport.PrintSettings.AutoWidth = true;
+        settings.SettingsExport.PrintSettings.ExpandAllNodes = true;
+        settings.SettingsExport.PrintSettings.ShowTreeButtons = true;
+        settings.Styles.Cell.Font.Size = System.Web.UI.WebControls.FontUnit.Medium;
+        settings.ClientLayout = (s, e) =>
+        {
+            if (e.LayoutMode == ClientLayoutMode.Loading)
+            {
+                if (Session["TreeListState"] != null)
+                    e.LayoutData = (string)Session["TreeListState"];
+            }
+            else
+                Session["TreeListState"] = e.LayoutData;
+        };
+
+        settings.PreRender = (sender, e) =>
+        {
+            if (Session["TreeListState"] == null)
+                ((MVCxTreeList)sender).ExpandToLevel(2);
+        };
+    });
+}
+@treeList.Bind(Model).GetHtml()

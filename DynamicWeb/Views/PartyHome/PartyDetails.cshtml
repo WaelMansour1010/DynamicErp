@@ -1,0 +1,446 @@
+﻿@model  MyERP.Models.Party
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.PartyDetails;
+    Layout = "~/Views/Shared/_PartyManagementLayout.cshtml";
+    var cTime = ViewBag.Date;
+}
+
+
+<section class="ftco-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="row no-gutters justify-content-center mb-5 pb-3">
+                    <div class="col-md-7 heading-section text-center ftco-animate">
+                        <span class="subheading" style="font-size:20px">@MyERP.Properties.Resources.PartyDetails</span>
+                        <h2 class="mb-4">@Model.Singer.ArName</h2>
+                        <h3 class="mb-4">@Model.Date.Value.ToString("yyyy/MM/dd")</h3>
+                        <h4 class="mb-4"> @MyERP.Properties.Resources.FromTime: <span> @Model.FromTime </span> </h4>
+                        <br />
+                        <h4 class="mb-4"> @MyERP.Properties.Resources.ToTime: <span>  @Model.ToTime </span> </h4>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 ftco-animate">
+                        <div class="single-slider owl-carousel">
+                            @foreach (var item in Model.PartyImages)
+                            {
+                                <div class="item">
+                                    <div class="room-img" style="background-image: url(@item.Image);"></div>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                    <div class="col-md-12 room-single mt-4 mb-5 ftco-animate">
+                        <p>@Model.Notes</p>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- .col-md-8 -->
+        <div class="row">
+            <div class="col-lg-12">
+                @Html.Partial("_SeatChart", Model.Chairs.Where(a => a.IsReserved != true))
+            </div>
+        </div>
+        <br />
+        <div class="row" dir="rtl" style="padding-left: 17%;">
+            <div class="col-lg-12">
+                <div class="sidebar-box ftco-animate">
+                    <div id="ChairsPricesDiv" style="text-align: -webkit-center;">
+                        <div class="col-md ">
+                            <div class="form-group row align-self-stretch  align-items-end">
+                                <label for="#" class="col-sm-6">@MyERP.Properties.Resources.ChairsPrices</label>
+                                <div class=" col-sm-6">
+                                    @Html.Editor("ChairsPrices", new { htmlAttributes = new { @class = "form-control money", type = "text", @readonly = "readonly" } })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="form-group row align-self-stretch  align-items-end">
+                                <label for="#" class="col-sm-6">@MyERP.Properties.Resources.ChairsNo</label>
+                                <div class="wrap align-self-stretch py-3 col-sm-6">
+                                    <input id="ChairsNo" readonly type="text" class="form-control">
+                                    <input id="PartyId" type="text" value="@ViewBag.PartyId" class="form-control" hidden>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="form-group row align-self-stretch  align-items-end">
+                                <label for="#" class="wrap align-self-stretch py-3 col-sm-6">@MyERP.Properties.Resources.Customer</label>
+                                <div class="wrap align-self-stretch py-3 col-sm-5">
+                                    <select class="form-control" id="CustomerId">
+                                    </select>
+                                </div>
+                                <div class="wrap align-self-stretch py-3  col-sm-1 pos-customer-model-btn">
+                                    <button id="posCustomerAddBtn" data-toggle="modal" class="btn btn-primary  align-self-stretch d-block">
+                                        <i class="remixicon-user-add-fill"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md ">
+                            <div class="form-group" style="padding-right:50%">
+                                <div class="wrap align-self-stretch py-3 px-4">
+                                    <button onclick="BookNow()" class="btn btn-primary py-5 py-md-3 px-4 align-self-stretch d-block"><span> @MyERP.Properties.Resources.BookNow </span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md d-flex" id="NotAvailableChairsPricesDiv" style="visibility: hidden;">
+                        <div class="form-group align-self-stretch d-flex align-items-end">
+                            <div class="wrap align-self-stretch py-3 px-4">
+                                <h2> @MyERP.Properties.Resources.AllChairsAreReserved </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section> <!-- .section -->
+<!-- Modal Section  -->
+<div id="pos-customer-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.CustomerData</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <input hidden id="posCustomerIdInput" name="posCustomerIdInput" />
+                    <input hidden id="posCustomerCodeInput" name="posCustomerCodeInput" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="PosCustomerArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.EnName</label>
+                                <input type="text" class="form-control" id="PosCustomerEnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile 1</label>
+                                <input type="text" class="form-control" id="Mobile1" placeholder="@MyERP.Properties.Resources.Mobile 1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="IdentityNumber" class="control-label">@MyERP.Properties.Resources.NationalID</label>
+                                <input type="text" class="form-control" id="NationalId" placeholder="@MyERP.Properties.Resources.NationalID">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="GroupId" class="control-label">@MyERP.Properties.Resources.Group</label>
+                                @Html.DropDownList("GroupId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                            </div>
+                        </div>
+                    </div>
+                    @*<div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <input type="checkbox" id="IsBlocked">
+                                    <label for="IsBlocked" class="control-label col-sm-8">@MyERP.Properties.Resources.Blocked</label>
+                                </div>
+                            </div>
+                        </div>*@
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class=" control-label" for="">@MyERP.Properties.Resources.Country</label>
+                                <select class="form-control" id="GovernorateId" name="GovernorateId"></select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="control-label" for="">@MyERP.Properties.Resources.City</label>
+                                <select class="form-control" id="CityId" name="CityId"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="PosCustomerAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="PosCustomerNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addPosCustomer();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-------------------------------------------------------------------------------------------------->
+<script>
+    //--------------- Variables Declarations -------------------//
+        var IsAvailableChairs = '@ViewBag.IsAvailableChairs';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if (IsAvailableChairs == 0) {
+           // $('#ChairsPricesDiv').css('visibility', 'unset');
+            $('#NotAvailableChairsPricesDiv').css('visibility', 'unset');
+            GetAvailableChairs();
+        }
+        else {
+           // $('#ChairsPricesDiv').css('visibility', 'hidden');
+            $('#NotAvailableChairsPricesDiv').css('visibility', 'hidden');
+        }
+        let CustomerId = $('#CustomerId').val();
+        appendPosCustomerOptions(true).then(function () { $('#CustomerId').val(CustomerId).trigger('change') });
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $(document).on('click', '#posCustomerAddBtn', function () {
+        getGovernorates();
+        $('#pos-customer-modal').modal("show");
+    });
+
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+     function addPosCustomer() {
+        let valid = true;
+        if ($("#PosCustomerArName").val() == "") {
+            $("#PosCustomerArName").prop('required', true);
+        }
+        if ($("#pos-customer-modal").find(".form-control:invalid").length > 0) {
+            $("#pos-customer-modal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        } else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Customers/AddEdit', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Id: $("#posCustomerIdInput").val() != "" ? $("#posCustomerIdInput").val() : 0,
+                        Code: $("#posCustomerCodeInput").val(),
+                        ArName: $("#PosCustomerArName").val(),
+                        EnName: $('#PosCustomerEnName').val(),
+                        Address: $('#PosCustomerAddress').val(),
+                        Mobile: $('#Mobile1').val(),
+                        //Mobile2: $('#Mobile2').val(),
+                        Notes: $('#PosCustomerNotes').val(),
+                        CountryId: $('#GovernorateId').val(),
+                        CityId: $('#CityId').val(),
+                        //AreaId: $('#AreaId').val(),
+                        NationalId: $('#NationalId').val(),
+                        IsBlocked: $('#IsBlocked').prop('checked'),
+                        CustomersGroupId: $('#GroupId').val(),
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        appendPosCustomerOptions(true).then(function () { $('#CustomerId').val(r.Id).trigger('change'); });
+                        $('#pos-customer-modal').modal('hide');
+                        $('#preloader, #status').fadeOut();
+
+                    }
+                });
+        }
+    }
+    function showPosCustomerModal(posCustomer, isNew, mobileNo, identityNo) {
+        if (posCustomer != null &&posCustomer.IsBlocked == true) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.BlockedCustomerCantBeSelected',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            $('#CustomerId').prop('selectedIndex', 0)
+            $('#CustomerId').trigger('change')
+        }
+        else {
+        if (posCustomer != null && isNew == false) {
+            $("#posCustomerIdInput").val(posCustomer.PosCustomerId);
+            $("#posCustomerCodeInput").val(posCustomer.PosCustomerCode);
+            $("#PosCustomerArName").val(posCustomer.ArName);
+            $("#PosCustomerEnName").val(posCustomer.EnName);
+            $("#PosCustomerAddress").val(posCustomer.Address);
+            $("#PosCustomerNotes").val(posCustomer.Notes);
+            $("#Mobile1").val(posCustomer.Mobile);
+            $("#Mobile2").val(posCustomer.Mobile2);
+            $("#NationalId").val(posCustomer.NationalId);
+            $("#IsBlocked").prop("checked", posCustomer.IsBlocked);
+            $("#GroupId").val(posCustomer.CustomersGroupId).select2();
+            $("#GovernorateId").val(posCustomer.GovernorateId).trigger('change');
+            $("#CityId").val(posCustomer.CityId).trigger('change');
+
+        }
+        else {
+            if (mobileNo != "" && mobileNo != null)
+                $("#Mobile1").val(mobileNo);
+            else
+                $("#Mobile1").val("");
+
+            if (identityNo != "" && identityNo != null)
+                $("#NationalId").val(identityNo);
+            else
+                $("#NationalId").val("");
+
+            $("#PosCustomerArName").val("");
+            $("#PosCustomerEnName").val("");
+            $("#PosCustomerAddress").val("");
+            $("#PosCustomerNotes").val("");
+        }
+            $('#pos-customer-modal').modal("show");
+        }
+    }
+    function appendPosCustomerOptions(refill) {
+        return getPosCustomers(refill).then(function () {
+            // let custumerType = $('#CustomerType').val();
+            let posCustomerOptions = '';
+            @*posCustomerOptions = '<option value="0">' + '@MyERP.Properties.Resources.Select' + '</option>';*@
+            for (var i = 0; i < posCustomers.length; i++) {
+                posCustomerOptions += '<option value="' + posCustomers[i].Id + '">' + posCustomers[i].ArName + ' - ' + posCustomers[i].Code + '</option>';
+            }
+            $('#CustomerId').empty().append(posCustomerOptions);
+            $('#CustomerId').trigger('change');
+        });
+    }
+    function getPosCustomers(refill) {
+        if (refill == true)
+            requestCache['/Helper/GetCustomers'] = null;
+        return requestData('/Helper/GetCustomers').done(function (r) {
+            posCustomers = r;
+        });
+    }
+
+    function getGovernorates() {
+        $.get('/Helper/GetGovernorates/').done(function (r) {
+            $('#GovernorateId').empty();
+            for (var i = 0; i < r.length; i++) {
+                $('#GovernorateId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+            $('#GovernorateId').trigger('change');
+        });
+    }
+    function getCities() {
+        $('#CityId').empty();
+        $.get('/Helper/getCities').done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                $('#CityId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+    function getAreas() {
+        $('#AreaId').empty();
+        $.get('/Helper/getAreas').done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                $('#AreaId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+    function GetAvailableChairs() {
+        $.get('/PartyHome/GetAvailableChairs?PartyId=' + $('#PartyId').val() + '&Price=' + $('#ChairsPrices').val()).done(function (r) {
+            $('#AvailableSpan').text(r);
+        });
+    }
+
+    function CalculateTotalPrice() {
+        var Price = 0;
+        var ChairCount = [];
+        $("#SeatRow .seat").each(function () {
+            var _Chair = $(this);
+            if (_Chair.find('.IsChairChecked').prop('checked') == true) {
+                Price += parseFloat(_Chair.find(".ChairPrice").inputmask('unmaskedvalue'));
+                ChairCount.push(_Chair);
+            }
+            var Total = parseFloat(Price);
+            $('#ChairsPrices').val(Total)
+            $('#ChairsNo').val(ChairCount.length)
+        });
+    }
+
+
+    function BookNow() {
+        var Chairs = [];
+        $("#SeatRow .seat").each(function () {
+            var _Chair = $(this);
+            var Chair = {
+                Id: _Chair.find(".ChairId").val(),
+                ChairNo: _Chair.find(".ChairNo").val(),
+                IsReserved: _Chair.find(".IsChairChecked").prop('checked'),
+                PartyId: _Chair.find(".ChairPartyId").val(),
+                PartyBookingId: $("#Id").val(),
+                Price: _Chair.find(".ChairPrice").val(),
+                Notes: _Chair.find(".ChairNotes").val(),
+            }
+            Chairs.push(Chair);
+        });
+
+        if ($('#ChairsNo').val() > 0) {
+            $.ajax({
+                type: "POST",
+                url: '/PartyHome/BookNow?PartyId=' + $('#PartyId').val() + '&Price=' + $('#ChairsPrices').val() + '&ChairsNo=' + $('#ChairsNo').val(),
+                data: { Chairs: JSON.stringify(Chairs) },
+                data: JSON.stringify(Chairs),
+                //dataType: "json",
+                contentType: "application/json",
+                success: function (response) {
+                    window.open('/PartyHome/BookNow?PartyId=' + response.PartyId + '&Price=' + response.Price + '&ChairsNo=' + response.ChairsNo);
+                }
+            });
+        }
+        else {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.ChairsNo  @MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+    }
+
+    //*********************************************************//
+
+
+</script>

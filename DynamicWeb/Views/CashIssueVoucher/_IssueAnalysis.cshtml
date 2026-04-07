@@ -1,0 +1,145 @@
+﻿@model MyERP.Models.IssueAnalysis
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.CashIssueVoucher;
+}
+
+<div class="panel-group" id='issueAnalysisCard_@Model.Id' role="tablist" aria-multiselectable="true">
+    <div class="panel panel-default">
+        <div class="panel-heading d-flex align-items-center justify-content-between" role="tab" id='issueAnalysisHeader_@Model.Id'>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-centered FixedCells mb-0">
+                    <tbody id='IssueAnalysis_@Model.Id'>
+                        <tr>
+                            <td style="width: 10%;">
+                                <input class="form-control Reason" value="@Model.Reason" />
+                            </td>
+                            <td class="adjustWidth">
+                                @{
+                                    if (Model.Id == -1)
+                                    {
+                                        @Html.DropDownList("IssueAnalysisAccountId", null, htmlAttributes: new { @style = "max-width: 100%; width:100%;min-width:100%;", @class = "IssueAnalysisAccountId form-control", required = "required", id = "", name = "", onchange = "GetIssueAnalysisAccountDetails(this);" })
+                                    }
+                                    else
+                                    {
+                                        <select class="IssueAnalysisAccountId form-control" style="max-width:100%; width:100%;min-width:100%;" onchange="GetIssueAnalysisAccountDetails(this);">
+                                            <option value="@Model.AccountId">@Model.ChartOfAccount.ArName</option>
+                                        </select>
+                                    }
+                                }
+                            </td>
+                            <td>
+                                <input type="number" step="any" class="form-control Total AccTotals" value="@Model.Total" @Html.Raw(Model.Total > 0 ? "" : "disabled") />
+                            </td>
+                            <td>
+                                <input type="number" step="any" class="form-control Value" value="@Model.Value" onchange="CalculateValue(this)" />
+                            </td>
+                            <td>
+                                <input type="text" class="form-control TaxesPrecentage AccTotals" value="@Model.TaxesPrecentage" @Html.Raw(Model.TaxesPrecentage > 0 ? "" : "disabled") />
+                            </td>
+                            <td>
+                                <input type="number" step="any" class="form-control Taxes AccTotals" value="@Model.Taxes" @Html.Raw(Model.Taxes > 0 ? "" : "disabled") />
+                            </td>
+                            <td>
+                                <input type="text" class="form-control IssueAnalysisVendorId AccTotals" hidden value="@Model.VendorId" />
+                                <input type="checkbox" class="IssueAnalysisIncludeValueAddedTax" hidden>
+                                @if (Model.VendorId > 0)
+                                {
+                                    <input type="text" class="form-control IssueAnalysisVendorArName AccTotals" value="@Model.Vendor.ArName" @Html.Raw(Model.VendorId > 0 || Model.Vendor.ArName != null ? "" : "disabled") />
+                                }
+                                else
+                                {
+                                    <input type="text" class="form-control IssueAnalysisVendorArName AccTotals" value="@Model.VendorArName" @Html.Raw(Model.VendorId > 0 || Model.VendorArName != null ? "" : "disabled") />
+                                }
+                                <input type="text" class="form-control IssueAnalysisVendorTaxNumber AccTotals" hidden value="@Model.TaxNumber" />
+                                <input type="text" class="form-control IssueAnalysisVendorVATNumber AccTotals" hidden value="@Model.VATNumber" />
+                                <input type="text" class="form-control IssueAnalysisVendorInvoiceNo AccTotals" hidden value="@Model.InvoiceNo" />
+                            </td>
+                            <td>
+                                <input class="form-control Notes" value="@Model.Notes" />
+                            </td>
+                            <td>
+                                <a href="javascript:void(0);" onclick="deleteIssueAnalysisRow(this)"><i class="fas fa-trash-alt"></i></a>
+                                <input type="hidden" class="issueAnalysisId" value="@Model.Id" />
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-default pull-right" type="button" data-toggle="collapse"
+                                        data-target='#collapseIssueAnalysis_@Model.Id' aria-expanded="false"
+                                        aria-controls='collapseIssueAnalysis_@Model.Id'>
+                                    <i class="fa fa-chevron-down" style="color: #333;"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id='collapseIssueAnalysis_@Model.Id' class="panel-collapse collapse" role="tabpanel"
+             aria-labelledby='issueAnalysisHeader_@Model.Id'>
+            <div class="panel-body">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table id="issueAnalDetailsTable_@Model.Id" class="table table-bordered table-condensed table-striped table-centered FixedCells mb-0">
+                            <thead>
+                                <tr>
+                                    <th>@MyERP.Properties.Resources.Property</th>
+                                    <th>@MyERP.Properties.Resources.Unit</th>
+                                    <th>@MyERP.Properties.Resources.Price</th>
+                                    <th>
+                                        <div style="float:left;">
+                                            <div class="col-sm-offset-2">
+                                                <button class="btn btn-success" onclick="addIssueAnalysisDetailRow(this)">
+                                                    @MyERP.Properties.Resources.Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="IssueAnalysisDetailsTableBody_@Model.Id">
+                                @if (Model != null && Model.IssueAnalysisDetails?.Count() > 0)
+                                {
+                                    for (int i = 0; i < Model.IssueAnalysisDetails.Count(); i++)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="text" class="form-control IssueAnalysisDetailsId" hidden value="@Model.IssueAnalysisDetails.ElementAt(i).Id" />
+                                                @Html.DropDownListFor(m => m.IssueAnalysisDetails.ElementAt(i).PropertyDetail.MainDocId,
+                                                    new SelectList(ViewBag.Properties, "Id", "ArName",
+                                                        Model.IssueAnalysisDetails.ElementAt(i).PropertyDetail.MainDocId),
+                                                    htmlAttributes: new
+                                                    {
+                                                        @class = "form-control PropertyList",
+                                                        onchange = "onChangePropertyList(this);"
+                                                    }
+                                                )
+                                            </td>
+
+                                            <td>
+                                                @Html.DropDownListFor(m => m.IssueAnalysisDetails.ElementAt(i).PropertyDetail.PropertyUnitNo,
+                                                        new SelectList(ViewBag.PropertyUnits, "Id", "ArName",
+                                                            Model.IssueAnalysisDetails.ElementAt(i).PropertyDetail.Id),
+                                                        htmlAttributes: new { @class = "PropertyUnitList form-control" }
+                                                )
+                                            </td>
+                                            <td>
+                                                @Html.EditorFor(m => m.IssueAnalysisDetails.ElementAt(i).Price,
+                                                    new { htmlAttributes = new { @class = "form-control tabledit-input price-input", placeholder = "--@MyERP.Properties.Resources.Price--" } }
+                                                )
+                                            <td>
+                                                <a href="javascript:void(0);" onclick="removeIssueAnalysisDetailRow(this)"><i class="fas fa-trash-alt"></i></a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,292 @@
+﻿@model IEnumerable<MyERP.Models.ItemPrice>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.ItemsPricingBasedOnCustomerGroups;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.ItemsPricingBasedOnCustomerGroups :</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.ItemsPricingBasedOnCustomerGroups
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="CustomersGroupId" class="control-label col-sm-2">@MyERP.Properties.Resources.CustomersGroups</label>
+                                    <div class="col-xs-12 col-sm-3 col-lg-3">
+                                        @Html.DropDownList("CustomerGroupId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+
+                                    <div class="col-xs-12 col-sm-3 col-lg-3">
+                                        <button type="button" class="btn btn-success btnSearch" onclick="paging();">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                        <a class="btn btn-info" href="/Item/ItemsPricingBasedOnCustomerGroups" role="button"><i class="fe-refresh-ccw"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!----------------------------------------------------- Item Price ---------------------------------------------------------------->
+
+            <div class="col-6" style="padding-bottom:inherit;">
+                <button onclick="addEdit('pagingNext');" class="btn btn-info col-1" @*style="float:right;"*@>&#8249;</button>
+                <button onclick="addEdit('pagingPrev');" class=" btn btn-info col-1" @*style="float:left;"*@>&#8250;</button>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.Prices</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Item</th>
+                                                <th>@MyERP.Properties.Resources.Price </th>
+                                                <th>@MyERP.Properties.Resources.Unit</th>
+                                                <th>@MyERP.Properties.Resources.Equivalent</th>
+                                                <th>@MyERP.Properties.Resources.Default</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemPrices">
+                                            @if (Model.Count() > 0)
+                                            {
+                                                foreach (var item in Model)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <label class="ItemName control-label control-label-sm"> @(item.Barcode+" - "+item.Item.Code+" - "+item.Item.ArName ) </label>
+                                                            <input type="hidden" class="ItemId" value="@item.ItemId" />
+                                                            <input type="hidden" class="ItemPriceId" value="@item.Id" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="text" class="money Price form-control tabledit-input form-control-sm" value="@item.Price" required />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <select class="ItemUnitId form-control tabledit-input form-control-sm" required disabled>
+                                                                <option value="@item.ItemUnitId">
+                                                                    @(item.ItemUnit.Code + " - " + item.ItemUnit.ArName)
+                                                                </option>
+                                                            </select>
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="Equivalent form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Equivalent" required disabled />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="IsDefault" disabled type="checkbox" @Html.Raw(item.IsDefault == null ? "" : (bool)item.IsDefault ? "checked" : "") />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--------------------------------------------------------------------------------------------------------------------->
+
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+
+                        <button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button class="btn btn-success" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:fit-content;float: left;" onchange="paging()">
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">@MyERP.Properties.Resources.All</option>
+            </select>
+            <span style="font-size:12px;float:right;"> @MyERP.Properties.Resources.NoOfResults : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> @MyERP.Properties.Resources.PageNo: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:fit-content;float: left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-offset-2">
+        <button class="btn btn-success" onclick="addEdit()">
+            @MyERP.Properties.Resources.Save
+        </button>
+        <a class="btn btn-danger" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>
+    </div>
+</div>
+
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    var CustomerGroupItemDetails = [];
+    let itemUnits = [];
+    let itemUnitsOptionString = '';
+     var count ='@ViewBag.Count';
+     var pageNo = 1;
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        setPages();
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+        paging();
+
+    });
+    $('#CustomerGroupId').on('change', function () {
+        paging();
+    });
+
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function paging() {
+        var link = '/Item/ItemsPricingBasedOnCustomerGroups?CustomerGroupId=' + $('#CustomerGroupId').val()+ '&wantedRowsNo=' + $('#ShowByPage').val() + '&pageIndex=' + pageNo;
+        window.location.replace(link);
+    }
+
+    function setPages() {
+
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+    $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+
+        if ($(tr).index() > 0) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length > 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).children("input[type|='text']").each(function () {
+                $(this).empty();
+            });
+        }
+    }
+    //*********************************************************//
+
+    function addEdit(n) {
+        let valid = true;
+        var itemPrices = [];
+
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+        }
+        else if ($(".form-control:invalid").length == 0) {
+
+
+            $('#itemPrices tr').each(function () {
+                var td = $(this);
+                var itemPrice = {
+                    Id: td.find('.ItemPriceId').val(),
+                    ItemId: td.find('.ItemId').val(),
+                    Price: td.find('.Price').inputmask('unmaskedvalue') ? td.find('.Price').inputmask('unmaskedvalue') : 0,
+                    ItemUnitId: td.find('.ItemUnitId').val(),
+                    Equivalent: td.find('.Equivalent').val(),
+                    IsDefault: td.find('.IsDefault').prop("checked"),
+                    IsActive: true,
+                    IsDeleted: false,
+                    // CustomerGroupId: td.find('#customersgroups').val(),
+                    IsDefault: td.find('.IsDefault').prop("checked"),
+
+                };
+                itemPrices.push(itemPrice);
+            });
+
+            if (valid @*&& confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')*@) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    type: "POST", contentType: "application/json",
+                    url: "/Item/ItemsPricingBasedOnCustomerGroups",
+                    data: JSON.stringify({
+                        ItemPrices: itemPrices
+                    }),
+                    success: function (r) {
+                        if (r.success == true) {
+                            if (n == "pagingNext") {
+                                pageNo = Math.ceil(count / $('#ShowByPage').val()) == pageNo ? pageNo : (pageNo + 1)
+                                var link = '/Item/ItemsPricingBasedOnCustomerGroups?CustomerGroupId=' + $('#CustomerGroupId').val() + '&wantedRowsNo=' + $('#ShowByPage').val() + '&pageIndex=' + pageNo;
+                                window.location.replace(link);
+                            } else if (n == "pagingPrev") {
+                                pageNo = pageNo > 1 ? (pageNo - 1) : pageNo
+                                var link = '/Item/ItemsPricingBasedOnCustomerGroups?CustomerGroupId=' + $('#CustomerGroupId').val() + '&wantedRowsNo=' + $('#ShowByPage').val() + '&pageIndex=' + pageNo;
+                                window.location.replace(link);
+                            }
+                            else {
+                                window.location.reload();
+                            }
+                            alert("@MyERP.Properties.Resources.Saved");
+                        } else
+                            alert("@MyERP.Properties.Resources.AnErrorOccurredTryAgain" + "!");
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        alert("@MyERP.Properties.Resources.AnErrorOccurredTryAgain" + "!");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+            }
+        }
+    }
+</script>

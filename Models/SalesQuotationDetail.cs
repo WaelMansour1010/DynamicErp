@@ -60,5 +60,9 @@ namespace MyERP.Models
         public virtual SalesQuotation SalesQuotation { get; set; }
         public virtual SystemPage SystemPage { get; set; }
         public virtual Patch Patch { get; set; }
+        public virtual CarColor CarColor { get; set; }
+        public virtual CarModel CarModel { get; set; }
+        public virtual CarType CarType { get; set; }
+        public virtual VehicleStock VehicleStock { get; set; }
     }
 }

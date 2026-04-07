@@ -208,6 +208,11 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrBarCode1 = new DevExpress.XtraReports.UI.XRBarCode();
             this.xrPictureBox1 = new DevExpress.XtraReports.UI.XRPictureBox();
             this.BottomMargin = new DevExpress.XtraReports.UI.BottomMarginBand();
+            this.xrLabel4 = new DevExpress.XtraReports.UI.XRLabel();
+            this.User = new DevExpress.XtraReports.UI.XRLabel();
+            this.pageInfo2 = new DevExpress.XtraReports.UI.XRPageInfo();
+            this.Time = new DevExpress.XtraReports.UI.XRLabel();
+            this.xrLabel6 = new DevExpress.XtraReports.UI.XRLabel();
             this.Detail = new DevExpress.XtraReports.UI.DetailBand();
             this.xrLabel76 = new DevExpress.XtraReports.UI.XRLabel();
             this.xrLabel77 = new DevExpress.XtraReports.UI.XRLabel();
@@ -288,11 +293,6 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.Id = new DevExpress.XtraReports.Parameters.Parameter();
             this.UserId = new DevExpress.XtraReports.Parameters.Parameter();
             this.PageHeader = new DevExpress.XtraReports.UI.PageHeaderBand();
-            this.pageInfo2 = new DevExpress.XtraReports.UI.XRPageInfo();
-            this.Time = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel6 = new DevExpress.XtraReports.UI.XRLabel();
-            this.xrLabel4 = new DevExpress.XtraReports.UI.XRLabel();
-            this.User = new DevExpress.XtraReports.UI.XRLabel();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable4)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
@@ -305,7 +305,8 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter1.Name = "@Id";
             queryParameter1.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter1.Value = new DevExpress.DataAccess.Expression("?Id", typeof(int));
-            storedProcQuery1.Parameters.Add(queryParameter1);
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1});
             storedProcQuery1.StoredProcName = "CarEntrance_Get";
             customSqlQuery1.MetaSerializable = "<Meta X=\"225\" Y=\"20\" Width=\"155\" Height=\"236\" />";
             customSqlQuery1.Name = "Query";
@@ -315,7 +316,8 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter2.Name = "@UserId";
             queryParameter2.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter2.Value = new DevExpress.DataAccess.Expression("?UserId", typeof(int));
-            storedProcQuery2.Parameters.Add(queryParameter2);
+            storedProcQuery2.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter2});
             storedProcQuery2.StoredProcName = "Department_ReportUserDepartments";
             this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
             storedProcQuery1,
@@ -383,7 +385,7 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrPictureBox1.Name = "xrPictureBox1";
             this.xrPictureBox1.SizeF = new System.Drawing.SizeF(233.1318F, 147.9247F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrPictureBox1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // BottomMargin
             // 
@@ -395,6 +397,78 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrLabel6});
             this.BottomMargin.HeightF = 68.42524F;
             this.BottomMargin.Name = "BottomMargin";
+            // 
+            // xrLabel4
+            // 
+            this.xrLabel4.BackColor = System.Drawing.Color.White;
+            this.xrLabel4.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel4.ForeColor = System.Drawing.Color.Black;
+            this.xrLabel4.LocationFloat = new DevExpress.Utils.PointFloat(9.916626F, 9.999974F);
+            this.xrLabel4.Multiline = true;
+            this.xrLabel4.Name = "xrLabel4";
+            this.xrLabel4.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel4.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel4.StylePriority.UseBackColor = false;
+            this.xrLabel4.StylePriority.UseFont = false;
+            this.xrLabel4.StylePriority.UseForeColor = false;
+            this.xrLabel4.Text = "المستخدم";
+            // 
+            // User
+            // 
+            this.User.BackColor = System.Drawing.Color.White;
+            this.User.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.User.ForeColor = System.Drawing.Color.Black;
+            this.User.LocationFloat = new DevExpress.Utils.PointFloat(109.917F, 9.999974F);
+            this.User.Multiline = true;
+            this.User.Name = "User";
+            this.User.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.User.SizeF = new System.Drawing.SizeF(214.0416F, 23F);
+            this.User.StylePriority.UseBackColor = false;
+            this.User.StylePriority.UseFont = false;
+            this.User.StylePriority.UseForeColor = false;
+            this.User.StylePriority.UseTextAlignment = false;
+            this.User.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
+            // 
+            // pageInfo2
+            // 
+            this.pageInfo2.LocationFloat = new DevExpress.Utils.PointFloat(427.1666F, 43.06679F);
+            this.pageInfo2.Name = "pageInfo2";
+            this.pageInfo2.SizeF = new System.Drawing.SizeF(351F, 23F);
+            this.pageInfo2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
+            this.pageInfo2.TextFormatString = "Page {0} of {1}";
+            // 
+            // Time
+            // 
+            this.Time.BackColor = System.Drawing.Color.White;
+            this.Time.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.Time.ForeColor = System.Drawing.Color.Black;
+            this.Time.LocationFloat = new DevExpress.Utils.PointFloat(538.1256F, 9.999974F);
+            this.Time.Multiline = true;
+            this.Time.Name = "Time";
+            this.Time.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.Time.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.No;
+            this.Time.SizeF = new System.Drawing.SizeF(241F, 23F);
+            this.Time.StylePriority.UseBackColor = false;
+            this.Time.StylePriority.UseFont = false;
+            this.Time.StylePriority.UseForeColor = false;
+            this.Time.StylePriority.UseTextAlignment = false;
+            this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
+            this.Time.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Time_BeforePrint);
+            // 
+            // xrLabel6
+            // 
+            this.xrLabel6.BackColor = System.Drawing.Color.White;
+            this.xrLabel6.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
+            this.xrLabel6.ForeColor = System.Drawing.Color.Black;
+            this.xrLabel6.LocationFloat = new DevExpress.Utils.PointFloat(438.1256F, 9.999974F);
+            this.xrLabel6.Multiline = true;
+            this.xrLabel6.Name = "xrLabel6";
+            this.xrLabel6.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
+            this.xrLabel6.SizeF = new System.Drawing.SizeF(100F, 23F);
+            this.xrLabel6.StylePriority.UseBackColor = false;
+            this.xrLabel6.StylePriority.UseFont = false;
+            this.xrLabel6.StylePriority.UseForeColor = false;
+            this.xrLabel6.Text = "الوقت";
             // 
             // Detail
             // 
@@ -844,7 +918,8 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             // 
             // xrLabel38
             // 
-            this.xrLabel38.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold, DevExpress.Drawing.DXGraphicsUnit.Point, new DevExpress.Drawing.DXFontAdditionalProperty[] {new DevExpress.Drawing.DXFontAdditionalProperty("GdiCharSet", ((byte)(0)))});
+            this.xrLabel38.Font = new DevExpress.Drawing.DXFont("Arial", 12F, DevExpress.Drawing.DXFontStyle.Bold, DevExpress.Drawing.DXGraphicsUnit.Point, new DevExpress.Drawing.DXFontAdditionalProperty[] {
+            new DevExpress.Drawing.DXFontAdditionalProperty("GdiCharSet", ((byte)(0)))});
             this.xrLabel38.ForeColor = System.Drawing.Color.DarkBlue;
             this.xrLabel38.LocationFloat = new DevExpress.Utils.PointFloat(0.2501831F, 215.2999F);
             this.xrLabel38.Multiline = true;
@@ -859,7 +934,8 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             // 
             this.xrLabel11.BorderColor = System.Drawing.Color.Silver;
             this.xrLabel11.Borders = DevExpress.XtraPrinting.BorderSide.None;
-            this.xrLabel11.Font = new DevExpress.Drawing.DXFont("Arial", 18F, DevExpress.Drawing.DXFontStyle.Bold, DevExpress.Drawing.DXGraphicsUnit.Point, new DevExpress.Drawing.DXFontAdditionalProperty[] {new DevExpress.Drawing.DXFontAdditionalProperty("GdiCharSet", ((byte)(0)))});
+            this.xrLabel11.Font = new DevExpress.Drawing.DXFont("Arial", 18F, DevExpress.Drawing.DXFontStyle.Bold, DevExpress.Drawing.DXGraphicsUnit.Point, new DevExpress.Drawing.DXFontAdditionalProperty[] {
+            new DevExpress.Drawing.DXFontAdditionalProperty("GdiCharSet", ((byte)(0)))});
             this.xrLabel11.ForeColor = System.Drawing.Color.DarkBlue;
             this.xrLabel11.LocationFloat = new DevExpress.Utils.PointFloat(284.2819F, 157.9247F);
             this.xrLabel11.Multiline = true;
@@ -880,7 +956,7 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.DetailReport.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
             this.Detail1,
             this.GroupHeader1});
-            this.DetailReport.DataMember = "CarEntrance_Get.CarEntrance_GetQuery";
+            this.DetailReport.DataMember = "CarEntrance_Get";
             this.DetailReport.DataSource = this.sqlDataSource1;
             this.DetailReport.Level = 0;
             this.DetailReport.Name = "DetailReport";
@@ -1110,7 +1186,7 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             // 
             // ExtendedTotal
             // 
-            this.ExtendedTotal.DataMember = "SalesInvoice_Get.SalesInvoice_GetQuery";
+            this.ExtendedTotal.DataMember = "CarEntrance_Get";
             this.ExtendedTotal.Expression = "[Price] * [Qty]";
             this.ExtendedTotal.Name = "ExtendedTotal";
             // 
@@ -1440,78 +1516,6 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.PageHeader.HeightF = 499.4249F;
             this.PageHeader.Name = "PageHeader";
             // 
-            // pageInfo2
-            // 
-            this.pageInfo2.LocationFloat = new DevExpress.Utils.PointFloat(427.1666F, 43.06679F);
-            this.pageInfo2.Name = "pageInfo2";
-            this.pageInfo2.SizeF = new System.Drawing.SizeF(351F, 23F);
-            this.pageInfo2.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopRight;
-            this.pageInfo2.TextFormatString = "Page {0} of {1}";
-            // 
-            // Time
-            // 
-            this.Time.BackColor = System.Drawing.Color.White;
-            this.Time.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
-            this.Time.ForeColor = System.Drawing.Color.Black;
-            this.Time.LocationFloat = new DevExpress.Utils.PointFloat(538.1256F, 9.999974F);
-            this.Time.Multiline = true;
-            this.Time.Name = "Time";
-            this.Time.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.Time.RightToLeft = DevExpress.XtraReports.UI.RightToLeft.No;
-            this.Time.SizeF = new System.Drawing.SizeF(241F, 23F);
-            this.Time.StylePriority.UseBackColor = false;
-            this.Time.StylePriority.UseFont = false;
-            this.Time.StylePriority.UseForeColor = false;
-            this.Time.StylePriority.UseTextAlignment = false;
-            this.Time.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
-            // 
-            // xrLabel6
-            // 
-            this.xrLabel6.BackColor = System.Drawing.Color.White;
-            this.xrLabel6.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
-            this.xrLabel6.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel6.LocationFloat = new DevExpress.Utils.PointFloat(438.1256F, 9.999974F);
-            this.xrLabel6.Multiline = true;
-            this.xrLabel6.Name = "xrLabel6";
-            this.xrLabel6.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel6.SizeF = new System.Drawing.SizeF(100F, 23F);
-            this.xrLabel6.StylePriority.UseBackColor = false;
-            this.xrLabel6.StylePriority.UseFont = false;
-            this.xrLabel6.StylePriority.UseForeColor = false;
-            this.xrLabel6.Text = "الوقت";
-            // 
-            // xrLabel4
-            // 
-            this.xrLabel4.BackColor = System.Drawing.Color.White;
-            this.xrLabel4.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
-            this.xrLabel4.ForeColor = System.Drawing.Color.Black;
-            this.xrLabel4.LocationFloat = new DevExpress.Utils.PointFloat(9.916626F, 9.999974F);
-            this.xrLabel4.Multiline = true;
-            this.xrLabel4.Name = "xrLabel4";
-            this.xrLabel4.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.xrLabel4.SizeF = new System.Drawing.SizeF(100F, 23F);
-            this.xrLabel4.StylePriority.UseBackColor = false;
-            this.xrLabel4.StylePriority.UseFont = false;
-            this.xrLabel4.StylePriority.UseForeColor = false;
-            this.xrLabel4.Text = "المستخدم";
-            // 
-            // User
-            // 
-            this.User.BackColor = System.Drawing.Color.White;
-            this.User.Font = new DevExpress.Drawing.DXFont("Arial", 12F);
-            this.User.ForeColor = System.Drawing.Color.Black;
-            this.User.LocationFloat = new DevExpress.Utils.PointFloat(109.917F, 9.999974F);
-            this.User.Multiline = true;
-            this.User.Name = "User";
-            this.User.Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0, 100F);
-            this.User.SizeF = new System.Drawing.SizeF(214.0416F, 23F);
-            this.User.StylePriority.UseBackColor = false;
-            this.User.StylePriority.UseFont = false;
-            this.User.StylePriority.UseForeColor = false;
-            this.User.StylePriority.UseTextAlignment = false;
-            this.User.TextAlignment = DevExpress.XtraPrinting.TextAlignment.TopCenter;
-            // 
             // CarEntrance_Report
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
@@ -1525,10 +1529,10 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.ExtendedTotal});
             this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
             this.sqlDataSource1});
-            this.DataMember = "CarEntrance_Get";
+            this.DataMember = "Query";
             this.DataSource = this.sqlDataSource1;
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
-            this.Margins = new DevExpress.Drawing.DXMargins(20, 19, 28, 68);
+            this.Margins = new DevExpress.Drawing.DXMargins(20F, 19F, 28.1329F, 68.42524F);
             this.PageHeight = 1169;
             this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
@@ -1544,7 +1548,7 @@ public class CarEntrance_Report : DevExpress.XtraReports.UI.XtraReport
             this.RightToLeftLayout = DevExpress.XtraReports.UI.RightToLeftLayout.Yes;
             this.StyleSheet.AddRange(new DevExpress.XtraReports.UI.XRControlStyle[] {
             this.xrControlStyle1});
-            this.Version = "20.1";
+            this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.xrTable4)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrTable3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();

@@ -1,0 +1,158 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoice>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.SalesInvoice;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="page-title"> @MyERP.Properties.Resources.Synchronization</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @MyERP.Properties.Resources.VoucherNo
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.TotalAfterTaxes
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.VoucherDate
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Branch
+                                    </th>
+                                    <th>
+                                        <button class="btn btn-success" onclick="CheckAll()"> @MyERP.Properties.Resources.Sync  @MyERP.Properties.Resources.All </button>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="NotSynced">
+                                @if (Model != null)
+                                {
+                                    foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @Html.DisplayFor(modelItem => item.DocumentNumber)
+                                            </td>
+                                            <td>
+                                                @Html.DisplayFor(modelItem => item.TotalAfterTaxes)
+                                            </td>
+
+                                            <td>
+                                                @Html.DisplayFor(modelItem => item.VoucherDate)
+                                            </td>
+                                            <td>
+                                                @Html.DisplayFor(modelItem => item.Department.ArName)
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" class="form-check IsSynced" />
+                                            </td>
+                                            <td style="display:none;">
+                                                <input type="checkbox" class="form-check Id" value="@item.Id" />
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <br />
+                    <button class="btn btn-success" style="float:left;" onclick="SyncData()">  @MyERP.Properties.Resources.Sync </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function CheckAll() {
+        $('#NotSynced tr').each(function () {
+            var td = $(this);
+            if (td.find('.IsSynced').prop('checked') == true) {
+                td.find('.IsSynced').prop('checked', false);
+            }
+            else {
+                td.find('.IsSynced').prop('checked', true);
+            }
+        });
+    }
+
+    function SyncData() {
+        var Ids = [];
+        var Id = 0;
+        $('#NotSynced tr').each(function () {
+            var td = $(this);
+            Id = td.find('.Id').val();
+            if (td.find('.IsSynced').prop('checked') == true) {
+                Ids.push(Id);
+            }
+        });
+        $.ajax({
+            type: "POST",
+            url: "/SalesInvoice/SynchronizationData",
+            dataType: "json",
+            data: ({ ids: Ids }),
+            success: function (r) {
+                if (r.success == "true") {
+                    //   window.location.replace("/SalesInvoice");
+                    $('#preloader, #status').fadeOut();
+                    //alert("@MyERP.Properties.Resources.Sended");
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.Sended',
+                        text: " ",
+                        icon: 'success',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                } else {
+                    $('#preloader, #status').fadeOut();
+                    //alert("@MyERP.Properties.Resources.NotSaved");
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotSaved',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            },
+            error: function (r) {
+                $('#preloader, #status').fadeOut();
+                //alert("@MyERP.Properties.Resources.NotSended");
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotSended',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+
+    }
+
+</script>

@@ -1,0 +1,446 @@
+﻿@model MyERP.Models.AdditionalItem
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.AdditionalItems;
+}
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title"> @MyERP.Properties.Resources.AdditionalItems :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                    }
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="ItemId" class="control-label col-sm-2">@MyERP.Properties.Resources.Item</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ItemRequired
+                                        </div>
+                                    </div>
+                                    <label for="ItemUnitId" class="control-label col-sm-2">@MyERP.Properties.Resources.Unit</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ItemPriceId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        @if (Model != null)
+                                        {
+                                            <input hidden id="ItemUnitId" value="@Model.ItemUnitId" />
+                                        }
+                                        else
+                                        {
+                                            <input hidden id="ItemUnitId" />
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.UnitRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Equivalent" class="control-label col-sm-2">@MyERP.Properties.Resources.Equivalent </label>
+                                    <div class="col-sm-4">
+
+                                        @Html.EditorFor(model => model.Equivalent, new { htmlAttributes = new { @class = "form-control", @type = "number", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.EquivalentRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="DoublePrice" class="control-label col-sm-2">@MyERP.Properties.Resources.DoublePrice</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DoublePrice, new
+                                        {
+                                            htmlAttributes = new
+                                            {
+                                                @class = "form-control",
+                                                @type = "number"@*@required = "required"*@}
+})
+                                    </div>
+                                    <label for="DoubleQuantity" class="control-label col-sm-2">@MyERP.Properties.Resources.DoubleQuantity</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DoubleQuantity, new
+                                   {
+                                       htmlAttributes = new
+                                       {
+                                           @class = "form-control",
+                                           @type = "number"@*@required = "required"*@}
+                                   })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ExtraPrice" class="control-label col-sm-2">@MyERP.Properties.Resources.ExtraPrice</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ExtraPrice, new { htmlAttributes = new { @class = "form-control", @type = "number", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ExtraQuantity" class="control-label col-sm-2">@MyERP.Properties.Resources.ExtraQuantity</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ExtraQuantity, new { htmlAttributes = new { @class = "form-control", @type = "number", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ShortagePrice" class="control-label col-sm-2">@MyERP.Properties.Resources.ShortagePrice</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ShortagePrice, new
+                                   {
+                                       htmlAttributes = new
+                                       {
+                                           @class = "form-control",
+                                           @type = "number",
+                                           @disabled = true@*@required = "required"*@}
+                                   })
+                                    </div>
+                                    <label for="ShortageQuantity" class="control-label col-sm-2">@MyERP.Properties.Resources.ShortageQuantity</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ShortageQuantity, new
+                                   {
+                                       htmlAttributes = new
+                                       {
+                                           @class = "form-control",
+                                           @type = "number",@*@required = "required"*@}
+                                   })
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse7">
+                                            @MyERP.Properties.Resources.Groups
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse7">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="ItemGroupId">@MyERP.Properties.Resources.Group</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ItemGroupId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+
+                                        </div>
+                                        <div class="col-sm-offset-2">
+                                            <button class="btn btn-success AddItem">
+                                                @MyERP.Properties.Resources.Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Group
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Delete
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="AdditionalItemsGroups">
+                                                @if (Model != null)
+                                                {
+                                                    foreach (var item in Model.AdditionalItemsGroups)
+                                                    {
+                                                        <tr>
+                                                            <td hidden>
+                                                                <input class="ItemGroupId" value="@item.ItemGroupId" />
+                                                            </td>
+                                                            <td>
+                                                                <label>@item.ItemGroup.ArName</label>
+                                                            </td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:left;">
+                            @if (Model == null)
+                            {
+                                <button onclick="addEdit('new')" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button onclick="addEdit()" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button onclick="addEdit()" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <a class="btn btn-danger" onclick="Delete(@Model.Id,'AdditionalItem')" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //------------------ Variables Declaration -----------------------------//
+    var ItemUnitId;
+    var ItemUnitIds = [];
+    //------------------------------ Ready Function --------------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            if ($('#ItemId').val() > 0) {
+                $('#ItemId').trigger('change')
+            }
+        }
+        else {
+            function setCodeNum() {
+                var doc = $.get('/AdditionalItem/SetCodeNum').done(function (r) {
+                    $('#Code').val(r);
+                });
+            }
+            setCodeNum();
+        }
+    });
+    //*********************************************************************//
+    //------------------------------ Event Functions ----------------------//
+    // change unit value upon item value
+    $('#ItemId').on('change', function () {
+        let id = $('#ItemId option:selected').val();
+        $.ajax({
+            type: "GET",
+            contentType: "application/json",
+            url: "/AdditionalItem/GetDefaultUnits/" + id,
+            success: function (r) {
+                $('#ItemPriceId').empty();
+                ItemUnitIds = [];
+                //$('#ItemUnitId').append($("<option></option>").val(0).html("إختر الوحدة"))
+                for (var i = 0; i < r.length; i++)
+                {
+                    $('#ItemPriceId').append($("<option></option>").val(r[i].Id).html(r[i].ArName));
+                    ItemUnitIds.push({ ItemPriceId: r[i].Id, ItemUnitId: r[i].ItemUnitId});
+                }
+                $('#Equivalent').val(1);
+            },
+            error: function () {
+                alert('@MyERP.Properties.Resources.SelectItem');
+            }
+        });
+    });
+    // add item in Additional item details table
+    $('.AddItem').on('click', function () {
+        let id = $(this).attr('id');
+
+        if (!$('#ItemGroupId').val()) {
+            alert('@MyERP.Properties.Resources.SelectGroup')
+        }
+        else {
+            let valid = true;
+            $('#AdditionalItemsGroups tr').each(function () {
+                var tr = $(this);
+                if ($('#ItemGroupId').val() == tr.find('.ItemGroupId').val())
+                    valid = false;
+            });
+
+            if (valid == false)
+                alert('@MyERP.Properties.Resources.GroupExistsBefore')
+            else {
+                $('#AdditionalItemsGroups').append('<tr><td hidden><input class="ItemGroupId" value=' + $('#ItemGroupId').val() + '></td ><td><label >' + $('#ItemGroupId option:selected').text() + '</label ></td><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">حذف</button></td></tr>');
+            }
+        }
+
+    });
+    //*********************************************************************//
+
+   //------------------------------ Other Functions ----------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+   // delete specific item (row) from any salary item table Vacation , Annual increase or End of service
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+    }
+    function search(id, ItemUnitIds)
+    {
+        for (var i = 0 ; i < ItemUnitIds.length ; i++)
+        {
+            if (ItemUnitIds[i].ItemPriceId == id)
+            {
+                return ItemUnitIds[i].ItemUnitId;
+            }
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/AdditionalItem/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/AdditionalItem');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+    function addEdit(n)
+    {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var additionalItemsGroups = [];
+            $('#AdditionalItemsGroups tr').each(function () {
+                var td = $(this);
+                var additionalItemsGroup = {
+                    AdditionlItemId: $('#Id').val(),
+                    ItemGroupId: td.find('.ItemGroupId').val()
+                };
+                additionalItemsGroups.push(additionalItemsGroup);
+            });
+
+            if (!$('#Id').val()) {
+                ItemUnitId = search($('#ItemPriceId').val(), ItemUnitIds);
+            }
+            else
+            {
+                if (ItemUnitIds.length == 0)
+                {
+                    ItemUnitId = $('#ItemUnitId').val();
+                }
+                else
+                {
+                    ItemUnitId = search($('#ItemPriceId').val(), ItemUnitIds);
+                }
+            }
+            var additionalItem =
+            {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                ArName: $('#ItemId option:selected').text(),
+                //EnName: $('#EnName').val(),
+                ItemId: $('#ItemId').val(),
+                ItemUnitId: ItemUnitId,
+                ItemPriceId: $('#ItemPriceId').val(),
+                Equivalent: $('#Equivalent').val(),
+                DoublePrice: $('#DoublePrice').val(),
+                ExtraPrice: $('#ExtraPrice').val(),
+                ShortagePrice: $('#ShortagePrice').val(),
+                DoubleQuantity: $('#DoubleQuantity').val(),
+                ExtraQuantity: $('#ExtraQuantity').val(),
+                ShortageQuantity: $('#ShortageQuantity').val(),
+
+
+                IsActive: true,
+                IsDeleted: false,
+                AdditionalItemsGroups: additionalItemsGroups,
+
+            };
+
+            if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                $.ajax({
+                    type: "POST",
+                    url: "/AdditionalItem/AddEdit",
+                    data: additionalItem,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/AdditionalItem/AddEdit");
+                            } else {
+                                window.location.replace("/AdditionalItem");
+                            }
+                        }
+                        else
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+
+        }
+    }
+    //*********************************************************************//
+
+</script>

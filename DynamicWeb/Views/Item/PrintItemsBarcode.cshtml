@@ -1,0 +1,291 @@
+﻿@model MyERP.Models.ItemsPrintBarcodeQueue
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.PrintItemsBarcode;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.PrintItemsBarcode :</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.PrintItemsBarcode
+                                </h5>
+                                <div class="form-group row">
+                                    <div class="col-sm-6">
+                                        <label for="ViewTypeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Type</label>
+                                        <input type="radio" id="SpecificItem" name="ViewTypeId" value="1" class="col-sm-2" checked="checked" />@MyERP.Properties.Resources.SpecificItem
+                                        <input type="radio" id="FromDocument" name="ViewTypeId" value="2" class="col-sm-2" />@MyERP.Properties.Resources.FromDocument
+                                    </div>
+                                </div>
+                                <div class="form-group row Item" style="display:none;">
+                                    <label for="ItemId" class="control-label col-sm-2 Item">@MyERP.Properties.Resources.Item</label>
+                                    <div class="col-sm-4 Item">
+                                        @Html.DropDownList("ItemId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <label for="ItemPriceId" class="control-label col-sm-2 Item">@MyERP.Properties.Resources.Barcode</label>
+                                    <div class="col-sm-4 Item">
+                                        <select class="form-control" id="ItemPriceId">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row Item" style="display:none;">
+                                    <label class=" col-sm-2 control-label" for="NumberOfPrintedCopies">@MyERP.Properties.Resources.NumberOfCopies</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NumberOfPrintedCopies, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.NumberOfCopies, @type = "text" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row Document" style="display:none;">
+                                    <label for="DocumentTypeId" class="control-label col-sm-2 Document">@MyERP.Properties.Resources.DocumentType</label>
+                                    <div class="col-sm-4 Document">
+                                        @Html.DropDownList("DocumentTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <label for="DocNoId" class="control-label col-sm-2 Document">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4 Document">
+                                        <select class="form-control" id="DocNoId">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row Document" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="form-horizontal needs-validation" role="form">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="header-title">
+                                                        @MyERP.Properties.Resources.Details
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-centered mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <td>@MyERP.Properties.Resources.Item</td>
+                                                                    <td>@MyERP.Properties.Resources.Barcode</td>
+                                                                    <td>@MyERP.Properties.Resources.NumberOfCopies</td>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="Details">
+                                                                
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--------------------------------------------------------------------------------------------------------------------->
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button type="submit" onclick="addEdit()" class="btn btn-success">
+                            @MyERP.Properties.Resources.Print
+                        </button>
+                        @*<button type="submit" onclick="addEdit('new')" class="btn btn-success">
+                                 @MyERP.Properties.Resources.SaveAndNew
+                             </button>
+                             <button class="btn btn-success" onclick="addEdit()">
+                                 @MyERP.Properties.Resources.Save
+                             </button>
+                            <a class="btn btn-danger" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>*@
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    let ItemPriceOptions = '';
+    let DocNoOptions = '';
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $("input[name='ViewTypeId']").trigger('change');
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $('#ItemId').on('change', function () {
+        GetItemBarcodesByItemId()
+    });
+    $('#DocumentTypeId').on('change', function () {
+        GetDocumentNumberByDocumentTypeId();
+            GetDocumentDetailsByDocumentTypeIdAndDocumentId();
+    });
+    $('#DocNoId').on('change', function () {
+        GetDocumentDetailsByDocumentTypeIdAndDocumentId();
+    });
+    $("input[name='ViewTypeId']").on('change', function () {
+        if ($("input[name='ViewTypeId']:checked").val() == 1) {
+            $('.Item').show();
+            $('#NumberOfPrintedCopies').prop('required', true);
+            $('#ItemId').prop('required', true);
+            $('#ItemPriceId').prop('required', true);
+            $('.Document').hide();
+            $('#DocumentTypeId').prop('required', false);
+            $('#DocNoId').prop('required', false);
+        }
+        else {
+            $('.Item').hide();
+            $('#NumberOfPrintedCopies').prop('required', false);
+            $('#ItemId').prop('required', false);
+            $('#ItemPriceId').prop('required', false);
+            $('.Document').show();
+            $('#DocumentTypeId').prop('required', true);
+            $('#DocNoId').prop('required', true);
+        }
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function GetItemBarcodesByItemId() {
+        $.get('/Helper/GetItemBarcodesByItemId?ItemId=' + $('#ItemId').val()).done(function (r) {
+            ItemPriceOptions = '<option value="0">' + '@MyERP.Properties.Resources.Select' + '</option>';
+            if (r.length) {
+                for (var i = 0; i < r.length; i++) {
+                    if (r[i].Barcode!=null)
+                    ItemPriceOptions += '<option value="' + r[i].Id + '">' + r[i].Barcode + '</option>';
+                }
+            }
+            $("#ItemPriceId").empty().append(ItemPriceOptions)
+        });
+    }
+    function GetDocumentNumberByDocumentTypeId() {
+        $.get('/Item/GetDocumentNumberByDocumentTypeId?DocumentTypeId=' + $('#DocumentTypeId').val()).done(function (r) {
+            r = r[0];
+            DocNoOptions = '<option value="0">' + '@MyERP.Properties.Resources.Select' + '</option>';
+            if (r.length) {
+                for (var i = 0; i < r.length; i++) {
+                    DocNoOptions += '<option value="' + r[i].Id + '">' + r[i].DocumentNumber + '</option>';
+                }
+            }
+            $("#DocNoId").empty().append(DocNoOptions)
+        });
+    }
+    function GetDocumentDetailsByDocumentTypeIdAndDocumentId() {
+        $("#Details").empty();
+        $.get('/Item/GetDocumentDetailsByDocumentTypeIdAndDocumentId?DocumentTypeId=' + $('#DocumentTypeId').val() + '&DocumentId=' + $("#DocNoId").val()).done(function (r) {
+            r = r[0];
+            if (r.length) {
+                for (var i = 0; i < r.length; i++) {
+                    if (r[i].Barcode != null) {
+                        let tr = ' <tr><td class="tabledit-edit-mode" ><input type="text" class="ItemName form-control tabledit-input form-control-sm" readonly value="' +
+                            r[i].ItemName + '" /><input type="text" class="ItemId form-control tabledit-input form-control-sm" hidden readonly value="' +
+                            r[i].ItemId + '" /><input type="text" class="ItemPriceId form-control tabledit-input form-control-sm" hidden readonly value="' +
+                            r[i].ItemPriceId + '" /></td ><td class="tabledit-edit-mode"><input type="text" class="Barcode form-control tabledit-input form-control-sm" readonly value="' +
+                            r[i].Barcode + '" /></td><td class="tabledit-edit-mode"><input type="text" class="NumberOfCopies form-control tabledit-input form-control-sm" readonly value="' +
+                            r[i].Qty + '"/></td></tr>';
+                        $("#Details").append(tr);
+                    }
+                }
+            }
+        });
+    }
+
+    //*********************************************************//
+
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+        }
+        else if ($(".form-control:invalid").length == 0) {
+
+            if ($("input[name='ViewTypeId']:checked").val() == 1) { //نوع محدد
+                var itemsPrintBarcodeQueues = [];
+                if ($('#ItemPriceId').val() > 0) {
+                    var Detail = {
+                        ItemId: $('#ItemId').val(),
+                        ItemPriceId: $('#ItemPriceId').val(),
+                        NumberOfPrintedCopies: $('#NumberOfPrintedCopies').val(),
+                    }
+                    itemsPrintBarcodeQueues.push(Detail);
+                }
+                else {
+                    valid = false;
+                    alert('@MyERP.Properties.Resources.Barcode @MyERP.Properties.Resources.Required');
+                }
+            }
+            else {// من مستند
+                var itemsPrintBarcodeQueues = [];
+                if ($('#DocNoId').val() > 0) {
+                    $('#Details tr').each(function () {
+                        var td = $(this);
+                        var Detail = {
+                            ItemId: td.find('.ItemId').val(),
+                            ItemPriceId: td.find('.ItemPriceId').val(),
+                            NumberOfPrintedCopies: td.find('.NumberOfCopies').val(),
+                        };
+                        itemsPrintBarcodeQueues.push(Detail);
+                    });
+                }
+                else {
+                    valid = false;
+                    alert('@MyERP.Properties.Resources.DocNo @MyERP.Properties.Resources.Required')
+                }
+                 if ($('#Details tr').length == 0) {
+                 valid = false;
+                 alert('@MyERP.Properties.Resources.Details @MyERP.Properties.Resources.Required')
+            }
+            }
+
+
+            if (valid @*&& confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')*@) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "/Item/PrintItemsBarcode",
+                    data: JSON.stringify({
+                        itemsPrintBarcodeQueues: itemsPrintBarcodeQueues
+                    }),
+                    success: function (r) {
+                        if (r.success == true) {
+                            window.location.reload();
+                            alert("@MyERP.Properties.Resources.Saved");
+                        }
+                        else {
+                            alert("@MyERP.Properties.Resources.AnErrorOccurredTryAgain" + "!");
+                        }
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        alert("@MyERP.Properties.Resources.AnErrorOccurredTryAgain" + "!");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+            }
+        }
+    }
+</script>

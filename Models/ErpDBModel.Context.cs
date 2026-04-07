@@ -35,7 +35,6 @@ namespace MyERP.Models
         public virtual DbSet<CashBox> CashBoxes { get; set; }
         public virtual DbSet<CashIssueSourceType> CashIssueSourceTypes { get; set; }
         public virtual DbSet<CashIssueVoucher> CashIssueVouchers { get; set; }
-        public virtual DbSet<CashReceiptSourceType> CashReceiptSourceTypes { get; set; }
         public virtual DbSet<CashTransfer> CashTransfers { get; set; }
         public virtual DbSet<CashTransferType> CashTransferTypes { get; set; }
         public virtual DbSet<ChartOfAccount> ChartOfAccounts { get; set; }
@@ -444,14 +443,6 @@ namespace MyERP.Models
         public virtual DbSet<RegisterAttendanceAndAbsence> RegisterAttendanceAndAbsences { get; set; }
         public virtual DbSet<RegisterAttendanceAndAbsenceDetail> RegisterAttendanceAndAbsenceDetails { get; set; }
         public virtual DbSet<ExpenseAmortizationDistribution> ExpenseAmortizationDistributions { get; set; }
-
-        
-        public virtual DbSet<SalesRepresentativesGroup> SalesRepresentativesGroup { get; set; }
-        public virtual DbSet<SalesReturnPaymentMethod> SalesReturnPaymentMethod { get; set; }
-        
-        
-        public virtual DbSet<Service> Service { get; set; }
-        public virtual DbSet<ServiceInvoice> ServiceInvoice { get; set; }
         public virtual DbSet<SystemSetting> SystemSettings { get; set; }
         public virtual DbSet<ChurchService> ChurchServices { get; set; }
         public virtual DbSet<Child> Children { get; set; }
@@ -463,13 +454,15 @@ namespace MyERP.Models
         public virtual DbSet<ItemInsertion> ItemInsertions { get; set; }
         public virtual DbSet<sysdiagram> sysdiagrams { get; set; }
         public virtual DbSet<PropertyBillRegisteration> PropertyBillRegisterations { get; set; }
-        public virtual DbSet<DelMe> DelMes { get; set; }
         public virtual DbSet<PropertyPaymentHistory> PropertyPaymentHistory { get; set; }
         public virtual DbSet<PropertyContractMergedUnit> PropertyContractMergedUnit { get; set; }
         public virtual DbSet<vw_PropertyBatchDetailed> vw_PropertyBatchDetailed { get; set; }
         public virtual DbSet<vw_PropertyPaymentSummary> vw_PropertyPaymentSummary { get; set; }
         public virtual DbSet<transactionsVatDetail> transactionsVatDetails { get; set; }
-        public virtual DbSet<JED_AccountFixLog> JED_AccountFixLog { get; set; }
+        public virtual DbSet<CashReceiptSourceType> CashReceiptSourceTypes { get; set; }
+        public virtual DbSet<VehicleStatu> VehicleStatus { get; set; }
+        public virtual DbSet<VehicleStock> VehicleStocks { get; set; }
+        public virtual DbSet<vw_AvailableVehicleStock> vw_AvailableVehicleStock { get; set; }
     
         public virtual ObjectResult<CashBox_Balances_Result> CashBox_Balances(Nullable<int> cashBoxId)
         {
@@ -480,7 +473,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CashBox_Balances_Result>("CashBox_Balances", cashBoxIdParameter);
         }
     
-        public virtual int CashTransfer_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
+        public virtual int CashTransfer_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> chartOfAccountIdFrom, Nullable<int> chartOfAccountIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
         {
             var branchIdParameter = branchId.HasValue ?
                 new ObjectParameter("BranchId", branchId) :
@@ -517,6 +510,14 @@ namespace MyERP.Models
             var cashBoxIdToParameter = cashBoxIdTo.HasValue ?
                 new ObjectParameter("CashBoxIdTo", cashBoxIdTo) :
                 new ObjectParameter("CashBoxIdTo", typeof(int));
+    
+            var chartOfAccountIdFromParameter = chartOfAccountIdFrom.HasValue ?
+                new ObjectParameter("ChartOfAccountIdFrom", chartOfAccountIdFrom) :
+                new ObjectParameter("ChartOfAccountIdFrom", typeof(int));
+    
+            var chartOfAccountIdToParameter = chartOfAccountIdTo.HasValue ?
+                new ObjectParameter("ChartOfAccountIdTo", chartOfAccountIdTo) :
+                new ObjectParameter("ChartOfAccountIdTo", typeof(int));
     
             var currencyIdParameter = currencyId.HasValue ?
                 new ObjectParameter("CurrencyId", currencyId) :
@@ -582,10 +583,10 @@ namespace MyERP.Models
                 new ObjectParameter("DepartmentIdTo", departmentIdTo) :
                 new ObjectParameter("DepartmentIdTo", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Insert", id, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Insert", id, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, chartOfAccountIdFromParameter, chartOfAccountIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
         }
     
-        public virtual int CashTransfer_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
+        public virtual int CashTransfer_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<int> bankIdFrom, Nullable<int> bankAccountIdFrom, string bankBranchFrom, Nullable<int> bankIdTo, Nullable<int> bankAccountIdTo, string bankBranchTo, Nullable<int> cashBoxIdFrom, Nullable<int> cashBoxIdTo, Nullable<int> chartOfAccountIdFrom, Nullable<int> chartOfAccountIdTo, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> totalMoneyAmount, Nullable<System.DateTime> date, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> isLinked, Nullable<bool> isPosted, string notes, string image, Nullable<int> transferTypeId, Nullable<int> departmentId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<int> departmentIdTo)
         {
             var idParameter = id.HasValue ?
                 new ObjectParameter("Id", id) :
@@ -631,6 +632,14 @@ namespace MyERP.Models
                 new ObjectParameter("CashBoxIdTo", cashBoxIdTo) :
                 new ObjectParameter("CashBoxIdTo", typeof(int));
     
+            var chartOfAccountIdFromParameter = chartOfAccountIdFrom.HasValue ?
+                new ObjectParameter("ChartOfAccountIdFrom", chartOfAccountIdFrom) :
+                new ObjectParameter("ChartOfAccountIdFrom", typeof(int));
+    
+            var chartOfAccountIdToParameter = chartOfAccountIdTo.HasValue ?
+                new ObjectParameter("ChartOfAccountIdTo", chartOfAccountIdTo) :
+                new ObjectParameter("ChartOfAccountIdTo", typeof(int));
+    
             var currencyIdParameter = currencyId.HasValue ?
                 new ObjectParameter("CurrencyId", currencyId) :
                 new ObjectParameter("CurrencyId", typeof(int));
@@ -695,7 +704,7 @@ namespace MyERP.Models
                 new ObjectParameter("DepartmentIdTo", departmentIdTo) :
                 new ObjectParameter("DepartmentIdTo", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Update", idParameter, documentNumberParameter, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashTransfer_Update", idParameter, documentNumberParameter, branchIdParameter, bankIdFromParameter, bankAccountIdFromParameter, bankBranchFromParameter, bankIdToParameter, bankAccountIdToParameter, bankBranchToParameter, cashBoxIdFromParameter, cashBoxIdToParameter, chartOfAccountIdFromParameter, chartOfAccountIdToParameter, currencyIdParameter, currencyEquivalentParameter, totalMoneyAmountParameter, dateParameter, userIdParameter, isActiveParameter, isDeletedParameter, isLinkedParameter, isPostedParameter, notesParameter, imageParameter, transferTypeIdParameter, departmentIdParameter, systemPageIdParameter, selectedIdParameter, departmentIdToParameter);
         }
     
         public virtual int CloseTransactions(Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo)
@@ -15062,7 +15071,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyUnitsByPropertyAndUnitTypeId_Result>("GetPropertyUnitsByPropertyAndUnitTypeId", propertyIdParameter, propertyUnitTypeIdParameter, contractIdParameter);
         }
     
-        public virtual int CashReceiptVoucher_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<decimal> moneyAmount, Nullable<int> sourceTypeId, Nullable<System.DateTime> date, Nullable<int> currencyId, Nullable<int> accountId, Nullable<bool> isLinked, Nullable<bool> isPosted, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<int> customerId, Nullable<int> vendorId, Nullable<int> employeeId, Nullable<int> technicianId, Nullable<double> currencyEquivalent, Nullable<int> departmentId, Nullable<int> cashBoxId, Nullable<int> directRevenueId, Nullable<int> shareholderId, Nullable<int> costCenterId, Nullable<bool> isInvoiceSelected, string salesInvoiceActualPayment, Nullable<int> bankAccountId, string transactionNo, Nullable<System.DateTime> transactionDate, Nullable<int> chartOfAccountId, Nullable<int> cashReceiptPaymentMethodId, string documentCoding, string vendorReceiptNumber, Nullable<int> month, Nullable<int> year, Nullable<int> childrenId, Nullable<int> elderId, Nullable<int> propertyContractId, Nullable<decimal> electricityBillValue, Nullable<decimal> gasBillValue, Nullable<decimal> violationBillValue, string cashReceiptVoucherPropertyContractBatches)
+        public virtual int CashReceiptVoucher_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<decimal> moneyAmount, Nullable<int> sourceTypeId, Nullable<System.DateTime> date, Nullable<int> currencyId, Nullable<int> accountId, Nullable<bool> isLinked, Nullable<bool> isPosted, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<int> customerId, Nullable<int> vendorId, Nullable<int> employeeId, Nullable<int> technicianId, Nullable<double> currencyEquivalent, Nullable<int> departmentId, Nullable<int> cashBoxId, Nullable<int> directRevenueId, Nullable<int> shareholderId, Nullable<int> costCenterId, Nullable<bool> isInvoiceSelected, string salesInvoiceActualPayment, Nullable<int> bankAccountId, string transactionNo, Nullable<System.DateTime> transactionDate, Nullable<int> chartOfAccountId, Nullable<int> cashReceiptPaymentMethodId, string documentCoding, string vendorReceiptNumber, Nullable<int> month, Nullable<int> year, Nullable<int> childrenId, Nullable<int> elderId, Nullable<int> propertyContractId, Nullable<int> propertyContractTerminationId, Nullable<decimal> electricityBillValue, Nullable<decimal> gasBillValue, Nullable<decimal> violationBillValue, string cashReceiptVoucherPropertyContractBatches)
         {
             var branchIdParameter = branchId.HasValue ?
                 new ObjectParameter("BranchId", branchId) :
@@ -15212,6 +15221,10 @@ namespace MyERP.Models
                 new ObjectParameter("PropertyContractId", propertyContractId) :
                 new ObjectParameter("PropertyContractId", typeof(int));
     
+            var propertyContractTerminationIdParameter = propertyContractTerminationId.HasValue ?
+                new ObjectParameter("PropertyContractTerminationId", propertyContractTerminationId) :
+                new ObjectParameter("PropertyContractTerminationId", typeof(int));
+    
             var electricityBillValueParameter = electricityBillValue.HasValue ?
                 new ObjectParameter("ElectricityBillValue", electricityBillValue) :
                 new ObjectParameter("ElectricityBillValue", typeof(decimal));
@@ -15228,10 +15241,10 @@ namespace MyERP.Models
                 new ObjectParameter("CashReceiptVoucherPropertyContractBatches", cashReceiptVoucherPropertyContractBatches) :
                 new ObjectParameter("CashReceiptVoucherPropertyContractBatches", typeof(string));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashReceiptVoucher_Insert", id, branchIdParameter, moneyAmountParameter, sourceTypeIdParameter, dateParameter, currencyIdParameter, accountIdParameter, isLinkedParameter, isPostedParameter, isActiveParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, customerIdParameter, vendorIdParameter, employeeIdParameter, technicianIdParameter, currencyEquivalentParameter, departmentIdParameter, cashBoxIdParameter, directRevenueIdParameter, shareholderIdParameter, costCenterIdParameter, isInvoiceSelectedParameter, salesInvoiceActualPaymentParameter, bankAccountIdParameter, transactionNoParameter, transactionDateParameter, chartOfAccountIdParameter, cashReceiptPaymentMethodIdParameter, documentCodingParameter, vendorReceiptNumberParameter, monthParameter, yearParameter, childrenIdParameter, elderIdParameter, propertyContractIdParameter, electricityBillValueParameter, gasBillValueParameter, violationBillValueParameter, cashReceiptVoucherPropertyContractBatchesParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashReceiptVoucher_Insert", id, branchIdParameter, moneyAmountParameter, sourceTypeIdParameter, dateParameter, currencyIdParameter, accountIdParameter, isLinkedParameter, isPostedParameter, isActiveParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, customerIdParameter, vendorIdParameter, employeeIdParameter, technicianIdParameter, currencyEquivalentParameter, departmentIdParameter, cashBoxIdParameter, directRevenueIdParameter, shareholderIdParameter, costCenterIdParameter, isInvoiceSelectedParameter, salesInvoiceActualPaymentParameter, bankAccountIdParameter, transactionNoParameter, transactionDateParameter, chartOfAccountIdParameter, cashReceiptPaymentMethodIdParameter, documentCodingParameter, vendorReceiptNumberParameter, monthParameter, yearParameter, childrenIdParameter, elderIdParameter, propertyContractIdParameter, propertyContractTerminationIdParameter, electricityBillValueParameter, gasBillValueParameter, violationBillValueParameter, cashReceiptVoucherPropertyContractBatchesParameter);
         }
     
-        public virtual int CashReceiptVoucher_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<decimal> moneyAmount, Nullable<int> sourceTypeId, Nullable<System.DateTime> date, Nullable<int> currencyId, Nullable<int> accountId, Nullable<bool> isLinked, Nullable<bool> isPosted, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<int> customerId, Nullable<int> vendorId, Nullable<int> employeeId, Nullable<int> technicianId, Nullable<double> currencyEquivalent, Nullable<int> departmentId, Nullable<int> cashBoxId, Nullable<int> directRevenueId, Nullable<int> shareholderId, Nullable<int> costCenterId, Nullable<bool> isInvoiceSelected, string salesInvoiceActualPayment, Nullable<int> bankAccountId, string transactionNo, Nullable<System.DateTime> transactionDate, Nullable<int> chartOfAccountId, Nullable<int> cashReceiptPaymentMethodId, string vendorReceiptNumber, Nullable<int> month, Nullable<int> year, Nullable<int> childrenId, Nullable<int> elderId, Nullable<int> propertyContractId, Nullable<decimal> electricityBillValue, Nullable<decimal> gasBillValue, Nullable<decimal> violationBillValue, string cashReceiptVoucherPropertyContractBatches)
+        public virtual int CashReceiptVoucher_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<decimal> moneyAmount, Nullable<int> sourceTypeId, Nullable<System.DateTime> date, Nullable<int> currencyId, Nullable<int> accountId, Nullable<bool> isLinked, Nullable<bool> isPosted, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<int> customerId, Nullable<int> vendorId, Nullable<int> employeeId, Nullable<int> technicianId, Nullable<double> currencyEquivalent, Nullable<int> departmentId, Nullable<int> cashBoxId, Nullable<int> directRevenueId, Nullable<int> shareholderId, Nullable<int> costCenterId, Nullable<bool> isInvoiceSelected, string salesInvoiceActualPayment, Nullable<int> bankAccountId, string transactionNo, Nullable<System.DateTime> transactionDate, Nullable<int> chartOfAccountId, Nullable<int> cashReceiptPaymentMethodId, string vendorReceiptNumber, Nullable<int> month, Nullable<int> year, Nullable<int> childrenId, Nullable<int> elderId, Nullable<int> propertyContractId, Nullable<decimal> electricityBillValue, Nullable<decimal> gasBillValue, Nullable<decimal> violationBillValue, string cashReceiptVoucherPropertyContractBatches, Nullable<int> propertyContractTerminationId)
         {
             var idParameter = id.HasValue ?
                 new ObjectParameter("Id", id) :
@@ -15401,7 +15414,11 @@ namespace MyERP.Models
                 new ObjectParameter("CashReceiptVoucherPropertyContractBatches", cashReceiptVoucherPropertyContractBatches) :
                 new ObjectParameter("CashReceiptVoucherPropertyContractBatches", typeof(string));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashReceiptVoucher_Update", idParameter, documentNumberParameter, branchIdParameter, moneyAmountParameter, sourceTypeIdParameter, dateParameter, currencyIdParameter, accountIdParameter, isLinkedParameter, isPostedParameter, isActiveParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, customerIdParameter, vendorIdParameter, employeeIdParameter, technicianIdParameter, currencyEquivalentParameter, departmentIdParameter, cashBoxIdParameter, directRevenueIdParameter, shareholderIdParameter, costCenterIdParameter, isInvoiceSelectedParameter, salesInvoiceActualPaymentParameter, bankAccountIdParameter, transactionNoParameter, transactionDateParameter, chartOfAccountIdParameter, cashReceiptPaymentMethodIdParameter, vendorReceiptNumberParameter, monthParameter, yearParameter, childrenIdParameter, elderIdParameter, propertyContractIdParameter, electricityBillValueParameter, gasBillValueParameter, violationBillValueParameter, cashReceiptVoucherPropertyContractBatchesParameter);
+            var propertyContractTerminationIdParameter = propertyContractTerminationId.HasValue ?
+                new ObjectParameter("PropertyContractTerminationId", propertyContractTerminationId) :
+                new ObjectParameter("PropertyContractTerminationId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("CashReceiptVoucher_Update", idParameter, documentNumberParameter, branchIdParameter, moneyAmountParameter, sourceTypeIdParameter, dateParameter, currencyIdParameter, accountIdParameter, isLinkedParameter, isPostedParameter, isActiveParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, customerIdParameter, vendorIdParameter, employeeIdParameter, technicianIdParameter, currencyEquivalentParameter, departmentIdParameter, cashBoxIdParameter, directRevenueIdParameter, shareholderIdParameter, costCenterIdParameter, isInvoiceSelectedParameter, salesInvoiceActualPaymentParameter, bankAccountIdParameter, transactionNoParameter, transactionDateParameter, chartOfAccountIdParameter, cashReceiptPaymentMethodIdParameter, vendorReceiptNumberParameter, monthParameter, yearParameter, childrenIdParameter, elderIdParameter, propertyContractIdParameter, electricityBillValueParameter, gasBillValueParameter, violationBillValueParameter, cashReceiptVoucherPropertyContractBatchesParameter, propertyContractTerminationIdParameter);
         }
     
         public virtual ObjectResult<GetRoomLeavePermissionInDate_Result> GetRoomLeavePermissionInDate(Nullable<System.DateTime> date)
@@ -15675,7 +15692,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<ServiceInvoice_Get_Result>("ServiceInvoice_Get", idParameter);
         }
     
-        public virtual int PropertyContractTerminate_Insert(ObjectParameter id, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> propertyContractId, Nullable<int> propertyId, Nullable<int> propertyUnitTypeId, Nullable<int> propertyRenterId, Nullable<System.DateTime> terminationDate, Nullable<System.DateTime> lastBatchDate, Nullable<bool> isLastBatchCalculation, Nullable<bool> isDocumented, Nullable<decimal> increaseDayValue, Nullable<int> increaseDaysNo, Nullable<decimal> increaseDaysTotalValue, Nullable<decimal> decreaseDayValue, Nullable<int> decreaseDaysNo, Nullable<decimal> decreaseDaysTotalValue, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, string details, string damages)
+        public virtual int PropertyContractTerminate_Insert(ObjectParameter id, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> propertyContractId, Nullable<int> propertyId, Nullable<int> propertyUnitTypeId, Nullable<int> propertyRenterId, Nullable<System.DateTime> terminationDate, Nullable<System.DateTime> lastBatchDate, Nullable<bool> isLastBatchCalculation, Nullable<bool> isDocumented, Nullable<decimal> increaseDayValue, Nullable<int> increaseDaysNo, Nullable<decimal> increaseDaysTotalValue, Nullable<decimal> decreaseDayValue, Nullable<int> decreaseDaysNo, Nullable<decimal> decreaseDaysTotalValue, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<decimal> totalUnpaidAmount, Nullable<decimal> insuranceAmount, Nullable<decimal> renterBalance, Nullable<int> calculationMethod, string details, string damages)
         {
             var departmentIdParameter = departmentId.HasValue ?
                 new ObjectParameter("DepartmentId", departmentId) :
@@ -15757,6 +15774,22 @@ namespace MyERP.Models
                 new ObjectParameter("Image", image) :
                 new ObjectParameter("Image", typeof(string));
     
+            var totalUnpaidAmountParameter = totalUnpaidAmount.HasValue ?
+                new ObjectParameter("TotalUnpaidAmount", totalUnpaidAmount) :
+                new ObjectParameter("TotalUnpaidAmount", typeof(decimal));
+    
+            var insuranceAmountParameter = insuranceAmount.HasValue ?
+                new ObjectParameter("InsuranceAmount", insuranceAmount) :
+                new ObjectParameter("InsuranceAmount", typeof(decimal));
+    
+            var renterBalanceParameter = renterBalance.HasValue ?
+                new ObjectParameter("RenterBalance", renterBalance) :
+                new ObjectParameter("RenterBalance", typeof(decimal));
+    
+            var calculationMethodParameter = calculationMethod.HasValue ?
+                new ObjectParameter("CalculationMethod", calculationMethod) :
+                new ObjectParameter("CalculationMethod", typeof(int));
+    
             var detailsParameter = details != null ?
                 new ObjectParameter("Details", details) :
                 new ObjectParameter("Details", typeof(string));
@@ -15765,10 +15798,10 @@ namespace MyERP.Models
                 new ObjectParameter("Damages", damages) :
                 new ObjectParameter("Damages", typeof(string));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PropertyContractTerminate_Insert", id, departmentIdParameter, voucherDateParameter, propertyContractIdParameter, propertyIdParameter, propertyUnitTypeIdParameter, propertyRenterIdParameter, terminationDateParameter, lastBatchDateParameter, isLastBatchCalculationParameter, isDocumentedParameter, increaseDayValueParameter, increaseDaysNoParameter, increaseDaysTotalValueParameter, decreaseDayValueParameter, decreaseDaysNoParameter, decreaseDaysTotalValueParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, detailsParameter, damagesParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PropertyContractTerminate_Insert", id, departmentIdParameter, voucherDateParameter, propertyContractIdParameter, propertyIdParameter, propertyUnitTypeIdParameter, propertyRenterIdParameter, terminationDateParameter, lastBatchDateParameter, isLastBatchCalculationParameter, isDocumentedParameter, increaseDayValueParameter, increaseDaysNoParameter, increaseDaysTotalValueParameter, decreaseDayValueParameter, decreaseDaysNoParameter, decreaseDaysTotalValueParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, totalUnpaidAmountParameter, insuranceAmountParameter, renterBalanceParameter, calculationMethodParameter, detailsParameter, damagesParameter);
         }
     
-        public virtual int PropertyContractTerminate_Update(Nullable<int> id, string documentNumber, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> propertyContractId, Nullable<int> propertyId, Nullable<int> propertyUnitTypeId, Nullable<int> propertyRenterId, Nullable<System.DateTime> terminationDate, Nullable<System.DateTime> lastBatchDate, Nullable<bool> isLastBatchCalculation, Nullable<bool> isDocumented, Nullable<decimal> increaseDayValue, Nullable<int> increaseDaysNo, Nullable<decimal> increaseDaysTotalValue, Nullable<decimal> decreaseDayValue, Nullable<int> decreaseDaysNo, Nullable<decimal> decreaseDaysTotalValue, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, string details, string damages)
+        public virtual int PropertyContractTerminate_Update(Nullable<int> id, string documentNumber, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> propertyContractId, Nullable<int> propertyId, Nullable<int> propertyUnitTypeId, Nullable<int> propertyRenterId, Nullable<System.DateTime> terminationDate, Nullable<System.DateTime> lastBatchDate, Nullable<bool> isLastBatchCalculation, Nullable<bool> isDocumented, Nullable<decimal> increaseDayValue, Nullable<int> increaseDaysNo, Nullable<decimal> increaseDaysTotalValue, Nullable<decimal> decreaseDayValue, Nullable<int> decreaseDaysNo, Nullable<decimal> decreaseDaysTotalValue, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<decimal> totalUnpaidAmount, Nullable<decimal> insuranceAmount, Nullable<decimal> renterBalance, Nullable<int> calculationMethod, string details, string damages)
         {
             var idParameter = id.HasValue ?
                 new ObjectParameter("Id", id) :
@@ -15858,6 +15891,22 @@ namespace MyERP.Models
                 new ObjectParameter("Image", image) :
                 new ObjectParameter("Image", typeof(string));
     
+            var totalUnpaidAmountParameter = totalUnpaidAmount.HasValue ?
+                new ObjectParameter("TotalUnpaidAmount", totalUnpaidAmount) :
+                new ObjectParameter("TotalUnpaidAmount", typeof(decimal));
+    
+            var insuranceAmountParameter = insuranceAmount.HasValue ?
+                new ObjectParameter("InsuranceAmount", insuranceAmount) :
+                new ObjectParameter("InsuranceAmount", typeof(decimal));
+    
+            var renterBalanceParameter = renterBalance.HasValue ?
+                new ObjectParameter("RenterBalance", renterBalance) :
+                new ObjectParameter("RenterBalance", typeof(decimal));
+    
+            var calculationMethodParameter = calculationMethod.HasValue ?
+                new ObjectParameter("CalculationMethod", calculationMethod) :
+                new ObjectParameter("CalculationMethod", typeof(int));
+    
             var detailsParameter = details != null ?
                 new ObjectParameter("Details", details) :
                 new ObjectParameter("Details", typeof(string));
@@ -15866,7 +15915,7 @@ namespace MyERP.Models
                 new ObjectParameter("Damages", damages) :
                 new ObjectParameter("Damages", typeof(string));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PropertyContractTerminate_Update", idParameter, documentNumberParameter, departmentIdParameter, voucherDateParameter, propertyContractIdParameter, propertyIdParameter, propertyUnitTypeIdParameter, propertyRenterIdParameter, terminationDateParameter, lastBatchDateParameter, isLastBatchCalculationParameter, isDocumentedParameter, increaseDayValueParameter, increaseDaysNoParameter, increaseDaysTotalValueParameter, decreaseDayValueParameter, decreaseDaysNoParameter, decreaseDaysTotalValueParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, detailsParameter, damagesParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PropertyContractTerminate_Update", idParameter, documentNumberParameter, departmentIdParameter, voucherDateParameter, propertyContractIdParameter, propertyIdParameter, propertyUnitTypeIdParameter, propertyRenterIdParameter, terminationDateParameter, lastBatchDateParameter, isLastBatchCalculationParameter, isDocumentedParameter, increaseDayValueParameter, increaseDaysNoParameter, increaseDaysTotalValueParameter, decreaseDayValueParameter, decreaseDaysNoParameter, decreaseDaysTotalValueParameter, isDeletedParameter, userIdParameter, notesParameter, imageParameter, totalUnpaidAmountParameter, insuranceAmountParameter, renterBalanceParameter, calculationMethodParameter, detailsParameter, damagesParameter);
         }
     
         public virtual int DebitAndCreditNotifi_Insert(ObjectParameter id, Nullable<System.DateTime> date, Nullable<int> departmentId, Nullable<int> debitAndCreditNotificationTypeId, Nullable<int> sourceTypeId, Nullable<int> repId, Nullable<decimal> totalMoneyAmount, Nullable<decimal> moneyAmount, Nullable<decimal> vATValue, Nullable<double> vATPercentage, Nullable<int> debitId, Nullable<int> creditId, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<bool> isLinked, Nullable<bool> isPosted, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, Nullable<int> customerId, Nullable<int> vendorId, Nullable<int> employeeId, Nullable<int> technicianId, Nullable<int> directRevenueId, Nullable<int> shareholderId, Nullable<int> accountId, Nullable<int> costCenterId, Nullable<int> month, Nullable<int> year, Nullable<int> childrenId, Nullable<int> elderId, string invoiceNo, Nullable<int> renterId)
@@ -19204,6 +19253,81 @@ namespace MyERP.Models
                 new ObjectParameter("DepartmentId", typeof(int));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("GetGeneralLedgerByParent", parentAccountIdParameter, fromDateParameter, toDateParameter, departmentIdParameter);
+        }
+    
+        public virtual ObjectResult<CarCurrentStock_Get_Result> CarCurrentStock_Get(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> warehouseId, Nullable<int> carTypeId, Nullable<int> carModelId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var warehouseIdParameter = warehouseId.HasValue ?
+                new ObjectParameter("WarehouseId", warehouseId) :
+                new ObjectParameter("WarehouseId", typeof(int));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarCurrentStock_Get_Result>("CarCurrentStock_Get", fromDateParameter, toDateParameter, warehouseIdParameter, carTypeIdParameter, carModelIdParameter);
+        }
+    
+        public virtual ObjectResult<CarQuotationReport_Get_Result> CarQuotationReport_Get(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> customerId, Nullable<int> carTypeId, Nullable<int> carModelId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var customerIdParameter = customerId.HasValue ?
+                new ObjectParameter("CustomerId", customerId) :
+                new ObjectParameter("CustomerId", typeof(int));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarQuotationReport_Get_Result>("CarQuotationReport_Get", fromDateParameter, toDateParameter, customerIdParameter, carTypeIdParameter, carModelIdParameter);
+        }
+    
+        public virtual ObjectResult<CarSalesHistory_Get_Result> CarSalesHistory_Get(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> carTypeId, Nullable<int> carModelId, Nullable<int> customerId)
+        {
+            var fromDateParameter = fromDate.HasValue ?
+                new ObjectParameter("FromDate", fromDate) :
+                new ObjectParameter("FromDate", typeof(System.DateTime));
+    
+            var toDateParameter = toDate.HasValue ?
+                new ObjectParameter("ToDate", toDate) :
+                new ObjectParameter("ToDate", typeof(System.DateTime));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            var customerIdParameter = customerId.HasValue ?
+                new ObjectParameter("CustomerId", customerId) :
+                new ObjectParameter("CustomerId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarSalesHistory_Get_Result>("CarSalesHistory_Get", fromDateParameter, toDateParameter, carTypeIdParameter, carModelIdParameter, customerIdParameter);
         }
     }
 }

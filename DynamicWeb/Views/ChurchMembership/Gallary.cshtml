@@ -1,0 +1,515 @@
+﻿@model  MyERP.Models.ChurchMembership
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Gallary;
+}
+
+
+<style>
+    /* fonts  */
+    @@import url('https://fonts.googleapis.com/css?family=Abel|Aguafina+Script|Artifika|Athiti|Condiment|Dosis|Droid+Serif|Farsan|Gurajada|Josefin+Sans|Lato|Lora|Merriweather|Noto+Serif|Open+Sans+Condensed:300|Playfair+Display|Rasa|Sahitya|Share+Tech|Text+Me+One|Titillium+Web');
+
+    body {
+        background: #DFC2F2;
+        background-image: linear-gradient( 135deg, #CE9FFC 10%, #7367F0 100%);
+        background-attachment: fixed;
+        background-size: cover;
+    }
+
+    .MasterContainer {
+        display: flex
+    }
+
+    #container {
+        box-shadow: 0 15px 30px 1px rgba(128, 128, 128, 0.31);
+        background: rgba(255, 255, 255, 0.90);
+        text-align: center;
+        border-radius: 5px;
+        /*        overflow: hidden;
+    */ margin: 5em auto;
+        height: 350px;
+        width: 700px;
+    }
+
+
+
+    /* 	Product details  */
+    .product-details {
+        position: relative;
+        display: inline-block;
+        text-align: left;
+        overflow: hidden;
+        padding: 30px;
+        height: 100%;
+        float: left;
+        width: 40%;
+        flex: 1;
+    }
+
+
+    /* product image  */
+    .product-image {
+        transition: all 0.3s ease-out;
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        float: right;
+        width: 50%;
+        flex: 1;
+    }
+
+
+    /* 	Product Name */
+    #container .product-details h1 {
+        font-family: 'Old Standard TT', serif;
+        display: inline-block;
+        position: relative;
+        font-size: 34px;
+        color: #344055;
+        margin: 0;
+    }
+
+        #container .product-details h1:before {
+            position: absolute;
+            content: '';
+            right: 0%;
+            top: 0%;
+            transform: translate(25px, -15px);
+            font-family: 'Farsan', cursive;
+            display: inline-block;
+            /*	background: #FFA69E;
+        */ border-radius: 5px;
+            font-size: 14px;
+            padding: 5px;
+            color: #FFF;
+            margin: 0;
+            /*	animation: chan-sh 6s ease infinite;
+        */
+        }
+
+
+    /*@@keyframes chan-sh {
+            from  {content: 'free shipping';}
+            to  {content: 'New';}
+
+        }
+        */
+    /*Product Rating  */
+    .hint-star {
+        display: inline-block;
+        margin-left: 0.5em;
+        color: gold;
+        width: 50%;
+    }
+
+
+    /* The most important information about the product */
+    #container .product-details > p {
+        font-family: 'Farsan', cursive;
+        text-align: center;
+        font-size: 20px;
+        color: #7d7d7d;
+    }
+    .product-image .information {
+        padding-left: 2%;
+    }
+
+    /* control */
+
+    .control {
+        position: absolute;
+        bottom: 20%;
+        left: 22.8%;
+    }
+    /* the Button */
+    .btn {
+        transform: translateY(0px);
+        transition: 0.3s linear;
+        background: #49C608;
+        border-radius: 5px;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        outline: none;
+        border: none;
+        color: #eee;
+        padding: 0;
+        margin: 0;
+    }
+
+        .btn:hover {
+            transform: translateY(-4px);
+        }
+
+        .btn span {
+            font-family: 'Farsan', cursive;
+            transition: transform 0.3s;
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin: 0;
+        }
+        /* shopping cart icon */
+        .btn .price, .shopping-cart {
+            background: #333;
+            border: 0;
+            margin: 0;
+        }
+
+        .btn .price {
+            transform: translateX(-10%);
+            padding-right: 15px;
+        }
+
+        /* the Icon */
+        .btn .shopping-cart {
+            transform: translateX(-100%);
+            position: absolute;
+            background: #333;
+            z-index: 1;
+            left: 0;
+            top: 0;
+        }
+
+        /* buy */
+        .btn .buy {
+            z-index: 3;
+            font-weight: bolder;
+        }
+
+        .btn:hover .price {
+            transform: translateX(-110%);
+        }
+
+        .btn:hover .shopping-cart {
+            transform: translateX(0%);
+        }
+
+
+
+    #container img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .info {
+        background: rgba(27, 26, 26, 0.9);
+        font-family: 'Farsan', cursive;
+        transition: all 0.3s ease-out;
+        transform: translateX(-100%);
+        position: absolute;
+        line-height: 1.9;
+        text-align: left;
+        font-size: 120%;
+        cursor: no-drop;
+        color: #FFF;
+        height: 100%;
+        width: 100%;
+        left: 0;
+        top: 0;
+        padding-left: 10%;
+    }
+
+        .info h2 {
+            text-align: center
+        }
+
+    .product-image:hover .info {
+        transform: translateX(0);
+    }
+
+    .info ul li {
+        transition: 0.3s ease;
+    }
+
+        .info ul li:hover {
+            transform: translateX(50px) scale(1.3);
+        }
+
+    .product-image:hover img {
+        transition: all 0.3s ease-out;
+    }
+
+    .product-image:hover img {
+        transform: scale(1.2, 1.2);
+    }
+</style>
+
+
+
+<input hidden id="ID" value="@Model.Id" />
+<div id="carouselExampleControls" class="carousel slide">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <div class="MasterContainer">
+                <div id="container">
+                    <!-- Start	Product details -->
+                    <div class="product-details">
+
+                        <!-- 	Product Name -->
+                        <h1 id="Header1" style="color:mediumorchid;">@Model.ArName</h1>
+                        <br />
+                        <hr />
+                        <h4 style="color:mediumpurple;float:right;"> @MyERP.Properties.Resources.FamilyMembers </h4>
+                        <br />
+                        <hr />
+                        <p class="information">
+                            <ul id="FamilyMembers">
+                                @if (Model.ChurchMembership1.Count > 0)
+                                {
+                                    foreach (var item in Model.ChurchMembership1)
+                                    {
+                                        <li style="color:mediumpurple;"><strong style="color:mediumorchid;"> @item.ArName </strong> @item.Relative</li>
+                                    }
+                                }
+                            </ul>
+                        </p>
+                    </div>
+
+                    <!-- 	End	Product details   -->
+                    <!-- 	Start product image & Information -->
+                    <div class="product-image" id="ImgContainer">
+                        @if (Model.Image != null)
+                        {
+                            <img src="@Model.Image" alt="@Model.ArName" ontouchmove="GetMember(@Model.Id,'Next')">
+                        }
+                        else
+                        {
+                            <img src="~/assets/images/users/Avatar_User.png" alt="@Model.ArName" ontouchmove="GetMember(@Model.Id,'Next')">
+                        }
+
+                        <!-- 	product Information-->
+                        <div class="info">
+                            <h2 style="color:whitesmoke;"> @MyERP.Properties.Resources.Details </h2>
+
+                            <p class="information">
+                                @Model.BirthDate.Value.ToString("MM/dd/yyyy")
+                            </p>
+                            <p class="information">
+                                @Model.Mobile
+                            </p>
+                            <p class="information">
+                                @Model.Address
+                            </p>
+                            <p class="information">
+                                <ul id="VisitsDiv">
+                                    <li style="color:whitesmoke;text-align: center;"> @MyERP.Properties.Resources.Visits  </li>
+                                    @if (Model.ChurchMembershipVisits.Count > 0)
+                                    {
+                                        foreach (var item in Model.ChurchMembershipVisits)
+                                        {
+                                            <li style="color:lightskyblue;"><strong style="color:cornflowerblue;">@(MyERP.Properties.Resources.VisitDate+ " : "+  item.Date.Value.ToString("MM/dd/yyyy")) </strong> <br /> @(item.ConfessionFather!=null? MyERP.Properties.Resources.ConfessionFather + " : " + item.ConfessionFather:"")</li>
+                                        }
+                                        }
+                                </ul>
+                            </p>
+                        </div>
+
+                    </div>
+                    <!--  End product image  -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="Arrows">
+        <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev" onclick="GetMember(@Model.Id,'Prev')">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next" onclick="GetMember(@Model.Id,'Next')">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+</div>
+
+
+<script>
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) /*+ "T" + strTime*/);
+
+        //2022 - 01 - 18T20: 23
+    }
+
+    function GetMember(id, txt) {
+        $.get('/ChurchMembership/Gallary?Id=' + id + '&Text=' + txt).done(function (r) {
+            r = r.Member;
+            if (r) {
+                $('#Header1').text('');
+                $('#ID').val('');
+                $('#FamilyMembers').empty();
+                $('#ImgContainer').empty();
+                $('#VisitsDiv').empty();
+                let VisitsDiv = '';
+               // $('#Arrows').empty();
+                var Details = r.Details;
+                if (r != null || r.length > 0) {
+                      var PrevVisits = r.PrevVisits;
+
+                    if (PrevVisits != null || PrevVisits.length > 0) {
+                        for (var i = 0; i < PrevVisits.length; i++) {
+                            PrevVisits[i].Date = PrevVisits[i].Date != null ?'@MyERP.Properties.Resources.VisitDate : '+ convertToJavaScriptDate(PrevVisits[i].Date) : "";
+                            PrevVisits[i].ConfessionFather = PrevVisits[i].ConfessionFather != null ?'@MyERP.Properties.Resources.ConfessionFather : '+ PrevVisits[i].ConfessionFather : "";
+                            VisitsDiv += '<li style="color:lightskyblue;"><strong style="color:cornflowerblue;">  ' +
+                                PrevVisits[i].Date + ' </strong><br />' +
+                                PrevVisits[i].ConfessionFather + '</li>';
+                        }
+                    }
+
+                    $('#Header1').text(r.ArName);
+                    $('#ID').val(r.Id);
+
+                    r.BirthDate = r.BirthDate != null ? convertToJavaScriptDate(r.BirthDate) : "";
+                    r.Mobile = r.Mobile != null ? r.Mobile : "";
+                    r.Address = r.Address != null ? r.Address : "";
+                    r.Image = r.Image != null ? '<img src="' + r.Image + '" alt="' + r.ArName + '">' : '<img src="/assets/images/users/Avatar_User.png" alt="' + r.ArName + '">'
+                    let div = r.Image + '<div class="info"><h2 style="color:whitesmoke;"> @MyERP.Properties.Resources.Details </h2><p class="information">' +
+                        r.BirthDate + '</p><p class="information">'+
+                        r.Mobile + '</p><p class="information">' +
+                        r.Address + '</p><p class="information" ><ul id="VisitsDiv"><li style="color:whitesmoke;text-align: center;"> @MyERP.Properties.Resources.Visits </li>' + VisitsDiv + '</ul></p></div> ';
+
+                     @*var PrevVisits = r.PrevVisits;
+                    let VisitsDiv = '<li style="color:whitesmoke;"> @MyERP.Properties.Resources.Visits  </li>';
+                    if (PrevVisits != null || PrevVisits.length > 0) {
+                        console.log("PrevVisits : ", PrevVisits)
+
+                        for (var i = 0; i < length; i++) {
+                            PrevVisits[i].Date = PrevVisits[i].Date != null ? convertToJavaScriptDate(PrevVisits[i].Date) : "";
+                            PrevVisits[i].ConfessionFather = PrevVisits[i].ConfessionFather != null ? PrevVisits[i].ConfessionFather : "";
+                             VisitsDiv += '<li style="color:mediumpurple;"><strong style="color:mediumorchid;">  ' +
+                                PrevVisits[i].Date + ' </strong>' +
+                                PrevVisits[i].ConfessionFather + '</li>';
+
+                            $('#VisitsDiv').append(VisitsDiv);
+                        }
+                    }*@
+                    $('#ImgContainer').append(div);
+
+                    if (Details.length > 0 || Details != null) {
+                        for (var i = 0; i < Details.length; i++) {
+                            Details[i].Relative = Details[i].Relative != null ? Details[i].Relative : "";
+                            let li = '<li style="color:mediumpurple;"><strong style="color:mediumorchid;">' +
+                                Details[i].ArName + ' </strong>' +
+                                Details[i].Relative + '</li>';
+                            $('#FamilyMembers').append(li);
+                        }
+                    }
+
+                    let arrows = '<a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev" onclick="GetMember(\'' +
+                        r.Id + '\',\'' + "Prev" + '\')"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="sr-only">Previous</span></a><a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next" onclick="GetMember(\'' +
+                        r.Id + '\',\'' + "Next" + '\')"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="sr-only">Next</span></a>';
+                    $('#Arrows').append(arrows);
+
+                }
+
+                    //if (Details.length > 0 || Details != null) {
+                    //    for (var i = 0; i < Details.length; i++) {
+                    //        Details[i].Relative = Details[i].Relative != null ? Details[i].Relative : "";
+                    //        let li = '<li style="color:mediumpurple;"><strong style="color:mediumorchid;">' +
+                    //            Details[i].ArName + ' </strong>' +
+                    //            Details[i].Relative + '</li>';
+                    //        $('#FamilyMembers').append(li);
+                    //    }
+                    //}
+
+                    //let arrows = '<a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev" onclick="GetMember(\'' +
+                    //    r.Id + '\',\'' + "Prev" + '\')"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="sr-only">Previous</span></a><a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next" onclick="GetMember(\'' +
+                    //    r.Id + '\',\'' + "Next" + '\')"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="sr-only">Next</span></a>';
+                    //$('#Arrows').append(arrows);
+
+            }
+        });
+    }
+
+
+    window.onload = function () {
+        (function (d) {
+            var
+                ce = function (e, n) {
+                    var a = document.createEvent("CustomEvent");
+                    a.initCustomEvent(n, true, true, e.target);
+                    e.target.dispatchEvent(a);
+                    a = null;
+                    return false
+                },
+                nm = true,
+                sp = {
+                    x: 0,
+                    y: 0
+                },
+                ep = {
+                    x: 0,
+                    y: 0
+                },
+                touch = {
+                    touchstart: function (e) {
+                        sp = {
+                            x: e.touches[0].pageX,
+                            y: e.touches[0].pageY
+                        }
+                    },
+                    touchmove: function (e) {
+                        nm = false;
+                        ep = {
+                            x: e.touches[0].pageX,
+                            y: e.touches[0].pageY
+                        }
+                    },
+                    touchend: function (e) {
+                        if (nm) {
+                            ce(e, 'fc')
+                        } else {
+                            var x = ep.x - sp.x,
+                                xr = Math.abs(x),
+                                y = ep.y - sp.y,
+                                yr = Math.abs(y);
+                            if (Math.max(xr, yr) > 20) {
+                                ce(e, (xr > yr ? (x < 0 ? 'swl' : 'swr') : (y < 0 ? 'swu' : 'swd')))
+                            }
+                        };
+                        nm = true
+                    },
+                    touchcancel: function (e) {
+                        nm = false
+                    }
+                };
+            for (var a in touch) {
+                d.addEventListener(a, touch[a], false);
+            }
+        })(document);
+        //EXAMPLE OF USE
+        var h = function (e) {
+            //console.log(e.type, e)
+            var id = $('#ID').val();
+            if (e.type === 'swl') {
+                GetMember(id, "Next");
+            }
+            else if (e.type === 'swr') {
+                GetMember(id, "Prev");
+            }
+        };
+        document.body.addEventListener('fc', h, false); // 0-50ms vs 500ms with normal click
+        document.body.addEventListener('swl', h, false);
+        document.body.addEventListener('swr', h, false);
+        document.body.addEventListener('swu', h, false);
+        document.body.addEventListener('swd', h, false);
+    }
+</script>

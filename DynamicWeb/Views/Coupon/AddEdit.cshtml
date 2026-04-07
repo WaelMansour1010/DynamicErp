@@ -1,0 +1,233 @@
+﻿@model MyERP.Models.Coupon
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+}
+@{
+    ViewBag.Title = "كوبانات الخصم";
+
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">الأول</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">الأخير</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>}
+            </div>
+            <h4 class="page-title">@ViewBag.Title</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form id="addEditForm" action="/Coupon/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @Html.HiddenFor(model => model.UserId)
+
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    البيانات الاساسية
+                                </h5>
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">الكوبون</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CouponCode, new { htmlAttributes = new { @class = "form-control", placeholder = "الكوبون", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الكوبون مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label class=" col-sm-2 control-label" for="ArName">التفاصيل بالعربية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NoteAr, new { htmlAttributes = new { @class = "form-control", placeholder = "التفاصيل بالعربية", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            التفاصيل بالعربية مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="EnName">التفاصيل بالانجليزية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NoteEn, new { htmlAttributes = new { @class = "form-control", placeholder = "التفاصيل بالانجليزية" } })
+                                        <div class="invalid-feedback">
+                                            التفاصيل بالانجليزية مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="EnName">التفاصيل بالكردية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NoteKr, new { htmlAttributes = new { @class = "form-control", placeholder = "التفاصيل بالكردية" } })
+                                        <div class="invalid-feedback">
+                                            التفاصيل بالكردية مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="IsActive">نشط</label>
+                                    <div class="col-sm-4">
+                                        @Html.CheckBoxFor(model => model.IsActive, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="DiscountAmount">مبلغ الخصم</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DiscountAmount, new { htmlAttributes = new { @class = "form-control", @type = "number", @value = "0" } })
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="DiscountPercentage">نسبة الخصم</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DiscountPercentage, new { htmlAttributes = new { @class = "form-control", @type = "number", @value = "0" } })
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <button type="button" id="newbtn" class="btn btn-success" onclick="return checkform();">
+                                            حفظ و جديد
+                                        </button>
+                                        <button type="button" class="btn btn-success" onclick="return checkform();">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="button" class="btn btn-success" onclick="return checkform();">
+                                                حفظ
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                            <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">حذف</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    //if ($('#Id').val() == 0) {
+    //    function setCodeNum() {
+    //        var doc = $.get('/Coupon/SetCodeNum').done(function (r) {
+    //            $('#Code').val(r);
+    //        });
+
+    //    }
+
+    //    setCodeNum();
+    //}
+
+    function DeleteFunc(id) {
+        if (confirm('هل تريد الحذف؟')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Coupon/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('لم يتم الحذف!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Coupon');
+                        } else
+                            alert('لم يتم الحذف!');
+                    }
+                });
+        }
+    }
+
+
+    function checkform(e) {
+        if (
+            ($('#DiscountAmount').val() == '' && $('#DiscountPercentage').val() == '')
+            ||
+            ($('#DiscountAmount').val() == 0 && $('#DiscountPercentage').val() == 0)
+            ||
+            ($('#DiscountAmount').val() == 0 && $('#DiscountPercentage').val() == '')
+            ||
+            ($('#DiscountAmount').val() == '' && $('#DiscountPercentage').val() == 0)
+            ||
+            ($('#DiscountAmount').val() != 0 && $('#DiscountPercentage').val() != 0)
+
+        ) {
+
+            alert('من فضلك اختار نسبة خصم فقط او قيمة خصم فقط');
+            e.preventDefault();
+            return false;
+        } else {
+            $("#addEditForm").submit()
+        }
+    }
+
+
+</script>

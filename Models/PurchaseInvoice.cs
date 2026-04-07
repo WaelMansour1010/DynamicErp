@@ -22,6 +22,7 @@ namespace MyERP.Models
             this.PurchaseInvoiceDirectExpenses = new HashSet<PurchaseInvoiceDirectExpens>();
             this.PurchaseInvoicePaymentMethods = new HashSet<PurchaseInvoicePaymentMethod>();
             this.PurchaseInvoiceActualPayments = new HashSet<PurchaseInvoiceActualPayment>();
+            this.VehicleStocks = new HashSet<VehicleStock>();
         }
     
         public int Id { get; set; }
@@ -86,5 +87,7 @@ namespace MyERP.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<PurchaseInvoiceActualPayment> PurchaseInvoiceActualPayments { get; set; }
         public virtual SystemPage SystemPage { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<VehicleStock> VehicleStocks { get; set; }
     }
 }

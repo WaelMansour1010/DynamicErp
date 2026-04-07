@@ -1,0 +1,1003 @@
+﻿@model MyERP.Models.RegisterAttendanceAndAbsence
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.RegisterAttendanceAndAbsence;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                }
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.RegisterAttendanceAndAbsence </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+
+
+                                <!-- Panel 1 -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                                    @MyERP.Properties.Resources.MainData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse1">
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.Code</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.Code, required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.AttendDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.Date, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Course</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.SubjectId, null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Lecture</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.LessonId, null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.Student</label>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownList("StudentId", null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6 row">
+                                                    <div class="col-sm-4">
+                                                        <button type="button" class="btn btn-success" onclick="appendRegisterAttendanceAndAbsenceDetails()">
+                                                            @MyERP.Properties.Resources.Add
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-sm-4">
+                                                        <button type="button" class="btn btn-success" id="SearchModalBtn" data-toggle="modal">
+                                                            <i class="fa fa-search"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-sm-4">
+                                                        <button onclick="AdvancedEntry();" class="btn btn-bordered-info">
+                                                            @MyERP.Properties.Resources.AdvancedEntry
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                                <div class="col-sm-4">
+                                                    <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- End Of Panel 1 -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Panel 2 -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="accordion">
+                                <h5 class=" pb-3 header-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                        @MyERP.Properties.Resources.Details
+                                    </a>
+                                </h5>
+                            </div>
+                            <div id="collapse2">
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-horizontalDetail needs-validation" role="form">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <div class="header-title">
+                                                        @MyERP.Properties.Resources.Details
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-centered mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <td>@MyERP.Properties.Resources.Code</td>
+                                                                    <td>@MyERP.Properties.Resources.Student</td>
+                                                                    <td>@MyERP.Properties.Resources.AttendDate</td>
+                                                                    <td>@MyERP.Properties.Resources.IsAttend</td>
+                                                                    <td>@MyERP.Properties.Resources.Delete</td>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="RegisterAttendanceAndAbsenceDetails">
+                                                                @if (Model != null)
+                                                                {
+                                                                    foreach (var item in Model.RegisterAttendanceAndAbsenceDetails)
+                                                                    {
+                                                                        if (item.IsDeleted == false)
+                                                                        {
+                                                                        <tr>
+                                                                            <td class="tabledit-edit-mode" hidden>
+                                                                                <input class="DetailId" value="@item.Id" />
+                                                                                <input class="SubjectId" value="@item.SubjectId" />
+                                                                                <input class="LessonId" value="@item.LessonId" />
+                                                                            </td>
+                                                                            <td class="tabledit-edit-mode">
+                                                                                <input type="text" class="Code form-control tabledit-input form-control-sm" value="@item.Code" hidden />
+                                                                                <label class="control-label"> @item.Code</label>
+                                                                            </td>
+                                                                            <td class="tabledit-edit-mode">
+                                                                                <input hidden class="StudentId" value="@item.StudentId" />
+                                                                                <label class="control-label">@item.Child.ArName</label>
+                                                                            </td>
+                                                                            <td class="tabledit-edit-mode">
+                                                                                <input type="text" class="AttendDate form-control tabledit-input form-control-sm" value="@item.AttendDate" hidden />
+                                                                                <label class="control-label">@item.AttendDate</label>
+                                                                            </td>
+                                                                            <td class="tabledit-edit-mode">
+                                                                                <input type="checkbox" class="IsAttended" @(item.IsAttended == true ? "checked" : "") disabled />
+                                                                            </td>
+                                                                            <td>
+                                                                                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                                    <i class="fas fa-trash-alt"></i>
+                                                                                </a>
+                                                                            </td>
+                                                                        </tr>
+                                                                        }
+                                                                    }
+                                                                }
+
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="row">
+                                    @if (Model != null && Model.Id > 0)
+                                    {
+                                        <div class="col-sm-6">
+                                            <button onclick="CloseLecture(@Model.Id);" class="btn btn-primary">
+                                                @MyERP.Properties.Resources.CloseLecture
+                                            </button>
+                                        </div>
+                                    }
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End Of Panel 2 -->
+
+                </div>
+            </div>
+            <!-------------------------------------------------------------------------------------------------------->
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        @*<button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>*@
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        @*<button onclick="addEdit();" class="btn btn-success" id="save">
+                            @MyERP.Properties.Resources.Save
+                        </button>*@
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                    }
+                </div>
+            </div>
+            <!-------------------------------------------------------------------------------------------------------->
+        </div>
+    </div>
+</div>
+
+<!------------------------------------------------------------------------------------------------------->
+<!-- Modal Section -->
+<!----------------- Search Modal ----------------->
+<div id="SearchModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.Student</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile" class="control-label">@MyERP.Properties.Resources.Student</label>
+                                <input type="text" class="form-control" id="SearchStudent" placeholder=@MyERP.Properties.Resources.Search>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table class="table table-condensed">
+                                <thead>
+                                    <tr>
+                                        <th>@MyERP.Properties.Resources.Student</th>
+                                        <th> @MyERP.Properties.Resources.Add</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="Students">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!----------------- End Of Family Member Modal ----------------->
+<!--------------------------- End Of  Modal Section -------------------------------------------------------->
+
+<script>
+
+ //--------------- Variables Declarations -------------------//
+
+ //*********************************************************//
+
+ //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#Date').val('@ViewBag.Date');
+        if ($('#Id').val()) {
+        }
+        else {
+            setCodeNum();
+            CheckIfRegisteredBefore();
+        }
+    });
+//*********************************************************//
+//--------------- Event Functions -------------------//
+
+    $(document).on('change', '#SubjectId', function () {
+        CheckIfRegisteredBefore();
+    });
+    $(document).on('change', '#LessonId', function () {
+        CheckIfRegisteredBefore();
+    });
+    $(document).on('click', '#SearchModalBtn', function () {
+        $('#SearchModal').modal("show");
+    });
+    $(document).on('keydown', '#SearchStudent', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            $.get('/RegisterAttendanceAndAbsence/SearchStudent?Name=' + $(this).val()).done(function (r) {
+                if (r.length) {
+                    for (var i = 0; i < r.length; i++) {
+                        let tr = '<tr><td><input hidden class="StudentId" value="' +
+                            r[i].Id + '" /><label class="StudentName">' +
+                            r[i].ArName + '</label></td><td><button class="btn btn-info" onclick="AddStudent(this)">' +
+                            '@MyERP.Properties.Resources.Add' + '</button></td></tr>';
+                        $('#Students').append(tr);
+                    }
+                }
+            });
+        }
+        //else {
+        //    $('#SearchStudent').val('');
+        //}
+    });
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------//
+
+//*********************************************************//
+//--------------- Other Functions -------------------//
+    function convertToTime(time) {
+        if (time === null)
+            return null;
+        var hours = time.Hours;
+        var minutes = time.Minutes;
+        var seconds = time.Seconds;
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds */ + ' ' + ampm;
+        return strTime
+
+        //2022 - 01 - 18T20: 23
+    }
+
+    function setCodeNum() {
+        var doc = $.get('/RegisterAttendanceAndAbsence/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+    function convertToJavaScriptDate2(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) );
+
+        //2022 - 01 - 18T20: 23
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        let id = $(tr).find('.DetailId').val();
+
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+           // $(tr).find('select').empty();
+            $(tr).find('select').prop('selectedIndex', 0);
+            $(tr).find('select').select2();
+            $(tr).find("label").text('');
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+        DeleteDetail(id);
+    }
+
+    function AddStudent(e) {
+        if ($('#StudentId').val()) {
+            let valid = true;
+            let id = $(e).closest('tr').find('.StudentId').val();
+            let Name = $(e).closest('tr').find('.StudentName').text();
+            if ($('#RegisterAttendanceAndAbsenceDetails tr').length == 0) {
+                Code = 1;
+            }
+            else {
+                Code = parseInt($('#RegisterAttendanceAndAbsenceDetails .Code:last').val()) + 1;
+            }
+            if ($('#RegisterAttendanceAndAbsenceDetails .form-control:invalid').length > 0) {
+                $('#RegisterAttendanceAndAbsenceDetails').closest('.form-horizontalDetail').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $("#RegisterAttendanceAndAbsenceDetails").find(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+                console.log($('#RegisterAttendanceAndAbsenceDetails .form-control:invalid'));
+                valid = false;
+            } else {
+                let SubjectId = $('#SubjectId').val();
+                let LessonId = $('#LessonId').val();
+                let StudentId = id;
+                let StudentName = Name;
+                let AttendDate = $('#Date').val();
+                $('#RegisterAttendanceAndAbsenceDetails tr').each(function () {
+                    var td = $(this);
+                    if (StudentId == td.find('.StudentId').val()) {
+                        valid = false;
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.StudentExistsBefore !',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#StudentId').prop('selectedIndex', 0).select2();
+
+                    }
+                });
+                if (valid === true) {
+                    let tr = '<tr><td class="tabledit-edit-mode" hidden><input class="DetailId" /><input class="SubjectId" value="' +
+                        SubjectId + '" /><input class="LessonId" value="' +
+                        LessonId + '" /></td><td class="tabledit-edit-mode"><input type="text" class="Code form-control tabledit-input form-control-sm" value="' +
+                        Code + '" hidden /><label class="control-label"> ' +
+                        Code + '</label></td><td class="tabledit-edit-mode"><input hidden class="StudentId" value="' +
+                        StudentId + '" /><label class="control-label" >' +
+                        StudentName + '</label></td><td class="tabledit-edit-mode"><input type="datetime-local" class="AttendDate form-control tabledit-input form-control-sm" value="' +
+                        AttendDate + '" hidden /><label class="control-label">' +
+                        AttendDate + '</label></td><td class="tabledit-edit-mode"><input type="checkbox" class="IsAttended" checked /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                    $('#RegisterAttendanceAndAbsenceDetails').append(tr);
+                    AddEditDetail(StudentId);
+                }
+            }
+        }
+    }
+
+    let Code = 1;
+
+    function appendRegisterAttendanceAndAbsenceDetails() {
+        if ($('#StudentId').val()) {
+            let valid = true;
+
+            if ($('#RegisterAttendanceAndAbsenceDetails tr').length == 0) {
+                Code = 1;
+            }
+            else {
+                Code = parseInt($('#RegisterAttendanceAndAbsenceDetails .Code:last').val()) + 1;
+            }
+            if ($('#RegisterAttendanceAndAbsenceDetails .form-control:invalid').length > 0) {
+                $('#RegisterAttendanceAndAbsenceDetails').closest('.form-horizontalDetail').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $("#RegisterAttendanceAndAbsenceDetails").find(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+                console.log($('#RegisterAttendanceAndAbsenceDetails .form-control:invalid'))
+                valid = false;
+            } else {
+                let SubjectId = $('#SubjectId').val();
+                let LessonId = $('#LessonId').val();
+                let StudentId = $('#StudentId').val();
+                let StudentName = $('#StudentId option:selected').text();
+                let AttendDate = $('#Date').val();
+                $('#RegisterAttendanceAndAbsenceDetails tr').each(function () {
+                    var td = $(this);
+                    if (StudentId == td.find('.StudentId').val()) {
+                        valid = false;
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.StudentExistsBefore !',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    $('#StudentId').prop('selectedIndex', 0).select2();
+
+                });
+                if (valid === true) {
+                    let tr = '<tr><td class="tabledit-edit-mode" hidden><input class="DetailId" /><input class="SubjectId" value="' +
+                        SubjectId + '" /><input class="LessonId" value="' +
+                        LessonId + '" /></td><td class="tabledit-edit-mode"><input type="text" class="Code form-control tabledit-input form-control-sm" value="' +
+                        Code + '" hidden /><label class="control-label"> ' +
+                        Code + '</label></td><td class="tabledit-edit-mode"><input hidden class="StudentId" value="' +
+                        StudentId + '" /><label class="control-label" >' +
+                        StudentName + '</label></td><td class="tabledit-edit-mode"><input type="datetime-local" class="AttendDate form-control tabledit-input form-control-sm" value="' +
+                        AttendDate + '" hidden /><label class="control-label">' +
+                        AttendDate + '</label></td><td class="tabledit-edit-mode"><input type="checkbox" class="IsAttended" checked /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                    $('#RegisterAttendanceAndAbsenceDetails').append(tr);
+                    AddEditDetail(StudentId);
+                }
+
+            }
+        }
+    }
+    function AddEditDetail(id) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        var Detail = {
+            MainDocId: $('#Id').val(),
+            Code: $('#RegisterAttendanceAndAbsenceDetails .Code:last').val(),
+            AttendDate: $('#Date').val(),
+            SubjectId: $('#SubjectId').val(),
+            LessonId: $('#LessonId').val(),
+            StudentId: id,
+            IsAttended: $('#RegisterAttendanceAndAbsenceDetails .IsAttended:last').prop('checked'),
+            IsDeleted: false,
+            IsActive: true,
+            UserId: $('#UserId').val(),
+        }
+        var RegisterAttendanceAndAbsence = {
+            Id: $('#Id').val(),
+            Code: $('#Code').val(),
+            Date: $('#Date').val(),
+            SubjectId: $('#SubjectId').val(),
+            LessonId: $('#LessonId').val(),
+            UserId: $('#UserId').val(),
+            IsDeleted: false,
+            IsActive: true,
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+        }
+        if (valid) {
+            $('#preloader, #status').fadeIn();
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/RegisterAttendanceAndAbsence/AddEditDetail",
+                data: JSON.stringify({ RegisterAttendanceAndAbsence, Detail }),
+                success: function (r) {
+                    if (r.success == true) {
+                        window.location.replace("/RegisterAttendanceAndAbsence/AddEdit?id=" + r.Id);
+                    }
+                    else {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    $('#preloader, #status').fadeOut();
+                },
+                error: function (r) {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    }); $('#preloader, #status').fadeOut();
+                }
+            });
+            $('#StudentId').prop('selectedIndex', 0).select2();
+        }
+    }
+
+function CloseLecture(id) {
+        $.get('/RegisterAttendanceAndAbsence/CloseLecture?Id=' + id).done(function (r) {
+            if (r.success == true) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.LectureClosed',
+                    text: " ",
+                    icon: 'success',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                window.location.replace("/RegisterAttendanceAndAbsence");
+            }
+            else {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                console.log("Error : ",r.e);
+            }
+        });
+    }
+function AdvancedEntry() {
+        let valid = true
+        var Date = $('#Date').val();
+        var LessonId = $('#LessonId').val();
+    var SubjectId = $('#SubjectId').val();
+    let Code = 1;
+    if ($('#RegisterAttendanceAndAbsenceDetails tr').length == 0) {
+        Code = 1;
+    }
+    else {
+        Code = parseInt($('#RegisterAttendanceAndAbsenceDetails .Code:last').val()) + 1;
+    }
+
+         if (Date == null) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AttendDate @MyERP.Properties.Resources.Required !',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            valid = false;
+        }
+        if (!SubjectId) {
+            Swal.fire({
+                        title: '@MyERP.Properties.Resources.SelectCourse !',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+            });
+            valid = false;
+        }
+        if (!LessonId) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.SelectLecture !',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+            valid = false;
+        }
+    if (valid == true) {
+        let Id = $('#Id').val() > 0 ? $('#Id').val() : 0;
+            window.location.replace('/RegisterAttendanceAndAbsence/AdvancedEntry?Date=' + Date + '&LessonId=' + LessonId + '&SubjectId=' + SubjectId + '&Id=' + Id + '&Code=' + Code + '&MasterCode=' + $('#Code').val());
+        }
+    }
+
+    function CheckIfRegisteredBefore() {
+        $.get('/RegisterAttendanceAndAbsence/CheckIfRegisteredBefore?LessonId=' + $('#LessonId').val() + '&SubjectId=' + $('#SubjectId').val()).done(function (r) {
+            if (r.success == "Exist") {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.RegisteredBeforeWantToRedirect ?',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.replace("/RegisterAttendanceAndAbsence/AddEdit?id=" + r.Id);
+                    }
+                    else {
+                        result.dismiss;
+                        $('#SubjectId').prop('selectedIndex', 0).select2();
+                        $('#LessonId').prop('selectedIndex', 0).select2();
+                    }
+                });
+            }
+        });
+    }
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        let RegisterAttendanceAndAbsenceDetails = [];
+        $('#RegisterAttendanceAndAbsenceDetails').find('tr').each(function () {
+            var RegisterAttendanceAndAbsenceDetail = {
+                Code: $(this).find('.Code').val(),
+                AttendDate: $(this).find('.AttendDate').val(),
+                SubjectId: $(this).find('.SubjectId').val(),
+                LessonId: $(this).find('.LessonId').val(),
+                StudentId: $(this).find('.StudentId').val(),
+                IsAttended: $(this).find('.IsAttended').prop('checked'),
+                IsDeleted: false,
+                IsActive:true,
+                UserId: $('#UserId').val(),
+            }
+                RegisterAttendanceAndAbsenceDetails.push(RegisterAttendanceAndAbsenceDetail);
+        });
+        var RegisterAttendanceAndAbsence = {
+            Id: $('#Id').val(),
+            Code: $('#Code').val(),
+            Date: $('#Date').val(),
+            SubjectId: $('#SubjectId').val(),
+            LessonId: $('#LessonId').val(),
+            UserId: $('#UserId').val(),
+            IsDeleted: false,
+            IsActive: true,
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            RegisterAttendanceAndAbsenceDetails: RegisterAttendanceAndAbsenceDetails
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/RegisterAttendanceAndAbsence/AddEdit",
+                        data: JSON.stringify(RegisterAttendanceAndAbsence),
+                        success: function (r) {
+                            if (r.success == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); if (n == "new") {
+                                    window.location.replace("/RegisterAttendanceAndAbsence/AddEdit");
+                                } else {
+                                    window.location.replace("/RegisterAttendanceAndAbsence");
+                                }
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/RegisterAttendanceAndAbsence/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/RegisterAttendanceAndAbsence');
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+        $('#preloader, #status').fadeOut();
+    }
+
+    function DeleteDetail(id) {
+          $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/RegisterAttendanceAndAbsence/DeleteDetail',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                        }
+                    });
+
+        @*Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/RegisterAttendanceAndAbsence/DeleteDetail',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+
+                            } else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });*@
+        $('#preloader, #status').fadeOut();
+    }
+
+</script>

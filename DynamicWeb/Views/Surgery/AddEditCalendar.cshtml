@@ -1,0 +1,211 @@
+﻿@model IEnumerable<MyERP.Models.GetDoctorCalendar_Result>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.MonthlyDates;
+}
+<!-- Full Calendar -->
+<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
+<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
+
+<h4 class="hed page-title"> @MyERP.Properties.Resources.MonthlyDates </h4>
+
+<div id="calendar">
+
+</div>
+<script>
+
+    $(document).ready(function () {
+        $('#calendar').fullCalendar({
+            monthNames: ['@MyERP.Properties.Resources.January', '@MyERP.Properties.Resources.February', '@MyERP.Properties.Resources.March', '@MyERP.Properties.Resources.April', '@MyERP.Properties.Resources.May', '@MyERP.Properties.Resources.June', '@MyERP.Properties.Resources.July', '@MyERP.Properties.Resources.August', '@MyERP.Properties.Resources.September', '@MyERP.Properties.Resources.October', '@MyERP.Properties.Resources.November', '@MyERP.Properties.Resources.December'],
+            monthNamesShort: ['@MyERP.Properties.Resources.January', '@MyERP.Properties.Resources.February', '@MyERP.Properties.Resources.March', '@MyERP.Properties.Resources.April', '@MyERP.Properties.Resources.May', '@MyERP.Properties.Resources.June', '@MyERP.Properties.Resources.July', '@MyERP.Properties.Resources.August', '@MyERP.Properties.Resources.September', '@MyERP.Properties.Resources.October', '@MyERP.Properties.Resources.November', '@MyERP.Properties.Resources.December'],
+            dayNames: ['@MyERP.Properties.Resources.Sunday', '@MyERP.Properties.Resources.Monday', '@MyERP.Properties.Resources.Tuesday', '@MyERP.Properties.Resources.Wednesday', '@MyERP.Properties.Resources.Thursday', '@MyERP.Properties.Resources.Friday', '@MyERP.Properties.Resources.Saturday'],
+            dayNamesShort: ['@MyERP.Properties.Resources.Sunday', '@MyERP.Properties.Resources.Monday', '@MyERP.Properties.Resources.Tuesday', '@MyERP.Properties.Resources.Wednesday', '@MyERP.Properties.Resources.Thursday', '@MyERP.Properties.Resources.Friday', '@MyERP.Properties.Resources.Saturday'],
+            header:
+            {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            buttonText: {
+                today: 'today',
+                month: 'month',
+                week: 'week',
+                day: 'day'
+            },
+
+            //events: [
+            //    {
+            //    title: "تسجيل اماني عبد الفتاح",
+            //        description:"تسجيل اماني عبد الفتاح",
+            //        start: "2022-12-15",
+            //        end: "2022-12-15",
+            //        backgroundColor: "#9501fc",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل محمد محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-16",
+            //        end: "2021-3-16",
+            //        backgroundColor: "#9501fc",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل علي محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-16",
+            //        end: "2021-3-16",
+            //        backgroundColor: "#9501fc",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل اماني عبد الفتاح",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-10",
+            //        end: "2021-3-10",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل محمد محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-10",
+            //        end: "2021-3-10",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل علي محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-10",
+            //        end: "2021-3-10",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل اماني عبد الفتاح",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-5",
+            //        end: "2021-3-5",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل محمد محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-5",
+            //        end: "2021-3-5",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل علي محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-5",
+            //        end: "2021-3-5",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل اماني عبد الفتاح",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-3",
+            //        end: "2021-3-3",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل محمد محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-3",
+            //        end: "2021-3-3",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    },
+            //    {
+            //        title: "تسجيل علي محمد",
+            //        description: "تسجيل اماني عبد الفتاح",
+            //        start: "2021-3-3",
+            //        end: "2021-3-3",
+            //        backgroundColor: "##59afde",
+            //        borderColor: "#fc0101"
+            //    }
+
+            //],
+
+            events: function (start, end, timezone, callback) {
+                $.ajax({
+                    url: '/Clinic_Reception/GetDoctorCalendar',
+                    type: "GET",
+                    dataType: "JSON",
+
+                    success: function (result) {
+                        var events = [];
+
+                        $.each(result, function (i, data) {
+                            if (data.SurgeryId > 0) {
+                                events.push(
+                                    {
+                                        title: data.DoctorName,
+                                        description: data.DoctorName,
+                                        start: moment(data.SurgeryDate).format('YYYY-MM-DD'),
+                                        end: moment(data.SurgeryDate).format('YYYY-MM-DD'),
+                                        id: data.SurgeryId,
+                                        type: "Surgery",
+                                        backgroundColor: "#9501fc",
+                                        borderColor: "#fc0101",
+                                    });
+                            }
+                            else if (data.ExaminationId > 0) {
+                                events.push(
+                                    {
+                                        title: data.DoctorName,
+                                        description: data.DoctorName,
+                                        start: moment(data.ExaminationDate).format('YYYY-MM-DD'),
+                                        end: moment(data.ExaminationDate).format('YYYY-MM-DD'),
+                                        id: data.ExaminationId,
+                                        type: "Examination",
+                                        backgroundColor: "green",
+                                        borderColor: "yellow"
+                                    });
+                            }
+
+                        });
+
+                        callback(events);
+                    }
+                });
+            },
+
+            eventClick: function (event) {
+                if (event.type === "Examination" && event.id > 0) {
+                    window.open('/Examination/AddEdit?' + event.id, "_blank")
+                }
+                else if (event.type === "Surgery" && event.id > 0) {
+                    window.open('/Surgery/AddEdit?' + event.id, "_blank")
+
+                }
+                //$('#exampleModal').modal('toggle');
+                //$('#titre').val(event.event.title);
+                //$('#date').val(event.event.start);
+                //$('#edit-event').on("click", function () {
+                //    event.event.title = $('#titre').val();
+                //    $('#exampleModal').modal('hide');
+                //});
+            },
+
+            //eventRender: function (event, element) {
+            //    element.qtip(
+            //        {
+            //            content: event.description
+            //        });
+            //},
+
+            editable: true
+        });
+    });
+</script>

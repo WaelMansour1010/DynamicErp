@@ -8,6 +8,12 @@ namespace MyERP.Reporting.Reports
 {
     public class CarSalesHistory_Report : XtraReport
     {
+        private TopMarginBand topMarginBand1;
+        private DetailBand detailBand1;
+        private BottomMarginBand bottomMarginBand1;
+        private SqlDataSource sqlDataSource1;
+        private System.ComponentModel.IContainer components;
+
         public CarSalesHistory_Report(DateTime? fromDate, DateTime? toDate, int? carTypeId, int? carModelId, int? customerId)
         {
             var pFromDate = new Parameter { Name = "FromDate", Type = typeof(DateTime), Value = fromDate.HasValue ? (object)fromDate.Value : DBNull.Value, Visible = false };
@@ -30,8 +36,10 @@ namespace MyERP.Reporting.Reports
             DataSource = sqlDataSource;
             DataMember = "CarSalesHistory_Get";
 
-            TopMargin.HeightF = 20;
-            BottomMargin.HeightF = 20;
+            //TopMargin.HeightF = 20;
+            //BottomMargin.HeightF = 20;
+            //TopMargin.HeightF = 20;
+            //BottomMargin.HeightF = 20;
 
             var header = new ReportHeaderBand { HeightF = 35 };
             header.Controls.Add(new XRLabel
@@ -71,6 +79,80 @@ namespace MyERP.Reporting.Reports
             var cell = new XRTableCell { Borders = DevExpress.XtraPrinting.BorderSide.All, TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter };
             cell.ExpressionBindings.Add(new ExpressionBinding("BeforePrint", "Text", expression));
             row.Cells.Add(cell);
+        }
+
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter5 = new DevExpress.DataAccess.Sql.QueryParameter();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(CarSalesHistory_Report));
+            this.topMarginBand1 = new DevExpress.XtraReports.UI.TopMarginBand();
+            this.detailBand1 = new DevExpress.XtraReports.UI.DetailBand();
+            this.bottomMarginBand1 = new DevExpress.XtraReports.UI.BottomMarginBand();
+            this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
+            ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
+            // 
+            // topMarginBand1
+            // 
+            this.topMarginBand1.Name = "topMarginBand1";
+            // 
+            // detailBand1
+            // 
+            this.detailBand1.Name = "detailBand1";
+            // 
+            // bottomMarginBand1
+            // 
+            this.bottomMarginBand1.Name = "bottomMarginBand1";
+            // 
+            // sqlDataSource1
+            // 
+            this.sqlDataSource1.ConnectionName = "MyERP_ConnectionString";
+            this.sqlDataSource1.Name = "sqlDataSource1";
+            storedProcQuery1.Name = "CarSalesHistory_Get";
+            queryParameter1.Name = "@FromDate";
+            queryParameter1.Type = typeof(System.DateTime);
+            queryParameter1.ValueInfo = "1753-01-01";
+            queryParameter2.Name = "@ToDate";
+            queryParameter2.Type = typeof(System.DateTime);
+            queryParameter2.ValueInfo = "1753-01-01";
+            queryParameter3.Name = "@CarTypeId";
+            queryParameter3.Type = typeof(int);
+            queryParameter3.ValueInfo = "0";
+            queryParameter4.Name = "@CarModelId";
+            queryParameter4.Type = typeof(int);
+            queryParameter4.ValueInfo = "0";
+            queryParameter5.Name = "@CustomerId";
+            queryParameter5.Type = typeof(int);
+            queryParameter5.ValueInfo = "0";
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1,
+            queryParameter2,
+            queryParameter3,
+            queryParameter4,
+            queryParameter5});
+            storedProcQuery1.StoredProcName = "CarSalesHistory_Get";
+            this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
+            storedProcQuery1});
+            this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
+            // 
+            // CarSalesHistory_Report
+            // 
+            this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
+            this.topMarginBand1,
+            this.detailBand1,
+            this.bottomMarginBand1});
+            this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
+            this.sqlDataSource1});
+            this.DataMember = "CarSalesHistory_Get";
+            this.DataSource = this.sqlDataSource1;
+            this.Version = "23.1";
+            ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
+
         }
     }
 }

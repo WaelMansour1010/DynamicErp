@@ -1,0 +1,120 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ImportExcelSheet;
+}
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">
+                @MyERP.Properties.Resources.ImportExcelSheet:
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <h3 id="Message"></h3>
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+                        <form class="p-3" id="excel-upload-form" enctype="multipart/form-data" @*style="display:none;"*@>
+                            <h3>@ViewBag.Error</h3>
+                            <label class="control-label col-sm-2">@MyERP.Properties.Resources.SelectFile </label>
+                            <input type="file" id="file" @*style="visibility:hidden;" *@ name="excelfile" />
+                            <button type="button" id="Load" class="btn btn-secondary" @*data-toggle="modal" data-target="#exampleModalCenter" *@ onclick="GetFileData()"> @MyERP.Properties.Resources.UploadFile</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function GetFileData() {
+        $('#preloader, #status').fadeIn();
+        var formData = new FormData($('#excel-upload-form')[0]);
+        $.ajax({
+            type: "POST",
+            data: formData,
+            contentType: "application/json",
+            cache: false,
+            contentType: false,
+            processData: false,
+            url: "/Employee/ImportExcelFile",
+            success: function (r) {
+                if (r == "نوع الملف غير صحيح" || r == "من فضلك اختر ملف") {
+                    $('#Message').text(r);
+                    alert(r)
+                    $('#preloader, #status').fadeOut();
+
+                }
+                else {
+                    $('#Message').text("");
+                    $('#Load').attr('disabled', 'true');
+                    if (r == "success") {
+                        alert('@MyERP.Properties.Resources.Saved');
+                        window.location.replace("/Employee");
+                    }
+                    else {
+                        alert('@MyERP.Properties.Resources.FileNotUploaded');
+                        $('#preloader, #status').fadeOut();
+
+                    }
+
+                    @*$('#EmployeesAttendLeaveDetails').empty();
+                    for (let i = 0; i < r[0].length; i++)
+                    {
+                        r[0][i].Attend_LeaveDateTime = convertToJavaScriptDate(r[0][i].Attend_LeaveDateTime);
+                        var convert = r[0][i].Attend_LeaveDateTime;
+                        var split = convert.split(' ');
+                        var in_out = r[0][i].In_Out == 0 ? "حضور" : "انصراف";
+                        $('#EmployeesAttendLeaveDetails').append('<tr><td hidden><input class="EmployeesAttendAndLeaveId" value="' + r[0][i].EmployeesAttendAndLeaveId + '" /></td><td hidden><input class="EmployeeId" value="' + r[0][i].EmployeeId + '" /></td><td><label class="EmpCodeOnFingerPrint">' + r[0][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[0][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[0][i].EmployeeArName + '</label></td><td><label class="Attend_LeaveDate">' + split[0] + ' </label></td><td><label class="Attend_LeaveTime">' + split[1] + split[2] + '</label></td><td><label >' + in_out + '</label><input class="In_Out" hidden value="' + r[0][i].In_Out +'"/></td><td><button type = "button" class= "btn btn-danger" onclick = "deleteElement(this)" > ' + '@MyERP.Properties.Resources.Delete' + '</button ></td ></tr>')
+                    }
+                    if (r[1].length > 0)
+                    {
+                        $('#UnmatchedEmployeesAttendLeaveDetais').empty();
+                        for (let i = 0; i < r[1].length; i++)
+                        {
+                            $('#UnmatchedEmployeesAttendLeaveDetais').append('<tr><td><label class="EmpCodeOnFingerPrint">' + r[1][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[1][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[1][i].EmployeeArName + '</label></td></tr>')
+                            $('#exampleModalCenter').modal("show");
+                        }
+                    }
+                    if (r[2].length > 0) {
+                        $('#alreadyExistInDBAttendLeaveDetailsTbody').empty();
+                        for (let i = 0; i < r[2].length; i++) {
+                            $('#alreadyExistInDBAttendLeaveDetailsTbody').append('<tr><td><label class="EmpCodeOnFingerPrint">' + r[2][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[2][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[2][i].EmployeeArName + '</label></td></tr>')
+                            $('#alreadyExistInDBAttendLeaveDetails').modal("show");
+                        }
+                    }
+                    if (r[3].length > 0) {
+                        $('#EmployeesWithNoContractAttendLeaveDetailsTbody').empty();
+                        for (let i = 0; i < r[3].length; i++) {
+                            $('#EmployeesWithNoContractAttendLeaveDetailsTbody').append('<tr><td><label class="EmpCodeOnFingerPrint">' + r[3][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[3][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[3][i].EmployeeArName + '</label></td></tr>')
+                            $('#EmployeesWithNoContractAttendLeaveDetails').modal("show");
+                        }
+                    }*@
+                    $('#preloader, #status').fadeOut();
+                }
+            },
+            error: function (r) {
+                alert('@MyERP.Properties.Resources.FileNotUploaded');
+            }
+        });
+    }
+
+
+</script>

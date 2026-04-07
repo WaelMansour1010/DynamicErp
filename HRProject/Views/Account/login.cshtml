@@ -1,0 +1,106 @@
+﻿@model EazyCash.Auth.LoginViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login</title>
+
+    <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/font-awesome/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/assets/css/animate.css" rel="stylesheet">
+    <link href="/assets/css/style.css" rel="stylesheet">
+
+    <style>
+        img {
+            vertical-align: middle;
+            border-style: none;
+            height: 164px;
+            width: 297px;
+        }
+    </style>
+</head>
+
+<body class="gray-bg">
+   
+    <div id="mainbox" class="middle-box text-center loginscreen animated fadeInDown ">
+   
+    <div>
+        <div>
+
+            <img src="/image/logo.jpeg"/>
+
+        </div>
+
+        <p>Login in. To see it in action.</p>
+        <form class="m-t" role="form" action="@Url.Action("Login")" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+               
+                    <input id="txtcode" type="text" asp-for="EmployeeCode"
+                               class="form-control" placeholder="Code" autocomplete="off" onfocusout="setsel();">
+        
+                        <div class="spiner d-none">
+                            <div class="sk-spinner sk-spinner-wave">
+                                <div class="sk-rect1"></div>
+                                <div class="sk-rect2"></div>
+                                <div class="sk-rect3"></div>
+                                <div class="sk-rect4"></div>
+                                <div class="sk-rect5"></div>
+                            </div>
+                        </div>
+             
+                
+              
+            </div>
+            <div class="form-group ">
+                       <input id="txtname" readonly="readonly" asp-for="EmployeeName" type="text" class="form-control"
+                                                          placeholder="Name" autocomplete="off">
+                
+              
+         
+
+
+            </div >
+            <div class="form-group ">
+                <input type="password" asp-for="Password" class="form-control" placeholder="Password" required="">
+               
+               
+            </div>
+              <button type="submit" class="btn btn-warning block full-width m-b">Login</button> 
+             
+            
+ 
+        </form>
+
+    </div>
+</div>
+
+    <!-- Mainly scripts -->
+    <script src="/assets/js/jquery-3.1.1.min.js"></script>
+    <script src="/assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.js"></script>
+<script src="~/assets/sweetalert2-11.7.20/sweetalert2.all.min.js"></script>
+    <script src="/js/site.js"></script>
+<script>
+    function setsel() {
+        let value = $('#txtcode').val();
+        if (value) {
+            getname(value);
+            //  $('#drusers').val(value);
+        } else {
+            $('#txtname').val('');
+        }
+    }
+    
+</script>
+</body>
+
+</html>

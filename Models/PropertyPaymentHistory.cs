@@ -17,13 +17,13 @@ namespace MyERP.Models
         public int Id { get; set; }
         public int PropertyBatchId { get; set; }
         public int MainDocId { get; set; }
-        public decimal PaymentAmount { get; set; }
-        public System.DateTime PaymentDate { get; set; }
+        public Nullable<decimal> PaymentAmount { get; set; }
+        public Nullable<System.DateTime> PaymentDate { get; set; }
         public string PaymentMethod { get; set; }
         public string PaymentReference { get; set; }
         public string PaymentNotes { get; set; }
         public Nullable<int> UserId { get; set; }
-        public System.DateTime CreatedDate { get; set; }
+        public Nullable<System.DateTime> CreatedDate { get; set; }
         public bool IsDeleted { get; set; }
     
         public virtual Property Property { get; set; }

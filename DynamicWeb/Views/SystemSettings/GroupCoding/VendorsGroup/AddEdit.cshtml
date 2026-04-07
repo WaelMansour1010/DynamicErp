@@ -1,0 +1,150 @@
+﻿<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    <input type="button" class="btn btn-info btnAdd" name="AddEdit" value="رجوع" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')" style="float:left;">
+                    <h4>بيانات مجموعات الموردين :</h4>
+                </div>
+                <div class="form-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-2 control-label">الكود</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="txtCode" id="txtCode" placeholder="الكود" required>
+                                <span class="Asterisks">*</span>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-2 control-label">الاسم العربى</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="txtArName" id="txtArName" placeholder="الاسم العربى" required>
+                                <span class="Asterisks">*</span>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-2 control-label">الاسم الانجليزى</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="txtEnName" placeholder="الاسم الانجليزى">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-2 control-label">الشركة</label>
+                            <div class="col-sm-9">
+                                <select id="ddlCompanyId" name="ddlCompanyId" class="form-control" required></select>
+                                <span class="Asterisks">*</span>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-2 control-label">ملاحظات</label>
+                            <div class="col-sm-9">
+                                <textarea type="text" class="form-control" id="txtNotes" placeholder="ملاحظات"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-sm-offset-2">
+                            <button type="button" class="btn btn-success" onclick="save()">
+                                حفظ
+                            </button>
+                            <button type="reset" class="btn btn-danger" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')">
+                                رجوع
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hdnobjID" />
+<input type="hidden" id="hdnUserId" />
+<input type="hidden" id="hdnIsDeleted"  />
+<input type="hidden" id="hdnIsActive"  />
+<input type="hidden" id="hdnImage" />
+<script>
+
+    FillcompanyDDL();
+
+function save() {
+
+            CheckSave();
+
+
+        if ($("form").valid() && $('.error:visible').length  == 0) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: MainDomain + 'api/VendorsGroup/' + $('#hdnobjID').val(),
+                    type: ((@ViewBag.ID.ToString() != '') ? 'PUT' : 'POST'),
+                    data: {
+                        "Id": $('#hdnobjID').val(),
+                        "Code": $('#txtCode').val(),
+                        "ArName": $('#txtArName').val(),
+                        "EnName": $('#txtEnName').val(),
+                        "Notes": $('#txtNotes').val(),
+                        "CompanyId": $('#ddlCompanyId').val(),
+
+                        "Image": $('#hdnImage').val(),
+                        "UserId": $('#hdnUserId').val(),
+                        "IsDeleted": (@ViewBag.ID.ToString() != '') ? $('#hdnIsDeleted').val() : false,
+                        "IsActive": (@ViewBag.ID.ToString() != '') ? $('#hdnIsActive').val() : true
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                    },
+                    error: function (e) {
+                        if (e.responseJSON.Message == 'Duplicate Code Found') {
+                            alert("الكود موجود بالفعل");
+                            $('#preloader, #status').fadeOut();
+                        } else
+                            window.location = '/logout/';
+                    },
+                    success: function (r) {
+                        back('@ViewContext.RouteData.Values["controller"].ToString()');
+                    }
+                });
+        } else {
+            $("label.error").html('يرحى ادخال هذا الحقل');
+             $('html').animate({ scrollTop: $('.error:visible').offset().top - 170 }, '500', 'swing');
+        }
+    }
+
+
+
+    if (@ViewBag.ID.ToString() != '') {
+
+        $.ajax(
+            {
+                url: MainDomain + 'api/VendorsGroup/@ViewBag.ID.ToString()',
+                type: 'Get',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                },
+                success: function (r) {
+                    console.log(r);
+                    console.log(r['ArName']);
+                    if (r != null) {
+                        $('#txtArName').val(r['ArName']);
+                        $('#txtCode').val(r['Code']);
+                        $('#txtEnName').val(r['EnName']);
+                        $('#hdnImage').val(r['Image']);
+                        $('#txtNotes').val(r['Notes']);
+                        $('#ddlCompanyId').val(r['CompanyId']);
+
+                        $('#hdnobjID').val(r['Id']);
+                        $('#hdnUserId').val(r['UserId']);
+                        $('#hdnIsDeleted').val(r['IsDeleted']);
+                        $('#hdnIsActive').val(r['IsActive']);
+FillAutoCompelete();
+                    }
+
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+    }
+
+
+</script>

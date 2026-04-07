@@ -1,0 +1,705 @@
+﻿@model MyERP.Models.ManufacturingOrder
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ManufacturingOrder;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.ManufacturingOrder :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null && Model.Id > 0)
+{
+    @Html.HiddenFor(model => model.Id)
+    @Html.HiddenFor(model => model.ManufacturingRequestId)
+    @Html.HiddenFor(model => model.ManufacturingRequest.DepartmentId)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsLinked)
+    @Html.HiddenFor(model => model.IsPosted)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.IsAccepted)
+    @Html.HiddenFor(model => model.IsCompleted)
+}
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        @Html.Partial("_LinkWithDocModal")
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title form-group">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VoucherDate" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input id="OrderDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.OrderDate" required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] != "Genoise")
+                                    {
+                                        <label for="Employee_ArName" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Employee </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Employee.ArName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.Employee, required = "required" } })
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <label for="Employee_ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.Chef</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Employee.ArName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.Chef, required = "required" } })
+                                        </div>
+                                    }
+                                    <label class=" col-sm-2 control-label" for="ManufacturingRequest_DocumentNumber"> @MyERP.Properties.Resources.ManufacturingRequestNo </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ManufacturingRequest.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.ManufacturingRequestNo, required = "required" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Warehouse_ArName">@MyERP.Properties.Resources.WareHouse</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Warehouse.ArName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", required = "required" } })
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="ManufacturingRequest_ItemGroup_ArName">@MyERP.Properties.Resources.ItemGroups</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ManufacturingRequest.ItemGroup.ArName, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", required = "required" } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.ApprovalDate</label>
+                                    <label class="control-label " for="Notes"> @Model.AcceptanceDate</label>
+
+                                </div>
+                                <!-- Test -->
+                                <div class="form-group row">
+                                    <div class="col-sm-6">
+                                        <button class="btn btn-primary" data-toggle="modal" data-target="#LinkWithOtherDocModal"> @MyERP.Properties.Resources.LinkWithOtherDoc </button>
+                                        <label id="PurchaseRequestDocNum">
+
+                                        </label>
+                                        <button id="cancelPurchaseRequest" onclick="cancelPurchaseRequest()" class="btn btn-icon waves-effect waves-light btn-danger btn-xs" style="display:none;"> <i class="fas fa-times"></i> </button>
+                                    </div>
+                                </div>
+                                <!-- End Of Test -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12" id="produced-items">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.RequiredProducts</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Code</th>
+                                                <th>@MyERP.Properties.Resources.Item</th>
+                                                <th>@MyERP.Properties.Resources.Unit</th>
+                                                <th>@MyERP.Properties.Resources.Qty</th>
+                                                <th class="cost-th">@MyERP.Properties.Resources.Cost</th>
+                                                <th class="cost-th">@MyERP.Properties.Resources.TotalCost</th>
+                                                <th class="produced-qty-th" style="display:@Html.Raw(Model.IsCompleted==true?"table-cell":"none");"> @MyERP.Properties.Resources.ManufacturedQuantity </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model != null && Model.Id > 0)
+                                            {
+                                                foreach (var item in Model.ManufacturingRequest.ManufacturingRequestItems.Where(x => x.IsProcessed))
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="item-id" value="@item.ItemId" unit-id="@item.ItemUnitId" qty="@item.QTY" />
+                                                            @item.Item.Code
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @item.Item.ArName
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @item.ItemUnit.ArName
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @Html.DisplayFor(x => item.QTY)
+                                                        </td>
+                                                        <td class="tabledit-edit-mode cost">
+                                                            @Html.DisplayFor(x => item.Cost)
+                                                        </td>
+                                                        <td class="tabledit-edit-mode total-cost">
+                                                        </td>
+                                                        <td class="tabledit-edit-mode" style="display:@Html.Raw(Model.IsCompleted==true?"block":"none");">
+                                                            <input type="number" step="any" class="form-control tabledit-input form-control-sm produced-qty" value="@item.ProducedQty" required id="@item.Id" highest="@Html.Raw(item.Item.ItemPrices.Where(x=>x.IsDefault==true).Select(x=>item.QTY- x.ToleranceQty*item.QTY).FirstOrDefault())" lowest="@Html.Raw(item.Item.ItemPrices.Where(x=>x.IsDefault==true).Select(x=>item.QTY+x.ToleranceQty*item.QTY).FirstOrDefault())" />
+                                                            <div class="invalid-feedback">
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12" id="component-items">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.RequiredRawMaterials</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0" id="rawMaterial">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Code</th>
+                                                <th>@MyERP.Properties.Resources.Item</th>
+                                                <th>@MyERP.Properties.Resources.Unit</th>
+                                                <th>@MyERP.Properties.Resources.Qty</th>
+                                                <th class="cost-th">@MyERP.Properties.Resources.Cost</th>
+                                                <th class="cost-th">@MyERP.Properties.Resources.TotalCost</th>
+                                                <th>  <input type="checkbox" class="item-delivered" id="checkAll" value="checkAll" onclick="checkAll()" /> @MyERP.Properties.Resources.IsDelivered </th>
+                                                <th>@MyERP.Properties.Resources.DeliveredQty</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model != null && Model.Id > 0)
+                                            {
+                                                foreach (var item in Model.ManufacturingRequest.ManufacturingRequestItems.Where(x => x.IsProcessComponent))
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="item-id" value="@item.ItemId" unit-id="@item.ItemUnitId" qty="@item.QTY" />
+                                                            @item.Item.Code
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @item.Item.ArName
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @item.ItemUnit.ArName
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @Html.DisplayFor(x => item.QTY)
+                                                        </td>
+                                                        <td class="tabledit-edit-mode cost">
+                                                            @Html.DisplayFor(x => item.Cost)
+                                                        </td>
+                                                        <td class="tabledit-edit-mode total-cost">
+                                                        </td>
+                                                        <td class="tabledit-edit-mode"><input type="checkbox" @Html.Raw(item.IsDelivered ? "checked disabled" : "") class="item-delivered" value="@item.Id" /></td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="number" step="any" class="form-control tabledit-input form-control-sm received-qty" value="@item.ReceivedQty" readonly required initial-qty="@item.QTY" />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model != null && Model.IsDeleted == false)
+                    {
+                        <button @Html.Raw(Model.IsCompleted == true ? "disabled" : "") class="btn btn-success" id="addEditBtn" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+
+                        <button class="btn btn-success" data-toggle="modal" data-target="#stock-receipt-warehouse" style="display:@Html.Raw(Model.IsCompleted==true && Model.IsAccepted!=true?"inline-block;":"none;")" id="acceptBtn">@MyERP.Properties.Resources.Approve</button>
+
+                        if (!Model.ManufacturingRequest.ManufacturingRequestItems.Any(x => x.IsProcessComponent && x.IsDelivered == false) && Model.IsAccepted != true)
+                        {
+                            <button class="btn btn-success" id="complete-order"> @MyERP.Properties.Resources.CompletingManufactureOrder </button>
+                        }
+                        else
+                        { <button class="btn btn-success disabled" id="complete-order" disabled> @MyERP.Properties.Resources.CompletingManufactureOrder </button>}
+                    <a class="btn btn-success" href="@Url.Action("ManufacturingOrder","Report",new { id=Model.Id, print=true})" role="button" target="_blank">@MyERP.Properties.Resources.Print</a>
+                    <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                        @MyERP.Properties.Resources.Delete
+                    </button>
+                }
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="stock-receipt-warehouse" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel"> @MyERP.Properties.Resources.StockReceiptWarehouse </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-8 col-md-6">
+                        <select class="form-control" id="WarehouseId"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Closed</button>
+                <button type="button" class="btn btn-primary waves-effect" data-dismiss="modal" onclick="acceptOrder()">@MyERP.Properties.Resources.Accept</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+<script>
+    let ShowItemCost = '@ViewBag.ShowItemCost';
+    if (ShowItemCost != 'True') {
+        $('.cost, .cost-th, .total-cost').hide();
+    }
+
+    $('.cost').each(function () {
+        $(this).closest('tr').find('.total-cost').html(($(this).closest('tr').find('.cost').html() * $(this).closest('tr').find('.item-id').attr('qty')).toFixed(2));
+    });
+
+    $(document).ready(function () {
+        $('.produced-qty').each(function () {
+            let lowest = $(this).attr('lowest');
+            let highest = $(this).attr('highest');
+            if ($(this).inputmask('unmaskedvalue') * 1 < lowest || $(this).inputmask('unmaskedvalue') * 1 > highest) {
+                $(this).siblings('.invalid-feedback').html('@MyERP.Properties.Resources.TheManufacturedQuantityIsOutsideThePermittedQuantity').show();
+            } else
+                $(this).siblings('.invalid-feedback').html('').hide();
+        });
+    });
+
+    $(document).on('click', '.item-delivered', function () {
+        if ($(this).prop('checked')) {
+            $(this).closest('tr').find('.received-qty').removeAttr('readonly');
+            $(this).closest('tr').find('.received-qty').val($(this).closest('tr').find('.received-qty').attr('initial-qty'));
+        }
+        else {
+            $(this).closest('tr').find('.received-qty').attr('readonly', 'readonly');
+            $(this).closest('tr').find('.received-qty').val('');
+        }
+    });
+
+    function checkAll() {
+        if ($('#checkAll').prop('checked')) {
+            var table = document.getElementById("rawMaterial");
+            for (var i = 0, row; row = table.rows[i]; i++) {
+                $(row).find('.item-delivered').prop('checked', 'checked');
+                $(row).find('.received-qty').removeAttr('readonly');
+                $(row).find('.received-qty').val($(row).find('.received-qty').attr('initial-qty'));
+            }
+
+        } else {
+
+            var table = document.getElementById("rawMaterial");
+            for (var i = 0, row; row = table.rows[i]; i++) {
+                $(row).find('.item-delivered').prop("checked", false);
+                $(row).find('.received-qty').attr('readonly', 'readonly');
+                $(row).find('.received-qty').val('');
+
+            }
+
+          //  $('input[type="checkbox"]').removeAttr('checked');
+        }
+    }
+
+    function addEdit() {
+        if ($('#component-items').find(".form-control:invalid").length > 0) {
+            $('#component-items').find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('#component-items').find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        } else {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#addEditBtn').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/ManufacturingOrder/SetItemIsDelivered?id=" + $('#Id').val(),
+                        data:
+                            JSON.stringify({
+                                manufacturingRequestItems: $.map($('.item-delivered:checked').not(':disabled,#checkAll'), function (i) {
+                                    return {
+                                        Id: $(i).val(),
+                                        ItemId: $(i).closest('tr').find('.item-id').val(),
+                                        ReceivedQty: $(i).closest('tr').find('.received-qty').inputmask('unmaskedvalue') * 1
+                                    };
+                                }),
+                                notes: $('#Notes').val()
+                            }),
+                        success: function (r) {
+                            $('#preloader, #status').empty().fadeOut();
+                            $('.item-delivered:checked').attr('disabled', 'disabled').closest('tr').find('.received-qty').attr('readonly', 'readonly');
+                            if ($('.item-delivered:checked').length == $('.item-delivered').length) {
+                                $('#complete-order').removeClass('disabled').removeAttr('disabled');
+                            }
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        error: function () {
+                            $('#preloader, #status').empty().fadeOut();
+                            $('#addEditBtn').prop('disabled', false);
+
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+
+                }
+                else { result.dismiss; }
+            });
+
+            //if (confirm('هل تريد الحفظ؟')) {
+
+            //    $('#preloader, #status').fadeIn();
+            //    $('#addEditBtn').prop('disabled', true);
+            //    $.ajax({
+            //        type: "POST", contentType: "application/json",
+            //        url: "/ManufacturingOrder/SetItemIsDelivered?id=" + $('#Id').val(),
+            //        data:
+            //            JSON.stringify({
+            //                manufacturingRequestItems: $.map($('.item-delivered:checked').not(':disabled,#checkAll'), function (i) {
+            //                    return {
+            //                        Id: $(i).val(),
+            //                        ItemId: $(i).closest('tr').find('.item-id').val(),
+            //                        ReceivedQty: $(i).closest('tr').find('.received-qty').inputmask('unmaskedvalue') * 1
+            //                    };
+            //                }),
+            //                notes: $('#Notes').val()
+            //            }),
+            //        success: function (r) {
+            //            $('#preloader, #status').empty().fadeOut();
+            //            $('.item-delivered:checked').attr('disabled', 'disabled').closest('tr').find('.received-qty').attr('readonly', 'readonly');
+            //            if ($('.item-delivered:checked').length == $('.item-delivered').length) {
+            //                $('#complete-order').removeClass('disabled').removeAttr('disabled');
+            //            }
+            //            alert('تم الحفظ!');
+            //        },
+            //        error: function () {
+            //            $('#preloader, #status').empty().fadeOut();
+            //            $('#addEditBtn').prop('disabled', false);
+
+            //            alert('لم يتم الحفظ!');
+            //        }
+            //    });
+            //}
+
+        }
+    }
+
+    $(document).on('change', '.produced-qty', function () {
+        let lowest = $(this).attr('lowest');
+        let highest = $(this).attr('highest');
+        if ($(this).inputmask('unmaskedvalue') * 1 < lowest || $(this).inputmask('unmaskedvalue') * 1 > highest) {
+            $(this).siblings('.invalid-feedback').html('@MyERP.Properties.Resources.TheManufacturedQuantityIsOutsideThePermittedQuantity').show();
+        } else
+            $(this).siblings('.invalid-feedback').html('').hide();
+    });
+
+    let producedQtyShown = false;
+    $('#complete-order').on('click', function () {
+        if (producedQtyShown || $('#IsCompleted').val() == 'True')
+            completeOrder();
+        else {
+            $('.produced-qty').closest('td').show();
+            $('.produced-qty-th').show();
+            $('html, body').animate({
+                scrollTop: $(".produced-qty-th").eq(0).offset().top - 100
+            }, 500);
+        }
+        producedQtyShown = true;
+    });
+
+    function completeOrder() {
+        if ($('#produced-items').find(".form-control:invalid").length > 0) {
+            $('#produced-items').find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('#produced-items').find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        } else {
+
+            Swal.fire({
+    title: '@MyERP.Properties.Resources.AreYouSureYouWantToCompleteManufacturingOrder',
+    text: " ",
+    icon: 'info',
+    showCancelButton: true,
+    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    reverseButtons: true
+}).then((result) => {
+    if (result.isConfirmed) {
+        $('#preloader, #status').fadeIn();
+        $.ajax({
+            type: "POST", contentType: "application/json",
+            url: "/ManufacturingOrder/UpdateProducedQty/" + $('#Id').val(),
+            data:
+                JSON.stringify({
+                    manufacturingRequestItems: $.map($('.produced-qty'), function (i) {
+                        return {
+                            Id: $(i).prop('id'),
+                            ProducedQty: $(i).inputmask('unmaskedvalue') * 1
+                        };
+                    })
+                }),
+            success: function (r) {
+                $('#preloader, #status').fadeOut();
+                $('#acceptBtn').show();
+                $('#addEditBtn').attr('disabled', 'disabled');
+                //alert('تم انهاء امر التصنيع!');
+                Swal.fire(
+        {
+            title: '@MyERP.Properties.Resources.IsCompleted',
+            text: " ",
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            confirmButtonColor: '#3085d6'
+        });
+
+            },
+            error: function () {
+                $('#preloader, #status').fadeOut();
+                //alert('لم يتم انهاء امر التصنيع!');
+                Swal.fire({
+        title: '@MyERP.Properties.Resources.NotCompleted',
+        text: " ",
+        icon: 'error',
+        showCancelButton: false,
+        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+        confirmButtonColor: '#3085d6'
+    });
+            }
+        });}
+    else { result.dismiss; }
+});
+
+            @*if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToCompleteManufacturingOrder')) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    type: "POST", contentType: "application/json",
+                    url: "/ManufacturingOrder/UpdateProducedQty/" + $('#Id').val(),
+                    data:
+                        JSON.stringify({
+                            manufacturingRequestItems: $.map($('.produced-qty'), function (i) {
+                                return {
+                                    Id: $(i).prop('id'),
+                                    ProducedQty: $(i).inputmask('unmaskedvalue') * 1
+                                };
+                            })
+                        }),
+                    success: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        $('#acceptBtn').show();
+                        $('#addEditBtn').attr('disabled', 'disabled');
+                        alert('تم انهاء امر التصنيع!');
+                    },
+                    error: function () {
+                        $('#preloader, #status').fadeOut();
+                        alert('لم يتم انهاء امر التصنيع!');
+                    }
+                });
+            }*@
+        }
+    }
+
+    $('#stock-receipt-warehouse').on('show.bs.modal', function () {
+        requestData('/Helper/WarehousesByDepartmentId?id=28')
+            .done(function (r) {
+                let warehouseOptions = '';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+                $("#WarehouseId").empty().append(warehouseOptions);
+            });
+    })
+
+    function acceptOrder() {
+        $('#preloader, #status').fadeIn();
+        $.ajax({
+            type: "POST", contentType: "application/json",
+            url: "/ManufacturingOrder/AcceptOrder/" + $('#Id').val(),
+            data:
+                JSON.stringify({
+                    manufacturingRequestId: $('#ManufacturingRequestId').val(),
+                    warehouseId: $("#WarehouseId").val(),
+                    isProcess1: $('#IsProcess1').val() == 'True'
+                }),
+            success: function (r) {
+                if (r == true) {
+                    //alert('تمت الموافقة!');
+                    Swal.fire(
+        {
+            title: '@MyERP.Properties.Resources.IsAccepted',
+            text: " ",
+            icon: 'success',
+            showCancelButton: false,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            confirmButtonColor: '#3085d6'
+        });
+                    window.location.replace("/ManufacturingOrder");
+                } else {
+                    $('#preloader, #status').fadeOut();
+                   // alert('لم تتم الموافقة!');
+                    Swal.fire({
+        title: '@MyERP.Properties.Resources.NotAccepted',
+        text: " ",
+        icon: 'error',
+        showCancelButton: false,
+        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+        confirmButtonColor: '#3085d6'
+    });
+                }
+            },
+            error: function () {
+                $('#preloader, #status').fadeOut();
+                //alert('لم تتم الموافقة!');
+                Swal.fire({
+        title: '@MyERP.Properties.Resources.NotAccepted',
+        text: " ",
+        icon: 'error',
+        showCancelButton: false,
+        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+        confirmButtonColor: '#3085d6'
+    });
+            }
+        });
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/ManufacturingOrder/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/ManufacturingOrder');
+                            } else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+
+
+        //if (confirm('هل تريد الحذف؟')) {
+        //    $('#preloader, #status').fadeIn();
+        //    $.ajax(
+        //        {
+        //            url: '/ManufacturingOrder/Delete',
+        //            type: 'POST',
+        //            data: {
+        //                "Id": id,
+        //            },
+        //            error: function (e) {
+        //                alert('لم يتم الحذف!');
+        //                $('#preloader, #status').fadeIn();
+        //            },
+        //            success: function (r) {
+        //                if (r == 'true') {
+        //                    window.location.replace('/ManufacturingOrder');
+        //                } else {
+        //                    alert('لم يتم الحذف!');
+        //                    $('#preloader, #status').fadeIn();
+        //                }
+        //            }
+        //        });
+        //}
+    }
+</script>

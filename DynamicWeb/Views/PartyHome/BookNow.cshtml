@@ -1,0 +1,518 @@
+﻿@model MyERP.Models.PartyBooking
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.BookNow;
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> @MyERP.Properties.Resources.BookNow </title>
+
+    <!-- Font Icon -->
+    <link rel="stylesheet" href="~/assets/fonts/Registration/material-icon/css/material-design-iconic-font.min.css">
+
+    <!-- Main css -->
+    <link rel="stylesheet" href="~/assets/css/Registration/css/style.css">
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="~/assets/images/favicon.ico">
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" id="bs-default-stylesheet" />
+
+    <style>
+        .was-validated select.form-control:invalid + .select2 .selection .select2-selection {
+            border: 1px solid #f1556c;
+        }
+
+        .was-validated select.form-control:valid + .select2 .selection .select2-selection {
+            border: 1px solid #1abc9c;
+        }
+    </style>
+
+    <!------------------ PayPal Payment --------------------->
+    <!-- Replace "test" with your own sandbox Business account app client ID -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AbDt4yBG-U0xVShFDPvil36GCPCzSkJ0WezVcFOJZ209p6cBCSHaONxqcFuhMT0SUTemwJKFF0jD0Ch5"></script>
+    <!------------------ End Of PayPal Payment --------------------->
+
+
+</head>
+<body>
+
+    <div class="main">
+        <section class="signup">
+            @*<img src="../../assets/images/Hotel/images/bg_4.jpg" alt="">*@
+            <div class="container">
+                <div class="signup-content">
+
+                    @*<form method="POST" id="signup-form" class="signup-form">*@
+                    <div class="form-horizontal needs-validation" role="form" style="text-align: -webkit-center;">
+                        <h2 class="form-title" style="color:cornflowerblue;">@MyERP.Properties.Resources.BookNow</h2>
+                        <div class="col-8">
+                            <div class="card-box" style="text-align-last: right;">
+                                <div class="form-group col-sm-10">
+
+                                    <input hidden id="PartyId" value="@ViewBag.PartyId" />
+                                    <input hidden id="Price" value="@ViewBag.Price" />
+                                    <input hidden id="ChairsNo" value="@ViewBag.ChairsNo" />
+                                    <input hidden id="CustomerId" />
+                                    <input hidden id="OnlinePaymentId" />
+
+                                    <input type="text" required class="form-control" name="name" id="FirstName" placeholder="@MyERP.Properties.Resources.FirstName" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="text" required class="form-control" name="name" id="LastName" placeholder="@MyERP.Properties.Resources.LastName" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="text" required class="form-control" name="name" id="NationalId" placeholder="@MyERP.Properties.Resources.NationalID" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="text" required class="form-control" name="name" id="Mobile" placeholder="@MyERP.Properties.Resources.Mobile" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="email" required class="form-control" name="email" id="Email" placeholder="@MyERP.Properties.Resources.Email" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                <!----------------- Booking Details ----------------->
+                                <div class="card" id="BookingDetailsCard" style="visibility: hidden;">
+                                    <div class="card-body" id="BookingDetailsDiv">
+                                    </div>
+                                </div>
+                                <!----------------- End of Booking Details ----------------->
+
+
+                                <div class="form-group col-sm-10">
+                                    <div class="form-group row">
+                                        <input hidden id="PaymentMethodId" />
+                                        <div class="col-sm-4">
+                                            <label for="vacation">
+                                                @MyERP.Properties.Resources.EPay
+                                            </label>
+                                            <input type="radio" id="EPay" name="PaymentMethod" value="2" />                                           
+                                                <br>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <label for="vacation">
+                                                @MyERP.Properties.Resources.Cash
+                                            </label>
+                                            <input type="radio" id="Cash" name="PaymentMethod" value="1" checked="checked" />
+                                            <br>
+                                        </div>
+                                        <label for="PaymentMethod" class="col-sm-4 control-label">@MyERP.Properties.Resources.PaymentMethod </label>
+                                    </div>
+                                </div>
+
+                                <!------------------ PayPal Payment --------------------->
+                                <div class="card" id="VisaDiv" style="display:none;">
+                                    <div class="card-body">
+                                        <!-- Set up a container element for the button -->
+                                        <div id="paypal-button-container"></div>
+                                        <!------------------ End Of PayPal Payment --------------------->
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-sm-4" style="text-align-last: center; display:none;" id="AddCustomerBtnDiv">
+                                    <input type="button" name="submit" onclick="AddCustomer()" class="form-submit" value="@MyERP.Properties.Resources.Reserve" />
+                                </div>
+                                <div class="form-group col-sm-4" style="text-align-last: center; display:none;" id="SpinnerDiv">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </div>
+                                @*</form>*@
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- JS -->
+    @*<script src="vendor/jquery/jquery.min.js"></script>*@
+    <script src="~/assets/js/Hotel/js/jquery.min.js"></script>
+
+    @*<script src="js/main.js"></script>*@
+    <!-- App js -->
+</body>
+</html>
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    var Booking = [];
+    let posCustomers = [];
+    var OnlinePaymentId;
+    var Chairs='@ViewBag.Chairs';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        showBookingDetails();
+        getPosCustomers();
+        $('#AddCustomerBtnDiv').show();
+        $('#PaymentMethodId').val(1);
+       // StoreOnlinePaymentFile();
+        ChangeCurrency();
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $("input[name='PaymentMethod']").on('change', function () {
+        if ($("input[name='PaymentMethod']:checked").val() == 2) {
+            $('#VisaDiv').show();
+            $('#AddCustomerBtnDiv').hide();
+            $('#PaymentMethodId').val(4);
+            $('#SpinnerDiv').hide();
+        }
+        else {
+            $('#VisaDiv').hide();
+            $('#AddCustomerBtnDiv').show();
+            $('#PaymentMethodId').val(1);
+            $('#SpinnerDiv').hide();
+        }
+    });
+
+    (function ($) {
+        $(".toggle-password").click(function () {
+            $(this).toggleClass("zmdi-eye zmdi-eye-off");
+            var input = $($(this).attr("toggle"));
+            if (input.attr("type") == "password") {
+                input.attr("type", "text");
+            } else {
+                input.attr("type", "password");
+            }
+        });
+    })(jQuery);
+
+    //*********************************************************//
+    //--------------- Other Functions -------------------//
+
+    function ChangeCurrency() {
+        fetch("https://api.currencyfreaks.com/latest?apikey=d92bccc883f64bde8f65ddef4f11329c")
+            .then((result) => {
+                let myData = result.json();
+                return myData;
+            })
+            .then((currency) => {
+                let amount = Booking.TotalAfterTaxes;
+                var CurrencyRateInSAR = parseFloat(currency.rates["SAR"]);
+                CurrencyRateInSAR = CurrencyRateInSAR.toFixed(2);
+                var CurrencyInSAR = Math.round(amount / CurrencyRateInSAR);
+                Booking.TotalAfterTaxes = CurrencyInSAR;
+
+            });
+    }
+
+
+    function getPosCustomers() {
+        $.get('/Helper/GetCustomers').done(function (r) {
+            posCustomers = r;
+        });
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+    }
+    function convertToTime(time) {
+        if (time === null)
+            return null;
+        var hours = time.Hours;
+        var minutes = time.Minutes;
+        var seconds = time.Seconds;
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        //hours = hours % 12;
+        //hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds  + ' ' + ampm*/;
+        return strTime
+
+        //2022 - 01 - 18T20: 23
+    }
+
+    function showBookingDetails() {
+        $.get('/PartyHome/showBookingDetails?PartyId=' + $("#PartyId").val() + '&Price=' + $("#Price").val() + '&ChairsNo=' + $("#ChairsNo").val()).done(function (r) {
+
+            if (r) {
+                $('#BookingDetailsCard').css('visibility', 'unset');
+                r.Date = r.Date != null ? convertToJavaScriptDate(r.Date) : null;
+                r.FromTime = r.FromTime != null ? convertToTime(r.FromTime) : null;
+                r.ToTime = r.ToTime != null ? convertToTime(r.ToTime) : null;
+                r.Singer = r.Singer != null ? r.Singer : "";
+                r.ChairPrice = r.ChairPrice > 0 ? r.ChairPrice : 0;
+                r.ChairsNo = r.ChairsNo > 0 ? r.ChairsNo : 0;
+                r.Total = r.Total > 0 ? r.Total : 0;
+                r.Taxes = r.Taxes > 0 ? r.Taxes : 0;
+                r.TotalAfterTaxes = r.TotalAfterTaxes > 0 ? r.TotalAfterTaxes : 0;
+                Booking = r;
+                
+                let Div = ' <div class="form-group row"><div class="col-sm-3"><label id="Price">' +
+                    r.Singer + '</label></div > <label class="col-sm-3"> : @MyERP.Properties.Resources.Singer  </label><div class="col-sm-3"><label id="RoomCode">' +
+                    r.Date + '</label></div > <label class="col-sm-3"> : @MyERP.Properties.Resources.Date  </label></div><div class="form-group row" > <div class="col-sm-3"><label id="BookingEndDate">' +
+                    r.FromTime + '</label></div> <label class="col-sm-3">: @MyERP.Properties.Resources.FromTime</label><div class="col-sm-3"><label id = "BookingStartDate" > ' +
+                    r.ToTime + ' </label></div><label class="col-sm-3">: @MyERP.Properties.Resources.ToTime</label></div><div class="form-group row"><div class="col-sm-3"><label id="RequiredAmount">' +
+                    r.ChairPrice + '  </label></div><label class="col-sm-3"> : @MyERP.Properties.Resources.Price </label><div class="col-sm-3"><label id="NightsNumber">' +
+                    r.ChairsNo + '  </label></div><label class="col-sm-3">: @MyERP.Properties.Resources.ChairsNo</label></div><div class="form-group row" ><div class="col-sm-3"><label id="Remain"> ' +
+                    r.Total + ' </label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Total </label> <div class="col-sm-3"><label id="Tax">' +
+                    r.Taxes + '</label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Tax</label> </div><div class="form-group row" ><div class="col-sm-3"><label id="Paid">' +
+                    0 + '</label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Paid</label><div class="col-sm-3"><label id="Paid">' +
+                    r.TotalAfterTaxes + '</label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Amount</label></div>';
+                $('#BookingDetailsDiv').append(Div)
+            }
+
+        });
+
+    }
+    function AddCustomer(onlinePaymentId) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+            $('#AddCustomerBtnDiv').hide();
+            $('#SpinnerDiv').show();
+
+            $('#preloader, #status').fadeIn();
+            let customer = posCustomers.filter(function (i) { return i.NationalId == $('#NationalId').val() })[0];
+            if (customer != null) {
+                var CustomerId = customer.Id;
+                var ArName = customer.ArName.split(/ (.*)/s)[0]
+                var LastName = customer.ArName.split(/ (.*)/s)[1]
+                $("#FirstName").val(ArName)
+                $("#LastName").val(LastName)
+                $('#CustomerId').val(CustomerId)
+                $('#Mobile').val(customer.Mobile)
+                $('#NationalId').val(customer.NationalId)
+                if (valid ) {
+                    $.get('/PartyHome/CompleteRegistration?CustomerId=' + customer.Id + '&PartyId=' + $("#PartyId").val() + '&Price=' + $("#Price").val() + '&ChairsNo=' + $("#ChairsNo").val() + '&Email=' + $("#Email").val() + '&PaymentMethodId=' + $("#PaymentMethodId").val() + '&OnlinePaymentId=' + onlinePaymentId).done(function (PartyBooking) {
+                        if (PartyBooking != null) {
+                            PartyBooking.BookingDate = PartyBooking.BookingDate != null ? convertToJavaScriptDate(PartyBooking.BookingDate) : null;
+                            $.ajax({
+                                type: "POST", contentType: "application/json",
+                                url: "/PartyBooking/AddEdit?IsWeb=true",
+                                data: JSON.stringify(PartyBooking),
+                                success: function (r) {
+                                    if (r.success == true) {
+                                            alert('تم الحجز بنجاح , سيتم التواصل معكم')
+                                        window.location.replace("/PartyHome");
+                                    }
+                                    else {
+                                        alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                    }
+                                    $('#preloader, #status').fadeOut();
+                                },
+                                error: function (r) {
+                                    alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري!!')
+                                    $('#preloader, #status').fadeOut();
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+            else {
+                if (valid) {
+                    $.ajax(
+                        {
+                            url: '/Customers/AddEdit', contentType: "application/json",
+                            type: 'POST',
+                            data: JSON.stringify({
+                                Id: 0,
+                                Code: 1,
+                                ArName: $("#FirstName").val() + " " + $("#LastName").val(),
+                                EnName: $('#PosCustomerEnName').val(),
+                                Email: $('#Email').val(),
+                                Mobile: $('#Mobile').val(),
+                                NationalId: $('#NationalId').val(),
+                                CustomersGroupId: 1,
+                            }),
+                            error: function (e) {
+                                $('#preloader, #status').fadeOut();
+                            },
+                            success: function (customer) {
+                                if (valid) {
+                                    $.get('/PartyHome/CompleteRegistration?CustomerId=' + customer.Id + '&PartyId=' + $("#PartyId").val() + '&Price=' + $("#Price").val() + '&ChairsNo=' + $("#ChairsNo").val() + '&Email=' + $("#Email").val() + '&PaymentMethodId=' + $("#PaymentMethodId").val() + '&OnlinePaymentId=' + onlinePaymentId).done(function (PartyBooking) {
+                                        if (PartyBooking != null) {
+                                            PartyBooking.BookingDate = PartyBooking.BookingDate != null ? convertToJavaScriptDate(PartyBooking.BookingDate) : null;
+                                             $.ajax({
+                                                type: "POST", contentType: "application/json",
+                                                 url: "/PartyBooking/AddEdit?IsWeb=true",
+                                                 data: JSON.stringify(PartyBooking),
+                                                success: function (r) {
+                                                    if (r.success == true) {
+                                                    alert('تم الحجز بنجاح , سيتم التواصل معكم')
+                                                        window.location.replace("/PartyHome");
+                                                    }
+                                                    else {
+                                                        alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                                    }
+                                                    $('#preloader, #status').fadeOut();
+                                                },
+                                                error: function (r) {
+                                                    alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                                    $('#preloader, #status').fadeOut();
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                                $('#preloader, #status').fadeOut();
+
+                            }
+                        });
+                }
+            }
+        }
+    }
+
+    /*----------------- PayPal Payment---------------------*/
+    paypal.Buttons({
+        style: {
+            layout: 'vertical',
+            color: 'silver',
+            shape: 'rect',
+            label: 'paypal'
+        },
+
+        createOrder: function (data, actions) {
+            let valid = true;
+            if ($(".form-control:invalid").length > 0) {
+                console.log($(".form-control:invalid"));
+                $('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+                valid = false;
+            }
+            else {
+                return actions.order.create({
+                    "intent": "CAPTURE",
+                    purchase_units: [{
+                        reference_id: "PUHF",
+                        description: "Fun Time Chalets",
+                        custom_id: "CUST-FuntimeChalets",
+                        soft_descriptor: "FuntimeChalets",
+                        amount: {
+                            currency_code: "USD",
+                            value: Booking.TotalAfterTaxes,
+                            breakdown: {
+                                item_total: {
+                                    currency_code: "USD",
+                                    value: Booking.TotalAfterTaxes
+                                },
+                                shipping: {
+                                    currency_code: "USD",
+                                    value: "00.00"
+                                },
+                                handling: {
+                                    currency_code: "USD",
+                                    value: "00.00"
+                                },
+                                tax_total: {
+                                    currency_code: "USD",
+                                    value: "00.00"
+                                },
+                                shipping_discount: {
+                                    currency_code: "USD",
+                                    value: "00"
+                                }
+                            }
+                        },
+                        items: [{
+                            name: Booking.Singer,
+                            description: Booking.Singer,
+                            sku: "sku01",//The stock keeping unit (SKU) for the item.
+                            unit_amount: {
+                                currency_code: "USD",
+                                value: Booking.TotalAfterTaxes
+                            },
+                            tax: {
+                                currency_code: "USD",
+                                value: "00.00"
+                            },
+                            quantity: "1",
+                            category: "PHYSICAL_GOODS"
+                        }],
+                        shipping: {
+                            method: "United States Postal Service",
+                            address: {
+                                name: {
+                                    full_name: "John",
+                                    surname: "Doe"
+                                },
+                                address_line_1: "123 Townsend St",
+                                address_line_2: "Floor 6",
+                                admin_area_2: "San Francisco",
+                                admin_area_1: "CA",
+                                postal_code: "94107",
+                                country_code: "US"
+                            }
+                        }
+                    }]
+                })
+            }
+        },
+        onApprove: function (data, actions) {
+            let valid = true;
+            if ($(".form-control:invalid").length > 0) {
+                console.log($(".form-control:invalid"));
+                $('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+                valid = false;
+            }
+            else {
+                return actions.order.capture().then(function (details) {
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/PartyHome/StoreOnlinePaymentFile",
+                        dataType: 'JSON',
+                        data: { jsonObj: JSON.stringify(details), id: details.id },
+                        success: function (r) {
+                            AddCustomer(r);
+                        },
+                        error: function (r) {
+                            alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                        }
+                    });
+
+                })
+            }
+        }
+    }).render('#paypal-button-container');
+    /*----------------- End Of PayPal Payment ---------------------*/
+
+    //*********************************************************//
+</script>
+

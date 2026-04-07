@@ -14,6 +14,12 @@ namespace MyERP.Models
     
     public partial class SalesInvoiceDetail
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public SalesInvoiceDetail()
+        {
+            this.VehicleStocks = new HashSet<VehicleStock>();
+        }
+    
         public int Id { get; set; }
         public int MainDocId { get; set; }
         public int ItemId { get; set; }
@@ -65,5 +71,11 @@ namespace MyERP.Models
         public virtual Patch Patch { get; set; }
         public virtual SalesInvoice SalesInvoice { get; set; }
         public virtual SystemPage SystemPage { get; set; }
+        public virtual CarColor CarColor { get; set; }
+        public virtual CarModel CarModel { get; set; }
+        public virtual CarType CarType { get; set; }
+        public virtual VehicleStock VehicleStock { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<VehicleStock> VehicleStocks { get; set; }
     }
 }

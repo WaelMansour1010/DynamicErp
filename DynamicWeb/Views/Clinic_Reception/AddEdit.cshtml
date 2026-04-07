@@ -1,0 +1,270 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Reception;
+}
+
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Reception</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Clinic_Reception/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @*@if (Model != null)
+                        {
+                            @Html.HiddenFor(Model => Model.Id)
+                            @Html.HiddenFor(Model => Model.IsActive)
+                            @Html.HiddenFor(Model => Model.IsDeleted)
+                            @Html.HiddenFor(Model => Model.UserId)
+                            @Html.HiddenFor(Model => Model.Image)
+
+                        }*@
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <br />
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.FileNo</label>
+                                    <div class="col-sm-4">
+                                        @*@Html.EditorFor(Model => Model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = "رقم الملف", @readonly = "readonly", required = "required" } })*@
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.FileNo" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.PatientName</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.PatientName" required />
+                                        @*@Html.EditorFor(Model => Model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = "الاسم الكامل بالعربية", required = "required" } })*@
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Mobile</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.Mobile" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.Age</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.Age" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Type</label>
+                                    <div class="col-sm-4">
+                                        <select id="Type" required class="form-control">
+                                            <option value="1"> @MyERP.Properties.Resources.Male</option>
+                                            <option value="2"> @MyERP.Properties.Resources.Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.NationalID</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.NationalID" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.Address" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Email</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" placeholder="@MyERP.Properties.Resources.Email" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="EnName"> @MyERP.Properties.Resources.VisitReason </label>
+                                    <div class="col-sm-4">
+                                        <select id="VisitReason" required class="form-control">
+                                            <option value="1"> @MyERP.Properties.Resources.New</option>
+                                            <option value="2"> @MyERP.Properties.Resources.FollowUp</option>
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-1 control-label" for="From"> @MyERP.Properties.Resources.FromTime </label>
+                                    <div class="col-sm-2">
+                                        <input class="form-control" type="time" required />
+                                    </div>
+                                    <label class="col-sm-1 control-label" for="To"> @MyERP.Properties.Resources.ToTime </label>
+                                    <div class="col-sm-2">
+                                        <input class="form-control" type="time" required />
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label class="control-label col-sm-2" for="DrName">@MyERP.Properties.Resources.DrName</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" required placeholder="@MyERP.Properties.Resources.DrName " />
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Classification</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" required placeholder="@MyERP.Properties.Resources.Classification" />
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                @*<div class="form-group row">
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.ReceptionStatus</label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" required placeholder="@MyERP.Properties.Resources.ReceptionStatus" />
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Preview</label>
+                                        <div class="col-sm-4">
+                                            <input class="form-control" required placeholder="@MyERP.Properties.Resources.Preview" value="0" type="number" step="any" />
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>*@
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@*@if (Model != null) { @Model.Notes; }*@</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <button type="submit" id="newbtn" class="btn btn-success">
+                                            @MyERP.Properties.Resources.SaveAndNew
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            @MyERP.Properties.Resources.Save
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            var doc = $.get('/Clinic_Reception/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Clinic_Reception/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Clinic_Reception');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+</script>

@@ -1,0 +1,139 @@
+﻿
+
+@model IEnumerable<MyERP.Models.UpdatedTransaction_GetUpdatedList_Result>
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.UpdatedTransactions;
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="hed page-title">@MyERP.Properties.Resources.UpdatedTransactions</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label for="SystemPages" class="control-label col-sm-2">@MyERP.Properties.Resources.Transaction</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SystemPages", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.FromDate:</label>
+                                    <div class="col-sm-4">
+                                        <input type="datetime-local" name="fromDate" id="FromDate" class="form-control" />
+
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ToDate:</label>
+                                    <div class="col-sm-4">
+                                        <input type="datetime-local" name="toDate" id="ToDate" class="form-control" />
+
+                                    </div>
+                                </div>
+                                <button type="submit" class="col-sm-1 btn btn-info search" id="Go">@MyERP.Properties.Resources.Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    @MyERP.Properties.Resources.DocNo
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Date
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Details
+                                                </th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td style="width:25%">
+                                                        @Html.DisplayFor(modelItem => item.DocumentNumber)
+                                                    </td>
+                                                    <td>
+                                                        @Html.DisplayFor(modelItem => item.UpdatedDate)
+                                                    </td>
+                                                    <td>
+                                                        @if (item.VendorOrCustomerId > 0)
+                                                        {
+                                                            <a href="@Url.Action("GetDetails","UpdatedTransaction",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                                                <i class="fa fa-eye"></i>
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="@Url.Action("StockDetails","UpdatedTransaction",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                                                <i class="fa fa-eye"></i>
+                                                            </a>
+                                                        }
+
+
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    //date
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    if ($('#SystemPages').val() == 0) {
+        var d = new Date();
+        $('#FromDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#ToDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+    } else {
+
+        $('#FromDate').val('@ViewBag.fromDate');
+        $('#ToDate').val('@ViewBag.toDate');
+         }
+
+
+
+</script>

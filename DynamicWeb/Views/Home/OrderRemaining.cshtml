@@ -1,0 +1,31 @@
+﻿ @model IEnumerable<MyERP.Models.remainingOrders_Result>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        الطلبات المؤجلة 
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                
+
+
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #89dff2;text-decoration: none" href="~/Order/addedit/@item.id" target="_blank"> رقم الطلب @item.OrderNumber</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            @item.Date
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+                
+            }
+    
+        </div>
+      </div>
+  </div>
+<script>
+    
+</script>
