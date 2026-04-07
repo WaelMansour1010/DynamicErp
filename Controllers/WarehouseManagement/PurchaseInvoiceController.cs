@@ -359,6 +359,48 @@ namespace MyERP.Controllers
                         return Json("false");
                     }
                     MyXML.xPathName = "Details";
+
+                    foreach (var d in purchaseInvoice.PurchaseInvoiceDetails)
+                    {
+                        var type = d.GetType();
+                        System.Diagnostics.Debug.WriteLine("==== DETAIL TYPE: " + type.FullName);
+
+                        foreach (var p in type.GetProperties())
+                        {
+                            object value = null;
+                            string valueType = "null";
+
+                            try
+                            {
+                                value = p.GetValue(d, null);
+                                valueType = value == null ? "null" : value.GetType().FullName;
+                            }
+                            catch (Exception ex)
+                            {
+                                valueType = "ERR: " + ex.Message;
+                            }
+
+                            System.Diagnostics.Debug.WriteLine(p.Name + " => " + valueType);
+                        }
+                    }
+                    var detail = purchaseInvoice.PurchaseInvoiceDetails.FirstOrDefault();
+                    if (detail != null)
+                    {
+                        foreach (var p in detail.GetType().GetProperties())
+                        {
+                            try
+                            {
+                                var value = p.GetValue(detail, null);
+                                var typeName = value == null ? "null" : value.GetType().FullName;
+                                System.Diagnostics.Debug.WriteLine(p.Name + " => " + typeName);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine(p.Name + " => ERROR: " + ex.Message);
+                            }
+                        }
+                    }
+                    db.Configuration.ProxyCreationEnabled = false;
                     var PurchaseInvoiceDetails = MyXML.GetXML(purchaseInvoice.PurchaseInvoiceDetails);
                     MyXML.xPathName = "PaymentMethods";
                     var InvoicePaymentMethods = MyXML.GetXML(purchaseInvoice.PurchaseInvoicePaymentMethods);
