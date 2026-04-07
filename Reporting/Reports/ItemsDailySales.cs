@@ -7,7 +7,9 @@ using System.Web;
 using System.Security.Claims;
 using MyERP.Models;
 using System.Linq;
+using DevExpress.DashboardCommon;
 using MyERP.Controllers;
+
 
 /// <summary>
 /// Summary description for ItemsDailySales
