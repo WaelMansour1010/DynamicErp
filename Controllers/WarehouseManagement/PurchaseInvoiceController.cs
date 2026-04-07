@@ -476,36 +476,129 @@ namespace MyERP.Controllers
                 ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
             }).ToList());
         }
+        //private string ValidateVehicleChassisNumbers(ICollection<PurchaseInvoiceDetail> details, int invoiceId)
+        //{
+        //    if (details == null) return null;
+        //    var normalizedInInvoice = new HashSet<string>();
+        //    foreach (var detail in details)
+        //    {
+        //        var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+        //        var chassis = (detail.ChassisNo ?? "").Trim();
+        //        if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
+        //            return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
+        //        if (!string.IsNullOrWhiteSpace(chassis))
+        //        {
+        //            var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+        //            if (normalizedInInvoice.Contains(normalized))
+        //                return "رقم الشاسيه مكرر داخل نفس الفاتورة.";
+        //            normalizedInInvoice.Add(normalized);
+        //            var existsInPurchase = db.PurchaseInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+        //                .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+        //            if (existsInPurchase)
+        //                return "رقم الشاسيه مستخدم مسبقاً في فاتورة شراء أخرى.";
+        //            var existsInSales = db.SalesInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+        //                .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+        //            if (existsInSales)
+        //                return "رقم الشاسيه مستخدم مسبقاً في فاتورة بيع.";
+        //        }
+        //    }
+        //    return null;
+        //}
+
         private string ValidateVehicleChassisNumbers(ICollection<PurchaseInvoiceDetail> details, int invoiceId)
         {
-            if (details == null) return null;
+            if (details == null || !details.Any())
+                return null;
+
+            Func<string, string> normalize = s =>
+                string.IsNullOrWhiteSpace(s)
+                    ? string.Empty
+                    : Regex.Replace(s.Trim().ToLower(), "\\s+", "");
+
+            // الشواسي الأصلية الموجودة حاليًا في نفس فاتورة الشراء قبل الحفظ
+            var existingInvoiceDetails = db.PurchaseInvoiceDetails
+                .Where(x => !x.IsDeleted && x.MainDocId == invoiceId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.ChassisNo
+                })
+                .ToList();
+
+            var existingChassisInCurrentInvoice = existingInvoiceDetails
+                .Where(x => !string.IsNullOrWhiteSpace(x.ChassisNo))
+                .Select(x => normalize(x.ChassisNo))
+                .ToHashSet();
+
+            // كل الشواسي الموجودة في فواتير شراء أخرى
+            var purchaseChassisRows = db.PurchaseInvoiceDetails
+                .Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.ChassisNo
+                })
+                .ToList();
+
+            var purchaseChassisSet = purchaseChassisRows
+                .Where(x => !string.IsNullOrWhiteSpace(x.ChassisNo))
+                .Select(x => normalize(x.ChassisNo))
+                .ToHashSet();
+
+            // كل الشواسي الموجودة في فواتير البيع
+            var salesChassisSet = db.SalesInvoiceDetails
+                .Where(x => !x.IsDeleted && x.ChassisNo != null)
+                .Select(x => x.ChassisNo)
+                .ToList()
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => normalize(x))
+                .ToHashSet();
+
             var normalizedInInvoice = new HashSet<string>();
+
             foreach (var detail in details)
             {
-                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
+                if (detail == null)
+                    continue;
+
+                var hasVehicleData =
+                    detail.CarTypeId.HasValue ||
+                    detail.CarModelId.HasValue ||
+                    detail.CarColorId.HasValue ||
+                    !string.IsNullOrWhiteSpace(detail.EngineNo) ||
+                    detail.ManufacturingYear.HasValue ||
+                    !string.IsNullOrWhiteSpace(detail.PlateNo);
+
                 var chassis = (detail.ChassisNo ?? "").Trim();
+
                 if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
                     return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
-                if (!string.IsNullOrWhiteSpace(chassis))
-                {
-                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
-                    if (normalizedInInvoice.Contains(normalized))
-                        return "رقم الشاسيه مكرر داخل نفس الفاتورة.";
-                    normalizedInInvoice.Add(normalized);
-                    var existsInPurchase = db.PurchaseInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
-                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
-                    if (existsInPurchase)
-                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة شراء أخرى.";
-                    var existsInSales = db.SalesInvoiceDetails.Where(x => !x.IsDeleted && x.MainDocId != invoiceId && x.ChassisNo != null)
-                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
-                    if (existsInSales)
-                        return "رقم الشاسيه مستخدم مسبقاً في فاتورة بيع.";
-                }
+
+                if (string.IsNullOrWhiteSpace(chassis))
+                    continue;
+
+                var normalized = normalize(chassis);
+
+                // تكرار داخل نفس الفاتورة الحالية
+                if (!normalizedInInvoice.Add(normalized))
+                    return "رقم الشاسيه مكرر داخل نفس الفاتورة.";
+
+                // مستخدم في فاتورة شراء أخرى
+                if (purchaseChassisSet.Contains(normalized))
+                    return "رقم الشاسيه مستخدم مسبقاً في فاتورة شراء أخرى.";
+
+                // لو الشاسيه موجود في البيع:
+                // نمنعه فقط إذا كان شاسيه جديدًا على الفاتورة الحالية
+                // أما لو كان موجود أصلًا في نفس فاتورة الشراء ثم تم بيعه بعد ذلك،
+                // فيُسمح بالتعديل على الفاتورة بدون تغيير هذا الشاسيه.
+                bool existedOriginallyInCurrentInvoice = existingChassisInCurrentInvoice.Contains(normalized);
+
+                if (salesChassisSet.Contains(normalized) && !existedOriginallyInCurrentInvoice)
+                    return "رقم الشاسيه مستخدم مسبقاً في فاتورة بيع.";
             }
+
             return null;
         }
-
-
 
         private bool VehicleStockTableExists()
         {
