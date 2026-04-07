@@ -61,7 +61,6 @@ namespace MyERP.Models
         public Nullable<int> ManufacturingYear { get; set; }
         public string PlateNo { get; set; }
         public string VehicleNotes { get; set; }
-        public Nullable<int> VehicleStockId { get; set; }
     
         public virtual Currency Currency { get; set; }
         public virtual ItemPrice ItemPrice { get; set; }

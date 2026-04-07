@@ -188,14 +188,7 @@
                                                 <td class="tabledit-edit-mode ItemArea" style="display:none;"><input class="Area form-control tabledit-input form-control-sm" disabled type="text" value="@item.Area" /></td>
                                                 <td><button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button></td>
                                                 <td class="tabledit-edit-mode">
-                                                    <input type="hidden" class="car-type-id" value="@item.CarTypeId" />
-                                                    <input type="hidden" class="car-model-id" value="@item.CarModelId" />
-                                                    <input type="hidden" class="car-color-id" value="@item.CarColorId" />
-                                                    <input type="hidden" class="chassis-no" value="@item.ChassisNo" />
-                                                    <input type="hidden" class="engine-no" value="@item.EngineNo" />
-                                                    <input type="hidden" class="manufacturing-year" value="@item.ManufacturingYear" />
-                                                    <input type="hidden" class="plate-no" value="@item.PlateNo" />
-                                                    <input type="hidden" class="vehicle-notes" value="@item.VehicleNotes" />
+                                                   
                                                     <input type="hidden" class="vehicle-stock-id" value="@item.VehicleStockId" />
                                                     <input type="hidden" class="car-type-id" value="@(item.CarType != null ? item.CarType.Id.ToString() : "")" />
                                                     <input type="hidden" class="car-model-id" value="@(item.CarModel != null ? item.CarModel.Id.ToString() : "")" />
