@@ -1838,6 +1838,10 @@
         <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_VehicleStock" />
         <AssociationConnector Association="MyERPModel.FK_VehicleStock_VehicleStatus" />
         <AssociationConnector Association="MyERPModel.FK_VehicleStock_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_VehicleStock" />
         </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

@@ -34,6 +34,9 @@ namespace MyERP.Reporting.Reports
         private static readonly Color C_Purple   = Color.FromArgb(155,  89, 182);
         private static readonly Color C_Pink     = Color.FromArgb(233,  30,  99);
         private static readonly Color C_Silver   = Color.FromArgb(149, 165, 166);
+        private TopMarginBand topMarginBand1;
+        private DetailBand detailBand1;
+        private BottomMarginBand bottomMarginBand1;
 
         // ── Column layout ─────────────────────────────────────────────────────
         private static readonly (string Header, float Width)[] Columns = {
@@ -562,6 +565,36 @@ namespace MyERP.Reporting.Reports
             }
             catch { /* return empty table so report still renders */ }
             return dt;
+        }
+
+        private void InitializeComponent()
+        {
+            this.topMarginBand1 = new DevExpress.XtraReports.UI.TopMarginBand();
+            this.detailBand1 = new DevExpress.XtraReports.UI.DetailBand();
+            this.bottomMarginBand1 = new DevExpress.XtraReports.UI.BottomMarginBand();
+            ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
+            // 
+            // topMarginBand1
+            // 
+            this.topMarginBand1.Name = "topMarginBand1";
+            // 
+            // detailBand1
+            // 
+            this.detailBand1.Name = "detailBand1";
+            // 
+            // bottomMarginBand1
+            // 
+            this.bottomMarginBand1.Name = "bottomMarginBand1";
+            // 
+            // VehicleSalesDashboard_Report
+            // 
+            this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
+            this.topMarginBand1,
+            this.detailBand1,
+            this.bottomMarginBand1});
+            this.Version = "23.1";
+            ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
+
         }
     }
 }

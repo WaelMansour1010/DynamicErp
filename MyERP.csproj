@@ -5129,6 +5129,9 @@
     <EmbeddedResource Include="Reporting\Reports\UnitesStatus_Report.resx">
       <DependentUpon>UnitesStatus_Report.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Reporting\Reports\VehicleSalesDashboard_Report.resx">
+      <DependentUpon>VehicleSalesDashboard_Report.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Reporting\Reports\WaiterSalesInPeriod_Report.resx">
       <DependentUpon>WaiterSalesInPeriod_Report.cs</DependentUpon>
     </EmbeddedResource>

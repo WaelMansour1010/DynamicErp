@@ -42,6 +42,11 @@ namespace MyERP.Models
         public Nullable<int> SalesInvoiceId { get; set; }
         public Nullable<int> ExtraTypeId { get; set; }
         public Nullable<decimal> AccessoryPrice { get; set; }
+        public string ChassisNo { get; set; }
+        public string EngineNo { get; set; }
+        public Nullable<int> ManufacturingYear { get; set; }
+        public string PlateNo { get; set; }
+        public string VehicleNotes { get; set; }
     
         public virtual Currency Currency { get; set; }
         public virtual ItemPrice ItemPrice { get; set; }
@@ -50,5 +55,9 @@ namespace MyERP.Models
         public virtual Item Item { get; set; }
         public virtual SalesReturn SalesReturn { get; set; }
         public virtual SystemPage SystemPage { get; set; }
+        public virtual CarColor CarColor { get; set; }
+        public virtual CarModel CarModel { get; set; }
+        public virtual CarType CarType { get; set; }
+        public virtual VehicleStock VehicleStock { get; set; }
     }
 }

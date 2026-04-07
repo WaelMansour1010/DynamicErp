@@ -19329,5 +19329,62 @@ namespace MyERP.Models
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<CarSalesHistory_Get_Result>("CarSalesHistory_Get", fromDateParameter, toDateParameter, carTypeIdParameter, carModelIdParameter, customerIdParameter);
         }
+    
+        public virtual int VehicleSalesDashboard(Nullable<int> reportMode, Nullable<int> departmentId, Nullable<int> warehouseId, Nullable<int> branchId, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo, Nullable<int> carTypeId, Nullable<int> carModelId, Nullable<int> carColorId, Nullable<int> manufacturingYear, Nullable<int> vendorOrCustomerId, Nullable<int> vehicleStatusId, string chassisNo)
+        {
+            var reportModeParameter = reportMode.HasValue ?
+                new ObjectParameter("ReportMode", reportMode) :
+                new ObjectParameter("ReportMode", typeof(int));
+    
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            var warehouseIdParameter = warehouseId.HasValue ?
+                new ObjectParameter("WarehouseId", warehouseId) :
+                new ObjectParameter("WarehouseId", typeof(int));
+    
+            var branchIdParameter = branchId.HasValue ?
+                new ObjectParameter("BranchId", branchId) :
+                new ObjectParameter("BranchId", typeof(int));
+    
+            var dateFromParameter = dateFrom.HasValue ?
+                new ObjectParameter("DateFrom", dateFrom) :
+                new ObjectParameter("DateFrom", typeof(System.DateTime));
+    
+            var dateToParameter = dateTo.HasValue ?
+                new ObjectParameter("DateTo", dateTo) :
+                new ObjectParameter("DateTo", typeof(System.DateTime));
+    
+            var carTypeIdParameter = carTypeId.HasValue ?
+                new ObjectParameter("CarTypeId", carTypeId) :
+                new ObjectParameter("CarTypeId", typeof(int));
+    
+            var carModelIdParameter = carModelId.HasValue ?
+                new ObjectParameter("CarModelId", carModelId) :
+                new ObjectParameter("CarModelId", typeof(int));
+    
+            var carColorIdParameter = carColorId.HasValue ?
+                new ObjectParameter("CarColorId", carColorId) :
+                new ObjectParameter("CarColorId", typeof(int));
+    
+            var manufacturingYearParameter = manufacturingYear.HasValue ?
+                new ObjectParameter("ManufacturingYear", manufacturingYear) :
+                new ObjectParameter("ManufacturingYear", typeof(int));
+    
+            var vendorOrCustomerIdParameter = vendorOrCustomerId.HasValue ?
+                new ObjectParameter("VendorOrCustomerId", vendorOrCustomerId) :
+                new ObjectParameter("VendorOrCustomerId", typeof(int));
+    
+            var vehicleStatusIdParameter = vehicleStatusId.HasValue ?
+                new ObjectParameter("VehicleStatusId", vehicleStatusId) :
+                new ObjectParameter("VehicleStatusId", typeof(int));
+    
+            var chassisNoParameter = chassisNo != null ?
+                new ObjectParameter("ChassisNo", chassisNo) :
+                new ObjectParameter("ChassisNo", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("VehicleSalesDashboard", reportModeParameter, departmentIdParameter, warehouseIdParameter, branchIdParameter, dateFromParameter, dateToParameter, carTypeIdParameter, carModelIdParameter, carColorIdParameter, manufacturingYearParameter, vendorOrCustomerIdParameter, vehicleStatusIdParameter, chassisNoParameter);
+        }
     }
 }
