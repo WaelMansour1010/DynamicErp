@@ -2,9 +2,10 @@
     if (ViewBag.ShowReport == true) { Layout = null; } else { Layout = "~/Views/Shared/_Layout.cshtml"; }
     ViewBag.Title = "لوحة تحكم مبيعات السيارات";
 }
-<meta name="viewport" content="width=device-width" />
 @if (ViewBag.ShowReport == true)
 {
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
     @Html.DevExpress().GetStyleSheets(
         new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
         new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },

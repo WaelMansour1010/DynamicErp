@@ -61,6 +61,10 @@ namespace MyERP.Reporting.Reports
         };
         // Sum = 90+118+68+92+62+52+73+73+82+82+75+75+108+48 = 1098 ≈ 1100
 
+        // ── Parameterless constructor (required for DevExpress designer) ──────
+        public VehicleSalesDashboard_Report()
+            : this(null, null, null, null, null, null, null, null, null, null, null) { }
+
         // ── Constructor ───────────────────────────────────────────────────────
         public VehicleSalesDashboard_Report(
             DateTime? dateFrom,           DateTime? dateTo,
@@ -70,10 +74,14 @@ namespace MyERP.Reporting.Reports
             int?      vehicleStatusId,    string    chassisNo,
             int?      vendorOrCustomerId)
         {
-            // ── Load summary data via ADO.NET (modes 3, 4, 8) ────────────────
-            DataTable dtKpi    = Exec(3, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
-            DataTable dtModels = Exec(4, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
-            DataTable dtStatus = Exec(8, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            // ── Load summary data via ADO.NET (all non-detail modes) ─────────
+            DataTable dtKpi      = Exec(3, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtModels   = Exec(4, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtStatus   = Exec(8, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtGrouped  = Exec(2, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtTimeline = Exec(5, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtByModel  = Exec(6, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtByStatus = Exec(7, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
 
             DataRow kpi = dtKpi.Rows.Count > 0 ? dtKpi.Rows[0] : null;
 
@@ -93,7 +101,7 @@ namespace MyERP.Reporting.Reports
             Parameters.AddRange(new Parameter[] { pMode, pFrom, pTo, pBranch, pWH, pCT, pCM, pCC, pYear, pStatus, pChassis, pVendor });
 
             // ── Detail data source via DevExpress SqlDataSource (mode=1) ──────
-            var sqlDS = new SqlDataSource("ConnectionString");
+            var sqlDS = new SqlDataSource("MyERP_ConnectionString");
             var query = new StoredProcQuery("VehicleSalesDashboard", "VehicleSalesDashboard");
             query.Parameters.Add(new QueryParameter("ReportMode",         typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?ReportMode",         typeof(int))));
             query.Parameters.Add(new QueryParameter("DateFrom",           typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?DateFrom",           typeof(DateTime))));
@@ -108,7 +116,7 @@ namespace MyERP.Reporting.Reports
             query.Parameters.Add(new QueryParameter("ChassisNo",          typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?ChassisNo",          typeof(string))));
             query.Parameters.Add(new QueryParameter("VendorOrCustomerId", typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?VendorOrCustomerId", typeof(int))));
             sqlDS.Queries.Add(query);
-            sqlDS.RebuildResultSchema();
+            try { sqlDS.RebuildResultSchema(); } catch { /* design-time / SP not yet deployed */ }
 
             // ── Page settings ─────────────────────────────────────────────────
             Landscape         = true;
@@ -139,7 +147,7 @@ namespace MyERP.Reporting.Reports
 
             // ── Assemble bands ────────────────────────────────────────────────
             Bands.Add(new TopMarginBand    { HeightF = 20 });
-            Bands.Add(BuildReportHeader(kpi, dtModels, dtStatus, dateFrom, dateTo));
+            Bands.Add(BuildReportHeader(kpi, dtModels, dtStatus, dtGrouped, dtTimeline, dtByModel, dtByStatus, dateFrom, dateTo));
             Bands.Add(BuildPageHeader());
             Bands.Add(BuildDetail());
             Bands.Add(BuildPageFooter());
@@ -152,12 +160,14 @@ namespace MyERP.Reporting.Reports
 
         private ReportHeaderBand BuildReportHeader(
             DataRow kpi, DataTable dtModels, DataTable dtStatus,
+            DataTable dtGrouped, DataTable dtTimeline, DataTable dtByModel, DataTable dtByStatus,
             DateTime? dateFrom, DateTime? dateTo)
         {
             // Layout constants
             const float W        = 1100f;   // usable width
             const float CARD_H   =   82f;
             const float CHART_H  =  202f;
+            const float CHART2_H =  158f;   // second analytics row height
 
             // KPI card geometry (4 cards per row, 8px gap)
             float gap    = 8f;
@@ -172,8 +182,11 @@ namespace MyERP.Reporting.Reports
             float yKpiRow2    = yKpiRow1 + CARD_H + 8f;
             float yChartHdr   = yKpiRow2 + CARD_H + 10f;
             float yCharts     = yChartHdr + 24f;
-            float yDivider    = yCharts  + CHART_H + 4f;
-            float totalH      = yDivider + 4f;
+            float yFirstDiv   = yCharts   + CHART_H + 4f;   // divider after first charts
+            float yChart2Hdr  = yFirstDiv + 4f;              // second analytics section header
+            float yChart2     = yChart2Hdr + 22f;            // second chart row
+            float yFinalDiv   = yChart2   + CHART2_H + 4f;  // final divider before detail
+            float totalH      = yFinalDiv + 4f;
 
             var band = new ReportHeaderBand { HeightF = totalH, BackColor = C_PageBg };
 
@@ -238,13 +251,36 @@ namespace MyERP.Reporting.Reports
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
             band.Controls.Add(chrtHdrPanel);
 
-            // ── Charts ────────────────────────────────────────────────────────
+            // ── First chart row (mode 4 = top models, mode 8 = status pie) ──
             float halfW  = (W - 6f) / 2f;   // ≈ 547
-            band.Controls.Add(BuildBarChart (dtModels, 0f,           yCharts, halfW, CHART_H));
-            band.Controls.Add(BuildPieChart (dtStatus, halfW + 6f,   yCharts, halfW, CHART_H));
+            band.Controls.Add(BuildBarChart(dtModels, 0f,         yCharts, halfW, CHART_H));
+            band.Controls.Add(BuildPieChart(dtStatus, halfW + 6f, yCharts, halfW, CHART_H));
 
-            // ── Divider before detail table ───────────────────────────────────
-            band.Controls.Add(Panel(0, yDivider, W, 3f, C_Blue));
+            // ── Divider between chart rows ────────────────────────────────────
+            band.Controls.Add(Panel(0, yFirstDiv, W, 3f, C_Blue));
+
+            // ── Second analytics section header ───────────────────────────────
+            var anltHdrPanel = Panel(0, yChart2Hdr, W, 22f, C_TblHdr);
+            anltHdrPanel.Controls.Add(Label(
+                "◆  تحليل تفصيلي إضافي  –  Detailed Analytics  (Modes 2 · 5 · 6 · 7)",
+                10f, 0, W - 20f, 22f,
+                new Font("Arial", 8f, FontStyle.Bold), C_Orange,
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+            band.Controls.Add(anltHdrPanel);
+
+            // ── Second chart row (modes 2, 5, 6, 7) ──────────────────────────
+            float q4W = (W - 3 * 6f) / 4f;  // ≈ 269.5
+            band.Controls.Add(BuildBarChart4(dtGrouped,  0f,              yChart2, q4W, CHART2_H,
+                "تجميع حسب النوع  –  By Type (M2)",     "CarTypeName",        "TotalSales",    C_Orange));
+            band.Controls.Add(BuildBarChart4(dtTimeline, q4W + 6f,        yChart2, q4W, CHART2_H,
+                "خط الزمن  –  Timeline (M5)",            "SaleYear",           "TotalSales",    C_Cyan));
+            band.Controls.Add(BuildBarChart4(dtByModel,  2*(q4W + 6f),    yChart2, q4W, CHART2_H,
+                "مبيعات الموديلات  –  By Model (M6)",   "CarModelName",       "TotalSales",    C_Purple));
+            band.Controls.Add(BuildBarChart4(dtByStatus, 3*(q4W + 6f),    yChart2, q4W, CHART2_H,
+                "توزيع الحالة  –  By Status (M7)",      "VehicleStatusName",  "VehicleCount",  C_Pink));
+
+            // ── Final divider before detail table ────────────────────────────
+            band.Controls.Add(Panel(0, yFinalDiv, W, 3f, C_Blue));
 
             return band;
         }
@@ -423,6 +459,34 @@ namespace MyERP.Reporting.Reports
             chart.Legend.AlignmentHorizontal = LegendAlignmentHorizontal.Right;
             chart.Legend.AlignmentVertical   = LegendAlignmentVertical.Center;
 
+            return chart;
+        }
+
+        /// <summary>Generic parameterised bar chart for the second analytics row.</summary>
+        private XRChart BuildBarChart4(DataTable dt, float x, float y, float w, float h,
+            string titleText, string argMember, string valueMember, Color barColor)
+        {
+            var chart = new XRChart {
+                BoundsF     = new RectangleF(x, y, w, h),
+                BackColor   = C_CardBg,
+                BorderColor = C_Divider,
+                Borders     = DevExpress.XtraPrinting.BorderSide.All
+            };
+            var ct = new ChartTitle();
+            ct.Text      = titleText;
+            ct.TextColor = C_White;
+            ct.Font      = new Font("Arial", 7.5f, FontStyle.Bold);
+            ct.Alignment = System.Drawing.StringAlignment.Center;
+            chart.Titles.Add(ct);
+
+            var series = new Series("", ViewType.Bar);
+            series.ArgumentDataMember = argMember;
+            series.DataSource         = dt;
+            series.ValueDataMembers.AddRange(new[] { valueMember });
+            ((BarSeriesView)series.View).Color = barColor;
+            series.Label.Visible = false;
+            chart.Series.Add(series);
+            chart.Legend.Visible = false;
             return chart;
         }
 
