@@ -37,6 +37,8 @@ namespace MyERP.Reporting.Reports
         private TopMarginBand topMarginBand1;
         private DetailBand detailBand1;
         private BottomMarginBand bottomMarginBand1;
+        private DevExpress.DataAccess.Sql.SqlDataSource sqlDataSource1;
+        private System.ComponentModel.IContainer components;
 
         // ── Column layout ─────────────────────────────────────────────────────
         private static readonly (string Header, float Width)[] Columns = {
@@ -531,9 +533,26 @@ namespace MyERP.Reporting.Reports
 
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            DevExpress.DataAccess.Sql.StoredProcQuery storedProcQuery1 = new DevExpress.DataAccess.Sql.StoredProcQuery();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter1 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter2 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter3 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter4 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter5 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter6 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter7 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter8 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter9 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter10 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter11 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter12 = new DevExpress.DataAccess.Sql.QueryParameter();
+            DevExpress.DataAccess.Sql.QueryParameter queryParameter13 = new DevExpress.DataAccess.Sql.QueryParameter();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VehicleSalesDashboard_Report));
             this.topMarginBand1 = new DevExpress.XtraReports.UI.TopMarginBand();
             this.detailBand1 = new DevExpress.XtraReports.UI.DetailBand();
             this.bottomMarginBand1 = new DevExpress.XtraReports.UI.BottomMarginBand();
+            this.sqlDataSource1 = new DevExpress.DataAccess.Sql.SqlDataSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this)).BeginInit();
             // 
             // topMarginBand1
@@ -548,12 +567,78 @@ namespace MyERP.Reporting.Reports
             // 
             this.bottomMarginBand1.Name = "bottomMarginBand1";
             // 
+            // sqlDataSource1
+            // 
+            this.sqlDataSource1.ConnectionName = "MyERP_ConnectionString";
+            this.sqlDataSource1.Name = "sqlDataSource1";
+            storedProcQuery1.Name = "VehicleSalesDashboard";
+            queryParameter1.Name = "@ReportMode";
+            queryParameter1.Type = typeof(int);
+            queryParameter1.ValueInfo = "1";
+            queryParameter2.Name = "@DepartmentId";
+            queryParameter2.Type = typeof(int);
+            queryParameter2.ValueInfo = "0";
+            queryParameter3.Name = "@WarehouseId";
+            queryParameter3.Type = typeof(int);
+            queryParameter3.ValueInfo = "0";
+            queryParameter4.Name = "@BranchId";
+            queryParameter4.Type = typeof(int);
+            queryParameter4.ValueInfo = "0";
+            queryParameter5.Name = "@DateFrom";
+            queryParameter5.Type = typeof(System.DateTime);
+            queryParameter5.ValueInfo = "1753-01-01";
+            queryParameter6.Name = "@DateTo";
+            queryParameter6.Type = typeof(System.DateTime);
+            queryParameter6.ValueInfo = "1753-01-01";
+            queryParameter7.Name = "@CarTypeId";
+            queryParameter7.Type = typeof(int);
+            queryParameter7.ValueInfo = "0";
+            queryParameter8.Name = "@CarModelId";
+            queryParameter8.Type = typeof(int);
+            queryParameter8.ValueInfo = "0";
+            queryParameter9.Name = "@CarColorId";
+            queryParameter9.Type = typeof(int);
+            queryParameter9.ValueInfo = "0";
+            queryParameter10.Name = "@ManufacturingYear";
+            queryParameter10.Type = typeof(int);
+            queryParameter10.ValueInfo = "0";
+            queryParameter11.Name = "@VendorOrCustomerId";
+            queryParameter11.Type = typeof(int);
+            queryParameter11.ValueInfo = "0";
+            queryParameter12.Name = "@VehicleStatusId";
+            queryParameter12.Type = typeof(int);
+            queryParameter12.ValueInfo = "0";
+            queryParameter13.Name = "@ChassisNo";
+            queryParameter13.Type = typeof(string);
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1,
+            queryParameter2,
+            queryParameter3,
+            queryParameter4,
+            queryParameter5,
+            queryParameter6,
+            queryParameter7,
+            queryParameter8,
+            queryParameter9,
+            queryParameter10,
+            queryParameter11,
+            queryParameter12,
+            queryParameter13});
+            storedProcQuery1.StoredProcName = "VehicleSalesDashboard";
+            this.sqlDataSource1.Queries.AddRange(new DevExpress.DataAccess.Sql.SqlQuery[] {
+            storedProcQuery1});
+            this.sqlDataSource1.ResultSchemaSerializable = resources.GetString("sqlDataSource1.ResultSchemaSerializable");
+            // 
             // VehicleSalesDashboard_Report
             // 
             this.Bands.AddRange(new DevExpress.XtraReports.UI.Band[] {
             this.topMarginBand1,
             this.detailBand1,
             this.bottomMarginBand1});
+            this.ComponentStorage.AddRange(new System.ComponentModel.IComponent[] {
+            this.sqlDataSource1});
+            this.DataMember = "VehicleSalesDashboard";
+            this.DataSource = this.sqlDataSource1;
             this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this)).EndInit();
 
