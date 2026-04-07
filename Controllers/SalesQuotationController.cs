@@ -332,78 +332,37 @@ return Json(new
                 ArName = session == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
             }).ToList());
         }
-        private string NormalizeChassis(string value)
-        {
-            return Regex.Replace((value ?? "").Trim().ToLower(), "\\s+", "");
-        }
-
         private string ValidateVehicleChassisNumbers(ICollection<SalesQuotationDetail> details, int quotationId)
         {
             if (details == null) return null;
-
-            var quotationSql = @"
-        SELECT ChassisNo
-        FROM SalesQuotationDetails
-        WHERE ISNULL(IsDeleted, 0) = 0
-          AND MainDocId <> @p0
-          AND ChassisNo IS NOT NULL";
-
-            var existingChassisSet = new HashSet<string>(
-                db.Database.SqlQuery<string>(quotationSql, quotationId)
-                  .ToList()
-                  .Select(NormalizeChassis)
-                  .Where(x => !string.IsNullOrWhiteSpace(x))
-            );
-
             var normalizedInQuotation = new HashSet<string>();
-
             foreach (var detail in details)
             {
-                var hasVehicleData =
-                    detail.CarTypeId.HasValue ||
-                    detail.CarModelId.HasValue ||
-                    detail.CarColorId.HasValue ||
-                    !string.IsNullOrWhiteSpace(detail.EngineNo) ||
-                    detail.ManufacturingYear.HasValue ||
-                    !string.IsNullOrWhiteSpace(detail.PlateNo);
-
+                var hasVehicleData = detail.CarTypeId.HasValue || detail.CarModelId.HasValue || detail.CarColorId.HasValue || !string.IsNullOrWhiteSpace(detail.EngineNo) || detail.ManufacturingYear.HasValue || !string.IsNullOrWhiteSpace(detail.PlateNo);
                 var chassis = (detail.ChassisNo ?? "").Trim();
-
                 if (hasVehicleData && string.IsNullOrWhiteSpace(chassis))
                     return "رقم الشاسيه مطلوب عند إدخال بيانات سيارة.";
-
-                // فحص Vehicle Stock
                 if (detail.VehicleStockId.HasValue && VehicleStockTableExists())
                 {
-                    var validStock = db.Database.SqlQuery<int>(
-                        @"SELECT COUNT(1)
-                  FROM dbo.VehicleStock
-                  WHERE Id = @Id
-                    AND ItemId = @ItemId
-                    AND IsDeleted = 0
-                    AND VehicleStatusId = 1",
-                        new SqlParameter("@Id", detail.VehicleStockId.Value),
-                        new SqlParameter("@ItemId", detail.ItemId)
-                    ).FirstOrDefault() > 0;
-
+                    var validStock = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.VehicleStock WHERE Id=@Id AND IsDeleted=0 AND VehicleStatusId=1", new SqlParameter("@Id", detail.VehicleStockId.Value)).FirstOrDefault() > 0;
                     if (!validStock)
-                        return "السيارة المختارة غير متاحة بالمخزون أو لا تطابق الصنف.";
+                        return "السيارة المختارة غير متاحة بالمخزون.";
                 }
-
                 if (!string.IsNullOrWhiteSpace(chassis))
                 {
-                    var normalized = NormalizeChassis(chassis);
-
-                    if (!normalizedInQuotation.Add(normalized))
+                    var normalized = Regex.Replace(chassis.ToLower(), "\\s+", "");
+                    if (normalizedInQuotation.Contains(normalized))
                         return "رقم الشاسيه مكرر داخل نفس عرض السعر.";
-
-                    if (existingChassisSet.Contains(normalized))
+                    normalizedInQuotation.Add(normalized);
+                    var existsInQuotation = db.SalesQuotationDetails.Where(x => !x.IsDeleted && x.MainDocId != quotationId && x.ChassisNo != null)
+                        .Select(x => x.ChassisNo).ToList().Any(x => Regex.Replace(x.ToLower(), "\\s+", "") == normalized);
+                    if (existsInQuotation)
                         return "رقم الشاسيه مستخدم مسبقاً في عرض سعر آخر.";
                 }
             }
-
             return null;
         }
+
         // POST: SalesQuotation/Delete/5
         [HttpPost, ActionName("Delete")]
 

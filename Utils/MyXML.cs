@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Collections;
+using System.Reflection;
 using FastMember;
 
 namespace MyERP
@@ -34,7 +36,10 @@ namespace MyERP
         public static DataTable GetTable<T>(IEnumerable<T> collection)
         {
             DataTable table = new DataTable();
-            using (var reader = ObjectReader.Create(collection))
+            var memberNames = GetSerializableMemberNames(typeof(T));
+            using (var reader = memberNames.Length > 0
+                ? ObjectReader.Create(collection, memberNames)
+                : ObjectReader.Create(collection))
             {
                 table.Load(reader);
                 table.TableName = xPathName;
@@ -49,6 +54,36 @@ namespace MyERP
                 }
             }
             return table;
+        }
+
+        private static string[] GetSerializableMemberNames(Type type)
+        {
+            return type
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+                .Where(p => IsSupportedColumnType(p.PropertyType))
+                .Select(p => p.Name)
+                .ToArray();
+        }
+
+        private static bool IsSupportedColumnType(Type type)
+        {
+            var underlying = Nullable.GetUnderlyingType(type) ?? type;
+
+            if (underlying.IsEnum) return true;
+            if (underlying.IsPrimitive) return true;
+            if (underlying == typeof(string)) return true;
+            if (underlying == typeof(decimal)) return true;
+            if (underlying == typeof(DateTime)) return true;
+            if (underlying == typeof(DateTimeOffset)) return true;
+            if (underlying == typeof(Guid)) return true;
+            if (underlying == typeof(TimeSpan)) return true;
+            if (underlying == typeof(byte[])) return true;
+
+            if (typeof(IEnumerable).IsAssignableFrom(underlying) && underlying != typeof(string))
+                return false;
+
+            return false;
         }
 
         public static string GetXML<T>(IEnumerable<T> collection)
