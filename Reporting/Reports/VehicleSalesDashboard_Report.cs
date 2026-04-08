@@ -82,41 +82,9 @@ namespace MyERP.Reporting.Reports
             DataTable dtTimeline = Exec(5, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
             DataTable dtByModel  = Exec(6, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
             DataTable dtByStatus = Exec(7, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
+            DataTable dtDetail   = Exec(1, dateFrom, dateTo, branchId, warehouseId, carTypeId, carModelId, carColorId, manufacturingYear, vehicleStatusId, chassisNo, vendorOrCustomerId);
 
             DataRow kpi = dtKpi.Rows.Count > 0 ? dtKpi.Rows[0] : null;
-
-            // ── Report-level parameters (wired to SqlDataSource query) ────────
-            var pMode    = new Parameter { Name = "ReportMode",         Type = typeof(int),      Value = 1,                                                          Visible = false };
-            var pFrom    = new Parameter { Name = "DateFrom",           Type = typeof(DateTime), Value = dateFrom.HasValue          ? (object)dateFrom.Value          : DBNull.Value, Visible = false };
-            var pTo      = new Parameter { Name = "DateTo",             Type = typeof(DateTime), Value = dateTo.HasValue            ? (object)dateTo.Value            : DBNull.Value, Visible = false };
-            var pBranch  = new Parameter { Name = "BranchId",           Type = typeof(int),      Value = branchId.HasValue          ? (object)branchId.Value          : DBNull.Value, Visible = false };
-            var pWH      = new Parameter { Name = "WarehouseId",        Type = typeof(int),      Value = warehouseId.HasValue       ? (object)warehouseId.Value       : DBNull.Value, Visible = false };
-            var pCT      = new Parameter { Name = "CarTypeId",          Type = typeof(int),      Value = carTypeId.HasValue         ? (object)carTypeId.Value         : DBNull.Value, Visible = false };
-            var pCM      = new Parameter { Name = "CarModelId",         Type = typeof(int),      Value = carModelId.HasValue        ? (object)carModelId.Value        : DBNull.Value, Visible = false };
-            var pCC      = new Parameter { Name = "CarColorId",         Type = typeof(int),      Value = carColorId.HasValue        ? (object)carColorId.Value        : DBNull.Value, Visible = false };
-            var pYear    = new Parameter { Name = "ManufacturingYear",  Type = typeof(int),      Value = manufacturingYear.HasValue ? (object)manufacturingYear.Value : DBNull.Value, Visible = false };
-            var pStatus  = new Parameter { Name = "VehicleStatusId",    Type = typeof(int),      Value = vehicleStatusId.HasValue   ? (object)vehicleStatusId.Value   : DBNull.Value, Visible = false };
-            var pChassis = new Parameter { Name = "ChassisNo",          Type = typeof(string),   Value = !string.IsNullOrEmpty(chassisNo) ? (object)chassisNo         : DBNull.Value, Visible = false };
-            var pVendor  = new Parameter { Name = "VendorOrCustomerId", Type = typeof(int),      Value = vendorOrCustomerId.HasValue ? (object)vendorOrCustomerId.Value : DBNull.Value, Visible = false };
-            Parameters.AddRange(new Parameter[] { pMode, pFrom, pTo, pBranch, pWH, pCT, pCM, pCC, pYear, pStatus, pChassis, pVendor });
-
-            // ── Detail data source via DevExpress SqlDataSource (mode=1) ──────
-            var sqlDS = new SqlDataSource("MyERP_ConnectionString");
-            var query = new StoredProcQuery("VehicleSalesDashboard", "VehicleSalesDashboard");
-            query.Parameters.Add(new QueryParameter("ReportMode",         typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?ReportMode",         typeof(int))));
-            query.Parameters.Add(new QueryParameter("DateFrom",           typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?DateFrom",           typeof(DateTime))));
-            query.Parameters.Add(new QueryParameter("DateTo",             typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?DateTo",             typeof(DateTime))));
-            query.Parameters.Add(new QueryParameter("BranchId",           typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?BranchId",           typeof(int))));
-            query.Parameters.Add(new QueryParameter("WarehouseId",        typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?WarehouseId",        typeof(int))));
-            query.Parameters.Add(new QueryParameter("CarTypeId",          typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?CarTypeId",          typeof(int))));
-            query.Parameters.Add(new QueryParameter("CarModelId",         typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?CarModelId",         typeof(int))));
-            query.Parameters.Add(new QueryParameter("CarColorId",         typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?CarColorId",         typeof(int))));
-            query.Parameters.Add(new QueryParameter("ManufacturingYear",  typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?ManufacturingYear",  typeof(int))));
-            query.Parameters.Add(new QueryParameter("VehicleStatusId",    typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?VehicleStatusId",    typeof(int))));
-            query.Parameters.Add(new QueryParameter("ChassisNo",          typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?ChassisNo",          typeof(string))));
-            query.Parameters.Add(new QueryParameter("VendorOrCustomerId", typeof(DevExpress.DataAccess.Expression), new DevExpress.DataAccess.Expression("?VendorOrCustomerId", typeof(int))));
-            sqlDS.Queries.Add(query);
-            try { sqlDS.RebuildResultSchema(); } catch { /* design-time / SP not yet deployed */ }
 
             // ── Page settings ─────────────────────────────────────────────────
             Landscape         = true;
@@ -125,9 +93,9 @@ namespace MyERP.Reporting.Reports
             BackColor         = C_PageBg;
             Margins           = new System.Drawing.Printing.Margins(25, 25, 20, 20);
 
-            // ── Report data source (detail rows via SqlDataSource) ────────────
-            DataSource = sqlDS;
-            DataMember = "VehicleSalesDashboard";
+            // ── Report data source (detail rows loaded via ADO.NET mode=1) ────
+            DataSource = dtDetail;
+            DataMember = "";
 
             // ── Alternating-row styles ────────────────────────────────────────
             StyleSheet.Add(new XRControlStyle {
