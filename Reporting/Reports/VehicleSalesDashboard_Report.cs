@@ -91,8 +91,9 @@ namespace MyERP.Reporting.Reports
             BackColor         = C_PageBg;
             Margins           = new System.Drawing.Printing.Margins(25, 25, 20, 20);
 
-            // ── Report data source (detail rows loaded via ADO.NET mode=1) ────
-            DataSource = dtDetail;
+            // Root report is summary-only. Detail rows are rendered once in a
+            // dedicated appendix section (BuildDetailSection).
+            DataSource = null;
             DataMember = "";
 
             // ── Alternating-row styles ────────────────────────────────────────
@@ -131,7 +132,7 @@ namespace MyERP.Reporting.Reports
         {
             // Layout constants
             const float W        = 1100f;   // usable width
-            const float CARD_H   =   82f;
+            const float CARD_H   =   86f;
             const float CHART_H  =  202f;
             const float CHART2_H =  158f;   // second analytics row height
 
@@ -518,7 +519,7 @@ namespace MyERP.Reporting.Reports
             var ct = new ChartTitle();
             ct.Text      = titleText;
             ct.TextColor = C_InkSecondary;
-            ct.Font      = new Font("Segoe UI", 7.2f, FontStyle.Bold);
+            ct.Font      = new Font("Segoe UI", 7.4f, FontStyle.Bold);
             ct.Alignment = System.Drawing.StringAlignment.Center;
             chart.Titles.Add(ct);
 
@@ -577,13 +578,13 @@ namespace MyERP.Reporting.Reports
             card.Controls.Add(Label(title,
                 8f, 8f, w - 14f, 18f,
                 new Font("Segoe UI", 7.7f), C_Muted,
-                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
 
             // Large KPI value
             card.Controls.Add(Label(value,
                 8f, 28f, w - 14f, 40f,
                 new Font("Segoe UI", 19f, FontStyle.Bold), C_InkPrimary,
-                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
             card.Controls.Add(Panel(8f, h - 9f, w - 16f, 1f, C_Divider));
 
             return card;
