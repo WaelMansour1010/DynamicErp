@@ -4416,12 +4416,12 @@
                                     </ul>
                                 </li>
                                 <!-- تقارير خدمات السيارات -->
-                                @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] != "Genoise")
-                                {
-                                    <li>
-                                        <input hidden value="10271" />
-                                        <a href="javascript:void(0);"><i class="remixicon-table-line"></i> خدمات السيارات<span class="menu-arrow"></span> </a>
-                                        <ul class="nav-third-level nav" aria-expanded="false">
+                                <li>
+                                    <input hidden value="10271" />
+                                    <a href="javascript:void(0);"><i class="remixicon-table-line"></i> خدمات السيارات<span class="menu-arrow"></span> </a>
+                                    <ul class="nav-third-level nav" aria-expanded="false">
+                                        @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] != "Genoise")
+                                        {
                                             <li>
                                                 <a href="/Report/CarEntrance" pv="/Report/CarEntrance">
                                                     <i class="fa  fa-caret-left"></i>
@@ -4434,15 +4434,15 @@
                                                     امر شغل
                                                 </a>
                                             </li>
-                                            <li>
-                                                <a href="/Report/VehicleSalesDashboard" pv="/Report/VehicleSalesDashboard">
-                                                    <i class="fa  fa-caret-left"></i>
-                                                    لوحة تحكم مبيعات السيارات
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                }
+                                        }
+                                        <li>
+                                            <a href="/Report/VehicleSalesDashboard" pv="/Report/VehicleSalesDashboard">
+                                                <i class="fa  fa-caret-left"></i>
+                                                لوحة تحكم مبيعات السيارات
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
                                 <!--------------------------------------------------------------------------------------->
                                 <!-- تقارير الإدارة الطبية -->
                                 <li>
