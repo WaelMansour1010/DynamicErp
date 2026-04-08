@@ -11,7 +11,7 @@ using System.Drawing;
 namespace MyERP.Reporting.Reports
 {
     /// <summary>
-    /// Premium dark-theme executive dashboard for vehicle sales.
+    /// Premium executive dashboard for vehicle sales.
     /// Uses dbo.VehicleSalesDashboard with modes 1, 3, 4, 8.
     /// All data is loaded via ADO.NET in the constructor so no
     /// DevExpress designer / resx is needed.
@@ -19,23 +19,21 @@ namespace MyERP.Reporting.Reports
     public class VehicleSalesDashboard_Report : XtraReport
     {
         // ── Colour palette ────────────────────────────────────────────────────
-        private static readonly Color C_PageBg   = Color.FromArgb(13,  17,  38);
-        private static readonly Color C_CardBg   = Color.FromArgb(22,  30,  58);
-        private static readonly Color C_HdrBg    = Color.FromArgb( 8,  12,  28);
-        private static readonly Color C_TblHdr   = Color.FromArgb(28,  42,  80);
-        private static readonly Color C_RowEven  = Color.FromArgb(18,  25,  50);
-        private static readonly Color C_RowOdd   = Color.FromArgb(25,  34,  65);
-        private static readonly Color C_Divider  = Color.FromArgb(40,  55,  90);
-        private static readonly Color C_White    = Color.White;
-        private static readonly Color C_Gray     = Color.FromArgb(180, 195, 220);
-        private static readonly Color C_Blue     = Color.FromArgb( 52, 152, 219);
-        private static readonly Color C_Green    = Color.FromArgb( 46, 204, 113);
-        private static readonly Color C_Cyan     = Color.FromArgb( 26, 188, 156);
-        private static readonly Color C_Orange   = Color.FromArgb(230, 126,  34);
-        private static readonly Color C_Gold     = Color.FromArgb(241, 196,  15);
-        private static readonly Color C_Purple   = Color.FromArgb(155,  89, 182);
-        private static readonly Color C_Pink     = Color.FromArgb(233,  30,  99);
-        private static readonly Color C_Silver   = Color.FromArgb(149, 165, 166);
+        private static readonly Color C_PageBg       = ColorTranslator.FromHtml("#F8FAFC");
+        private static readonly Color C_CardBg       = ColorTranslator.FromHtml("#FFFFFF");
+        private static readonly Color C_HdrBg        = ColorTranslator.FromHtml("#FFFFFF");
+        private static readonly Color C_TblHdr       = ColorTranslator.FromHtml("#F1F5F9");
+        private static readonly Color C_RowEven      = ColorTranslator.FromHtml("#FFFFFF");
+        private static readonly Color C_RowOdd       = ColorTranslator.FromHtml("#F8FAFC");
+        private static readonly Color C_Divider      = ColorTranslator.FromHtml("#E2E8F0");
+        private static readonly Color C_InkPrimary   = ColorTranslator.FromHtml("#0F172A");
+        private static readonly Color C_InkSecondary = ColorTranslator.FromHtml("#334155");
+        private static readonly Color C_Muted        = ColorTranslator.FromHtml("#64748B");
+        private static readonly Color C_Blue         = ColorTranslator.FromHtml("#0EA5E9");
+        private static readonly Color C_Teal         = ColorTranslator.FromHtml("#14B8A6");
+        private static readonly Color C_Amber        = ColorTranslator.FromHtml("#F59E0B");
+        private static readonly Color C_IndigoMuted  = ColorTranslator.FromHtml("#475569");
+        private static readonly Color C_SlateSoft    = ColorTranslator.FromHtml("#CBD5E1");
         private TopMarginBand topMarginBand1;
         private DetailBand detailBand1;
         private BottomMarginBand bottomMarginBand1;
@@ -101,14 +99,14 @@ namespace MyERP.Reporting.Reports
             StyleSheet.Add(new XRControlStyle {
                 Name        = "EvenRow",
                 BackColor   = C_RowEven,
-                ForeColor   = C_White,
+                ForeColor   = C_InkPrimary,
                 BorderColor = C_Divider,
                 Borders     = DevExpress.XtraPrinting.BorderSide.Bottom
             });
             StyleSheet.Add(new XRControlStyle {
                 Name        = "OddRow",
                 BackColor   = C_RowOdd,
-                ForeColor   = C_White,
+                ForeColor   = C_InkPrimary,
                 BorderColor = C_Divider,
                 Borders     = DevExpress.XtraPrinting.BorderSide.Bottom
             });
@@ -116,8 +114,8 @@ namespace MyERP.Reporting.Reports
             // ── Assemble bands ────────────────────────────────────────────────
             Bands.Add(new TopMarginBand    { HeightF = 20 });
             Bands.Add(BuildReportHeader(kpi, dtModels, dtStatus, dtGrouped, dtTimeline, dtByModel, dtByStatus, dateFrom, dateTo));
-            Bands.Add(BuildPageHeader());
-            Bands.Add(BuildDetail());
+            Bands.Add(new DetailBand { HeightF = 0f, Name = "RootDetailBand" });
+            Bands.Add(BuildDetailSection(dtDetail));
             Bands.Add(BuildPageFooter());
             Bands.Add(new BottomMarginBand { HeightF = 20 });
         }
@@ -144,29 +142,34 @@ namespace MyERP.Reporting.Reports
 
             // Y offsets
             float yTitle      =   0f;
-            float ySubtitle   =  58f;
-            float yKpiHdr     =  84f;
-            float yKpiRow1    = 106f;
+            float ySubtitle   =  74f;
+            float yKpiHdr     = 104f;
+            float yKpiRow1    = 132f;
             float yKpiRow2    = yKpiRow1 + CARD_H + 8f;
-            float yChartHdr   = yKpiRow2 + CARD_H + 10f;
+            float yChartHdr   = yKpiRow2 + CARD_H + 14f;
             float yCharts     = yChartHdr + 24f;
-            float yFirstDiv   = yCharts   + CHART_H + 4f;   // divider after first charts
-            float yChart2Hdr  = yFirstDiv + 4f;              // second analytics section header
+            float yFirstDiv   = yCharts   + CHART_H + 8f;   // divider after first charts
+            float yChart2Hdr  = yFirstDiv + 8f;              // second analytics section header
             float yChart2     = yChart2Hdr + 22f;            // second chart row
-            float yFinalDiv   = yChart2   + CHART2_H + 4f;  // final divider before detail
-            float totalH      = yFinalDiv + 4f;
+            float yFinalDiv   = yChart2   + CHART2_H + 8f;  // final divider before detail
+            float totalH      = yFinalDiv + 8f;
 
             var band = new ReportHeaderBand { HeightF = totalH, BackColor = C_PageBg };
 
             // ── Title bar ─────────────────────────────────────────────────────
-            var titlePanel = Panel(0, yTitle, W, 54f, C_HdrBg);
+            var titlePanel = Panel(0, yTitle, W, 68f, C_HdrBg, DevExpress.XtraPrinting.BorderSide.All);
             titlePanel.Controls.Add(Label(
                 "لوحة تحكم مبيعات السيارات  |  Vehicle Sales Executive Dashboard",
-                0, 0, W, 54f,
-                new Font("Arial", 15f, FontStyle.Bold), C_White,
+                0, 5f, W, 36f,
+                new Font("Segoe UI", 16f, FontStyle.Bold), C_InkPrimary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+            titlePanel.Controls.Add(Label(
+                "Executive Summary • Board Reporting View",
+                0, 37f, W, 16f,
+                new Font("Segoe UI", 7.2f), C_Muted,
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
             // blue accent underline
-            titlePanel.Controls.Add(Panel(0, 51f, W, 3f, C_Blue));
+            titlePanel.Controls.Add(Panel(0, 65f, W, 3f, C_Blue));
             band.Controls.Add(titlePanel);
 
             // ── Subtitle (date / print time) ──────────────────────────────────
@@ -176,24 +179,24 @@ namespace MyERP.Reporting.Reports
             band.Controls.Add(Label(
                 $"{dr}          تاريخ الطباعة: {DateTime.Now:yyyy/MM/dd  HH:mm}",
                 0, ySubtitle, W, 22f,
-                new Font("Arial", 7.5f), C_Gray,
+                new Font("Segoe UI", 7.4f), C_Muted,
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
 
             // ── KPI section header ────────────────────────────────────────────
-            var kpiHdrPanel = Panel(0, yKpiHdr, W, 20f, C_TblHdr);
+            var kpiHdrPanel = Panel(0, yKpiHdr, W, 20f, C_TblHdr, DevExpress.XtraPrinting.BorderSide.All);
             kpiHdrPanel.Controls.Add(Label(
-                "◆  مؤشرات الأداء الرئيسية  –  Key Performance Indicators",
+                "مؤشرات الأداء الرئيسية  |  Key Performance Indicators",
                 10f, 0, W - 20f, 20f,
-                new Font("Arial", 8f, FontStyle.Bold), C_Gold,
-                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+                new Font("Segoe UI", 8f, FontStyle.Bold), C_InkSecondary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
             band.Controls.Add(kpiHdrPanel);
 
             // ── KPI Row 1 ─────────────────────────────────────────────────────
             (string title, string value, Color accent)[] row1 = {
                 ("إجمالي المركبات",   KpiInt  (kpi, "TotalVehicles"),  C_Blue),
-                ("مركبات في المخزن",  KpiInt  (kpi, "InStockCars"),    C_Green),
-                ("مركبات مباعة",      KpiInt  (kpi, "SoldCars"),       C_Cyan),
-                ("مركبات مرتجعة",     KpiInt  (kpi, "ReturnedCars"),   C_Orange),
+                ("مركبات في المخزن",  KpiInt  (kpi, "InStockCars"),    C_Teal),
+                ("مركبات مباعة",      KpiInt  (kpi, "SoldCars"),       C_IndigoMuted),
+                ("مركبات مرتجعة",     KpiInt  (kpi, "ReturnedCars"),   C_Amber),
             };
             for (int i = 0; i < row1.Length; i++)
                 band.Controls.Add(KpiCard(cardX(i), yKpiRow1, cardW, CARD_H,
@@ -201,22 +204,22 @@ namespace MyERP.Reporting.Reports
 
             // ── KPI Row 2 ─────────────────────────────────────────────────────
             (string title, string value, Color accent)[] row2 = {
-                ("إجمالي المبيعات",   KpiMoney(kpi, "TotalSales"),     C_Gold),
-                ("إجمالي الأرباح",    KpiMoney(kpi, "TotalProfit"),    C_Purple),
-                ("متوسط سعر البيع",   KpiMoney(kpi, "AvgSalePrice"),   C_Pink),
-                ("متوسط أيام البيع",  KpiDays (kpi, "AvgDaysToSell"),  C_Silver),
+                ("إجمالي المبيعات",   KpiMoney(kpi, "TotalSales"),     C_Blue),
+                ("إجمالي الأرباح",    KpiMoney(kpi, "TotalProfit"),    C_Teal),
+                ("متوسط سعر البيع",   KpiMoney(kpi, "AvgSalePrice"),   C_InkSecondary),
+                ("متوسط أيام البيع",  KpiDays (kpi, "AvgDaysToSell"),  C_Amber),
             };
             for (int i = 0; i < row2.Length; i++)
                 band.Controls.Add(KpiCard(cardX(i), yKpiRow2, cardW, CARD_H,
                     row2[i].title, row2[i].value, row2[i].accent));
 
             // ── Chart section header ──────────────────────────────────────────
-            var chrtHdrPanel = Panel(0, yChartHdr, W, 22f, C_TblHdr);
+            var chrtHdrPanel = Panel(0, yChartHdr, W, 22f, C_TblHdr, DevExpress.XtraPrinting.BorderSide.All);
             chrtHdrPanel.Controls.Add(Label(
-                "◆  تحليل وإحصائيات المبيعات  –  Sales Analytics",
+                "تحليل وإحصائيات المبيعات  |  Sales Analytics",
                 10f, 0, W - 20f, 22f,
-                new Font("Arial", 8f, FontStyle.Bold), C_Cyan,
-                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+                new Font("Segoe UI", 8f, FontStyle.Bold), C_InkSecondary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
             band.Controls.Add(chrtHdrPanel);
 
             // ── First chart row (mode 4 = top models, mode 8 = status pie) ──
@@ -225,37 +228,37 @@ namespace MyERP.Reporting.Reports
             band.Controls.Add(BuildPieChart(dtStatus, halfW + 6f, yCharts, halfW, CHART_H));
 
             // ── Divider between chart rows ────────────────────────────────────
-            band.Controls.Add(Panel(0, yFirstDiv, W, 3f, C_Blue));
+            band.Controls.Add(Panel(0, yFirstDiv, W, 1f, C_Divider));
 
             // ── Second analytics section header ───────────────────────────────
-            var anltHdrPanel = Panel(0, yChart2Hdr, W, 22f, C_TblHdr);
+            var anltHdrPanel = Panel(0, yChart2Hdr, W, 22f, C_TblHdr, DevExpress.XtraPrinting.BorderSide.All);
             anltHdrPanel.Controls.Add(Label(
-                "◆  تحليل تفصيلي إضافي  –  Detailed Analytics  (Modes 2 · 5 · 6 · 7)",
+                "تحليل تفصيلي إضافي  |  Detailed Analytics",
                 10f, 0, W - 20f, 22f,
-                new Font("Arial", 8f, FontStyle.Bold), C_Orange,
-                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+                new Font("Segoe UI", 8f, FontStyle.Bold), C_InkSecondary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
             band.Controls.Add(anltHdrPanel);
 
             // ── Second chart row (modes 2, 5, 6, 7) ──────────────────────────
             float q4W = (W - 3 * 6f) / 4f;  // ≈ 269.5
             band.Controls.Add(BuildBarChart4(dtGrouped,  0f,              yChart2, q4W, CHART2_H,
-                "تجميع حسب النوع  –  By Type (M2)",     "CarTypeName",        "TotalSales",    C_Orange));
+                "تجميع حسب النوع  –  By Type (M2)",     "CarTypeName",        "TotalSales",    C_Amber));
             band.Controls.Add(BuildBarChart4(dtTimeline, q4W + 6f,        yChart2, q4W, CHART2_H,
-                "خط الزمن  –  Timeline (M5)",            "SaleYear",           "TotalSales",    C_Cyan));
+                "خط الزمن  –  Timeline (M5)",            "SaleYear",           "TotalSales",    C_Teal));
             band.Controls.Add(BuildBarChart4(dtByModel,  2*(q4W + 6f),    yChart2, q4W, CHART2_H,
-                "مبيعات الموديلات  –  By Model (M6)",   "CarModelName",       "TotalSales",    C_Purple));
+                "مبيعات الموديلات  –  By Model (M6)",   "CarModelName",       "TotalSales",    C_Blue));
             band.Controls.Add(BuildBarChart4(dtByStatus, 3*(q4W + 6f),    yChart2, q4W, CHART2_H,
-                "توزيع الحالة  –  By Status (M7)",      "VehicleStatusName",  "VehicleCount",  C_Pink));
+                "توزيع الحالة  –  By Status (M7)",      "VehicleStatusName",  "VehicleCount",  C_IndigoMuted));
 
             // ── Final divider before detail table ────────────────────────────
-            band.Controls.Add(Panel(0, yFinalDiv, W, 3f, C_Blue));
+            band.Controls.Add(Panel(0, yFinalDiv, W, 1f, C_Divider));
 
             return band;
         }
 
         private PageHeaderBand BuildPageHeader()
         {
-            const float ROW_H = 26f;
+            const float ROW_H = 24f;
             var band = new PageHeaderBand { HeightF = ROW_H + 2f, BackColor = C_TblHdr };
 
             var tbl = new XRTable { BoundsF = new RectangleF(0, 1f, 1100f, ROW_H), BackColor = C_TblHdr };
@@ -268,8 +271,8 @@ namespace MyERP.Reporting.Reports
                     WidthF        = w,
                     HeightF       = ROW_H,
                     TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
-                    Font          = new Font("Arial", 7.5f, FontStyle.Bold),
-                    ForeColor     = C_White,
+                    Font          = new Font("Segoe UI", 7.2f, FontStyle.Bold),
+                    ForeColor     = C_InkSecondary,
                     BackColor     = C_TblHdr,
                     Borders       = DevExpress.XtraPrinting.BorderSide.Right | DevExpress.XtraPrinting.BorderSide.Bottom,
                     BorderColor   = C_Divider,
@@ -284,7 +287,7 @@ namespace MyERP.Reporting.Reports
 
         private DetailBand BuildDetail()
         {
-            const float ROW_H = 20f;
+            const float ROW_H = 21f;
             var band = new DetailBand { HeightF = ROW_H, BackColor = C_RowEven };
 
             var tbl = new XRTable { BoundsF = new RectangleF(0, 0, 1100f, ROW_H) };
@@ -314,7 +317,8 @@ namespace MyERP.Reporting.Reports
                     WidthF        = Columns[i].Width,
                     HeightF       = ROW_H,
                     TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
-                    Font          = new Font("Arial", 7f),
+                    Font          = new Font("Tahoma", 6.8f),
+                    ForeColor     = C_InkPrimary,
                     Borders       = DevExpress.XtraPrinting.BorderSide.Right | DevExpress.XtraPrinting.BorderSide.Bottom,
                     BorderColor   = C_Divider,
                     Padding       = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0)
@@ -329,6 +333,36 @@ namespace MyERP.Reporting.Reports
             return band;
         }
 
+        private DetailReportBand BuildDetailSection(DataTable dtDetail)
+        {
+            var detailReport = new DetailReportBand {
+                DataSource = dtDetail,
+                DataMember = ""
+            };
+
+            var coverHeader = new ReportHeaderBand {
+                HeightF = 62f,
+                PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand
+            };
+            coverHeader.Controls.Add(Panel(0, 0, 1100f, 44f, C_HdrBg, DevExpress.XtraPrinting.BorderSide.All));
+            coverHeader.Controls.Add(Label(
+                "البيانات التفصيلية للمركبات  |  Detailed Vehicle Sales Appendix",
+                0f, 2f, 1100f, 26f,
+                new Font("Segoe UI", 12f, FontStyle.Bold), C_InkPrimary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+            coverHeader.Controls.Add(Label(
+                "تفاصيل العمليات حسب نتائج التقرير التنفيذي",
+                0f, 24f, 1100f, 16f,
+                new Font("Tahoma", 7f), C_Muted,
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+            coverHeader.Controls.Add(Panel(0, 43f, 1100f, 1f, C_Divider));
+
+            detailReport.Bands.Add(coverHeader);
+            detailReport.Bands.Add(BuildPageHeader());
+            detailReport.Bands.Add(BuildDetail());
+            return detailReport;
+        }
+
         private PageFooterBand BuildPageFooter()
         {
             var band = new PageFooterBand { HeightF = 24f, BackColor = C_HdrBg };
@@ -338,21 +372,21 @@ namespace MyERP.Reporting.Reports
                 PageInfo      = DevExpress.XtraPrinting.PageInfo.NumberOfTotal,
                 Format        = "صفحة {0} من {1}",
                 TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
-                Font          = new Font("Arial", 7f),
-                ForeColor     = C_Gray,
+                Font          = new Font("Segoe UI", 7f),
+                ForeColor     = C_Muted,
                 BackColor     = Color.Transparent
             });
 
             band.Controls.Add(Label(
                 "نظام MySoft ERP  —  لوحة تحكم مبيعات السيارات  |  Vehicle Sales Executive Dashboard",
                 260f, 3f, 580f, 18f,
-                new Font("Arial", 7f), C_Gray,
+                new Font("Segoe UI", 7f), C_Muted,
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
 
             band.Controls.Add(Label(
                 DateTime.Now.ToString("yyyy/MM/dd"),
                 840f, 3f, 260f, 18f,
-                new Font("Arial", 7f), C_Gray,
+                new Font("Segoe UI", 7f), C_Muted,
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
 
             return band;
@@ -368,13 +402,15 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
+            StyleChartArea(chart);
 
             var title = new ChartTitle();
             title.Text      = "أفضل الموديلات مبيعاً  –  Top Models by Revenue";
-            title.TextColor = C_White;
-            title.Font      = new Font("Arial", 8f, FontStyle.Bold);
+            title.TextColor = C_InkSecondary;
+            title.Font      = new Font("Segoe UI", 8f, FontStyle.Bold);
             title.Alignment = System.Drawing.StringAlignment.Center;
             chart.Titles.Add(title);
 
@@ -402,13 +438,15 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
+            StyleChartArea(chart);
 
             var title = new ChartTitle();
             title.Text      = "توزيع المركبات حسب الحالة  –  Status Distribution";
-            title.TextColor = C_White;
-            title.Font      = new Font("Arial", 8f, FontStyle.Bold);
+            title.TextColor = C_InkSecondary;
+            title.Font      = new Font("Segoe UI", 8f, FontStyle.Bold);
             title.Alignment = System.Drawing.StringAlignment.Center;
             chart.Titles.Add(title);
 
@@ -419,11 +457,13 @@ namespace MyERP.Reporting.Reports
             series.Label.Visible = false;
 
             chart.Series.Add(series);
+            chart.PaletteBaseColorNumber = 4;
+            chart.PaletteName = "Aspect";
 
             chart.Legend.Visible             = true;
             chart.Legend.BackColor           = Color.Transparent;
-            chart.Legend.TextColor           = C_Gray;
-            chart.Legend.Font                = new Font("Arial", 7f);
+            chart.Legend.TextColor           = C_Muted;
+            chart.Legend.Font                = new Font("Segoe UI", 6.8f);
             chart.Legend.AlignmentHorizontal = LegendAlignmentHorizontal.Right;
             chart.Legend.AlignmentVertical   = LegendAlignmentVertical.Center;
 
@@ -438,12 +478,14 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
+            StyleChartArea(chart);
             var ct = new ChartTitle();
             ct.Text      = titleText;
-            ct.TextColor = C_White;
-            ct.Font      = new Font("Arial", 7.5f, FontStyle.Bold);
+            ct.TextColor = C_InkSecondary;
+            ct.Font      = new Font("Segoe UI", 7.2f, FontStyle.Bold);
             ct.Alignment = System.Drawing.StringAlignment.Center;
             chart.Titles.Add(ct);
 
@@ -462,14 +504,15 @@ namespace MyERP.Reporting.Reports
         //  Widget helpers
         // ─────────────────────────────────────────────────────────────────────
 
-        /// <summary>A solid-colour XRPanel (no border).</summary>
-        private static XRPanel Panel(float x, float y, float w, float h, Color bg)
+        /// <summary>A solid-colour XRPanel with optional soft border.</summary>
+        private static XRPanel Panel(float x, float y, float w, float h, Color bg,
+            DevExpress.XtraPrinting.BorderSide borders = DevExpress.XtraPrinting.BorderSide.None)
         {
             return new XRPanel {
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = bg,
-                BorderColor = Color.Transparent,
-                Borders     = DevExpress.XtraPrinting.BorderSide.None
+                BorderColor = C_Divider,
+                Borders     = borders
             };
         }
 
@@ -480,34 +523,36 @@ namespace MyERP.Reporting.Reports
             var card = new XRPanel {
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
-                BorderColor = Color.Transparent,
-                Borders     = DevExpress.XtraPrinting.BorderSide.None
+                BorderColor = C_Divider,
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
 
-            // Thick top accent bar
+            // Thin top accent bar
             card.Controls.Add(new XRPanel {
-                BoundsF   = new RectangleF(0, 0, w, 5f),
+                BoundsF   = new RectangleF(0, 0, w, 2f),
                 BackColor = accent,
                 Borders   = DevExpress.XtraPrinting.BorderSide.None
             });
-            // Thin left accent strip
+            // restrained left accent
             card.Controls.Add(new XRPanel {
-                BoundsF   = new RectangleF(0, 5f, 3f, h - 5f),
-                BackColor = Color.FromArgb(90, accent),
+                BoundsF   = new RectangleF(0, 2f, 2f, h - 2f),
+                BackColor = Color.FromArgb(75, accent),
                 Borders   = DevExpress.XtraPrinting.BorderSide.None
             });
 
             // Title
             card.Controls.Add(Label(title,
                 8f, 8f, w - 14f, 18f,
-                new Font("Arial", 7.5f), C_Gray,
-                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+                new Font("Segoe UI", 7.7f), C_Muted,
+                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
 
             // Large KPI value
             card.Controls.Add(Label(value,
                 8f, 28f, w - 14f, 40f,
-                new Font("Arial", 20f, FontStyle.Bold), accent,
-                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+                new Font("Segoe UI", 19f, FontStyle.Bold), C_InkPrimary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
+            card.Controls.Add(Panel(8f, h - 9f, w - 16f, 1f, C_Divider));
 
             return card;
         }
@@ -526,6 +571,27 @@ namespace MyERP.Reporting.Reports
                 CanGrow       = false,
                 WordWrap      = false
             };
+        }
+
+
+
+        private static void StyleChartArea(XRChart chart)
+        {
+            if (chart.Diagram is XYDiagram xy)
+            {
+                xy.DefaultPane.BackColor = Color.Transparent;
+                xy.AxisX.Label.Font = new Font("Segoe UI", 6.6f);
+                xy.AxisY.Label.Font = new Font("Segoe UI", 6.6f);
+                xy.AxisX.Label.TextColor = C_Muted;
+                xy.AxisY.Label.TextColor = C_Muted;
+                xy.AxisX.GridLines.Visible = false;
+                xy.AxisY.GridLines.Visible = true;
+                xy.AxisY.GridLines.Color = C_SlateSoft;
+                xy.AxisX.Color = C_SlateSoft;
+                xy.AxisY.Color = C_SlateSoft;
+                xy.AxisX.Tickmarks.MinorVisible = false;
+                xy.AxisY.Tickmarks.MinorVisible = false;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────────
