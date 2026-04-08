@@ -114,6 +114,7 @@ namespace MyERP.Reporting.Reports
             // ── Assemble bands ────────────────────────────────────────────────
             Bands.Add(new TopMarginBand    { HeightF = 20 });
             Bands.Add(BuildReportHeader(kpi, dtModels, dtStatus, dtGrouped, dtTimeline, dtByModel, dtByStatus, dateFrom, dateTo));
+            Bands.Add(new DetailBand { HeightF = 0f, Name = "RootDetailBand" });
             Bands.Add(BuildDetailSection(dtDetail));
             Bands.Add(BuildPageFooter());
             Bands.Add(new BottomMarginBand { HeightF = 20 });
@@ -545,6 +546,7 @@ namespace MyERP.Reporting.Reports
                 8f, 28f, w - 14f, 40f,
                 new Font("Segoe UI", 19f, FontStyle.Bold), C_InkPrimary,
                 DevExpress.XtraPrinting.TextAlignment.MiddleLeft));
+            card.Controls.Add(Panel(8f, h - 9f, w - 16f, 1f, C_Divider));
 
             return card;
         }
