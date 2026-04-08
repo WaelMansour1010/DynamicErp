@@ -114,8 +114,7 @@ namespace MyERP.Reporting.Reports
             // ── Assemble bands ────────────────────────────────────────────────
             Bands.Add(new TopMarginBand    { HeightF = 20 });
             Bands.Add(BuildReportHeader(kpi, dtModels, dtStatus, dtGrouped, dtTimeline, dtByModel, dtByStatus, dateFrom, dateTo));
-            Bands.Add(BuildPageHeader());
-            Bands.Add(BuildDetail());
+            Bands.Add(BuildDetailSection(dtDetail));
             Bands.Add(BuildPageFooter());
             Bands.Add(new BottomMarginBand { HeightF = 20 });
         }
@@ -253,7 +252,7 @@ namespace MyERP.Reporting.Reports
 
         private PageHeaderBand BuildPageHeader()
         {
-            const float ROW_H = 26f;
+            const float ROW_H = 24f;
             var band = new PageHeaderBand { HeightF = ROW_H + 2f, BackColor = C_TblHdr };
 
             var tbl = new XRTable { BoundsF = new RectangleF(0, 1f, 1100f, ROW_H), BackColor = C_TblHdr };
@@ -282,7 +281,7 @@ namespace MyERP.Reporting.Reports
 
         private DetailBand BuildDetail()
         {
-            const float ROW_H = 20f;
+            const float ROW_H = 21f;
             var band = new DetailBand { HeightF = ROW_H, BackColor = C_RowEven };
 
             var tbl = new XRTable { BoundsF = new RectangleF(0, 0, 1100f, ROW_H) };
@@ -328,6 +327,36 @@ namespace MyERP.Reporting.Reports
             return band;
         }
 
+        private DetailReportBand BuildDetailSection(DataTable dtDetail)
+        {
+            var detailReport = new DetailReportBand {
+                DataSource = dtDetail,
+                DataMember = ""
+            };
+
+            var coverHeader = new ReportHeaderBand {
+                HeightF = 62f,
+                PageBreak = DevExpress.XtraReports.UI.PageBreak.BeforeBand
+            };
+            coverHeader.Controls.Add(Panel(0, 0, 1100f, 44f, C_HdrBg, DevExpress.XtraPrinting.BorderSide.All));
+            coverHeader.Controls.Add(Label(
+                "البيانات التفصيلية للمركبات  |  Detailed Vehicle Sales Appendix",
+                0f, 2f, 1100f, 26f,
+                new Font("Segoe UI", 12f, FontStyle.Bold), C_InkPrimary,
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+            coverHeader.Controls.Add(Label(
+                "تفاصيل العمليات حسب نتائج التقرير التنفيذي",
+                0f, 24f, 1100f, 16f,
+                new Font("Tahoma", 7f), C_Muted,
+                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
+            coverHeader.Controls.Add(Panel(0, 43f, 1100f, 1f, C_Divider));
+
+            detailReport.Bands.Add(coverHeader);
+            detailReport.Bands.Add(BuildPageHeader());
+            detailReport.Bands.Add(BuildDetail());
+            return detailReport;
+        }
+
         private PageFooterBand BuildPageFooter()
         {
             var band = new PageFooterBand { HeightF = 24f, BackColor = C_HdrBg };
@@ -367,7 +396,8 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
             StyleChartArea(chart);
 
@@ -402,7 +432,8 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
             StyleChartArea(chart);
 
@@ -441,7 +472,8 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All
+                Borders     = DevExpress.XtraPrinting.BorderSide.All,
+                BorderWidth = 1f
             };
             StyleChartArea(chart);
             var ct = new ChartTitle();
