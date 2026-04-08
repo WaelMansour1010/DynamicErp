@@ -386,6 +386,7 @@ namespace MyERP.Reporting.Reports
                     TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
                     Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
                     ForeColor = Color.White,
+//                    ForeColor = C_InkSecondary,
                     BackColor = C_TblHdr,
                     Borders = DevExpress.XtraPrinting.BorderSide.Right | DevExpress.XtraPrinting.BorderSide.Bottom,
                     BorderColor = C_Divider,
