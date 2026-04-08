@@ -122,7 +122,7 @@ namespace MyERP.Reporting.Reports
         // ─────────────────────────────────────────────────────────────────────
         //  Band builders
         // ─────────────────────────────────────────────────────────────────────
-
+        
         private ReportHeaderBand BuildReportHeader(
             DataRow kpi, DataTable dtModels, DataTable dtStatus,
             DataTable dtGrouped, DataTable dtTimeline, DataTable dtByModel, DataTable dtByStatus,
@@ -352,11 +352,49 @@ namespace MyERP.Reporting.Reports
             coverHeader.Controls.Add(Panel(0, 43f, 1100f, 1f, C_Divider));
 
             detailReport.Bands.Add(coverHeader);
-            detailReport.Bands.Add(BuildPageHeader());
+            detailReport.Bands.Add(BuildDetailTableHeader());
             detailReport.Bands.Add(BuildDetail());
             return detailReport;
         }
+        private GroupHeaderBand BuildDetailTableHeader()
+        {
+            const float ROW_H = 26f;
+            var band = new GroupHeaderBand
+            {
+                HeightF = ROW_H + 2f,
+                RepeatEveryPage = true,
+                BackColor = C_TblHdr
+            };
 
+            var tbl = new XRTable
+            {
+                BoundsF = new RectangleF(0, 1f, 1100f, ROW_H),
+                BackColor = C_TblHdr
+            };
+
+            var row = new XRTableRow { BackColor = C_TblHdr };
+
+            foreach (var (hdr, w) in Columns)
+            {
+                row.Cells.Add(new XRTableCell
+                {
+                    Text = hdr,
+                    WidthF = w,
+                    HeightF = ROW_H,
+                    TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
+                    Font = new Font("Segoe UI", 7.5f, FontStyle.Bold),
+                    ForeColor = Color.White,
+                    BackColor = C_TblHdr,
+                    Borders = DevExpress.XtraPrinting.BorderSide.Right | DevExpress.XtraPrinting.BorderSide.Bottom,
+                    BorderColor = C_Divider,
+                    Padding = new DevExpress.XtraPrinting.PaddingInfo(2, 2, 0, 0)
+                });
+            }
+
+            tbl.Rows.Add(row);
+            band.Controls.Add(tbl);
+            return band;
+        }
         private PageFooterBand BuildPageFooter()
         {
             var band = new PageFooterBand { HeightF = 24f, BackColor = C_HdrBg };
