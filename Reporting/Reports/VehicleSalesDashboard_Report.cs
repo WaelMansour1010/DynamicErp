@@ -142,9 +142,9 @@ namespace MyERP.Reporting.Reports
 
             // Y offsets
             float yTitle      =   0f;
-            float ySubtitle   =  74f;
-            float yKpiHdr     = 104f;
-            float yKpiRow1    = 132f;
+            float ySubtitle   =  64f;
+            float yKpiHdr     =  90f;
+            float yKpiRow1    = 116f;
             float yKpiRow2    = yKpiRow1 + CARD_H + 8f;
             float yChartHdr   = yKpiRow2 + CARD_H + 14f;
             float yCharts     = yChartHdr + 24f;
@@ -157,19 +157,14 @@ namespace MyERP.Reporting.Reports
             var band = new ReportHeaderBand { HeightF = totalH, BackColor = C_PageBg };
 
             // ── Title bar ─────────────────────────────────────────────────────
-            var titlePanel = Panel(0, yTitle, W, 68f, C_HdrBg, DevExpress.XtraPrinting.BorderSide.All);
+            var titlePanel = Panel(0, yTitle, W, 58f, C_HdrBg, DevExpress.XtraPrinting.BorderSide.All);
             titlePanel.Controls.Add(Label(
                 "لوحة تحكم مبيعات السيارات  |  Vehicle Sales Executive Dashboard",
-                0, 5f, W, 36f,
-                new Font("Segoe UI", 16f, FontStyle.Bold), C_InkPrimary,
-                DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
-            titlePanel.Controls.Add(Label(
-                "Executive Summary • Board Reporting View",
-                0, 37f, W, 16f,
-                new Font("Segoe UI", 7.2f), C_Muted,
+                0, 0, W, 54f,
+                new Font("Segoe UI", 15f, FontStyle.Bold), C_InkPrimary,
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
             // blue accent underline
-            titlePanel.Controls.Add(Panel(0, 65f, W, 3f, C_Blue));
+            titlePanel.Controls.Add(Panel(0, 55f, W, 3f, C_Blue));
             band.Controls.Add(titlePanel);
 
             // ── Subtitle (date / print time) ──────────────────────────────────
@@ -179,7 +174,7 @@ namespace MyERP.Reporting.Reports
             band.Controls.Add(Label(
                 $"{dr}          تاريخ الطباعة: {DateTime.Now:yyyy/MM/dd  HH:mm}",
                 0, ySubtitle, W, 22f,
-                new Font("Segoe UI", 7.4f), C_Muted,
+                new Font("Segoe UI", 7.7f), C_Muted,
                 DevExpress.XtraPrinting.TextAlignment.MiddleCenter));
 
             // ── KPI section header ────────────────────────────────────────────
@@ -271,7 +266,7 @@ namespace MyERP.Reporting.Reports
                     WidthF        = w,
                     HeightF       = ROW_H,
                     TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
-                    Font          = new Font("Segoe UI", 7.2f, FontStyle.Bold),
+                    Font          = new Font("Segoe UI", 7.5f, FontStyle.Bold),
                     ForeColor     = C_InkSecondary,
                     BackColor     = C_TblHdr,
                     Borders       = DevExpress.XtraPrinting.BorderSide.Right | DevExpress.XtraPrinting.BorderSide.Bottom,
@@ -317,7 +312,7 @@ namespace MyERP.Reporting.Reports
                     WidthF        = Columns[i].Width,
                     HeightF       = ROW_H,
                     TextAlignment = DevExpress.XtraPrinting.TextAlignment.MiddleCenter,
-                    Font          = new Font("Tahoma", 6.8f),
+                    Font          = new Font("Tahoma", 7f),
                     ForeColor     = C_InkPrimary,
                     Borders       = DevExpress.XtraPrinting.BorderSide.Right | DevExpress.XtraPrinting.BorderSide.Bottom,
                     BorderColor   = C_Divider,
@@ -524,8 +519,7 @@ namespace MyERP.Reporting.Reports
                 BoundsF     = new RectangleF(x, y, w, h),
                 BackColor   = C_CardBg,
                 BorderColor = C_Divider,
-                Borders     = DevExpress.XtraPrinting.BorderSide.All,
-                BorderWidth = 1f
+                Borders     = DevExpress.XtraPrinting.BorderSide.All
             };
 
             // Thin top accent bar
