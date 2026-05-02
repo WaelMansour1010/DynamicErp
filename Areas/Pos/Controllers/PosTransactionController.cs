@@ -3,6 +3,8 @@ using MyERP.Areas.Pos.Models;
 using MyERP.Areas.Pos.Reports;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Globalization;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
@@ -80,6 +82,13 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult CalculateCommission(PosCommissionRequest request)
         {
+            request = request ?? new PosCommissionRequest();
+            var context = GetPosContext();
+            if (context != null && !request.BranchId.HasValue)
+            {
+                request.BranchId = context.BranchId;
+            }
+
             return Json(_repository.CalculateCommission(request));
         }
 
@@ -429,7 +438,7 @@ namespace MyERP.Areas.Pos.Controllers
                     customerId = saved.CustomerID,
                     activationStatus = true,
                     attachmentSubject = attachmentSubject,
-                    attachmentFolder = "Doc/" + DateTime.Today.ToString("yyyyMMdd"),
+                    attachmentFolder = DateTime.Today.ToString("yyyyMMdd"),
                     attachments = attachments
                 });
             }
@@ -468,6 +477,7 @@ namespace MyERP.Areas.Pos.Controllers
                 ApplyCashOutSecondaryDefault(request);
 
                 var validationErrors = ValidateSaveRequest(request, context);
+                AddServiceTypeValidationErrors(request, validationErrors);
                 if (validationErrors.Count > 0)
                 {
                     Response.StatusCode = 400;
@@ -538,7 +548,7 @@ namespace MyERP.Areas.Pos.Controllers
             catch (SqlException ex)
             {
                 Response.StatusCode = 500;
-                return Json(Fail("حدث خطأ من قاعدة البيانات أثناء الحفظ التجريبي", ex.Message));
+                return Json(Fail(FriendlySqlSaveMessage(ex), ex.Message));
             }
             catch (Exception ex)
             {
@@ -659,6 +669,37 @@ namespace MyERP.Areas.Pos.Controllers
             return errors;
         }
 
+        private void AddServiceTypeValidationErrors(PosSaveTransactionRequest request, IDictionary<string, string> errors)
+        {
+            if (request == null)
+            {
+                return;
+            }
+
+            var selectedItems = request.Items == null
+                ? new List<PosTransactionItemDto>()
+                : request.Items.Where(i => i != null && i.Item_ID.HasValue && i.Item_ID.Value > 0).ToList();
+
+            if (selectedItems.Count != 1)
+            {
+                errors["Items"] = "يجب تحميل خدمة كيشني واحدة فقط للفاتورة";
+                return;
+            }
+
+            var detailItemId = selectedItems[0].Item_ID.Value;
+            if (!_repository.IsServiceItemValidForTransactionType(request.TransactionType, detailItemId))
+            {
+                errors["Items"] = "الخدمة المحملة لا تطابق نوع العملية المحدد";
+            }
+
+            if (request.ItemIDService.HasValue
+                && request.ItemIDService.Value > 0
+                && !_repository.IsServiceItemValidForTransactionType(request.TransactionType, request.ItemIDService.Value))
+            {
+                errors["ItemIDService"] = "نوع الشحن لا يطابق نوع العملية المحدد";
+            }
+        }
+
         private static Dictionary<string, string> ValidateKeshniCardCustomer(PosCashCustomerSaveRequest request)
         {
             var errors = new Dictionary<string, string>();
@@ -742,7 +783,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var folderName = DateTime.Now.ToString("yyyyMMdd");
-            var folderPath = Path.Combine(Server.MapPath("~/Doc"), folderName);
+            var folderPath = Path.Combine(GetKycAttachmentRootPath(), folderName);
             Directory.CreateDirectory(folderPath);
 
             for (var i = 0; i < Request.Files.Count; i++)
@@ -754,7 +795,10 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var originalName = Path.GetFileName(file.FileName);
-                var imageName = MakeSafeFileName(originalName);
+                var safeOriginalName = MakeSafeFileName(originalName);
+                var imageName = MakeSafeFileName(DateTime.Now.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)
+                    + "_" + i.ToString(CultureInfo.InvariantCulture)
+                    + "_" + safeOriginalName);
                 var destinationName = MakeSafeFileName(subjectNo + imageName);
                 var destinationPath = Path.Combine(folderPath, destinationName);
                 var duplicateIndex = 1;
@@ -762,7 +806,7 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     var extension = Path.GetExtension(imageName);
                     var baseName = Path.GetFileNameWithoutExtension(imageName);
-                    imageName = MakeSafeFileName(baseName + "_" + duplicateIndex.ToString() + extension);
+                    imageName = MakeSafeFileName(baseName + "_" + duplicateIndex.ToString(CultureInfo.InvariantCulture) + extension);
                     destinationName = MakeSafeFileName(subjectNo + imageName);
                     destinationPath = Path.Combine(folderPath, destinationName);
                     duplicateIndex++;
@@ -773,6 +817,14 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return _repository.GetKeshniCardAttachments(subjectNo);
+        }
+
+        private static string GetKycAttachmentRootPath()
+        {
+            var configuredPath = ConfigurationManager.AppSettings["PosKycAttachmentRootPath"];
+            return string.IsNullOrWhiteSpace(configuredPath)
+                ? @"C:\Dynamic Byte\Doc"
+                : configuredPath.Trim();
         }
 
         private static string MakeSafeFileName(string value)
@@ -808,6 +860,28 @@ namespace MyERP.Areas.Pos.Controllers
                 technicalMessage = technicalMessage,
                 validationErrors = validationErrors
             };
+        }
+
+        private static string FriendlySqlSaveMessage(SqlException ex)
+        {
+            var message = ex == null ? string.Empty : ex.Message;
+            if (message.IndexOf("account is locked out", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "فشل الاتصال بقاعدة البيانات: حساب SQL مغلق. راجع مستخدم الاتصال في KishnyCashConnection.";
+            }
+
+            if (ex != null && ex.Number == 18456)
+            {
+                return "فشل تسجيل الدخول إلى قاعدة البيانات. راجع اسم المستخدم/كلمة المرور أو صلاحيات KishnyCashConnection.";
+            }
+
+            if (message.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "فشل تنفيذ الحفظ بسبب صلاحيات غير كافية على قاعدة البيانات.";
+            }
+
+            return "حدث خطأ من قاعدة البيانات أثناء الحفظ التجريبي";
         }
 
         private PosUserContext GetPosContext()

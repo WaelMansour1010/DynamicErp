@@ -774,6 +774,48 @@ ORDER BY id;";
             return items;
         }
 
+        public bool IsServiceItemValidForTransactionType(string serviceType, int itemId)
+        {
+            if (itemId <= 0)
+            {
+                return false;
+            }
+
+            var normalizedType = (serviceType ?? string.Empty).Trim().ToLowerInvariant();
+            string where;
+            switch (normalizedType)
+            {
+                case "cash-out":
+                    where = "ti.ItemType = 1 AND ti.ChkLot = 1 AND ISNULL(ti.IsPriceIsPerview, 0) = 1 AND ISNULL(ti.HaveGuarantee, 0) = 0";
+                    break;
+                case "card":
+                    where = "(ti.ItemID IN (1, 19) OR (ti.ItemType = 1 AND ti.ChkLot = 1 AND ISNULL(ti.HaveGuarantee, 0) = 1))";
+                    break;
+                case "violations":
+                    where = "(ti.ItemID = 20 OR ISNULL(ti.TrafficViolations, 0) = 1 OR ti.ItemName LIKE N'%مخالف%')";
+                    break;
+                case "cash-in":
+                    where = "ti.ItemType = 1 AND ti.ChkLot = 1 AND ISNULL(ti.IsPriceIsPerview, 0) = 0 AND ISNULL(ti.HaveGuarantee, 0) = 0 AND ISNULL(ti.TrafficViolations, 0) = 0";
+                    break;
+                default:
+                    return false;
+            }
+
+            var sql = @"
+SELECT TOP (1) 1
+FROM dbo.TblItems ti
+WHERE ti.ItemID = @itemId
+  AND " + where + ";";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@itemId", SqlDbType.Int).Value = itemId;
+                connection.Open();
+                return command.ExecuteScalar() != null;
+            }
+        }
+
         public IList<PosBranchDto> GetBranches()
         {
             var branches = new List<PosBranchDto>();
@@ -908,38 +950,38 @@ ORDER BY b.BoxID;";
 
             const string sql = @"
 SELECT TOP (20)
-    Id,
-    name,
-    namee,
-    ArabicName0,
-    ArabicName1,
-    ArabicName2,
-    ArabicName3,
-    EnglishName0,
-    EnglishName1,
-    EnglishName2,
-    EnglishName3,
-    EnglishName5,
-    EnglishName6,
-    EnglishName7,
-    COALESCE(NULLIF(name, N''), NULLIF(CustName, N'')) AS CustomerName,
-    COALESCE(NULLIF(PhoneNo2, N''), NULLIF(PhoneNo, N''), NULLIF(tel, N'')) AS Phone,
-    PhoneNo2,
-    CardId,
-    CardNo,
-    card,
-    CardSource,
-    tel,
-    Tet_NumPoket,
-    Address,
-    MailAdress,
-    Nationality,
-    BirthDate,
-    CardDate,
-    CardEndDate,
-    OrderDate,
-    EasyCashType,
-    BranchID,
+    c.Id,
+    c.name,
+    c.namee,
+    c.ArabicName0,
+    c.ArabicName1,
+    c.ArabicName2,
+    c.ArabicName3,
+    c.EnglishName0,
+    c.EnglishName1,
+    c.EnglishName2,
+    c.EnglishName3,
+    c.EnglishName5,
+    c.EnglishName6,
+    c.EnglishName7,
+    COALESCE(NULLIF(c.name, N''), NULLIF(c.CustName, N'')) AS CustomerName,
+    COALESCE(NULLIF(c.PhoneNo2, N''), NULLIF(c.PhoneNo, N''), NULLIF(c.tel, N'')) AS Phone,
+    c.PhoneNo2,
+    c.CardId,
+    c.CardNo,
+    c.card,
+    c.CardSource,
+    c.tel,
+    c.Tet_NumPoket,
+    c.Address,
+    c.MailAdress,
+    c.Nationality,
+    c.BirthDate,
+    c.CardDate,
+    c.CardEndDate,
+    c.OrderDate,
+    c.EasyCashType,
+    c.BranchID,
     COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName
 FROM dbo.TblCusCsh c
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
@@ -986,38 +1028,38 @@ ORDER BY c.Id DESC;";
         {
             const string sql = @"
 SELECT TOP (1)
-    Id,
-    name,
-    namee,
-    ArabicName0,
-    ArabicName1,
-    ArabicName2,
-    ArabicName3,
-    EnglishName0,
-    EnglishName1,
-    EnglishName2,
-    EnglishName3,
-    EnglishName5,
-    EnglishName6,
-    EnglishName7,
-    COALESCE(NULLIF(name, N''), NULLIF(CustName, N'')) AS CustomerName,
-    COALESCE(NULLIF(PhoneNo2, N''), NULLIF(PhoneNo, N''), NULLIF(tel, N'')) AS Phone,
-    PhoneNo2,
-    CardId,
-    CardNo,
-    card,
-    CardSource,
-    tel,
-    Tet_NumPoket,
-    Address,
-    MailAdress,
-    Nationality,
-    BirthDate,
-    CardDate,
-    CardEndDate,
-    OrderDate,
-    EasyCashType,
-    BranchID,
+    c.Id,
+    c.name,
+    c.namee,
+    c.ArabicName0,
+    c.ArabicName1,
+    c.ArabicName2,
+    c.ArabicName3,
+    c.EnglishName0,
+    c.EnglishName1,
+    c.EnglishName2,
+    c.EnglishName3,
+    c.EnglishName5,
+    c.EnglishName6,
+    c.EnglishName7,
+    COALESCE(NULLIF(c.name, N''), NULLIF(c.CustName, N'')) AS CustomerName,
+    COALESCE(NULLIF(c.PhoneNo2, N''), NULLIF(c.PhoneNo, N''), NULLIF(c.tel, N'')) AS Phone,
+    c.PhoneNo2,
+    c.CardId,
+    c.CardNo,
+    c.card,
+    c.CardSource,
+    c.tel,
+    c.Tet_NumPoket,
+    c.Address,
+    c.MailAdress,
+    c.Nationality,
+    c.BirthDate,
+    c.CardDate,
+    c.CardEndDate,
+    c.OrderDate,
+    c.EasyCashType,
+    c.BranchID,
     COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName
 FROM dbo.TblCusCsh c
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
@@ -1728,6 +1770,7 @@ SELECT
             {
                 ServiceType = request.TransactionType,
                 ItemID = firstItem.Item_ID,
+                BranchId = request.BranchId,
                 RechargeValue = IsCardService(request.TransactionType) ? 0m : (IsViolationsService(request.TransactionType) ? request.ViolationsValue.GetValueOrDefault() : request.RechargeValue.GetValueOrDefault()),
                 Vatyo = firstItem.Vatyo,
                 IsWallet = request.IsWallet,
@@ -2140,7 +2183,10 @@ SELECT TOP (1)
     t.ItemIDService,
     t.ItemIDService2,
     CAST(t.ViolationsValue AS DECIMAL(18, 2)) AS ViolationsValue,
-    CONVERT(NVARCHAR(100), t.Tet_NumPoket) AS Tet_NumPoket,
+    CASE
+        WHEN t.Tet_NumPoket IS NULL THEN NULL
+        ELSE CONVERT(NVARCHAR(100), CONVERT(DECIMAL(38, 0), t.Tet_NumPoket))
+    END AS Tet_NumPoket,
     CASE
         WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
         WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
@@ -2264,7 +2310,43 @@ ORDER BY d.Item_ID;";
             }
 
             invoice.TotalFees = invoice.Items.Sum(i => i.Price + i.Vat.GetValueOrDefault());
+            if (string.Equals(invoice.TransactionType, "card", StringComparison.OrdinalIgnoreCase))
+            {
+                invoice.KycCustomer = ResolveInvoiceKeshniCustomer(invoice, canChangeDefaults);
+            }
+
             return invoice;
+        }
+
+        private PosCustomerLookupDto ResolveInvoiceKeshniCustomer(PosInvoiceReviewDto invoice, bool canChangeDefaults)
+        {
+            if (invoice == null)
+            {
+                return null;
+            }
+
+            var lookupValues = new[]
+            {
+                invoice.VisaNumber,
+                invoice.CashCustomerPhone,
+                invoice.Tet_NumPoket
+            };
+
+            foreach (var value in lookupValues)
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    continue;
+                }
+
+                var customer = LookupKeshniCardCustomer(value, invoice.BranchId, canChangeDefaults);
+                if (customer != null)
+                {
+                    return customer;
+                }
+            }
+
+            return null;
         }
 
         public PosReceiptDto GetReceipt(int transactionId, int userId, bool canChangeDefaults)

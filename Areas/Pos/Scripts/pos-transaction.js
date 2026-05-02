@@ -137,10 +137,17 @@
             try {
                 data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
             } catch (ignore) {
-                data = null;
+                data = {
+                    success: false,
+                    message: "تعذر قراءة رد السيرفر أثناء الحفظ التجريبي",
+                    technicalMessage: "HTTP " + xhr.status + (xhr.responseText ? " - " + xhr.responseText.substring(0, 500) : "")
+                };
             }
 
             callback(xhr.status, data);
+        };
+        xhr.onerror = function () {
+            callback(0, { success: false, message: "تعذر الاتصال بالسيرفر", technicalMessage: "Network error" });
         };
         xhr.send(body ? JSON.stringify(body) : null);
     }
@@ -199,7 +206,7 @@
 
         var walletFields = document.querySelectorAll(".wallet-field");
         for (var w = 0; w < walletFields.length; w++) {
-            walletFields[w].classList.toggle("is-visible", mode === "cash-in" || mode === "cash-out" || mode === "violations");
+            walletFields[w].classList.toggle("is-visible", mode === "cash-out");
         }
 
         var rechargeFields = document.querySelectorAll(".recharge-field");
@@ -213,6 +220,7 @@
 
         if (mode === "cash-in") {
             byId("isWallet").value = "false";
+            byId("tetNumPoket").value = "";
             byId("isRecharg").value = numberValue("rechargeValue") > 0 ? "true" : "false";
             byId("haveGuarantee").value = "false";
         }
@@ -223,6 +231,7 @@
         }
         if (mode === "card") {
             byId("paymentCardNo").value = byId("visaNumber").value;
+            byId("tetNumPoket").value = "";
             byId("isWallet").value = "false";
             byId("isRecharg").value = "false";
             byId("rechargeValue").value = "0";
@@ -233,6 +242,7 @@
         }
         if (mode === "violations") {
             byId("isWallet").value = "false";
+            byId("tetNumPoket").value = "";
             byId("isRecharg").value = "false";
             byId("rechargeValue").value = "0";
         }
@@ -333,6 +343,7 @@
     }
 
     function resetServiceRows() {
+        serviceLoadSequence++;
         var rows = byId("itemsTable").querySelectorAll("tbody tr");
         for (var i = rows.length - 1; i > 0; i--) {
             rows[i].parentNode.removeChild(rows[i]);
@@ -347,6 +358,8 @@
                 inputs[x].value = inputs[x].classList.contains("item-name") ? "" : "0";
             }
         }
+        byId("serviceItemId").innerHTML = '<option value="">تحميل...</option>';
+        byId("serviceItemId2").innerHTML = '<option value="">تحميل...</option>';
     }
 
     function calculateTotals() {
@@ -697,12 +710,28 @@
             ItemCase: item.ItemCase || 1,
             CostPrice: item.CostPrice || 0,
             SavedItemType: item.SavedItemType || 0
-        });
+        }, true);
     }
 
     function decimalText(value) {
         var number = parseFloat(value);
         return isNaN(number) ? "0.00" : number.toFixed(2);
+    }
+
+    function textReference(value) {
+        if (value === null || value === undefined) { return ""; }
+        var text = String(value).trim();
+        var scientific = text.match(/^([0-9]+(?:\.[0-9]+)?)e\+?([0-9]+)$/i);
+        if (scientific) {
+            var digits = scientific[1].replace(".", "");
+            var decimals = (scientific[1].split(".")[1] || "").length;
+            var zeros = parseInt(scientific[2], 10) - decimals;
+            text = digits + new Array(Math.max(zeros, 0) + 1).join("0");
+        }
+        if (/^1[0-9]{9}$/.test(text)) {
+            text = "0" + text;
+        }
+        return text;
     }
 
     function loadInvoiceForReview(transactionId) {
@@ -727,7 +756,7 @@
             byId("phone2").value = data.Phone2 || "";
             byId("visaNumber").value = data.VisaNumber || "";
             byId("paymentCardNo").value = data.VisaNumber || "";
-            byId("tetNumPoket").value = data.Tet_NumPoket || "";
+            byId("tetNumPoket").value = textReference(data.Tet_NumPoket);
             byId("rechargeValue").value = decimalText(data.RechargeValue);
             byId("commissionValue").value = decimalText(data.NetValue);
             byId("vatValue").value = decimalText(data.VatValue);
@@ -736,9 +765,23 @@
             byId("payedValue").value = decimalText(data.PayedValue);
             byId("remainValue").value = decimalText(data.RemainValue);
             byId("violationValue").value = decimalText(data.ViolationsValue);
+            if ((data.TransactionType || "") === "card" && data.KycCustomer) {
+                applyKeshniCustomer(data.KycCustomer);
+            } else if ((data.TransactionType || "") === "card") {
+                renderKycAttachments([]);
+            }
+
             if (data.Items && data.Items.length) {
                 applyReviewItem(data.Items[0]);
             }
+
+            byId("rechargeValue").value = decimalText(data.RechargeValue);
+            byId("commissionValue").value = decimalText(data.NetValue);
+            byId("vatValue").value = decimalText(data.VatValue);
+            byId("totalFees").value = decimalText(data.TotalFees);
+            byId("netValue").value = decimalText((parseFloat(data.RechargeValue) || 0) + (parseFloat(data.TotalFees) || 0));
+            byId("payedValue").value = decimalText(data.PayedValue);
+            byId("remainValue").value = decimalText(data.RemainValue);
 
             byId("saveBtn").disabled = true;
             byId("saveResult").innerHTML = "وضع مراجعة فقط - رقم الفاتورة: " + escapeHtml(data.NoteSerial1 || "") + "<br />رقم الحركة: " + escapeHtml(data.Transaction_ID || "");
@@ -908,7 +951,7 @@
         });
     }
 
-    function applyServiceItem(row, selected) {
+    function applyServiceItem(row, selected, suppressRecalc) {
         if (!selected) {
             clearRowData(row);
             return;
@@ -936,8 +979,10 @@
             byId("branchId").value = selected.BranchId;
         }
 
-        calculateTotals();
-        scheduleCommissionPreview();
+        if (!suppressRecalc) {
+            calculateTotals();
+            scheduleCommissionPreview();
+        }
     }
 
     function applySelectedItem(input) {
@@ -1392,6 +1437,20 @@
         resetServiceRows();
 
         byId("cashCustomerId").value = "";
+        byId("transactionType").value = "";
+        byId("isCashOut").value = "false";
+        byId("isPOS").value = "false";
+        byId("otherItems").value = "false";
+        byId("isRecharg").value = "false";
+        byId("isWallet").value = "false";
+        byId("haveGuarantee").value = "false";
+        byId("tetNumPoket").value = "";
+        byId("violationWalletNo").value = "";
+        byId("violationValue").value = "0";
+        byId("visaNumber").value = "";
+        byId("paymentCardNo").value = "";
+        byId("cardNationalId").value = "";
+        byId("cardTypeName").value = "";
         byId("storeId").value = "";
         byId("storeName").value = "";
         byId("commissionValue").value = "0";

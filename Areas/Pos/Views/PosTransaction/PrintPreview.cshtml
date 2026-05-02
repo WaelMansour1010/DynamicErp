@@ -7,11 +7,11 @@
     var transactionId = ViewBag.TransactionId;
 }
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>ظ…ط¹ط§ظٹظ†ط© ط·ط¨ط§ط¹ط© ط§ظ„ظپط§طھظˆط±ط©</title>
+    <title>Receipt Preview</title>
     @Html.DevExpress().GetStyleSheets(
         new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
         new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },
@@ -25,10 +25,10 @@
     <style>
         body {
             background: #f4f6f8;
-            direction: rtl;
+            direction: ltr;
             font-family: Tahoma, Arial, sans-serif;
             margin: 0;
-            text-align: right;
+            text-align: left;
         }
 
         .preview-toolbar {
@@ -65,8 +65,11 @@
 </head>
 <body>
     <div class="preview-toolbar">
-        <h1>ظ…ط¹ط§ظٹظ†ط© ط·ط¨ط§ط¹ط© ط§ظ„ظپط§طھظˆط±ط© ط±ظ‚ظ… @transactionId</h1>
-        <button type="button" onclick="window.print();">ط·ط¨ط§ط¹ط©</button>
+        <h1>Receipt Preview #@transactionId</h1>
+        <div>
+            <button type="button" onclick="window.print();">Print</button>
+            <button type="button" onclick="window.close();">Back</button>
+        </div>
     </div>
     <div class="viewer-host">
         @Html.DevExpress().WebDocumentViewer(settings =>

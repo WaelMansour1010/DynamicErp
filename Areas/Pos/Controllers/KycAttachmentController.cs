@@ -2,6 +2,7 @@ using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -86,7 +87,8 @@ namespace MyERP.Areas.Pos.Controllers
 
         private bool TryResolveAttachmentPath(PosKycAttachmentDto attachment, out string physicalPath)
         {
-            var root = Server.MapPath("~/Doc");
+            var root = GetKycAttachmentRootPath();
+            var webRoot = Server.MapPath("~/Doc");
             var dateFolder = attachment.ImageDate.HasValue
                 ? attachment.ImageDate.Value.ToString("yyyyMMdd")
                 : DateTime.Today.ToString("yyyyMMdd");
@@ -97,11 +99,23 @@ namespace MyERP.Areas.Pos.Controllers
                 Path.Combine(root, dateFolder, legacyFileName),
                 Path.Combine(root, dateFolder, (attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty)),
                 Path.Combine(root, legacyFileName),
-                Path.Combine(root, plainFileName)
+                Path.Combine(root, plainFileName),
+                Path.Combine(webRoot, dateFolder, legacyFileName),
+                Path.Combine(webRoot, dateFolder, (attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty)),
+                Path.Combine(webRoot, legacyFileName),
+                Path.Combine(webRoot, plainFileName)
             };
 
             physicalPath = candidates.FirstOrDefault(System.IO.File.Exists);
             return physicalPath != null;
+        }
+
+        private static string GetKycAttachmentRootPath()
+        {
+            var configuredPath = ConfigurationManager.AppSettings["PosKycAttachmentRootPath"];
+            return string.IsNullOrWhiteSpace(configuredPath)
+                ? @"C:\Dynamic Byte\Doc"
+                : configuredPath.Trim();
         }
 
         private PosUserContext GetPosContext()

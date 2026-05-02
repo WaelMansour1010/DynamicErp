@@ -113,6 +113,7 @@ namespace MyERP.Areas.Pos.Models
     {
         public string ServiceType { get; set; }
         public int? ItemID { get; set; }
+        public int? BranchId { get; set; }
         public decimal RechargeValue { get; set; }
         public decimal? Vatyo { get; set; }
         public bool IsWallet { get; set; }
@@ -382,6 +383,7 @@ namespace MyERP.Areas.Pos.Models
         public decimal? ViolationsValue { get; set; }
         public string Tet_NumPoket { get; set; }
         public IList<PosTransactionItemDto> Items { get; set; }
+        public PosCustomerLookupDto KycCustomer { get; set; }
 
         public PosInvoiceReviewDto()
         {
