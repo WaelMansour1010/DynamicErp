@@ -1,0 +1,272 @@
+﻿@model MyERP.Models.Warehouse
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+}
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Warehouses;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Warehouses:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Warehouse/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.IsLinked)
+                                        @Html.HiddenFor(model => model.IsPosted)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                    }
+                                        <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                        <div class="col-sm-2">
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", required = "required" } })
+                                            @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+                                        </div>
+                                        <div class="col-sm-2">
+                                            @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+
+                                    <label class="col-sm-2 control-label" for="DepartmentId">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="ResponsibleEmpId">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ResponsibleEmpId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        @*<span class="Asterisks">*</span>
+
+                                            @Html.ValidationMessageFor(model => model.ResponsibleEmpId, "", new { @class = "text-danger" })*@
+                                    </div>
+
+                                    <label class="col-sm-2 control-label" for="Phone">@MyERP.Properties.Resources.Tel</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Phone, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Tel } })
+                                        @*@Html.ValidationMessageFor(model => model.Phone, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="Location">@MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Location, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Address } })
+                                        @Html.ValidationMessageFor(model => model.Location, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label class="col-sm-2 control-label" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if(Model!=null){ @Model.Notes; }</textarea>
+                                        @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                                
+                                <div class="row" id="SeparateDiv" style="display:none;">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="form-group row">
+                                                    <label class="col-sm-2 control-label" for="StockAccountId">@MyERP.Properties.Resources.StockAccount</label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(a=>a.StockAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    </div>
+                                                    <label class="col-sm-2 control-label" for="SalesCostAccountId">@MyERP.Properties.Resources.SalesCostAccount</label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(a=>a.SalesCostAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    </div>
+                                                </div>
+                                                <div class="form-group row">
+                                                    <label class="col-sm-2 control-label" for="InventoryVarianceAccountId">@MyERP.Properties.Resources.InventoryVarianceAccount</label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(a=>a.InventoryVarianceAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    </div>
+                                                    <label class="col-sm-2 control-label" for="LostAndDamagedAccountId">@MyERP.Properties.Resources.LostAndDamagedAccount</label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(a=>a.LostAndDamagedAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    </div>
+                                                </div>
+                                                <div class="form-group row">
+                                                    <label class="col-sm-2 control-label" for="GiftsAndSamplesAccountId">@MyERP.Properties.Resources.GiftsAndSamplesAccount</label>
+                                                    <div class="col-sm-4">
+                                                        @Html.DropDownListFor(a=>a.GiftsAndSamplesAccountId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row" style="float:left;">
+                                    <input id="new" name="newBtn" hidden />
+                                    <div>
+                                        @if (Model == null)
+                                        {
+                                            <input id="new" name="newBtn" hidden />
+                                            <button type="submit" id="newbtn" class="btn btn-success">
+                                                @MyERP.Properties.Resources.SaveAndNew
+                                            </button>
+                                            <button type="submit" class="btn btn-success">
+                                                @MyERP.Properties.Resources.Save
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                        }
+                                        else
+                                        {
+                                            if (Model.IsDeleted == false)
+                                            {
+                                                <button type="submit" class="btn btn-success">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                                <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    let UseSeparatedAccountsForWarehouse = '@ViewBag.UseSeparatedAccountsForWarehouse';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if (!$('#Id').val()) {            
+            setCodeNum();
+        }
+        else {
+            $('#FieldsCodingId').prop('disabled', true);
+        }
+        UseSeparatedAccounts();
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+    });
+    // disable gives Null with form Submit so we have to reverse it in submin
+    $("form").submit(function () {
+        $("#FieldsCodingId").prop('disabled', false);
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setCodeNum() {
+        var doc = $.get('/Warehouse/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function UseSeparatedAccounts() {
+      //  alert(UseSeparatedAccountsForWarehouse)
+        if (UseSeparatedAccountsForWarehouse!='True') {
+            $('#StockAccountId').prop('selectedIndex', 0).select2();
+            $('#SalesCostAccountId').prop('selectedIndex', 0).select2();
+            $('#InventoryVarianceAccountId').prop('selectedIndex', 0).select2();
+            $('#LostAndDamagedAccountId').prop('selectedIndex', 0).select2();
+            $('#GiftsAndSamplesAccountId').prop('selectedIndex', 0).select2();
+            $('#SeparateDiv').hide();
+        }
+        else {
+            $('#StockAccountId').prop('required', true);
+            $('#SalesCostAccountId').prop('required', true);
+            $('#InventoryVarianceAccountId').prop('required', true);
+            $('#LostAndDamagedAccountId').prop('required', true);
+            $('#GiftsAndSamplesAccountId').prop('required', true);
+            $('#SeparateDiv').show();
+        }
+    }
+    //*********************************************************//
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Warehouse/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Warehouse');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    }
+                });
+        }
+    }
+</script>

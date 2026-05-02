@@ -1,0 +1,179 @@
+﻿@model IEnumerable<MyERP.Models.Employee>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Drivers;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <h4 class="page-title">@MyERP.Properties.Resources.Drivers</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+
+                            <div class="form-group row form-horizontal needs-validation">
+                                <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Employee</label>
+                                <div class="col-sm-4">
+                                    @Html.DropDownList("empId", new SelectList(ViewBag.Employees, "Id", "ArName"),htmlAttributes: new { @class = "form-control", required = "required" } )
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.CarVehicle</label>
+                                <div class="col-sm-4">
+                                    @Html.DropDownList("fixedAssetId", new SelectList(ViewBag.Cars, "Id", "ArName"), htmlAttributes: new { @class = "form-control", required = "required" } )
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+
+                                </div>
+                                <div class="col-sm-1">
+                                    <button class="btn btn-success saveBtn">@MyERP.Properties.Resources.Add</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body" id="driversData">
+
+                           @if (Model != null)
+{
+    foreach (var driver in Model)
+    {
+        <div class="form-group row empRow" id="@Html.Raw("row" + driver.Id)">
+            <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Employee</label>
+            <div class="col-sm-4">
+                <input class="form-control" disabled value="@driver.ArName" />
+            </div>
+            
+            <input class="form-control" disabled value="@(driver.FixedAsset != null ? driver.FixedAsset.ArName : "N/A")" />
+
+            <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.CarVehicle</label>
+            <div class="col-sm-4">
+                <!-- إضافة شرط للتأكد من أن FixedAsset ليست null -->
+                <input class="form-control" disabled value="@(driver.FixedAsset != null ? driver.FixedAsset.ArName : "N/A")" />
+            </div>
+            
+            <div class="col-sm-1">
+                <button class="btn btn-danger removeBtn" empId="@driver.Id">@MyERP.Properties.Resources.Delete</button>
+            </div>
+        </div>
+    }
+}
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(".saveBtn").on('click', function () {
+
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            valid = false;
+        }
+        var empId = $("#empId").val();
+        var carId = $("#fixedAssetId").val();
+        var empName = $("#empId").select2('data')[0].text;
+        var carName = $("#fixedAssetId").select2('data')[0].text;
+        //alert(empName);
+
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+             $.ajax({
+            type: "POST", contentType: "application/json",
+            url: '/Drivers/AddEdit',
+            method: 'POST',
+            data: JSON.stringify({
+                empId: empId,
+                fixedAssetId: carId
+            }),
+            success: function (r) {
+                //alert(r)
+                if (r.Result == true) {
+                    var empRow = '<div class="form-group row empRow" id="row' + empId + '"><label class=" col-sm-2 control-label">' + '@MyERP.Properties.Resources.Employee' + '</label><div class="col-sm-4"><input class=" form-control" disabled value="' + empName + '" /></div><label class=" col-sm-1 control-label">' + '@MyERP.Properties.Resources.CarVehicle' + '</label><div class="col-sm-4"><input class=" form-control" disabled value="' + carName + '" /></div><div class="col-sm-1"><button class="btn btn-danger removeBtn" empId="' + empId + '">' + '@MyERP.Properties.Resources.Delete' + '</button></div></div>';
+
+                    var driversData = $("#driversData");
+                    driversData.append(empRow);
+                }
+                else if (r.Result == false && r.AddedBefore == true ) {
+                    alert('@MyERP.Properties.Resources.ThisEmployeeHasBeenAddedBefore');
+                }
+                else {
+                    alert('@MyERP.Properties.Resources.NotSaved');
+                }
+
+            },
+            error: function () {
+                alert('@MyERP.Properties.Resources.AnErrorOccurredTryAgain');
+            }
+        });
+        }
+
+    });
+
+    $(document).on('click', '.removeBtn',function () {
+        var btn = $(this);
+        var empId = btn.attr("empId");
+        var driversData = $("#driversData");
+        // debugger;
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $.ajax({
+            type: "POST", contentType: "application/json",
+            url: '/Drivers/RemoveDriver',
+            method: 'POST',
+            data: JSON.stringify({
+                empId: empId
+            }),
+            success: function (r) {
+                if (r == true) {
+                    //alert("success")
+                    var empRow = btn.closest(".empRow");
+
+                    console.log(empRow)
+                    empRow.remove();
+
+                }
+                else {
+                    alert('@MyERP.Properties.Resources.AnErrorOccurredTryAgain');
+                }
+
+            },
+            error: function () {
+                alert('@MyERP.Properties.Resources.AnErrorOccurredTryAgain');
+            }
+        });
+        }
+    });
+</script>
+

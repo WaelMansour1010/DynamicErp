@@ -1,0 +1,1821 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>sp_GetPropertyReport
+      <Diagram DiagramId="3fa378a81e054e74861606ef80352a5b" Name="Diagram1" ZoomLevel="54">
+        <EntityTypeShape EntityType="MyERPModel.AdvertisingCompaign" Width="1.5" PointX="2.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.Area" Width="1.5" PointX="26.25" PointY="264.875" />
+        <EntityTypeShape EntityType="MyERPModel.Bank" Width="1.5" PointX="24" PointY="256.25" />
+        <EntityTypeShape EntityType="MyERPModel.BankAccount" Width="1.5" PointX="3" PointY="245.5" />
+        <EntityTypeShape EntityType="MyERPModel.Branch" Width="1.5" PointX="29.25" PointY="275.75" />
+        <EntityTypeShape EntityType="MyERPModel.CashBox" Width="1.5" PointX="18.75" PointY="244.625" />
+        <EntityTypeShape EntityType="MyERPModel.CashIssueSourceType" Width="1.5" PointX="27.75" PointY="255.875" />
+        <EntityTypeShape EntityType="MyERPModel.CashIssueVoucher" Width="1.5" PointX="30" PointY="242.25" />
+        <EntityTypeShape EntityType="MyERPModel.CashTransfer" Width="1.5" PointX="13.5" PointY="244.875" />
+        <EntityTypeShape EntityType="MyERPModel.CashTransferType" Width="1.5" PointX="11.25" PointY="240.125" />
+        <EntityTypeShape EntityType="MyERPModel.ChartOfAccount" Width="1.5" PointX="14.25" PointY="231" />
+        <EntityTypeShape EntityType="MyERPModel.ChartOfAccountsCategory" Width="1.5" PointX="12" PointY="234.75" />
+        <EntityTypeShape EntityType="MyERPModel.ChartOfAccountsClassification" Width="1.5" PointX="12" PointY="232.25" />
+        <EntityTypeShape EntityType="MyERPModel.ChartOfAccountsType" Width="1.5" PointX="12" PointY="237.375" />
+        <EntityTypeShape EntityType="MyERPModel.ChequeIssue" Width="1.5" PointX="10.5" PointY="244.375" />
+        <EntityTypeShape EntityType="MyERPModel.ChequeReceipt" Width="1.5" PointX="5.25" PointY="243.875" />
+        <EntityTypeShape EntityType="MyERPModel.ChequeReceiptStatu" Width="1.5" PointX="3" PointY="241.125" />
+        <EntityTypeShape EntityType="MyERPModel.ChequeSourceType" Width="1.5" PointX="8.25" PointY="230.625" />
+        <EntityTypeShape EntityType="MyERPModel.ChequeStatu" Width="1.5" PointX="8.25" PointY="234.75" />
+        <EntityTypeShape EntityType="MyERPModel.City" Width="1.5" PointX="29.25" PointY="266.875" />
+        <EntityTypeShape EntityType="MyERPModel.Company" Width="1.5" PointX="24" PointY="316.5" />
+        <EntityTypeShape EntityType="MyERPModel.Contact" Width="1.5" PointX="34.5" PointY="278.875" />
+        <EntityTypeShape EntityType="MyERPModel.Contractor" Width="1.5" PointX="31.5" PointY="300.375" />
+        <EntityTypeShape EntityType="MyERPModel.ContractorsGroup" Width="1.5" PointX="26.25" PointY="331.125" />
+        <EntityTypeShape EntityType="MyERPModel.Country" Width="1.5" PointX="24" PointY="293.5" />
+        <EntityTypeShape EntityType="MyERPModel.Currency" Width="1.5" PointX="0.75" PointY="243.375" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerAddress" Width="1.5" PointX="4.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerOpenningBalance" Width="1.5" PointX="13.5" PointY="241.5" />
+        <EntityTypeShape EntityType="MyERPModel.CustomersGroup" Width="1.5" PointX="26.25" PointY="273.125" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerSourceType" Width="1.5" PointX="38.25" PointY="307" />
+        <EntityTypeShape EntityType="MyERPModel.Department" Width="1.5" PointX="8.25" PointY="241" />
+        <EntityTypeShape EntityType="MyERPModel.DepartmentItem" Width="1.5" PointX="16.5" PointY="247.75" />
+        <EntityTypeShape EntityType="MyERPModel.DirectExpens" Width="1.5" PointX="30" PointY="236.5" />
+        <EntityTypeShape EntityType="MyERPModel.DirectRevenue" Width="1.5" PointX="27" PointY="236.625" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeesGroup" Width="1.5" PointX="32.25" PointY="278.375" />
+        <EntityTypeShape EntityType="MyERPModel.ERPModule" Width="1.5" PointX="4.75" PointY="4.75" />
+        <EntityTypeShape EntityType="MyERPModel.ERPRole" Width="1.5" PointX="19.5" PointY="236.125" />
+        <EntityTypeShape EntityType="MyERPModel.ERPRoleReport" Width="1.5" PointX="21.75" PointY="220.625" />
+        <EntityTypeShape EntityType="MyERPModel.FinancialPeriod" Width="1.5" PointX="6.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAsset" Width="1.5" PointX="31.5" PointY="268.75" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetDepreciation" Width="1.5" PointX="31.5" PointY="261.25" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetDepreciationDetail" Width="1.5" PointX="46.75" PointY="251.375" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetsGroup" Width="1.5" PointX="24" PointY="309.125" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetStatu" Width="1.5" PointX="29.25" PointY="263.875" />
+        <EntityTypeShape EntityType="MyERPModel.IdentityType" Width="1.5" PointX="38.25" PointY="298.625" />
+        <EntityTypeShape EntityType="MyERPModel.InventoryVoucher" Width="1.5" PointX="41.25" PointY="252.625" />
+        <EntityTypeShape EntityType="MyERPModel.InventoryVoucherDetail" Width="1.5" PointX="49.5" PointY="275" />
+        <EntityTypeShape EntityType="MyERPModel.ItemGroup" Width="1.5" PointX="24" PointY="282.125" />
+        <EntityTypeShape EntityType="MyERPModel.ItemPrice" Width="1.5" PointX="37.5" PointY="290.125" />
+        <EntityTypeShape EntityType="MyERPModel.ItemQuantity" Width="1.5" PointX="28.5" PointY="287.125" />
+        <EntityTypeShape EntityType="MyERPModel.ItemTemp" Width="1.5" PointX="0.75" PointY="6.75" />
+        <EntityTypeShape EntityType="MyERPModel.ItemType" Width="1.5" PointX="24" PointY="277.875" />
+        <EntityTypeShape EntityType="MyERPModel.ItemUnit" Width="1.5" PointX="24" PointY="285.625" />
+        <EntityTypeShape EntityType="MyERPModel.ItemVendor" Width="1.5" PointX="45.75" PointY="286.375" />
+        <EntityTypeShape EntityType="MyERPModel.JobTitle" Width="1.5" PointX="38.25" PointY="302.75" />
+        <EntityTypeShape EntityType="MyERPModel.Maintenance" Width="1.5" PointX="58" PointY="261.875" />
+        <EntityTypeShape EntityType="MyERPModel.MyLog" Width="1.5" PointX="6.75" PointY="5.75" />
+        <EntityTypeShape EntityType="MyERPModel.Nationality" Width="1.5" PointX="38.25" PointY="310.125" />
+        <EntityTypeShape EntityType="MyERPModel.OnlineUser" Width="1.5" PointX="24" PointY="226.75" />
+        <EntityTypeShape EntityType="MyERPModel.Order" Width="1.5" PointX="48.75" PointY="283.5" />
+        <EntityTypeShape EntityType="MyERPModel.OrderHistory" Width="1.5" PointX="54" PointY="287.5" />
+        <EntityTypeShape EntityType="MyERPModel.OrderRequest" Width="1.5" PointX="18.75" PointY="279.875" />
+        <EntityTypeShape EntityType="MyERPModel.OrderService" Width="1.5" PointX="51" PointY="292.125" />
+        <EntityTypeShape EntityType="MyERPModel.OrderSparePart" Width="1.5" PointX="51" PointY="284.375" />
+        <EntityTypeShape EntityType="MyERPModel.OrderStatu" Width="1.5" PointX="46.5" PointY="300.625" />
+        <EntityTypeShape EntityType="MyERPModel.PageAction" Width="1.5" PointX="30.75" PointY="232.125" />
+        <EntityTypeShape EntityType="MyERPModel.PaymentMethod" Width="1.5" PointX="57.75" PointY="243.125" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseInvoiceDirectExpens" Width="1.5" PointX="37.5" PointY="249.625" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseInvoicePaymentMethod" Width="1.5" PointX="24" PointY="246.375" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseOrder" Width="1.5" PointX="35.25" PointY="244.75" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseOrderDetail" Width="1.5" PointX="42.75" PointY="274" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseQuotation" Width="1.5" PointX="47.25" PointY="255.75" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseQuotationDetail" Width="1.5" PointX="52.5" PointY="267" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseRequestStatu" Width="1.5" PointX="47.5" PointY="247.25" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseReturnPaymentMethod" Width="1.5" PointX="24" PointY="251.5" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseReturnsDetail" Width="1.5" PointX="54.75" PointY="279" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseSaleSerialNumber" Width="1.5" PointX="28.5" PointY="271.75" />
+        <EntityTypeShape EntityType="MyERPModel.RolePrivilege" Width="1.5" PointX="33" PointY="230.375" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoiceInstallmentActualPayment" Width="1.5" PointX="21" PointY="249.625" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoiceInstallmentDetail" Width="1.5" PointX="57" PointY="246.75" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoicePaymentMethod" Width="1.5" PointX="21" PointY="253.375" />
+        <EntityTypeShape EntityType="MyERPModel.SalesQuotationDetail" Width="1.5" PointX="52.5" PointY="275" />
+        <EntityTypeShape EntityType="MyERPModel.SalesReturnPaymentMethod" Width="1.5" PointX="60" PointY="253.875" />
+        <EntityTypeShape EntityType="MyERPModel.SalesReturnsDetail" Width="1.5" PointX="63" PointY="269.875" />
+        <EntityTypeShape EntityType="MyERPModel.Service" Width="1.5" PointX="48.75" PointY="308.5" />
+        <EntityTypeShape EntityType="MyERPModel.ServicesCategory" Width="1.5" PointX="46.5" PointY="304.5" />
+        <EntityTypeShape EntityType="MyERPModel.ServiceSetting" Width="1.5" PointX="2.75" PointY="7.75" />
+        <EntityTypeShape EntityType="MyERPModel.ShareHolder" Width="1.5" PointX="8.25" PointY="257.625" />
+        <EntityTypeShape EntityType="MyERPModel.ShareHolderEquity" Width="1.5" PointX="13.5" PointY="253.625" />
+        <EntityTypeShape EntityType="MyERPModel.StockIssueType" Width="1.5" PointX="36" PointY="241.625" />
+        <EntityTypeShape EntityType="MyERPModel.StockIssueVoucher" Width="1.5" PointX="38.25" PointY="253.375" />
+        <EntityTypeShape EntityType="MyERPModel.StockLossesVoucher" Width="1.5" PointX="44.25" PointY="244.875" />
+        <EntityTypeShape EntityType="MyERPModel.StockLossesVoucherDetail" Width="1.5" PointX="49.5" PointY="267" />
+        <EntityTypeShape EntityType="MyERPModel.StockReceiptVoucher" Width="1.5" PointX="41.25" PointY="263.625" />
+        <EntityTypeShape EntityType="MyERPModel.StockTransferVoucher" Width="1.5" PointX="38.25" PointY="264.625" />
+        <EntityTypeShape EntityType="MyERPModel.StockTransferVoucherDetail" Width="1.5" PointX="43.5" PointY="282" />
+        <EntityTypeShape EntityType="MyERPModel.SubmittedTechnician" Width="1.5" PointX="51" PointY="288.625" />
+        <EntityTypeShape EntityType="MyERPModel.Techanician" Width="1.5" PointX="46.5" PointY="290.75" />
+        <EntityTypeShape EntityType="MyERPModel.TechanicianService" Width="1.5" PointX="48.75" PointY="298.5" />
+        <EntityTypeShape EntityType="MyERPModel.TechnicianAttachedFile" Width="1.5" PointX="48.75" PointY="293.375" />
+        <EntityTypeShape EntityType="MyERPModel.UpdatedTransaction" Width="1.5" PointX="47.25" PointY="266.625" />
+        <EntityTypeShape EntityType="MyERPModel.UpdatedTransactionDetail" Width="1.5" PointX="55.5" PointY="263" />
+        <EntityTypeShape EntityType="MyERPModel.UpdatedTransactionPaymentMethod" Width="1.5" PointX="27" PointY="251.375" />
+        <EntityTypeShape EntityType="MyERPModel.UserCashBox" Width="1.5" PointX="24" PointY="242.75" />
+        <EntityTypeShape EntityType="MyERPModel.UserDepartment" Width="1.5" PointX="33" PointY="245.375" />
+        <EntityTypeShape EntityType="MyERPModel.UserHomePage" Width="1.5" PointX="24" PointY="235.625" />
+        <EntityTypeShape EntityType="MyERPModel.UserPrivilege" Width="1.5" PointX="24" PointY="239.375" />
+        <EntityTypeShape EntityType="MyERPModel.UserReport" Width="1.5" PointX="24" PointY="313.75" />
+        <EntityTypeShape EntityType="MyERPModel.User" Width="1.5" PointX="8.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.UserWareHouse" Width="1.5" PointX="27" PointY="233.625" />
+        <EntityTypeShape EntityType="MyERPModel.Vendor" Width="1.5" PointX="37.5" PointY="275.5" />
+        <EntityTypeShape EntityType="MyERPModel.VendorOpenningBalance" Width="1.5" PointX="49.75" PointY="255.5" />
+        <EntityTypeShape EntityType="MyERPModel.VendorsGroup" Width="1.5" PointX="32.25" PointY="283.25" />
+        <EntityTypeShape EntityType="MyERPModel.Warehouse" Width="1.5" PointX="33" PointY="248.375" />
+        <EntityTypeShape EntityType="MyERPModel.WarehouseOB" Width="1.5" PointX="44.25" PointY="266.875" />
+        <EntityTypeShape EntityType="MyERPModel.WarehouseOBDetail" Width="1.5" PointX="55.5" PointY="271.75" />
+        <EntityTypeShape EntityType="MyERPModel.WarrantyType" Width="1.5" PointX="46.5" PointY="297.75" />
+        <EntityTypeShape EntityType="MyERPModel.BalanceStatement" Width="1.5" PointX="8.75" PointY="4.75" />
+        <EntityTypeShape EntityType="MyERPModel.ChartOfAccountTemp" Width="1.5" PointX="8.75" PointY="9.75" />
+        <AssociationConnector Association="MyERPModel.FK_Area_City" />
+        <AssociationConnector Association="MyERPModel.FK_Area_Country" />
+        <AssociationConnector Association="MyERPModel.FK_BankAccount_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_Bank_From" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_Bank_To" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Bank_Debit" />
+        <AssociationConnector Association="MyERPModel.FK_InvoicesPaymentMethods_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnPaymentMethod_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePaymentMethods_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionPaymentMethods_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_BankAccount_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_BankAccount_ChartOfAccount1" />
+        <AssociationConnector Association="MyERPModel.FK_BankAccount_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_BankAccount_From" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_BankAccount_To" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_BankAccount_Debit" />
+        <AssociationConnector Association="MyERPModel.FK_Department_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_InvoicesPaymentMethods_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnPaymentMethod_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePaymentMethods_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionPaymentMethods_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Branch_Company" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_Contractor_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetDepreciation_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrder_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotation_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransaction_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOB_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_CashBox_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_CashBox_Department" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_CashBox_From" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_CashBox_To" />
+        <AssociationConnector Association="MyERPModel.FK_InvoicesPaymentMethods_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnPaymentMethod_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceInstallmentActualPayment_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePaymentMethods_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionPaymentMethods_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_UserCashBox_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_IssuePaymentSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_ShareHolder" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_Techanician" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_DirectExpenses" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_CashTransferTypes" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ChartOfAccount_ChartOfAccountsCategory" />
+        <AssociationConnector Association="MyERPModel.FK_ChartOfAccount_ChartOfAccountsClassification" />
+        <AssociationConnector Association="MyERPModel.FK_ChartOfAccount_ChartOfAccountsType" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_AcquiredDeduction" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_DiscountAllowed" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_GeneralExpenses" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_Inventory" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_Purchase" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_Sales" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_SalesCost" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_Tax" />
+        <AssociationConnector Association="MyERPModel.FK_DirectExpenses_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_DirectRevenue_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ShareHolder_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_ChequeSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_ChequeStatus" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_DirectExpenses" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_ShareHolder" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_ChequeReceiptStatus" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_ChequeSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_DirectRevenue" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_ShareHolder" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_City_Country" />
+        <AssociationConnector Association="MyERPModel.FK_Contact_City" />
+        <AssociationConnector Association="MyERPModel.FK_Contractor_Company" />
+        <AssociationConnector Association="MyERPModel.FK_ContractorsGroup_Company" />
+        <AssociationConnector Association="MyERPModel.FK_CustomersGroup_Company" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeesGroup_Company" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_Company" />
+        <AssociationConnector Association="MyERPModel.FK_VendorsGroup_Company" />
+        <AssociationConnector Association="MyERPModel.FK_Contacts_Country" />
+        <AssociationConnector Association="MyERPModel.FK_Contacts_JobTitle" />
+        <AssociationConnector Association="MyERPModel.FK_Contractor_ContractorsGroup" />
+        <AssociationConnector Association="MyERPModel.FK_Contractor_IdentityType" />
+        <AssociationConnector Association="MyERPModel.FK_Contractor_JobTitle" />
+        <AssociationConnector Association="MyERPModel.FK_Contractor_Nationality" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetDepreciation_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrder_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotation_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransaction_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOB_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOBDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerOpenningBalance_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPrice_CustomersGroup" />
+        <AssociationConnector Association="MyERPModel.FK_DepartmentItem_Department" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_Department" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetDepreciation_Department" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrder_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotation_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ShareHolderEquity_Department" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransaction_Department" />
+        <AssociationConnector Association="MyERPModel.FK_UserDepartment_Department" />
+        <AssociationConnector Association="MyERPModel.FK_VendorOpenningBalance_Department" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOB_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDirectExpenses_DirectExpenses" />
+        <AssociationConnector Association="MyERPModel.FK_ERPRoleReport_ERPRole" />
+        <AssociationConnector Association="MyERPModel.FK_RolePrivilege_ERPRole" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_FixedAssetsGroup" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_FixedAssetStatus" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetDepreciationDetails_FixedAsset" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetDepreciationDetails_FixedAssetDepreciation" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetsGroup_FixedAssetsGroup" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_IdentityType" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_InventoryVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPrice_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOBDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_ItemUnit_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOBDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_ItemVendor_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_JobTitle" />
+        <AssociationConnector Association="MyERPModel.FK_Maintenance_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_Nationality" />
+        <AssociationConnector Association="MyERPModel.FK_Order_OrderStatus" />
+        <AssociationConnector Association="MyERPModel.FK_Order_ServicesCategory" />
+        <AssociationConnector Association="MyERPModel.FK_Order_Techanician" />
+        <AssociationConnector Association="MyERPModel.FK_Order_WarrantyType" />
+        <AssociationConnector Association="MyERPModel.FK_OrderHistory_Order" />
+        <AssociationConnector Association="MyERPModel.FK_OrderServices_Order" />
+        <AssociationConnector Association="MyERPModel.FK_OrderSpareParts_Order" />
+        <AssociationConnector Association="MyERPModel.FK_SubmittedTechnician_Order" />
+        <AssociationConnector Association="MyERPModel.FK_OrderHistory_OrderStatus" />
+        <AssociationConnector Association="MyERPModel.FK_RolePrivilege_PageAction" />
+        <AssociationConnector Association="MyERPModel.FK_UserPrivilege_PageAction" />
+        <AssociationConnector Association="MyERPModel.FK_InvoicesPaymentMethods_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnPaymentMethod_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePaymentMethods_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnPaymentMethod_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionPaymentMethods_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrder_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrder_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_PurchaseOrder" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotation_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotation_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_PurchaseQuotation" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_Service_Service" />
+        <AssociationConnector Association="MyERPModel.FK_Service_ServicesCategory" />
+        <AssociationConnector Association="MyERPModel.FK_ServicesCategory_ServicesCategory" />
+        <AssociationConnector Association="MyERPModel.FK_TechanicianService_ServicesCategory" />
+        <AssociationConnector Association="MyERPModel.FK_ShareHolderEquity_ShareHolder" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_StockIssueType" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_StockLossesVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_StockTransferVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SubmittedTechnician_Techanician" />
+        <AssociationConnector Association="MyERPModel.FK_TechanicianService_Techanician" />
+        <AssociationConnector Association="MyERPModel.FK_TechnicianAttachedFiles_Techanician" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransaction_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_UpdatedTransaction" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionPaymentMethods_UpdatedTransaction" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_UserWareHouse_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_VendorsGroup" />
+        <AssociationConnector Association="MyERPModel.FK_VendorOpenningBalance_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOB_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOBDetails_WarehouseOB" />
+        <EntityTypeShape EntityType="MyERPModel.ItemComponent" Width="1.5" PointX="31.5" PointY="287.75" />
+        <AssociationConnector Association="MyERPModel.FK_ItemComponent_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.ManufacturingPurchaseRequest" Width="1.5" PointX="52" PointY="249.375" />
+        <EntityTypeShape EntityType="MyERPModel.SalesOrdersSalesInvoice" Width="1.5" PointX="64" PointY="264" />
+        <EntityTypeShape EntityType="MyERPModel.OccuredNotification" Width="1.5" PointX="35.25" PointY="234.875" />
+        <AssociationConnector Association="MyERPModel.FK_OccuredNotifications_PageAction" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoiceDetail" Width="1.5" PointX="61" PointY="261.5" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.SalesOrderDetail" Width="1.5" PointX="63" PointY="253.625" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseRequestDetail" Width="1.5" PointX="60" PointY="269.5" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.StockIssueVoucherDetail" Width="1.5" PointX="52.5" PointY="241.5" />
+        <EntityTypeShape EntityType="MyERPModel.StockReceiptVoucherDetail" Width="1.5" PointX="49.5" PointY="258.625" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucherDetails_StockIssueVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucherDetails_StockReceiptVoucher" />
+        <EntityTypeShape EntityType="MyERPModel.Employee" Width="1.5" PointX="16.5" PointY="239.5" />
+        <AssociationConnector Association="MyERPModel.FK_CashBox_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_IssuePaymentVoucher_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Department" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_OrderRequest_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_Employee" />
+        <EntityTypeShape EntityType="MyERPModel.ItemCostPrice" Width="1.5" PointX="40.5" PointY="246.125" />
+        <AssociationConnector Association="MyERPModel.FK_ItemCostPrice_Department" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseInvoiceDetail" Width="1.5" PointX="45.75" PointY="278.25" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.ManufacturingRequest" Width="1.5" PointX="26.25" PointY="244.625" />
+        <EntityTypeShape EntityType="MyERPModel.ManufacturingRequestItem" Width="1.5" PointX="52.25" PointY="261.5" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequest_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequest_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequest_ItemGroup" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequestItem_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingPurchaseRequest_ManufacturingRequest" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequestItem_ManufacturingRequest" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequestItem_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.ManufacturingOrder" Width="1.5" PointX="38.25" PointY="243.125" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingOrder_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingOrder_ManufacturingRequest" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingOrder_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.ERPUser" Width="1.5" PointX="35.75" PointY="220.75" />
+        <AssociationConnector Association="MyERPModel.FK_Area_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Bank_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_BankAccount_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Branch_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CashBox_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_City_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Company_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Country_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CustomersGroup_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_DirectExpenses_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_DirectRevenue_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ERPUser_Employee1" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeesGroup_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ERPUser_ERPRole" />
+        <AssociationConnector Association="MyERPModel.FK_ERPUser_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetsGroup_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ItemGroup_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ItemUnit_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Maintenance_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_OccuredNotifications_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_OnlineUsers_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_UserCashBox_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_UserDepartment_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_UserHomePage_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_UserPrivilege_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_UserReports_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_UserWareHouse_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_VendorsGroup_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoicePurchaseRequest" Width="1.5" PointX="60" PointY="257.625" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_Visa" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_VisaCommissionAccount" />
+        <EntityTypeShape EntityType="MyERPModel.Item" Width="1.5" PointX="26.25" PointY="278.375" />
+        <AssociationConnector Association="MyERPModel.FK_DepartmentItem_Item" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_Item_ItemGroup" />
+        <AssociationConnector Association="MyERPModel.FK_Item_ItemType" />
+        <AssociationConnector Association="MyERPModel.FK_ItemComponent_Item" />
+        <AssociationConnector Association="MyERPModel.FK_ItemCostPrice_Item" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPrice_Item" />
+        <AssociationConnector Association="MyERPModel.FK_ItemQuantity_Item" />
+        <AssociationConnector Association="MyERPModel.FK_ItemVendor_Item" />
+        <AssociationConnector Association="MyERPModel.FK_Maintenance_Item" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingRequestItem_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseSaleSerialNumber_Item" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOBDetails_Item" />
+        <EntityTypeShape EntityType="MyERPModel.SalesOrder" Width="1.5" PointX="54.75" PointY="237.5" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_SalesOrder" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrdersSalesInvoice_SalesOrder" />
+        <EntityTypeShape EntityType="MyERPModel.SalesOrderPaymentMethod" Width="1.5" PointX="63" PointY="247.75" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderPaymentMethod_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderPaymentMethod_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderPaymentMethod_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderPaymentMethod_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderPaymentMethod_SalesOrder" />
+        <EntityTypeShape EntityType="MyERPModel.CostCenter" Width="1.5" PointX="3.375" PointY="10.75" />
+        <AssociationConnector Association="MyERPModel.FK_CostCenter_CostCenter" />
+        <EntityTypeShape EntityType="MyERPModel.JournalEntry" Width="1.5" PointX="52" PointY="254.25" />
+        <EntityTypeShape EntityType="MyERPModel.JournalEntryDetail" Width="1.5" PointX="54.25" PointY="133.125" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntry_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntryDetail_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntry_Company" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntryDetail_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntry_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntry_Department" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntry_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntryDetail_JournalEntry" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_CostCenter" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseInvoice" Width="1.5" PointX="48.75" PointY="153.125" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseReturn" Width="1.5" PointX="39.75" PointY="144.625" />
+        <EntityTypeShape EntityType="MyERPModel.SalesReturn" Width="1.5" PointX="42.75" PointY="143.5" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Maintenance_PurchaseInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_PurchaseInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDirectExpenses_PurchaseInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoicePaymentMethods_PurchaseInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnPaymentMethod_PurchaseReturns" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_PurchaseReturns" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnPaymentMethod_SalesReturns" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_SalesReturns" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetScraping" Width="1.5" PointX="10.5" PointY="254.375" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetScrapingDetail" Width="1.5" PointX="33.75" PointY="264" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetScraping_Department" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetScrapingDetails_FixedAsset" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetScrapingDetails_FixedAssetScraping" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetSelling" Width="1.5" PointX="10.5" PointY="259.5" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetSellingDetail" Width="1.5" PointX="33.75" PointY="268.625" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetSelling_Department" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetSellingDetails_FixedAsset" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetSellingDetails_FixedAssetSelling" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetSelling_CashBox" />
+        <EntityTypeShape EntityType="MyERPModel.OvertimeType" Width="1.5" PointX="18.75" PointY="229.5" />
+        <EntityTypeShape EntityType="MyERPModel.PenaltyType" Width="1.5" PointX="18.75" PointY="260.875" />
+        <EntityTypeShape EntityType="MyERPModel.RewardType" Width="1.5" PointX="24.75" PointY="222.875" />
+        <EntityTypeShape EntityType="MyERPModel.SalaryItem" Width="1.5" PointX="19.5" PointY="226" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeSalaryItem" Width="1.5" PointX="21.75" PointY="236.5" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeSalaryItem_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeSalaryItem_SalaryItem" />
+        <EntityTypeShape EntityType="MyERPModel.SalesQuotation" Width="1.5" PointX="43.75" PointY="255.375" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_SalesQuotation" />
+        <EntityTypeShape EntityType="MyERPModel.TaxesPercentage" Width="1.5" PointX="5.375" PointY="10.75" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_ItemGroup" />
+        <EntityTypeShape EntityType="MyERPModel.CashBoxType" Width="1.5" PointX="16.5" PointY="251.25" />
+        <EntityTypeShape EntityType="MyERPModel.PosStatu" Width="1.5" PointX="36.75" PointY="217" />
+        <AssociationConnector Association="MyERPModel.FK_CashBox_CashBoxType" />
+        <EntityTypeShape EntityType="MyERPModel.Pos" Width="1.5" PointX="39" PointY="235.875" />
+        <EntityTypeShape EntityType="MyERPModel.UserPos" Width="1.5" PointX="41.25" PointY="227.5" />
+        <AssociationConnector Association="MyERPModel.FK_PointOfSales_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PointOfSales_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PointOfSales_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PointOfSales_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_UserPos_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PointOfSales_PosStatus" />
+        <AssociationConnector Association="MyERPModel.FK_UserPos_Pos" />
+        <AssociationConnector Association="MyERPModel.FK_ERPUser_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Pos" />
+        <EntityTypeShape EntityType="MyERPModel.CurrencyCategory" Width="1.5" PointX="11.375" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.PosClosing" Width="1.5" PointX="41.25" PointY="236.5" />
+        <EntityTypeShape EntityType="MyERPModel.PosClosingCurrencyCategory" Width="1.5" PointX="43.5" PointY="234.75" />
+        <EntityTypeShape EntityType="MyERPModel.PosClosingDetail" Width="1.5" PointX="60" PointY="239.75" />
+        <EntityTypeShape EntityType="MyERPModel.Shift" Width="1.5" PointX="44" PointY="238.25" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosing_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Shift_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosing_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosing_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosing_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_Shift_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosingDetail_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosing_Pos" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosing_Shift" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosingCurrencyCategory_PosClosing" />
+        <AssociationConnector Association="MyERPModel.FK_PosClosingDetail_PosClosing" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Shift" />
+        <AssociationConnector Association="MyERPModel.FK_PaymentMethod_PaymentMethod" />
+        <EntityTypeShape EntityType="MyERPModel.PosReceiptVoucher" Width="1.5" PointX="54.25" PointY="249.875" />
+        <EntityTypeShape EntityType="MyERPModel.PosReceiptVoucherDetail" Width="1.5" PointX="63" PointY="242.5" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucher_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_PaymentMethod_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucher_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucherDetail_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucher_Shift" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucherDetail_PosReceiptVoucher" />
+        <EntityTypeShape EntityType="MyERPModel.ShiftDetail" Width="1.5" PointX="46.25" PointY="239.125" />
+        <EntityTypeShape EntityType="MyERPModel.ShiftEmployee" Width="1.5" PointX="47.25" PointY="244" />
+        <AssociationConnector Association="MyERPModel.FK_ShiftEmployee_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_ShiftDetail_Shift" />
+        <AssociationConnector Association="MyERPModel.FK_ShiftEmployee_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.AdministrativeDepartment" Width="1.5" PointX="0.75" PointY="11.75" />
+        <EntityTypeShape EntityType="MyERPModel.ContractsType" Width="1.5" PointX="11.75" PointY="3.75" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeType" Width="1.5" PointX="11.75" PointY="7.75" />
+        <EntityTypeShape EntityType="MyERPModel.HrDepartment" Width="1.5" PointX="11.75" PointY="11.75" />
+        <EntityTypeShape EntityType="MyERPModel.Job" Width="1.5" PointX="13.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.JobGrade" Width="1.5" PointX="13.75" PointY="4.75" />
+        <EntityTypeShape EntityType="MyERPModel.Location" Width="1.5" PointX="13.75" PointY="8.75" />
+        <EntityTypeShape EntityType="MyERPModel.WorkTeam" Width="1.5" PointX="13.75" PointY="12.75" />
+        <EntityTypeShape EntityType="MyERPModel.ContractsStatu" Width="1.5" PointX="0.75" PointY="15.75" />
+        <EntityTypeShape EntityType="MyERPModel.ContractType" Width="1.5" PointX="7.75" PointY="15.75" />
+        <EntityTypeShape EntityType="MyERPModel.Gender" Width="1.5" PointX="14.625" PointY="262" />
+        <EntityTypeShape EntityType="MyERPModel.InsuranceCategory" Width="1.5" PointX="9.75" PointY="15.75" />
+        <EntityTypeShape EntityType="MyERPModel.MaritalStatu" Width="1.5" PointX="14.625" PointY="259.5" />
+        <EntityTypeShape EntityType="MyERPModel.PeriodType" Width="1.5" PointX="16.75" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.Religion" Width="1.5" PointX="14.625" PointY="256.875" />
+        <EntityTypeShape EntityType="MyERPModel.WorkStatu" Width="1.5" PointX="5.75" PointY="14.875" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_AdministrativeDepartment" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Area" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_ContractsType" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Employee1" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_EmployeeType" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Gender" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_HrDepartment" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_IdentityType" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Job" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_JobGrade" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Location" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_MaritalStatus" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Nationality" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Religion" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_WorkStatus" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_WorkTeam" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItem_ChartOfAccount" />
+        <EntityTypeShape EntityType="MyERPModel.SalaryItemCalcMethod" Width="1.5" PointX="17.25" PointY="217.375" />
+        <EntityTypeShape EntityType="MyERPModel.SalaryItemNature" Width="1.5" PointX="17.25" PointY="208.75" />
+        <EntityTypeShape EntityType="MyERPModel.SalaryItemUnit" Width="1.5" PointX="17.25" PointY="213" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItem_SalaryItemCalcMethod" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItem_SalaryItemNature" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItem_SalaryItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Pos" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeContractAnnualIncrease" Width="1.5" PointX="21.75" PointY="182.25" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeContractEndOfService" Width="1.5" PointX="21.75" PointY="176.25" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeContractSalaryItem" Width="1.5" PointX="24.75" PointY="178.75" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeContractVacation" Width="1.5" PointX="21.75" PointY="179.25" />
+        <EntityTypeShape EntityType="MyERPModel.SalaryItemValueCalcMethod" Width="1.5" PointX="16.375" PointY="3.75" />
+        <EntityTypeShape EntityType="MyERPModel.SocialInsuranceSetting" Width="1.5" PointX="16.5" PointY="234.875" />
+        <EntityTypeShape EntityType="MyERPModel.SocialInsuranceSettingDetail" Width="1.5" PointX="26.75" PointY="227.125" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceSetting_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceSetting_ChartOfAccount1" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceSetting_ChartOfAccount2" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractAnnualIncrease_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractEndOfService_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractSalaryItem_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractVacation_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceSettingDetail_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceSettingDetail_SocialInsuranceSetting" />
+        <EntityTypeShape EntityType="MyERPModel.SocialInsurance" Width="1.5" PointX="16.375" PointY="7.75" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_EmpVacationAccumulatedAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_EmpVacationExpensesAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_EndOfServiceAccumulatedAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_EndOfServiceExpensesAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_PaidAllowancesAccumulatedAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_PaidAllowancesExpensesAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_SalesReturnsAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_TravelingTicketsAccumulatedAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_TravelingTicketsExpensesAccount" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItem_SalaryItemValueCalcMethodId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsurance_Department" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeContract" Width="1.5" PointX="18.75" PointY="124.625" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_ContractsStatus" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_ContractsType" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_ContractType" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_InsuranceCategory" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_Job" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractAnnualIncrease_EmployeeContract" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractEndOfService_EmployeeContract" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractSalaryItem_EmployeeContract" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContractVacation_EmployeeContract" />
+        <EntityTypeShape EntityType="MyERPModel.ItemImage" Width="1.5" PointX="28.5" PointY="290.25" />
+        <AssociationConnector Association="MyERPModel.FK_ItemImage_Item" />
+        <AssociationConnector Association="MyERPModel.FK_AdministrativeDepartment_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_AdministrativeDepartment_HrDepartment" />
+        <AssociationConnector Association="MyERPModel.FK_HrDepartment_Department" />
+        <AssociationConnector Association="MyERPModel.FK_HrDepartment_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_HrDepartment_MainDepartmentId" />
+        <EntityTypeShape EntityType="MyERPModel.AdditionalItem" Width="1.5" PointX="24" PointY="298.25" />
+        <EntityTypeShape EntityType="MyERPModel.AdditionalItemsGroup" Width="1.5" PointX="26.25" PointY="291.125" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeesAttendAndLeave" Width="1.5" PointX="10.5" PointY="265.375" />
+        <EntityTypeShape EntityType="MyERPModel.ItemGroupDepartment" Width="1.5" PointX="26.25" PointY="261.625" />
+        <AssociationConnector Association="MyERPModel.FK_AdditionalItemsGroup_AdditionalItem" />
+        <AssociationConnector Association="MyERPModel.FK_AdditionalItemsGroup_ItemGroup" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeesAttendAndLeave_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ItemGroupDepartment_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ItemGroupDepartment_ItemGroup" />
+        <AssociationConnector Association="MyERPModel.FK_AdditionalItem_Item" />
+        <AssociationConnector Association="MyERPModel.FK_AdditionalItem_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_ItemGroup_ItemGroup" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsurance_Department1" />
+        <AssociationConnector Association="MyERPModel.FK_AdditionalItem_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_AdministrativeDepartment" />
+        <EntityTypeShape EntityType="MyERPModel.SocialInsuranceDetail" Width="1.5" PointX="18.75" PointY="136.375" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceDetail_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceDetail_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsuranceDetail_SocialInsurance" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_Warehouse1" />
+        <EntityTypeShape EntityType="MyERPModel.CarColor" Width="1.5" PointX="47.5" PointY="235.25" />
+        <EntityTypeShape EntityType="MyERPModel.CarModel" Width="1.5" PointX="47.5" PointY="226.625" />
+        <EntityTypeShape EntityType="MyERPModel.CarService" Width="1.5" PointX="49.75" PointY="232.625" />
+        <EntityTypeShape EntityType="MyERPModel.CarServiceCategory" Width="1.5" PointX="47.5" PointY="230.875" />
+        <EntityTypeShape EntityType="MyERPModel.CarServiceDetail" Width="1.5" PointX="39.75" PointY="287.625" />
+        <AssociationConnector Association="MyERPModel.FK_CarServiceDetail_CarService" />
+        <AssociationConnector Association="MyERPModel.FK_CarServiceDetail_Item" />
+        <AssociationConnector Association="MyERPModel.FK_CarServiceDetail_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_CarServiceDetail_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.CarType" Width="1.5" PointX="45.25" PointY="230.75" />
+        <AssociationConnector Association="MyERPModel.FK_CarModel_CarType" />
+        <EntityTypeShape EntityType="MyERPModel.Cart" Width="1.5" PointX="42.75" PointY="290.375" />
+        <EntityTypeShape EntityType="MyERPModel.Slider" Width="1.5" PointX="38" PointY="227.5" />
+        <AssociationConnector Association="MyERPModel.FK_Slider_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Pos_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.CarEntrance" Width="1.5" PointX="56.75" PointY="251" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_CarServiceCategory" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_Department" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.CarEntranceDetail" Width="1.5" PointX="63" PointY="237" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntranceDetail_CarEntrance" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntranceDetail_CarService" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntranceDetail_Currency" />
+        <EntityTypeShape EntityType="MyERPModel.CarEntranceImage" Width="1.5" PointX="59" PointY="236.75" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntranceImage_CarEntrance" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucherDetail_PosReceiptVoucherDetail" />
+        <EntityTypeShape EntityType="MyERPModel.CarSalesInvoice" Width="1.5" PointX="65.75" PointY="240.25" />
+        <EntityTypeShape EntityType="MyERPModel.CarSalesInvoiceDetail" Width="1.5" PointX="68" PointY="237.5" />
+        <EntityTypeShape EntityType="MyERPModel.CarWorkOrder" Width="1.5" PointX="65.75" PointY="250.25" />
+        <EntityTypeShape EntityType="MyERPModel.CarWorkOrderDetail" Width="1.5" PointX="68" PointY="242.5" />
+        <AssociationConnector Association="MyERPModel.FK_AdditionalItem_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_AdministrativeDepartment_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarColor_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_CarColor" />
+        <AssociationConnector Association="MyERPModel.FK_CarModel_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_CarModel" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_CarServiceCategory" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_Department" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoiceDetail_CarSalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoiceDetail_CarService" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoiceDetail_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CarService_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrderDetail_CarService" />
+        <AssociationConnector Association="MyERPModel.FK_CarServiceCategory_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_CarServiceCategory" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_CarType" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_Department" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrderDetail_CarWorkOrder" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrderDetail_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_ContractsStatus_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ContractsType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ContractType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeContract_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeesAttendAndLeave_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_HrDepartment_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_IdentityType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Job_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_JobGrade_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_JobTitle_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Location_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Nationality_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItemCalcMethod_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItemNature_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItemUnit_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SocialInsurance_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_WorkTeam_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItemUnit_SalaryItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_ItemQuantity_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ItemQuantity_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.Coupon" Width="1.5" PointX="16.375" PointY="12.75" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerCoupon" Width="1.5" PointX="58" PointY="277.75" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerCoupon_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerCoupon_Order" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPrice_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_Order_Cart" />
+        <EntityTypeShape EntityType="MyERPModel.CartDetail" Width="1.5" PointX="51" PointY="297" />
+        <AssociationConnector Association="MyERPModel.FK_CartDetails_Cart" />
+        <AssociationConnector Association="MyERPModel.FK_CartDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_DepartmentCurrentAccountId" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeVacationOpeningBalance" Width="1.5" PointX="41" PointY="230.625" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeVacationOpeningBalanceDetail" Width="1.5" PointX="52.25" PointY="234.25" />
+        <EntityTypeShape EntityType="MyERPModel.EmpPreviousVacation" Width="1.5" PointX="38" PointY="230.875" />
+        <EntityTypeShape EntityType="MyERPModel.EmpPreviousVacationDetail" Width="1.5" PointX="50.25" PointY="240" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationOpeningBalance_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmpPreviousVacation_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationOpeningBalanceDetail_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmpPreviousVacationDetail_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationOpeningBalance_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationOpeningBalanceDetail_EmployeeVacationOpeningBalance" />
+        <AssociationConnector Association="MyERPModel.FK_EmpPreviousVacation_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmpPreviousVacationDetail_EmpPreviousVacation" />
+        <EntityTypeShape EntityType="MyERPModel.VacationRequest" Width="1.5" PointX="52" PointY="226.125" />
+        <AssociationConnector Association="MyERPModel.FK_VacationRequest_Department" />
+        <AssociationConnector Association="MyERPModel.FK_VacationRequest_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_VacationRequest_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeVacationDue" Width="1.5" PointX="65.25" PointY="230.375" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeVacationDueDetail" Width="1.5" PointX="67.5" PointY="231.375" />
+        <EntityTypeShape EntityType="MyERPModel.SalesOrderStatu" Width="1.5" PointX="52.5" PointY="222.125" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerAddress_Area" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Cart" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerAddress_City" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerAddress_Country" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_CustomerAddress" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationDue_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationDue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationDue_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationDue_VacationRequest" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationDueDetail_EmployeeVacationDue" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationDueDetail_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_SalesOrderStatus" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeAbsence" Width="1.5" PointX="44" PointY="226.5" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeLateness" Width="1.5" PointX="41" PointY="223.5" />
+        <EntityTypeShape EntityType="MyERPModel.OfficialVacation" Width="1.5" PointX="38" PointY="223.375" />
+        <EntityTypeShape EntityType="MyERPModel.StoreInfo" Width="1.5" PointX="3.375" PointY="17.75" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerCoupon_Coupon" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerCoupon_Customer1" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerCoupon_SalesOrder" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeAbsence_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeLateness_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeAbsence_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeLateness_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_OfficialVacation_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeesAttendAndLeaveDetail" Width="1.5" PointX="19.375" PointY="256.5" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeesAttendAndLeaveDetail_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeesAttendAndLeaveDetail_EmployeesAttendAndLeave" />
+        <EntityTypeShape EntityType="MyERPModel.TaskLog" Width="1.5" PointX="46.25" PointY="223" />
+        <EntityTypeShape EntityType="MyERPModel.TaskStatu" Width="1.5" PointX="41.75" PointY="220.375" />
+        <EntityTypeShape EntityType="MyERPModel.UserTask" Width="1.5" PointX="44" PointY="221" />
+        <AssociationConnector Association="MyERPModel.FK_Task_ERPUser_AssignedTo" />
+        <AssociationConnector Association="MyERPModel.FK_Task_ERPUser_CreatedBy" />
+        <AssociationConnector Association="MyERPModel.FK_TaskLog_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_TaskLog_TaskStatus" />
+        <AssociationConnector Association="MyERPModel.FK_TaskLog_UserTask" />
+        <AssociationConnector Association="MyERPModel.FK_Task_TaskStatus" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerRep" Width="1.5" PointX="57.75" PointY="269.375" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerRep_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Employee" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoiceItemDistribution" Width="1.5" PointX="48" PointY="216.25" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDirectExpenses_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDirectExpenses_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceItemDistribution_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDirectExpenses_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceItemDistribution_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.UserNotificationSetting" Width="1.5" PointX="38.25" PointY="220.25" />
+        <AssociationConnector Association="MyERPModel.FK_UserNotification_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_OccuredNotifications_UserNotification" />
+        <AssociationConnector Association="MyERPModel.FK_UserNotification_PageAction" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.Patch" Width="1.5" PointX="35.375" PointY="260.125" />
+        <AssociationConnector Association="MyERPModel.FK_Patch_Item" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_WarehouseOBDetails_Patch" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerMessage" Width="1.5" PointX="42.75" PointY="294.125" />
+        <EntityTypeShape EntityType="MyERPModel.ItemPriceRate" Width="1.5" PointX="57.75" PointY="272.625" />
+        <EntityTypeShape EntityType="MyERPModel.WishList" Width="1.5" PointX="53.75" PointY="292.125" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPriceRate_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPriceRate_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_WishList_ItemPrice" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerNotification" Width="1.5" PointX="13" PointY="17.75" />
+        <EntityTypeShape EntityType="MyERPModel.CRM_CustomerEvaluation" Width="1.5" PointX="38" PointY="200.375" />
+        <EntityTypeShape EntityType="MyERPModel.CRM_RecordVisitingDates" Width="1.5" PointX="38" PointY="204.625" />
+        <EntityTypeShape EntityType="MyERPModel.CRM_TimeSetting" Width="1.5" PointX="38" PointY="209" />
+        <EntityTypeShape EntityType="MyERPModel.CRM_VisitRecord" Width="1.5" PointX="38" PointY="191.75" />
+        <EntityTypeShape EntityType="MyERPModel.CRM_VisitsRequirements" Width="1.5" PointX="38" PointY="196" />
+        <EntityTypeShape EntityType="MyERPModel.CRM_VisitsType" Width="1.5" PointX="38" PointY="213.25" />
+        <AssociationConnector Association="MyERPModel.FK_CRM_CustomerEvaluation_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CRM_RecordVisitingDates_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CRM_TimeSetting_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CRM_VisitRecord_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CRM_VisitsRequirements_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CRM_VisitsType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Department_DueSalariesAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_DestinationDepartment" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeOpenningBalance" Width="1.5" PointX="21.75" PointY="245.25" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeOpenningBalance_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeOpenningBalance_EmployeeOpenningBalance" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_ERPUser_cashierUserId" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_Pos" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.EarlyLeavePermission" Width="1.5" PointX="58.25" PointY="229.875" />
+        <EntityTypeShape EntityType="MyERPModel.LateAttendancePermission" Width="1.5" PointX="55.25" PointY="230.875" />
+        <AssociationConnector Association="MyERPModel.FK_EarlyLeavePermission_Department" />
+        <AssociationConnector Association="MyERPModel.FK_LateAttendancePermission_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EarlyLeavePermission_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EarlyLeavePermission_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EarlyLeavePermission_Shift" />
+        <AssociationConnector Association="MyERPModel.FK_LateAttendancePermission_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_LateAttendancePermission_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_LateAttendancePermission_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.AttendAndLeaveApproval" Width="1.5" PointX="55" PointY="225.375" />
+        <EntityTypeShape EntityType="MyERPModel.AttendAndLeaveApprovalDetail" Width="1.5" PointX="68.25" PointY="248.25" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApproval_Department" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApproval_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApproval_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_AttendAndLeaveApproval" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_EmployeeAbsence" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_EmployeeLateness" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_EmployeesAttendAndLeave" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.ShiftOfficialVacation" Width="1.5" PointX="49.25" PointY="223.5" />
+        <AssociationConnector Association="MyERPModel.FK_ShiftOfficialVacation_OfficialVacation" />
+        <AssociationConnector Association="MyERPModel.FK_ShiftOfficialVacation_Shift" />
+        <EntityTypeShape EntityType="MyERPModel.DBChange" Width="1.5" PointX="16.125" PointY="18" />
+        <EntityTypeShape EntityType="MyERPModel.SyncedDepartment" Width="1.5" PointX="18.375" PointY="18.375" />
+        <AssociationConnector Association="MyERPModel.FK_SyncedDepartment_DBChange" />
+        <EntityTypeShape EntityType="MyERPModel.Hall" Width="1.5" PointX="58" PointY="225.125" />
+        <EntityTypeShape EntityType="MyERPModel.Table" Width="1.5" PointX="61.25" PointY="232.25" />
+        <AssociationConnector Association="MyERPModel.FK_Hall_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Table_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Hall_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Table_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Table_Hall" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount1" />
+        <EntityTypeShape EntityType="MyERPModel.DebitAgesType" Width="1.5" PointX="38" PointY="183" />
+        <EntityTypeShape EntityType="MyERPModel.PosCustomer" Width="1.5" PointX="43.5" PointY="156.625" />
+        <EntityTypeShape EntityType="MyERPModel.SalesRepresentativesGroup" Width="1.5" PointX="38" PointY="187.125" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAgesTypes_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalesRepresentativesGroup_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoiceActualPayment" Width="1.5" PointX="63" PointY="197.125" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceActualPayment_ChequeReceipt" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceActualPayment_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.FixedAssetsType" Width="1.5" PointX="11" PointY="21" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_FixedAsset" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_FixedAssetsType" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetsType_Users" />
+        <AssociationConnector Association="MyERPModel.FK_PosCustomer_Area" />
+        <AssociationConnector Association="MyERPModel.FK_PosCustomer_City" />
+        <AssociationConnector Association="MyERPModel.FK_PosCustomer_Country" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_PosCustomer" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_PosCustomer" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseInvoiceActualPayment" Width="1.5" PointX="51" PointY="201.25" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceActualPayment_CashIssueVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceActualPayment_ChequeIssue" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceActualPayment_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoiceActualPayment_PurchaseInvoice" />
+        <EntityTypeShape EntityType="MyERPModel.CashReceiptPaymentMethod" Width="1.5" PointX="18.375" PointY="3.75" />
+        <EntityTypeShape EntityType="MyERPModel.CashReceiptVoucher" Width="1.5" PointX="51.75" PointY="151.75" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_DirectRevenue" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_ShareHolder" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_Techanician1" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceActualPayment_CashReceiptVoucher" />
+        <EntityTypeShape EntityType="MyERPModel.CashIssuePaymentMethod" Width="1.5" PointX="18.375" PointY="6.75" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_CashIssuePaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_CashReceiptPaymentMethod" />
+        <EntityTypeShape EntityType="MyERPModel.CommissionSetting" Width="1.5" PointX="18.5" PointY="10.75" />
+        <EntityTypeShape EntityType="MyERPModel.AssemblyVoucher" Width="1.5" PointX="60.25" PointY="248.125" />
+        <EntityTypeShape EntityType="MyERPModel.AssemblyVoucherDetail" Width="1.5" PointX="65.5" PointY="270.5" />
+        <EntityTypeShape EntityType="MyERPModel.FragmentationVoucher" Width="1.5" PointX="61.25" PointY="279.125" />
+        <EntityTypeShape EntityType="MyERPModel.FragmentationVoucherDetail" Width="1.5" PointX="63.5" PointY="284.75" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_Item" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_AssemblyVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_Department" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_Item" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_FragmentationVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_Item" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_ItemPrice" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.CustomerType" Width="1.5" PointX="58.625" PointY="221.375" />
+        <EntityTypeShape EntityType="MyERPModel.PosReceiptVoucherCustomerType" Width="1.5" PointX="60.875" PointY="244.75" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucherCustomerType_CustomerType" />
+        <AssociationConnector Association="MyERPModel.FK_PosReceiptVoucherCustomerType_PosReceiptVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_Branch" />
+        <EntityTypeShape EntityType="MyERPModel.PurchaseRequest" Width="1.5" PointX="50" PointY="245.25" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_ItemGroup" />
+        <AssociationConnector Association="MyERPModel.FK_ManufacturingPurchaseRequest_PurchaseRequest" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_PurchaseRequestStatus" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_PurchaseRequest" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePurchaseRequest_PurchaseRequest" />
+        <EntityTypeShape EntityType="MyERPModel.ApplicantWorkStatu" Width="1.5" PointX="14.25" PointY="264.75" />
+        <EntityTypeShape EntityType="MyERPModel.Church" Width="1.5" PointX="38" PointY="178.75" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_ApplicantWorkStatus" />
+        <AssociationConnector Association="MyERPModel.FK_Church_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Church" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeExperience" Width="1.5" PointX="19" PointY="264.75" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeJob" Width="1.5" PointX="22" PointY="129.5" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeExperience_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeJob_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeJob_Job" />
+        <EntityTypeShape EntityType="MyERPModel.JobStatu" Width="1.5" PointX="36" PointY="161.375" />
+        <EntityTypeShape EntityType="MyERPModel.JobCandidate" Width="1.5" PointX="40.875" PointY="161" />
+        <AssociationConnector Association="MyERPModel.FK_JobCandidate_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_JobCandidate_Job" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeePayrollIssueDetail" Width="1.5" PointX="38" PointY="130.875" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssueDetail_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssueDetail_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssueDetail_HrDepartment" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeePayrollIssue" Width="1.5" PointX="10.5" PointY="270.25" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssue_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssueDetail_EmployeePayrollIssue" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssueDetail_Job" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssueDetail_Nationality" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssue_AdministrativeDepartment" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeePayrollIssue_HrDepartment" />
+        <EntityTypeShape EntityType="MyERPModel.OvertimeTypeDetail" Width="1.5" PointX="28" PointY="223.875" />
+        <AssociationConnector Association="MyERPModel.FK_OvertimeType_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_OvertimeTypeDetail_OvertimeType" />
+        <AssociationConnector Association="MyERPModel.FK_OvertimeTypeDetail_SalaryItem" />
+        <EntityTypeShape EntityType="MyERPModel.OvertimeIssue" Width="1.5" PointX="18.75" PointY="240.375" />
+        <EntityTypeShape EntityType="MyERPModel.OvertimeIssueDetial" Width="1.5" PointX="21" PointY="240.25" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_OvertimeIssue" />
+        <AssociationConnector Association="MyERPModel.FK_OvertimeIssue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_OvertimeIssueDetials_OvertimeIssue" />
+        <AssociationConnector Association="MyERPModel.FK_OvertimeIssueDetials_OverTimeType" />
+        <EntityTypeShape EntityType="MyERPModel.PenaltyIssueDetail" Width="1.5" PointX="21" PointY="267.25" />
+        <EntityTypeShape EntityType="MyERPModel.RewardIssue" Width="1.5" PointX="18.75" PointY="267.75" />
+        <EntityTypeShape EntityType="MyERPModel.RewardIssueDetial" Width="1.5" PointX="33" PointY="241.375" />
+        <AssociationConnector Association="MyERPModel.FK_RewardIssue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PenaltyIssueDetails_PenaltyType" />
+        <AssociationConnector Association="MyERPModel.FK_RewardIssueDetials_RewardIssue" />
+        <AssociationConnector Association="MyERPModel.FK_RewardIssueDetials_RewardType" />
+        <EntityTypeShape EntityType="MyERPModel.PenaltyTypeDetail" Width="1.5" PointX="33" PointY="237.625" />
+        <EntityTypeShape EntityType="MyERPModel.RewardTypeDetail" Width="1.5" PointX="27.25" PointY="230.125" />
+        <AssociationConnector Association="MyERPModel.FK_PenaltyType_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_RewardType_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_PenaltyTypeDetail_PenaltyType" />
+        <AssociationConnector Association="MyERPModel.FK_PenaltyTypeDetail_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_RewardTypeDetail_RewardType" />
+        <AssociationConnector Association="MyERPModel.FK_RewardTypeDetail_SalaryItem" />
+        <EntityTypeShape EntityType="MyERPModel.PenaltyIssue" Width="1.5" PointX="18.75" PointY="271.625" />
+        <AssociationConnector Association="MyERPModel.FK_PenaltyIssue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PenaltyIssueDetails_PenaltyIssue" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_PenaltyIssue" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_RewardIssue" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_PenaltyIssueDetails" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApprovalDetail_RewardIssueDetials" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeQualification" Width="1.5" PointX="40.25" PointY="217.5" />
+        <EntityTypeShape EntityType="MyERPModel.Qualification" Width="1.5" PointX="38" PointY="174" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeQualification_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeQualification_Qualification" />
+        <AssociationConnector Association="MyERPModel.FK_Qualification_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.QualificationType" Width="1.5" PointX="18.375" PointY="15" />
+        <AssociationConnector Association="MyERPModel.FK_Qualification_QualificationType" />
+        <EntityTypeShape EntityType="MyERPModel.AllocationType" Width="1.5" PointX="38" PointY="169.25" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeMonthlyAllocation" Width="1.5" PointX="43.25" PointY="215.625" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeMonthlyAllocationDetail" Width="1.5" PointX="60.5" PointY="228.125" />
+        <AssociationConnector Association="MyERPModel.FK_AllocationType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeMonthlyAllocation_AllocationType" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeMonthlyAllocation_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeMonthlyAllocationDetail_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeMonthlyAllocation_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeMonthlyAllocationDetail_EmployeeMonthlyAllocation" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_ChartOfAccount1" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_ChartOfAccount2" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_ChartOfAccount3" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_ChartOfAccount4" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount2" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount3" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount4" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeFollowUp" Width="1.5" PointX="61.25" PointY="223" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeFollowUp_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeFollowUp_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeFollowUp_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.CompanyJobRequest" Width="1.5" PointX="38.25" PointY="159.375" />
+        <AssociationConnector Association="MyERPModel.FK_CompanyJobRequest_Company" />
+        <AssociationConnector Association="MyERPModel.FK_CompanyJobRequest_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_CompanyJobRequest_Job" />
+        <AssociationConnector Association="MyERPModel.FK_CompanyJobRequest_JobStatus" />
+        <AssociationConnector Association="MyERPModel.FK_JobCandidate_CompanyJobRequest" />
+        <EntityTypeShape EntityType="MyERPModel.Customer" Width="1.5" PointX="57.5" PointY="282.25" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Cart_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeIssue_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_ChequeReceipt_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_City" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_Company" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_Country" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_CustomersGroup" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_CustomerSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_Nationality" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerMessage_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerOpenningBalance_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_CustomerRep_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_ItemPriceRate_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Maintenance_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Order_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrder_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_WishList_Customer" />
+        <EntityTypeShape EntityType="MyERPModel.ItemCategory" Width="1.5" PointX="0.75" PointY="19.75" />
+        <AssociationConnector Association="MyERPModel.FK_Item_ItemCategory" />
+        <EntityTypeShape EntityType="MyERPModel.BorrowRequest" Width="1.5" PointX="55" PointY="218.125" />
+        <EntityTypeShape EntityType="MyERPModel.BorrowRequestDetail" Width="1.5" PointX="64.25" PointY="226.125" />
+        <AssociationConnector Association="MyERPModel.FK_BorrowRequest_Department" />
+        <AssociationConnector Association="MyERPModel.FK_BorrowRequest_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_BorrowRequest_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_BorrowRequestDetail_BorrowRequest" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoice" Width="1.5" PointX="63.75" PointY="143.125" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Area" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Branch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Employee1" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_FixedAsset" />
+        <AssociationConnector Association="MyERPModel.FK_Maintenance_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Pos" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_PosCustomer" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Shift" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Table" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Warehouse" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceActualPayment_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceInstallmentActualPayment_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceInstallmentDetails_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceItemDistribution_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePaymentMethods_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePurchaseRequest_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrdersSalesInvoice_SalesInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_SalesInvoice" />
+        <EntityTypeShape EntityType="MyERPModel.CashIssueVoucherEmployeePayrollIssue" Width="1.5" PointX="35.25" PointY="255.5" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucherEmployeePayrollIssue_CashIssueVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucherEmployeePayrollIssue_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_BorrowRequest" />
+        <EntityTypeShape EntityType="MyERPModel.EndOfServiceSalaryItem" Width="1.5" PointX="48.5" PointY="211.75" />
+        <EntityTypeShape EntityType="MyERPModel.EndOfServiceType" Width="1.5" PointX="38" PointY="314.875" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceSalaryItem_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceSalaryItem_SalaryItem" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceType_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.EndOfServiceRewardAccount" Width="1.5" PointX="46.5" PointY="160.875" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceRewardAccount_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceRewardAccount_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceRewardAccount_TerminatorEmployee1" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceRewardAccount_EndOfServiceType" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceRewardAccount_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceRewardAccount_Job" />
+        <AssociationConnector Association="MyERPModel.FK_EndOfServiceSalaryItem_EndOfServiceRewardAccount" />
+        <EntityTypeShape EntityType="MyERPModel.Project" Width="1.5" PointX="64" PointY="214.125" />
+        <EntityTypeShape EntityType="MyERPModel.ProjectDetail" Width="1.5" PointX="66.25" PointY="217.75" />
+        <AssociationConnector Association="MyERPModel.FK_Project_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_Project_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Project_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ProjectDetail_Project" />
+        <AssociationConnector Association="MyERPModel.FK_Project_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_Project_EndCustomer" />
+        <AssociationConnector Association="MyERPModel.FK_Project_SubCustomer" />
+        <AssociationConnector Association="MyERPModel.FK_Project_CustomerRep" />
+        <AssociationConnector Association="MyERPModel.FK_Project_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Project_HrDepartment" />
+        <AssociationConnector Association="MyERPModel.FK_ProjectDetail_ItemUnit" />
+        <EntityTypeShape EntityType="MyERPModel.ProjectItemOperation" Width="1.5" PointX="71.25" PointY="251.625" />
+        <AssociationConnector Association="MyERPModel.FK_ProjectItemOperation_ItemUnit" />
+        <AssociationConnector Association="MyERPModel.FK_ProjectItemOperation_Project" />
+        <EntityTypeShape EntityType="MyERPModel.IssueAnalysis" Width="1.5" PointX="32.625" PointY="225" />
+        <AssociationConnector Association="MyERPModel.FK_IssueAnalysis_CashIssueVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_IssueAnalysis_ChartOfAccount" />
+        <EntityTypeShape EntityType="MyERPModel.Activity" Width="1.5" PointX="38.25" PointY="319.125" />
+        <AssociationConnector Association="MyERPModel.FK_Activity_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Department_Activity" />
+        <AssociationConnector Association="MyERPModel.FK_Department_Company" />
+        <EntityTypeShape EntityType="MyERPModel.FinancialPeriodMaster" Width="1.5" PointX="38" PointY="323.25" />
+        <AssociationConnector Association="MyERPModel.FK_FinancialPeriodMaster_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_FinancialPeriods_FinancialPeriodMaster" />
+        <EntityTypeShape EntityType="MyERPModel.FieldsCoding" Width="1.5" PointX="51" PointY="216.875" />
+        <AssociationConnector Association="MyERPModel.FK_FieldsCoding_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Item_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Customer_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAsset_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_ItemGroup_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Warehouse_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_CustomersGroup_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_FixedAssetsGroup_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_VendorsGroup_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Bank_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_CashBox_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_ChartOfAccount_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_CostCenter_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Currency_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_DirectExpenses_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_DirectRevenue_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Hall_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_PaymentMethod_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Pos_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_PosCustomer_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_SalesRepresentativesGroup_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Shift_FieldsCoding" />
+        <AssociationConnector Association="MyERPModel.FK_Table_FieldsCoding" />
+        <EntityTypeShape EntityType="MyERPModel.DocumentsCoding" Width="1.5" PointX="61" PointY="217.875" />
+        <AssociationConnector Association="MyERPModel.FK_DocumentsCoding_Department" />
+        <AssociationConnector Association="MyERPModel.FK_DocumentsCoding_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.SystemPage" Width="1.5" PointX="11.25" PointY="205.125" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_AssemblyVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_AttendAndLeaveApproval_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_BorrowRequest_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_BorrowRequestDetail_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntrance_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CarEntranceDetail_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoice_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CarSalesInvoiceDetail_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrder_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CarWorkOrderDetail_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationOpeningBalance_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationOpeningBalanceDetail_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_FieldsCoding_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_FragmentationVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_InventoryVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntry_SystemPages" />
+        <AssociationConnector Association="MyERPModel.FK_JournalEntryDetail_SystemPages" />
+        <AssociationConnector Association="MyERPModel.FK_OccuredNotifications_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PageActions_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_Patch_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseInvoice_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_InvoicesPaymentMethods_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrder_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotation_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseQuotatoinDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequest_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturns_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_RolePrivilege_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoiceDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePaymentMethods_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotation_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturns_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_SalesReturnsDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockIssueVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockLossesVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockReceiptVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucher_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_StockTransferVoucherDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransaction_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionDetails_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_UpdatedTransactionPaymentMethods_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_UserHomePage_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_UserPrivilege_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_UserTask_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_VacationRequest_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_Vendor_Currency" />
+        <EntityTypeShape EntityType="MyERPModel.Building" Width="1.5" PointX="38" PointY="328.75" />
+        <EntityTypeShape EntityType="MyERPModel.Room" Width="1.5" PointX="40.25" PointY="276.25" />
+        <EntityTypeShape EntityType="MyERPModel.RoomBooking" Width="1.5" PointX="66.75" PointY="264.5" />
+        <AssociationConnector Association="MyERPModel.FK_Building_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Room_Building" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Room_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_Room" />
+        <EntityTypeShape EntityType="MyERPModel.MealReservation" Width="1.5" PointX="68.75" PointY="259.75" />
+        <EntityTypeShape EntityType="MyERPModel.MealReservationDetail" Width="1.5" PointX="45" PointY="273" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservation_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservation_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservationDetail_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservationDetail_Item" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservationDetail_MealReservation" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_Building" />
+        <EntityTypeShape EntityType="MyERPModel.DayUseReservation" Width="1.5" PointX="69.75" PointY="264.75" />
+        <AssociationConnector Association="MyERPModel.FK_DayUseReservation_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_DayUseReservation_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.HotelManagementCarEntry" Width="1.5" PointX="71.75" PointY="257.875" />
+        <EntityTypeShape EntityType="MyERPModel.RoomLeavePermission" Width="1.5" PointX="69" PointY="273.75" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_Building" />
+        <AssociationConnector Association="MyERPModel.FK_DayUseReservation_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_HotelManagementCarEntry_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_HotelManagementCarEntry_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_DayUseReservation_Department" />
+        <AssociationConnector Association="MyERPModel.FK_HotelManagementCarEntry_Department" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_Department" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_Department" />
+        <AssociationConnector Association="MyERPModel.FK_HotelManagementCarEntry_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_Room" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_RoomBooking" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount5" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservation_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_DayUseReservation_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_HotelManagementCarEntry_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservation_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_MealReservation_Department" />
+        <EntityTypeShape EntityType="MyERPModel.RoomType" Width="1.5" PointX="38" PointY="333.125" />
+        <EntityTypeShape EntityType="MyERPModel.RoomTypeImage" Width="1.5" PointX="40.25" PointY="334" />
+        <AssociationConnector Association="MyERPModel.FK_RoomType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RoomTypeImage_RoomType" />
+        <AssociationConnector Association="MyERPModel.FK_Room_RoomType" />
+        <AssociationConnector Association="MyERPModel.FK_IssueAnalysis_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_Order_ServicesCategory_DeviceBrand" />
+        <AssociationConnector Association="MyERPModel.FK_Order_ServicesCategory_DeviceModel" />
+        <AssociationConnector Association="MyERPModel.FK_Order_ServicesCategory_DeviceType" />
+        <AssociationConnector Association="MyERPModel.FK_OrderServices_Service" />
+        <AssociationConnector Association="MyERPModel.FK_Order_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_TechanicianService_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Order_Item" />
+        <EntityTypeShape EntityType="MyERPModel.OrderItem" Width="1.5" PointX="60" PointY="291.625" />
+        <AssociationConnector Association="MyERPModel.FK_OrderItem_Item" />
+        <AssociationConnector Association="MyERPModel.FK_OrderItem_Order" />
+        <AssociationConnector Association="MyERPModel.FK_Order_Department" />
+        <EntityTypeShape EntityType="MyERPModel.ChurchMembership" Width="1.5" PointX="58" PointY="214.875" />
+        <EntityTypeShape EntityType="MyERPModel.ChurchMembershipVisit" Width="1.5" PointX="67.25" PointY="225.625" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembership_Area" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembership_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembershipVisit_ChurchMembership" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembershipVisit_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.Doctor" Width="1.5" PointX="40.25" PointY="282" />
+        <EntityTypeShape EntityType="MyERPModel.Examination" Width="1.5" PointX="53.5" PointY="295.75" />
+        <EntityTypeShape EntityType="MyERPModel.ExaminationAnalysi" Width="1.5" PointX="55.75" PointY="303.875" />
+        <EntityTypeShape EntityType="MyERPModel.ExaminationMedicine" Width="1.5" PointX="34.5" PointY="286.625" />
+        <EntityTypeShape EntityType="MyERPModel.ExaminationRay" Width="1.5" PointX="55.75" PointY="300.625" />
+        <EntityTypeShape EntityType="MyERPModel.MedicalSpecialty" Width="1.5" PointX="38" PointY="337.75" />
+        <EntityTypeShape EntityType="MyERPModel.Patient" Width="1.5" PointX="38" PointY="341.75" />
+        <AssociationConnector Association="MyERPModel.FK_Doctor_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Doctor_MedicalSpecialty" />
+        <AssociationConnector Association="MyERPModel.FK_Examination_Doctor" />
+        <AssociationConnector Association="MyERPModel.FK_Examination_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_MedicalSpecialty_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Patient_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Examination_MedicalSpecialty" />
+        <AssociationConnector Association="MyERPModel.FK_Examination_Patient" />
+        <AssociationConnector Association="MyERPModel.FK_ExaminationAnalysis_Examination" />
+        <AssociationConnector Association="MyERPModel.FK_ExaminationMedicine_Examination" />
+        <AssociationConnector Association="MyERPModel.FK_ExaminationRay_Examination" />
+        <AssociationConnector Association="MyERPModel.FK_ExaminationMedicine_Item" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_RoomType" />
+        <AssociationConnector Association="MyERPModel.FK_RoomType_RoomType" />
+        <EntityTypeShape EntityType="MyERPModel.ExaminationAnalysisImage" Width="1.5" PointX="55.75" PointY="310" />
+        <EntityTypeShape EntityType="MyERPModel.ExaminationRayImage" Width="1.5" PointX="55.75" PointY="307.5" />
+        <AssociationConnector Association="MyERPModel.FK_ExaminationAnalysisImage_Examination" />
+        <AssociationConnector Association="MyERPModel.FK_ExaminationRayImage_Examination" />
+        <EntityTypeShape EntityType="MyERPModel.RoomBookingDay" Width="1.5" PointX="69" PointY="299.875" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBookingDay_Room" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBookingDay_RoomBooking" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBookingDay_RoomType" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_PaymentMethod" />
+        <EntityTypeShape EntityType="MyERPModel.ExcelTemplate" Width="1.5" PointX="19.375" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.Surgery" Width="1.5" PointX="65.75" PointY="285.375" />
+        <EntityTypeShape EntityType="MyERPModel.SurgeryAnalysi" Width="1.5" PointX="74" PointY="255.875" />
+        <EntityTypeShape EntityType="MyERPModel.SurgeryAnalysisImage" Width="1.5" PointX="68" PointY="303.25" />
+        <EntityTypeShape EntityType="MyERPModel.SurgeryImage" Width="1.5" PointX="68" PointY="293.125" />
+        <EntityTypeShape EntityType="MyERPModel.SurgeryMedicine" Width="1.5" PointX="64" PointY="278.875" />
+        <EntityTypeShape EntityType="MyERPModel.SurgeryRay" Width="1.5" PointX="74" PointY="259.875" />
+        <EntityTypeShape EntityType="MyERPModel.SurgeryRayImage" Width="1.5" PointX="68" PointY="295.75" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_Doctor" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_Doctor" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_Doctor1" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryAnalysis_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryMedicine_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryRay_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryMedicine_Item" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_MedicalSpecialty" />
+        <AssociationConnector Association="MyERPModel.FK_Surgery_Patient" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryAnalysis_Surgery" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryAnalysisImage_Surgery" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryImage_SurgeryImage" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryMedicine_Surgery" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryRay_Surgery" />
+        <AssociationConnector Association="MyERPModel.FK_SurgeryRayImage_Surgery" />
+        <AssociationConnector Association="MyERPModel.FK_PosCustomer_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount6" />
+        <AssociationConnector Association="MyERPModel.FK_SalaryItem_HrDepartment" />
+        <EntityTypeShape EntityType="MyERPModel.Chair" Width="1.5" PointX="76.25" PointY="258.875" />
+        <EntityTypeShape EntityType="MyERPModel.Party" Width="1.5" PointX="40.25" PointY="292.5" />
+        <EntityTypeShape EntityType="MyERPModel.PartyBooking" Width="1.5" PointX="72" PointY="264" />
+        <EntityTypeShape EntityType="MyERPModel.PartyImage" Width="1.5" PointX="42.5" PointY="297.625" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyNotification" Width="1.5" PointX="71.25" PointY="235.875" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyNotificationType" Width="1.5" PointX="38" PointY="155.625" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyOwner" Width="1.5" PointX="69" PointY="219.25" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyRenter" Width="1.5" PointX="60" PointY="147" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyStatu" Width="1.5" PointX="38" PointY="127.125" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyType" Width="1.5" PointX="38" PointY="351.125" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyUnitType" Width="1.5" PointX="38" PointY="122.75" />
+        <EntityTypeShape EntityType="MyERPModel.Singer" Width="1.5" PointX="38" PointY="347.25" />
+        <AssociationConnector Association="MyERPModel.FK_Chair_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Chair_Party" />
+        <AssociationConnector Association="MyERPModel.FK_Chair_PartyBooking" />
+        <AssociationConnector Association="MyERPModel.FK_Owner_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_PartyBooking_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Renter_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_Renter_CustomerRep" />
+        <AssociationConnector Association="MyERPModel.FK_Owner_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotification_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Renter_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Owner_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Party_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PartyBooking_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotification_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotificationType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyStatus_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyUnitType_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Renter_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Singer_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Renter_Job" />
+        <AssociationConnector Association="MyERPModel.FK_Party_Singer" />
+        <AssociationConnector Association="MyERPModel.FK_PartyBooking_Party" />
+        <AssociationConnector Association="MyERPModel.FK_PartyImage_Party" />
+        <AssociationConnector Association="MyERPModel.FK_PartyBooking_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotification_PropertyOwner" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotification_PropertyRenter" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotification_PropertyType" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyNotification_PropertyUnitType" />
+        <EntityTypeShape EntityType="MyERPModel.Elder" Width="1.5" PointX="38" PointY="117.375" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_Elder" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount7" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount8" />
+        <AssociationConnector Association="MyERPModel.FK_Elder_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.SalesInvoicePrintQueue" Width="1.5" PointX="66" PointY="153.375" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoicePrintQueue_SalesInvoice" />
+        <EntityTypeShape EntityType="MyERPModel.PosWaiter" Width="1.5" PointX="57.25" PointY="239.875" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyUnit" Width="1.5" PointX="38" PointY="113.375" />
+        <AssociationConnector Association="MyERPModel.FK_Renter_CustomerRep1" />
+        <AssociationConnector Association="MyERPModel.FK_PosWaiter_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyUnit_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PosWaiter_Pos" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractBatch" Width="1.5" PointX="76.5" PointY="238" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractRep" Width="1.5" PointX="76.5" PointY="244.625" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractRep_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractBatch_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractRep_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractBatch_JournalEntry" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContract" Width="1.5" PointX="74.25" PointY="230.125" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_PropertyOwner" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_PropertyRenter" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_PropertyUnit" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_PropertyUnitType" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractBatch_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractRep_PropertyContract" />
+        <EntityTypeShape EntityType="MyERPModel.AllowedModule" Width="1.5" PointX="54" PointY="215.25" />
+        <AssociationConnector Association="MyERPModel.FK_AllowedModule_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_AllowedModule_SystemPage" />
+        <EntityTypeShape EntityType="MyERPModel.BookingInstruction" Width="1.5" PointX="5.375" PointY="19.75" />
+        <AssociationConnector Association="MyERPModel.FK_RoomLeavePermission_Employee" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyBatch" Width="1.5" PointX="41.25" PointY="300.375" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyDetail" Width="1.5" PointX="70.25" PointY="242.125" />
+        <AssociationConnector Association="MyERPModel.FK_RoomBooking_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyBatch_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDetail_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_JournalEntry" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDetail_PropertyUnitType" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyUnit_PropertyUnitType" />
+        <EntityTypeShape EntityType="MyERPModel.Property" Width="1.5" PointX="79.25" PointY="235.75" />
+        <AssociationConnector Association="MyERPModel.FK_Property_Department" />
+        <AssociationConnector Association="MyERPModel.FK_Property_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_Property_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Property_FixedAsset" />
+        <AssociationConnector Association="MyERPModel.FK_Property_PropertyOwner" />
+        <AssociationConnector Association="MyERPModel.FK_Property_PropertyStatus" />
+        <AssociationConnector Association="MyERPModel.FK_Property_PropertyType" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyBatch_Property" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_Property" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDetail_Property" />
+        <EntityTypeShape EntityType="MyERPModel.CashReceiptVoucherPropertyContractBatch" Width="1.5" PointX="78.75" PointY="196.375" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucherPropertyContractBatch_CashReceiptVoucher" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucherPropertyContractBatch_PropertyContractBatch" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ElectricityRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_MediatorARentsDueToOthersId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_QuestAndCommissionRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_RentRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_RentsDueToOthersId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ServicesRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_WaterRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount11" />
+        <EntityTypeShape EntityType="MyERPModel.ItemsPrintBarcodeQueue" Width="1.5" PointX="43.75" PointY="300.25" />
+        <AssociationConnector Association="MyERPModel.FK_ItemsPrintBarcodeQueue_Item" />
+        <AssociationConnector Association="MyERPModel.FK_ItemsPrintBarcodeQueue_ItemPrice" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyDueBatch" Width="1.5" PointX="68" PointY="281.5" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyDueBatchDetail" Width="1.5" PointX="78.75" PointY="251.125" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDueBatch_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDueBatch_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDueBatchDetail_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDueBatchDetail_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDueBatchDetail_PropertyContractBatch" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyDueBatchDetail_PropertyDueBatch" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_BookingBatchesId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_CommissionAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_CompanyDueCommissionId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_DueBatchesId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_DueRentId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ElectricityDueRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ElectricityExpensesAndInvoicesId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_MediatorAInsuranceForOthersToAllRentersId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_OwnerAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_OwnerDueExpensesId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_PropertyExpensesAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_PropertyRefundInsuranceId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_RefundableInsuranceAccountForRentersId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_RepsCommissionAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ServicesDueRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_WaterDueRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContract_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SalesInvoice_Employee2" />
+        <EntityTypeShape EntityType="MyERPModel.Housing" Width="1.5" PointX="38" PointY="360.75" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractImage" Width="1.5" PointX="76.5" PointY="235" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyRenterImage" Width="1.5" PointX="62.25" PointY="140" />
+        <AssociationConnector Association="MyERPModel.FK_Housing_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractImage_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRenterImage_PropertyRenter" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyRevenueProof" Width="1.5" PointX="71" PointY="281.875" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyRevenueProofDetail" Width="1.5" PointX="81.75" PointY="250.25" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRevenueProof_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRevenueProof_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRevenueProofDetail_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRevenueProofDetail_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRevenueProofDetail_PropertyContractBatch" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRevenueProofDetail_PropertyRevenueProof" />
+        <EntityTypeShape EntityType="MyERPModel.ServiceInvoiceDetail" Width="1.5" PointX="62" PointY="205" />
+        <EntityTypeShape EntityType="MyERPModel.ServiceInvoicePaymentMethod" Width="1.5" PointX="65" PointY="208.875" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoicePaymentMethod_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoicePaymentMethod_BankAccount" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoicePaymentMethod_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoiceDetail_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseOrderDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseRequestDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_PurchaseReturnsDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesOrderDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_SalesQuotationDetails_Patch" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoicePaymentMethod_PaymentMethod" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoiceDetail_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoicePaymentMethod_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ServiceRevenueAccount" />
+        <EntityTypeShape EntityType="MyERPModel.ServiceInvoice" Width="1.5" PointX="59.75" PointY="156.25" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoice_SystemPage" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoiceDetail_ServiceInvoice" />
+        <AssociationConnector Association="MyERPModel.FK_ServiceInvoicePaymentMethod_ServiceInvoice" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyComponent" Width="1.5" PointX="41" PointY="212.625" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyComponentDetail" Width="1.5" PointX="54.25" PointY="256.625" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractTermination" Width="1.5" PointX="81.5" PointY="201.625" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractTerminationDamage" Width="1.5" PointX="86.75" PointY="229.875" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractTerminationDetail" Width="1.5" PointX="83.75" PointY="230" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyComponent_ChartOfAccount" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTermination_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyComponent_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyComponentDetail_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTermination_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDamage_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDetail_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTermination_Property" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyComponentDetail_PropertyComponent1" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDamage_PropertyComponent" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDamage_PropertyComponentDetail" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTermination_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDetail_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDetail_PropertyContractBatch" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTermination_PropertyRenter" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTermination_PropertyUnitType" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDamage_PropertyContractTermination" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractTerminationDetail_PropertyContractTermination" />
+        <AssociationConnector Association="MyERPModel.FK_Order_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_Order_PropertyRenter" />
+        <EntityTypeShape EntityType="MyERPModel.Competitor" Width="1.5" PointX="22.625" PointY="0.75" />
+        <EntityTypeShape EntityType="MyERPModel.CompetitorAnswer" Width="1.5" PointX="24.875" PointY="4.5" />
+        <EntityTypeShape EntityType="MyERPModel.CompetitorQuestion" Width="1.5" PointX="20.375" PointY="5" />
+        <EntityTypeShape EntityType="MyERPModel.CompetitorQuestionDetail" Width="1.5" PointX="22.625" PointY="5.125" />
+        <EntityTypeShape EntityType="MyERPModel.UserMessage" Width="1.5" PointX="38" PointY="366.875" />
+        <AssociationConnector Association="MyERPModel.FK_CompetitorAnswer_Competitor" />
+        <AssociationConnector Association="MyERPModel.FK_CompetitorAnswer_CompetitorQuestion" />
+        <AssociationConnector Association="MyERPModel.FK_CompetitorQuestionDetail_CompetitorQuestion" />
+        <AssociationConnector Association="MyERPModel.FK_UserMessage_ERPUser_Receiver" />
+        <AssociationConnector Association="MyERPModel.FK_UserMessage_ERPUser_Sender" />
+        <EntityTypeShape EntityType="MyERPModel.DebitAndCreditNotificationType" Width="1.5" PointX="38" PointY="371.125" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotificationType_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.CompetitionResult" Width="1.5" PointX="41" PointY="127.375" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_CreditValueAddedTaxesAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_DebitValueAddedTaxesAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_CompetitionResult_Competitor" />
+        <AssociationConnector Association="MyERPModel.FK_CompetitionResult_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.DebitAndCreditNotificationSourceType" Width="1.5" PointX="38" PointY="109.25" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotificationSourceType_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.DebitAndCreditNotification" Width="1.5" PointX="62.25" PointY="184.75" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_ChartOfAccount_AccountId" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_ChartOfAccount_CreditId" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_ChartOfAccount_DebitId" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Currency" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Customer" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_DebitAndCreditNotificationSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_DebitAndCreditNotificationType" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Department" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_DirectRevenue" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Elder" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Employee_EmployeeId" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Employee_RepId" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_PropertyRenter" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_ShareHolder" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Techanician" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Vendor" />
+        <EntityTypeShape EntityType="MyERPModel.ChurchMeeting" Width="1.5" PointX="73.25" PointY="225.5" />
+        <EntityTypeShape EntityType="MyERPModel.EducationalSubject" Width="1.5" PointX="69" PointY="213.875" />
+        <EntityTypeShape EntityType="MyERPModel.Lesson" Width="1.5" PointX="77.25" PointY="229.625" />
+        <EntityTypeShape EntityType="MyERPModel.LessonImage" Width="1.5" PointX="79.5" PointY="230.875" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMeeting_ChurchMembership" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMeeting_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembership_ChurchMembership" />
+        <AssociationConnector Association="MyERPModel.FK_EducationalSubject_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EducationalSubject_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Lesson_EducationalSubject" />
+        <AssociationConnector Association="MyERPModel.FK_Lesson_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_LessonImage_Lesson" />
+        <EntityTypeShape EntityType="MyERPModel.MemberSpiritualNote" Width="1.5" PointX="60.25" PointY="214" />
+        <EntityTypeShape EntityType="MyERPModel.SpiritualNote" Width="1.5" PointX="58" PointY="212.125" />
+        <AssociationConnector Association="MyERPModel.FK_MemberSpiritualNote_ChurchMembership" />
+        <AssociationConnector Association="MyERPModel.FK_MemberSpiritualNote_SpiritualNote" />
+        <EntityTypeShape EntityType="MyERPModel.ChurchMeetingSetting" Width="1.5" PointX="7.375" PointY="19.75" />
+        <EntityTypeShape EntityType="MyERPModel.PrepaidExpense" Width="1.5" PointX="38" PointY="375.875" />
+        <EntityTypeShape EntityType="MyERPModel.PrepaidExpenseDetail" Width="1.5" PointX="66.25" PointY="191.375" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpense_ChartOfAccount_ExpenseAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpense_ChartOfAccount_PrePaymentAccountId" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpense_CostCenter" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpense_Department" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpense_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpense_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpenseDetail_PrepaidExpense" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpenseDetail_Project" />
+        <EntityTypeShape EntityType="MyERPModel.ExpenseAmortization" Width="1.5" PointX="68" PointY="285.75" />
+        <EntityTypeShape EntityType="MyERPModel.ExpenseProof" Width="1.5" PointX="72" PointY="270" />
+        <EntityTypeShape EntityType="MyERPModel.RegisterAttendanceAndAbsence" Width="1.5" PointX="81.5" PointY="235.5" />
+        <EntityTypeShape EntityType="MyERPModel.RegisterAttendanceAndAbsenceDetail" Width="1.5" PointX="83.75" PointY="284.75" />
+        <AssociationConnector Association="MyERPModel.FK_CashIssueVoucher_PrepaidExpenseDetail" />
+        <AssociationConnector Association="MyERPModel.FK_ExpenseAmortization_Department" />
+        <AssociationConnector Association="MyERPModel.FK_ExpenseProof_Department" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_EducationalSubject" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_EducationalSubject1" />
+        <AssociationConnector Association="MyERPModel.FK_ExpenseAmortization_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ExpenseProof_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpenseDetail_ExpenseAmortization" />
+        <AssociationConnector Association="MyERPModel.FK_PrepaidExpenseDetail_ExpenseProof" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_Lesson" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_Lesson1" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsenceDetail_RegisterAttendanceAndAbsence" />
+        <EntityTypeShape EntityType="MyERPModel.ExpenseAmortizationDistribution" Width="1.5" PointX="70.25" PointY="232.25" />
+        <AssociationConnector Association="MyERPModel.FK_ExpenseAmortizationDistribution_ExpenseAmortization" />
+        <AssociationConnector Association="MyERPModel.FK_ExpenseAmortizationDistribution_PrepaidExpenseDetail" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembership_Gender" />
+        <EntityTypeShape EntityType="MyERPModel.SystemSetting" Width="1.5" PointX="35.25" PointY="290.875" />
+        <AssociationConnector Association="MyERPModel.FK_SystemSetting_Bank" />
+        <AssociationConnector Association="MyERPModel.FK_SystemSetting_CashBox" />
+        <AssociationConnector Association="MyERPModel.FK_SystemSetting_City" />
+        <AssociationConnector Association="MyERPModel.FK_SystemSetting_Country" />
+        <AssociationConnector Association="MyERPModel.FK_SystemSetting_Department" />
+        <AssociationConnector Association="MyERPModel.FK_SystemSetting_Warehouse" />
+        <EntityTypeShape EntityType="MyERPModel.ChurchService" Width="1.5" PointX="51.25" PointY="301.5" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchService_ChurchService" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchService_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_EducationalSubject_Lesson" />
+        <EntityTypeShape EntityType="MyERPModel.Child" Width="1.5" PointX="71.5" PointY="274.25" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_Children" />
+        <AssociationConnector Association="MyERPModel.FK_Children_ChurchService" />
+        <AssociationConnector Association="MyERPModel.FK_Children_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_Children_Gender" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchService_Children" />
+        <AssociationConnector Association="MyERPModel.FK_DebitAndCreditNotification_Children" />
+        <AssociationConnector Association="MyERPModel.FK_RegisterAttendanceAndAbsence_Children" />
+        <EntityTypeShape EntityType="MyERPModel.ChurchFather" Width="1.5" PointX="38" PointY="356" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchFather_ERPUser" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchFather_ERPUser1" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMembership_ChurchFather" />
+        <AssociationConnector Association="MyERPModel.FK_ChurchMeeting_ChurchFather" />
+        <EntityTypeShape EntityType="MyERPModel.AlternativeItem" Width="1.5" PointX="28.5" PointY="293.5" />
+        <AssociationConnector Association="MyERPModel.FK_AlternativeItem_Item" />
+        <AssociationConnector Association="MyERPModel.FK_AlternativeItem_MainItem" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Department_DepartmentRepId" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_SalesRepresentativesGroup" />
+        <AssociationConnector Association="MyERPModel.FK_Employee_Employee_RepId" />
+        <EntityTypeShape EntityType="MyERPModel.EmployeeVacationsRegistration" Width="1.5" PointX="70" PointY="226.875" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationsRegistration_Department" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationsRegistration_Employee" />
+        <AssociationConnector Association="MyERPModel.FK_EmployeeVacationsRegistration_ERPUser" />
+        <EntityTypeShape EntityType="MyERPModel.IssueAnalysisDetail" Width="1.5" PointX="79.5" PointY="227.25" />
+        <AssociationConnector Association="MyERPModel.FK_IssueAnalysisDetail_IssueAnalysis" />
+        <AssociationConnector Association="MyERPModel.FK_IssueAnalysisDetail_PropertyDetail" />
+        <EntityTypeShape EntityType="MyERPModel.ChartOfAccounts2" Width="1.5" PointX="13.375" PointY="20.75" />
+        <EntityTypeShape EntityType="MyERPModel.ItemInsertion" Width="1.5" PointX="20.375" PointY="14.75" />
+        <EntityTypeShape EntityType="MyERPModel.sysdiagram" Width="1.5" PointX="21.375" PointY="8.75" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyBillRegisteration" Width="1.5" PointX="76.5" PointY="225.125" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyBillRegisteration_PropertyContract" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsDueRevenueId" />
+        <AssociationConnector Association="MyERPModel.FK_Department_ChartOfAccount_ViolationsRevenueId" />
+        <EntityTypeShape EntityType="MyERPModel.DelMe" Width="1.5" PointX="15.375" PointY="21.75" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyPaymentHistory" Width="1.5" PointX="0.99386463360575239" PointY="6.0869795708390786" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_Property" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_PropertyBatch" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyPaymentHistory_User" />
+        <EntityTypeShape EntityType="MyERPModel.PropertyContractMergedUnit" Width="1.5" PointX="11.254591745908648" PointY="9.4832540496640156" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyContractMergedUnit_PropertyContract" />
+        <EntityTypeShape EntityType="MyERPModel.vw_PropertyBatchDetailed" Width="1.5" PointX="7.0602517626528876" PointY="14.269643492190932" />
+        <EntityTypeShape EntityType="MyERPModel.vw_PropertyPaymentSummary" Width="1.5" PointX="5.7199644174985425" PointY="6.5916830928026151" />
+        <EntityTypeShape EntityType="MyERPModel.transactionsVatDetail" Width="1.5" PointX="2.288284902595116" PointY="12.423661044064751" />
+        <AssociationConnector Association="MyERPModel.FK_PropertyRenter_ChartOfAccount_AccountId" />
+        <AssociationConnector Association="MyERPModel.FK_JED_Vendor" />
+        <AssociationConnector Association="MyERPModel.FK_CashReceiptVoucher_PropertyContractTermination" />
+        <EntityTypeShape EntityType="MyERPModel.CashReceiptSourceType" Width="1.5" PointX="4.9181257546498092" PointY="3.3520241395346932" />
+        <AssociationConnector Association="MyERPModel.FK_ReceiptAndPaymentVoucher_ReceiptAndPaymentSourceType" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ChartOfAccount_From" />
+        <AssociationConnector Association="MyERPModel.FK_CashTransfer_ChartOfAccount_To" />
+        
+        </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

@@ -1,0 +1,67 @@
+﻿@model MyERP.Models.SystemPage
+
+@{
+    ViewBag.Title = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>SystemPage</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Code)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Code)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.ArName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.ArName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.EnName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.EnName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.IsMasterFile)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.IsMasterFile)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.TableName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.TableName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.ControllerName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.ControllerName)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.Id }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

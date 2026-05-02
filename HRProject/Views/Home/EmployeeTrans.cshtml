@@ -1,0 +1,302 @@
+﻿@using HRServices.Models
+@model HomeModel
+
+
+<div class="ibox" id="iboxManager">
+    <div class="ibox-title">
+        <h5>My Requests</h5>
+        @* <span class="label Row1 ">Level 1</span>
+        <span class="label Row2 ">Level 2</span>
+        <span class="label Row3 ">Level 3</span>*@
+    </div>
+
+    <div class="ibox-content">
+        <table class="display nowrap" style="width:100% !important" id="tbldata">
+            <thead>
+            <tr>
+                <th>Order ID </th>
+                <th>Order Date</th>
+                <th>Type </th>
+                <th>Employee Code</th>
+                <th>Employee Name</th>
+                <th>Job</th>
+                <th>Project</th>
+                <th>Action</th>
+                <th>Level one</th>
+                <th>Level Tow</th>
+                <th>Level Three</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var emp in Model.EmployeeTrans)
+            {
+                <tr>
+                    <td>@emp.OrderId </td>
+                    <td>@emp.Date </td>
+                    <td>@emp.TransTypeName</td>
+                    <td>@emp.EmployeeCode</td>
+                    <td>@emp.EmployeeName</td>
+                    <td>@emp.JobName</td>
+                    <td>@emp.ProjectName</td>
+
+                    <td>
+                        <div class="btn-group">
+                            @{
+                                var rowId = Guid.NewGuid().ToString("D");
+                            }
+                            <input id="@rowId" type="hidden" value="@emp.Data" />
+                            <input id="@(rowId)_lvl" class="emplevel" type="hidden" value="@((int)emp.EmployeeLevelType)" />
+                            <input id="@(rowId)_o" type="hidden" value="@emp.OrderId" />
+                            <input id="@(rowId)_d" type="hidden" value="@emp.Date" />
+                            <input id="@(rowId)_t" type="hidden" value="@emp.TransTypeName" />
+                            <input id="@(rowId)_name" type="hidden" value="@emp.EmployeeName" />
+                            <input id="@(rowId)_pname" type="hidden" value="@emp.ProjectName" />
+                            <input id="@(rowId)_jname" type="hidden" value="@emp.JobName" />
+                            <input id="@(rowId)_ecode" type="hidden" value="@emp.EmployeeCode" />
+                            <button class="btn-warning   btn btn-xs mx-auto p-1 m-1" type="button" onclick="show('@rowId');">Preview</button>
+                            @if (emp.RowId.HasValue)
+                            {
+                                <a class="btn-info   btn btn-xs mx-auto p-1 m-1"  href="@Url.Action("getitemReportfile",new {id=emp.RowId})"><i class="fa fa-print" aria-hidden="true"></i></a>
+
+                            }
+                        </div>
+                    </td>
+
+                    <td>
+
+                        @if (emp.LevelOne.HasValue)
+                        {
+                            if (emp.LevelOne == 1)
+                            {
+                                <i class="fa fa-check-circle fa-lg" style="color:green"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle fa-lg" style="color:red"></i>
+                            }
+                        }
+                        else
+                        {
+                            <i class="fa fa-pause-circle fa-lg" style="color:blue"></i>
+                        }
+                    </td>
+                    <td>
+                        @if (emp.LevelTow.HasValue)
+                        {
+                            if (emp.LevelTow == 1)
+                            {
+                                <i class="fa fa-check-circle fa-lg" style="color:green"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle fa-lg" style="color:red"></i>
+                            }
+                        }
+                        else
+                        {
+                            <i class="fa fa-pause-circle fa-lg" style="color:blue"></i>
+                        }
+                    </td>
+                    <td>
+                        @if (emp.LevelThree.HasValue)
+                        {
+                            if (emp.LevelThree == 1)
+                            {
+                                <i class="fa fa-check-circle fa-lg" style="color:green"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle fa-lg" style="color:red"></i>
+                            }
+                        }
+                        else
+                        {
+                            <i class="fa fa-pause-circle fa-lg" style="color:blue"></i>
+                        }
+                    </td>
+                    
+
+                </tr>
+            }
+
+            </tbody>
+            <tfoot>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+<div class="modal  fade" id="mymodal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="items"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+
+                </button>
+            </div>
+            <div id="content" class="modal-body">
+                <div class="ibox ">
+
+                    <div class="ibox-content m-b-sm border-bottom">
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_id">Order No</label>
+                                    <input type="text" id="show_order_id" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_name">EmployeeName</label>
+                                    <input type="text" id="show_order_name" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_id">Job</label>
+                                    <input type="text" id="txtjobName" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_name">Project</label>
+                                    <input type="text" id="txtprojectName" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_transName">Order Type</label>
+                                    <input type="text" id="show_transName" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_date_added">Order Date</label>
+                                    <div class="input-group date">
+                                        <span class="input-group-addon">
+                                            <i class="fa fa-calendar"></i>
+                                        </span><input id="show_date_added" type="text" disabled="disabled" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+
+                    </div>
+
+                    <div class="ibox-content" id="tblcontent">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                    @section scripts
+                    {
+                        <script>
+        $(document).ready(function () {
+
+            $('#tbldata').DataTable({
+
+                responsive: true,
+                searching: true,
+                destroy: true 
+             
+            });
+     
+
+        });
+        function show(id) {
+
+            ///*
+            // *                <input id="(rowId)_name" type="hidden" value="emp.EmployeeName" />
+            //                <input id="(rowId)_pname" type="hidden" value="emp.ProjectName" />
+            //                <input id="(rowId)_jname" type="hidden" value="emp.JobName" />
+            //                <input id="(rowId)_ecode" type="hidden" value="emp.EmployeeCode" />
+            // */
+            let orderNo = $(`#${id}_o`).val();
+            let orderDate = $(`#${id}_d`).val();
+            let ordertypename = $(`#${id}_t`).val();
+            let employeeName = $(`#${id}_name`).val();
+            let employeecode = $(`#${id}_ecode`).val();
+            let jobName = $(`#${id}_jname`).val();
+            let projName = $(`#${id}_pname`).val();
+
+
+            $('#show_order_name').val(employeecode+'-'+employeeName);
+            $('#show_order_id').val(orderNo);
+            $('#show_date_added').val(orderDate);
+            $('#show_transName').val(ordertypename);
+
+            $('#txtjobName').val(jobName);
+            $('#txtprojectName').val(projName);
+
+            let data = $(`#${id}`).val();
+
+
+
+            if (!data) {
+                return;
+            }
+            var arr = data.split('¥');
+
+            let dataHeadr = arr[0].split('¢');
+
+            let tableheder = '';
+            for (let i = 0; i < dataHeadr.length; i++) {
+                tableheder += `<th>${dataHeadr[i]}</th>`;
+            }
+            let databody = '';
+            for (let i = 1; i < arr.length; i++) {
+                let bodyarr = arr[i].split('¢');
+                databody += '<tr>';
+                for (let row = 0; row < bodyarr.length; row++) {
+                    databody += `<td>${bodyarr[row]}</td>`;
+                }
+                databody += '</tr>';
+
+            }
+
+            //
+            $('#tblcontent').html(`<table id="tblItemlist" class="display nowrap" style="width:100% !important">
+
+                                           <thead>
+                                    <tr>
+                                       ${tableheder}
+                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
+
+                                                       ${databody}
+
+                                                                    </tbody>
+                                                        </table>`);
+
+
+            $('#items').text("Details");
+
+            $('#tblItemlist').DataTable({
+
+                responsive: true,
+                searching: true,
+                destroy: true
+            });
+
+            $('#mymodal').modal('show');
+        }
+                        </script>
+                    }

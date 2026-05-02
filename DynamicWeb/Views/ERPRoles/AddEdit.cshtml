@@ -1,0 +1,161 @@
+﻿@model MyERP.Models.ERPRole
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ERPRole;
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model.Id > 0)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+                        if (ViewBag.Previous > 0)
+                        {
+            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.ERPRole:</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ERPRoles/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                     
+                            <input type="hidden" id="Id" name="Id" value="@Model.Id" />
+                            @Html.HiddenFor(model => model.IsActive)
+                            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-group row">
+                                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                           @* @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })*@
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>*@
+                                        </div>
+
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="form-control" value="@Model.ArName" name="ArName" id="txtArName" placeholder=@MyERP.Properties.Resources.ArName required>
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                            @*<span class="Asterisks">*</span>*@
+                                        </div>
+
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                        <div class="col-sm-4">
+                                            <input type="text" class="form-control" value="@Model.EnName" name="EnName" placeholder=@MyERP.Properties.Resources.EnName>
+                                        </div>
+                                    </div>
+                                    <input id="new" name="newBtn" hidden />
+                                    <div class="form-group">
+                                        <div class="col-md-offset-2 col-md-10">
+                                            @if (Model.Id == 0)
+                                            {
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left">@MyERP.Properties.Resources.Back</a>
+                                                <input type="submit" value="@MyERP.Properties.Resources.Save" class="btn btn-success" style="float:left;margin-left:2%" />
+                                                <input type="submit" value="@MyERP.Properties.Resources.SaveAndNew" id="newbtn" class="btn btn-success" style="float:left;margin-left:2%" />
+
+
+                                            }
+                                            else
+                                            {
+                                                if (Model.IsDeleted == false)
+                                                {
+                                        <a class="btn btn-danger" onclick="Delete(@Model.Id,'ERPRoles')" style="float:left;margin-left:2%" role="button" href="javascript:void(0);">@MyERP.Properties.Resources.Delete</a>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left;margin-left:2%">@MyERP.Properties.Resources.Back</a>
+                                                    <input type="submit" value="@MyERP.Properties.Resources.Save" class="btn btn-success" style="float:left;margin-left:2%" />
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+            if ($('#Id').val() == 0) {
+                function setCodeNum() {
+                    var doc = $.get('/ERPRoles/SetCodeNum').done(function (r) {
+                        $('#Code').val(r);
+                    });
+
+                }
+
+                setCodeNum();
+            }
+            $(document).on('change', '#type1', function () {
+                var id = $('#type1').val();
+
+                if (id == 1) {
+                    $('#div1').hide();
+                }
+                else {
+                    $('#div1').show();
+                    //$('.main').show();
+                }
+            });
+            function Delete(id) {
+                if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+                    $('#preloader, #status').fadeIn();
+                    $.ajax(
+                        {
+                            url: '/ERPRoles/Delete',
+                            type: 'POST',
+                            data: {
+                                "Id": id,
+                            },
+                            error: function (e) {
+                                $('#preloader, #status').fadeOut();
+
+                            },
+                            success: function (r) {
+                                if (r == 'true') {
+                                    window.location.replace('/ERPRoles');
+                                }
+                            }
+                        });
+                }
+            }
+</script>

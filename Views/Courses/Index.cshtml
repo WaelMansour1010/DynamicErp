@@ -1,0 +1,79 @@
+﻿@model IEnumerable<MyERP.Models.EducationalSubject>
+
+@{
+    Layout = "~/Views/Shared/_CoursesLayout.cshtml";
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Courses;
+}
+
+
+
+<main>
+    <!--? slider Area Start-->
+    <section class="landing-section">
+        <div class="inner-landing">
+            <img src="~/assets/images/Courses/img/header.png" />
+        </div>
+    </section>
+    <!-- Courses area start -->
+    <div class="courses-area section-padding40 fix">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-7 col-lg-8">
+                    <div class="section-tittle text-center mb-55">
+                        <h2 id="all_courses"> @MyERP.Properties.Resources.Courses </h2>
+                    </div>
+                </div>
+            </div>
+            <div class="courses-actives" id="CoursesDiv">
+                @foreach (var item in Model)
+                {
+
+                    <div class="properties pb-20">
+                        <div class="properties__card">
+                            <div class="properties__img overlay1">
+                                <a href="/Courses/Course?Id=@item.Id">
+                                    @if (item.Image != null)
+                                    {
+                                        <img src="@item.Image" alt="" style="height:300px;" />
+                                    }
+                                    else
+                                    {
+                                        <img src="~/assets/images/users/Avatar_User.png" alt=" style="height:300px;" />
+                                    }
+                                </a>
+                            </div><div class="properties__caption">
+                                <h3 class="course-name">
+                                    <a href="/Courses/Course?Id=@item.Id">
+                                       @item.ArName
+                                    </a>
+                                </h3><p>
+                                    @item.Notes
+                                </p><div class="properties__footer d-flex justify-content-between align-items-center">
+                                    <div class="price lecture-number">
+                                        <h3>@MyERP.Properties.Resources.NoOfLectures</h3><p>
+                                            <span>
+                                                @item.NoOfLessons 
+                                            </span><span>@MyERP.Properties.Resources._Lecture</span>
+                                        </p>
+                                    </div>
+                                </div><a href="/Courses/Course?Id=@item.Id" class="border-btn border-btn2">@MyERP.Properties.Resources.ShowAllDetails</a>
+                        </div>
+                    </div>
+                </div>
+            }
+            </div>
+            <!-- Courses area End -->
+        </div>
+    </div>
+</main>
+
+
+<script>
+
+
+    //$(document).ready(function () {
+    //    GetCourses();
+    //});
+
+</script>

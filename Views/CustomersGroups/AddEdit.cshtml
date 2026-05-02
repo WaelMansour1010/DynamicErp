@@ -1,0 +1,191 @@
+﻿@model MyERP.Models.CustomersGroup
+<script src="~/Scripts/SaveAndNew.js"></script>
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.CustomersGroups;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model!=null&&Model.Id > 0)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        if (ViewBag.Previous > 0)
+                        {
+            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <div class="hed page-title">@*بيانات مجموعات العملاء*@ @MyERP.Properties.Resources.CustomersGroups:</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/CustomersGroups/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                    }
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-2">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                        @*<span class="Asterisks">*</span>*@
+                                        @*@Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })*@
+                                    </div>
+                                    <div class="col-sm-2">
+                                        @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-md-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.ArName, "", new { @class = "text-danger" })*@
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName </label>
+                                    <div class="col-md-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                        @Html.ValidationMessageFor(model => model.EnName, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                                @*<div class="form-group">
+                    <label for="inputtext3" class="col-sm-2 control-label">الشركة</label>
+                    <div class="col-md-10">
+                        @Html.DropDownList("CompanyId", null,"اختر", htmlAttributes: new { @class = "form-control", @required = "required" })
+                        @Html.ValidationMessageFor(model => model.CompanyId, "", new { @class = "text-danger" })
+                        <span class="Asterisks">*</span>
+                    </div>
+                </div>*@
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-md-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+
+                                        @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input id="new" name="newBtn" hidden />
+                        <div class="form-group row">
+                            <div class="col-md-offset-2 col-md-10">
+                                @if (Model == null)
+                                {
+                                    <input type="submit" value="@MyERP.Properties.Resources.Save" class="btn btn-success" />
+
+                                    <input type="submit" value="@MyERP.Properties.Resources.SaveAndNew" id="newbtn" class="btn btn-success" />
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+
+                                }
+                                else
+                                {
+                                    if (Model != null && Model.IsDeleted == false)
+                                    {
+                                        <input type="submit" value="حفظ" class="btn btn-success" />
+                                        <a class="btn btn-danger" onclick="Delete(@Model.Id)" role="button" href="javascript:void(0);">@MyERP.Properties.Resources.Delete</a>
+
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    //--------------- Variables Declarations -------------------//
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+        else {
+            $('#FieldsCodingId').prop('disabled', true);
+        }
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+    });
+    // disable gives Null with form Submit so we have to reverse it in submin
+    $("form").submit(function () {
+        $("#FieldsCodingId").prop('disabled', false);
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+     function setCodeNum() {
+        var doc = $.get('/CustomersGroups/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/CustomersGroups/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+            $('#preloader, #status').fadeOut();
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/CustomersGroups');
+                        }
+                    }
+                });
+        }
+    }
+    //*********************************************************//
+</script>

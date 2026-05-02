@@ -1,0 +1,445 @@
+﻿@model IEnumerable<MyERP.Models.ItemGroup>
+@{
+    ViewBag.Title = "طلب شراء";
+}
+
+<input type="hidden" id="PurchaseRequestId" value="@ViewBag.PurchaseRequestId" />
+<input type="hidden" id="IsApproved" value="@Html.Raw(ViewBag.IsApproved)" />
+<input type="hidden" id="StatusId" value="@ViewBag.StatusId" />
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+            </div>
+            <h4 class="page-title">طلب شراء:</h4>
+        </div>
+    </div>
+</div>
+<div class="row p-0">
+    <div class="col-lg-12 p-0">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="form-group row">
+                    <label class=" col-sm-1 control-label" for="DocumentNumber">رقم الطلب</label>
+                    <div class="col-sm-2">
+                        <input id="DocumentNumber" class="form-control" readonly placeholder="رقم المستند" required value="@ViewBag.DocumentNumber" />
+                        <div class="invalid-feedback">
+                            رقم المستند مطلوب
+                        </div>
+                    </div>
+                    <label for="VoucherDate" class="control-label col-sm-1">تاريخ الطلب</label>
+                    <div class="col-sm-2">
+                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required readonly />
+                        <div class="invalid-feedback">
+                            ادخل التاريخ
+                        </div>
+                    </div>
+                    <label class="control-label col-sm-1" for="Notes">تاريخ الإعتماد</label>
+                    <label class="control-label " for="Notes"> @ViewBag.ApprovalDate</label>
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 p-0">
+                    <div class="card m-1 p-1">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="row form-group m-0">
+                                <label for="VendorOrCustomerId" class="control-label col-sm-1">المورد </label>
+                                <div class="col-sm-2">
+                                    @Html.DropDownList("VendorOrCustomerId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <div class="invalid-feedback">
+                                        اختر المورد
+                                    </div>
+                                </div>
+
+                                <label for="DepartmentId" class="control-label col-sm-1">الفرع</label>
+                                <div class="col-sm-2">
+                                    @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <div class="invalid-feedback">
+                                        اختر الفرع
+                                    </div>
+                                </div>
+
+                                <label for="WarehouseId" class="control-label col-sm-1">المخزن</label>
+                                <div class="col-sm-2">
+                                    @Html.DropDownList("WarehouseId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <div class="invalid-feedback">
+                                        اختر المخزن
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-8 p-0">
+                    <div class="card m-1 p-1">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                    @foreach (var item in Model.Where(x => x.IsDeleted == false && x.IsActive == true &&x.Id !=10))//to hide raw materials
+                                    {
+                                        <a item-group-id="@item.Id" class="nav-link mb-2" id="@item.Id-tab" data-toggle="pill" href="#v-@item.Id" role="tab" aria-controls="v-@item.Id" aria-selected="false">@item.ArName</a>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-sm-10">
+                                <div class="tab-content pt-0">
+                                    @foreach (var itemGroup in Model)
+                                    {
+                                        <div class="tab-pane fade" id="v-@itemGroup.Id" role="tabpanel" aria-labelledby="@itemGroup.Id-tab">
+                                            <div class="row">
+                                                <!-- Plans -->
+                                                @foreach (var item in itemGroup.Items.Where(x => x.IsDeleted == false && x.IsActive == true))
+                                                {
+                                                    <div class="col-xl-3 col-md-6 mb-1">
+                                                        <input type="hidden" class="item-id" value="@item.Id" />
+                                                        <button class="btn btn-outline-primary waves-effect waves-light col-sm-12" onclick="addItem(this)">@item.ArName</button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4 p-0">
+                    <div class="card m-1 p-1">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="table-responsive">
+                                <table class="table table-centered table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>الصنف </th>
+                                            <th>الكمية</th>
+                                            <th class="UnitClass" style="display:none;">الوحدة</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="PurchaseRequestDetails"></tbody>
+                                </table>
+                            </div>
+                            <div class="row form-group m-1">
+                                <div class="col-12">
+                                    <button class="btn btn-success" onclick="addEdit()" id="btnSave">
+                                        حفظ
+                                    </button>
+                                     <button class="btn btn-success" onclick="addEditAndNew()" id="btnAddEditAndNew">
+                                        حفظ وجديد
+                                    </button>
+                                    <button class="btn btn-success" onclick="approve()" id="btnApprove">
+                                        اعتماد
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if ($('#PurchaseRequestId').val() > 0) {
+        let itemGroupId = '@Html.Raw(ViewBag.ItemGroupId)';
+        $('#' + itemGroupId + '-tab').trigger('click');
+        $('.nav.flex-column.nav-pills').find('a').attr('disabled', 'disabled').addClass('disabled');
+        if ($("#IsApproved").val() == 'True')
+            $("#btnApprove").attr("disabled", "disabled");
+    } else {
+        $('.nav-link.mb-2').first().trigger('click');
+        $('#btnApprove').remove();
+    }
+    function editPurchaseRequest(id) {
+        $.get('/PurchaseRequest/PurchaseRequestDetails/' + id).done(function (r) {
+            appendPurchaseRequestDetails(r);
+        });
+    }
+
+    if ($('#PurchaseRequestId').val() > 0)
+        editPurchaseRequest($('#PurchaseRequestId').val())
+
+    $(document).ready(function () {
+        if ($("#IsApproved").val() == 'True') {
+            $("#btnSave").attr("disabled", "disabled");
+            $("#btnAddEditAndNew").attr("disabled", "disabled");
+        }
+        else {
+            $("#btnSave").removeAttr("disabled");
+            $("#btnAddEditAndNew").removeAttr("disabled");
+        }
+
+        if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+            $('.UnitClass').show();
+
+            // show item unit ArName
+            $('#PurchaseRequestDetails tr').each(function () {
+                var tr = $(this);
+
+                var itemUnitArName = tr.find('.itemUnitArName');
+                //console.log("itemUnitArName", itemUnitArName.val())
+                var itemDisplayName = tr.find('.item-name').val();
+                if (itemDisplayName != "") {
+
+                    itemDisplayName += " " + itemUnitArName.val();
+                    tr.find('.item-name').val(itemDisplayName);
+                   // console.log("itemDisplayName", itemDisplayName)
+
+                }
+            });
+        }
+
+
+    });
+
+    let warehouseOptions = '';
+
+    function setWarehouseValues() {
+        warehouseOptions = '';
+        return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function (r) {
+                warehouseOptions = '';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+            });
+    }
+    if ($('#DepartmentId').val()) {
+        setWarehouseValues().then(function () {
+            $("#WarehouseId").empty().append(warehouseOptions);
+        });
+    }
+
+    function getItemUnits(itemId) {
+
+        // TO Fix Missing Unit .
+        requestCache['/Helper/ItemUnits?itemId=' + itemId] = null;
+        ////////////////////////
+
+        return requestData('/Helper/ItemUnits?itemId=' + itemId);
+    }
+
+    function setDocNum() {
+        if ($('#PurchaseRequestId').val() == "" || $('#PurchaseRequestId').val() == 0) {
+            if ($('#DepartmentId').val())
+                $.get('/PurchaseRequest/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+                    $('#DocumentNumber').val(r);
+                });
+        } else {
+            // $('#DocumentNumber').val(r);
+        }
+    }
+    setDocNum();
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            setWarehouseValues().then(function () {
+                $("#WarehouseId").empty().append(warehouseOptions);
+            });
+            setDocNum();
+        } else {
+            $('#DocumentNumber').val('');
+            $("#WarehouseId").empty().append('<option value>إختر المخزن</option>');;
+        }
+    });
+
+    function addItem(e) {
+        let itemid = $(e).siblings('.item-id').val();
+        let valid = true;
+        $('#PurchaseRequestDetails tr').each(function () {
+            var td = $(this);
+            if (td.find('.item').val() == itemid) {
+                valid = false
+            }
+        });
+
+        if (valid == false)
+            alert('لا يمكن إضافة الصنف أكثر من مرة');
+        else {
+            $('#preloader, #status').fadeIn();
+            let tr = '<tr><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item" required /><input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" required /></td><td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" required /></td><td class="tabledit-edit-mode UnitClass" style="display:none;" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+            $('#PurchaseRequestDetails').append(tr);
+            if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+                $('.UnitClass').show();
+            }
+
+
+            $('.item').last().val(itemid).closest('tr').find('.item-name').val($(e).text());
+            $('#PurchaseRequestDetails tr:last select').select2({
+                matcher: matchCustom
+            });
+
+            $('#PurchaseRequestDetails .money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+            });
+            $('#PurchaseRequestDetails tr:last .money').inputmask({
+                alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+            });
+            getItemUnits(itemid).done(function (r) {
+                let units = '';
+                for (var i = 0; i < r.length; i++) {
+                    units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+                $('#preloader, #status').fadeOut();
+                $('.item-unit').last().empty().append(units).trigger('change');
+            });
+            $('.nav.flex-column.nav-pills').find('a').attr('disabled', 'disabled').addClass('disabled');
+        }
+    }
+
+    $(document).on('change', '.item-unit', function () {
+        let itemUnitId = $(this).val();
+        let item = $(this).closest('tr').find('.item');
+        getItemUnits(item.val()).done(function (r) {
+            let itemUnit = r.filter(function (i) { return i.Id == itemUnitId })[0];
+            item.closest('tr').find('.unit-equavalent').val(itemUnit.Equivalent);
+            item.closest('tr').find('.price').val(itemUnit.Price);
+            item.closest('tr').find('.barcode').val(itemUnit.Barcode);
+            item.closest('tr').find('.item-price-id').val(itemUnit.ItemPriceId);
+        });
+    });
+
+    function appendPurchaseRequestDetails(r) {
+        console.log(r)
+        $('#PurchaseRequestDetails').empty().append(r.view);
+        console.log(r.view,"r.view")
+        $('#PurchaseRequestDetails select').select2({
+            matcher: matchCustom
+        });
+
+        $('#DepartmentId').val(r.purchaseRequest.DepartmentId).trigger('change').attr('disabled', 'disabled');
+        setWarehouseValues().then(function () {
+            $('#WarehouseId').empty().append(warehouseOptions).val(r.purchaseRequest.WarehouseId).trigger('change').attr('disabled', 'disabled');
+        });
+    }
+
+    function deleteElement(e) {
+        $(e).closest('tr').remove();
+        if ($('#PurchaseRequestDetails').find('tr').length == 0)
+            $('.nav.flex-column.nav-pills').find('a').removeAttr('disabled').removeClass('disabled');
+    }
+    function addEditAndNew() {
+
+        addEdit('new');
+    }
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+        var PurchaseRequestDetails = [];
+        if (valid) {
+            $('#PurchaseRequestDetails tr').each(function () {
+                var td = $(this);
+                if (td.find('.quantity').val() * 1 != 0 && td.find('.item').val() > 0) {
+                    var PurchaseRequestDetail = {
+                        ItemId: td.find('.item').val(),
+                        ItemPriceId: td.find('.item-price-id').val(),
+                        ItemUnitId: td.find('.item-unit').val(),
+                        UnitEquivalent: td.find('.unit-equavalent').val(),
+                        Price: td.find('.price').inputmask('unmaskedvalue') * 1,
+                        Qty: td.find('.quantity').val(),
+                        IsActive: true,
+                        IsDeleted: false,
+                    };
+
+                    PurchaseRequestDetails.push(PurchaseRequestDetail);
+                }
+            });
+            valid = PurchaseRequestDetails.length > 0 ? true : false;
+            valid == false ? alert('برجاء ادخال التفاصيل كاملة!') : null;
+        }
+
+        if (valid && confirm('هل تريد الحفظ؟')) {
+            $('#preloader, #status').fadeIn();
+            $('#btnAddEditAndNew').prop('disabled', true);
+            $('#btnSave').prop('disabled', true);
+            let itemGroupId = $('.nav.flex-column.nav-pills').find('a.active').attr('item-group-id');
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/PurchaseRequest/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: $('#PurchaseRequestId').val(),
+                        DocumentNumber: $('#DocumentNumber').val(),
+                        BranchId: $('#BranchId').val(),
+                        WarehouseId: $('#WarehouseId').val(),
+                        VoucherDate: $('#VoucherDate').val(),
+                        VendorOrCustomerId: $('#VendorOrCustomerId').val(),
+                        CurrencyId: $('#CurrencyId').val(),
+                        CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                        Total: $('#Total').inputmask('unmaskedvalue'),
+                        DepartmentId: $('#DepartmentId').val(),
+                        PurchaseRequestDetails: PurchaseRequestDetails,
+                        IsActive: true,
+                        IsDeleted: false,
+                        IsApproved: $('#IsApproved').val(),
+                        StatusId: $('#StatusId').val(),
+                        ItemGroupId: itemGroupId
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+                        alert("تم الحفظ");
+                        console.log(r.id);
+                        if(n=='new')
+                            window.location.replace('/PurchaseRequest/AddEdit');
+                        else
+                        window.location.replace('/PurchaseRequest/');
+                        
+                    } else {
+                        $('#preloader, #status').fadeOut();
+                        $('#btnAddEditAndNew').prop('disabled', false);
+                        $('#btnSave').prop('disabled', false);
+                        alert("لم يتم الحفظ!");
+                    }
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    $('#btnAddEditAndNew').prop('disabled', false);
+                    $('#btnSave').prop('disabled', false);
+                    alert("لم يتم الحفظ!");
+                }
+            });
+        }
+    }
+
+    function approve() {
+        $('#preloader, #status').fadeIn();
+        $.ajax({
+            url: '/PurchaseRequest/ActivateDeactivate',
+            type: 'POST',
+            data: {
+                "Id": $('#PurchaseRequestId').val(),
+            },
+            error: function (e) {
+                alert('لم يتم تغير حالة الاعتماد!');
+                $('#preloader, #status').fadeOut();
+            },
+            success: function (r) {
+                $('#preloader, #status').fadeOut();
+                if (r == 'approved') {
+                    alert('تم اعتماد الطلب!');
+                }
+                else if (r == 'notApproved') {
+                    alert('تم الغاء اعتماد الطلب!');
+                } else {
+                    alert('لم يتم تعديل الاعتماد!');
+                }
+            }
+        });
+    }
+
+  
+</script>

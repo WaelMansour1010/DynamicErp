@@ -1,0 +1,955 @@
+﻿@model MyERP.Models.ChurchMeeting
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Confessions;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.Confessions </h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2 ">@MyERP.Properties.Resources.MemberName </label>
+                                    <div class="col-sm-4 ">
+                                        <div class="row ">
+                                            <div class="col-sm-10">
+                                                <select class="form-control" id="ChurchMembershipId" required>
+                                                    @if (Model != null)
+                                                    {
+                                                        <option value="@Model.ChurchMembershipId"></option>
+                                                    }
+                                                </select>
+
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-1" style="padding: 0;margin-right: -10px;">
+                                                <button class="btn btn-success  btn-sm" id="FamilyMemberAddBtn" data-toggle="modal"><i class="remixicon-user-add-fill"></i></button>
+                                            </div>
+                                            <div class="col-sm-1" style="padding: 0;margin-right:2px;">
+                                                <button class="btn btn-success  btn-sm" id="FamilyMemberEditBtn" data-toggle="modal"><i class="fa fa-edit"></i></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @*<label class="control-label col-sm-2">@MyERP.Properties.Resources.MemberName</label>
+        <div class="col-sm-4">
+            @Html.DropDownListFor(model => model.ChurchMembershipId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+            <div class="invalid-feedback">
+                @MyERP.Properties.Resources.Required
+            </div>
+        </div>*@
+                                    <label for="MobileNumber" class="control-label col-sm-2"> @MyERP.Properties.Resources.Mobile</label>
+                                    <div class="col-sm-3">
+                                        @Html.EditorFor(model => model.Mobile, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Mobile } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-1" style="padding: 0;">
+                                        <button class="btn btn-success  btn-sm" onclick="SearchByMobileNo()"><i class="fa fa-search"></i></i></button>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Date, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ConfessionFather" class="control-label col-sm-2">@MyERP.Properties.Resources.Father </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ChurchFatherId",null,MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control"} })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+    @*<label for="ConfessionFather" class="control-label col-sm-2">@MyERP.Properties.Resources._Interviewer </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ConfessionFather, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources._Interviewer } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>*@
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="TopicsForDiscussion">@MyERP.Properties.Resources.TopicsForDiscussion</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="TopicsForDiscussion" name="TopicsForDiscussion" class="form-control" rows="5" cols="5">@*@if (Model != null) { @Model.TopicsForDiscussion; }*@ </textarea>
+                                    </div>
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <div class="col-sm-6">
+                                        <input type="checkbox" name="IsUseApplication" id="IsUseApplication" disabled />
+                                        <label class="col-sm-10 control-label" for="IsUseApplication">
+                                            @MyERP.Properties.Resources.IsUseApplication
+                                        </label>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="tab-pane" id="5">
+                                            <label class="col-sm-4 control-label">@MyERP.Properties.Resources.Image</label>
+                                            <div id="MemberImage" style="width: 100%;margin: 20px;">
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                           
+                            <h5 class="header-title">
+                                @MyERP.Properties.Resources.PreviousMeetings
+                            </h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.Date
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources._Interviewer
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Notes
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="MeetingData">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                      </div>
+                    </div>
+
+                    <!-------------------------------------------------------------------------------------------------------->
+
+                    <div class="row">
+                        <div class="col-sm-offset-2">
+                            @if (Model == null)
+                            {
+                                <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button onclick="addEdit();" class="btn btn-success" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else if (Model.IsDeleted == false)
+                            {
+                                <button onclick="addEdit();" class="btn btn-success" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+    </div>
+</div>
+
+<!-- Modal Section -->
+<div id="FamilyMemberModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.FamilyMember</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <input hidden id="FamilyMemberIdInput" name="FamilyMemberIdInput" />
+                    <input hidden id="FamilyMemberCodeInput" name="FamilyMemberCodeInput" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="FamilyMemberArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.BirthDate</label>
+                                <input type="datetime-local" class="form-control" id="FamilyMemberBirthDate" value="@ViewBag.Date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.Phone</label>
+                                <input type="text" class="form-control" id="FamilyMemberPhone" placeholder=@MyERP.Properties.Resources.Phone>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile </label>
+                                <input type="text" class="form-control" id="FamilyMemberMobile" placeholder="@MyERP.Properties.Resources.Mobile">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="GroupId" class="control-label">@MyERP.Properties.Resources.Area</label>
+                                @Html.DropDownList("AreaId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <input type="checkbox" id="FamilyMemberIsAlive" checked>
+                                <label for="IsBlocked" class="control-label col-sm-8">@MyERP.Properties.Resources.IsAlive</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Email" class="control-label">@MyERP.Properties.Resources.Email </label>
+                                <input class="form-control" id="MemberEmailPopUp" placeholder=@MyERP.Properties.Resources.Email />
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tab-pane" id="5">
+                                <label for="ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.Image</label>
+                                <input hidden id="PopUpMemberImage" />
+
+                                <div id="Membergallery" style="width: 100%;margin: 20px;">
+
+                                </div>
+
+                                <input type="file" id="MemberBrowseImage" onchange="MemberpreviewImage()" value="Browse" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="FamilyMemberAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="FamilyMemberNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="addFamilyMember();">@MyERP.Properties.Resources.Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="FamilyMemberEditModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@MyERP.Properties.Resources.FamilyMember</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-horizontal needs-validation" role="form">
+                    <input hidden id="EditFamilyMemberIdInput" />
+                    <input hidden id="EditFamilyMemberCodeInput" />
+                    <input hidden id="EditFamilyMemberParentId"  />
+                    <input hidden id="EditFamilyMemberRelative"  />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ArName" class="control-label">@MyERP.Properties.Resources.ArName</label>
+                                <input type="text" class="form-control" id="EditFamilyMemberArName" placeholder=@MyERP.Properties.Resources.ArName>
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.BirthDate</label>
+                                <input type="datetime-local" class="form-control" id="EditFamilyMemberBirthDate" >
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="EnName" class="control-label">@MyERP.Properties.Resources.Phone</label>
+                                <input type="text" class="form-control" id="EditFamilyMemberPhone" placeholder=@MyERP.Properties.Resources.Phone>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Mobile1" class="control-label">@MyERP.Properties.Resources.Mobile </label>
+                                <input type="text" class="form-control" id="EditFamilyMemberMobile" placeholder="@MyERP.Properties.Resources.Mobile">
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="Email" class="control-label">@MyERP.Properties.Resources.Email </label>
+                                <input class="form-control" id="EditMemberEmailPopUp" placeholder=@MyERP.Properties.Resources.Email />
+                            </div>
+                            <div class="invalid-feedback">
+                                @MyERP.Properties.Resources.Required
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="tab-pane" id="5">
+                                <label for="ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.Image</label>
+                                <input hidden id="EditPopUpMemberImage" />
+
+                                <div id="EditMembergallery" style="width: 100%;margin: 20px;">
+
+                                </div>
+
+                                <input type="file" id="EditMemberBrowseImage" onchange="EditMemberpreviewImage()" value="Browse" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="Address" class="control-label">@MyERP.Properties.Resources.Address</label>
+                                <input type="text" class="form-control" id="EditFamilyMemberAddress" placeholder=@MyERP.Properties.Resources.Address>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group no-margin">
+                                <label for="Notes" class="control-label">@MyERP.Properties.Resources.Notes</label>
+                                <textarea class="form-control" id="EditFamilyMemberNotes" placeholder=@MyERP.Properties.Resources.Notes></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-info waves-effect waves-light" onclick="EditFamilyMember();">@MyERP.Properties.Resources.Edit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Of Modal Section -->
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    let FamilyMembers = [];
+    let AllMembers = [];
+    //*********************************************************//
+
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#Date').val('@ViewBag.Date');
+        GetMembers();
+        if ($('#Id').val() > 0) {
+            let ChurchMembershipId = $('#ChurchMembershipId').val();
+            appendFamilyMemberOptions(true).then(function () { $('#ChurchMembershipId').val(ChurchMembershipId).trigger('change') });
+        }
+        else {
+            setCodeNum();
+            appendFamilyMemberOptions(true);
+        }
+    });
+    //*********************************************************//
+    function SearchByMobileNo() {
+
+        $.get('/ChurchMembership/SearchFamilyMemberByMobileNo?Mobile=' + $('#Mobile').val()).done(function (r) {
+                r = r[0];
+                if (r) {
+                    r.BirthDate = r.BirthDate != null ? convertToJavaScriptDate2(r.BirthDate) : null;
+                  //  $('#Mobile').val(r.Mobile);
+                    $('#FamilyMemberIdInput').val(r.Id);
+                    $('#FamilyMemberCodeInput').val(r.Code);
+                    $('#FamilyMemberAddress').val(r.Address);
+                    $('#FamilyMemberMobile').val(r.Mobile);
+                    $("#FamilyMemberPhone").val(r.Phone);
+                    $("#FamilyMemberEmail").val(r.Email);
+                    $("#FamilyMemberBirthDate").val(r.BirthDate);
+                    $("#AreaId").val(r.AreaId);
+                    $("#AreaId").select2();
+                    $("#ChurchMembershipId").val(r.Id);
+                    $("#ChurchMembershipId").select2();
+                    $("#FamilyMemberArName").val(r.ArName);
+                    $("#FamilyMemberNotes").val(r.Notes);
+                    $("#FamilyMemberIsAlive").prop("checked", r.IsAlive);
+                    $("#IsUseApplication").prop("checked", r.IsUseApplication);
+                    $("#TopicsForDiscussion").val(r.TopicsForDiscussion);
+                    r.Image = r.Image != null ? "<img src ='" +
+                        r.Image + "' alt='' class='MemberImage' style='width:200px;height:200px;' />" : "<img src ='/assets/images/users/Avatar_User.png' alt='' class='MemberImage' style='width:200px;height:200px;' />";
+                    $("#MemberImage").html(r.Image);
+                    GetPreviousChurchMeeting();
+                }
+                else {
+                    $("#MemberImage").empty();
+                    if (confirm('@MyERP.Properties.Resources.ThereIsNoMemberWithThisNoDoYouWantToAdd')) {
+                        $('#FamilyMemberModal').modal("show");
+                        $('#FamilyMemberMobile').val($('#Mobile').val());
+                    }
+                    else {
+                        //$('#ChurchMembershipId').val(0);
+                        //$('#ChurchMembershipId').select2();
+                        $('#ChurchMembershipId').prop('selectedIndex', 0).select2();
+
+                    }
+                }
+            });
+
+    }
+    //--------------- Event Functions -------------------//
+    //$(document).on('keydown', '#Mobile', function (e) {
+    //    if (e.which == 13 || e.keyCode == 13) {
+    //        SearchByMobileNo();
+    //    }
+    //});
+    $(document).on('change', '#ChurchMembershipId', function (e) {
+        $("#MemberImage").empty();
+        $.get('/ChurchMeeting/GetFamilyMemberById?ChurchMembershipId=' + $(this).val()).done(function (r) {
+            let member = r;
+            if (member) {
+                //member.BirthDate = member.BirthDate != null ? convertToJavaScriptDate(member.BirthDate) : null;
+                //$('#FamilyMemberIdInput').val(member.Id);
+                //$('#FamilyMemberCodeInput').val(member.Code);
+                //$('#FamilyMemberAddress').val(member.Address);
+                //$('#FamilyMemberMobile').val(member.Mobile);
+                //$("#FamilyMemberPhone").val(member.Phone);
+                //$("#FamilyMemberBirthDate").val(member.BirthDate);
+                //$("#AreaId").val(member.AreaId);
+                //$("#AreaId").select2();
+                //$("#FamilyMemberArName").val(member.ArName);
+                //$("#FamilyMemberNotes").val(member.Notes);
+                //$("#FamilyMemberIsAlive").prop("checked", member.IsAlive);
+                $('#Mobile').val(member.Mobile);
+                $("#IsUseApplication").prop("checked", member.IsUseApplication);
+                $("#TopicsForDiscussion").val(member.TopicsForDiscussion);
+                member.Image = member.Image != null ? "<img src ='" +
+                    member.Image + "' alt='' class='MemberImage' style='width:200px; height:200px;'/>" : "<img src ='/assets/images/users/Avatar_User.png' alt='' class='MemberImage' style='width:200px;height:200px;' />";
+                $("#MemberImage").html(member.Image);
+
+                //$("#Membergallery").html(member.Image)
+                //$('#PopUpMemberImage').val(member.Image);
+            }
+        });
+        GetPreviousChurchMeeting();
+    });
+    $(document).on('click', '#FamilyMemberAddBtn', function () {
+        $('#FamilyMemberModal').modal("show");
+        $("#FamilyMemberArName").val('')
+    });
+    $(document).on('click', '#FamilyMemberEditBtn', function () {
+        if ($('#ChurchMembershipId').val()) {
+            $("#MemberImage").empty();
+            $.get('/ChurchMeeting/GetFamilyMemberById?ChurchMembershipId=' + $('#ChurchMembershipId').val()).done(function (r) {
+                let member = r;
+                if (member) {
+                    member.BirthDate = member.BirthDate != null ? convertToJavaScriptDate2(member.BirthDate) : null;
+                    $('#EditFamilyMemberIdInput').val(member.Id);
+                    $('#EditFamilyMemberCodeInput').val(member.Code);
+                    $('#EditFamilyMemberAddress').val(member.Address);
+                    $('#EditFamilyMemberMobile').val(member.Mobile);
+                    $("#EditFamilyMemberPhone").val(member.Phone);
+                    $("#EditFamilyMemberBirthDate").val(member.BirthDate);
+                    $("#EditFamilyMemberArName").val(member.ArName);
+                    $("#EditFamilyMemberNotes").val(member.Notes);
+                    $('#EditMobile').val(member.Mobile);
+                    $('#EditFamilyMemberRelative').val(member.Relative);
+                    $('#EditFamilyMemberParentId').val(member.ParentId);
+                    $('#EditPopUpMemberImage').val(member.Image);
+
+                    member.Image = member.Image != null ? "<img src ='" +member.Image + "' alt='' class='MemberImage' style='width:200px; height:200px;'/>" : "<img src ='/assets/images/users/Avatar_User.png' alt='' class='MemberImage' style='width:200px;height:200px;' />";
+
+                    $("#MemberImage").html(member.Image);
+
+                    $("#EditMembergallery").html(member.Image)
+
+                }
+            });
+
+
+            $('#FamilyMemberEditModal').modal("show");
+        }
+        else {
+            alert('@MyERP.Properties.Resources.Member @MyERP.Properties.Resources.Required')
+        }
+        $("#FamilyMemberArName").val('')
+    });
+    //*********************************************************//
+
+    //--------------- Other Functions -------------------//
+    function GetMembers() {
+        return requestData('/ChurchMeeting/GetMembers').done(function (r) {
+            AllMembers = r;
+        });
+    }
+    function DeleteMemberIMG(url) {
+        $("#Membergallery").empty();
+        $("#PopUpMemberImage").val('');
+    }
+    function MemberpreviewImage() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#Membergallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteMemberIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#PopUpMemberImage").val(reader.result);
+        }, false);
+
+        for (var i = 0; i < $("#MemberBrowseImage")[0].files.length; i++) {
+            if ($("#MemberBrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#MemberBrowseImage")[0].files[i]);
+            }
+        }
+    }
+    function EditMemberpreviewImage() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#EditMembergallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteMemberIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#EditPopUpMemberImage").val(reader.result);
+        }, false);
+
+        for (var i = 0; i < $("#EditMemberBrowseImage")[0].files.length; i++) {
+            if ($("#EditMemberBrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#EditMemberBrowseImage")[0].files[i]);
+            }
+        }
+    }
+    function GetPreviousChurchMeeting() {
+        if ($('#ChurchMembershipId').val()) {
+            $.get('/ChurchMeeting/GetPreviousChurchMeeting?ChurchMembershipId=' + $('#ChurchMembershipId').val()).done(function (r) {
+                $('#MeetingData').empty();
+                if (r.length) {
+                    for (var i = 0; i < r.length; i++) {
+                        r[i].Date = r[i].Date != null ? convertToJavaScriptDate(r[i].Date) : "";
+                        r[i].Mobile = r[i].Mobile != null ? r[i].Mobile : "";
+                        r[i].Address = r[i].Address != null ? r[i].Address : "";
+                        r[i].ArName = r[i].ArName != null ? r[i].ArName : "";
+                        r[i].Notes = r[i].Notes != null ? r[i].Notes : "";
+                        r[i].ConfessionFather = r[i].ConfessionFather != null ? r[i].ConfessionFather : "";
+                        let tr = '<tr><td>' +
+                            r[i].Date + '</td><td>' +
+                            r[i].ConfessionFather + '</td><td>' +
+                            r[i].Notes + '</td></tr>';
+                        $('#MeetingData').append(tr);
+                    }
+                }
+            });
+        }
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        //var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        //return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+         var strTime = hours + ':' + minutes + ":" + seconds + ' ' + ampm;
+        return ((month + "/" + day + "/" + dt.getFullYear() ) + " " + strTime);
+        //2022 - 01 - 18T20: 23
+    }
+    function convertToJavaScriptDate2(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+               var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+    function addFamilyMember() {
+        let valid = true;
+        if ($("#FamilyMemberArName").val() == "") {
+            $("#FamilyMemberArName").prop('required', true);
+        }
+        var member = AllMembers.filter(function (i) { return i.Mobile == $('#FamilyMemberMobile').val(); })[0];
+
+        if (member && parseInt($("#FamilyMemberIdInput").val()) !== member.Id) {
+            alert('@MyERP.Properties.Resources.ThisMobileNoExistsBefore');
+            $('#FamilyMemberMobile').val('');
+            valid = false;
+        }
+        if ($("#FamilyMemberModal").find(".form-control:invalid").length > 0) {
+            $("#FamilyMemberModal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            valid = false;
+        } else {
+            $('#preloader, #status').fadeIn();
+            if (valid == true) {
+                $.ajax(
+                    {
+                        url: '/ChurchMembership/AddEdit', contentType: "application/json",
+                        type: 'POST',
+                        data: JSON.stringify({
+                            Id: $("#FamilyMemberIdInput").val() != "" ? $("#FamilyMemberIdInput").val() : 0,
+                            Code: $("#FamilyMemberCodeInput").val(),
+                            ArName: $("#FamilyMemberArName").val(),
+                            BirthDate: $('#FamilyMemberBirthDate').val(),
+                            Address: $('#FamilyMemberAddress').val(),
+                            Email: $('#MemberEmailPopUp').val(),
+                            Image: $('#PopUpMemberImage').val(),
+                            Mobile: $('#FamilyMemberMobile').val(),
+                            Phone: $('#FamilyMemberPhone').val(),
+                            Notes: $('#FamilyMemberNotes').val(),
+                            AreaId: $('#AreaId').val(),
+                            IsAlive: $('#FamilyMemberIsAlive').prop('checked'),
+                            ParentId: null,
+                            Relative: null,
+                            IsActive: true,
+                            IsDeleted: false
+                        }),
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            appendFamilyMemberOptions(true).then(function () { $('#ChurchMembershipId').val(r.Id).trigger('change'); });
+                            $('#FamilyMemberModal').modal('hide');
+                            $('#preloader, #status').fadeOut();
+                        }
+                    });
+            }
+            $('#preloader, #status').fadeOut();
+        }
+    }
+    function appendFamilyMemberOptions(refill) {
+        return getFamilyMembers(refill).then(function () {
+            let FamilyMemberOptions = '';
+            FamilyMemberOptions = '<option value="">' + "@MyERP.Properties.Resources.Select" + '</option>';
+
+            for (var i = 0; i < FamilyMembers.length; i++) {
+                FamilyMemberOptions += '<option value="' + FamilyMembers[i].Id + '">' + FamilyMembers[i].ArName + ' - ' + FamilyMembers[i].Code + '</option>';
+            }
+            $('#ChurchMembershipId').empty().append(FamilyMemberOptions);
+            $('#ChurchMembershipId').trigger('change');
+        });
+    }
+    function getFamilyMembers(refill) {
+        if (refill == true)
+            requestCache['/ChurchMeeting/GetMembers'] = null;
+        return requestData('/ChurchMeeting/GetMembers').done(function (r) {
+            FamilyMembers = r;
+        });
+    }
+
+        function EditFamilyMember() {
+        let valid = true;
+        if ($("#EditFamilyMemberArName").val() == "") {
+            $("#EditFamilyMemberArName").prop('required', true);
+        }
+        var member = AllMembers.filter(function (i) { return i.Mobile == $('#EditFamilyMemberMobile').val(); })[0];
+
+        if (member && parseInt($("#EditFamilyMemberIdInput").val()) !== member.Id) {
+            alert('@MyERP.Properties.Resources.ThisMobileNoExistsBefore');
+            $('#EditFamilyMemberMobile').val('');
+            valid = false;
+        }
+            if ($("#FamilyMemberEditModal").find(".form-control:invalid").length > 0) {
+                $("#FamilyMemberEditModal").find('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            valid = false;
+        } else {
+            $('#preloader, #status').fadeIn();
+                if (valid == true) {
+                $.ajax(
+                    {
+                        url: '/ChurchMembership/AddEdit?id=' + $("#EditFamilyMemberIdInput").val(),
+                        contentType: "application/json",
+                        type: 'POST',
+                        data: JSON.stringify({
+                            Code: $("#EditFamilyMemberCodeInput").val(),
+                            ArName: $("#EditFamilyMemberArName").val(),
+                            BirthDate: $('#EditFamilyMemberBirthDate').val(),
+                            Address: $('#EditFamilyMemberAddress').val(),
+                            Email: $('#EditMemberEmailPopUp').val(),
+                            Image: $('#EditPopUpMemberImage').val(),
+                            Mobile: $('#EditFamilyMemberMobile').val(),
+                            Phone: $('#EditFamilyMemberPhone').val(),
+                            Notes: $('#EditFamilyMemberNotes').val(),
+                            ParentId: $("#EditFamilyMemberParentId").val(),
+                            Relative: $("#EditFamilyMemberRelative").val(),
+                            IsActive: true,
+                            IsDeleted: false
+                        }),
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            appendFamilyMemberOptions(true).then(function () { $('#ChurchMembershipId').val(r.Id).trigger('change'); });
+                            $('#FamilyMemberEditModal').modal('hide');
+                            $('#preloader, #status').fadeOut();
+                        }
+                    });
+            }
+            $('#preloader, #status').fadeOut();
+        }
+    }
+
+
+
+    function setCodeNum() {
+        var doc = $.get('/ChurchMeeting/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function ChangeDateFormat(value) {
+        if (value === null) {
+            return null;
+        }
+        //var dt = new Date(parseFloat(value));
+        var dt = new Date(value);
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+    function deleteElement(e) {
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        //let tr = $(e).closest('tr');
+        //if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+        //    $(tr).find("input").val('');
+        //    $(tr).find("label").text('');
+        //    $(tr).find('input, select').removeAttr('required');
+        //    // $(tr).find('select').empty();
+        //    $(tr).find('select').prop('selectedIndex', 0);
+        //    $(tr).find('select').select2();
+        //}
+        //else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+        //    e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        //else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+        //    $(tr).find("input").val('');
+        //    $(tr).find('input, select').removeAttr('required');
+        //   // $(tr).find('select').empty();
+        //    $(tr).find('select').prop('selectedIndex', 0);
+        //    $(tr).find('select').select2();
+        //    $(tr).find("label").text('');
+       // }
+    }
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+
+        var churchMeeting = {
+            Id: $('#Id').val(),
+            Code: $('#Code').val(),
+            Mobile: $('#Mobile').val(),
+            ChurchMembershipId: $('#ChurchMembershipId').val(),
+            Date: $('#Date').val(),
+            ConfessionFather: $('#ConfessionFather').val(),
+            ChurchFatherId: $('#ChurchFatherId').val(),
+            UserId: $('#UserId').val(),
+            IsActive: true,
+            IsDeleted: false,
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val()
+        }
+        if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            $('#newbtn').prop('disabled', true);
+            $('#save').prop('disabled', true);
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/ChurchMeeting/AddEdit?TopicsForDiscussion="+ $('#TopicsForDiscussion').val(),
+                data: JSON.stringify(churchMeeting ),
+                success: function (r) {
+                    if (r.success == true) {
+                        alert("@MyERP.Properties.Resources.Saved");
+                        if (n == "new") {
+                            window.location.replace("/ChurchMeeting/AddEdit");
+                        } else {
+                            window.location.replace("/ChurchMeeting");
+                        }
+                    }
+                    else {
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                    }
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                },
+                error: function (r) {
+                    alert("@MyERP.Properties.Resources.NotSaved");
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                }
+            });
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/ChurchMeeting/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/ChurchMeeting');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+</script>
+
+

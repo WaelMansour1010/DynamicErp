@@ -1,0 +1,100 @@
+﻿
+@{
+    ViewBag.Title = "الارصدة الافتتاحية لمراكز التكلفة";
+}
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.common-material.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.material.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2018.2.516/styles/kendo.material.mobile.min.css" />
+<script src="https://kendo.cdn.telerik.com/2018.2.516/js/kendo.all.min.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+                <button class="btn btn-success" id="treeCollapse">اجمالي</button>
+
+                <button class="btn btn-success" id="treeExpand">تفصيلي</button>
+            </div>
+            <div class="page-title">الارصدة الافتتاحية لمراكز التكلفة</div>
+        </div>
+    </div>
+</div>
+
+<div id="treelist"></div>
+
+<script>
+    function GetCostCenterOB() {
+
+        $("#treelist").kendoTreeList({
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/CostCenterOB/GetCostCenterOB",
+                        dataType: "json"
+                    },
+                    parameterMap: function (options, operation) {
+                        if (operation !== "read" && options.models) {
+                            return { models: kendo.stringify(options.models) };
+                        }
+                    }
+                },
+                schema: {
+                    model: {
+                        id: "Id",
+                        parentId: "ParentId",
+                        fields: {
+                            ParentId: { field: "ParentId", nullable: true },
+                            Code: { field: "Code", nullable: true },
+                            ArName: { field: "ArName", nullable: true },
+                            EnName: { field: "EnName", nullable: true },
+                            ObDebit: { field: "ObDebit", type: "number" },
+                            ObCredit: { field: "ObCredit", type: "number" }
+                        },
+                        expanded: true
+                    }
+                }
+            },
+            columns: [{
+                field: "Code", title: "الكود", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d;font-weight: 500;"
+                }
+            },
+            {
+                field: "ArName", title: "الاسم بالعربية", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d; font-weight: 500;"
+                }
+            },
+            {
+                field: "EnName", title: "الاسم بالانجليزية", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d; font-weight: 500;"
+                }
+            },
+            {
+                field: "ObDebit", title: "الافتتاحية مدين", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d; font-weight: 500;"
+                }
+            },
+            {
+                field: "ObCredit", title: "الافتتاحية دائن", width: 160, headerAttributes: {
+                    style: "text-align: right; color:#6c757d;font-weight: 500;"
+                }
+            }]
+        });
+
+    }
+    $(document).ready(function () {
+        GetCostCenterOB();
+    });
+
+
+    $("#treeCollapse").click(function () {
+        var treeList = $("#treelist").data("kendoTreeList");
+        treeList.collapse($("#treelist tbody>tr:eq(0)"));
+    });
+
+    $("#treeExpand").click(function () {
+        var treeList = $("#treelist").data("kendoTreeList");
+        treeList.expand($("#treelist tbody>tr:eq(0)"));
+    });
+</script>

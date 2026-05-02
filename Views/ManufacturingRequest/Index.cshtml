@@ -1,0 +1,248 @@
+﻿@model IEnumerable<MyERP.Models.ManufacturingRequest>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ManufacturingRequest;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("AddEdit")" role="button" style="float:left; margin-right:4px"> @MyERP.Properties.Resources.AddNew </a>
+            </div>
+            <h4 class="page-title">  @MyERP.Properties.Resources.ManufacturingRequest </h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group row">
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+                                <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder="@MyERP.Properties.Resources.Search">
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                                <a class="btn btn-info" href="@Url.Action("Index")" role="button"><i class="fe-refresh-ccw"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @MyERP.Properties.Resources.RequestNo
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Date
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Department
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.ItemsGroup
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Status
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Edit
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Delete
+                                    </th>
+                                    <th>@MyERP.Properties.Resources.Print</th>
+                                </tr>
+                            </thead>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                        @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.RequestDate)
+                                    </td>
+
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Department.ArName)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.ItemGroup.ArName)
+                                    </td>
+                                    <td>
+                                        @((item.ManufacturingOrders.Any(x => x.IsDeleted == false)) ? @MyERP.Properties.Resources.ManufacturingOrdersCreated : MyERP.Properties.Resources.NoManufacturingOrders)
+                                    </td>
+
+                                    <td>
+                                        <a href="@Url.Action("AddEdit","ManufacturingRequest",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="javascript:void(0);"
+                                           @((item.ManufacturingOrders.Any(x => x.IsDeleted == false)) ? "style=color:gray;cursor:no-drop;" : "onclick=Delete(" + @item.Id + ")")>
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("ManufacturingRequest","Report",new { id=item.Id, print=true})" target="_blank">
+                                            <i class="remixicon-printer-fill"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count"> @MyERP.Properties.Resources.All </option>
+            </select>
+            <span style="font-size:12px;float:right;"> @MyERP.Properties.Resources.NoOfResults : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> @MyERP.Properties.Resources.PageNo: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+    var pageNo = 1;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function paging() {
+        var link = '/ManufacturingRequest/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord;
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+           $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+    })
+
+    function Delete(id) {
+        Swal.fire({
+    title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+    text: " ",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    reverseButtons: true
+}).then((result) => {
+    if (result.isConfirmed) {
+        $('#preloader, #status').fadeIn();
+        $.ajax(
+            {
+                url: '/ManufacturingRequest/Delete',
+                type: 'POST',
+                data: {
+                    "Id": id,
+                },
+                error: function (e) {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    $('#preloader, #status').fadeOut();
+                },
+                success: function (r) {
+                    if (r == 'true') {
+                        window.location.reload();
+                    } else {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        }); $('#preloader, #status').fadeOut();
+                    }
+                }
+            });
+    }
+    else { result.dismiss;}
+});
+
+        @*if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/ManufacturingRequest/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                            $('#preloader, #status').fadeIn();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.reload();
+                        } else {
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                            $('#preloader, #status').fadeIn();
+                        }
+                    }
+                });
+        }*@
+    }
+
+</script>
+
+

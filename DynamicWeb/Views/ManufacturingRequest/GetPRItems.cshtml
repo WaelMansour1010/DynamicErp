@@ -1,0 +1,32 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequest_GetItems_Result>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td class="tabledit-edit-mode">
+            <input type="hidden" class="item-id" value="@item.ItemId" unit-id="@item.ItemUnitId" qty="@item.Qty" cost="@item.AvgCost" Width="@item.Width" Height="@item.Height" Area="@item.Area" />
+            @item.Code
+        </td>
+        <td class="tabledit-edit-mode">
+            @item.ItemArName
+        </td>
+        <td class="tabledit-edit-mode">
+            @item.ItemUnitArName
+        </td>
+        <td class="tabledit-edit-mode">
+            @Html.DisplayFor(x => item.Qty)
+        </td>
+        <td class="tabledit-edit-mode cost">
+            @Html.DisplayFor(x => item.AvgCost)
+        </td>
+        <td class="tabledit-edit-mode ItemArea">
+            @Html.DisplayFor(x => item.Width)
+        </td>
+        <td class="tabledit-edit-mode ItemArea">
+            @Html.DisplayFor(x => item.Height)
+        </td>
+        <td class="tabledit-edit-mode ItemArea">
+            @Html.DisplayFor(x => item.Area)
+        </td>
+    </tr>
+}

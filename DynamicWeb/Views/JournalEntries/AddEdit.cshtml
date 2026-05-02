@@ -1,0 +1,1074 @@
+﻿@model MyERP.Models.JournalEntry
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = MyERP.Properties.Resources.JournalEntries;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model.Id > 0)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.JournalEntryDetails:</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form" id="form">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input type="hidden" id="Id" value="@Model.Id" />
+
+                                <div class="form-group row">
+                                    <label class="col-sm-1 control-label">@MyERP.Properties.Resources.VoucherNo</label>
+                                    <div class="col-sm-5">
+                                        <input type="text" class="form-control" name="DocumentNumber" value="@Model.DocumentNumber" id="DocumentNumber" placeholder=@MyERP.Properties.Resources.VoucherNo disabled required hidden>
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                    </div>
+                                    <label class="col-sm-1 control-label">@MyERP.Properties.Resources.Date </label>
+                                    <div class="col-sm-5">
+                                        <input type="datetime-local" class="form-control" name="Date" id="Date" value="@ViewBag.Date" required>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-1 control-label">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("DepartmentId", null, null, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                @if (Model.SourceId != null && Model.SourcePageId != null)
+                                {
+                                    <div class="form-group row">
+                                        <label class="col-sm-1 control-label">@MyERP.Properties.Resources.MainDoc</label>
+                                        <div class="col-sm-5">
+                                            <input type="text" class="form-control" value="@Model.SystemPage.ArName" name="SourcePageId" id="SourcePageId" placeholder=@MyERP.Properties.Resources.MainDoc disabled>
+                                        </div>
+                                        <label class="col-sm-1 control-label">@MyERP.Properties.Resources.MainDocNo</label>
+                                        <div class="col-sm-5">
+                                            @*<input type="text" class="form-control" name="SourceId" value="@Model.SourceId" id="SourceId" placeholder=@MyERP.Properties.Resources.MainDocNo disabled>*@
+                                            <input type="text" class="form-control" name="SourceId" value="@ViewBag.SourceId" id="SourceId" placeholder=@MyERP.Properties.Resources.MainDocNo disabled>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="form-group row">
+                                    <label class="col-sm-1 control-label">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-5">
+                                        @Html.TextAreaFor(model => model.Notes, htmlAttributes: new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Notes })
+                                    </div>
+                                    <label class="col-sm-1 control-label">@MyERP.Properties.Resources.Deported</label>
+                                    <div class="col-sm-5">
+                                        @if (Model.IsPosted == true)
+                                        {
+                                            <input type="checkbox" class="form-control" id="IsPosted" name="IsPosted" style="width:15px;" checked>
+                                        }
+                                        else
+                                        {
+                                            <input type="checkbox" class="form-control" id="IsPosted" name="IsPosted" style="width:15px;">
+                                        }
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="subHid header-title">@MyERP.Properties.Resources.JournalEntryDetails :</div>
+                                <div class="form-horizontal needs-validation" role="form">
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>@MyERP.Properties.Resources.Debit</th>
+                                                    <th>@MyERP.Properties.Resources.Credit</th>
+                                                    <th>@MyERP.Properties.Resources.Account</th>
+                                                    <th style="width:220px;">Vendor</th>  <!-- جديد -->
+                                                    <th>@MyERP.Properties.Resources.Explanation</th>
+                                                    @if (ViewBag.UseCostCenter)
+                                                    {
+                                                        <th>
+                                                            @MyERP.Properties.Resources.CostCenters
+                                                        </th>
+                                                    }
+                                                    <th>@MyERP.Properties.Resources.Delete</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="JEDetails">
+                                                @if (Model.Id != 0)
+                                                {
+                                                    foreach (var jED in Model.JournalEntryDetails)
+                                                    {
+                                                        <tr>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="money form-control txtDebit tabledit-input form-control-sm" value="@jED.Debit" required />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="money form-control txtCredit tabledit-input form-control-sm" value="@jED.Credit" required />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <select class="AccountId form-control tabledit-input form-control-sm" required onchange="CheckValueAddedTaxes(this)">
+                                                                    @if (jED.AccountId != null)
+                                                                    {
+                                                                        <option value="@jED.AccountId">@jED.ChartOfAccount.ArName</option>
+                                                                    }
+                                                                </select>
+                                                            </td>
+
+                                                            <td class="tabledit-edit-mode">
+                                                                <select class="PartyId form-control tabledit-input form-control-sm"
+                                                                        data-party-id="@jED.PartyId"
+                                                                        data-party-type="@jED.PartyType">
+                                                                    <option value="">@MyERP.Properties.Resources.Select</option>
+                                                                </select>
+                                                            </td>
+
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="text" class="form-control txtNotes tabledit-input form-control-sm" value="@jED.Notes" />
+                                                            </td>
+
+                                                            @if (ViewBag.UseCostCenter)
+                                                            {
+                                                                <td class="tabledit-edit-mode">
+                                                                    <select class="CostCenterId form-control tabledit-input form-control-sm">
+                                                                        @if (jED.CostCenterId.HasValue)
+                                                                        {
+                                                                            <option value="@jED.CostCenterId"></option>
+                                                                        }
+                                                                    </select>
+                                                                </td>
+                                                            }
+
+                                                            @if (Model.SourceId == null && Model.SourcePageId == null)
+                                                            {
+                                                                <td class="tabledit-edit-mode"><a href="javascript:void(0);" class="DelBtn"><i class="fas fa-trash-alt"></i></a></td>
+                                                            }
+                                                            else
+                                                            {
+                                                                <td><a href="javascript:void(0);" onclick="Swal.fire({title: '@MyERP.Properties.Resources.TheAutomaticJournalEntryCannotBeDeleted', text: ' ', icon: 'info', showCancelButton: false, confirmButtonText: '@MyERP.Properties.Resources.Ok', confirmButtonColor: '#3085d6'})"><i class="fas fa-trash-alt"></i></a></td>
+                                                            }
+                                                        </tr>
+                                                    }
+                                                }
+
+                                                <!-- الصف الافتراضي الفارغ بنفس ترتيب الأعمدة -->
+                                                <tr>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="money form-control txtDebit tabledit-input form-control-sm" required />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="money form-control txtCredit tabledit-input form-control-sm" required />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <select class="AccountId form-control tabledit-input form-control-sm" required onchange="CheckValueAddedTaxes(this)">
+                                                            <option value="">@MyERP.Properties.Resources.Select</option>
+                                                        </select>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <select class="PartyId form-control tabledit-input form-control-sm">
+                                                            <option value="">@MyERP.Properties.Resources.Select</option>
+                                                        </select>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="form-control txtNotes tabledit-input form-control-sm" />
+                                                    </td>
+                                                    @if (ViewBag.UseCostCenter)
+                                                    {
+                                                        <td class="tabledit-edit-mode">
+                                                            <select class="CostCenterId form-control tabledit-input form-control-sm"></select>
+                                                        </td>
+                                                    }
+                                                    <td class="tabledit-edit-mode">
+                                                        <a href="javascript:void(0);" class="DelBtn"><i class="fas fa-trash-alt"></i></a>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+
+                                           
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <div class="col-sm-3">
+                                        <label class="col-sm-6 control-label">@MyERP.Properties.Resources.TotalDebit</label>
+                                        <input type='text' class='TotalDebit col-sm-6' value="" disabled>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <label class="col-sm-6 control-label">@MyERP.Properties.Resources.TotalCredit</label>
+                                        <input type='text' class='TotalCredit col-sm-6' value="" disabled>
+
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <label class="col-sm-6 control-label">@MyERP.Properties.Resources.Subtraction</label>
+
+                                        <input type='text' class='money difference col-sm-6' value="" disabled>
+                                    </div>
+                                </div>
+
+                                <br />
+                                <br />
+                                <div class="row">
+                                    <div class="col-sm-offset-2">
+                                        <input id="new" name="newBtn" hidden />
+
+                                        @if (Model.SourceId == null && Model.SourcePageId == null)
+                                        {
+                                            if (Model.Id == 0)
+                                            {
+                                    <button type="button" id="save" class="btn btn-success" onclick="saveJE()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <button type="button" id="newbtn" onclick="saveJE('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button type="button" onclick="saveJE('report')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndPrint
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                                            }
+                                            else if (Model.IsDeleted == false)
+                                            {
+                                    <button type="button" id="save" onclick="saveJE()" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-success" target="_blank" href="@Url.Action("JournalEntryDetails","Report",new { id=Model.Id})" role="button"> @MyERP.Properties.Resources.Print</a>
+
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="Delete(@Model.Id)"> @MyERP.Properties.Resources.Delete</button>
+
+                                            }
+                                        }
+
+                                        else
+                                        {
+                                            if (Model.Id == 0)
+                                            {
+                                    <button type="button" class="btn btn-success" onclick="Swal.fire({title: '@MyERP.Properties.Resources.TheAutomaticJournalEntryCannotBeEdited',text: ' ',icon: 'info',showCancelButton: false,confirmButtonText: '@MyERP.Properties.Resources.Ok',confirmButtonColor: '#3085d6'})">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                            }
+                                            else
+                                            {
+                                                if (Model.IsDeleted == false)
+                                                {
+                                    <button type="button" class="btn btn-success" onclick="Swal.fire({title: '@MyERP.Properties.Resources.TheAutomaticJournalEntryCannotBeEdited',text: ' ',icon: 'info',showCancelButton: false,confirmButtonText: '@MyERP.Properties.Resources.Ok',confirmButtonColor: '#3085d6'})">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-success" target="_blank" href="@Url.Action("JournalEntryDetails","Report",new { id=Model.Id})" role="button">@MyERP.Properties.Resources.Print</a>
+
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="Swal.fire({title: '@MyERP.Properties.Resources.TheAutomaticJournalEntryCannotBeDeleted',text: ' ',icon: 'info',showCancelButton: false,confirmButtonText: '@MyERP.Properties.Resources.Ok',confirmButtonColor: '#3085d6'})">@MyERP.Properties.Resources.Delete</button>
+
+                                                }
+                                            }
+
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    let UseCostCenter = '@ViewBag.UseCostCenter';
+    let TotalCredit;
+    let TotalDebit;
+    var taxPercentage = 0.15;
+    let Accounts = [];
+    let costCenterOptions = '';
+     var RES_SELECT   = '@MyERP.Properties.Resources.Select';
+    var getPartiesUrl = '@Url.Action("GetPartiesByAccount","Helper", new { area = "" })';
+
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+
+        if ($('#Id').val()>0) {
+            getCostCenters().then(function () {
+                $('.CostCenterId').each(function () {
+                    let selectedItem = $(this).val();
+                    $(this).empty().append(costCenterOptions);
+                    if (selectedItem)
+                        $(this).val(selectedItem).trigger('change');
+                });
+            });
+            $(".txtCredit").last().removeAttr('required');
+            $(".txtDebit").last().removeAttr('required');
+            $(".AccountId").last().removeAttr('required');
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        } else {
+            setDocNum();
+            getCostCenters().then(() => $('.CostCenterId').empty().append(costCenterOptions));
+        }
+        GetCurrentTaxPercentage();
+        calculateTotalDebit();
+        calculateTotalCredit();
+        calculateDifference();
+
+        $.when(getAccounts(), getVendors()).done(function () {
+            fillAccounts($('#JEDetails'));
+            // لو فتحنا سجل قديم: حمّل الأطراف لكل صف بحسب الحساب المخزَّن
+            $('#JEDetails tr').each(function () {
+                var $acc = $(this).find('.AccountId');
+                if ($acc.val()) loadRowParties($acc);
+            });
+
+            // فعّل select2
+            $('#JEDetails select').each(function () {
+                if ($.fn.select2 && !$(this).hasClass('select2-hidden-accessible')) $(this).select2();
+            });
+
+        });
+
+
+
+
+
+        TotalCredit = $(".TotalCredit").inputmask('unmaskedvalue');
+        TotalDebit = $(".TotalDebit").inputmask('unmaskedvalue');
+    });
+
+    function setDocNum() {
+        if ($("#DepartmentId").val()) {
+            $.get('/JournalEntries/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+        }
+    }
+$('#DepartmentId').on('change', function () {
+  setDocNum();
+
+  if ($('#JEDetails tr').length > 1) {
+    Swal.fire({
+      title: '@MyERP.Properties.Resources.AllDataOfPreviousDepartmentCleared',
+      text: ' ',
+      icon: 'info',
+      showCancelButton: false,
+      confirmButtonText: '@MyERP.Properties.Resources.Ok',
+      confirmButtonColor: '#3085d6'
+    });
+
+    $('#JEDetails tr').remove();
+
+    var markup =
+      '<tr>'
+    + '  <td class="tabledit-edit-mode"><input type="text" class="money form-control txtDebit tabledit-input form-control-sm"></td>'
+    + '  <td class="tabledit-edit-mode"><input type="text" class="money form-control txtCredit tabledit-input form-control-sm"></td>'
+    + '  <td class="tabledit-edit-mode"><select class="AccountId form-control tabledit-input form-control-sm" onchange="CheckValueAddedTaxes(this)"><option value="">' +
+           '@MyERP.Properties.Resources.Select' + '</option></select></td>'
+    + '  <td class="tabledit-edit-mode"><select class="PartyId form-control tabledit-input form-control-sm"><option value="">' +
+           '@MyERP.Properties.Resources.Select' + '</option></select></td>'
+    + '  <td class="tabledit-edit-mode"><input type="text" class="form-control txtNotes tabledit-input form-control-sm"></td>'
+    + (UseCostCenter == 'True'
+        ? '  <td class="tabledit-edit-mode"><select class="CostCenterId form-control tabledit-input form-control-sm"></select></td>'
+        : '')
+    + '  <td class="tabledit-edit-mode"><a href="javascript:void(0);" class="DelBtn"><i class="fas fa-trash-alt"></i></a></td>'
+    + '</tr>';
+
+    $('#JEDetails').append(markup);
+
+    var $row = $('#JEDetails tr:last');
+
+    // املا حسابات الصف الجديد (لو لسه ما اتحمّلتش هاتـها الأول)
+    var fillAcc = Accounts && Accounts.length ? $.Deferred().resolve() : getAccounts();
+    $.when(fillAcc).done(function () {
+      // فضّل استخدام دالة موحّدة لو عندك، وإلا:
+      $row.find('select.AccountId').empty()
+          .append('<option value="">@MyERP.Properties.Resources.Select</option>');
+      for (var i = 0; i < Accounts.length; i++) {
+        $row.find('select.AccountId')
+            .append(new Option(Accounts[i].ArName, Accounts[i].Id, false, false));
+      }
+    });
+
+    // مراكز التكلفة
+    if (UseCostCenter == 'True') {
+      getCostCenters().then(function () {
+        $row.find('.CostCenterId').empty().append(costCenterOptions);
+      });
+    }
+
+    // الموردين
+      // حمّل الأطراف حسب الحساب المختار (لو فاضي هيرجع قائمة فاضية وtype فاضي)
+      loadRowParties($row.find('.AccountId'));
+
+
+    // بعد ما القوائم تتملي فعّل select2 (من غير تهيئة مكرّرة)
+    $.when(fillAcc, fillVend).done(function () {
+      $row.find('select').each(function () {
+        if ($.fn.select2 && !$(this).hasClass('select2-hidden-accessible')) {
+          $(this).select2();
+        }
+      });
+    });
+
+    // ماسك الأرقام
+    $row.find('.money').inputmask({
+      alias: 'numeric', groupSeparator: ',', autoGroup: true,
+      digits: 2, digitsOptional: false, allowMinus: false, placeholder: '0'
+    });
+  }
+});
+    $('#Date').on('change', function () {
+        setDocNum();
+        GetCurrentTaxPercentage();
+    });
+
+    $(document).on("change", ".txtDebit", function () {
+        $(this).closest('tr').find(".txtCredit").val(0).removeAttr('required');
+        $(this).attr('required', 'required');
+        calculateTotalDebit();
+        calculateTotalCredit();
+        calculateDifference();
+        AddToDetials();
+        CalculateValueAddedTaxes($(this))
+    });
+
+
+    $(document).on("change", ".txtCredit", function () {
+        $(this).closest('tr').find(".txtDebit").val(0).removeAttr('required');
+        $(this).attr('required', 'required');
+        calculateTotalDebit();
+        calculateTotalCredit();
+        calculateDifference();
+        AddToDetials();
+        CalculateValueAddedTaxes($(this))
+    });
+
+    $(document).on("change", ".AccountId", function () {
+        AddToDetials();
+        loadRowParties($(this));
+        //let accId = $(this).val();
+        //let acc = Accounts.filter(function (i) { return i.Id == accId })[0];
+        //if (acc && (acc.CategoryId == 3 || acc.CategoryId == 4)) {
+        //    $(this).closest('tr').find('.CostCenterId').removeAttr('disabled');
+        //} else
+        //    $(this).closest('tr').find('.CostCenterId').attr('disabled','disabled');
+    });
+
+
+
+    function getAccounts() {
+        return $.get("/JournalEntries/GetAccounts").done(function (r) {
+            Accounts = r;
+        });
+    }
+
+    function getCostCenters() {
+        return requestData("/JournalEntries/GetCostCenters").done(function (r) {
+            costCenterOptions = "<option value>"+'@MyERP.Properties.Resources.Select'+"</option>";
+            for (var i = 0; i < r.length; i++) {
+                costCenterOptions += '<option value="'+r[i].Id+'">'+r[i].ArName+'</option>';
+            }
+        });
+    }
+
+
+
+    function fillAccounts() {
+        //debugger;
+        if ($('#Id').val() == 0) {
+            $('.AccountId').empty();
+            $('.AccountId').append('<option value>'+'@MyERP.Properties.Resources.Select'+'</option>');
+            for (var i = 0; i < Accounts.length; i++) {
+                $('.AccountId').append($('<option>', {
+                    value: Accounts[i].Id,
+                    text: Accounts[i].ArName
+                }));
+            }
+        } else {
+            let selectedItem;
+
+            $('.AccountId').each(function () {
+                selectedItem = $(this).val();
+                $(this).empty().append('<option value>'+'@MyERP.Properties.Resources.Select'+'</option>');
+                for (var i = 0; i < Accounts.length; i++) {
+                    $(this).append($('<option>', {
+                        value: Accounts[i].Id,
+                        text: Accounts[i].ArName
+                    }));
+                }
+                if (selectedItem) {
+                    $(this).val(selectedItem)/*.trigger('change');*/
+                    selectedItem > 0 ? $(this).val(selectedItem) : $(this).prop('selectedIndex', 0);
+                }
+            });
+        }
+    }
+
+    function GetCurrentTaxPercentage() {
+        $.get('/TaxesPercentages/GetCurrentTaxPercentage?date=' + $('#Date').val()).done(function (r) {
+            taxPercentage = r / 100;
+            if ($('#JEDetails tr').length > 1) {
+                $('#JEDetails tr').each(function () {
+                    let tr = $(this);
+                    CalculateValueAddedTaxes(tr);
+                });
+            }
+        });
+    }
+
+    function CalculateValueAddedTaxes(e) {
+        if ($(e).closest('tr').next('tr').find('.IncludeValueAddedTax').val() == 'true') {
+            var txtDebit = $(e).closest('tr').find('.txtDebit').inputmask('unmaskedvalue');
+            var txtCredit = $(e).closest('tr').find('.txtCredit').inputmask('unmaskedvalue');
+            var TaxDebit = txtDebit * taxPercentage;
+            var TaxCredit = txtCredit * taxPercentage;
+            $(e).closest('tr').next('tr').find('.txtDebit').val(TaxDebit);
+            $(e).closest('tr').next('tr').find('.txtCredit').val(TaxCredit);
+        }
+
+        calculateTotalDebit();
+        calculateTotalCredit();
+        calculateDifference();
+    }
+
+    function CheckValueAddedTaxes(e) {
+        var AccountId = $(e).val();
+        if ($('#DepartmentId').val() > 0) {
+            $.get("/JournalEntries/CheckValueAddedTaxes?AccountId=" + AccountId + "&DepartmentId=" + $('#DepartmentId').val()).done(function (r) {
+                var txtDebit = $(e).closest('tr').find('.txtDebit').inputmask('unmaskedvalue');
+                var txtCredit = $(e).closest('tr').find('.txtCredit').inputmask('unmaskedvalue');
+                var TaxDebit = txtDebit * taxPercentage;
+                var TaxCredit = txtCredit * taxPercentage;
+                if (r.IncludeValueAddedTax == true) {
+                    var markup = '<tr><td class="tabledit-edit-mode"><input hidden class="IncludeValueAddedTax" value="' + r.IncludeValueAddedTax +'"/><input type="text" class="money form-control txtDebit tabledit-input form-control-sm" value="' +
+                        TaxDebit + '" ></td><td class="tabledit-edit-mode"><input type="text" class="money form-control txtCredit tabledit-input form-control-sm" value="' +
+                        TaxCredit + '" ></td><td class="tabledit-edit-mode"><select class="AccountId form-control tabledit-input form-control-sm" onchange="CheckValueAddedTaxes(this)"><option value>' +
+                        '@MyERP.Properties.Resources.Select' + '</option></select></td><td class="tabledit-edit-mode"><input type="text" class=" form-control txtNotes tabledit-input form-control-sm"></td>' + (UseCostCenter == 'True' ? '<td class="tabledit-edit-mode"><select class="CostCenterId form-control tabledit-input form-control-sm"></select></td>' : '') + '<td class="tabledit-edit-mode"><a href="javascript:void(0);" class="DelBtn"><i class="fas fa-trash-alt"></i></a></td></tr >';
+
+                    $(e).closest('tr').after(markup);
+
+                    for (var i = 0; i < Accounts.length; i++) {
+                       /* $('#JEDetails .AccountId:last')*/ $(e).closest('tr').next('tr').find('.AccountId').append($('<option>', {
+                            value: Accounts[i].Id,
+                            text: Accounts[i].ArName
+                        }));
+                    }
+                    if (UseCostCenter == 'True')
+                        getCostCenters().then(() => /*$('#JEDetails .CostCenterId:last')*/$(e).closest('tr').next('tr').find('.CostCenterId').append(costCenterOptions));
+
+                    $('#JEDetails tr:last select').select2();
+                    $('#JEDetails tr:last .money').inputmask({
+                        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+                    });
+
+                calculateTotalDebit();
+                calculateTotalCredit();
+                calculateDifference();
+
+
+                    $(e).closest('tr').next('tr').find('.AccountId').val(r.TaxAccount.TaxAccountId);
+                    $(e).closest('tr').next('tr').find('.AccountId').select2();
+
+                }
+                else {
+                   // $('#JEDetails tr').not(':last').remove();
+                    $(e).closest('tr').next('tr').remove();
+                    calculateTotalDebit();
+                    calculateTotalCredit();
+                    calculateDifference();
+                }
+            });
+        }
+        else {
+             Swal.fire({
+                    title: '@MyERP.Properties.Resources.DepartmentRequired',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+        }
+    }
+
+
+  function AddToDetials() {
+  // آخر صف حاليًا
+  var $last = $('#JEDetails tr:last');
+
+  var hasAcc = $last.find('.AccountId').val();
+  var credit = $last.find('.txtCredit').inputmask('unmaskedvalue') || 0;
+  var debit  = $last.find('.txtDebit').inputmask('unmaskedvalue')  || 0;
+
+  credit = parseFloat(credit) || 0;
+  debit  = parseFloat(debit)  || 0;
+
+  // ما نضيفش صف جديد إلا لو الحساب موجود وفيه قيمة مدينة/دائنة
+  if (hasAcc && (credit > 0 || debit > 0)) {
+    var markup =
+        '<tr>'
+      + '  <td class="tabledit-edit-mode"><input type="text" class="money form-control txtDebit tabledit-input form-control-sm"></td>'
+      + '  <td class="tabledit-edit-mode"><input type="text" class="money form-control txtCredit tabledit-input form-control-sm"></td>'
+      + '  <td class="tabledit-edit-mode"><select class="AccountId form-control tabledit-input form-control-sm" onchange="CheckValueAddedTaxes(this)"><option value="">' + RES_SELECT + '</option></select></td>'
+      + '  <td class="tabledit-edit-mode"><select class="PartyId form-control tabledit-input form-control-sm"><option value="">' + RES_SELECT + '</option></select></td>'
+      + '  <td class="tabledit-edit-mode"><input type="text" class="form-control txtNotes tabledit-input form-control-sm"></td>'
+      + (UseCostCenter == 'True'
+          ? '  <td class="tabledit-edit-mode"><select class="CostCenterId form-control tabledit-input form-control-sm"></select></td>'
+          : '')
+      + '  <td class="tabledit-edit-mode"><a href="javascript:void(0);" class="DelBtn"><i class="fas fa-trash-alt"></i></a></td>'
+      + '</tr>';
+
+    // أضف الصف
+    $('#JEDetails').append(markup);
+
+    // اشتغل على الصف الجديد
+    var $row = $('#JEDetails tr:last');
+
+    // املأ حسابات الصف الجديد
+    var $acc = $row.find('.AccountId').empty().append('<option value="">' + RES_SELECT + '</option>');
+    for (var i = 0; i < Accounts.length; i++) {
+      $acc.append(new Option(Accounts[i].ArName, Accounts[i].Id, false, false));
+    }
+
+    // مراكز التكلفة لو مفعّلة
+    if (UseCostCenter == 'True') {
+      getCostCenters().then(function () {
+        $row.find('.CostCenterId').empty().append(costCenterOptions);
+      });
+    }
+
+    // IMPORTANT: ما نستخدمش getVendors()/fillVendors هنا
+    // حمّل الأطراف المعتمدة على الحساب (لو فاضي، الكومبو هيفضل "اختار")
+    loadRowParties($acc);
+
+    // فعّل select2 على سيلكتات الصف الجديد (بدون تكرار)
+    $row.find('select').each(function () {
+      if ($.fn.select2 && !$(this).hasClass('select2-hidden-accessible')) {
+        $(this).select2();
+      }
+    });
+
+    // inputmask للأرقام
+    $row.find('.money').inputmask({
+      alias: 'numeric',
+      groupSeparator: ',',
+      autoGroup: true,
+      digits: 2,
+      digitsOptional: false,
+      allowMinus: false,
+      placeholder: '0'
+    });
+  }
+
+  // إعادة الحسابات
+  calculateTotalDebit();
+  calculateTotalCredit();
+  calculateDifference();
+}
+
+
+    function calculateTotalDebit() {
+        var sum = 0;
+
+        $(".txtDebit").each(function () {
+            if ($(this).inputmask('unmaskedvalue')) {
+                //if ($(this).closest('tr').next('tr').find('.TaxDebit').inputmask('unmaskedvalue')) {
+                //    var TaxDebit = $(this).closest('tr').next('tr').find('.TaxDebit').inputmask('unmaskedvalue');
+                //    sum += ($(this).inputmask('unmaskedvalue') * 1) + parseFloat(TaxDebit);
+                //}
+                //else {
+                    sum += ($(this).inputmask('unmaskedvalue') * 1);
+               // }
+            }
+        });
+
+        $(".TotalDebit").val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+    function calculateTotalCredit() {
+        var sum = 0;
+        $(".txtCredit").each(function () {
+            if ($(this).inputmask('unmaskedvalue')) {
+                //if ($(this).closest('tr').next('tr').find('.TaxCredit').inputmask('unmaskedvalue')) {
+                //     var TaxCredit = $(this).closest('tr').next('tr').find('.TaxCredit').inputmask('unmaskedvalue');
+                //    sum += ($(this).inputmask('unmaskedvalue') * 1) + parseFloat(TaxCredit);
+                //}
+                //else {
+                    sum += ($(this).inputmask('unmaskedvalue') * 1);
+                //}
+            }
+        });
+
+        $(".TotalCredit").val(sum).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+    function calculateDifference() {
+        $(".difference").val($(".TotalDebit").inputmask('unmaskedvalue') - $(".TotalCredit").inputmask('unmaskedvalue')).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+    }
+    $(document).on('click', '.DelBtn', function () {
+        var Debit = $(this).closest("tr")   // Finds the closest row <tr>
+            .find(".txtDebit")     // Gets a descendent with class="nr"
+            .inputmask('unmaskedvalue');         // Retrieves the text within <td>
+        var Credit = $(this).closest("tr")   // Finds the closest row <tr>
+            .find(".txtCredit")     // Gets a descendent with class="nr"
+            .inputmask('unmaskedvalue');
+        var CurrentTotalCredit = $(".TotalCredit").inputmask('unmaskedvalue');
+        var newTotalCredit = CurrentTotalCredit - Credit;
+        $(".TotalCredit").val(newTotalCredit).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        var CurrentTotalDebit = $(".TotalDebit").inputmask('unmaskedvalue');
+        var newTotalDebit = CurrentTotalDebit - Debit;
+        $(".TotalDebit").val(newTotalDebit).inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        calculateDifference();
+        TotalCredit = newTotalCredit;
+        TotalDebit = newTotalDebit;
+        var e = this;
+        var tr = $(e).closest('tr');
+
+        if ($(tr).index() > 0) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length > 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+
+        } else if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).children("input[type|='text']").each(function () {
+                $(this).empty();
+            });
+        }
+
+    });
+
+    function saveJE(n) {
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            if ($('.TotalDebit').val() != $('.TotalCredit').val()) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.TheValueOfTheTotalCreditDoesNotEqualTheValueOfTheTotalDebit',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+            else {
+              //  $('#preloader, #status').fadeIn();
+                var JEDetails = [];
+
+                $('#JEDetails tr').each(function () {
+                    var td = $(this);
+                    var JEDItem = {
+                        JournalEntryId: $('#Id').val(),
+                        Debit: td.find(".txtDebit").inputmask('unmaskedvalue'),
+                        Credit: td.find(".txtCredit").inputmask('unmaskedvalue'),
+                        AccountId: td.find(".AccountId").val(),
+                        PartyId: (function () {
+                            var v = td.find(".PartyId").val();
+                            return v ? parseInt(v, 10) : null;
+                        })(),
+
+                        PartyType: (function () {
+                            var $p = td.find(".PartyId");
+                            var t = $p.data('party-type');                // يقرأ من data
+                            if (t === undefined || t === null || t === '') {
+                                t = $p.attr('data-party-type');             // fallback من attr لو لسه
+                            }
+                            t = parseInt(t, 10);
+                            return isNaN(t) ? null : t;
+                        })(),
+
+
+
+                        IsPosted: $('#IsPosted').prop("checked"),
+                        IsDeleted: false,
+                        IsActive: true,
+                        Notes: td.find(".txtNotes").val(),
+                        CostCenterId: td.find('.CostCenterId').val()
+
+                    }
+                    if ($(this).find('.AccountId').val() && ($(this).find('.txtCredit').inputmask('unmaskedvalue') > 0 || $(this).find('.txtDebit').inputmask('unmaskedvalue') > 0)) {
+                        JEDetails.push(JEDItem);
+                    }
+                });
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#preloader, #status').fadeIn();
+                        $('#form').find("button[id='newbtn']").prop('disabled', true);
+                        $('#form').find("button[id='save']").prop('disabled', true);
+                        $.ajax({
+                            type: 'POST',
+                            contentType: "application/json",
+                            url: '/JournalEntries/AddEdit',
+                            data: JSON.stringify(
+                                {
+                                    Id: $('#Id').val(),
+                                    DocumentNumber: $('#DocumentNumber').val(),
+                                    Date: $('#Date').val(),
+                                    DepartmentId: $('#DepartmentId').val(),
+                                    IsActive: true,
+                                    IsDeleted: false,
+                                    IsPosted: $('#IsPosted').prop("checked"),
+                                    Notes: $('#Notes').val(),
+                                    JournalEntryDetails: JEDetails
+                                }),
+                            success: function (r) {
+                                window.location.replace("/JournalEntries");
+                                if (r.success == 'true') {
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.SavedSuccessfully',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                    $('#preloader, #status').fadeOut();
+                                    if (n == 'new')
+                                        window.location.reload();
+                                    else if (n == 'report') {
+                                        window.open("/Report/JournalEntryDetails?id=" + r.Id)
+                                        window.location.replace("/JournalEntries");
+                                    } else
+                                        window.location.replace("/JournalEntries");
+                                }
+                            },
+                            error: function (error) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                                $('#form').find("button[id='newbtn']").prop('disabled', false);
+                                $('#form').find("button[id='save']").prop('disabled', false);
+                                console.log(error);
+                            }
+                        });
+                    }
+                    else { result.dismiss; }
+                });
+            }
+        }
+    };
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/JournalEntries/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/JournalEntries');
+                        } else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+    // 1) متغيّر هنخزن فيه خيارات الموردين
+
+    // ==== Vendors (الموردين) ====
+// ===== Vendors =====
+let vendors = [];                // علشان نكاشي النتيجة
+let vendorsOptionString = '';    // خيارات الكومبو
+
+// لو عندك requestData جاهز—كويس. لو مش موجود، استبدله بـ $.get
+function getVendors() {
+  // كاش: لو اتحمّلوا قبل كده، رجّع Deferred محلول
+  if (vendors.length) return $.Deferred().resolve(vendors);
+
+  return requestData('/Helper/Vendors').done(function (r) {
+    vendors = Array.isArray(r) ? r : [];
+    vendorsOptionString = '<option value="">' + '@MyERP.Properties.Resources.Select' + '</option>';
+    for (var i = 0; i < vendors.length; i++) {
+      var v = vendors[i];
+      var name = v.ArName || v.EnName || ('Vendor #' + v.Id);
+      vendorsOptionString += '<option value="' + v.Id + '">' + name + '</option>';
+    }
+  }).fail(function (xhr) {
+    console.error('getVendors failed:', xhr?.status, xhr?.responseText);
+    vendors = [];
+    vendorsOptionString = '<option value="">' + '@MyERP.Properties.Resources.Select' + '</option>';
+  });
+}
+
+// يملا أي كومبو Vendor داخل سكوب معيّن (صف جديد مثلاً)
+function fillVendors($scope) {
+  ($scope || $(document)).find('select.PartyId').each(function () {
+    var sel = $(this).val(); // احتفظ بالقيمة الحالية لو موجودة
+    $(this).html(vendorsOptionString);
+    if (sel) $(this).val(sel);
+    // فعّل select2 بعد ما الكومبو يبقى فيه عناصر
+    if ($.fn.select2 && !$(this).hasClass('select2-hidden-accessible')) {
+      $(this).select2();
+    }
+  });
+}
+
+    function fillPartySelect($row, items, partyType) {
+        var $party = $row.find('select.PartyId');
+
+        var savedId = $party.attr('data-party-id');    // اللي جاي من Razor
+        var savedType = $party.attr('data-party-type');  // اللي جاي من Razor
+
+        var html = '<option value="">' + RES_SELECT + '</option>';
+        (items || []).forEach(function (it) {
+            var name = it.Name || it.ArName || it.EnName || ('#' + it.Id);
+            html += '<option value="' + it.Id + '">' + name + '</option>';
+        });
+
+        // اكتب النوع على data + attr (للدebug)، وارجّع الاختيار القديم لو موجود
+        var finalType = partyType || savedType || null;
+
+        $party.html(html)
+            .prop('disabled', false)
+            .data('party-type', finalType)              // ← المهم
+            .attr('data-party-type', finalType || '')   // اختياري
+            .val(savedId || '')                         // رجّع اختيار السجل
+            .trigger('change');
+
+        if ($.fn.select2 && !$party.hasClass('select2-hidden-accessible')) $party.select2();
+    }
+
+
+    function loadRowParties($accountSelect) {
+        var depId = $('#DepartmentId').val();
+        var accId = $accountSelect.val();
+        var $row = $accountSelect.closest('tr');
+        var $party = $row.find('select.PartyId');
+
+        var savedId = $party.attr('data-party-id');    // من الداتابيز
+        var savedType = $party.attr('data-party-type');  // من الداتابيز
+
+        if (!depId || !accId) {
+            $party.html('<option value="">' + RES_SELECT + '</option>').prop('disabled', false);
+            return;
+        }
+
+        // loading state
+        $party.prop('disabled', true).html('<option value="">…</option>').trigger('change');
+
+        $.get(getPartiesUrl, { departmentId: depId, accountId: accId })
+            .done(function (r) {
+                fillPartySelect($row, (r && r.items) || [], r && r.type);
+            })
+            .fail(function () {
+                $party.html('<option value="">' + RES_SELECT + '</option>').prop('disabled', false).trigger('change');
+            });
+    }
+
+
+
+// 4) عند تحميل الصفحة
+
+
+// 5) عند إضافة صف جديد (بعد append(markup))
+//fillVendors($('#JEDetails tr:last'));         // املا كومبو المورد في الصف الجديد
+
+
+</script>

@@ -1,0 +1,558 @@
+﻿@using HRServices.Models
+@model HomeModel
+@{
+    ViewData["Title"] = "Employee Services";
+}
+@{
+
+}
+<style>
+    .Row1 {
+        background-color: whitesmoke !important;
+    }
+
+    .Row2 {
+        background-color: wheat !important;
+    }
+
+    .Row3 {
+        background-color: lightgray !important;
+    }
+    /*.tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 150%;
+            left: 50%;
+            margin-left: -60px;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: black transparent transparent transparent;
+        }*/
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+    }
+</style>
+
+<div class="ibox" id="ibox1">
+    <div class="ibox-title">
+        <h5>My Services</h5>
+    </div>
+    <div class="ibox-content">
+        <div class="sk-spinner sk-spinner-wave">
+            <div class="sk-rect1"></div>
+            <div class="sk-rect2"></div>
+            <div class="sk-rect3"></div>
+            <div class="sk-rect4"></div>
+            <div class="sk-rect5"></div>
+        </div>
+        <div>
+            <button class="btn btn-primary  btn-w-m btn-h-m " type="button" onclick="vac();">
+                <i class="fa fa-handshake-o"></i>
+                <span class="d-inline-block    text-left">
+                    Request For Vacation
+                </span>
+            </button>
+            <button class="btn btn-warning btn-w-m btn-h-m   " type="button" onclick="per();">
+                <i class="fa fa-check-square-o"></i>
+                <span class="  text-left">
+                    Request for permissions
+                </span>
+            </button>
+            @if (@CurrentSession.location)
+            {
+                <button class="btn btn-info btn-w-m btn-h-m   " type="button" onclick="visit();">
+                    <i class="fa fa-map-marker" aria-hidden="true"></i>
+                    <span class="  text-left">
+                        Visits
+                    </span>
+                </button>
+            }
+
+
+            <button class="btn btn-danger btn-w-m btn-h-m   " type="button" onclick="advance();">
+            <i class="fa fa-money"></i>
+            <span class="text-left">
+            Request An Advance
+            </span>
+            </button>
+            @if (Model.ItemRequestShow)
+            {
+                <button class="btn btn-success  btn-w-m btn-h-m   " type="button" onclick="itemrec();">
+                    <i class="fa fa-check-square-o"></i>
+                    <span class="  text-left">
+                        Materials Requisition
+                    </span>
+                </button>
+            }
+
+
+        </div>
+
+    </div>
+    <div class="ibox-footer">
+    </div>
+
+
+
+</div>
+<div class="ibox" id="iboxManager">
+    <div class="ibox-title">
+        <h5>Manager Trans</h5>
+        <span class="label Row1 ">Level 1</span>
+        <span class="label Row2 ">Level 2</span>
+        <span class="label Row3 ">Level 3</span>
+    </div>
+
+    <div class="ibox-content">
+        <table class="display nowrap" style="width:100% !important" id="tbldata">
+            <thead>
+                <tr>
+                    <th>Order ID </th>
+                    <th>Order Date</th>
+                    <th>Type </th>
+                    <th>Employee Code </th>
+                    <th>Employee Name </th>
+                    <th>Job</th>
+                    <th>Project</th>
+                    <th>Action</th>
+                    <th>Level one</th>
+                    <th>Level Tow</th>
+                    <th>Level Three</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var emp in Model.ManagerTrans)
+                {
+                    <tr>
+                        <td>@emp.OrderId </td>
+                        <td>@emp.Date </td>
+                        <td>@emp.TransTypeName</td>
+                        <td>@emp.EmployeeCode</td>
+                        <td>@emp.EmployeeName</td>
+                        <td>@emp.JobName</td>
+                        <td>@emp.ProjectName</td>
+                        <td>
+                            <div class="btn-group">
+                                @{
+                                    var rowId = Guid.NewGuid().ToString("D");
+                                }
+                                <input id="@rowId" type="hidden" value="@emp.Data" />
+                                <input id="@(rowId)_lvl" class="emplevel" type="hidden" value="@((int)emp.EmployeeLevelType)" />
+                                <input id="@(rowId)_o" type="hidden" value="@emp.OrderId" />
+                                <input id="@(rowId)_d" type="hidden" value="@emp.Date" />
+                             
+                                <input id="@(rowId)_t" type="hidden" value="@emp.TransTypeName" />
+                                <input id="@(rowId)_name" type="hidden" value="@emp.EmployeeName" />
+                                <input id="@(rowId)_pname" type="hidden" value="@emp.ProjectName" />
+                                <input id="@(rowId)_jname" type="hidden" value="@emp.JobName" />
+                                <input id="@(rowId)_ecode" type="hidden" value="@emp.EmployeeCode" />
+                                @{
+                                    var level = (int)emp.EmployeeLevelType;
+
+                                }
+
+                                @if (emp.Status == StatusEnum.Approved)
+                                {
+                                    <span class="label label-warning p-1  m-1">Approved</span>
+                                }
+                                else
+                                {
+                                    <button class="btn-success btn btn-xs mx-auto p-1 m-1" type="button" onclick="React(1, @((int)emp.TransType), @emp.OrderId,@level);">Accept</button>
+                                    <button class="btn-danger btn btn-xs mx-auto p-1 m-1" type="button" onclick="React(0, @((int)emp.TransType), @emp.OrderId,@level);">Reject</button>
+                                }
+                                <button class="btn-warning   btn btn-xs mx-auto p-1 m-1" type="button" onclick="show('@rowId');">Preview</button>
+                                @if (emp.RowId.HasValue)
+                                {
+                                    <a   class="btn-info   btn btn-xs mx-auto p-1 m-1"  href="@Url.Action("getitemReportfile",new {id=emp.RowId})"><i class="fa fa-print" aria-hidden="true"></i></a>
+
+                                }
+                            </div>
+
+
+
+
+
+
+                        </td>
+
+                        <td>
+
+                            @if (emp.LevelOne.HasValue)
+                            {
+                                if (emp.LevelOne == 1)
+                                {
+                                    <i class="fa fa-check-circle fa-lg  " style="color: green" title="Approved">
+
+                                    </i>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-times-circle fa-lg  " style="color: red" title="Rejected">
+
+                                    </i>
+
+                                }
+                            }
+                            else
+                            {
+                                <i class="fa fa-pause-circle fa-lg  " style="color: blue" title="Pending">
+
+                                </i>
+
+                            }
+                        </td>
+                        <td>
+                            @if (emp.LevelTow.HasValue)
+                            {
+                                if (emp.LevelTow == 1)
+                                {
+                                    <i class="fa fa-check-circle fa-lg  " style="color: green" title="Approved">
+
+                                    </i>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-times-circle fa-lg  " style="color: red" title="Rejected">
+
+                                    </i>
+                                }
+                            }
+                            else
+                            {
+                                <i class="fa fa-pause-circle fa-lg  " style="color: blue" title="Pending">
+
+                                </i>
+                            }
+                        </td>
+                        <td>
+                            @if (emp.LevelThree.HasValue)
+                            {
+                                if (emp.LevelThree == 1)
+                                {
+                                    <i class="fa fa-check-circle fa-lg  " style="color: green" title="Approved">
+
+                                    </i>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-times-circle fa-lg  " style="color: red" title="Rejected">
+
+                                    </i>
+                                }
+                            }
+                            else
+                            {
+                                <i class="fa fa-pause-circle fa-lg  " style="color: blue" title="Pending">
+
+                                </i>
+                            }
+                        </td>
+                      
+
+                    </tr>
+                }
+
+
+
+
+
+            </tbody>
+            <tfoot>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+
+<div class="modal  fade" id="mymodal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="items"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span>&times;</span>
+
+                </button>
+            </div>
+            <div id="content" class="modal-body">
+                <div class="ibox ">
+
+                    <div class="ibox-content m-b-sm border-bottom">
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_id">Order No</label>
+                                    <input type="text" id="show_order_id" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_name">EmployeeName</label>
+                                    <input type="text" id="show_order_name" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_id">Job</label>
+                                    <input type="text" id="txtjobName" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_order_name">Project</label>
+                                    <input type="text" id="txtprojectName" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_transName">Order Type</label>
+                                    <input type="text" id="show_transName" disabled="disabled" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="col-form-label" for="show_date_added">Order Date</label>
+                                    <div class="input-group date">
+                                        <span class="input-group-addon">
+                                            <i class="fa fa-calendar"></i>
+                                        </span><input id="show_date_added" type="text" disabled="disabled" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+
+                    </div>
+
+                    <div class="ibox-content" id="tblcontent">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section scripts
+    {
+    <script>
+        function closeModal() {
+            //$('#tblItemlist').DataTable().destroy();
+            //$('#content').html('');
+            //$('#mymodal').modal('hide');
+        }
+        function show(id) {
+            let orderNo = $(`#${id}_o`).val();
+            let orderDate = $(`#${id}_d`).val();
+            let ordertypename = $(`#${id}_t`).val();
+            let employeeName = $(`#${id}_name`).val();
+            let employeecode = $(`#${id}_ecode`).val();
+            let jobName = $(`#${id}_jname`).val();
+            let projName = $(`#${id}_pname`).val();
+            $('#show_order_name').val(employeecode + '-' + employeeName);
+            $('#show_order_id').val(orderNo);
+            $('#show_date_added').val(orderDate);
+            $('#show_transName').val(ordertypename);
+            $('#txtjobName').val(jobName);
+            $('#txtprojectName').val(projName);
+            let data = $(`#${id}`).val();
+
+
+
+            if (!data) {
+                return;
+            }
+            var arr = data.split('¥');
+
+            let dataHeadr = arr[0].split('¢');
+
+            let tableheder = '';
+            for (let i = 0; i < dataHeadr.length; i++) {
+                tableheder += `<th>${dataHeadr[i]}</th>`;
+            }
+            let databody = '';
+            for (let i = 1; i < arr.length; i++) {
+                let bodyarr = arr[i].split('¢');
+                databody += '<tr>';
+                for (let row = 0; row < bodyarr.length; row++) {
+                    databody += `<td>${bodyarr[row]}</td>`;
+                }
+                databody += '</tr>';
+
+            }
+
+            //
+            $('#tblcontent').html(`<table id="tblItemlist" class="display nowrap" style="width:100% !important">
+
+                                           <thead>
+                                    <tr>
+                                       ${tableheder}
+                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
+
+                                                       ${databody}
+
+                                                                    </tbody>
+                                                        </table>`);
+
+
+            $('#items').text("Details");
+
+            $('#tblItemlist').DataTable({
+
+                responsive: true,
+                searching: true,
+                destroy: true
+            });
+
+            $('#mymodal').modal('show');
+        }
+
+        function vac() {
+
+            window.location.href = '@Url.Action("Vacation", "Home")'; // + id;
+        }
+
+        function itemrec() {
+
+            window.location.href = '@Url.Action("MaterialsRequisition", "Home")';
+        }
+
+        function per() {
+
+            window.location.href = '@Url.Action("Permission", "Home")';
+        }
+        function visit() {
+
+            window.location.href = '@Url.Action("visit", "Home")';
+        }
+        function advance() {
+
+            window.location.href = '@Url.Action("advance", "Home")';
+        }
+
+        $(document).ready(function () {
+
+            $('#tbldata').DataTable({
+
+                responsive: true,
+                searching: true,
+                destroy: true,
+                "createdRow": function (row, data, dataIndex) {
+                    let empLeve = $(row).find('.emplevel').val();
+                    console.log(empLeve);
+                    if (empLeve == 1) {
+                        $(row).addClass('Row1');
+                    } else if (empLeve == 2) {
+                        $(row).addClass('Row2');
+                    } else if (empLeve == 3) {
+                        $(row).addClass('Row3');
+                    }
+                    //if ( data[2] == "London" ) {
+                    //    $(row).addClass('red');
+
+                    //}
+
+
+                }
+                //columnDefs: [
+                //    { responsivePriority: 1, targets: -1 },
+                //    { responsivePriority: 2, targets: -2 },
+                //    { responsivePriority: 3, targets: 1 },
+                //    { responsivePriority: 4, targets: 0 }
+                //]
+            });
+            //$('#tbldata2').DataTable({
+
+            //    responsive: true,
+            //    searching: true,
+            //    destroy: true
+            //    //columnDefs: [
+            //    //    { responsivePriority: 1, targets: -1 },
+            //    //    { responsivePriority: 2, targets: -2 },
+            //    //    { responsivePriority: 3, targets: 1 },
+            //    //    { responsivePriority: 4, targets: 0 }
+            //    //]
+            //});
+            //$('#tbldata3').DataTable({
+
+            //    responsive: true,
+            //    searching: true,
+            //    destroy: true
+            //    //columnDefs: [
+            //    //    { responsivePriority: 1, targets: -1 },
+            //    //    { responsivePriority: 2, targets: -2 },
+            //    //    { responsivePriority: 3, targets: 1 },
+            //    //    { responsivePriority: 4, targets: 0 }
+            //    //]
+            //});
+
+        });
+
+        function React2(s, t, i) {
+            $.ajax({
+                url: '@Url.Action("React")',
+                type: "get",
+                data: { s: s, t: t, i: i },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+        }
+        function React(s, t, i, l) {
+            $.ajax({
+                url: '@Url.Action("React")',
+                type: "get",
+                data: { s: s, t: t, i: i, l: l },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+        }
+        function closetran(t, i) {
+
+            $.ajax({
+                url: '@Url.Action("Close")',
+                type: "get",
+                data: { t: t, i: i },
+                success: function (data) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+}
+
+

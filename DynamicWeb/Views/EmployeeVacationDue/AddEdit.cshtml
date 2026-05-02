@@ -1,0 +1,1363 @@
+﻿@model MyERP.Models.EmployeeVacationDue
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeeVacationDue;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.EmployeeVacationDue:</h4>
+        </div>
+    </div>
+</div>
+
+
+@if (Model != null)
+{
+    @Html.HiddenFor(model => model.Id)
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.Image)
+
+}
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+
+            <div class="row">
+                <div class="col-12">
+                    @*<form action="/EmployeeVacationDue/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber"> @MyERP.Properties.Resources.TransactionNo </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.TransactionNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="DepartmentId" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Department </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.DepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            @Html.Editor("Date", new { htmlAttributes = new { @class = "form-control", required = "required", type = "datetime-local" } })
+
+                                        }
+                                        else
+                                        {
+                                            @Html.Editor("Date", new { htmlAttributes = new { @Value = DateTime.Now, @class = "form-control", required = "required", type = "datetime-local" } })
+
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="AdjustmentDate" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.AdjustmentDate
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            @Html.Editor("AdjustmentDate", new { htmlAttributes = new { @class = "form-control", required = "required", type = "datetime-local" } })
+                                        }
+                                        else
+                                        {
+                                            @Html.Editor("AdjustmentDate", new { htmlAttributes = new { @Value = DateTime.Now, @class = "form-control", required = "required", type = "datetime-local" } })
+
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Employee </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(a => a.EmployeeId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="VacationRequestId" class="col-sm-2 control-label">
+                                        @MyERP.Properties.Resources.RequestNo
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null && Model.VacationRequestId > 0)
+                                        {
+                                            @Html.DropDownListFor(a => a.VacationRequestId, null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        }
+                                        else
+                                        {
+                                            <select id="VacationRequestId" class="form-control" required></select>
+
+                                        }
+                                        @*@Html.DropDownListFor(a => a.VacationRequestId, null, "اختر", htmlAttributes: new { @class = "form-control", required = "required" })*@
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <!--Employee Data -->
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div id="accordion">
+                                            <h5 class=" pb-3 header-title">
+                                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                                    @MyERP.Properties.Resources.EmployeeData
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapse5">
+
+                                            <div class="row">
+                                                <div class="col-12">
+
+                                                    <div class="form-group row">
+                                                        <label for="DepartmentArName" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Department  </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="text" id="DepartmentArName" class="form-control" disabled readonly />
+                                                        </div>
+                                                        <label for="JobArName" class="col-sm-2 control-label"> @MyERP.Properties.Resources.Job  </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="text" id="JobArName" class="form-control" disabled readonly />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group row">
+                                                        <label for="HireDate" class="col-sm-2 control-label">  @MyERP.Properties.Resources.HireDate  </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="datetime-local" id="HireDate" class="form-control" disabled readonly />
+                                                        </div>
+                                                        <label for="AdministrativeDepartmentArName" class="col-sm-2 control-label"> @MyERP.Properties.Resources.AdministrativeDepartment  </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="text" id="AdministrativeDepartmentArName" class="form-control" disabled readonly />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group row">
+                                                        <label for="lastVacation" class="col-sm-2 control-label">
+                                                            @MyERP.Properties.Resources.LastVacationDate
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="datetime-local" id="lastVacation" class="form-control" disabled readonly />
+                                                        </div>
+                                                        <label for="EndOfWork" class="col-sm-2 control-label">
+                                                            @MyERP.Properties.Resources.EndOfServiceType
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="text" id="EndOfWork" class="form-control" disabled readonly />
+                                                        </div>
+                                                    </div>
+                                                    <!--<div class="form-group row">
+                                                    <!--<label for="VacationRequestId" class="col-sm-2 control-label"> رقم الطلب </label>
+                                                    <div class="col-sm-4">
+                                                        <select id="VacationRequestId" class="form-control"></select>-->
+                                                    <!--@*@Html.DropDownListFor(a => a.VacationRequestId, null, "اختر", htmlAttributes: new { @class = "form-control", required = "required" })*@-->
+                                                    <!--</div>
+                                                    <div class="invalid-feedback">
+                                                        رقم الطلب مطلوب
+                                                    </div>-->
+                                                    <!--<label for="NumberOfVacationDays" class="col-sm-2 control-label"> عدد ايام الاجازة </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="text" id="NumberOfVacationDays" class="NumberOfVacationDays form-control" readonly />
+                                                        </div>
+                                                    </div>-->
+                                                    <div class="form-group row">
+                                                        <label for="VacationStartDate" class="col-sm-2 control-label">
+                                                            @MyERP.Properties.Resources.VacationStartDate
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="datetime-local" id="VacationStartDate" class="form-control" disabled readonly />
+                                                            <div class="invalid-feedback">
+                                                                @MyERP.Properties.Resources.Required
+                                                            </div>
+                                                        </div>
+                                                        <label for="VacationEndDate" class="col-sm-2 control-label">
+                                                            @MyERP.Properties.Resources.VacationEndDate
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input type="datetime-local" id="VacationEndDate" class="form-control" disabled readonly />
+                                                            <div class="invalid-feedback">
+                                                                @MyERP.Properties.Resources.Required
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <br />
+
+                                                    <div class="form-group row">
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group row">
+                                                                <label for="NumberOfVacationDays" class="col-sm-4 control-label"> @MyERP.Properties.Resources.VacationDaysNo</label>
+                                                                <div class="col-sm-8">
+                                                                    <input type="text" id="NumberOfVacationDays" class="NumberOfVacationDays form-control" readonly />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                            <div class="form-group row">
+                                                                <div class="col-sm-4">
+                                                                    <input type="radio" id="vacation" name="type" value="vacation" checked>
+                                                                    <label for="vacation">
+                                                                        @MyERP.Properties.Resources.Vacation
+                                                                    </label><br>
+                                                                </div>
+
+                                                                <div class="col-sm-4">
+                                                                    <input type="radio" id="working" name="type" value="working">
+                                                                    <label for="working">
+                                                                        @MyERP.Properties.Resources.Working
+                                                                    </label><br>
+                                                                </div>
+
+                                                                <div class="col-sm-4">
+                                                                    <input type="radio" id="ending" name="type" value="working">
+                                                                    <label for="working">
+                                                                        @MyERP.Properties.Resources.EndOfService
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <br />
+                                                    <!--*******************************-->
+
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="">
+                                                            @MyERP.Properties.Resources.AbsenceDays
+                                                        </label>
+                                                        <label class=" col-sm-1 control-label">
+                                                            @MyERP.Properties.Resources.Day
+                                                        </label>
+                                                        <div class="col-sm-2">
+                                                            <input id="Absence_Days" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">
+                                                            @MyERP.Properties.Resources.Month
+
+                                                        </label>
+                                                        <div class="col-sm-2">
+                                                            <input id="Absence_Months" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">
+                                                            @MyERP.Properties.Resources.Year
+                                                        </label>
+                                                        <div class="col-sm-2">
+                                                            <input id="Absence_Years" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="">
+                                                            @MyERP.Properties.Resources.ServicePeriod
+                                                        </label>
+                                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Day</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="DutyDays" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Month</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="DutyMonths" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Year</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="DutyYears" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="JobId">
+                                                            @MyERP.Properties.Resources.VacationWithoutSalary
+                                                        </label>
+                                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Day</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="VacationWithoutSalary_Days" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Month</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="VacationWithoutSalary_Months" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Year</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="VacationWithoutSalary_Years" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="JobId">
+                                                            @MyERP.Properties.Resources.WorkPeriod
+                                                        </label>
+                                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Day</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="Work_Days" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Month</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="Work_Months" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Year</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="Work_Years" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="JobId">
+                                                            @MyERP.Properties.Resources.CarryOverBalance
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="CarryOverBalance" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label for="LocationId" class="control-label col-sm-2">
+                                                            @MyERP.Properties.Resources.DeductionDays
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="DeductionDays" type="number" step="any" class="form-control" value="0.00" disabled readonly />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="JobId">
+                                                            @MyERP.Properties.Resources.NetWorkingPeriod
+                                                        </label>
+                                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Day</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="NetWork_Days" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Month</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="NetWork_Months" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label class="control-label col-sm-1">@MyERP.Properties.Resources.Year</label>
+                                                        <div class="col-sm-2">
+                                                            <input id="NetWork_Years" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class=" col-sm-2 control-label" for="JobId">
+                                                            @MyERP.Properties.Resources.DueVacationDaysBeforeDeduction
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="VacationDaysBeforeDeduction" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label for="" class=" col-sm-2 control-label">
+                                                            @MyERP.Properties.Resources.AbsenceDays
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="TotalAbsenceDays" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label for="" class="control-label col-sm-2">
+                                                            @MyERP.Properties.Resources.WithoutSalary
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="TotalDaysOFVacationWithoutSalary" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group row">
+                                                        <label for="" class="control-label col-sm-2">
+                                                            @MyERP.Properties.Resources.NetAbsence
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="NetAbsenceDay" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                        <label for="" class="control-label col-sm-2">
+                                                            @MyERP.Properties.Resources.DueVacationDays
+                                                        </label>
+                                                        <div class="col-sm-4">
+                                                            <input id="VacationDues" type="number" step="any" class="form-control" />
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-group row">
+                                                        <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                                        <div class="col-sm-4">
+                                                            <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                                        </div>
+                                                    </div>
+
+
+
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- المستحقات المالية -->
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="control-label ">
+                                                    @MyERP.Properties.Resources.FinancialDues
+                                                </h5>
+
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped table-centered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th></th>
+                                                                <th></th>
+                                                                <th style="text-align: center">
+                                                                    @MyERP.Properties.Resources.DueSalaryAmount
+                                                                </th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsCurrentSalary" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.MonthCurrentSalary
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsCurrentSalary" @Html.Raw(Model != null && Model.IsCurrentSalary == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.CurrentSalaryAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.CurrentSalaryAmount.HasValue ? Model.CurrentSalaryAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsVariableAdditional" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.VariableAdditional
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsVariableAdditional" @Html.Raw(Model != null && Model.IsVariableAdditional == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.VariableAdditionalAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.VariableAdditionalAmount.HasValue ? Model.VariableAdditionalAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsVacationSalaryDue" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.DueVacationSalary
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsVacationSalaryDue" @Html.Raw(Model != null && Model.IsVacationSalaryDue == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.VacationSalaryDueAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.VacationSalaryDueAmount.HasValue ? Model.VacationSalaryDueAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsPreviousSalary" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.PreviousSalaries
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsPreviousSalary" @Html.Raw(Model != null && Model.IsPreviousSalary == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.PreviousSalaryAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.PreviousSalaryAmount.HasValue ? Model.PreviousSalaryAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsOtherAdditional" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.OtherAddition
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsOtherAdditional" @Html.Raw(Model != null && Model.IsOtherAdditional == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.OtherAdditionalAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.OtherAdditionalAmount.HasValue ? Model.OtherAdditionalAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="TotalDueAmount" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.TotalDueSalaryAmount
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="any" id="TotalDueAmount" class="form-control" disabled readonly />
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- الاستقطاعات المالية -->
+                                    <div class="col-sm-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="control-label">
+                                                    @MyERP.Properties.Resources.FinancialDeductions
+                                                </h5>
+
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped table-centered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th></th>
+                                                                <th></th>
+                                                                <th style="text-align: center">
+                                                                    @MyERP.Properties.Resources.MoneyAmount
+                                                                    
+                                                                </th>
+                                                        </thead>
+                                                        <tbody>
+
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsLoanDue" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.DueLoan
+
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsLoanDue" @Html.Raw(Model != null && Model.IsLoanDue == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.LoanDueAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.LoanDueAmount.HasValue ? Model.LoanDueAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsOtherPenalty" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.OtherPenalty
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsOtherPenalty" @Html.Raw(Model != null && Model.IsOtherPenalty == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.OtherPenaltyAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.OtherPenaltyAmount.HasValue ? Model.OtherPenaltyAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsVariableDeduction" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.VariableDeduction
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsVariableDeduction" @Html.Raw(Model != null && Model.IsVariableDeduction == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.VariableDeductionAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.VariableDeductionAmount.HasValue ? Model.VariableDeductionAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="IsInsurance" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.InsuranceAmount
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" id="IsInsurance" @Html.Raw(Model != null && Model.IsInsurance == true ? "checked" : "") />
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.InsuranceAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.InsuranceAmount.HasValue ? Model.InsuranceAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label for="TotalDeductionAmount" class="col-sm-12 control-label">
+                                                                        @MyERP.Properties.Resources.TotalDeduction
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="any" id="TotalDeductionAmount" class="form-control" disabled readonly />
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <label class="col-sm-8 control-label">
+                                                                        @MyERP.Properties.Resources.TicketStatus
+                                                                    </label>
+                                                                </td>
+                                                                <td class="d-flex justify-content-center align-items-center">
+                                                                    <input type="checkbox" id="IsTicket" @Html.Raw(Model != null && Model.IsTicket == true ? "checked" : "") />
+                                                                    <label for="IsTicket">
+                                                                        @MyERP.Properties.Resources.Reserved
+                                                                    </label>
+                                                                </td>
+                                                                <td>
+                                                                    @Html.EditorFor(a => a.TicketAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.TicketAmount.HasValue ? Model.TicketAmount : 0, @type = "number" } })
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- اجمالى المستحقات-->
+                                <div class="card">
+                                    <div class="card-body">
+
+                                        <div class="form-group row">
+                                            <label for="NetDueAmount" class="col-sm-2 control-label">
+                                                @MyERP.Properties.Resources.TotalDues
+                                            </label>
+                                            <div class="col-sm-4">
+                                                <input type="number" step="any" id="NetDueAmount" class="form-control" disabled readonly />
+                                            </div>
+                                            <label for="RecommendedPaymentAmount" class="col-sm-2 control-label">
+                                                @MyERP.Properties.Resources.PaymentRecommendedAmount
+                                            </label>
+                                            <div class="col-sm-4">
+                                                @Html.EditorFor(a => a.RecommendedPaymentAmount, new { htmlAttributes = new { @class = "form-control", @Value = Model != null && Model.RecommendedPaymentAmount.HasValue ? Model.RecommendedPaymentAmount : 0, @type = "number" } })
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!-- Details Table -->
+                                <div class="col-sm-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div id="accordion">
+                                                <h5 class=" pb-3 header-title">
+                                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                                        @MyERP.Properties.Resources.VacationSalaryItemsData
+                                                    </a>
+                                                </h5>
+                                            </div>
+                                            <div id="collapse5">
+
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped table-centered mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th> @MyERP.Properties.Resources.Item </th>
+                                                                <th> @MyERP.Properties.Resources.Value </th>
+                                                        </thead>
+                                                        <tbody id="Details">
+                                                            @*@if (Model != null)
+                                                                {
+                                                                    foreach (var item in Model.EmployeeVacationDueDetails)
+                                                                    {
+                                                                        <tr>
+                                                                            <td>
+                                                                                <label class=" col-sm-2 control-label SalaryItemId" hidden id="SalaryItemId">@item.SalaryItemId</label>
+                                                                                <label class=" col-sm-4 control-label SalaryItemArName" id="SalaryItemArName">@item.SalaryItem.ArName</label>
+                                                                            </td>
+                                                                            <td>
+                                                                                <input id="SalaryItemValue" disabled class="SalaryItemValue form-control col-sm-4" value="@item.SalaryItemValue" />
+                                                                            </td>
+                                                                        </tr>
+
+                                                                    }
+                                                                }*@
+                                                        </tbody>
+                                                    </table>
+                                                    <br />
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <div class="form-group row d-flex justify-content-center">
+                                                                <label class=" col-sm-2 control-label">
+                                                                    @MyERP.Properties.Resources.TotalSalary
+                                                                </label>
+                                                                <div class="col-sm-4">
+                                                                    <input id="TotalSalary" class="form-control" disabled />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--    Save Buttons      -->
+                                    <div class="card-body">
+                                        <input id="new" name="newBtn" hidden />
+                                        <div style="float:right;">
+                                            <div class="row">
+                                                <div class="col-sm-offset-2">
+                                                    @if (Model == null)
+                                                    {
+                                                    <button onclick="addEdit('new')" class="btn btn-success" id="newbtn">
+                                                        @MyERP.Properties.Resources.SaveAndNew
+                                                    </button>
+                                                    <button class="btn btn-success" onclick="addEdit()" id="save">
+                                                        @MyERP.Properties.Resources.Save
+                                                    </button>
+                                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                                    }
+                                                    else if (Model.IsDeleted == false)
+                                                    {
+
+                                                <button class="btn btn-success" onclick="addEdit()" id="save">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                                <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                                                    @MyERP.Properties.Resources.Delete
+                                                </button>   
+                                                }
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @*</form>*@
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+//----------- variable Declaration -----------
+        var sum = 0;
+        let vacationReq = [];
+        let requestDetails = [];
+        var total = 0;
+        let TotalDutyDays = 0;
+        let days = 0;
+        let months = 0;
+        let years = 0;
+        let VacationDays = 0;
+//----------------------- On Ready -------------
+    $(document).ready(function () {
+        //   GetEmployeeData();
+        CalculateTotalDueAmount();
+        CalculateTotalDeductionAmount();
+        CalculateNetDueAmount();
+
+        if ($('#EmployeeId').val()) {
+            GetEmployeeData();
+            EmployeeVacationDueDetails()
+        }
+        if ($('#Id').val() > 0) {
+            if ($('#VacationRequestId').val() > 0) {
+                $('#VacationRequestId').trigger('change')
+            }
+            $('#Date').val('@ViewBag.Date');
+            $('#AdjustmentDate').val('@ViewBag.AdjustmentDate');
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        }
+        else {
+            setDocNum();
+            var d = new Date();
+            $('#Date').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+            $('#AdjustmentDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        }
+    });
+
+//------------------------- On Change ----------
+        $('#EmployeeId').on('change', function () {
+            GetEmployeeData();
+            EmployeeVacationDueDetails();
+            GetEmployeeVacationRequest();
+        });
+
+        $('#VacationRequestId').on('change', function () {
+            GetEmployeeVacationRequestDetails();
+        });
+        $(document).on('change', '#CurrentSalaryAmount,#PreviousSalaryAmount,#OtherAdditionalAmount,#VariableAdditionalAmount,#VacationSalaryDueAmount,#VariableDeductionAmount,#InsuranceAmount,#LoanDueAmount,#OtherPenaltyAmount', function () {
+            CalculateTotalDeduction_Due();
+        });
+//-------------------------- DocNum---------------------------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/EmployeeVacationDue/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+        }
+    });
+    $(document).on('change', '#Date', function () {
+            setDocNum();
+    });
+
+//------------------------------- ShowDate------------------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    //------------------- ConvertDate-------------
+    function convertToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return (dt)
+    }
+
+    //-------------------- Get Employee Data -----------
+    function GetEmployeeData() {
+
+        let id = $('#EmployeeId').val();
+        $.ajax({
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json",
+            url: "/EmployeeVacationDue/GetEmployeeData/" + id,
+            success: function (r) {
+                if ($('#EmployeeId').val() == r[0].Id) {
+                    $('#DepartmentArName').val(r[0].DepartmentArName);
+                    $('#JobArName').val(r[0].JobArName)
+                    $('#AdministrativeDepartmentArName').val(r[0].AdministrativeDepartmentArName)
+                    var d = convertToJavaScriptDate(r[0].HireDate)
+                    $('#HireDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+                    //--------------------------- اجازة بدون مرتب -----------------------------//
+                    var total = r[0].vacationWithoutSalaryBalance + r[0].vacationwithoutSalaryRecord;
+                    CalcTotalVacationWithOutSalary(total);
+                    //----------------- بدون راتب ------------------
+                    $('#TotalDaysOFVacationWithoutSalary').val(total)
+
+                }
+            },
+            error: function () {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotLinked !',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+    }
+
+    //-------------------- Get Employee Vacation DueDetails -----------
+    function EmployeeVacationDueDetails() {
+        let id = $('#EmployeeId').val();
+        $.ajax({
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json",
+            url: "/EmployeeVacationDue/EmployeeVacationDueGetDetails/" + id,
+            success: function (r) {
+                $('#Details').empty();
+                sum = 0;
+                for (var i = 0; i < r.length; i++) {
+                    sum += r[i].ItemValue;
+                    $('#TotalSalary').val(sum);
+
+                    $('#Details').append('<tr><td><label class=" col-sm-2 control-label SalaryItemId" hidden id="SalaryItemId"> ' + r[i].SalaryItemId + ' </label><label class=" col-sm-4 control-label SalaryItemArName" id="SalaryItemArName"> ' + r[i].SalaryItemArName + ' </label></td><td><input id="SalaryItemValue" disabled class="SalaryItemValue form-control col-sm-4" value="' + r[i].ItemValue + '" /></td></tr>')
+                }
+
+            },
+            error: function () {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotLinked !',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+    }
+
+    //-------------- Get Employee Vacation Request
+    function GetEmployeeVacationRequest() {
+            let id = $('#EmployeeId').val();
+            $.ajax({
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json",
+                url: "/EmployeeVacationDue/GetVacationRequest/" + id,
+                success: function (r) {
+                    $('#VacationRequestId').empty();
+                    if (r.length == 0) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.NoVacationRequest',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    vacationReq = r;
+                    $('#VacationRequestId').append(new Option('@MyERP.Properties.Resources.Select', '0'));
+                    for (var i = 0; i < vacationReq.length; i++) {
+                        $('#VacationRequestId').append('<option value="' + vacationReq[i].Id + '">' + vacationReq[i].Code.replaceAll('-','') + '</option>');
+                    }
+                },
+                error: function () {
+                     Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotLinked !',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                }
+            });
+        }
+
+    //-------------- Get Employee Vacation Request Detaild
+    function GetEmployeeVacationRequestDetails() {
+            let id = $('#VacationRequestId').val();
+        $.ajax({
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json",
+            url: "/EmployeeVacationDue/GetVacationRequestDetails?id=" + id + "&date=" + $('#Date').val(),
+            success: function (r) {
+                requestDetails = r;
+                var d = convertToJavaScriptDate(r[0].VacationEndDate)
+                $('#VacationEndDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+                var d = convertToJavaScriptDate(r[0].VacationStartDate)
+                $('#VacationStartDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+                var d = convertToJavaScriptDate(r[0].lastVacation)
+                $('#lastVacation').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+                $('#NumberOfVacationDays').val(r[0].NumberOfVacationDays);
+                // ------------- Financial Dues ------------- //
+                var adjustmentDate = (new Date($('#AdjustmentDate').val())).getDate();
+                //r[0].CurrentSalaryAmount = r[0].CurrentSalaryAmount > 0 || r[0].CurrentSalaryAmount != null ? r[0].CurrentSalaryAmount : 0;
+                //r[0].VariableAdditionalAmount = r[0].VariableAdditionalAmount > 0 || r[0].VariableAdditionalAmount!=null ? r[0].VariableAdditionalAmount : 0;
+                //r[0].VacationSalaryDueAmount = r[0].VacationSalaryDueAmount > 0 || r[0].VacationSalaryDueAmount!=null ? r[0].VacationSalaryDueAmount : 0;
+                //r[0].PreviousSalaryAmount = r[0].PreviousSalaryAmount > 0 || r[0].PreviousSalaryAmount!=null ? r[0].PreviousSalaryAmount : 0;
+                //r[0].LoanDueAmount = r[0].LoanDueAmount > 0 || r[0].LoanDueAmount!=null ? r[0].LoanDueAmount : 0;
+                //r[0].VariableDeductionAmount = r[0].VariableDeductionAmount > 0 || r[0].VariableDeductionAmount!=null ? r[0].VariableDeductionAmount: 0;
+                //r[0].InsuranceAmount = r[0].InsuranceAmount > 0 || r[0].InsuranceAmount!=null ? r[0].InsuranceAmount : 0;
+                var additional = $('#OtherAdditionalAmount').val();
+                additional = additional != null || additional > 0 ? additional : 0;
+                $('#OtherAdditionalAmount').val(additional);
+                var penalty = $('#OtherPenaltyAmount').val();
+                penalty = penalty != null || penalty > 0 ? penalty : 0;
+                $('#OtherPenaltyAmount').val(penalty);
+                $('#CurrentSalaryAmount').val(r[0].CurrentSalaryAmount * adjustmentDate);
+                $('#VariableAdditionalAmount').val(r[0].VariableAdditionalAmount);
+                $('#VacationSalaryDueAmount').val(r[0].VacationSalaryDueAmount);
+                $('#PreviousSalaryAmount').val(r[0].PreviousSalaryAmount);
+                $('#LoanDueAmount').val(r[0].LoanDueAmount);
+                $('#VariableDeductionAmount').val(r[0].VariableDeductionAmount);
+                $('#InsuranceAmount').val(r[0].InsuranceAmount);
+                //------------------------ مدة الغياب -----------------------------//
+                let TotalAbsenceDays = r[0].AbsenceDays;
+                CalcEquivalent(TotalAbsenceDays);
+                $('#Absence_Days').val(days);
+                $('#Absence_Months').val(months);
+                $('#Absence_Years').val(years);
+
+                //-------------------------- مدة الخدمة ---------------------------//
+                let ToDate = convertToJavaScriptDate(r[0].VacationStartDate);
+                let FromDate = new Date($('#HireDate').val());
+                CalcTotalDutyPeriod(FromDate, ToDate);
+
+                //-------------------------------- مدة العمل ---------------------//
+                let TotalWorkDays = TotalDutyDays - (TotalAbsenceDays + TotalDaysOFVacationWithoutSalary);
+
+                CalcEquivalent(TotalWorkDays);
+                $('#Work_Days').val(days);
+                $('#Work_Months').val(months);
+                $('#Work_Years').val(years);
+
+                //-------------------------------- الرصيد المرحل -----------------//
+                $('#CarryOverBalance').val(r[0].CarryOverBalanceDays);
+
+                //------------------------------ صافى مدة العمل ------------------//
+                let DeductionDays = $('#DeductionDays').val();
+                let NetWorkDays = TotalWorkDays - DeductionDays;
+                CalcEquivalent(NetWorkDays);
+                $('#NetWork_Days').val(days);
+                $('#NetWork_Months').val(months);
+                $('#NetWork_Years').val(years);
+                //----------------------------------ايام الاجازة المستحقة قبل الخصم ------------------
+                $('#VacationDaysBeforeDeduction').val(r[0].NumberOfVacationDays);
+
+                ////----------------------------  ايام الغياب  -----------
+                $('#TotalAbsenceDays').val(r[0].AbsenceDays);
+
+                //---------------------------- صافى الغياب ----------------------
+                let NetAbsenceDay = TotalAbsenceDays - $('#TotalDaysOFVacationWithoutSalary').val();
+                $('#NetAbsenceDay').val(NetAbsenceDay);
+
+                //---------------------------- ايام الاجازة المستحقة--------------------
+                let VacationDues = VacationDays - NetAbsenceDay;
+                $('#VacationDues').val(VacationDues);
+
+                CalculateTotalDeduction_Due();
+
+            },
+            error: function () {
+                 Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotLinked !',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+
+
+        }
+
+
+        function CalculateTotalDeduction_Due() {
+            var CurrentSalaryAmount = parseFloat( $('#CurrentSalaryAmount').val() > 0 ? $('#CurrentSalaryAmount').val() : 0.00);
+            var PreviousSalaryAmount = parseFloat($('#PreviousSalaryAmount').val() > 0 ? $('#PreviousSalaryAmount').val() : 0.00);
+            var OtherAdditionalAmount = parseFloat($('#OtherAdditionalAmount').val() > 0 ? $('#OtherAdditionalAmount').val() : 0.00);
+            var VariableAdditionalAmount = parseFloat($('#VariableAdditionalAmount').val() > 0 ? $('#VariableAdditionalAmount').val() : 0.00);
+            var VacationSalaryDueAmount = parseFloat($('#VacationSalaryDueAmount').val() > 0 ? $('#VacationSalaryDueAmount').val() : 0.00);
+
+            var TotalDueAmount = CurrentSalaryAmount + PreviousSalaryAmount + OtherAdditionalAmount + VariableAdditionalAmount + VacationSalaryDueAmount;
+            $('#TotalDueAmount').val(TotalDueAmount);
+
+            var VariableDeductionAmount = parseFloat($('#VariableDeductionAmount').val() > 0 ? $('#VariableDeductionAmount').val() : 0.00);
+            var InsuranceAmount = parseFloat($('#InsuranceAmount').val() > 0 ? $('#InsuranceAmount').val() : 0.00);
+            var LoanDueAmount = parseFloat($('#LoanDueAmount').val() > 0 ? $('#LoanDueAmount').val() : 0.00);
+            var OtherPenaltyAmount = parseFloat($('#OtherPenaltyAmount').val() > 0 ? $('#OtherPenaltyAmount').val() : 0.00);
+
+            var TotalDeductionAmount = VariableDeductionAmount + InsuranceAmount + LoanDueAmount + OtherPenaltyAmount;
+            $('#TotalDeductionAmount').val(TotalDeductionAmount);
+            var NetDueAmount = TotalDueAmount - TotalDeductionAmount;
+            $('#NetDueAmount').val(NetDueAmount);
+        }
+
+
+        function CalcTotalDutyPeriod(FromDate, ToDate) {
+            let Duty_years = ToDate.getFullYear() - FromDate.getFullYear();
+            $('#DutyYears').val(Duty_years);
+            let Duty_months = (ToDate.getMonth() + 1) - (FromDate.getMonth() + 1);
+            $('#DutyMonths').val(Duty_months);
+            let Duty_days = (ToDate.getDate() - FromDate.getDate());
+            $('#DutyDays').val(Duty_days);
+        }
+
+        function CalcTotalVacationWithOutSalary(total) {
+            let years = 0;
+            let months = 0;
+            let days = 0;
+            if (total > 30 && total < 365) {
+                months = parseInt(total / 30);
+                days = total - (months * 30);
+            }
+            else {
+                if (total > 365) {
+                    years = parseInt(total / 365);
+                    months = parseInt(((total - (years * 365))) / 30);
+                    days = total - ((years * 365) + (months * 30));
+                }
+                else {
+                    days = total;
+                }
+            }
+            $('#VacationWithoutSalary_Days').val(days);
+            $('#VacationWithoutSalary_Months').val(months);
+            $('#VacationWithoutSalary_Years').val(years);
+        }
+
+        function CalcEquivalent(total) {
+            if (total > 30 && total < 365) {
+                months = parseInt(total / 30);
+                days = total - (months * 30);
+            }
+            else {
+                if (total > 365) {
+                    years = parseInt(total / 365);
+                    months = parseInt(((total - (years * 365))) / 30);
+                    days = total - ((years * 365) + (months * 30));
+                }
+                else {
+                    days = total;
+                }
+            }
+
+        }
+
+
+
+    //--------- Calculate TotalDueAmount------
+    function CalculateTotalDueAmount() {
+        var Current = $('#CurrentSalaryAmount').val();
+        var Additional = $('#VariableAdditionalAmount').val();
+        var SalaryDue = $('#VacationSalaryDueAmount').val();
+        var Previous = $('#PreviousSalaryAmount').val();
+        var Other = $('#OtherAdditionalAmount').val();
+        TotalDueAmount = parseInt(Current) + parseInt(Additional) + parseInt(SalaryDue) + parseInt(Previous) + parseInt(Other);
+        $('#TotalDueAmount').val(TotalDueAmount);
+    }
+
+    //--------- Calculate TotalDeductionAmount ------
+    function CalculateTotalDeductionAmount() {
+        var LoanDueAmount = $('#LoanDueAmount ').val();
+        var OtherPenaltyAmount = $('#OtherPenaltyAmount ').val();
+        var VariableDeductionAmount = $('#VariableDeductionAmount ').val();
+        var InsuranceAmount = $('#InsuranceAmount ').val();
+        TotalDeductionAmount = parseInt(LoanDueAmount) + parseInt(OtherPenaltyAmount) + parseInt(VariableDeductionAmount) + parseInt(InsuranceAmount);
+        $('#TotalDeductionAmount ').val(TotalDeductionAmount);
+    }
+
+    //--------- Calculate NetDueAmount ------
+    function CalculateNetDueAmount() {
+        var TotalDueAmount = $('#TotalDueAmount').val();
+        var TotalDeductionAmount = $('#TotalDeductionAmount').val();
+        NetDueAmount = parseInt(TotalDueAmount) - parseInt(TotalDeductionAmount);
+        $('#NetDueAmount').val(NetDueAmount);
+
+        }
+
+    //--------------------------------------- ADD EDIT---------------------------//
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+            CalculateTotalDueAmount();
+            CalculateTotalDeductionAmount();
+            CalculateNetDueAmount();
+            var EmployeeVacationDueDetails = [];
+
+            $('#Details tr').each(function () {
+                var td = $(this);
+                var EmployeeVacationDueDetail = {
+                    MainDocId: $('#Id').val(),
+                    IsDeleted: false,
+                    SalaryItemId: td.find('.SalaryItemId').text(),
+                    SalaryItemValue: td.find('.SalaryItemValue').val(),
+                };
+                EmployeeVacationDueDetails.push(EmployeeVacationDueDetail);
+            });
+            @*if ($('#VacationRequestId').val() == 0) {
+                alert('@MyERP.Properties.Resources.NoVacationRequest')
+                valid = false;
+            }*@
+            var EmployeeVacationDue =
+            {
+                Id: $('#Id').val(),
+                DocumentNumber: $('#DocumentNumber').val(),
+                DepartmentId: $('#DepartmentId').val(),
+                EmployeeId: $('#EmployeeId').val(),
+                Date: $('#Date').val(),
+                AdjustmentDate: $('#AdjustmentDate').val(),
+                IsActive: true,
+                IsDeleted: false,
+                VacationRequestId: $('#VacationRequestId').val(),
+                IsCurrentSalary: $('#IsCurrentSalary').prop('checked'),
+                CurrentSalaryAmount: $('#CurrentSalaryAmount').val() ? $('#CurrentSalaryAmount').val() : 0,
+                IsVariableAdditional: $('#IsVariableAdditional').prop('checked'),
+                VariableAdditionalAmount: $('#VariableAdditionalAmount').val() ? $('#VariableAdditionalAmount').val() : 0,
+                IsVacationSalaryDue: $('#IsVacationSalaryDue').prop('checked'),
+                VacationSalaryDueAmount: $('#VacationSalaryDueAmount').val() ? $('#VacationSalaryDueAmount').val() : 0,
+                IsPreviousSalary: $('#IsPreviousSalary').prop('checked'),
+                PreviousSalaryAmount: $('#PreviousSalaryAmount').val() ? $('#PreviousSalaryAmount').val() : 0,
+                IsOtherAdditional: $('#IsOtherAdditional').prop('checked'),
+                OtherAdditionalAmount: $('#OtherAdditionalAmount').val() ? $('#OtherAdditionalAmount').val() : 0,
+                TotalDueAmount: $('#TotalDueAmount').val(),
+                IsLoanDue: $('#IsLoanDue').prop('checked'),
+                LoanDueAmount: $('#LoanDueAmount').val() ? $('#LoanDueAmount').val() : 0,
+                IsOtherPenalty: $('#IsOtherPenalty').prop('checked'),
+                OtherPenaltyAmount: $('#OtherPenaltyAmount').val() ? $('#OtherPenaltyAmount').val() : 0,
+                IsVariableDeduction: $('#IsVariableDeduction').prop('checked'),
+                VariableDeductionAmount: $('#VariableDeductionAmount').val() ? $('#VariableDeductionAmount').val() : 0,
+                IsInsurance: $('#IsInsurance').prop('checked'),
+                InsuranceAmount: $('#InsuranceAmount').val() ? $('#InsuranceAmount').val() : 0,
+                TotalDeductionAmount: $('#TotalDeductionAmount').val(),
+                IsTicket: $('#IsTicket').prop('checked'),
+                TicketAmount: $('#TicketAmount').val() ? $('#TicketAmount').val() : 0,
+                NetDueAmount: $('#NetDueAmount').val(),
+                RecommendedPaymentAmount: $('#RecommendedPaymentAmount').val() ? $('#RecommendedPaymentAmount').val() : 0,
+                EmployeeVacationDueDetails: EmployeeVacationDueDetails,
+            };
+
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (parseInt($('#RecommendedPaymentAmount').val()) > parseInt($('#NetDueAmount').val())) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.TotalDuesMustBeGreaterThanPaymentRecommendedAmount',
+                            text: " ",
+                            icon: 'info',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    else {
+
+                        $('#newbtn').prop('disabled', true);
+                        $('#save').prop('disabled', true);
+                        $('#preloader, #status').fadeIn();
+                        $.ajax({
+                            type: "POST",
+                            url: "/EmployeeVacationDue/AddEdit",
+                            data: EmployeeVacationDue,
+                            success: function (r) {
+                                if (r.success == "true") {
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                    if (n == "new") {
+                                        window.location.replace("/EmployeeVacationDue/AddEdit");
+                                    } else {
+                                        window.location.replace("/EmployeeVacationDue");
+                                    }
+                                }
+                                else
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.NotSaved !',
+                                        text: " ",
+                                        icon: 'error',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    }); $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                            },
+                            error: function (r) {
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        });
+                    }
+                }
+                else { result.dismiss; }
+            });
+
+        }
+    }
+
+        function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+   $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+
+                    url: '/EmployeeVacationDue/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace("/EmployeeVacationDue");
+                        }
+                        else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+</script>

@@ -1,0 +1,194 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model HRServices.Models.VactionModel
+
+<link href="assets/css/plugins/datapicker/datepicker3.css" rel="stylesheet">
+<div class="ibox">
+  
+    <div class="ibox-content">
+        <form id="frmvac" asp-action="Vacation" method="post">
+            <div class="form-group  row">
+                <label class="col-sm-2 col-form-label">Employee Code</label>
+
+                <div class="col-sm-10"><input asp-for="EmployeeCode" type="text" class="form-control" readonly="readonly"></div>
+            </div>
+            <div class="hr-line-dashed"></div>
+
+            <div class="hr-line-dashed"></div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Employee Name</label>
+
+                <div class="col-sm-10"><input asp-for="EmployeeName" type="text" class="form-control" readonly="readonly"></div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Balance</label>
+
+                <div class="col-sm-10"><input asp-for="Balance" type="text" class="form-control" readonly="readonly"></div>
+            </div>
+            <div class="hr-line-dashed"></div>
+            <div class="row">
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label class="col-form-label" for="date_added">Alternative Employee</label>
+                        <div class="input-group">
+                            <input id="txtSearchemp" type="text" class="form-control" required>
+                         
+                            <input id="txtalteremp" type="hidden" class="form-control" asp-for="AlterEmp">
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+            <div class="hr-line-dashed"></div>
+            <div class="form-group row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="col-form-label" for="date_added">From Date</label>
+                        <div class="input-group date">
+                            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                            <input id="date_added" type="text" class="form-control datepicker" asp-for="FromDate" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="col-form-label" for="date_modified">To Date</label>
+                        <div class="input-group date">
+                            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+                            <input id="date_modified" type="text" class="form-control datepicker" asp-for="ToDate" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="hr-line-dashed"></div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">
+                    vacation type <br>
+                </label>
+
+                <div class="col-sm-10">
+
+                    <div>
+                        <label>
+                            <input asp-for="withSal" type="radio" checked="" value="1"> Paid vacation
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            <input asp-for="withSal" type="radio" value="2">  Unpaid vacation
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hr-line-dashed"></div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">
+                    Sick leave <br>
+                </label>
+
+                <div class="col-sm-10">
+                    <input type="checkbox"  asp-for="IsSickleave" />
+                   
+                </div>
+            </div>
+            <div class="hr-line-dashed"></div>
+            <div class="form-group row">
+                <label class="col-sm-2 col-form-label">Notes</label>
+
+                <div class="col-sm-10"><input asp-for="Details" id="txtnotes" type="text" class="form-control" ></div>
+            </div>
+
+            <div class="ibox-footer">
+                <button type="button" class="btn-danger  btn-lg" onclick="sendform();"> Send </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section scripts
+{
+    <script src="~/assets/js/plugins/jquery-ui/jquery-ui.min.js"></script>
+    <script src="~/assets/js/plugins/datapicker/bootstrap-datepicker.js"></script>
+    <script>
+        function sendform() {
+            if (!$('#txtalteremp').val() || $('#txtalteremp').val() =='0'
+                ) {
+                showError("fill to alternative employee ");
+                return;
+            }  
+
+            if (!$('#date_added').val()) {
+                showError("fill from date ");
+                return;
+            }
+            if (!$('#date_modified').val()) {
+                showError("fill to date ");
+                return;
+            } if (!$('#txtnotes').val()) {
+                showError("fill to notes ");
+                return;
+            }
+           
+            $('#frmvac').submit();
+        }
+        $(document).ready(function () {
+            setUpAutoCompleate();
+            $('.datepicker').datepicker({
+                todayBtn: "linked",
+                keyboardNavigation: false,
+                forceParse: false,
+                calendarWeeks: true,
+                autoclose: true,
+                format: 'dd/mm/yyyy'
+            });
+        });
+        function setUpAutoCompleate() {
+            /*    name = t.Emp_Name,
+                namee = t.Emp_Namee,
+                id = t.Emp_ID,
+                code = t.Emp_Code */
+
+            var $elem = $('#txtSearchemp').autocomplete({
+                source: function (request, response) {
+
+                    $.ajax({
+                        url: "@Url.Action("SearchAutoCompleteEmployee")",
+                        type: "get",
+                        dataType: "json",
+                        minLength: 3,
+                        data: { word: request.term },
+                        success: function (data) {
+                            response($.map(data,
+                                function (item) {
+                                    return {
+                                        label: `${item.code}-${item.namee}`,
+                                        value: item.namee,
+                                        id: item.id,
+                                        code: item.code,
+                                        name: item.name,
+                                        namee: item.namee
+                                    };
+                                }
+                            ));
+                        }
+                    });
+                },
+                select: function (event, ui) {
+
+                    $('#txtSearchemp').val(`${ui.item.code}-${ui.item.namee}`);
+                    $('#txtalteremp').val(ui.item.id);
+                    return false;
+                },
+                close: function () {
+                    //$('#txtSearchemp').val('');
+                }
+            });
+
+
+        }
+    </script>
+ }

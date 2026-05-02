@@ -1,0 +1,862 @@
+﻿@model MyERP.Models.AssemblyVoucher
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.AssemblyVoucher;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.AssemblyVoucher :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsLinked)
+    @Html.HiddenFor(model => model.IsPosted)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.IsAccepted)
+    @Html.HiddenFor(model => model.IsCompleted)
+    @Html.HiddenFor(model => model.Image)
+    @Html.HiddenFor(model => model.AutoCreated)
+    @Html.HiddenFor(model => model.IsDelivered)
+    @Html.HiddenFor(model => model.IsClosed)
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="VoucherDate" class="control-label col-sm-2">@MyERP.Properties.Resources.DocumentDate</label>
+                                    <div class="col-sm-4">
+                                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="WarehouseId" class="col-sm-2 control-label">@MyERP.Properties.Resources.WareHouse</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("WarehouseId", null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ItemId" class="control-label col-sm-2">@MyERP.Properties.Resources.Item </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ItemId", null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ItemQty" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.Qty
+                                    </label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ItemQty, new { htmlAttributes = new { @class = "form-control" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model != null && Model.Id > 0 && Model.AutoCreated == true)
+                                {
+                                    <div class="form-group row">
+                                        <label class="control-label col-sm-1" for="SystemPage">@MyERP.Properties.Resources.MainDoc</label>
+                                        <div class="col-sm-5">
+                                            <input id="SystemPage" class="form-control" type="text" readonly value="@ViewBag.SystemPage" />
+                                        </div>
+                                        <label class="control-label col-sm-1" for="SelectedId">@MyERP.Properties.Resources.MainDocNo</label>
+                                        <div class="col-sm-5">
+                                            <input id="SelectedId" class="form-control" type="text" readonly value="@Model.SelectedId" />
+                                        </div>
+                                    </div>
+                                }
+
+
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="1" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+
+                                    <label for="Unit" class="control-label col-sm-2">
+                                        @MyERP.Properties.Resources.Unit
+                                    </label>
+
+                                    @if (Model != null)
+                                    {
+                                        <div class="col-sm-4">
+                                            <input hidden id="ItemUnitId" value="@Model.ItemUnitId" required />
+                                            <input id="ItemUnitArName" value="@Model.ItemUnit.ArName" class="form-control" readonly disabled required />
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-sm-4">
+                                            <input hidden id="ItemUnitId" required />
+                                            <input id="ItemUnitArName" class="form-control" readonly disabled required />
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.Details</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th> @MyERP.Properties.Resources.Item</th>
+                                                <th>@MyERP.Properties.Resources.Qty</th>
+                                                <th>@MyERP.Properties.Resources.Unit</th>
+                                                <th>@MyERP.Properties.Resources.Equivalent</th>
+                                                <th>@MyERP.Properties.Resources.Delete</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="AssemblyVoucherDetails">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.AssemblyVoucherDetails)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="item IsUpdated form-control tabledit-input form-control-sm" value="@item.ItemId" required />
+                                                            <input type="hidden" class="ItemPriceId IsUpdated form-control tabledit-input form-control-sm" value="@item.ItemPriceId" required />
+                                                            <input type="text" class="item-name form-control tabledit-input form-control-sm" value="@item.Item.ArName" required disabled />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Qty" required disabled />
+                                                            <input class="Oldquantity form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Qty" hidden disabled />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode UnitClass"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select></td>
+                                                        <td class="tabledit-edit-mode UnitEquivClass"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" value="@item.UnitEquivalent" required disabled /></td>
+                                                        <td class="tabledit-edit-mode expiry" style="display:none;">
+                                                            @if (item.ExpireDate.HasValue)
+                                                            {
+                                                                <input class="ExpiryDate form-control tabledit-input form-control-sm" readonly value="@item.ExpireDate.Value.ToString("MM/dd/yyyy")" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <input class="ExpiryDate form-control tabledit-input form-control-sm" readonly />
+                                                            }
+                                                            <input class="PatchId form-control tabledit-input form-control-sm" hidden value="" />
+                                                            <input class="itemId form-control tabledit-input form-control-sm" hidden value="" />
+                                                        </td>
+                                                        @if ((bool)ViewBag.ShowCost)
+                                                        {
+                                                            <td class="tabledit-edit-mode" style="display:none;"><input type="text" class="money cost form-control tabledit-input form-control-sm" disabled="disabled" value="" /></td>
+                                                            <td class="tabledit-edit-mode" style="display:none;"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly value="0" /></td>
+                                                        }
+                                                        <td class="tabledit-edit-mode" style="display:none;"><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td>
+
+
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        @*<button type="button" onclick="addEdit('report')" class="btn btn-success">
+                        @MyERP.Properties.Resources.SaveAndPrint
+                    </button>*@
+                        <button type="button" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        @*<button type="button" onclick="addEdit('report')" class="btn btn-success">
+                        @MyERP.Properties.Resources.SaveAndPrint
+                    </button>*@
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                            @MyERP.Properties.Resources.Delete
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- JournalEntry -->
+            @if (Model != null)
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.StockIssueVouchers
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.TotalCost
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.WareHouse
+                                                    </th>
+
+                                                    <th>@MyERP.Properties.Resources.View</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (List<MyERP.Models.StockIssueVoucher>)ViewBag.StockIssueVouchers)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                                            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.VoucherDate)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.TotalCostPrice)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.Warehouse.ArName)
+                                                        </td>
+
+                                                        <td>
+                                                            <a href="@Url.Action("AddEdit","StockIssueVoucher",new { id=item.Id }) " target="_blank">
+                                                                <i class="fa fa-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.StockReceiptVoucher
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.TotalCost
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.WareHouse
+                                                    </th>
+
+                                                    <th>@MyERP.Properties.Resources.View</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (List<MyERP.Models.StockReceiptVoucher>)ViewBag.StockReceiptVouchers)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                                            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.VoucherDate)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.TotalCostPrice)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.Warehouse.ArName)
+                                                        </td>
+
+                                                        <td>
+                                                            <a href="@Url.Action("AddEdit","StockReceiptVoucher",new { id=item.Id }) " target="_blank">
+                                                                <i class="fa fa-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.JournalEntries
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.MainDoc
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+
+                                                    <th>@MyERP.Properties.Resources.View</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (List<MyERP.Models.JournalEntry>)ViewBag.JournalEntries)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                                            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.SystemPage.ArName)
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.Date)
+                                                        </td>
+                                                        <td>
+                                                            <a href="@Url.Action("AddEdit","JournalEntries",new { id=item.Id }) " target="_blank">
+                                                                <i class="fa fa-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            <!-------------------------------------------------------------->
+
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    //----------------- Variable Declration ----------------//
+    let warehouseOptions = '';
+    let DepartmentItemsOptions = '';
+    let ChildItems = [];
+    let items = [];
+
+    //******************************************************//
+
+    //----------------- Ready Function ----------------//
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+
+        if ($('#Id').val() > 0) {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#VoucherDate").prop('disabled', true);
+        }
+        else {
+            setWarehouseValues().then(function () {
+                $("#WarehouseId").empty().append(warehouseOptions);
+            });
+            setDocNum();
+            GetAssemblyItemsByDepartmentId();
+        }
+        getItems();
+    });
+    //******************************************************//
+
+    //----------------- Event Functions ----------------//
+    $(document).on('change', '#DepartmentId', function () {
+        setWarehouseValues().then(function () {
+            $("#WarehouseId").empty().append(warehouseOptions);
+        });
+        GetAssemblyItemsByDepartmentId();
+        setDocNum();
+    });
+    $(document).on('change', '#ItemId', function () {
+        GetAssemblyPartsOfItem($(this).val())
+    });
+    $(document).on('change', '#ItemQty', function () {
+        $('#AssemblyVoucherDetails tr').each(function () {
+            var td = $(this);
+            if (td.find('.item').val() > 0) {
+                var NewQty = parseFloat(td.find('.Oldquantity').val() * $('#ItemQty').val()).toFixed(2);
+                td.find('.quantity').val(NewQty);
+            }
+        });
+    });
+    $(document).on('change', '#VoucherDate', function () {
+        if (!$('#Id').val()) {
+            setDocNum();
+        }
+    });
+    //******************************************************//
+
+    //----------------- Other Functions ----------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/AssemblyVoucher/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function ToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return dt.getFullYear() + "-" + zeroPadded((dt.getMonth() + 1)) + "-" + zeroPadded(dt.getDate());
+    }
+    function setWarehouseValues() {
+        warehouseOptions = '';
+        return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function (r) {
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+                $('#WarehouseId').empty();
+                $('#WarehouseId').append(warehouseOptions);
+            });
+    }
+    function GetAssemblyPartsOfItem(id) {
+        let ShowCost = '@((bool)ViewBag.ShowCost)' == 'True';
+        $('#preloader, #status').fadeIn();
+        if ($('#ItemId').val() > 0) {
+            $.get('/Helper/GetAssemblyPartsOfItem?ItemId=' + $('#ItemId').val()).done(function (r) {
+                $('#preloader, #status').fadeOut();
+                $('#AssemblyVoucherDetails').empty();
+                ChildItems = r.ChildItem;
+                for (var i = 0; i < ChildItems.length; i++) {
+                    let tr = '<tr><td class="tabledit-edit-mode"><input type="hidden" class="item IsUpdated form-control tabledit-input form-control-sm" value="' +
+                        ChildItems[i].ItemId + '" required /><input type="text" class="item-name form-control tabledit-input form-control-sm" value="' +
+                        ChildItems[i].ItemName + '" required disabled/><input type="hidden" class="ItemPriceId IsUpdated form-control tabledit-input form-control-sm" value="' +
+                        ChildItems[i].ItemPriceId + '" required /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type = "number" value ="' +
+                        parseFloat(ChildItems[i].Quantity).toFixed(2) + '" required disabled/><input class="Oldquantity form-control tabledit-input form-control-sm" type="number" step="any" value="' +
+                        parseFloat(ChildItems[i].Quantity).toFixed(2) + '" hidden disabled/></td><td class="tabledit-edit-mode UnitClass"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option value="' +
+                        ChildItems[i].ItemUnitId + '">' +
+                        ChildItems[i].UnitName + '</option></select></td><td class="tabledit-edit-mode UnitEquivClass"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" value="' +
+                        ChildItems[i].UnitEquivalent + '" required disabled/></td><td class="tabledit-edit-mode expiry" hidden><input class="ExpiryDate form-control tabledit-input form-control-sm" readonly /><input class="PatchId form-control tabledit-input form-control-sm" hidden value=""/><input class="itemId form-control tabledit-input form-control-sm" hidden value="' +
+                        ChildItems[i].ItemId + '" /></td><td hidden class="tabledit-edit-mode" > <input type="text" class="money cost form-control tabledit-input form-control-sm" disabled="disabled" value=""  /></td ><td hidden class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly value="0"  /></td><td class="tabledit-edit-mode" hidden><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+                    $('#AssemblyVoucherDetails').append(tr);
+                }
+                $('#ItemUnitId').val(r.ParentUnit[0].Id);
+                $('#ItemUnitArName').val(r.ParentUnit[0].ArName);
+                // $('#ItemQty').val(r.ParentQty);
+                $('#ItemQty').val(1);
+            });
+        } else {
+            $('#AssemblyVoucherDetails').empty();
+            $('#ItemUnitId').empty();
+            $('#ItemUnitArName').empty();
+            $('#ItemQty').empty();
+            $('#preloader, #status').fadeOut();
+        }
+    }
+    function GetAssemblyItemsByDepartmentId() {
+        DepartmentItemsOptions = '';
+        $.get('/Helper/GetAssemblyItemsByDepartmentId?DepartmentId=' + $('#DepartmentId').val()).done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                DepartmentItemsOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+            }
+            $('#ItemId').empty();
+            $('#ItemId').append(DepartmentItemsOptions);
+        }).done(function () {
+            GetAssemblyPartsOfItem($('#ItemId').val());
+        });
+    }
+    function getItems() {
+        return requestData('/Helper/ItemsByDepId/?departmentId=' + $('#DepartmentId').val()).done(function (r) {
+            items = r;
+        });
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find("label").text('');
+        }
+    }
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+        var AssemblyVoucherDetails = [];
+            $('#AssemblyVoucherDetails tr').each(function () {
+                var td = $(this);
+                if (td.find('.item').val() > 0) {
+                    //let itemId = items.filter(function (i) { return i.ItemPriceId == td.find('.ItemPriceId').val(); })[0].Id;
+                    var AssemblyVoucherDetail = {
+                        MainDocId:$('#Id').val(),
+                        ItemId: td.find('.item').val(),
+                        ItemUnitId: td.find('.item-unit').val(),
+                        UnitEquivalent: td.find('.unit-equavalent').val(),
+                        Qty: td.find('.quantity').val(),
+                        IsDeleted: false,
+                        Notes: td.find('.Notes').val(),
+                        ItemPriceId: td.find('.ItemPriceId').val(),
+                        CostPrice: td.find('.cost').inputmask('unmaskedvalue'),
+                        ExpireDate: td.find('.ExpiryDate').val(),
+                        PatchId: td.find('.PatchId').val(),
+                        Price: td.find('.Price').val(),
+                        CurrencyId: td.find('.CurrencyId').val(),
+                        CurrencyEquivalent: td.find('.CurrencyEquivalent').val(),
+                        DiscountValue: td.find('.DiscountValue').val(),
+                        DiscountPerc: td.find('.DiscountPerc').val(),
+                        WareHouseId: td.find('.WareHouseId').val(),
+                        WarrantyPeriod: td.find('.WarrantyPeriod').val(),
+                        WarrantyStart: td.find('.WarrantyStart').val(),
+                        SystemPageId: td.find('.SystemPageId').val(),
+                        SelectedId: td.find('.SelectedId').val(),
+                        RemainQty: td.find('.RemainQty').val(),
+                        ItemDirectExpenses: td.find('.ItemDirectExpenses').val(),
+                        UpdatedId: td.find('.UpdatedId').val(),
+                        ExtraTypeId: td.find('.ExtraTypeId').val(),
+                    };
+                    AssemblyVoucherDetails.push(AssemblyVoucherDetail);
+                }
+            });
+        var assemblyVoucher = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            VoucherDate: $('#VoucherDate').val(),
+            DepartmentId: $('#DepartmentId').val(),
+            WarehouseId: $('#WarehouseId').val(),
+            ItemId: $('#ItemId').val(),
+            ItemUnitId: $('#ItemUnitId').val(),
+            ItemQty: $('#ItemQty').val(),
+            IsActive: true,
+            IsDeleted: false,
+            Notes: $('#Notes').val(),
+            CurrencyId: $('#CurrencyId').val(),
+            CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+            SystemPageId: $('#SystemPageId').val(),
+            SelectedId: $('#SelectedId').val(),
+            IsDelivered: $('#IsDelivered').val(),
+            IsAccepted: $('#IsAccepted').val(),
+            IsLinked: $('#IsLinked').val(),
+            IsCompleted: $('#IsCompleted').val(),
+            IsPosted: $('#IsPosted').val(),
+            AutoCreated: $('#AutoCreated').val(),
+            UpdatedId: $('#UpdatedId').val(),
+            IsClosed: $('#IsClosed').val(),
+            AssemblyVoucherDetails: AssemblyVoucherDetails
+        }
+        if (valid == true) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/AssemblyVoucher/AddEdit",
+                        data:
+                            JSON.stringify(
+                                assemblyVoucher
+                            ),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                //alert("@MyERP.Properties.Resources.Saved");
+                                Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                $('#preloader, #status').fadeOut();
+                                if (n == "new") {
+                                    window.location.replace("/AssemblyVoucher/AddEdit");
+                                }
+                                else {
+                                    window.location.replace("/AssemblyVoucher");
+                                }
+                            } else {
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                               // alert("@MyERP.Properties.Resources.NotSaved");
+                                Swal.fire({
+                                        title: '@MyERP.Properties.Resources.NotSaved',
+                                        text: " ",
+                                        icon: 'error',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                            //alert("@MyERP.Properties.Resources.NotSaved");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+
+        }
+        @*if (valid==true && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            $('#preloader, #status').fadeIn();
+            $('#newbtn').prop('disabled', true);
+            $('#save').prop('disabled', true);
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/AssemblyVoucher/AddEdit",
+                data:
+                JSON.stringify(
+                    assemblyVoucher
+                    ),
+                success: function (r) {
+                    if (r.success == "true") {
+                        alert("@MyERP.Properties.Resources.Saved");
+                        $('#preloader, #status').fadeOut();
+                        if (n == "new") {
+                            window.location.replace("/AssemblyVoucher/AddEdit");
+                        }
+                        else {
+                            window.location.replace("/AssemblyVoucher");
+                        }
+                    } else {
+                        $('#preloader, #status').fadeOut();
+                        $('#newbtn').prop('disabled', false);
+                        $('#save').prop('disabled', false);
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                    }
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    $('#newbtn').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                }
+            });
+        }*@
+    }
+    //******************************************************//
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                        url: '/AssemblyVoucher/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace("/AssemblyVoucher");
+                            }
+                        }
+                });
+            }
+            else { result.dismiss; }
+        });
+
+        @*if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/AssemblyVoucher/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace("/AssemblyVoucher");
+                        }
+                    }
+                });
+        }*@
+    }
+
+</script>

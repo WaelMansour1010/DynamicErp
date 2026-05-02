@@ -1,0 +1,1597 @@
+﻿@model MyERP.Models.InventoryVoucher
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.InventoryVoucher;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.InventoryVoucher:</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    @Html.HiddenFor(model => model.Id)
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsLinked)
+    @Html.HiddenFor(model => model.IsPosted)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.IsAccepted)
+    @Html.HiddenFor(model => model.IsCompleted)
+    @Html.HiddenFor(model => model.Image)
+    @Html.HiddenFor(model => model.AutoCreated)
+}
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="VoucherDate" class="control-label col-sm-2">@MyERP.Properties.Resources.InvoiceDate</label>
+                                    <div class="col-sm-4">
+                                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.EnterDate
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+                                    <label for="WarehouseId" class="col-sm-2 control-label">@MyERP.Properties.Resources.WareHouse</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("WarehouseId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <div class="col-sm-4">
+                                        <input type="checkbox" name="AdjustmentonEmployeeReceivable" @Html.Raw(Model != null && Model.AdjustmentonEmployeeReceivable == true ? "checked" : "") id="AdjustmentonEmployeeReceivable" />
+                                        <label for="AdjustmentonEmployeeReceivable" class="col-sm-8 control-label">@MyERP.Properties.Resources.AdjustmentonEmployeeReceivable</label>
+                                    </div>
+
+                                    <div class="col-sm-8">
+                                        <label for="InventoryTypeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.InventoryType</label>
+                                        <input type="radio" id="CostPriceInventory" name="InventoryTypeId" value="1" class="col-sm-2" checked="checked" />@MyERP.Properties.Resources.CostPriceInventory
+                                        <input type="radio" id="SalePriceInventory" name="InventoryTypeId" value="2" class="col-sm-2" />@MyERP.Properties.Resources.SalePriceInventory
+                                        @if (Model != null && Model.InventoryTypeId > 0)
+                                        {
+                                            <input id="InventoryType" hidden value="@Model.InventoryTypeId" />
+                                        }
+
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                    @if (ViewBag.ShowItemsInsteadOfItemGroupsInInventoryVoucher != true && ViewBag.ShowDepartmentItemsInInventoryVoucher != true)
+                                    {
+                                        <label for="ItemGroupId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Group</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ItemGroupId", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Select
+                                            </div>
+                                        </div>
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @if (ViewBag.ShowItemsInsteadOfItemGroupsInInventoryVoucher == true)
+            {
+                @Html.Partial("ItemSearch")
+            }
+            @*@Html.Partial("ItemSearch")*@
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.Details</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Barcode</th>
+                                                <th>@MyERP.Properties.Resources.Item</th>
+                                                <th class="expiry" style="display:none;"> @MyERP.Properties.Resources.ExpirationDate </th>
+                                                <th>@MyERP.Properties.Resources.BookQuantity</th>
+                                                <th>@MyERP.Properties.Resources.ActualQuantity</th>
+                                                <th class="UnitEquivClass" style="display:none;">@MyERP.Properties.Resources.Unit</th>
+                                                <th class="UnitEquivClass" style="display:none;">@MyERP.Properties.Resources.Equivalent</th>
+                                                <th>@MyERP.Properties.Resources.Price</th>
+                                                <th>@MyERP.Properties.Resources.Status</th>
+
+                                                @if (ViewBag.ShowItemsInsteadOfItemGroupsInInventoryVoucher == true)
+                                                {
+                                                    <th> @MyERP.Properties.Resources.Delete </th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody id="InventoryVoucherDetails">
+
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.InventoryVoucherDetails)
+                                                {
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" value="@Html.Raw(item.ItemPrice==null?"":item.ItemPrice.Barcode)" disabled /></td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="item form-control tabledit-input form-control-sm" value="@item.ItemPriceId" required />
+                                                            <input type="text" hidden class="item-name form-control tabledit-input form-control-sm" value=" @item.ItemPrice.Barcode -@item.Item.ArName - @item.ItemUnit.ArName" required disabled />
+                                                            <label class="name"> @item.ItemPrice.Barcode -@item.Item.ArName - </label>
+                                                            <input hidden class="itemUnitArName" value=@item.ItemUnit.ArName />
+
+                                                        </td>
+                                                        <td class="tabledit-edit-mode expiry" style="display:none;">
+                                                            @if (item.ExpireDate.HasValue)
+                                                            {
+                                                                <input class="ExpiryDate form-control tabledit-input form-control-sm" readonly value="@item.ExpireDate.Value.ToString("MM/dd/yyyy")" />
+                                                            }
+                                                            else
+                                                            {
+                                                                <input class="ExpiryDate form-control tabledit-input form-control-sm" readonly />
+                                                            }
+                                                            <input class="PatchId form-control tabledit-input form-control-sm" hidden value="@item.PatchId" />
+                                                            <input class="itemId form-control tabledit-input form-control-sm" hidden value="@item.ItemId" />
+
+                                                        </td>
+                                                        <td class="tabledit-edit-mode"><input type="text" class="quantityOnSystem form-control tabledit-input form-control-sm" value="@item.QtyOnSystem" disabled /></td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="quantity form-control tabledit-input form-control-sm" type="text" value="@item.Qty" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select></td>
+                                                        <td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="number" step="any" value="@item.UnitEquivalent" disabled /></td>
+                                                        <td class="tabledit-edit-mode"><input class="Price form-control tabledit-input form-control-sm " type="text" value="@item.CostPrice.Value.ToString("0.00")" disabled /></td>
+                                                        <td class="tabledit-edit-mode">
+                                                            @if (item.Status !=null)
+                                                            {
+                                                                <input class="Status form-control tabledit-input form-control-sm" value="@item.Status" hidden />
+                                                                if (item.Status == 1)
+                                                                {
+                                                                    <label class="StatusName control-label"> @MyERP.Properties.Resources.Equal </label>
+                                                                }
+                                                                else if (item.Status == 2)
+                                                                {
+                                                                    <label class="StatusName control-label"> @MyERP.Properties.Resources.Extra </label>
+                                                                }
+                                                                else if (item.Status == 3)
+                                                                {
+                                                                    <label class="StatusName control-label"> @MyERP.Properties.Resources.Deficiency </label>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <label class="StatusName control-label">  </label>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <input class="Status form-control tabledit-input form-control-sm"  hidden />
+                                                                <label class="StatusName control-label">  </label>
+                                                            }
+                                                        </td>
+                                                    </tr>
+
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (ViewBag.ShowItemsInsteadOfItemGroupsInInventoryVoucher == true)
+                                                {
+
+                                                    <tr>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="barcode form-control tabledit-input form-control-sm" />
+                                                        </td>
+                                                        <td onclick="showSearchModal()" class="tabledit-edit-mode popupCell">
+                                                            <input type="hidden" class="item form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "required ") />
+                                                            <input type="text" hidden class="item-name form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "required ") />
+                                                            <span class="Add-Button" style="font-size: 25px; color: limegreen;margin-right:50%;"><i class="fas fa-plus"></i></span>
+                                                            <label style="width:200px" class="name control-label tabledit-input"></label>
+                                                            <input hidden class="itemUnitArName" />
+                                                        </td>
+
+                                                        <td class="tabledit-edit-mode expiry" style="display:none;">
+
+                                                            <input class="ExpiryDate form-control tabledit-input form-control-sm" readonly />
+
+                                                            <input class="PatchId form-control tabledit-input form-control-sm" hidden />
+                                                            <input class="itemId form-control tabledit-input form-control-sm" hidden />
+
+                                                        </td>
+                                                        <td class="tabledit-edit-mode"><input type="text" class="quantityOnSystem form-control tabledit-input form-control-sm" disabled /></td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="quantity form-control tabledit-input form-control-sm" type="text" />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option></option></select></td>
+                                                        <td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="number" step="any" disabled /></td>
+                                                        <td>
+                                                            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group row">
+
+                                <label for="Total" class="col-sm-2 control-label">@MyERP.Properties.Resources.Total</label>
+                                <div class="col-sm-4">
+                                    @Html.EditorFor(model => model.Total, new { htmlAttributes = new { @class = "form-control", @type = "number", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.Total } })
+
+                                    @*<input type="text" id="Total" class="form-control" disabled />*@
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patch Modal-->
+            <div id="patchModal" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <table class="table table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.PatchCode</th>
+                                                <th>@MyERP.Properties.Resources.ExpirationDate</th>
+                                                <th>@MyERP.Properties.Resources.Qty</th>
+                                                <th>@MyERP.Properties.Resources.Add</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="item-patches"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" onclick=" $('.bs-example-modal-lg').modal('hide');" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    @if (Model == null)
+                    {
+                        <button type="button" onclick="addEdit('report')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndPrint
+                        </button>
+                        <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndNew
+                        </button>
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                    else if (Model.IsDeleted == false)
+                    {
+                        <button type="button" onclick="addEdit('report')" class="btn btn-success">
+                            @MyERP.Properties.Resources.SaveAndPrint
+                        </button>
+                        <button class="btn btn-success" id="save" onclick="addEdit()">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <button class="btn btn-success" onclick="adjustment(@Model.Id)">
+                            @MyERP.Properties.Resources.Adjustment
+                        </button>
+
+                        <a class="btn btn-success" target="_blank" href="@Url.Action("InventoryVoucher","Report",new { id=Model.Id})" role="button"> @MyERP.Properties.Resources.Print</a>
+
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button"> @MyERP.Properties.Resources.Back</a>
+                        <button class="btn btn-danger" onclick="Delete(@Model.Id)" role="button"> @MyERP.Properties.Resources.Delete</button>
+                    }
+                </div>
+
+            </div>
+
+            <!-- JournalEntry -->
+            @if (Model != null && Model.IsCompleted == true)
+            {
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.StockIssueVouchers
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.TotalCost
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.WareHouse
+                                                    </th>
+
+                                                    <th>@MyERP.Properties.Resources.View</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (List<MyERP.Models.StockIssueVoucher>)ViewBag.StockIssueVouchers)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                                            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.VoucherDate)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.TotalCostPrice)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.Warehouse.ArName)
+                                                        </td>
+
+                                                        <td>
+                                                            <a href="@Url.Action("AddEdit","StockIssueVoucher",new { id=item.Id }) " target="_blank">
+                                                                <i class="fa fa-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.StockReceiptVoucher
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.TotalCost
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.WareHouse
+                                                    </th>
+
+                                                    <th>@MyERP.Properties.Resources.View</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (List<MyERP.Models.StockReceiptVoucher>)ViewBag.StockReceiptVouchers)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                                            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.VoucherDate)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.TotalCostPrice)
+                                                        </td>
+
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.Warehouse.ArName)
+                                                        </td>
+
+                                                        <td>
+                                                            <a href="@Url.Action("AddEdit","StockReceiptVoucher",new { id=item.Id }) " target="_blank">
+                                                                <i class="fa fa-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.JournalEntries
+                                    </h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.MainDoc
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+
+                                                    <th>@MyERP.Properties.Resources.View</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in (List<MyERP.Models.JournalEntry>)ViewBag.JournalEntries)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                                            @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.SystemPage.ArName)
+                                                        </td>
+                                                        <td>
+                                                            @Html.DisplayFor(modelItem => item.Date)
+                                                        </td>
+                                                        <td>
+                                                            <a href="@Url.Action("AddEdit","JournalEntries",new { id=item.Id }) " target="_blank">
+                                                                <i class="fa fa-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-------------------------------------------------------------->
+
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/BarcodeScan.js"></script>
+<script>
+    //-------------- Variable Declarations ----------------//
+    let UseExpiryDateForItems = '@ViewBag.UseExpiryDateForItems';
+    var selectedItemRowToEdit; // for expire date
+    let ShowItemsInsteadOfItemGroupsInInventoryVoucher = '@ViewBag.ShowItemsInsteadOfItemGroupsInInventoryVoucher';
+    let ShowDepartmentItemsInInventoryVoucher = '@ViewBag.ShowDepartmentItemsInInventoryVoucher';
+    let items = [];
+    let custIems = [];
+    let warehouseOptions = '';
+    var isBarcodeScanned = false; // For barcode scanner
+    var barcodeScannerCode = ""; // For barcode scanner
+    var currentItemTr;
+    //-------------------- conditions and Checks ----------------------//
+    if ($('#IsCompleted').val() == 'True') {
+        $('button.btn.btn-success').addClass('disabled').attr('disabled', 'disabled');
+    }
+
+    //---------------------- Ready ----------------------//
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("#VoucherDate").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        if ($('#Id').val() > 0) {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $('#ItemGroupId').prop('disabled', true);
+            $('#DepartmentId').prop('disabled', true);
+            $('#ItemGroupId').prop('disabled', true);
+            $('#WarehouseId').prop('disabled', true);
+            $('#VoucherDate').prop('disabled', true);
+            $('.cost').each(function () {
+                $(this).closest('tr').find('.total').val($(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val());
+            });
+            // getItems();
+            if ($('#DepartmentId').val() && $('#ItemGroupId').val()) {
+                getItems();
+            }
+            if (ShowItemsInsteadOfItemGroupsInInventoryVoucher == 'True') {
+                getItems();
+                addInventoryVoucherDetails(null, null, null, null);
+            }
+            else if (ShowDepartmentItemsInInventoryVoucher == 'True') {
+                // Get Items And Quantity
+                //  $('#InventoryVoucherDetails').empty();
+                getItems()
+                //    .then(function () {
+                //    fillDetails();
+                //});
+            }
+
+            if ($('#InventoryType').val() > 0) {
+                $("input[name=InventoryTypeId][value=" + $('#InventoryType').val() + "]").prop('checked', true);
+            }
+        }
+        else {
+            setDocNum();
+            $('#DepartmentId').trigger('change');
+            /*if ($('#DepartmentId').val() && $('#ItemGroupId').val()) {
+                getItems().then(function () {
+                    fillDetails();
+                });
+            }*/
+        }
+        if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+            $('.UnitClass').show();
+            $('.UnitEquivClass').show();
+
+            // show item unit ArName
+            $('#InventoryVoucherDetails tr').each(function () {
+                var tr = $(this);
+
+                var itemUnitArName = tr.find('.itemUnitArName');
+
+                var itemDisplayName = tr.find('.name').text();
+                if (itemDisplayName != "") {
+
+                    itemDisplayName += " " + itemUnitArName.val();
+                    tr.find('.name').text(itemDisplayName);
+
+                }
+            });
+        }
+
+        // Expire date
+        if (UseExpiryDateForItems == 'True') {
+            $('.expiry').show();
+        }
+
+    });
+  //----------------- DocNum -------------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/InventoryVoucher/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+
+    $(document).on('change', '#VoucherDate', function () {
+        if (!$('#Id').val()) {
+            setDocNum();
+        }
+    });
+    //------------------------------------------------//
+    function getItems() {
+        if (ShowItemsInsteadOfItemGroupsInInventoryVoucher == 'True'/* || ShowDepartmentItemsInInventoryVoucher == 'True'*/) { //الجرد بالصنف
+            return requestData('/Helper/ItemsByDepId/?departmentId=' + $('#DepartmentId').val()).done(function (r) {
+                items = r;
+            });
+        }
+        else {
+            return requestData('/Helper/InventoryVoucherItemsByDepId/?departmentId=' + $('#DepartmentId').val() + '&warehouseId=' + $('#WarehouseId').val() + '&groupId=' + $('#ItemGroupId').val()).done(function (r) {
+                items = r;
+            });
+        }
+        ////else if (ShowDepartmentItemsInInventoryVoucher != 'True') { // جرد بالفرع و المجموعة
+        ////    return requestData('/Helper/InventoryVoucherItemsByDepId/?departmentId=' + $('#DepartmentId').val() + '&warehouseId=' + $('#WarehouseId').val() + '&groupId=' + $('#ItemGroupId').val()).done(function (r) {
+        ////        items = r;
+        ////    });
+        ////}
+        //else { // جرد بعرض اصناف الفرع
+        //    return requestData('/Helper/ItemsByDepIdAndGroupId?groupId=' + $('#ItemGroupId').val() + '&departmentId=' + $('#DepartmentId').val() + '&isDefault=true').done(function (r) {
+        //        items = r;
+        //    });
+        //}
+    }
+
+    function fillDetails() {
+        $('#preloader, #status').fadeIn();
+        if ($('#DepartmentId').val()) {
+            for (var i = 0; i < items.length; i++) {
+                addInventoryVoucherDetails(items[i].Barcode, items[i].ArName, items[i].ItemPriceId, items[i].Id);
+         //       $('.item').last().trigger('change');
+               // $('#InventoryVoucherDetails tr:last').find('.item').trigger('change');
+
+            }
+        }
+        if (items.length > 0) {
+            // setTimeout(SetItemPrice, 1000);
+            setTimeout(SetItemStatus, 2000);
+        }
+        $('#preloader, #status').fadeOut();
+    }
+
+    function setWarehouseValues() {
+        warehouseOptions = '';
+        return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function (r) {
+                // warehouseOptions = '<option value>إختر</option>';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+            });
+    }
+
+    $('#DepartmentId').on('change', function () {
+        setWarehouseValues().then(function () {
+            $("#WarehouseId").empty().append(warehouseOptions);
+        });
+        setDocNum();
+
+        if ($('#InventoryVoucherDetails tr').length > 1) {
+           // alert(" @MyERP.Properties.Resources.AllDataHasBeenRemoved" + "!");
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDataHasBeenRemoved' + ' !',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        $('#InventoryVoucherDetails tr').remove();
+        if (ShowItemsInsteadOfItemGroupsInInventoryVoucher == 'True') {
+            getItems();
+            addInventoryVoucherDetails(null, null, null, null)
+        }
+        else if (ShowDepartmentItemsInInventoryVoucher == 'True') {
+            // Get Items And Quantity
+            getItems().then(function () {
+                fillDetails();
+            });
+        }
+        else {
+            getItems().then(function () {
+                fillDetails();
+            });
+        }
+    });
+    $('#ItemGroupId').on('change', function () {
+        if ($('#InventoryVoucherDetails tr').length > 1) {
+           // alert(" @MyERP.Properties.Resources.AllDataHasBeenRemoved" + "!");
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDataHasBeenRemoved' + ' !',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        $('#InventoryVoucherDetails tr').remove();
+
+        getItems().then(function () {
+            fillDetails();
+        });
+    });
+    $("#WarehouseId").on('change', function () {
+        $('.item').each(function () {
+            if ($(this).val())
+                getItemQuantityOnSystem($(this));
+        });
+    });
+
+    $(document).on('keydown paste', '.quantityOnSystem', function (e) {
+        e.preventDefault();
+    });
+
+    $(document).on('keydown', '.barcode', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            let elem = $(this);
+            var barcode = elem.val().includes("-*-") ? elem.val().split("-*-")[1] : elem.val(); //For barcode scanner
+
+            if (items.length) {
+                //let itemPrice = items.filter(function (i) { return i.Barcode === $(elem).val(); })[0];
+                let itemPrice = items.filter(function (i) { return i.Barcode === barcode; })[0];
+
+                if (itemPrice) {
+                    let itmId = itemPrice.Id;
+
+                    // Item Has Expire Date
+                    let ItemHasExpiry = isItemHasExpireDate(itmId);
+
+                    // Barcode scanner
+                    if (elem.val().includes("-*-")) {
+                        if (ItemHasExpiry && UseExpiryDateForItems) {
+                            isBarcodeScanned = true;
+                            barcodeScannerCode = elem.val();
+                        }
+                        else if (!UseExpiryDateForItems || UseExpiryDateForItems === null || UseExpiryDateForItems === undefined) {
+                          //  alert("@MyERP.Properties.Resources.ExpirationDateForItemsIsDisabled");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.ExpirationDateForItemsIsDisabled' + ' !',
+                                text: " ",
+                                icon: 'info',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    }
+                    else {
+                        isBarcodeScanned = false;
+                        barcodeScannerCode = "";
+
+                        $(elem).closest('tr').find('.ExpiryDate').val(''); //
+                    }
+
+                    $(elem).closest('tr').find('.itemId').val(itmId);
+                    $(elem).closest('tr').find('.name').text(itemPrice.ArName);
+
+                    $(elem).closest('tr').find('.item-name').val(itemPrice.ArName);
+                    $(elem).closest('tr').find('.item').val(itemPrice.ItemPriceId).trigger('change');
+                } else {
+
+                    $(elem).closest('tr').find('.itemId').val(''); //
+                    $(elem).closest('tr').find('.ExpiryDate').val(''); //
+
+                    $(elem).closest('tr').find('.item-name').val('');
+                    $(elem).closest('tr').find('.name').text('');
+
+                    $(elem).closest('tr').find('.item').val('').trigger('change');
+                }
+            } else {
+                $(elem).closest('tr').find('.item-name').val('');
+                $(elem).closest('tr').find('.name').text('');
+
+                $(elem).closest('tr').find('.item').val('').trigger('change');
+            }
+        }
+    });
+
+    $(document).on('change', '.barcode', function () {
+        let itemPrice = $(this).closest('tr').find('.item').val();
+        if (items.length && itemPrice) {
+            let itemPrice = $(this).closest('tr').find('.item').val();
+            let barcode = items.filter(function (i) { return i.ItemPriceId == itemPrice; })[0];
+            $(this).val(barcode ? barcode.Barcode : '');
+        } else
+            $(this).val('');
+    });
+
+    $(document).on('keyup', '.item-name', function () {
+        let itemNameInput = $(this);
+        if (!custIems.length)
+            custIems = $.map(items, function (n) {
+                return { label: n.ArName, value: n.ItemPriceId };
+            });
+        $(this).autocomplete({
+            source: custIems,
+            select: function (event, ui) {
+                event.preventDefault();
+                $(itemNameInput).val(ui.item.label);
+                $(itemNameInput).closest('td').find('.item').val(ui.item.value).trigger('change');
+            },
+            minLength: 0,
+            focus: function (event, ui) {
+                event.preventDefault();
+            }
+        })
+    });
+
+    $(document).on('change', '.item-name', function () {
+        let itemName = $(this).val();
+        if (!items.filter(function (i) { return i.ArName == itemName; }).length) {
+            $(this).closest('tr').find('.item-name').val('');
+            $(this).closest('tr').find('.item').val('').trigger('change');
+            $(this).closest('tr').find('.item-unit').empty();
+        }
+    });
+
+    $(document).on('change', '.item', function () {
+        let itemPrice = $(this);
+        if (itemPrice.val() && items.length) {
+            //getItemQuantityOnSystem($(this));
+            let tr = itemPrice.closest('tr');
+            currentItemTr = tr;
+            let item = items.filter(function (i) { return i.ItemPriceId == itemPrice.val(); })[0];
+            itemPrice.closest('tr').find('.barcode').val(item.Barcode);
+            itemPrice.closest('tr').find('.item-unit').empty().append('<option value="' + item.ItemUnitId + '">' + item.ItemUnitArName + '</option>');
+            itemPrice.closest('tr').find('.unit-equavalent').val(item.Equivalent);
+            // if item has expire date
+            let itmHasExpDate = isItemHasExpireDate(item.Id);
+
+            if (UseExpiryDateForItems != 'True' || !itmHasExpDate) {
+                getItemQuantityOnSystem($(this));
+            }
+            else {
+                $(this).closest('tr').find('.ExpiryDate ').val('@MyERP.Properties.Resources.DoubleClickToSelectPatches')
+            }
+
+
+            if (ShowItemsInsteadOfItemGroupsInInventoryVoucher == 'True') {
+                // Barcode scanner
+                if (isBarcodeScanned) {
+                    getDataFromBarcode(barcodeScannerCode, tr, true);
+                }
+                else {
+                    showPatchModal(item.Id, true, true);
+                }
+            }
+            //showPatchModal(item.Id, true);
+
+        } else {
+            itemPrice.closest('tr').find('input[type="text"]').val('');
+            itemPrice.closest('tr').find('select').empty();
+        }
+
+        if (ShowItemsInsteadOfItemGroupsInInventoryVoucher == 'True') {
+            if (itemPrice.closest('tr').find('.Add-Button').prop('hidden') == false) {
+                itemPrice.closest('tr').find('.Add-Button').prop('hidden', true);
+            }
+            if ($(this).val()) {
+                addInventoryVoucherDetails(null, null, null, null);
+            }
+        }
+    });
+
+    function chooseItem(item) {
+        let itemId = $(item).closest('tr').find('.items-prices-quantities-id').val();
+        let itmId = $(item).closest('tr').find('.item-id').val();
+        $('#InventoryVoucherDetails .item:last').val(itemId);
+        $('#InventoryVoucherDetails .itemId:last').val(itmId);
+        $('#InventoryVoucherDetails .item-name:last').val($(item).closest('tr').find('.nameOfItem').text());
+        $('#InventoryVoucherDetails .name:last').text($(item).closest('tr').find('.nameOfItem').text());
+        $('#InventoryVoucherDetails .item:last').trigger('change');
+        $('.bs-example-modal-lg').modal('hide');
+        //setTimeout(SetItemPrice, 1000);
+        setTimeout(SetItemStatus, 1000);
+    }
+
+    $("input[name='InventoryTypeId']").on('change', function () {
+        //SetItemPrice();
+        SetItemStatus();
+    });
+
+    function SetItemPrice() {
+        $('#preloader, #status').fadeIn();
+        var sum = 0.00;
+        $('#InventoryVoucherDetails tr').each(function () {
+            let td = $(this);
+            if (td.find('.item').val()) {
+                if ($("input[name='InventoryTypeId']:checked").val() == 1) {
+                    $.get('/Helper/GetItemAvgPrice?itemId=' + td.find('.itemId').val() + '&departmentId=' + $('#DepartmentId').val()).done(function (r) {
+                        td.find('.Price').val(r);
+                        sum += r * td.find('.quantity').val();
+                        $('#Total').val(sum);
+                    });
+                }
+                else {
+                    let itemPrice = items.filter(function (i) { return i.ItemPriceId == td.find('.item').val(); })[0].Price;
+                    td.find('.Price').val(itemPrice);
+                    sum += itemPrice * td.find('.quantity').val();
+                    $('#Total').val(sum);
+                }
+                //SetItemStatus(td.find('.quantity'));
+            }
+            $('#preloader, #status').fadeOut();
+        });
+        SetTotalPrice();
+    }
+
+    function SetItemStatus(e) {
+        if ($(e).val() != null) { // Came From Quantity Change
+            let elem = $(e).closest('tr');
+            if (elem.find('.item').val()) {
+                var qtyOnSystem = elem.find('.quantityOnSystem').val();
+                var qty = $(e).val();
+                if (qtyOnSystem === qty) {
+                    elem.find('.Status').val(1);
+                    elem.find('.StatusName').text('@MyERP.Properties.Resources.Equal');
+                }
+                else if (qtyOnSystem < 0 && qty < 0) {
+                    if (qtyOnSystem > qty) {
+                        elem.find('.Status').val(2);
+                        elem.find('.StatusName').text('@MyERP.Properties.Resources.Extra');
+                    }
+                    else {
+                        elem.find('.Status').val(3);
+                        elem.find('.StatusName').text('@MyERP.Properties.Resources.Deficiency');
+                    }
+                }
+                else {
+                    if (qtyOnSystem < qty) {
+                        elem.find('.Status').val(2);
+                        elem.find('.StatusName').text('@MyERP.Properties.Resources.Extra');
+                    }
+                    else {
+                        elem.find('.Status').val(3);
+                        elem.find('.StatusName').text('@MyERP.Properties.Resources.Deficiency');
+                    }
+                }
+
+            }
+        }
+        else {
+            $('#InventoryVoucherDetails tr').each(function () {
+            let td = $(this);
+            if (td.find('.item').val()) {
+                var qtyOnSystem = td.find('.quantityOnSystem').val();
+                var qty = td.find('.quantity').val();
+                if (qtyOnSystem === qty) {
+                    td.find('.Status').val(1);
+                    td.find('.StatusName').text('@MyERP.Properties.Resources.Equal');
+                }
+                else if (qtyOnSystem < qty) {
+                     td.find('.Status').val(2);
+                    td.find('.StatusName').text('@MyERP.Properties.Resources.Extra');
+                }
+                else {
+                     td.find('.Status').val(3);
+                    td.find('.StatusName').text('@MyERP.Properties.Resources.Deficiency');
+                }
+            }
+        });
+
+        }
+        SetItemPrice();
+    }
+
+    $(document).on('change', '.quantity', function () {
+        SetItemStatus($(this));
+    });
+    function SetTotalPrice() {
+        var sum = 0.00;
+         $('#InventoryVoucherDetails tr').each(function () {
+            let td = $(this);
+             if (td.find('.item').val()) {
+                 var Price = td.find('.Price').val();
+                 var qty = td.find('.quantity').val();
+                 sum += Price * qty;
+                 $('#Total').val(sum);
+             }
+             else {
+                 sum += 0.00;
+                 $('#Total').val(sum);
+             }
+         });
+    }
+
+    function addInventoryVoucherDetails(barcode, arName, itemPriceId, id) {
+        let tr;
+        let item = items.filter(function (i) { return i.ItemPriceId == itemPriceId })[0];
+        var _qty = 0;
+        var _qtyOnSystem = 0;
+        var _Price = 0;
+        var Status = 0;
+        var StatusName = '';
+        barcode = barcode != null ? barcode : "";
+        if (ShowItemsInsteadOfItemGroupsInInventoryVoucher == 'True') {
+            tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" /></td><td onclick="showSearchModal()" class="tabledit-edit-mode popupCell"><input type="hidden" class="item form-control tabledit-input form-control-sm" /><input type="text" hidden class="item-name form-control tabledit-input form-control-sm" /><span class="Add-Button" style="font-size: 25px; color:limegreen;margin-right:50%;"><i class="fas fa-plus"></i></span><label style="width:200px"class="name control-label tabledit-input"></label><input hidden class="itemUnitArName" /></td><td class="tabledit-edit-mode expiry" style="display:none;"><input class="ExpiryDate form-control tabledit-input form-control-sm" readonly /><input class="PatchId form-control tabledit-input form-control-sm" hidden /><input class="itemId form-control tabledit-input form-control-sm" hidden value="" /></td><td class="tabledit-edit-mode"><input type="text" class="quantityOnSystem form-control tabledit-input form-control-sm" disabled /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="text" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option></option></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="number" step="any" disabled /></td><td class="tabledit-edit-mode"><input class="Price form-control tabledit-input form-control-sm" type="text"  disabled /></td><td class="tabledit-edit-mode"><input class="Status form-control tabledit-input form-control-sm" value="1" hidden /> <label class="control-label StatusName">  </label></td><td><a href = "javascript:void(0);" onclick = "deleteElement(this)" ><i class="fas fa-trash-alt"></i></a ></td></tr>';
+        }
+        else /*if (ShowDepartmentItemsInInventoryVoucher != 'True') */{
+            //-- test --//
+            if ($('#WarehouseId').val()) {
+                _qtyOnSystem = item.ItemQuantityOnSystem;
+                _qty = item.ItemQuantityOnSystem;
+            }
+
+            if ($("input[name='InventoryTypeId']:checked").val() == 1) {
+                _Price = item.AvgCost;
+            }
+            else {
+                _Price = item.Price;
+            }
+
+        //------------------------------------------------------//
+
+            tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" value="' +
+                barcode + '" disabled /></td><td class="tabledit-edit-mode"><input type="hidden" class="item form-control tabledit-input form-control-sm" value="' +
+                itemPriceId + '" required/><input type="text" class="item-name form-control tabledit-input form-control-sm" hidden required disabled value="' +
+                arName + '"/><label>' +
+                arName + '</label></td ><td class="tabledit-edit-mode expiry" style="display:none;"><input readonly class="ExpiryDate form-control tabledit-input form-control-sm" value="" /><input class="PatchId form-control tabledit-input form-control-sm" hidden /> <input class="itemId form-control tabledit-input form-control-sm" hidden value="' +
+                id + '"/></td> <td class="tabledit-edit-mode"><input type="text" class="quantityOnSystem form-control tabledit-input form-control-sm" required value="' +
+                _qtyOnSystem + '" /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="text" value="' +
+                _qty + '" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select disabled class="item-unit form-control tabledit-input form-control-sm"><option value="' + item.ItemUnitId + '">' +
+                item.ItemUnitArName + '</option></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="text" disabled value="' +
+                item.Equivalent + '" /></td><td class="tabledit-edit-mode"><input class="Price form-control tabledit-input form-control-sm" type="text" disabled value="' +
+                _Price + '" /></td><td class="tabledit-edit-mode"><input class="Status form-control tabledit-input form-control-sm" value="' +
+                Status + '" hidden /><label class="StatusName control-label">' + StatusName + '</label></td></tr > ';
+        }
+        //else {
+        //    tr = '<tr><td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" value="' + barcode + '" disabled /></td><td class="tabledit-edit-mode"><input type="hidden" class="item form-control tabledit-input form-control-sm" value="' + itemPriceId + '" required/><input type="text" class="item-name form-control tabledit-input form-control-sm" hidden required disabled value="' + arName + '"/><label>' + arName + '</label></td ><td class="tabledit-edit-mode expiry" style="display:none;"><input readonly class="ExpiryDate form-control tabledit-input form-control-sm" /><input class="PatchId form-control tabledit-input form-control-sm" hidden/> <input class="itemId form-control tabledit-input form-control-sm" hidden value="' + id + '"/></td> <td class="tabledit-edit-mode"><input type="text" class="quantityOnSystem form-control tabledit-input form-control-sm" required /></td><td class="tabledit-edit-mode"><input class="quantity form-control tabledit-input form-control-sm" type="text" /></td><td class="tabledit-edit-mode UnitClass" style="display:none;"><select disabled class="item-unit form-control tabledit-input form-control-sm"></select></td><td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm" type="text" disabled /></td><td class="tabledit-edit-mode"><input class="Price form-control tabledit-input form-control-sm" type="text" disabled /></td><td class="tabledit-edit-mode"><input class="Status form-control tabledit-input form-control-sm" value=" " hidden /><label class="StatusName control-label">  </label></td></tr > ';
+        //}
+        $('#InventoryVoucherDetails').append(tr);
+        // Expire date
+        if (UseExpiryDateForItems == 'True') {
+            $('.expiry').show();
+        }
+        if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+            $('.UnitClass').show();
+            $('.UnitEquivClass').show();
+        }
+        $('#InventoryVoucherDetails tr:last .money').inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $('#InventoryVoucherDetails input[type=number]').removeProp('oninput').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $('#InventoryVoucherDetails tr:last input.small-number').removeProp('oninput').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $('#InventoryVoucherDetails tr:last select').select2({
+            matcher: matchCustom
+        });
+    }
+
+    var qtyOnSystem = 0;
+    function getItemQuantityOnSystem(item) {
+        let itemId = items.filter(function (i) { return i.ItemPriceId == item.val(); })[0].Id;
+        //  let itemName = items.filter(function (i) { return i.ItemPriceId == item.val(); })[0].ArName;
+        if ($('#WarehouseId').val())
+            requestData('/Helper/ItemQuantityOnSystem?warehouseId=' + $('#WarehouseId').val() + '&itemId=' + itemId).done(function (r) {
+                qtyOnSystem = r;// (r * 1 > 0 ? r * 1 : 0) ;
+                $(item).closest('tr').find('.quantityOnSystem').val(qtyOnSystem);
+                $(item).closest('tr').find('.quantity').val(qtyOnSystem);
+                $('#preloader, #status').fadeOut();
+            }).fail(function () {
+                $(item).closest('tr').find('.quantityOnSystem').val('');
+                $(item).closest('tr').find('.quantity').val('');
+                $('#preloader, #status').fadeOut();
+            });
+        setTimeout(SetItemStatus, 1000);
+    }
+
+    // check if item has expire date
+    function isItemHasExpireDate(itemId) {
+        let ItemHasExpiry = items.filter(function (i) { return i.Id == itemId; })[0].ItemHasExpiry;
+        return ItemHasExpiry;
+    }
+
+    // Patch modal
+    function showPatchModal(itemId, isNewItem, getZeroQunatity) {
+        let ItemHasExpiry = isItemHasExpireDate(itemId);
+        if (UseExpiryDateForItems && ItemHasExpiry == true) {
+            $('#patchModal').modal('show');
+            let itemPatches = [];
+            //let itemId = $(item).closest('tr').find('.item-id').val();
+            $.get('/Helper/PatchesByItemId?itemId=' + itemId + '&getZeroQunatity=' + getZeroQunatity).done(function (r) {
+                itemPatches = r;
+                let tr = '';
+                // Add
+                if (isNewItem) {
+                    for (var i = 0; i < itemPatches.length; i++) {
+                        tr += ('<tr><td>' + (itemPatches[i].PatchCode ? itemPatches[i].PatchCode : '') + '</td><td><input hidden class="itemId" value="' + itemId + '" /><input hidden class="itemPatchId" value="' + itemPatches[i].PatchId + '" /><label class="itemPatchExpireDate">' + (itemPatches[i].ExpiryDate != null ? convertToJavaScriptDate(itemPatches[i].ExpiryDate) : '') + '</label></td ><td><input hidden class="itemPatchesQty" value="' + itemPatches[i].Qty + '"/>' + itemPatches[i].Qty + '</td><td><button class="btn btn-info js-choose-patch-item">' + ' @MyERP.Properties.Resources.Add' + '</button></td></tr > ');
+                    }
+                }
+                else {
+                    for (var i = 0; i < itemPatches.length; i++) {
+                        tr += ('<tr><td>' + (itemPatches[i].PatchCode ? itemPatches[i].PatchCode : '') + '</td><td><input hidden class="itemId" value="' + itemId + '" /><input hidden class="itemPatchId" value="' + itemPatches[i].PatchId + '" /><label class="itemPatchExpireDate">' + (itemPatches[i].ExpiryDate != null ? convertToJavaScriptDate(itemPatches[i].ExpiryDate) : '') + '</label></td ><td><input hidden class="itemPatchesQty" value="' + itemPatches[i].Qty + '"/>' + itemPatches[i].Qty + '</td><td><button class="btn btn-info js-edit-patch-item">اضف</button></td></tr > ');
+                    }
+                }
+                $('#item-patches').empty().append(tr);
+                $('#pleasewait').fadeOut();
+            });
+        }
+    }
+
+    //------------------- ConvertDate-------------
+    function convertToJavaScriptDate(value) {
+
+                                        if (value === null)
+                                            return null;
+                                        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+        // return (dt)
+    }
+
+    // Choose patch item to add
+    $("#patchModal").on('click', '.js-choose-patch-item', function () {
+        var tr = $(this).closest("tr");
+        var patchId = tr.find(".itemPatchId").val();
+        var expireDate = tr.find(".itemPatchExpireDate").text();
+        var Qty = tr.find('.itemPatchesQty').val();
+        $("#patchModal").modal('hide');
+        @*$('#InventoryVoucherDetails tr:last').find('.PatchId').val(patchId);
+        $('#InventoryVoucherDetails tr:last').find('.ExpiryDate').val(expireDate);
+
+         // quantity of patch
+        $('#InventoryVoucherDetails tr:last').find('.quantityOnSystem').val(Qty);
+
+        // Default Quantity In Pos
+        $('#InventoryVoucherDetails tr:last').find('.quantity').val('@ViewBag.DefaultQuantityInPos');
+        $('#InventoryVoucherDetails tr:last').find('.quantity').trigger('change');*@
+
+        currentItemTr.find('.PatchId').val(patchId);
+        currentItemTr.find('.ExpiryDate').val(expireDate);
+
+         // quantity of patch
+        currentItemTr.find('.quantityOnSystem').val(Qty);
+
+        // Default Quantity In Pos
+        currentItemTr.find('.quantity').val('@ViewBag.DefaultQuantityInPos');
+        currentItemTr.find('.quantity').trigger('change');
+    });
+
+    // Double click on expire date
+    $(document).on('dblclick', ".ExpiryDate", function () {
+        var expireDateInput = $(this);
+        selectedItemRowToEdit= expireDateInput.closest("tr");
+        var itemId = selectedItemRowToEdit.find('.itemId').val();
+        if (itemId) {
+            showPatchModal(itemId,false,true);
+        }
+    });
+
+    // Choose patch item to edit
+    $("#patchModal").on('click', '.js-edit-patch-item', function () {
+        var button = $(this);
+        var tr = button.closest("tr");
+        var patchId = tr.find(".itemPatchId").val();
+        var expireDate = tr.find(".itemPatchExpireDate").text();
+        var Qty = tr.find('.itemPatchesQty').val();
+        $("#patchModal").modal('hide');
+        var itemRowToEdit = selectedItemRowToEdit;
+        $(itemRowToEdit).find('.ExpiryDate').val(expireDate);
+        $(itemRowToEdit).find('.PatchId').val(patchId);
+        // quantity of patch
+        $(itemRowToEdit).find('.quantityOnSystem').val(Qty);
+        // Default Quantity In Pos if no qty
+        if ($(itemRowToEdit).closest('tr').find('.quantity').val() === "" || $(itemRowToEdit).closest('tr').find('.quantity').val() === undefined) {
+            $(itemRowToEdit).closest('tr').find('.quantity').val('@ViewBag.DefaultQuantityInPos');
+        }
+        $(itemRowToEdit).closest('tr').find('.quantity').trigger('change');
+    });
+
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            // $(tr).find('input, select').removeAttr('required');
+            //  $(tr).find('select').empty();
+            $(tr).find('.Add-Button').prop('hidden', false);
+            $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1) {
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        }
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find("label").text('');
+            $(tr).find('.Add-Button').prop('hidden', false);
+            $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+        }
+        SetTotalPrice();
+    }
+
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+        }
+        else if ($(".form-control:invalid").length == 0) {
+            var inventoryVoucherDetails = [];
+            $('#InventoryVoucherDetails tr').each(function () {
+                var td = $(this);
+
+                if (td.find('.item').val()) {
+                    let itemId = items.filter(function (i) { return i.ItemPriceId == td.find('.item').val(); })[0].Id;
+                    let inventoryVoucherDetail = {
+                        ItemPriceId: td.find('.item').val(),
+                        ItemId: itemId,
+                        ItemUnitId: td.find('.item-unit').val(),
+                        UnitEquivalent: td.find('.unit-equavalent').val(),
+                        Qty: td.find('.quantity').val(),
+                        QtyOnSystem: td.find('.quantityOnSystem').val(),
+                        IsActive: true,
+                        IsDeleted: false,
+                        ExpireDate: new Date(td.find('.ExpiryDate').val() + ' ' + '13:00:00'),
+                        PatchId: td.find('.PatchId').val(),
+                        CostPrice: td.find('.Price').val(),
+                        Status: td.find('.Status').val()
+                    };
+                    inventoryVoucherDetails.push(inventoryVoucherDetail);
+                }
+            });
+            if ($('#InventoryVoucherDetails tr').length > 1) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#preloader, #status').fadeIn();
+                        $('#newbtn').prop('disabled', true);
+                        $('#save').prop('disabled', true);
+                        $.ajax({
+                            type: "POST", contentType: "application/json",
+                            url: "/InventoryVoucher/AddEdit",
+                            data: JSON.stringify({
+                                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').eq(0).val(),
+                                Id: $('#Id').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                BranchId: $('#BranchId').val(),
+                                SystemPageId: $('#SystemPageId').val(),
+                                WarehouseId: $('#WarehouseId').val(),
+                                VoucherDate: $('#VoucherDate').val(),
+                                ItemGroupId: $('#ItemGroupId').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                InventoryVoucherDetails: inventoryVoucherDetails,
+                                IsActive: $('#IsActive').val(),
+                                IsDeleted: $('#IsDeleted').val(),
+                                Notes: $('#Notes').val(),
+                                AdjustmentonEmployeeReceivable: $('#AdjustmentonEmployeeReceivable').prop('checked'),
+                                InventoryTypeId: $("input[name='InventoryTypeId']:checked").val(),
+                                Total: $('#Total').val(),
+                            }),
+                            success: function (r) {
+                                if (r.success == "true") {
+                                    //  alert("  @MyERP.Properties.Resources.Saved ");
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+
+                                    if (n == "new") {
+                                        window.location.replace("/InventoryVoucher/AddEdit");
+                                    } else if (n == 'report') {
+                                        window.open("/Report/InventoryVoucher?id=" + r.id + "&deptId=" + $('#DepartmentId').val() + "&docNo=" + $('#DocumentNumber').val())
+                                        window.location.replace("/InventoryVoucher");
+                                    } else {
+                                        window.location.replace("/InventoryVoucher");
+                                    }
+                                } else
+                                    // alert(" @MyERP.Properties.Resources.NotSaved" + "!");
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.NotSaved',
+                                        text: " ",
+                                        icon: 'error',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                            },
+                            error: function (r) {
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                                // alert(" @MyERP.Properties.Resources.NotSaved" + "!");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        });
+                    }
+                    else { result.dismiss; }
+                });
+
+                @*if (confirm(' @MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/InventoryVoucher/AddEdit",
+                        data: JSON.stringify({
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').eq(0).val(),
+                            Id: $('#Id').val(),
+                            DocumentNumber: $('#DocumentNumber').val(),
+                            BranchId: $('#BranchId').val(),
+                            SystemPageId: $('#SystemPageId').val(),
+                            WarehouseId: $('#WarehouseId').val(),
+                            VoucherDate: $('#VoucherDate').val(),
+                            ItemGroupId: $('#ItemGroupId').val(),
+                            DepartmentId: $('#DepartmentId').val(),
+                            InventoryVoucherDetails: inventoryVoucherDetails,
+                            IsActive: $('#IsActive').val(),
+                            IsDeleted: $('#IsDeleted').val(),
+                            Notes: $('#Notes').val(),
+                            AdjustmentonEmployeeReceivable: $('#AdjustmentonEmployeeReceivable').prop('checked'),
+                            InventoryTypeId: $("input[name='InventoryTypeId']:checked").val(),
+                            Total: $('#Total').val(),
+                        }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                alert("  @MyERP.Properties.Resources.Saved ");
+                                if (n == "new") {
+                                    window.location.replace("/InventoryVoucher/AddEdit");
+                                } else if (n == 'report') {
+                                    window.open("/Report/InventoryVoucher?id=" + r.id + "&deptId=" + $('#DepartmentId').val() + "&docNo=" + $('#DocumentNumber').val())
+                                    window.location.replace("/InventoryVoucher");
+                                } else {
+                                    window.location.replace("/InventoryVoucher");
+                                }
+                            } else
+                                alert(" @MyERP.Properties.Resources.NotSaved" + "!");
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                            alert(" @MyERP.Properties.Resources.NotSaved" + "!");
+                        }
+                    });
+                }*@
+            }
+            else {
+                // alert('@MyERP.Properties.Resources.AllDetailsRequired')
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        }
+    }
+
+    function adjustment(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.DoYouWantToAdjust',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                var AdjustmentonEmployeeReceivable = $('#AdjustmentonEmployeeReceivable').prop('checked');
+                $.post('/InventoryVoucher/Adjustment?id=' + id + '&AdjustmentonEmployeeReceivable=' + AdjustmentonEmployeeReceivable).done(function (r) {
+                    if (r == true) {
+                        $('button.btn.btn-success').addClass('disabled').attr('disabled', 'disabled');
+                        // alert('@MyERP.Properties.Resources.AdjustmentHasBeenDone' + '!');
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.AdjustmentHasBeenDone' + '!',
+                            text: " ",
+                            icon: 'success',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    } else
+                        //    alert('@MyERP.Properties.Resources.AdjustmentDoesNotSucceeded' + '!');
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.AdjustmentDoesNotSucceeded' + '!',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    $('#preloader, #status').fadeOut();
+                }).fail(function () {
+                    //alert('@MyERP.Properties.Resources.AdjustmentDoesNotSucceeded' + '!');
+                    Swal.fire({
+                            title: '@MyERP.Properties.Resources.AdjustmentDoesNotSucceeded' + '!',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    $('#preloader, #status').fadeOut();
+                });
+            }
+            else { result.dismiss; }
+        });
+        @*if (confirm('@MyERP.Properties.Resources.DoYouWantToAdjust')) {
+            $('#preloader, #status').fadeIn();
+            var AdjustmentonEmployeeReceivable = $('#AdjustmentonEmployeeReceivable').prop('checked');
+            $.post('/InventoryVoucher/Adjustment?id=' + id + '&AdjustmentonEmployeeReceivable=' + AdjustmentonEmployeeReceivable).done(function (r) {
+                if (r == true) {
+                    $('button.btn.btn-success').addClass('disabled').attr('disabled', 'disabled');
+                    alert('@MyERP.Properties.Resources.AdjustmentHasBeenDone'+'!');
+                } else
+                    alert('@MyERP.Properties.Resources.AdjustmentDoesNotSucceeded'+'!');
+                $('#preloader, #status').fadeOut();
+            }).fail(function () {
+                alert('@MyERP.Properties.Resources.AdjustmentDoesNotSucceeded'+'!');
+                $('#preloader, #status').fadeOut();
+            });
+        }*@
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/InventoryVoucher/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            $('#preloader, #status').fadeOut();
+                            //alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded" + "!");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded' + '!',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace("/InventoryVoucher");
+                            } else
+                                //alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded"+"!");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded' + '!',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+        @*if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/InventoryVoucher/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded"+"!");
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace("/InventoryVoucher");
+                        } else
+                            alert("@MyERP.Properties.Resources.DeleteDoesNotSucceeded"+"!");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }*@
+    }
+</script>

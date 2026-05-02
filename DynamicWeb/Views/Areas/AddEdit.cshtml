@@ -1,0 +1,171 @@
+﻿@model MyERP.Models.Area
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Areas;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+            <a class="btn btn-info" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="/Item/Index" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Areas :</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        @using (Html.BeginForm())
+                        {
+                            @Html.AntiForgeryToken()
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.MainData
+                                    </h5>
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    <input type="hidden" id="hdnobjID" value="@Model.Id" />
+                                    @Html.HiddenFor(model => model.IsActive)
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                        <div class="col-md-10">
+                                            <input value="@Model.Code" class="form-control" name="Code" id="Code" required readonly />
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label"> @MyERP.Properties.Resources.ArName </label>
+                                        <div class="col-md-10">
+                                            @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", @required = "required" } })
+                                            <span class="Asterisks">*</span>
+                                            @Html.ValidationMessageFor(model => model.ArName, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                        <div class="col-md-10">
+                                            @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.EnName, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Country</label>
+                                        <div class="col-md-10">
+                                            @Html.DropDownList("CountryId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                            <span class="Asterisks">*</span>
+                                            @Html.ValidationMessageFor(model => model.CountryId, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.City</label>
+                                        <div class="col-md-10">
+                                            @Html.DropDownList("CityId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                            <span class="Asterisks">*</span>
+                                            @Html.ValidationMessageFor(model => model.CityId, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                        <div class="col-md-10">
+                                            @Html.TextAreaFor(model => model.Notes, new { htmlAttributes = new { @class = "form-control" } })
+                                            @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+                                    <input id="new" name="newBtn" hidden />
+
+                                    <div class="form-group row">
+                                        <div class="col-md-offset-2 col-md-10">
+                                            @if (Model.Id == 0)
+                                            {
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left">@MyERP.Properties.Resources.Back</a>
+                                                <input type="submit" value="@MyERP.Properties.Resources.Save" class="btn btn-success" style="float:left;margin-left:2%" />
+
+                                                <input type="submit" value="@MyERP.Properties.Resources.SaveAndNew" id="newbtn" class="btn btn-success" style="float:left;margin-left:2%" />
+
+
+                                            }
+                                            else
+                                            {
+                                                if (Model.IsDeleted == false)
+                                                {
+                                        <a class="btn btn-danger" onclick="Delete(@Model.Id,'Areas')" role="button" style="float:left;margin-left:2%">@MyERP.Properties.Resources.Delete</a>
+
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button" style="float:left;margin-left:2%">@MyERP.Properties.Resources.Back</a>
+
+                                                    <input type="submit" value="@MyERP.Properties.Resources.Save" class="btn btn-success" style="float:left;margin-left:2%" />
+                                                }
+                                            }
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).on("change", "#CountryId", function () {
+        $('#CityId').empty();
+        var cities = $.get('/Areas/CitiesByCountryId?id=' + $('#CountryId').val())
+            .done(function () {
+                cities = cities.responseJSON;
+                $('#CityId').empty();
+                $('#CityId').append($('<option>', {
+
+                    text: "@MyERP.Properties.Resources.Select"
+                }));
+                for (var i = 0; i < cities.length; i++) {
+                    $('#CityId').append($('<option>', {
+                        value: cities[i].Id,
+                        text: cities[i].ArName
+                    }));
+                }
+            });
+
+    })
+
+
+    if ($('#hdnobjID').val() == 0) {
+        function setCodeNum() {
+            var doc = $.get('/Areas/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+</script>

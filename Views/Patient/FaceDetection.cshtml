@@ -1,0 +1,97 @@
+﻿@{
+    ViewBag.Title = "FaceDetection";
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    else if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form" method="post" enctype="multipart/form-data">
+
+                <div class="row">
+                    @* مكان الصورة *@
+                    <div class="col-md-6">
+                        <div class="tab-pane" id="5">
+                            <label for="ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.Image</label>
+                            <div id="gallery" style="width: 100%;margin: 20px;">
+
+                                @if (Model != null && Model.Image != null)
+                                {
+                                    <img src="@Model.Image" alt="" class="img_@Model.Id" style="max-width: 200px;max-height: 200px;" />
+                                    @*<i class="fas fa-trash-alt img_@Model.Id" style="cursor:pointer;" onclick="DeleteIMG('@Model.Id');$(this).prev().remove();$(this).remove();"></i>*@
+                                }
+
+                            </div>
+
+                            <input type="file" id="BrowseImage" onchange="previewImage()" value="Browse" />
+                        </div>
+                    </div>
+                  
+                </div>
+
+
+                <button onclick="FaceDetection()"> save </button>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var Imgdata = "";
+
+    function previewImage() {
+        var reader = new FileReader();
+        reader.addEventListener("load", function () {
+
+            $("#gallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#Image").val(reader.result);
+            Imgdata = reader.result;
+
+        }, false);
+
+        for (var i = 0; i < $("#BrowseImage")[0].files.length; i++) {
+            if ($("#BrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#BrowseImage")[0].files[i]);
+            }
+        }
+    }
+
+
+    function FaceDetection() {
+        console.log(Imgdata)
+        $.ajax({
+            type: "POST",
+            url: "/Patient/FaceDetection?IsTrue=true",
+            data: { Image: Imgdata },
+                    success: function (r) {
+                        if (r.success == "true") {
+                            alert('@MyERP.Properties.Resources.Saved');
+                            $('#preloader, #status').fadeOut();
+                        }
+                        else {
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                            $('#preloader, #status').fadeOut();
+                        }
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+
+    }
+</script>
+
+

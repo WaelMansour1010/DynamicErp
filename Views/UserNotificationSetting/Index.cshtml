@@ -1,0 +1,122 @@
+﻿@model MyERP.Models.UserNotificationSetting
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.UserNotificationSetting;
+}
+<div class="panel panel-widget forms-panel">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title">@MyERP.Properties.Resources.UserNotificationSetting</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="UserId">@MyERP.Properties.Resources.User</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("UserId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                              
+                                    <label class="col-sm-1 control-label" for="PageId">@MyERP.Properties.Resources.Screen</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("PageId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                      
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <table class="table table-hover table-condensed">
+                                        <thead>
+                                            <tr>
+                                                <th>@MyERP.Properties.Resources.Processes</th>
+                                                <th>@MyERP.Properties.Resources.Notifications</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="Notification"></tbody>
+                                    </table>
+                                </div>
+
+                                <div style="float:left">
+                                    <button class="btn btn-success" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).on('change', '#PageId, #UserId', function () {
+        if ($('#UserId').val() && $('#PageId').val()) {
+            $('#preloader, #status').fadeIn();
+            $.get('/UserNotificationSetting/ActionsByPageId?userId=' + $('#UserId').val() + '&pageId=' + $('#PageId').val()).done(function (r) {
+                $('#Notification').empty();
+                $('#Notification').append('<tr><td>الكل</td><td><input type="checkbox" id="checkAll" onclick="checkAll()" /></td></tr>' + r);
+                $('#preloader, #status').fadeOut();
+            });
+        }
+    });
+
+    $(document).on('change', 'input[type="checkbox"]:not("#checkAll")', function () {
+        $(this).prop('checked') ? null : $('#checkAll').removeAttr('checked');
+    });
+
+    function checkAll() {
+        if ($('#checkAll').prop('checked')) {
+            $('input[type="checkbox"]').prop('checked', 'checked');
+        } else {
+            $('input[type="checkbox"]').removeAttr('checked');
+        }
+    }
+
+
+    function addEdit() {
+
+        var Notification = $.map($('.access:checked'), function (i) {
+            return { ActionId: $(i).val(), UserId: $('#UserId').val() }
+        });
+
+        $('#preloader, #status').fadeIn();
+        $.ajax({
+            type: "POST",
+            contentType: "application/json",
+            url: '/UserNotificationSetting/Index/',
+            data: JSON.stringify({
+                userNotifications: Notification,
+                pageId: $('#PageId').val(),
+                userId: $('#UserId').val()
+            }),
+            success: function (r) {
+                if (r == 'true') {
+                    alert('@MyERP.Properties.Resources.Saved'+'!');
+                } else {
+                    alert('@MyERP.Properties.Resources.NotSaved'+'!');
+                }
+                $('#preloader, #status').fadeOut();
+            },
+            error: function (r) {
+                alert('@MyERP.Properties.Resources.NotSaved'+'!');
+                console.log(r);
+                $('#preloader, #status').fadeOut();
+            }
+        })
+    }
+</script>

@@ -1,0 +1,102 @@
+﻿
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.StatementOfFinancialPosition;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="hed page-title"> @MyERP.Properties.Resources.StatementOfFinancialPosition</div>
+        </div>
+    </div>
+</div>
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="form-horizontal" role="form">
+                <div class="form-group row">
+                    <label for="DepartmentId" class="control-label col-sm-1">@MyERP.Properties.Resources.Branch</label>
+                    <div class="col-sm-5">
+                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="GetFinancialStatement()">@MyERP.Properties.Resources.View</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+                            <th>
+                                @MyERP.Properties.Resources.Statement
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.PartialAmount
+                            </th>
+                            <th>
+                                @MyERP.Properties.Resources.TotalAmount
+
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="FinancialStatement"></tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    $(document).ready(function () {
+        GetFinancialStatement();
+        var d = new Date();
+        $('#DateFrom').val('@ViewBag.DateFrom');
+        $('#DateTo').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+    });
+
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function GetFinancialStatement() {
+        $('#preloader, #status').fadeIn();
+        var accStatement = $.get("/FinancialStatement/GetFinancialStatement?depId=" + $('#DepartmentId').val() )
+            .done(function () {
+                $('#FinancialStatement').html('');
+                newHTML = '';
+                accStatement = accStatement.responseJSON;
+                for (var i = 0; i < accStatement.length; i++) {
+                    newHTML += '<tr>' +
+                        '<td>' + (accStatement[i].Statement ? accStatement[i].Statement: '') + '</td>'
+                        + '<td>' + (accStatement[i].PartialAmount ? accStatement[i].PartialAmount : '' ) + '</td>' +
+                        '<td>' + (accStatement[i].TotalAmount ? accStatement[i].TotalAmount : '') + '</td>' +
+
+                        '</tr>';
+                }
+                $('#FinancialStatement').append(newHTML);
+                $('#preloader, #status').fadeOut();
+            }).fail(function () {
+                $('#preloader, #status').fadeOut();
+            });
+
+    }
+    $('#DepartmentId').on('change', function () {
+        $('.FinancialStatement').show();
+        GetFinancialStatement();
+    })
+</script>

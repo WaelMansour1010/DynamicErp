@@ -1,0 +1,228 @@
+﻿@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.OpenPointOfSale;
+    //if (ViewBag.IsCashier == true)
+    //{
+    Layout = "~/Views/Shared/_CashierLayout.cshtml";
+//}
+}
+@*<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index","Home")" role="button">@MyERP.Properties.Resources.MainPage</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.OpenPointOfSale</h4>
+        </div>
+    </div>
+</div>*@
+
+
+<div class="account-pages mt-5 mb-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-5">
+                <div class="card">
+
+                    <div class="card-body p-4">
+                        
+                        @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Genoise")
+                        {<div class="text-center w-75 m-auto">
+                                <span>
+                                    <img src="~/assets\images\logo-dark.png" alt="" height="80" />
+                                </span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <img id="Logo" src="@ViewBag.Logo" alt="Logo" style="width: 50%;background-color: #2494be;margin-right: 25%;/*border-radius: 50%;*/">
+                            </div>
+                        }
+
+
+                    <form action="/Pos/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                        <div class="row">
+                            <div class="col-12" style="align-content:center">
+                                <div class="card" style="margin: auto;">
+                                    <div class="card-body">
+                                        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                                        <h5 class="header-title">
+                                            @MyERP.Properties.Resources.OpenPointOfSale
+                                        </h5>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-4 control-label" for="EnName">@MyERP.Properties.Resources.UserName </label>
+                                            <div class="col-sm-8">
+                                                <input type="text" class="form-control" id="UserName" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-4 control-label" for="EnName">@MyERP.Properties.Resources.PassWord </label>
+                                            <div class="col-sm-8">
+                                                <input type="password" class="form-control" id="Password" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="PosManagerId" class="control-label col-sm-4">@MyERP.Properties.Resources.Shifts</label>
+                                            <div class="col-sm-8">
+                                                @Html.DropDownList("ShiftId", null, @MyERP.Properties.Resources.Shifts, htmlAttributes: new { @class = "form-control", required = "required" })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Select
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-sm-offset-4">
+                                                <button type="button" onclick="login()" class="btn btn-success">
+                                                    @MyERP.Properties.Resources.OpenPointOfSale
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    </div> <!-- end card-body -->
+                </div>
+                <!-- end card -->
+                <!-- end row -->
+
+            </div> <!-- end col -->
+        </div>
+        <!-- end row -->
+    </div>
+    <!-- end container -->
+</div>
+
+
+
+@*<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Pos/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12" style="align-content:center">
+                        <div class="card" style="margin: auto;">
+                            <div class="card-body">
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.OpenPointOfSale
+                                </h5>
+                                           <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.UserName </label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" id="UserName" />
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.PassWord </label>
+                                    <div class="col-sm-4">
+                                        <input type="password" class="form-control" id="Password" />
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="PosManagerId" class="control-label col-sm-2">@MyERP.Properties.Resources.Shifts</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ShiftId", null, @MyERP.Properties.Resources.Shifts, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>                                    
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-offset-4">
+                                        <button type="button" onclick="login()" class="btn btn-success">
+                                            @MyERP.Properties.Resources.OpenPointOfSale
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>*@
+
+<script>
+
+    function login() {
+        if (!$('#Password').val()) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.PassWord @MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        else if (!$('#UserName').val()) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.UserName @MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        else if (!$('#ShiftId').val()) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.SelectShift',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        else {
+            $('#preloader, #status').fadeIn();
+            $.ajax({
+                url: '/MiniPointOfSale/MiniPosLogin', contentType: "application/json",
+                type: 'POST',
+                data: JSON.stringify({
+                    Password: $('#Password').val(),
+                    UserName: $('#UserName').val(),
+                    ShiftId: $('#ShiftId').val()
+                }),
+                error: function (e) {
+                    $('#preloader, #status').fadeOut();
+                },
+                success: function (r) {
+                    if (r == 'PasswordIncorrect') {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.ThePOSManagerPasswordIsIncorrect',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    else if (r == 'UserIsNull') {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.PosManagerHasNoUserName',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    else {
+                        window.location.replace("/MiniPointOfSale/AddEdit?ShiftId=" + r.ShiftId);
+                    }
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+        }
+    }
+</script>

@@ -1,0 +1,283 @@
+﻿@model MyERP.Models.CompetitorAnswer
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Answers;
+    Layout = "~/Views/Shared/_ActivityLayout.cshtml";
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+
+            <div class="text-center w-75 m-auto" style="padding-top: 2%;padding-bottom: 2%;">
+                <span>
+                    <img src="@ViewBag.logo" alt="" height="200" width="200"/>
+                </span>
+            </div>
+            
+            @*<div class="hed page-title">@MyERP.Properties.Resources.Answers :</div>*@
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                    }
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input id="Date" class="form-control" type="datetime-local" value="@ViewBag.Date" disabled />
+                                        <input id="CompetitorId" class="form-control" type="text" hidden value="@ViewBag.CompetitorId" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                
+                                            <div  id="AnswerDiv">
+
+                                            </div>
+                                        
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+            <!---------------------------------------------- Saves Buttons ----------------------------------------------------------->
+            <div class="row">
+                <div class="col-sm-offset-2">
+                    <button onclick="addEdit();" class="btn btn-success" id="save">
+                        @MyERP.Properties.Resources.Send
+                    </button>
+                </div>
+            </div>
+            <!----------------------------------------------------------------------------------------------------------------------------------------->
+
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    let QuestionOptions = '';
+    var AcceptingsAnswers = '@ViewBag.AcceptingsAnswers';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#Date').val('@ViewBag.Date');
+        if ($('#Id').val() == 0) {
+          ///  setCodeNum();
+        }
+        GetQuestionByDate();
+    });
+
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $(document).on('change', '#Date', function () {
+        GetQuestionByDate();
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    //function setCodeNum() {
+    //    $.get('/CompetitorAnswer/SetCodeNum').done(function (r) {
+    //        $('#Code').val(r);
+    //    });
+    //}
+
+    function GetQuestionByDate() {
+        QuestionOptions = "";
+        $("#AnswerDiv").empty()
+        $.get('/CompetitorAnswer/GetQuestionByDate?Date=' + $('#Date').val()).done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                QuestionOptions += '<option value="' + r[i].Id + '">' + r[i].Question + '</option>';
+                var Div = '<div class="form-group" ><label class="col-sm-6 control-label"> ' +
+                    r[i].Question + ' </label><input class="QuestionId" hidden value="' +
+                    r[i].Id + '" /><div class="col-sm-6"><textarea class="form-control Answer">' +
+                    r[i].Answer + '</textarea></div></div >';
+                $("#AnswerDiv").append(Div);
+            }
+        });
+    }
+
+//***********************************************************************************************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        if (AcceptingsAnswers == 'False') {
+            valid = false;
+            Swal.fire({
+                    title: '@MyERP.Properties.Resources.ReceivingAnswersHasBeenStopped',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+        }
+                var competitorAnswers = [];
+            if (valid) {
+                $('.QuestionId').each(function () {
+                    var td = $(this);
+                    var CompetitorAnswer = {
+                        CompetitorId: $('#CompetitorId').val(),
+                        Date: $('#Date').val(),
+                        QuestionId: $(this).val(),
+                        IsDeleted: false,
+                        IsActive: true,
+                        Answer: td.closest('div').find('.Answer').val(),
+                        Notes: td.closest('div').find('.Notes').val(),
+                    };
+                    //if ( $(this).val().length > 0 || $(this).val()!="") {
+                        competitorAnswers.push(CompetitorAnswer);
+                    //}
+                });
+            }
+                @*if (competitorAnswers.length == 0) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.InsertAQuestionAtLeast',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                valid = false;
+            }*@
+            //    var CompetitorAnswer = {
+            //    Id: $('#Id').val(),
+            //    Code: $('#Code').val(),
+            //    Date: $('#Date').val(),
+            //    IsActive: true,
+            //    IsDeleted: false,
+            //    Notes: $('#Notes').val(),
+            //    Image: $('#Image').val(),
+            //    CompetitorAnswerDetails: CompetitorAnswerDetails
+            //}
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSubmitAnswers',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/CompetitorAnswer/AddEdit",
+                        data: JSON.stringify(competitorAnswers),
+                        success: function (r) {
+                            if (r.success == true) {
+                                @*Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Submitted',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });*@
+
+                                window.location.replace("/CompetitorAnswer/Submission");
+
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSubmitted !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSubmitted !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/CompetitorAnswer/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/CompetitorAnswer');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+    //*********************************************************//
+
+
+
+</script>
+

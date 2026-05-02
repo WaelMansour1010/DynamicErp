@@ -1,0 +1,97 @@
+﻿@model MyERP.Models.ServiceSetting
+@{
+    ViewBag.Title = "اعدادات الخدمات";
+}
+
+@Html.AntiForgeryToken()
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <input type="button" class="btn btn-info btnAdd" name="AddEdit" value="رجوع" onclick="window.location.replace('/home/index')" style="float: left;">
+            </div>
+            <div class="page-title"> اعدادات الخدمات</div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ServiceSetting/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row" hidden>
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.HiddenFor(model => model.Id)
+                                    <label for="inputtext3" class="col-sm-2 control-label"> رسوم الخدمة</label>
+                                    <div class="col-md-10">
+                                        <input class="money form-control" value="@Model.CompanyFees" name="CompanyFees" id="txtCompanyFees" placeholder="رسوم الخدمة" required>
+                                        @Html.ValidationMessageFor(model => model.CompanyFees, "", new { @class = "text-danger" })
+                                        @*<span class="Asterisks">*</span>*@
+                                        <div class="invalid-feedback">
+                                            رسوم الخدمة مطلوبة
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" hidden>
+                                    <label for="inputtext3" class="col-sm-2 control-label"> الحد الادنى للطلب</label>
+                                    <div class="col-sm-10">
+                                        <input class="money form-control" value="@Model.MinimumCharge" name="MinimumCharge" id="txtMinimumCharge" placeholder="الحد الادنى للطلب" required>
+                                        <div class="invalid-feedback">
+                                            الحد الادنى للطلب مطلوبة
+                                        </div>
+
+                                        @* @Html.ValidationMessageFor(model => model.MinimumCharge, "", new { @class = "text-danger" })*@
+
+                                        @*<span class="Asterisks">*</span>*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> قيمة النقطة</label>
+                                    <div class="col-md-4">
+                                        <input class="money form-control" value="@Model.PointValue" name="PointValue" id="txtPointValue" placeholder="القيمة">
+                                        
+                                        @*@Html.ValidationMessageFor(model => model.PointValue, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label"> المسافة المسموح بها</label>
+                                    <div class="col-md-4">
+                                        <input type="number" step="any" class="form-control" value="@Model.AllowedDistance" name="AllowedDistance" placeholder="المسافة المسموح بها">
+
+                                        @*@Html.ValidationMessageFor(model => model.AllowedDistance, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+                              
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label"> نسبة رسم الطلب</label>
+                                    <div class="col-md-4">
+                                        <input type="number" step="any" class="form-control" value="@Model.OrderFeesPercentage" name="OrderFeesPercentage" placeholder="نسبة رسم الطلب">
+
+                                        @*@Html.ValidationMessageFor(model => model.OrderFeesPercentage, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+                             
+                                <div style="float:left">
+                                    <button type="submit" class="btn btn-success">
+                                        حفظ
+                                    </button>
+                                    <button type="reset" class="btn btn-danger" onclick="window.location.replace('/home/index')">
+                                        رجوع
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>                             
+</div>

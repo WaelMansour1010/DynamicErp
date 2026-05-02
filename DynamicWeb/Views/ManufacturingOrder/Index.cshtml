@@ -1,0 +1,372 @@
+﻿@model IEnumerable<MyERP.Models.ManufacturingOrder>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.ManufacturingOrder;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <h4 class="page-title">@MyERP.Properties.Resources.ManufacturingOrder</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group row">
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+                                <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder="@MyERP.Properties.Resources.Search">
+                            </div>
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+
+                                @Html.DropDownList("StatusId", null, @MyERP.Properties.Resources.Status, htmlAttributes: new { @class = "form-control searchtxt" })
+
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                                <a class="btn btn-info" href="@Url.Action("Index")" role="button"><i class="fe-refresh-ccw"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @MyERP.Properties.Resources.OrderNo
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.ManufacturingRequestNo
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Date
+                                    </th>
+                                    @if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] != "Genoise")
+                                    {
+                                <th>
+                                    @MyERP.Properties.Resources.Employee
+                                </th>
+                                    }
+                                    else
+                                    {
+                                <th>
+                                    @MyERP.Properties.Resources.Chef
+                                </th>
+                                    }
+                                <th>
+                                    @MyERP.Properties.Resources.WareHouse
+                                </th>
+                                <th>@MyERP.Properties.Resources.Status</th>
+                                <th>
+                                    @MyERP.Properties.Resources.ApprovalDate
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.Edit
+                                </th>
+                                <th>
+                                    @MyERP.Properties.Resources.Delete
+                                </th>
+
+                                <th>@MyERP.Properties.Resources.Print</th>
+                                </tr>
+                            </thead>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                        @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                    </td>
+                                    <td>
+                                        @*@Html.DisplayFor(modelItem => item.ManufacturingRequest.DocumentNumber)*@
+                                        @Html.Raw(item.ManufacturingRequest.DocumentNumber.ToString().Replace("-", ""))
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.OrderDate)
+                                    </td>
+
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Employee.ArName)
+                                    </td>
+
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Warehouse.ArName)
+                                    </td>
+                                    <td>
+                                        @if (item.IsAccepted == true)
+                                        {
+                                        <label> @MyERP.Properties.Resources.IsApproved</label>
+                                        }
+                                        else if (item.IsCompleted == true)
+                                        {
+                                    <label> @MyERP.Properties.Resources.IsCompleted</label>
+                                        }
+                                        else if (item.IsAccepted == false)
+                                        {
+                                    <label> @MyERP.Properties.Resources.NotCompleted</label>
+                                        }
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-success" onclick="SetManufacturingOrderIdAndRequestId(@item.Id,@item.ManufacturingRequestId)" data-toggle="modal" data-target="#stock-receipt-warehouse" style="display:@Html.Raw(item.IsCompleted==true && item.IsAccepted!=true?"inline-block;":"none;")" id="acceptBtn">@MyERP.Properties.Resources.Approve</button>
+
+                                        <label  style="display:@Html.Raw(item.IsCompleted==true && item.IsAccepted==true?"inline-block;":"none;")">@item.AcceptanceDate</label>
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("AddEdit","ManufacturingOrder",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    </td>
+                                  
+                                    <td>
+                                        <a href="javascript:void(0);" onclick="Delete(@item.Id)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("ManufacturingOrder","Report",new { id=item.Id, print=true})" target="_blank">
+                                            <i class="remixicon-printer-fill"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">@MyERP.Properties.Resources.All</option>
+            </select>
+            <span style="font-size:12px;float:right;">@MyERP.Properties.Resources.NoOfResults : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> @MyERP.Properties.Resources.PageNo: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+<div id="stock-receipt-warehouse" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">@MyERP.Properties.Resources.StockReceiptWarehouse</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-8 col-md-6">
+                        <select class="form-control" id="WarehouseId"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect" data-dismiss="modal" onclick="acceptOrder()">@MyERP.Properties.Resources.Accept</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+<script>
+    var pageNo = 1;
+    var ManufacturingOrderId = 0;
+    var ManufacturingRequestId = 0;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function SetManufacturingOrderIdAndRequestId(orderId,requestId) {
+        ManufacturingOrderId = orderId;
+        ManufacturingRequestId = requestId;
+    }
+    function paging() {
+        var link = '/ManufacturingOrder/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord + '&statusId=' + $('#StatusId').val();
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+           $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+    })
+
+    $('#stock-receipt-warehouse').on('show.bs.modal', function () {
+        requestData('/Helper/WarehousesByDepartmentId?id=28')
+            .done(function (r) {
+                let warehouseOptions = '';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+                $("#WarehouseId").empty().append(warehouseOptions);
+            });
+    })
+
+    function acceptOrder() {
+        $('#preloader, #status').fadeIn();
+        $.ajax({
+            type: "POST", contentType: "application/json",
+            url: "/ManufacturingOrder/AcceptOrder/" + ManufacturingOrderId,
+            data:
+                JSON.stringify({
+                    manufacturingRequestId: ManufacturingRequestId,
+                    warehouseId: $("#WarehouseId").val(),
+                    isProcess1: $('#IsProcess1').val() == 'True'
+                }),
+            success: function (r) {
+                if (r == true) {
+                    Swal.fire(
+                        {
+                            title: '@MyERP.Properties.Resources.IsAccepted',
+                            text: " ",
+                            icon: 'success',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    window.location.replace("/ManufacturingOrder");
+                } else {
+                    $('#preloader, #status').fadeOut();
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotAccepted',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            },
+            error: function () {
+                $('#preloader, #status').fadeOut();
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.NotAccepted',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        });
+    }
+
+
+    function Delete(id) {
+        Swal.fire({
+    title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+    text: " ",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    reverseButtons: true
+}).then((result) => {
+    if (result.isConfirmed) {
+        $('#preloader, #status').fadeIn();
+        $.ajax(
+            {
+                url: '/ManufacturingOrder/Delete',
+                type: 'POST',
+                data: {
+                    "Id": id,
+                },
+                error: function (e) {
+                   Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    $('#preloader, #status').fadeOut();
+                },
+                success: function (r) {
+                    if (r == 'true') {
+                        window.location.reload();
+                    } else {
+                       Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    }
+                }
+            });
+    }
+    else { result.dismiss;}
+});
+
+
+        //if (confirm('هل تريد الحذف؟')) {
+        //    $('#preloader, #status').fadeIn();
+        //    $.ajax(
+        //        {
+        //            url: '/ManufacturingOrder/Delete',
+        //            type: 'POST',
+        //            data: {
+        //                "Id": id,
+        //            },
+        //            error: function (e) {
+        //                 alert('لم يتم الحذف!');
+        //                    $('#preloader, #status').fadeIn();
+        //            },
+        //            success: function (r) {
+        //                if (r == 'true') {
+        //                    window.location.reload();
+        //                } else {
+        //                    alert('لم يتم الحذف!');
+        //                    $('#preloader, #status').fadeIn();
+        //                }
+        //            }
+        //        });
+        //}
+    }
+
+</script>
+
+

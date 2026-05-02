@@ -1,0 +1,2157 @@
+﻿@using MyERP.Models
+@using MyERP.Models.MyModels
+@model MyERP.Models.CashReceiptVoucher
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.CashReceiptVoucher;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.CashReceiptVoucher :</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+                @*<form action="/CashReceiptVoucher/AddEdit" class="form-horizontal needs-validation" novalidate method="post">*@
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @Html.AntiForgeryToken()
+                                @if (Model != null && Model?.Id != 0)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsLinked)
+                                    @Html.HiddenFor(model => model.IsPosted)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.Image)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                }
+                                else
+                                {
+                                    <input type="hidden" name="Id" id="Id" value="0" />
+                                }
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.VoucherNo, hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+
+                                    </div>
+
+                                    <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownList("DepartmentId", null, null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label " for="MoneyAmount">@MyERP.Properties.Resources.Amount</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.MoneyAmount, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Amount, @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label " for="Date">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input id="Date" name="Date" class="form-control" type="datetime-local" required value="@ViewBag.Date" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label " for="SourceTypeId">@MyERP.Properties.Resources.Source</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SourceTypeId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="CustomerId" class="CustomerId control-label col-sm-2">@MyERP.Properties.Resources.Customer</label>
+                                    <div class="CustomerId col-sm-4">
+                                        @Html.DropDownList("CustomerId", null, htmlAttributes: new { @class = "CustomerId form-control" })
+                                    </div>
+
+                                    <label class="col-sm-2 control-label AccountId" for="AccountId">@MyERP.Properties.Resources.Account</label>
+                                    <div class="col-sm-4 AccountId">
+                                        @Html.DropDownList("AccountId", null, htmlAttributes: new { @class = " AccountId form-control" })
+                                    </div>
+
+                                    <label for="VendorId" class="VendorId control-label col-sm-2">@MyERP.Properties.Resources.Supplier</label>
+                                    <div class="VendorId col-sm-4">
+                                        @Html.DropDownList("VendorId", null, htmlAttributes: new { @class = "VendorId form-control" })
+                                    </div>
+
+                                    <label for="ShareholderId" class="ShareholderId control-label col-sm-2">@MyERP.Properties.Resources.Contributor</label>
+                                    <div class="ShareholderId col-sm-4">
+                                        @Html.DropDownList("ShareholderId", null, htmlAttributes: new { @class = "ShareholderId form-control" })
+
+                                    </div>
+
+                                    <label for="EmployeeId" class="EmployeeId control-label col-sm-2">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="EmployeeId col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, htmlAttributes: new { @class = "EmployeeId form-control" })
+                                    </div>
+                                    <label for="PropertyContractId" class="PropertyContractId control-label col-sm-2">@MyERP.Properties.Resources.Contracts</label>
+                                    <div class="PropertyContractId col-sm-4">
+
+                                        @Html.DropDownList("PropertyContractId", null, htmlAttributes: new { @class = "PropertyContractId form-control" })
+                                    </div>
+
+                                    <label for="IsAgainstOpeningBalance" class="PropertyContractId control-label col-sm-2">نوع السداد</label>
+                                    <div class="PropertyContractId col-sm-4">
+                                        <div class="custom-control custom-checkbox">
+
+                                            @Html.CheckBox("IsAgainstOpeningBalance",
+      (Model != null && Model.IsAgainstOpeningBalance.GetValueOrDefault()),
+      new { @class = "custom-control-input", @id = "IsAgainstOpeningBalance" })
+                                            <label class="custom-control-label" for="IsAgainstOpeningBalance">
+                                                التحصيل من رصيد سابق (Opening Balance)
+                                            </label>
+                                        </div>
+                                        <small class="form-text text-muted">
+                                            عند تفعيل هذا الخيار، لن يتم ربط السند بأقساط محددة
+                                        </small>
+                                    </div>
+
+                                    <label for="TechId" class="TechId control-label col-sm-2">@MyERP.Properties.Resources.Technician</label>
+                                    <div class="TechId col-sm-4">
+                                        @Html.DropDownList("TechnicianId", null, htmlAttributes: new { @class = "TechId form-control" })
+                                    </div>
+
+                                    <label for="DirectRevenueId" class="DirectRevenueId control-label col-sm-2">@MyERP.Properties.Resources.DirectRevenue</label>
+                                    <div class="DirectRevenueId col-sm-4">
+                                        @Html.DropDownList("DirectRevenueId", null, htmlAttributes: new { @class = "DirectRevenueId form-control" })
+                                    </div>
+
+                                    <label for="ChildrenId" class="ChildrenId control-label col-sm-2">@MyERP.Properties.Resources.Students</label>
+                                    <div class="ChildrenId col-sm-4">
+                                        @Html.DropDownList("ChildrenId", null, htmlAttributes: new { @class = "ChildrenId form-control" })
+                                    </div>
+
+                                    <label for="ElderId" class="ElderId control-label col-sm-2">@MyERP.Properties.Resources.Elder</label>
+                                    <div class="ElderId col-sm-4">
+                                        @Html.DropDownList("ElderId", null, htmlAttributes: new { @class = "ElderId form-control" })
+                                    </div>
+                                    <label for="RenterId" class="RenterId control-label col-sm-2">@MyERP.Properties.Resources.Renter</label>
+                                    <div class="RenterId col-sm-4">
+                                        @Html.DropDownList("RenterId", null, htmlAttributes: new { @class = "RenterId form-control" })
+                                    </div>
+
+                                    <!-- قسم اختيار التصفية -->
+                                    <label for="SettlementId" class="SettlementId control-label col-sm-2">التصفية</label>
+                                    <div class="SettlementId col-sm-4">
+                                        <select id="SettlementId" name="PropertyContractTerminationId" class="SettlementId form-control">
+                                            <option value="">-- اختر التصفية --</option>
+                                        </select>
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group row" id="Month_Year" style="display:none;">
+                                    <label for="Month" class="control-label col-sm-2">@MyERP.Properties.Resources.Month</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("Month", null, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <label for="Year" class="control-label col-sm-2">@MyERP.Properties.Resources.Year</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("Year", null, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row PropertyContractId" style="display:none;">
+                                    <label class="control-label col-sm-2">رصيد المستأجر الكامل</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" id="RenterBalance" class="form-control money-format" readonly disabled style="font-weight: bold; background-color: #f8f9fa;" value="0.00" />
+                                        <small class="form-text text-muted">الرصيد الافتتاحي + الأقساط المستحقة - المسدد</small>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="CashReceiptPaymentMethodId" class="CashReceiptPaymentMethodId control-label col-sm-2">@MyERP.Properties.Resources.PaymentMethod</label>
+                                    <div class="CashReceiptPaymentMethodId col-sm-4">
+                                        @Html.DropDownList("CashReceiptPaymentMethodId", null, htmlAttributes: new { @class = "CashBoxId form-control" })
+                                    </div>
+
+                                    <label for="CashBoxId" style="display:none;" class="CashBoxId CashBoxDiv control-label col-sm-2">@MyERP.Properties.Resources.CashBox</label>
+                                    <div class="CashBoxId CashBoxDiv col-sm-4" style="display:none;">
+                                        @Html.DropDownList("CashBoxId", null, htmlAttributes: new { @class = "CashBoxId form-control" })
+                                    </div>
+                                    <label for="ChartOfAccountId" style="display:none;" class="ChartOfAccountId ChartOfAccountDiv control-label col-sm-2">@MyERP.Properties.Resources.Account</label>
+                                    <div class="ChartOfAccountId ChartOfAccountDiv col-sm-4" style="display:none;">
+                                        @Html.DropDownList("ChartOfAccountId", null, htmlAttributes: new { @class = "ChartOfAccountId form-control" })
+                                    </div>
+                                    <label for="BankAccountId" style="display:none;" class="BankAccountId BankAccountDiv control-label col-sm-2">@MyERP.Properties.Resources.BankAccount</label>
+                                    <div style="display:none;" class="BankAccountId BankAccountDiv col-sm-4">
+                                        @Html.DropDownList("BankAccountId", null, htmlAttributes: new { @class = "BankAccountId form-control" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row" id="TransactionDiv" style="display:none;">
+                                    <label class="col-sm-2 control-label " id="TransactionNoLabel" for="TransactionNo">@MyERP.Properties.Resources.TransactionNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TransactionNo, new { htmlAttributes = new { @class = "form-control" } })
+                                    </div>
+                                    <label class="col-sm-2 control-label" id="TransactionDateLabel" for="TransactionDate">@MyERP.Properties.Resources.TransactionDate </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null && Model?.Id != 0)
+                                        {
+                                            <input type="datetime-local" name="TransactionDate" id="TransactionDate" class="form-control" value="@ViewBag.TransactionDate" />
+                                        }
+                                        else
+                                        {
+                                            <input type="datetime-local" name="TransactionDate" id="TransactionDate" class="form-control" />
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null && Model?.Id != 0) { @Model.Notes; }</textarea>
+
+                                    </div>
+
+                                    @if (ViewBag.UseCostCenter == true)
+                                    {
+                                        <label for="CostCenterId" class="control-label col-sm-2">@MyERP.Properties.Resources.CostCenter </label>
+
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("CostCenterId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.InvoiceSelected</label>
+                                    <div class="col-sm-4">
+                                        <input type="checkbox" id="IsInvoiceSelected" @Html.Raw(Model != null && Model.IsInvoiceSelected == true ? "checked" : "") style="width:15px;">
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="VendorInvoiceNumber">@MyERP.Properties.Resources.VendorReceiptNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.VendorReceiptNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.VendorReceiptNumber } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="SalesInvoiceActualPayment" style="display:none;">
+                            <div class="col-12">
+                                <div class="card-box">
+                                    <div class=" table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.InvoiceNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VoucherDate
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DueDate
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Department
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Total
+                                                        @*إجمالى الفاتورة*@
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Paid
+                                                        @*مسدد سابقا*@
+                                                    </th>
+                                                    <th>
+                                                        @*متبقى*@
+                                                        @MyERP.Properties.Resources.Remain
+                                                    </th>
+                                                    <th>
+                                                        <i class="fe-check-circle"></i>
+                                                    </th>
+                                                    <th>
+                                                        @*مسدد الحركة*@
+                                                        @MyERP.Properties.Resources.PaidAmount
+                                                    </th>
+                                                    <th>@MyERP.Properties.Resources.NetRequired</th>
+                                                    @*الصافى المستحق*@
+                                                </tr>
+                                            </thead>
+
+                                            <tbody id="SalesInvoiceActualPaymentTable">
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <!--------------------------------  CashReceiptVoucherPropertyContractBatches  --------------------------------------------->
+                        <div class="row" id="CashReceiptVoucherPropertyContractBatchesTable" style="display:none;">
+                            <div class="col-12">
+                                <div class="card-box">
+                                    <div class=" table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Batch
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Rent
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Electricity
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Water
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Gas
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Services
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Commission
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Insurance
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.VAT
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Total
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Property
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Unit
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.IsDelivered
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.PaidBefore
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Paid
+                                                    </th>
+
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Remain
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="CashReceiptVoucherPropertyContractBatches" style="overflow-x:scroll;">
+                                                @{
+                                                    var Batchlst = (ViewBag.BathcesPaid as List<BatchPaidModel>) ?? new List<BatchPaidModel>();
+                                                    var unitdetails = (ViewBag.PropertyUnits as List<UniteModel>) ?? new List<UniteModel>();
+                                                }
+                                                @if (Model != null && Model.CashReceiptVoucherPropertyContractBatches.Count() > 0)
+                                                {
+                                                    foreach (var item in Model.CashReceiptVoucherPropertyContractBatches)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <input hidden class="PropertyContractBatchId" value="@item.PropertyContractBatchId" />
+                                                                <label class="control-label">
+                                                                    @item.PropertyContractBatch.BatchNo
+                                                                </label>
+                                                            </td>
+                                                            <td>
+                                                                <label class="control-label Gregorian">
+                                                                    @item.PropertyContractBatch.BatchDate.Value.ToString("yyyy/MM/dd")
+                                                                </label>
+                                                            </td>
+
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchRentValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchRentValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchElectricityValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchElectricityValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchElectricityValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchWaterValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchWaterValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchGasValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchGasValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchGasValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchGasValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchServicesValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchServicesValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchServicesValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchServicesValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchCommissionValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchCommissionValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchCommissionValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchInsuranceValue form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchInsuranceValue" disabled readonly />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="BatchInsuranceValueTaxes form-control tabledit-input form-control-sm" value="@item.PropertyContractBatch.BatchInsuranceValueTaxes" disabled readonly />
+                                                            </td>
+                                                            <td>
+                                                                <input class="form-control BatchTotal" disabled value="@(item.PropertyContractBatch.BatchTotal.Value.ToString("0.00"))" />
+                                                            </td>
+                                                            <td>
+                                                                <input class="form-control property" disabled value="@item.PropertyContractBatch.PropertyContract.Property.ArName">
+                                                            </td>
+                                                            <td>
+                                                                @{
+                                                                    var unitNo = unitdetails.FirstOrDefault(t => t.Id == item.PropertyContractBatch.PropertyContract.PropertyUnitId)?.PropertyUnitNo;
+                                                                }
+                                                                <input class="form-control unit" disabled value="@unitNo">
+                                                            </td>
+                                                            <td>
+                                                                <input type="checkbox" class="IsDelivered" @Html.Raw(Model != null && item.IsDelivered == true ? "checked disabled" : "") />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                @{
+                                                                    var totalPaid = (Batchlst.FirstOrDefault(t => t.Id != item.PropertyContractBatchId)?.Paid ?? 0m) - item.Paid;
+                                                                }
+                                                                <input type="number" step="any" class="TotalPaid form-control tabledit-input form-control-sm" value="@totalPaid" readonly disabled />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="Paid form-control tabledit-input form-control-sm" value="@item.Paid" @Html.Raw(Model != null && item.IsDelivered == true ? "readonly disabled" : "") />
+                                                            </td>
+                                                            <td class="tabledit-edit-mode">
+                                                                <input type="number" step="any" class="Remain form-control tabledit-input form-control-sm" value="@item.Remain" readonly disabled />
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!--------------------------------  SettlementDetailsTable  --------------------------------------------->
+                        <div class="row" id="SettlementDetailsTable" style="display:none;">
+                            <div class="col-12">
+                                <div class="card-box">
+                                    <!-- معلومات التصفية الأساسية -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-12">
+                                            <h5 class="header-title">تفاصيل التصفية</h5>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">رقم التصفية:</label>
+                                            <p id="settlement-doc-number" class="text-primary"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">رقم العقد:</label>
+                                            <p id="settlement-contract-no"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">المستأجر:</label>
+                                            <p id="settlement-renter-name"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">العقار:</label>
+                                            <p id="settlement-property-name"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">المبلغ الإجمالي:</label>
+                                            <p id="settlement-total-amount" class="text-success font-weight-bold"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">رصيد المستأجر:</label>
+                                            <p id="settlement-renter-balance"></p>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="font-weight-bold">التأمين:</label>
+                                            <p id="settlement-insurance"></p>
+                                        </div>
+                                    </div>
+
+                                    <!-- جدول الدفعات -->
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>الدفعة</th>
+                                                    <th>التاريخ</th>
+                                                    <th>الإيجار</th>
+                                                    <th>المياه</th>
+                                                    <th>الكهرباء</th>
+                                                    <th>الغاز</th>
+                                                    <th>الخدمات</th>
+                                                    <th>السعي/العمولة</th>
+                                                    <th>التأمين</th>
+                                                    <th>الإجمالي</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="SettlementDetailsBody">
+                                                <!-- سيتم ملؤها من JavaScript -->
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <th colspan="9" class="text-right">الإجمالي الكلي:</th>
+                                                    <th id="settlement-grand-total">0.00</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" id="PropertyContractTerminationIdHidden" value="@(Model != null ? Model.PropertyContractTerminationId : (int?)null)" />
+
+
+                        <!-- ✅ عرض معلومات إضافية عن التصفية -->
+                        <div id="SettlementSummaryInfo" style="display:none; margin-top: 20px;">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">"ملخص التصفية"</h5>
+
+                                    <div class="row">
+                                        <!-- أيام الزيادة -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.ExtraDays:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-extra-days" class="form-control-plaintext font-weight-bold text-success">0</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- قيمة أيام الزيادة -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.ExtraDaysValue:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-extra-days-value" class="form-control-plaintext font-weight-bold text-success">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <!-- إجمالي التلفيات -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.TotalDamages:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-total-damages" class="form-control-plaintext font-weight-bold text-danger">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- المبلغ النهائي -->
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <label class="col-sm-6 control-label">@MyERP.Properties.Resources.Amount:</label>
+                                                <div class="col-sm-6">
+                                                    <span id="settlement-final-amount" class="form-control-plaintext font-weight-bold text-primary">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- شرح الحساب -->
+                                    <div class="alert alert-info">
+                                        <strong>@MyERP.Properties.Resources.Calculate:</strong><br>
+                                        <span>@MyERP.Properties.Resources.Remain</span>: <span id="calc-unpaid">0.00</span><br>
+                                        <span class="text-success">+ @MyERP.Properties.Resources.ExtraDaysValue</span>: <span id="calc-extra" class="text-success">0.00</span><br>
+                                        <span class="text-warning">+ @MyERP.Properties.Resources.TotalDamages</span>: <span id="calc-damages" class="text-warning">0.00</span><br>
+                                        <hr>
+                                        <span class="font-weight-bold">= @MyERP.Properties.Resources.Amount</span>: <span id="calc-total" class="font-weight-bold">0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-------------------------------------------------------------------------------------------------------------->
+                        <div class="row" id="PropertyBillRegisteration" style="display:none;">
+                            <div class="col-12">
+                                <div class="card-box">
+                                    <h5 class="header-title"> @MyERP.Properties.Resources.BillRegisteration</h5>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label ElectricityBillValue" for="ElectricityBillValue">@MyERP.Properties.Resources.Electricity</label>
+                                        <div class="col-sm-4">
+                                            <input id="ElectricityBillValue" name="ElectricityBillValue" class="form-control" type="number" step="0.01" disabled placeholder=@MyERP.Properties.Resources.Electricity value="@((Model == null)? "":Model.ElectricityBillValue.ToString())" />
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label GasBillValue" for="GasBillValue">@MyERP.Properties.Resources.Gas</label>
+                                        <div class="col-sm-4">
+                                            <input id="GasBillValue" name="GasBillValue" class="form-control" type="number" step="0.01" disabled placeholder=@MyERP.Properties.Resources.Gas value="@((Model == null)? "": Model.GasBillValue.ToString())" />
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label " for="ViolationBillValue">@MyERP.Properties.Resources.Violations</label>
+                                        <div class="col-sm-4">
+                                            <input id="ViolationBillValue" name="ViolationBillValue" class="form-control ViolationBillValue" type="number" step="0.01" disabled placeholder=@MyERP.Properties.Resources.Violations value="@((Model == null)? "": Model.ViolationBillValue.ToString())" />
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-offset-2">
+                                @if (Model == null)
+                                {
+
+                                    <button type="submit" onclick="addEdit('report')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndPrint
+                                    </button>
+                                    <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
+                                }
+                                else if (Model.IsDeleted == false)
+                                {
+
+                                    <button type="submit" id="SaveAndPrint" onclick="addEdit('report')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndPrint
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="DeleteFunc(@Model.Id)">
+                                        @MyERP.Properties.Resources.Delete
+                                    </button>
+                                    <button class="btn btn-info balance-details-btn" data-toggle="modal" data-target="#BalanceDetails">@MyERP.Properties.Resources.Balance</button>
+
+                                    if (Model.IsActive == false)
+                                    {
+                                        <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
+                                            @MyERP.Properties.Resources.Approval
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-success" onclick="ApproveNotApprove(@Model.Id)">
+                                            @MyERP.Properties.Resources.CancelApproval
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </div>
+
+                        @*<div style="float:left;">
+            <input id="new" name="newBtn" hidden />
+            @if (Model != null)
+            {
+                if (Model.IsDeleted == true)
+                {
+                    <a class="btn btn-danger" href="@Url.Action("Index","DeletedTransaction", new { table= "CashReceiptVoucher" })" role="button">@MyERP.Properties.Resources.Back</a>
+                }
+                else if (Model.IsDeleted == false)
+                {
+                    <button type="submit" id="Report" class="btn btn-success">
+                        @MyERP.Properties.Resources.SaveAndPrint
+                    </button>
+                    <button type="submit" class="btn btn-success" id="save">
+                        @MyERP.Properties.Resources.Save
+                    </button>
+                    <a class="btn btn-success" target="_blank" href="@Url.Action("CashReceiptVoucherDetails","Report",new { id=Model.Id})" role="button">@MyERP.Properties.Resources.Print</a>
+                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    <a class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button" href="javascript:void(0);">@MyERP.Properties.Resources.Delete</a>
+                }
+            }
+            else
+            {
+                <button type="submit" id="Report" class="btn btn-success">
+                    @MyERP.Properties.Resources.SaveAndPrint
+                </button>
+                <button type="submit" id="newbtn" class="btn btn-success">
+                    @MyERP.Properties.Resources.SaveAndNew
+                </button>
+                <button type="submit" class="btn btn-success" id="save">
+                    @MyERP.Properties.Resources.Save
+                </button>
+                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+
+            }
+        </div>*@
+                    </div>
+                        </div>
+                @*</form>*@
+            </div>
+            @*-------------------------End Of Form---------------------------------*@
+        </div>
+    </div>
+</div>
+
+
+@if (Model != null)
+{
+    if (ViewBag.JE != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntries</h5>
+                <div class="form-horizontal">
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.VoucherNo</label>
+                        <div class="col-sm-4">
+                            <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.VoucherNo disabled>
+
+                        </div>
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Date </label>
+                        <div class="col-sm-4">
+                            <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.Date" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                        <div class="col-sm-4">
+                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                        <div class="col-sm-11">
+                            <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
+                        </div>
+                        <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Deported</label>
+                        <div class="col-sm-4">
+                            @if (Model.IsPosted == true)
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" checked disabled>
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" disabled>
+                            }
+
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>@MyERP.Properties.Resources.Debit</th>
+                                            <th>@MyERP.Properties.Resources.Credit</th>
+                                            <th>@MyERP.Properties.Resources.Account</th>
+                                            <th>@MyERP.Properties.Resources.Explanation</th>
+                                            <th>@MyERP.Properties.Resources.CostCenter</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Id != 0 || ViewBag.JEDetails != null)
+                                        {
+                                            foreach (var jED in ViewBag.JEDetails)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <label>@jED.Debit</label>
+                                                        <input type='text' class='txtDebit' value="@jED.Debit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Credit</label>
+                                                        <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        @if (jED.AccountId != null)
+                                                        {
+                                                            <label>@jED.ChartOfAccount.ArName</label>
+                                                            <input type='number' class='AccountId' value="@jED.AccountId" hidden>
+                                                        }
+
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Notes</label>
+                                                    </td>
+                                                    <td>
+                                                        @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+
+<div id="BalanceDetails" class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" data-backdrop="false" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                @*<h4 class="modal-title" id="myModalLabel">تفاصيل الصنف</h4>*@
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card-box">
+                            <div class=" table-responsive">
+                                <table id="balanceTable" class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.Department
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.DebitBalance
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.CreditBalance
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+    <!--<div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="row">
+                    <div class="col-md-1">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>-->
+    @*<div class="col-md-11">
+            <input class="form-control" id="search-items" placeholder="بحث" type="text" />
+        </div>*@
+    <!--<div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
+    </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="row">-->
+    @*<table class="table table-condensed">
+            <thead>
+                <tr>
+                    <th class="col-sm-2">الباركود</th>
+                    <th class="col-md-5">اسم الصنف</th>
+                    <th class="col-md-2">السعر</th>
+                    <th class="col-md-2">الكمية</th>
+                    <th class="col-md-1">إضافة</th>
+                </tr>
+            </thead>
+            <tbody id="items-prices-quantities"></tbody>
+        </table>*@
+    <!--</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">غلق</button>
+            </div>
+        </div>
+
+    </div>-->
+</div>
+
+
+
+
+
+<script>
+    // --- Variable Declaration ---//
+    var EditAmount = 0;
+    var savedPropertyContractTerminationId = @(Model?.PropertyContractTerminationId ?? 0);
+    //---------- Ready Function --------------------//
+    $(document).ready(function () {
+
+
+
+        $('#RenterId').change(function () {
+            console.log('RenterId changed');
+
+            // ✅ تفريغ العقود والدفعات
+            $('#PropertyContractId').empty();
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+
+            // ✅ فقط في حالة SourceTypeId = 11 (مستأجر)
+            if ($('#SourceTypeId').val() == 11) {
+
+                // ✅ تحميل رصيد المستأجر
+                loadRenterBalance();
+
+                // ✅ التحقق من الـ checkbox
+                if ($('#IsAgainstOpeningBalance').prop('checked')) {
+                    // ✅ معلم على checkbox: رصيد سابق - لا نجلب العقود
+                    $('#PropertyContractId').prop('disabled', true);
+                    $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+                } else {
+                    // ✅ مش معلم: تحصيل عادي - نجلب العقود والدفعات
+                    $('#PropertyContractId').prop('disabled', false);
+                    $.getJSON('@Url.Action("ContractList","CashReceiptVoucher")/' + $('#RenterId').val(), function (data) {
+                        console.log(data);
+                        var items = "";
+                        $.each(data, function (i, state) {
+                            items += "<option value='" + state.Value + "'>" + state.Text + "</option>";
+                        });
+                        $('#PropertyContractId').html(items);
+                        GetContractBatches();
+                    });
+                }
+            }
+            // ملحوظة: SourceTypeId = 12 (مصاريف العقارات) له كود منفصل تماماً
+        });
+
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#TransactionDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+
+        if (!checkId()) {
+            console.log('id empty');
+            if ($('#DepartmentId').val()) {
+                setDocNum();
+                cashBoxByDepartment();
+            }
+        } else {
+            console.log('id not ');
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        }
+
+        if ($('#IsInvoiceSelected').prop("checked") == true && $('#SourceTypeId').val() == 1) {
+            $('#IsInvoiceSelected').prop('disabled', false);
+            $('#IsInvoiceSelected').prop('readonly', false);
+            $('#SalesInvoiceActualPayment').show();
+        }
+        else {
+            $('#SalesInvoiceActualPayment').hide();
+        }
+
+        sourceTypeChange();
+        getCustomerSalesInvoices();
+        $('#CashReceiptPaymentMethodId').trigger('change');
+        if (checkId() && ($('#SourceTypeId').val() != 12)) {
+            CalculateBatchesTotalMoney();
+        }
+
+
+
+    });
+    //*********************************************************************************************//
+
+    //---------------------------------- Event Functions -------------------------------------//
+    $('#SourceTypeId').on('change', function () {
+        sourceTypeChange();
+    });
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            if (!checkId())  {
+                setDocNum();
+            }
+            cashBoxByDepartment();
+            getCustomerSalesInvoices()
+        }
+    });
+    $('#CustomerId').on('change', function () {
+        getCustomerBalanceInEachDept();
+        getCustomerSalesInvoices();
+    });
+    $('#VendorId').on('change', function () {
+        getVendorBalanceInEachDept();
+    });
+    $(document).on('focusout', '.ActualPaymentPaidAmount', function () {
+        if ($(this).val() > 0) {
+            EditAmount = 0;
+            ReCalculateMoneyAmount();
+            var remain = $(this).closest('tr').find('.ActualPaymentRemain').text();
+            var paidAmount = $(this).val();
+            var NetRequired = parseFloat(remain) - parseFloat(paidAmount);
+            $(this).closest('tr').find('.ActualPaymentNetRequired').text(NetRequired.toFixed(2));
+          }
+
+    });
+    $(document).on('click', '#IsInvoiceSelected', function () {
+        if ($('#IsInvoiceSelected').prop("checked") == true && $('#SourceTypeId').val() == 1) {
+            getCustomerSalesInvoices();
+            if ($('#MoneyAmount').val() > 0) {
+                $('#MoneyAmount').val(0)
+            }
+            $('#SalesInvoiceActualPayment').show();
+            $('#MoneyAmount').prop('disabled', true).prop('readonly', true).attr('placeholder', '0.00');
+        }
+        else {
+            $('#SalesInvoiceActualPayment').hide();
+            $('#MoneyAmount').prop('disabled', false).prop('readonly', false).attr('placeholder','@MyERP.Properties.Resources.Amount');
+        }
+    });
+    $('#MoneyAmount').on('focusout', function () {
+        var money = $(this).val();
+        $('#SalesInvoiceActualPaymentTable tr').each(function () {
+            var td = $(this);
+            var NetRequired;// td.find('.ActualPaymentNetRequired').text();
+            var Amount = td.find('.ActualPaymentPaidAmount').val();
+            var TotalRemain = parseFloat(td.find('.ActualPaymentRemain').text());
+            if (money > 0) {
+                if (money > TotalRemain) {
+                    money -= TotalRemain;
+                    money = money.toFixed(2);
+                    td.find('.ActualPaymentPaidAmount').val(TotalRemain);
+                    Amount = td.find('.ActualPaymentPaidAmount').val();
+                    NetRequired = (Amount - TotalRemain).toFixed(2);
+                    td.find('.ActualPaymentNetRequired').text(NetRequired);
+                }
+                else if (money <= TotalRemain) {
+                    td.find('.ActualPaymentPaidAmount').val(money);
+                    NetRequired = Math.abs(TotalRemain - money).toFixed(2);
+                    td.find('.ActualPaymentNetRequired').text(NetRequired);
+                    money -= TotalRemain;
+                    money = money.toFixed(2);
+                }
+            }
+
+        })
+
+    });
+    $(document).on('change', '#CashReceiptPaymentMethodId', function () {
+        if ($('#CashReceiptPaymentMethodId').val() == 1) { //نقدى
+            $('.CashBoxDiv').show();
+            $('.ChartOfAccountDiv').hide();
+            $('.BankAccountDiv').hide();
+            $('#TransactionDiv').hide();
+            $('#TransactionNo').attr('required', false);
+            $('#TransactionDate').attr('required', false);
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 2) { //حوالة بنكية
+            $('.CashBoxDiv').hide();
+            $('.ChartOfAccountDiv').hide();
+            $('.BankAccountDiv').show();
+            $('#TransactionDiv').show();
+            $('#TransactionNoLabel').text('@MyERP.Properties.Resources.TransactionNumber');
+            $('#TransactionDateLabel').text('@MyERP.Properties.Resources.TransactionDate');
+            if (!$('#TransactionNo').val()) {
+                $('#TransactionNo').attr('required', true);
+                $('#TransactionDate').attr('required', true);
+            }
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 3) { // شيك مصدق
+            $('.CashBoxDiv').hide();
+            $('.ChartOfAccountDiv').hide();
+            $('.BankAccountDiv').show();
+            $('#TransactionDiv').show();
+            $('#TransactionNoLabel').text('@MyERP.Properties.Resources.ChequeNo');
+            $('#TransactionDateLabel').text('@MyERP.Properties.Resources.ChequeDate');
+            if (!$('#TransactionNo').val()) {
+                $('#TransactionNo').attr('required', true);
+                $('#TransactionDate').attr('required', true);
+            }
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 4) { //الحساب
+            $('.CashBoxDiv').hide();
+            $('.ChartOfAccountDiv').show();
+            $('.BankAccountDiv').hide();
+            $('#TransactionDiv').hide();
+            $('#TransactionNo').attr('required', false);
+            $('#TransactionDate').attr('required', false);
+        }
+
+    });
+    $(document).on('change', '#Date', function () {
+        if (!checkId()) {
+            setDocNum();
+        }
+    });
+
+        //$('form').submit(function () {
+    //    if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+    //        $('.form-horizontal').first().addClass('was-validated');
+    //        $('html, body').animate({
+    //            scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+    //        }, 500);
+    //    } else {
+    //        $(this).find("button[id='newbtn']").prop('disabled', true);
+    //        $(this).find("button[id='save']").prop('disabled', true);
+    //    }
+    //});
+
+
+    //*********************************************************************************************//
+
+    //---------------- Other Functions ----------------------//
+
+
+    function setDocNum() {
+        $.get('/CashReceiptVoucher/SetDocNum?id=' + $('#DepartmentId').val() +'&VoucherDate=' + $('#Date').val()).done(function (r) {
+            $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            $('#DocumentNumber').val(r);
+        });
+    }
+
+
+function sourceTypeChange() {
+    $('.AccountId').hide();
+    $('.VendorId').hide();
+    $('.CustomerId').hide();
+    $('.EmployeeId').hide();
+    $('.RenterId').hide();
+    $('.TechId').hide();
+    $('.DirectRevenueId').hide();
+    $('.ShareholderId').hide();
+    $('.ElderId').hide();
+    $('.ChildrenId').hide();
+    $('.PropertyContractId').hide();
+    $('.SettlementId').hide(); // ===== إضافة جديدة =====
+
+    $('#balanceTable').hide();
+    $('#IsInvoiceSelected').prop('disabled', true);
+    $('#IsInvoiceSelected').prop('readonly', true);
+    $('#IsInvoiceSelected').prop("checked", false);
+    $('#SalesInvoiceActualPayment').hide();
+    $('#Month_Year').hide();
+    $('#PropertyBillRegisteration').hide();
+    $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+    $('#SettlementDetailsTable').hide(); // ===== إضافة جديدة =====
+    $('#SettlementSummaryInfo').hide(); // ✅ إخفاء ملخص التصفية عند تغيير نوع المصدر
+
+    if ($('#SourceTypeId').val() == 6) {
+        $('.AccountId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 4) {
+        $('.DirectRevenueId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 3) {
+        $('.EmployeeId').show();
+        $('.RenterId').show();
+        $('.RenterId').prop('disabled', false);
+        // ✅ تأكيد إخفاء العقود والدفعات في حالة التحصيل من رصيد سابق
+        $('.PropertyContractId').hide();
+        $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+        $('#PropertyBillRegisteration').hide();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 5) {
+        $('.TechId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 2) {
+        $('.VendorId').show();
+        $('#balanceTable').show();
+        getVendorBalanceInEachDept();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.VendorBalance');
+    }
+    else if ($('#SourceTypeId').val() == 1) {
+        $('.CustomerId').show();
+        $('#balanceTable').show();
+        getCustomerBalanceInEachDept();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.CustomerBalance');
+        $('#IsInvoiceSelected').prop('disabled', false);
+        $('#IsInvoiceSelected').prop('readonly', false);
+        if ($('#IsInvoiceSelected').prop("checked") == true) {
+            $('#SalesInvoiceActualPayment').show();
+        }
+    }
+    else if ($('#SourceTypeId').val() == 8) {
+        $('.ShareholderId').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 9) {  //Elder
+        $('#Month_Year').show();
+        $('.ElderId').show();
+        GetMonthlySubscription();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance')
+    }
+    else if ($('#SourceTypeId').val() == 10) { //child
+        $('#Month_Year').show();
+        $('.ChildrenId').show();
+        GetMonthlySubscription();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 11) { //Property Contract
+        $('.PropertyContractId').show();
+        $('.PropertyContractId').prop('disabled', false);
+        $('.RenterId').show();
+        $('.RenterId').prop('disabled', false);
+
+        // ✅ التحقق من حالة Checkbox الرصيد الافتتاحي
+        if ($('#IsAgainstOpeningBalance').prop('checked')) {
+            // ✅ إذا كان التحصيل من رصيد سابق: إخفاء وقفل العقد والدفعات
+            $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+
+            // ✅ تفريغ رقم العقد والدفعات
+            $('#PropertyContractId').val('');
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+
+            // ✅ قفل الـ dropdown بتاع العقد (بدون إخفاء)
+            $('#PropertyContractId').prop('disabled', true);
+
+        } else {
+            // ✅ التحصيل العادي: إظهار وفتح العقد والدفعات
+            $('#CashReceiptVoucherPropertyContractBatchesTable').show();
+
+            // ✅ فتح الـ dropdown بتاع العقد
+            $('#PropertyContractId').prop('disabled', false);
+
+            // ✅ تحميل بيانات العقد إذا لم يكن في وضع الإنشاء
+            if (!checkId()) {
+                $('#PropertyContractId').trigger('change');
+            }
+        }
+
+        // تحميل رصيد المستأجر
+        loadRenterBalance();
+
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    else if ($('#SourceTypeId').val() == 12) { //Property Bill registeration تسجيل مصاريف
+        $('.PropertyContractId').show();
+        $('.PropertyContractId').prop('disabled', true);
+        $('.RenterId').show();
+        $('.RenterId').prop('disabled', true);
+        $('#PropertyBillRegisteration').show();
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+    // ===== إضافة كود التصفية =====
+    else if ($('#SourceTypeId').val() == 13) { // تصفية
+        $('.SettlementId').show();
+        $('#SettlementDetailsTable').hide(); // مخفي في البداية
+        // ✅ تحميل التصفيات مع تحديد المحفوظة إن وجدت
+       // var savedTerminationId = checkId() ? $('#PropertyContractTerminationIdHidden').val() : null;
+        //var savedTerminationId = checkId() ? @(Model?.PropertyContractTerminationId ?? 0) : null;
+        var savedTerminationId = checkId() ? savedPropertyContractTerminationId : null;
+        loadSettlements(savedTerminationId);
+        $('.balance-details-btn').text('@MyERP.Properties.Resources.Balance');
+    }
+}
+
+
+    $('#ElderId').on('change', function () {
+        GetMonthlySubscription()
+    });
+    $('#ChildrenId').on('change', function () {
+        GetMonthlySubscription()
+    });
+    $('#Month').on('change', function () {
+        GetMonthlySubscription()
+    });
+    $('#Year').on('change', function () {
+        GetMonthlySubscription()
+    });
+    $('#PropertyContractId').on('change', function () {
+        console.log('PropertyContractId');
+        GetContractBatches();
+    });
+    $(document).on('change', '.IsDelivered', function (e) {
+        if ($(this).prop('checked') == true) {
+            $(this).closest('tr').find('.Paid').val($(this).closest('tr').find('.BatchTotal').inputmask('unmaskedvalue'));
+            $(this).closest('tr').find('.Remain').val(0);
+        }
+        else {
+            $(this).closest('tr').find('.Paid').val(0);
+            $(this).closest('tr').find('.Remain').val(0);
+        }
+
+        CalculateBatchesTotalMoney();
+    });
+    $(document).on('change', '.Paid', function (e) {
+    //    var diff = parseFloat($(this).closest('tr').find('.BatchTotal').inputmask('unmaskedvalue')) - parseFloat($(this).inputmask('unmaskedvalue'));
+        var diff = parseFloat($(this).closest('tr').find('.BatchTotal').val()) - parseFloat($(this).val());
+    console.log(diff.toFixed(2));
+    //$(this).closest('tr').find('.Paid').val($(this).closest('tr').find('.BatchTotal').inputmask('unmaskedvalue'))
+        if (diff >= 0) {
+            $(this).closest('tr').find('.Remain').val(diff.toFixed(2));
+            $(this).closest('tr').find('.Remain').prop('required', false);
+        }
+        else {
+            $(this).closest('tr').find('.Remain').empty();
+            $(this).closest('tr').find('.Remain').prop('required', true);
+        }
+        CalculateBatchesTotalMoney();
+    });
+
+    function GetMonthlySubscription() {
+        var type = "";
+        var id = 0;
+        if ($('#SourceTypeId').val() == 9) {
+            type = "Elder";
+            id = $('#ElderId').val();
+        }
+        else {
+            type = "Children";
+            id = $('#ChildrenId').val();
+        }
+        $.get('/CashReceiptVoucher/GetMonthlySubscription?Id=' + id + "&Type=" + type /*+ "&Month=" + $('#Month').val() + "&Year=" + $('#Year').val()*/).done(function (r) {
+            $('#MoneyAmount').val(r)
+        });
+    }
+    function cashBoxByDepartment() {
+        $.get('/Helper/CashBoxByDepartment/' + $('#DepartmentId').val()).done(function (r) {
+            $('#CashBoxId').empty();
+            for (var i = 0; i < r.length; i++) {
+                $('#CashBoxId').append($('<option>', {
+                    value: r[i].Id,
+                    text: r[i].ArName
+                }));
+            }
+        });
+    }
+    function getCustomerBalanceInEachDept() {
+        $('#pleasewait').fadeIn();
+        $.get('/Helper/GetCustomerBalanceInEachDept/' + $('#CustomerId').val()).done(function (r) {
+            $('.balance').remove()
+            for (var i = 0; i < r.length; i++) {
+                let tr = '<tr class="balance"><td>' + r[i].DepartmentArName + '</td><td>' + r[i].Debit + '</td><td>' + r[i].Credit + '</td></tr >'
+                $('#balanceTable').append(tr);
+            }
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function getVendorBalanceInEachDept() {
+        $('#pleasewait').fadeIn();
+        $.get('/Helper/GetVendorBalanceInEachDept/' + $('#VendorId').val()).done(function (r) {
+            $('.balance').remove()
+            for (var i = 0; i < r.length; i++) {
+                let tr = '<tr class="balance"><td>' + r[i].DepartmentArName + '</td><td>' + r[i].Debit + '</td><td>' + r[i].Credit + '</td></tr >'
+                $('#balanceTable').append(tr);
+            }
+        });
+        $('#pleasewait').fadeOut();
+        getCustomerSalesInvoices();
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+        // return (dt)
+    }
+    //--------- Actual Payment Table -------------------//
+    function getCustomerSalesInvoices() {
+        var vid = 0;
+        if (checkId()) {
+            vid = $('#Id').val();
+        }
+        $('#pleasewait').fadeIn();
+        $.get('/Helper/GetCustomerSalesInvoices?id=' + $('#CustomerId').val() + '&cashReceiptVoucherId=' + vid + '&DepartmentId=' + $('#DepartmentId').val()).done(function (r) {
+            $('.invoice').remove();
+            var DueDate;
+            let tr;
+            var Remain;
+            for (var i = 0; i < r.length; i++) {
+                if (r[i].Paid == null) {
+                    r[i].Paid = 0;
+                }
+                if (r[i].PaidAmount == null) {
+                    r[i].PaidAmount = 0;
+                }
+                if (r[i].RemainAmount == null && r[i].PaidInTransaction == 0 && (r[i].PaidAmount == 0 || r[i].PaidAmount == null)) {
+                    r[i].RemainAmount = r[i].TotalAfterTaxes;
+                }
+                if (r[i].DueDate == null) {
+                    DueDate = "";
+                }
+                else {
+                    DueDate = convertToJavaScriptDate(r[i].DueDate);
+                }
+                if (checkId() ) {
+                    Remain = (parseFloat(r[i].PaidInTransaction) + parseFloat(r[i].RemainAmount)).toFixed(2);
+                    var TotalRequiredAmount = (parseFloat(Remain) - parseFloat(r[i].PaidAmount)).toFixed(2);
+                    tr = '<tr class="invoice"><td><input hidden class="SalesInvoiceId" value="' +
+                        r[i].Id + '"/><label class="ActualPaymentDocNo control-label">' +
+                        r[i].DocumentNumber + '</label></td ><td><label class="control-label ActualPaymentSalesInvoiceDate">  ' +
+                        convertToJavaScriptDate(r[i].VoucherDate) + '</label></td><td><label class="control-label ActualPaymentDate"> ' +
+                        DueDate + '</label></td><td><input hidden class="ActualPaymentDepartmentId" value="' +
+                        r[i].DepartmentId + '" /><lable class="control-label ActualPaymentDepartmentArName">' +
+                        r[i].DepartmentArName + '</lable></td><td><lable class="control-label ActualPaymentTotal"> ' +
+                        r[i].TotalAfterTaxes + '</lable></td><td><label class="control-label ActualPaymentPaid">' +
+                        r[i].Paid + '</td><td><label class="control-label ActualPaymentRemain">' +
+                        Remain + '</label></label></td><td><input type="checkbox" onclick="PaidAllAmount(this)" class="IsAllPaid form-control" style="width:15px;" /></td><td><input type="text" class="ActualPaymentPaidAmount form-control money" value="' +
+                        r[i].PaidAmount + '" /></td><td><label class="control-label ActualPaymentNetRequired">' +
+                        TotalRequiredAmount + '</label></td></tr>';
+                }
+                else {
+                     Remain = (parseFloat(r[i].TotalAfterTaxes) - parseFloat(r[i].Paid)).toFixed(2);
+                    tr = '<tr class="invoice"><td><input hidden class="SalesInvoiceId" value="' +
+                        r[i].Id + '"/><label class="ActualPaymentDocNo control-label">' +
+                        r[i].DocumentNumber + '</label></td ><td><label class="control-label ActualPaymentSalesInvoiceDate">  ' +
+                        convertToJavaScriptDate(r[i].VoucherDate) + '</label></td><td><label class="control-label ActualPaymentDate"> ' +
+                        DueDate + '</label></td><td><input hidden class="ActualPaymentDepartmentId" value="' +
+                        r[i].DepartmentId + '" /><lable class="control-label ActualPaymentDepartmentArName">' +
+                        r[i].DepartmentArName + '</lable></td><td><lable class="control-label ActualPaymentTotal"> ' +
+                        r[i].TotalAfterTaxes + '</lable></td><td><label class="control-label ActualPaymentPaid"></label>' +
+                        r[i].Paid + '</td><td><label class="control-label ActualPaymentRemain">' +
+                        Remain + '</label></td><td><input type="checkbox" onclick="PaidAllAmount(this)" class="IsAllPaid form-control" style="width:15px;" /></td><td><input type="text" class="ActualPaymentPaidAmount form-control money" /></td><td><label class="control-label ActualPaymentNetRequired"></label></td></tr>';
+                }
+                $('#SalesInvoiceActualPaymentTable').append(tr);
+                //if (parseFloat(r[i].PaidInTransaction) == parseFloat(Remain)) {
+                //    $('.IsAllPaid').prop('checked', true);
+                //}
+
+                if ($('#MoneyAmount').val() > 0 && $('#IsInvoiceSelected').prop("checked") == false) {
+                    $('#MoneyAmount').trigger('focusout');
+                }
+            }
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function PaidAllAmount(e) {
+        var TotalAmount = $(e).closest('tr').find('.ActualPaymentRemain').text();
+        if ($(e).prop('checked') == true) {
+
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').val(TotalAmount);
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').prop('disabled', true);
+            $(e).closest('tr').find('.ActualPaymentNetRequired').text('0');
+        }
+        else {
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').val(0);
+            $(e).closest('tr').find('.ActualPaymentPaidAmount').prop('disabled', false);
+            $(e).closest('tr').find('.ActualPaymentNetRequired').text(TotalAmount);
+        }
+        EditAmount = 0;
+        ReCalculateMoneyAmount();
+    }
+    function ReCalculateMoneyAmount() {
+        if ($('#SourceTypeId').val() == 1) {
+            $('#SalesInvoiceActualPaymentTable tr').each(function () {
+                let td = $(this);
+                if (td.find('.ActualPaymentPaidAmount').val() > 0) {
+                    EditAmount += parseFloat(td.find('.ActualPaymentPaidAmount').val());
+                }
+            });
+            $('#MoneyAmount').val(EditAmount.toFixed(2));
+        }
+    }
+    //--------------------------------------------------//
+    //--------------- Contract Batches -------------------------//
+    function GetContractBatches() {
+        $('#pleasewait').fadeIn();
+        let vid = 0;
+        if (checkId()) {
+            vid = $('#Id').val();
+        }
+        $.get('/CashReceiptVoucher/GetContractBatches?PropertyContractId=' + $('#PropertyContractId').val() + '&vid=' + vid ).done(function (r) {
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+            $('#CashReceiptVoucherPropertyContractBatchesTable').show();
+            for (var i = 0; i < r.length; i++) {
+                r[i].BatchDate = r[i].BatchDate != null ? convertToJavaScriptDate(r[i].BatchDate) : "";
+                r[i].PropertyArName = r[i].PropertyArName != null ? r[i].PropertyArName : "";
+                r[i].PropertyUnitArName = r[i].PropertyUnitArName != null ? r[i].PropertyUnitArName : "";
+                var CheckPaid = r[i].IsDelivered == true ? "readonly disabled" : "";
+                r[i].IsDelivered = r[i].IsDelivered == true ? "checked disabled" : "";
+                let tr = '<tr><td><input hidden class="PropertyContractBatchId" value="' +
+                    r[i].PropertyContractBatchId+'"/><label class="control-label">' +
+                    r[i].BatchNo + '</label></td><td><label class="control-label">' +
+                    r[i].BatchDate + '</label></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchRentValue form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchRentValue+'" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchRentValueTaxes form-control tabledit-input form-control-sm" value = "'+
+                    r[i].BatchRentValueTaxes+'" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchElectricityValue form-control tabledit-input form-control-sm" value = "'+
+                    r[i].BatchElectricityValue+'" disabled readonly /></td><td class="tabledit-edit-mode"><input type = "number" class="BatchElectricityValueTaxes form-control tabledit-input form-control-sm" value = "'+
+                    r[i].BatchElectricityValueTaxes+'" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValue form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchWaterValue+'" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchWaterValueTaxes form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchWaterValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchGasValue form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchGasValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchGasValueTaxes form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchGasValueTaxes + '" disabled readonly /></td> <td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValue form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchServicesValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchServicesValueTaxes form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchServicesValueTaxes + '" disabled readonly /></td> <td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValue form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchCommissionValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchCommissionValueTaxes form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchCommissionValueTaxes + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchInsuranceValue form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchInsuranceValue + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="BatchInsuranceValueTaxes form-control tabledit-input form-control-sm" value="' +
+                    r[i].BatchInsuranceValueTaxes + '" disabled readonly /></td><td><input class="form-control BatchTotal" disabled value="' +
+                    r[i].BatchTotal+'"></td><td><input class="form-control property" disabled value="' +
+                    r[i].PropertyArName+'"></td><td><input class="form-control unit" disabled value="' +
+                    r[i].PropertyUnitArName + '"></td><td><input type="checkbox" class="IsDelivered" ' +
+                    r[i].IsDelivered + ' /></td><td class="tabledit-edit-mode"><input type="number" step="any" readonly disabled  class="TotalPaid form-control tabledit-input form-control-sm" value="' +
+                    r[i].TotalPaid + '" /></td>' +
+                    '<td class="tabledit-edit-mode"><input   type="number" step="any" ' + CheckPaid + '  class="Paid  form-control tabledit-input form-control-sm" value = "' +
+                    r[i].Paid + '" /></td><td class="tabledit-edit-mode"><input type="number" step="any" class="Remain form-control tabledit-input form-control-sm" value="' +
+                    r[i].Remain + '" disabled readonly /></td></tr>';
+                    $('#CashReceiptVoucherPropertyContractBatches').append(tr);
+            }
+          CalculateBatchesTotalMoney(1);
+        });
+        $('#pleasewait').fadeOut();
+    }
+    function CalculateBatchesTotalMoney(fromload) {
+        var sum = 0;
+        $('.BatchTotal').each(function () {
+
+            //if ($(this).closest('tr').find('.IsDelivered').prop('checked') == true) {
+            //    var isDisabled = $(this).closest('tr').find('.IsDelivered').prop('disabled');
+            //    if (!isDisabled) {
+            //        sum += parseFloat($(this).val());
+            //    }
+
+            //}
+              {
+                if ($(this).closest('tr').find('.Paid').val() > 0) {
+                    sum += parseFloat($(this).closest('tr').find('.Paid').val());
+                }
+
+                let paid = parseFloat($(this).closest('tr').find('.Paid').val());
+                let totalPaid = parseFloat($(this).closest('tr').find('.TotalPaid').val());
+                let total = parseFloat($(this).val());
+
+                $(this).closest('tr').find('.Remain').val((total - (paid + totalPaid)).toFixed(2));
+                console.log(total - (paid + totalPaid));
+
+
+            }
+
+        });
+        if (!fromload) {
+            $('#MoneyAmount').val(sum.toFixed(2));
+        }
+
+    }
+    //----------------------------------------------------------//
+    //*********************************************************//
+    function DeleteFunc(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/CashReceiptVoucher/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/CashReceiptVoucher');
+                        } else {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+    function ApproveNotApprove(id) {
+        $.ajax({
+            url: '/CashReceiptVoucher/ApproveNotApprove',
+            type: 'POST',
+            data: {
+                "Id": id,
+            },
+            error: function (e) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.TheApprovalStateNotChanged',
+                    text: " ",
+                    icon: 'error',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            },
+            success: function (r) {
+                if (r == 'true') {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.TheApprovalStateHasChanged',
+                        text: " ",
+                        icon: 'success',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    window.location.replace('/CashReceiptVoucher');
+                }
+            }
+        });
+    }
+    function addEdit(n) {
+
+        let valid = true;
+        var sum = 0;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+        if ($('#CashReceiptPaymentMethodId').val() == 1)//نقدى
+        {
+            $('#TransactionNo').val('').attr('required', false);
+            $('#TransactionDate').val('').attr('required', false);
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 2) { //حوالة بنكية
+            if (!$('#TransactionNo').val()) {
+                $('#TransactionNo').attr('required', true);
+                $('#TransactionDate').attr('required', true);
+                valid = false;
+            }
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 3) { // شيك مصدق
+            if (!$('#TransactionNo').val()) {
+                $('#TransactionNo').attr('required', true);
+                $('#TransactionDate').attr('required', true);
+                valid = false;
+            }
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 4) { //الحساب
+            $('#TransactionNo').val('').attr('required', false);
+            $('#TransactionDate').val('').attr('required', false);
+        }
+        else if ($('#CashReceiptPaymentMethodId').val() == 12) { //تسجيل مصاريف
+            $('#ElectricityBillValue').val('').attr('required', false);
+            $('#GasBillValue').val('').attr('required', false);
+            $('#ViolationBillValue').val('').attr('required', false);
+        }
+
+        var CashReceiptVoucherPropertyContractBatches = [];
+        if (valid && $('#SourceTypeId').val() == 11) {
+            $('#CashReceiptVoucherPropertyContractBatches tr').each(function () {
+                var td = $(this);
+                var CashReceiptVoucherPropertyContractBatch = {
+                    CashReceiptVoucherId: $('#Id').val(),
+                    PropertyContractBatchId: td.find('.PropertyContractBatchId').val(),
+                    IsDelivered: td.find('.IsDelivered').prop('checked'),
+                    Paid: td.find('.Paid').inputmask('unmaskedvalue'),
+                    Remain: td.find('.Remain').inputmask('unmaskedvalue'),
+                };
+                CashReceiptVoucherPropertyContractBatches.push(CashReceiptVoucherPropertyContractBatch);
+            });
+        }
+        var SalesInvoiceActualPayments = [];
+        if (valid && $('#SourceTypeId').val() == 1) {
+            $('#SalesInvoiceActualPaymentTable tr').each(function () {
+                var td = $(this);
+                var SalesInvoiceActualPayment = {
+                    CashReceiptVoucherId: $('#Id').val(),
+                    SalesInvoiceId: td.find('.SalesInvoiceId').val(),
+                    SalesInvoiceDate: td.find('.ActualPaymentSalesInvoiceDate').text(),
+                    SalesInvoiceDocNumber: td.find('.ActualPaymentDocNo').text(),
+                    Amount: td.find('.ActualPaymentPaidAmount').inputmask('unmaskedvalue') > 0 ? td.find('.ActualPaymentPaidAmount').inputmask('unmaskedvalue') : 0,
+                    ChequeReceiptId: td.find('.ChequeReceiptId').val(),
+                    PaymentDate: $('#Date').val(),// td.find('.ActualPaymentSalesInvoiceDate').text(),
+                    NetAmountRemain: td.find('.ActualPaymentNetRequired').text(),
+                    IsActive: true,
+                    IsDeleted: false,
+                    Notes: td.find('.Notes').val(),
+                };
+                if ($('#IsInvoiceSelected').prop('checked') == true && td.find('.ActualPaymentPaidAmount').val() > 0) {
+                    sum += parseFloat(td.find('.ActualPaymentPaidAmount').val());
+                }
+                //else {
+                //  $('#MoneyAmount').trigger('keyup');
+                //    //  //var money = $('#MoneyAmount').val();
+                //    //  //var current = parseFloat(td.find('.ActualPaymentPaidAmount').val())
+                //    //  //if (money > 0) {
+                //    //  //    var diff = money - current;
+                //    //  //    money -= current;
+                //    ////  }
+                //}
+                SalesInvoiceActualPayments.push(SalesInvoiceActualPayment);
+            });
+            if ($('#IsInvoiceSelected').prop('checked') == true && sum.toFixed(2) != parseFloat($('#MoneyAmount').val())) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AmountMustBeEqualToSumOfAllPaidAmount',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+                valid = false;
+            }
+        }
+        //if ($('#IsInvoiceSelected').prop('checked') == true) {
+        //    $('#MoneyAmount').val(sum);
+        //}
+
+        var CashReceiptVoucher = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            BranchId: $('#BranchId').val(),
+            MoneyAmount: $('#MoneyAmount').inputmask('unmaskedvalue'),
+            SourceTypeId: $('#SourceTypeId').val(),
+            OtherSourceName: $('#OtherSourceName').val(),
+            Date: $('#Date').val(),
+            CurrencyId: $('#CurrencyId').val(),
+            AccountId: $('#AccountId').val(),
+            IsLinked: $('#IsLinked').prop('checked'),
+            IsPosted: $('#IsPosted').prop('checked'),
+            IsActive: $('#IsActive').val(),
+            IsDeleted: $('#IsDeleted').val(),
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            CustomerId: $('#CustomerId').val(),
+            VendorId: $('#VendorId').val(),
+            EmployeeId: $('#EmployeeId').val(),
+            RenterId: $('#RenterId').val(),
+            CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+            DepartmentId: $('#DepartmentId').val(),
+            CashBoxId: $('#CashBoxId').val(),
+            TechnicianId: $('#TechnicianId').val(),
+            DirectRevenueId: $('#DirectRevenueId').val(),
+            ShareholderId: $('#ShareholderId').val(),
+            CostCenterId: $('#CostCenterId').val(),
+            IsInvoiceSelected: $('#IsInvoiceSelected').prop('checked'),
+            BankAccountId: $('#BankAccountId').val(),
+            TransactionNo: $('#TransactionNo').val(),
+            TransactionDate: $('#TransactionDate').val(),
+            ChartOfAccountId: $('#ChartOfAccountId').val(),
+            CashReceiptPaymentMethodId: $('#CashReceiptPaymentMethodId').val(),
+            Month: $('#SourceTypeId').val() == 9 || $('#SourceTypeId').val() == 10 ? $('#Month').val() : 0,
+            Year: $('#SourceTypeId').val() == 9 || $('#SourceTypeId').val() == 10 ? $('#Year').val() : 0,
+            ChildrenId: $('#SourceTypeId').val() == 10 ? $('#ChildrenId').val() : null,
+            ElderId: $('#SourceTypeId').val() == 9 ? $('#ElderId').val() : null,
+            PropertyContractId: ($('#SourceTypeId').val() == 11 || $('#SourceTypeId').val() == 12) ? $('#PropertyContractId').val() : null,
+            IsAgainstOpeningBalance: $('#SourceTypeId').val() == 11 ? $('#IsAgainstOpeningBalance').prop('checked') : false,
+            SalesInvoiceActualPayments: SalesInvoiceActualPayments,
+            VendorReceiptNumber: $('#VendorReceiptNumber').val(),
+            CashReceiptVoucherPropertyContractBatches: CashReceiptVoucherPropertyContractBatches,
+            GasBillValue: $('#GasBillValue').val(),
+            ElectricityBillValue: $('#ElectricityBillValue').val(),
+            ViolationBillValue: $('#ViolationBillValue').val(),
+            PropertyContractTerminationId: $('#SourceTypeId').val() == 13 ? $('#SettlementId').val() : null,
+        }
+
+        if (valid == true) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $('#SaveAndPrint').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/CashReceiptVoucher/AddEdit",
+                        data:
+                            JSON.stringify({ CashReceiptVoucher }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                if (n == 'report') {
+                                    window.open("/Report/CashReceiptVoucherDetails/" + r.id);
+                                    window.location.replace("/CashReceiptVoucher");
+                                }
+                                else if (n == 'new') {
+                                    window.location.replace("/CashReceiptVoucher/AddEdit");
+                                }
+                                else {
+                                    window.location.replace("/CashReceiptVoucher");
+}
+                            } else {
+                                $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                                $('#SaveAndPrint').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                            $('#SaveAndPrint').prop('disabled', false);
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+
+    function checkId() {
+        var value = $('#Id').val(); // Get the value of the hidden input
+        if (value === null || value.trim() === "" || value === "0" || value===0) {
+            return false;
+        }
+        return true;
+    }
+
+
+
+    function loadSettlements(selectedId) {
+    $.ajax({
+        url: '@Url.Action("GetActiveSettlements", "CashReceiptVoucher")',
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            var settlementDropdown = $('#SettlementId');
+            settlementDropdown.empty();
+            settlementDropdown.append('<option value="">-- اختر التصفية --</option>');
+
+            $.each(data, function (index, item) {
+                settlementDropdown.append(
+                    $('<option></option>')
+                        .val(item.Id)
+                        .text(item.DocumentNumber + ' - ' + item.RenterName + ' (' + item.TotalAmount.toFixed(2) + ')')
+                );
+            });
+            // ✅ تحديد التصفية المحفوظة وتفعيل التغيير
+            if (selectedId && selectedId > 0) {
+                settlementDropdown.val(selectedId);
+                settlementDropdown.trigger('change');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('خطأ في تحميل التصفيات:', error);
+            Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء تحميل قائمة التصفيات',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    });
+    }
+
+
+
+
+$('#SettlementId').on('change', function () {
+    var settlementId = $(this).val();
+
+    if (!settlementId || settlementId == '' || settlementId == '0') {
+        $('#SettlementDetailsTable').hide();
+        $('#SettlementSummaryInfo').hide(); // ✅ إخفاء ملخص التصفية
+        $('#MoneyAmount').val('');
+        // ✅ مسح الحقول المخفية
+       // $('#PropertyContractTerminationId').val('');
+        return;
+    }
+
+    // جلب تفاصيل التصفية
+    $('#pleasewait').fadeIn();
+    $.ajax({
+        url: '@Url.Action("GetSettlementDetails", "CashReceiptVoucher")',
+        type: 'GET',
+        data: { id: settlementId },
+        dataType: 'json',
+        success: function (response) {
+            $('#pleasewait').fadeOut();
+
+            if (response.success) {
+                var settlement = response.data;
+
+                // ✅ حفظ رقم التصفية في Hidden Field
+              //  $('#PropertyContractTerminationId').val(settlement.Id);
+
+                // عرض المعلومات الأساسية
+                $('#settlement-doc-number').text(settlement.DocumentNumber);
+                $('#settlement-contract-no').text(settlement.ContractNumber);
+                $('#settlement-renter-name').text(settlement.RenterName);
+                $('#settlement-property-name').text(settlement.PropertyName);
+                $('#settlement-total-amount').text(settlement.TotalUnpaidAmount.toFixed(2));
+                $('#settlement-renter-balance').text(settlement.RenterBalance.toFixed(2));
+                $('#settlement-insurance').text(settlement.InsuranceAmount.toFixed(2));
+
+                // ✅ عرض أيام الزيادة وقيمتها
+                $('#settlement-extra-days').text(settlement.IncreaseDaysNo);
+                $('#settlement-extra-days-value').text(settlement.IncreaseDaysTotalValue.toFixed(2));
+
+                // ✅ عرض إجمالي التلفيات
+                $('#settlement-total-damages').text(settlement.TotalDamages.toFixed(2));
+
+                // ✅ حساب المبلغ الإجمالي (المبلغ غير المدفوع + أيام الزيادة + التلفيات)
+                // التلفيات تُضاف لأنها مستحقة على المستأجر لصالح الشركة
+                var finalAmount = 
+                                settlement.IncreaseDaysTotalValue +
+                                settlement.TotalDamages;
+
+                // ملء المبلغ تلقائياً
+                $('#MoneyAmount').val(finalAmount.toFixed(2));
+
+                // عرض الدفعات
+                var detailsHtml = '';
+                var grandTotal = 0;
+
+                $.each(settlement.Details, function (index, detail) {
+                    var batchDate = detail.BatchDate != null ? convertToJavaScriptDate(detail.BatchDate) : '';
+                    grandTotal += detail.Remain;
+
+                    detailsHtml += '<tr>' +
+                        '<td>' + detail.BatchNo + '</td>' +
+                        '<td>' + batchDate + '</td>' +
+                        '<td>' + detail.BatchRentValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchWaterValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchElectricityValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchGasValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchServicesValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchCommissionValue.toFixed(2) + '</td>' +
+                        '<td>' + detail.BatchInsuranceValue.toFixed(2) + '</td>' +
+                        '<td class="font-weight-bold">' + detail.Remain.toFixed(2) + '</td>' +
+                        '</tr>';
+                });
+
+                $('#SettlementDetailsBody').html(detailsHtml);
+                $('#settlement-grand-total').text(grandTotal.toFixed(2));
+
+                // إظهار الجدول
+                $('#SettlementDetailsTable').show();
+
+                // ✅ عرض قسم ملخص التصفية وتحديث الحسابات
+                $('#SettlementSummaryInfo').show();
+                $('#calc-unpaid').text(settlement.TotalUnpaidAmount.toFixed(2));
+                $('#calc-extra').text(settlement.IncreaseDaysTotalValue.toFixed(2));
+                $('#calc-damages').text(settlement.TotalDamages.toFixed(2));
+                $('#calc-total').text(finalAmount.toFixed(2));
+                $('#settlement-final-amount').text(finalAmount.toFixed(2));
+            } else {
+                Swal.fire({
+                    title: 'خطأ',
+                    text: response.message || 'خطأ في جلب بيانات التصفية',
+                    icon: 'error',
+                    confirmButtonText: 'حسناً'
+                });
+            }
+        },
+        error: function (xhr, status, error) {
+            $('#pleasewait').fadeOut();
+            console.error('خطأ في جلب تفاصيل التصفية:', error);
+            Swal.fire({
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء جلب تفاصيل التصفية',
+                icon: 'error',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    });
+});
+
+// ===================== Opening Balance Handling =====================
+
+// دالة تحميل رصيد المستأجر
+function loadRenterBalance() {
+    var renterId = $('#RenterId').val();
+    if (!renterId || renterId == '') {
+        $('#RenterBalance').val('0.00');
+        return;
+    }
+
+    $.ajax({
+        url: '/CashReceiptVoucher/GetRenterBalance',
+        type: 'GET',
+        data: { propertyRenterId: renterId },
+        success: function (response) {
+            if (response.success) {
+                var balance = parseFloat(response.balance) || 0;
+                $('#RenterBalance').val(balance.toFixed(2));
+            } else {
+                console.error('Error loading renter balance:', response.message);
+                $('#RenterBalance').val('0.00');
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading renter balance:', error);
+            $('#RenterBalance').val('0.00');
+        }
+    });
+}
+
+// Event handler للـ Checkbox (IsAgainstOpeningBalance)
+$('#IsAgainstOpeningBalance').on('change', function () {
+    if ($('#SourceTypeId').val() == 11) { // فقط للمستأجرين
+        if ($(this).prop('checked')) {
+            // ✅ التحصيل من رصيد سابق: إخفاء جدول الأقساط وتفريغ العقد
+            $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
+
+            // ✅ تفريغ رقم العقد والدفعات
+            $('#PropertyContractId').val('').trigger('change');
+            $('#CashReceiptVoucherPropertyContractBatches').empty();
+
+            // ✅ قفل الـ dropdown بتاع العقد (بدون إخفاء)
+            $('#PropertyContractId').prop('disabled', true);
+
+        } else {
+            // ✅ التحصيل العادي: إظهار جدول الأقساط وفتح العقد
+            $('#CashReceiptVoucherPropertyContractBatchesTable').show();
+
+            // ✅ فتح الـ dropdown بتاع العقد
+            $('#PropertyContractId').prop('disabled', false);
+
+            // ✅ إعادة تحميل الأقساط إذا كان هناك عقد محدد
+            if ($('#PropertyContractId').val()) {
+                GetContractBatches();
+            }
+        }
+    }
+});
+
+// ملحوظة: event handler لـ RenterId موجود في الأعلى (السطر 985)
+// وبيتعامل مع كل الحالات: تحميل الرصيد + تحميل العقود
+
+</script>

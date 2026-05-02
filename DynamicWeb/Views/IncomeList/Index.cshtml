@@ -1,0 +1,110 @@
+﻿
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.IncomeList;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="hed page-title">@MyERP.Properties.Resources.IncomeList</div>
+        </div>
+    </div>
+</div>
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="form-horizontal" role="form">
+                <div class="form-group row">
+                    <label for="DepartmentId" class="control-label col-sm-1">@MyERP.Properties.Resources.Branch</label>
+                    <div class="col-sm-5">
+                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-1 control-label " for="DateFrom"> @MyERP.Properties.Resources.FromDate</label>
+                    <div class="col-sm-5">
+                        <input id="DateFrom" class="form-control" type="datetime-local" />
+                    </div>
+
+                    <label class="col-sm-1 control-label " for="DateTo">@MyERP.Properties.Resources.ToDate</label>
+                    <div class="col-sm-5">
+                        <input id="DateTo" class="form-control" type="datetime-local" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-success" onclick="GETIncomeList()">@MyERP.Properties.Resources.View</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-striped table-centered mb-0">
+                <thead>
+                    <tr>
+                        <th>
+                            @MyERP.Properties.Resources.Statement
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.PartialAmount
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.TotalAmount
+                        </th>
+
+
+                    </tr>
+                </thead>
+                <tbody id="IncomeList"></tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
+   </div>
+<script>
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    var d = new Date();
+    $('#DateFrom').val('@ViewBag.DateFrom');
+    $('#DateTo').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+    function GETIncomeList() {
+        $('#preloader, #status').fadeIn();
+        var accStatement = $.get("/IncomeList/GETIncomeList?from=" + $('#DateFrom').val() + "&to=" + $('#DateTo').val() +"&id=" + $('#DepartmentId').val())
+            .done(function () {
+                $('#IncomeList').html('');
+                newHTML = '';
+                accStatement = accStatement.responseJSON;
+                for (var i = 0; i < accStatement.length; i++) {
+                    newHTML += '<tr>' +
+                        '<td>' + (accStatement[i].Statement ) + '</td>' +
+                        '<td>' + (accStatement[i].PartialAmount ) + '</td>' +
+                        '<td>' + (accStatement[i].TotalAmount ) + '</td>' +
+                        '</tr>';
+                }
+                $('#IncomeList').append(newHTML);
+                $('#preloader, #status').fadeOut();
+            }).fail(function () {
+                $('#preloader, #status').fadeOut();
+            });
+        $('.IncomeList').show();
+    }
+
+    //GETIncomeList();
+
+    //$('#DepartmentId').on('change', function () {
+    //    $('.IncomeList').show();
+    //    GETIncomeList();
+    //})
+
+</script>

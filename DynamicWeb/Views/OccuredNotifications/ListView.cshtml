@@ -1,0 +1,390 @@
+﻿@model IEnumerable< MyERP.Models.UserHomePage> 
+<div class="custom-widgets">
+    <div class="row-one">
+        <!-- four-grids -->
+        @if (ViewBag.count < 1)
+        {
+            <div style="margin-top: -8%; text-align: center ">
+                <img src="~/assets/images/logo/MySoft.jpg" width="50"height="50" />
+            </div>
+        }
+        else
+        {
+            foreach (var item in Model)
+            {
+                if (item.SystemPage.ControllerName == null)
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/Report/@item.SystemPage.EnName" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/Report/@item.SystemPage.EnName" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+                }
+                else if (item.SystemPage.ControllerName == "CashBoxBalance")
+                {<div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "FinancialPeriods")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "TechanicianServices")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "ChartOfAccountOB")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "VendorOB")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "Home")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "CustomerOB")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "BalanceReview")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "RolePrivilege")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "Log")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "DeletedTransaction")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "AccountStatement")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "IncomeList")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "UserPrivilege")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else if (item.SystemPage.ControllerName == "UpdatedTransaction")
+                {
+                    <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-center">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض  </a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>
+
+                }
+                else
+                { <div class="col-md-3 widget">
+                        <div class="stats-left ">
+                            <h5> <a style=" color: #ffffff;text-decoration: none" href="~/@item.SystemPage.ControllerName/Addedit" target="_blank">@item.SystemPage.ArName</a> </h5>
+                        </div>
+                        <div class="stats-right">
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Index" target="_blank">عرض الكل </a>
+                            <br />
+
+                            <br />
+                            <a role="button" style=" color: #3a3232;text-decoration: none" href="~/@item.SystemPage.ControllerName/Addedit" target="_blank"> إضافة جديد</a>
+
+                        </div>
+                        <div class="clearfix"> </div>
+                    </div>}
+            }
+            <br />
+            <br />
+            <br />
+            @*if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "Kimo")
+            {
+                <div style="left: 2%; bottom: 6%; position: fixed;">
+                    <img style="width: 100%;" src="/images/logo.png" />
+                </div>
+            }*@
+            @*else if (System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"] == "ElOsta")
+            {
+            <div style="left: 2%; bottom: 6%; text-align:left">
+            <img style="width: 20%" src="/images/OstaLogin.png " />
+            </div>
+            }*@
+
+
+        }
+    </div>
+</div>
+
+        
+
+        <style>
+            .widget {
+                width: 30.5%;
+                padding: 11px;
+                float: right;
+            }
+
+                .widget.states-mdl {
+                    margin: 0 2%;
+                }
+
+                .widget.states-thrd {
+                    margin-right: 2%;
+                }
+
+            .stats-left {
+                float: left;
+                width: 70%;
+                background-color: #3bafda;
+                text-align: center;
+                padding: 1.4em;
+                box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -o-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -moz-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+            }
+
+            .states-mdl .stats-left {
+                background-color: #00C6D7;
+            }
+
+            .states-mdl .stats-right {
+                border: none;
+                border-right: 2px solid #00C6D7;
+            }
+
+            .states-last .stats-left {
+                background-color: #00C6D7;
+                border: none;
+            }
+
+            .states-last.stats-right {
+                background-color: #eee;
+                border: none;
+                border-right: 2px solid #00C6D7;
+            }
+
+            .states-thrd .stats-left {
+                background-color: #052963;
+            }
+
+            .widget.states-last .stats-right {
+                border: none;
+                border-right: 2px solid #00C6D7;
+            }
+
+            .stats-right {
+                float: right;
+                width: 30%;
+                text-align: center;
+                padding: 0.34em 0.1em;
+                padding-top: 5.5px;
+                background-color: #eee;
+                border: none;
+                border-right: 2px solid #052963;
+                box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -o-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -moz-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+            }
+
+            .stats-left h5 {
+                color: #fff;
+                font-size: 1em;
+            }
+            .stats-center {
+                float: right;
+                width: 30%;
+                text-align: center;
+                padding: 0.54em 0.1em;
+                padding-top: 27.5px;
+                background-color: #eee;
+                border: none;
+                border-right: 2px solid #052963;
+                box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -o-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                -moz-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+                height: 73px;
+            }
+            .stats-left h4 {
+                font-size: 2em;
+                color: #fff;
+                margin-top: 10px;
+                font-weight: 400;
+            }
+
+            .stats-right label {
+                font-size: 2em;
+            }
+
+            .panelTop {
+                background: #2a2f43;
+                padding: 20px;
+                /* margin-bottom: 0px; */
+                border-radius: 0;
+                position: relative;
+                box-shadow: 0 -1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.24);
+            }
+
+            .roww {
+                margin-right: -235px;
+                margin-left: 0px;
+            }
+        </style>

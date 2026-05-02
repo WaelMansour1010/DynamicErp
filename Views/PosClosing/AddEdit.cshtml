@@ -1,0 +1,588 @@
+﻿@model MyERP.Models.PosClosing
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.PosClosing;
+
+    if (ViewBag.IsCashier == true)
+    {
+        Layout = "~/Views/Shared/_CashierLayout.cshtml";
+    }
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                @if (ViewBag.IsCashier == true)
+                {
+                    <a class="btn btn-info" href="@Url.Action("AddEdit", "PointOfSale")" role="button">@MyERP.Properties.Resources.BackToPointOfSale</a>
+                }
+                else
+                {
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                }
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.PosClosing :</h4>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (Model.Id > 0)
+    {
+        @Html.HiddenFor(model => model.Id)
+    }
+    @Html.HiddenFor(model => model.IsActive)
+    @Html.HiddenFor(model => model.UserId)
+    @Html.HiddenFor(model => model.IsLinked)
+    @Html.HiddenFor(model => model.IsPosted)
+    @Html.HiddenFor(model => model.IsDeleted)
+    @Html.HiddenFor(model => model.IsApproved)
+
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-5">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, required = "required", hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Date" class="control-label col-sm-1">@MyERP.Properties.Resources.ClosingDate</label>
+                                    <div class="col-sm-5">
+                                        <input id="Date" name="Date" class="form-control" type="datetime-local" value="@ViewBag.Date" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.EnterDate
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="col-sm-1 control-label">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", disabled = "disabled", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+                                    <label for="PosId" class="col-sm-1 control-label">@MyERP.Properties.Resources.PointOfSale</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("PosId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", disabled = "disabled", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label for="PosManagerId" class="control-label col-sm-1">
+                                        @MyERP.Properties.Resources.PosManager
+                                    </label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("PosManagerId", null, @MyERP.Properties.Resources.PosManager, htmlAttributes: new { @class = "form-control", disabled = "disabled", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+                                    <label for="CashierUserId" class="control-label col-sm-1">@MyERP.Properties.Resources.Cashier</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("CashierUserId", null, @MyERP.Properties.Resources.Cashier, htmlAttributes: new { @class = "form-control", disabled = "disabled", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="EnName">@MyERP.Properties.Resources.ManagerPassword </label>
+                                    <div class="col-sm-5">
+                                        <input type="password" class="form-control" id="PosManagerPassword" />
+                                    </div>
+
+
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-1" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-5">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title">@MyERP.Properties.Resources.Details</h5>
+                            <div class="form-horizontal needs-validation" role="form">
+                                <div class="table-responsive">
+                                    <table class="table table-centered mb-0">
+                                        <thead>
+                                            <tr>
+
+                                                <th>@MyERP.Properties.Resources.PaymentMethod</th>
+                                                <th>@MyERP.Properties.Resources.Sales </th>
+                                                <th>@MyERP.Properties.Resources.Returns</th>
+                                                <th>@MyERP.Properties.Resources.Expenses</th>
+                                                <th>@MyERP.Properties.Resources.NetSales</th>
+                                                <th>@MyERP.Properties.Resources.CurrentReservations</th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody id="PosClosingDetails">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.PosClosingDetails)
+                                                {
+                                                    <tr>
+
+                                                        <td class="tabledit-edit-mode">
+                                                            <input type="hidden" class="PaymentMethodId form-control tabledit-input form-control-sm" value="@item.PaymentMethodId" required />
+                                                            <input type="text" class="PaymentMethod-name form-control tabledit-input form-control-sm" value="@item.PaymentMethod.ArName" required />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="SalesAmount form-control tabledit-input form-control-sm" type="number" step="any" value="@item.SalesAmount" required />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="ReturnAmount form-control tabledit-input form-control-sm" type="number" step="any" value="@item.ReturnAmount" required />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="CashIssue form-control tabledit-input form-control-sm" type="number" step="any" value="@item.CashIssueVoucherAmount" required />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="NetSales form-control tabledit-input form-control-sm" type="number" step="any" value="@item.NetSales" required />
+                                                        </td>
+                                                        <td class="tabledit-edit-mode">
+                                                            <input class="ReservationAmount form-control tabledit-input form-control-sm" type="number" step="any" value="@item.ReservationAmount" required />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            else
+                                            {
+
+
+                                                Html.RenderAction("PosSalesAnalysis");
+
+
+                                            }
+
+
+
+
+                                        </tbody>
+                                    </table>
+                                </div>
+
+
+                                <hr />
+                                <div class="form-group row">
+                                    <label for="TotalSales" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalSales:</label>
+                                    <div class="col-sm-2">
+
+                                        <input type="text" class="form-control money" id="TotalSales" readonly="readonly" value="@ViewBag.TotalSales" />
+
+
+                                    </div>
+                                    <label for="TotalDiscount" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalDiscount: </label>
+                                    <div class="col-sm-2">
+                                        <input type="text" class="form-control money" id="TotalDiscount" readonly="readonly" value="@ViewBag.TotalDiscount" />
+
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label for="TotalReturn" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalReturns: </label>
+                                    <div class="col-sm-2">
+                                        <input type="text" class="form-control money" id="TotalReturn" readonly="readonly" value="@ViewBag.TotalReturn" />
+                                    </div>
+
+                                    <label for="TotalCashIssue" class="control-label col-sm-2">@MyERP.Properties.Resources.Expenses:</label>
+                                    <div class="col-sm-2">
+                                        <input type="text" class="form-control money" id="TotalCashIssue" readonly="readonly" value="@ViewBag.TotalCashIssue" />
+
+
+                                    </div>
+
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="TotalReservations" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalCurrentReservations: </label>
+                                    <div class="col-sm-2">
+                                        <input type="text" class="form-control money" id="TotalReservations" readonly="readonly" value="@ViewBag.TotalReservations" />
+                                    </div>
+                                    <label for="NetSales" class="control-label col-sm-2">@MyERP.Properties.Resources.NetSales:</label>
+                                    <div class="col-sm-2">
+                                        <input type="text" class="form-control money" id="NetSales" readonly="readonly" value="@ViewBag.NetSales" />
+
+
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="form-group row">
+
+
+                                <label for="CustodyAmount" class="control-label col-sm-2">@MyERP.Properties.Resources.CustodyAmount:</label>
+                                <div class="col-sm-2">
+                                    <input type="text" class="form-control money" id="CustodyAmount" readonly="readonly" value="@ViewBag.CustodyAmount" />
+
+
+                                </div>
+                                <label for="CustodyAmountDelivered" class="control-label col-sm-2">@MyERP.Properties.Resources.CustodyAmountDelivered:</label>
+                                <div class="col-sm-2">
+                                    @Html.EditorFor(model => model.CustodyAmountDelivered, new { htmlAttributes = new { @class = "form-control money", type = "text", id = "CustodyAmountDelivered" } })
+
+                                </div>
+                            </div>
+
+                            <div class="form-group row taxes">
+                                <label for="NetCashAmount" class="control-label  col-sm-2  ">@MyERP.Properties.Resources.NetCashAmount:</label>
+                                @if (Model == null)
+                                {
+                                    <div class="col-sm-2 ">
+                                        <input type="text" class="form-control money" id="NetCashAmount" readonly="readonly" value="" />
+                                    </div>
+                                }
+                                else
+                                { <div class="col-sm-2 ">
+                                        @Html.EditorFor(model => model.NetCashAmount, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "NetCashAmount", disabled = "disabled" } })
+                                    </div>
+                                }
+                            <label for="NetCashAmountDelivered" class="control-label col-sm-2 ">@MyERP.Properties.Resources.NetCashAmountDelivered:</label>
+                                <div class="col-sm-2 ">
+
+                                    @Html.EditorFor(model => model.NetCashAmountDelivered, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "NetCashAmountDelivered" } })
+                                    @Html.ValidationMessageFor(model => model.NetCashAmountDelivered, "", new { @class = "text-danger" })
+                                </div>
+
+                            </div>
+
+                            <div class="form-group row taxes">
+                                <label for="ReservationCashAmount" class="control-label  col-sm-2  ">@MyERP.Properties.Resources.NetReservationCashAmount:</label>
+                                @if (Model == null)
+                                {
+                                    <div class="col-sm-2 ">
+                                        <input type="text" class="form-control money" id="ReservationCashAmount" readonly="readonly" value="" />
+                                    </div>
+                                }
+                                else
+                                { <div class="col-sm-2 ">
+                                        @Html.EditorFor(model => model.ReservationCashAmount, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "ReservationCashAmount", disabled = "disabled" } })
+                                    </div>
+                                }
+                            <label for="ReservationCashAmountDelivered" class="control-label col-sm-2 ">@MyERP.Properties.Resources.NetReservationCashAmountDelivered:</label>
+                                <div class="col-sm-2 ">
+
+                                    @Html.EditorFor(model => model.ReservationCashAmountDelivered, new { htmlAttributes = new { @class = "form-control taxes money ", type = "text", id = "ReservationCashAmountDelivered" } })
+                                    @Html.ValidationMessageFor(model => model.ReservationCashAmountDelivered, "", new { @class = "text-danger" })
+                                </div>
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-offset-2">
+                @if (Model == null)
+                {
+
+
+                    @*<button type="submit" onclick="addEdit('new')" class="btn btn-success" id="newbtn">
+                            حفظ و جديد
+                        </button>*@
+                <button class="btn btn-success" onclick="addEdit()" id="save">
+                    @MyERP.Properties.Resources.Save
+                </button>
+                    @*<a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>*@
+                }
+                else if (Model.IsDeleted == false || Model.IsApproved == true)
+                {
+
+                    //prevent posClosing Update
+                    @*<button class="btn btn-success" id="save" onclick="addEdit()" @Html.Raw( Model.IsApproved == true ? "disabled" : "")>
+                            حفظ
+                        </button>*@
+            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+
+
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+
+    var taxPercentage = 0.15;
+    let warehouseOptions = '';
+    let items = [];
+    let custIems = [];
+    let itemsOptionString = '';
+    let includeFees = false;
+
+    $(document).ready(function () {
+
+
+        //$('#PosId').on('change', function () {
+        //    $('#preloader, #status').fadeIn();
+        //    $.ajax(
+        //        {
+        //            url: '/pos/GetPos/' + $('#PosId').val(), contentType: "application/json",
+        //            type: 'GET',
+        //            error: function (e) {
+        //                $('#preloader, #status').fadeOut();
+        //            },
+        //            success: function (r) {
+        //                $('#PosManagerId').val(r).trigger("change");
+        //                $('#preloader, #status').fadeOut();
+        //            }
+        //        });
+
+
+
+        //});
+
+
+
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+
+
+        if ($('#Id').val()) {
+
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+            $('#PosId').prop('disabled', 'disabled');
+            //$('#DepartmentId').prop('disabled', 'disabled');
+
+        } else {
+            setDocNum();
+
+
+            $('#PosClosingDetails tr').each(function () {
+                var td = $(this);
+                if (td.find('.PaymentMethodId').val() == 1) {
+                    $('#NetCashAmount').val(document.getElementById("PosClosingDetails").rows[0].cells[5].innerHTML);
+                    $('#ReservationCashAmount').val(document.getElementById("PosClosingDetails").rows[0].cells[6].innerHTML);
+                }
+
+            });
+
+            if ('@ViewBag.SameCashBox') {
+                $('#CustodyAmount').val($('#CustodyAmount').val() - $('#NetCashAmount').val());
+            }
+        }
+
+
+    });
+    $(document).on('change', '#DepartmentId', function () {
+        setDocNum();
+    });
+    $(document).on('change', '#Date', function () {
+        setDocNum();
+    });
+
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/PosClosing/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+    }
+    function ToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return dt.getFullYear() + "-" + zeroPadded((dt.getMonth() + 1)) + "-" + zeroPadded(dt.getDate());
+    }
+
+    function addEdit(n) {
+        let valid = true;
+
+        if (!$('#PosManagerPassword').val()) {
+            valid = false;
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.POSManagerPasswordMustBeEntered',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+
+        if (valid) {
+            var PosClosingDetails = [];
+            let totalPaied = 0;
+            $('#PosClosingDetails tr').each(function () {
+                var td = $(this);
+                var PosClosingDetail = {
+                    MainDocId: $('#Id').val(),
+                    PaymentMethodId: td.find('.PaymentMethodId').val(),
+                    SalesAmount: td.find('.SalesAmount').inputmask('unmaskedvalue'),
+                    CashIssueVoucherAmount: td.find('.CashIssue').inputmask('unmaskedvalue'),
+                    ReturnAmount: td.find('.ReturnAmount').inputmask('unmaskedvalue'),
+                    NetSales: td.find('.NetSales').inputmask('unmaskedvalue'),
+                    ReservationAmount: td.find('.ReservationAmount').inputmask('unmaskedvalue'),
+                };
+                PosClosingDetails.push(PosClosingDetail);
+            });
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    //  $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/PosClosing/AddEdit",
+                        data:
+                            JSON.stringify({
+                                Id: $('#Id').val(),
+                                posManagerPassword: $('#PosManagerPassword').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                BranchId: $('#BranchId').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                Date: $('#Date').val(),
+                                ShiftId: $('#ShiftId').val(),
+                                PosId: $('#PosId').val(),
+                                PosManagerId: $('#PosManagerId').val(),
+                                IsActive: $('#IsActive').val(),
+                                IsDeleted: $('#IsDeleted').val(),
+                                Notes: $('#Notes').val(),
+                                TotalSales: $('#TotalSales').inputmask('unmaskedvalue'),
+                                TotalCashIssueVoucher: $('#TotalCashIssue').inputmask('unmaskedvalue'),
+                                TotalDiscount: $('#TotalDiscount').inputmask('unmaskedvalue'),
+                                TotalReturn: $('#TotalReturn').inputmask('unmaskedvalue'),
+                                TotalReservations: $('#TotalReservations').inputmask('unmaskedvalue'),
+                                NetSales: $('#NetSales').inputmask('unmaskedvalue'),
+                                CustodyAmount: $('#CustodyAmount').inputmask('unmaskedvalue'),
+                                CustodyAmountDelivered: $('#CustodyAmountDelivered').inputmask('unmaskedvalue'),
+                                NetCashAmount: $('#NetCashAmount').inputmask('unmaskedvalue'),
+                                NetCashAmountDelivered: $('#NetCashAmountDelivered').inputmask('unmaskedvalue'),
+                                ReservationCashAmount: $('#ReservationCashAmount').inputmask('unmaskedvalue'),
+                                ReservationCashAmountDelivered: $('#ReservationCashAmountDelivered').inputmask('unmaskedvalue'),
+                                PosClosingDetails: PosClosingDetails,
+
+                            }),
+                        success: function (r) {
+                            if (r.success == "managerPasswordIncorrect") {
+                                $('#preloader, #status').fadeOut();
+                                $('#save').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.ThePOSManagerPasswordIsIncorrect',
+                                    text: " ",
+                                    icon: 'info',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            else if (r.success == "true") {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); console.log(r.id);
+                                $('#preloader, #status').fadeOut();
+                                window.location.replace("/PointOfSale/AddEdit");
+                            }
+                            else {
+                                $('#preloader, #status').fadeOut();
+                                $('#save').prop('disabled', false);
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#save').prop('disabled', false);
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+</script>

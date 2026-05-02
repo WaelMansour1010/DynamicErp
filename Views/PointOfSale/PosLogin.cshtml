@@ -1,0 +1,262 @@
+﻿@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.OpenPointOfSale;
+    if (ViewBag.IsCashier == true)
+    {
+        Layout = "~/Views/Shared/_CashierLayout.cshtml";
+    }
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index","Home")" role="button">@MyERP.Properties.Resources.MainPage</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.OpenPointOfSale</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Pos/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12" style="align-content:center">
+                        <div class="card" style="margin: auto;">
+                            <div class="card-body">
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.OpenPointOfSale
+                                </h5>
+                                <div class="form-group row">
+                                    <label for="PosId" class="control-label col-sm-2">@MyERP.Properties.Resources.PointOfSale</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("posId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="PosManagerId" class="control-label col-sm-2">@MyERP.Properties.Resources.PosManager</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("PosManagerId", null, @MyERP.Properties.Resources.PosManager, htmlAttributes: new { @class = "form-control", disabled = "disabled", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="PosManagerId" class="control-label col-sm-2">@MyERP.Properties.Resources.Shifts</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("ShiftId", null, @MyERP.Properties.Resources.Shifts, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Select
+                                        </div>
+                                    </div>
+
+                                    @*<input  disabled hidden type="time" id="StartTime" class="form-control" value="" />
+            <input disabled hidden type="time" id="EndTime" class="form-control" value="" />*@
+
+                                    <div hidden class="row px-4" id="ShiftTime">
+                                        <label>@MyERP.Properties.Resources.From</label>
+                                        <div class="col-sm-5 mr-1">
+                                            <input disabled type="time" id="StartTime" value="" />
+                                        </div>
+
+                                        <label>@MyERP.Properties.Resources.To</label>
+                                        <div class="col-sm-5">
+                                            <input disabled type="time" id="EndTime" value="" />
+                                        </div>
+
+                                    </div>
+                                </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.ManagerPassword </label>
+                                        <div class="col-sm-5">
+                                            <input type="password" class="form-control" id="PosManagerPassword" />
+                                        </div>
+
+
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="Custody" class="control-label col-sm-2">@MyERP.Properties.Resources.CustodyAmount</label>
+                                        <div class="col-sm-5">
+                                            <input type="number" step="any" value="0" class="form-control" id="CustodyAmount" />
+                                        </div>
+
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-sm-offset-4">
+
+                                            <button type="button" onclick="login()" class="btn btn-success">
+                                                @MyERP.Properties.Resources.OpenPointOfSale
+                                            </button>
+
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $('#posId').on('change', function () {
+        $('#preloader, #status').fadeIn();
+        $.ajax(
+            {
+                url: '/pos/GetPos/'+ $('#posId').val() , contentType: "application/json",
+                type: 'GET',
+                error: function (e) {
+                    $('#preloader, #status').fadeOut();
+                },
+                success: function (r) {
+                    $('#PosManagerId').val(r).trigger("change");
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+
+
+
+    });
+
+    $('#ShiftId').on('change', function () {
+        $('#preloader, #status').fadeIn();
+        if ($('#ShiftTime').is(":hidden")) {
+            $('#ShiftTime').attr("hidden", false);
+        }
+        ;
+
+        $.ajax(
+            {
+                url: '/PointOfSale/GetShiftTime/' + $('#ShiftId').val(), contentType: "application/json",
+                type: 'GET',
+                error: function (e) {
+                    $('#preloader, #status').fadeOut();
+                },
+                success: function (r) {
+                    console.log(r);
+                    var FromTime = r.StartTime.split(".")[0];
+                    var ToTime = r.EndTime.split(".")[0];
+
+
+                    $('#StartTime').val(FromTime).trigger("change");
+                    $('#EndTime').val(ToTime).trigger("change");
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+
+
+
+    });
+
+    function login() {
+    console.log($('#posId').val());
+        if (!$('#posId').val())
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.SelectPointOfSale',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        else if (!$('#PosManagerPassword').val())
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.POSManagerPasswordMustBeEntered',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        else if (!$('#ShiftId').val())
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.SelectShift',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        else {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PointOfSale/PosLogin', contentType: "application/json",
+                    type: 'POST',
+                    data: JSON.stringify({
+                        posId: $("#posId").val(),
+                        posManagerId: $('#PosManagerId').val(),
+                        posManagerPassword: $('#PosManagerPassword').val(),
+                        custodyAmount: $('#CustodyAmount').val(),
+                        ShiftId: $('#ShiftId').val()
+                    }),
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'managerPasswordIncorrect')
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.ThePOSManagerPasswordIsIncorrect',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        else if (r == 'noCustodyBox')
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.CashierDoesNotHaveCustodyBox',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        else if (r == 'noManagerCustodyBox')
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.POSManagerDoesNotHaveCustodyBox',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        else if (r == 'notExactTime')
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.LoginIsNotPermittedOutsideOfShiftTimes',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        else if (r == 'managerUserIsNull')
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.PosManagerHasNoUserName',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        else
+                            window.location.replace("/PointOfSale/AddEdit");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+</script>

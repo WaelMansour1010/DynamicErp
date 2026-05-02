@@ -1,0 +1,24 @@
+﻿@model IEnumerable<MyERP.Models.ShareholderEquity_GetByDeparment_Result>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.HiddenFor(modelItem => item.Id)
+            <input type="hidden" class="ShareHolderId" value="@item.ShareHolderId" />
+            @Html.DisplayFor(modelItem => item.Code)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ArName)
+        </td>
+        <td>
+            @Html.EditorFor(modelItem => item.Value, new { htmlAttributes = new { @class = "form-control Value money" } })
+        </td>
+        <td class="share-percentage"></td>
+        <td class="TotalPayment">
+            @Html.DisplayFor(modelItem => item.TotalPayment)
+        </td>
+        <td class="share-remaining"></td>
+        <td><button class="btn btn-success disabled" disabled onclick="saveShareholderEquity(this)">حفظ</button></td>
+    </tr>
+}
+

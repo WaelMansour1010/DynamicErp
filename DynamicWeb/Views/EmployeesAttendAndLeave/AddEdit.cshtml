@@ -1,0 +1,699 @@
+﻿@model MyERP.Models.EmployeesAttendAndLeave
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeesAttendAndLeave;
+}
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">
+                @MyERP.Properties.Resources.EmployeesAttendAndLeave:
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    <div class="col-12">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsPosted)
+                                    }
+                                    <label class=" col-sm-2 control-label" for="DepartmentId">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Date">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Date, new { htmlAttributes = new { @class = "form-control Gregorian", required = "required", @type = "datetime-local" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriDate </label>
+                                    <div class="col-sm-4">
+                                        <input readonly type="text" id="HijryDate" class="form-control" />
+                                    </div>
+                                </div>
+
+                                @*<div class="form-group row">
+                                    <div class="col-sm-2">
+                                        <input type="radio" id="SelectFile" name="Data" value="SelectFile" onclick="ShowData(this)" checked>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="SelectFile">@MyERP.Properties.Resources.SelectFile</label><br>
+                                    <div class="col-sm-2">
+                                        <input type="radio" id="EnterData" name="Data" value="EnterData" onclick="ShowData(this)">
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="EnterData">@MyERP.Properties.Resources.EnterData</label><br>
+                                </div>*@
+
+                                <form class="p-3" id="excel-upload-form" enctype="multipart/form-data" @*style="display:none;"*@>
+                                    <h3>@ViewBag.Error</h3>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.SelectFile </label>
+                                    <input type="file" id="file" @*style="visibility:hidden;" *@ name="excelfile" />
+
+                                    <button type="button" id="Load" class="btn btn-secondary" @*data-toggle="modal" data-target="#exampleModalCenter" *@ onclick="GetFileData()"> @MyERP.Properties.Resources.UploadFile</button>
+                                </form>
+
+
+                                <div class="form-group row" id="EmpDiv" style="display:none;">
+                                    <label class=" col-sm-2 control-label" for="SalaryItemId">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        <select class="form-control" id="EmployeeId">
+                                            <option value="0">@MyERP.Properties.Resources.Select</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-offset-2">
+                                        <button onclick="AddData()" class="btn btn-success">
+                                            @MyERP.Properties.Resources.Add
+                                        </button>
+                                    </div>
+                                </div>
+
+
+
+
+                                <h3 id="Message"></h3>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-centered">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    @MyERP.Properties.Resources.EmpCodeOnFingerPrint
+                                                </th>
+
+                                                <th>
+                                                    @MyERP.Properties.Resources.EmployeeCode
+                                                </th>
+
+                                                <th>
+                                                    @MyERP.Properties.Resources.Name
+                                                </th>
+
+                                                <th>
+                                                    @MyERP.Properties.Resources.Date
+                                                </th>
+
+                                                <th>
+                                                    @MyERP.Properties.Resources.Time
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.AttendAndLeave
+                                                </th>
+                                                <th>
+                                                    @MyERP.Properties.Resources.Delete
+                                                </th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody id="EmployeesAttendLeaveDetails">
+                                            @if (Model != null)
+                                            {
+                                                foreach (var item in Model.EmployeesAttendAndLeaveDetails)
+                                                {
+                                                    <tr>
+                                                        <td hidden><input class="EmployeesAttendAndLeaveId" value="@item.EmployeesAttendAndLeaveId" /></td>
+                                                        <td hidden><input class="EmployeeId" value="@item.EmployeeId" /></td>
+                                                        <td>
+                                                            <label class="EmpCodeOnFingerPrint">@item.EmpCodeOnFingerPrint</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="EmployeeCode">@item.EmployeeCode</label>
+                                                        </td>
+
+                                                        <td>
+                                                            <label class="EmployeeArName">@item.EmployeeArName</label>
+                                                        </td>
+                                                        <td>
+                                                            <label class="Attend_LeaveDate">@item.Attend_LeaveDateTime.Value.ToString("dd/MM/yyyy")</label>
+                                                        </td>
+                                                        <td>
+                                                            <label class="Attend_LeaveTime">@item.Attend_LeaveDateTime.Value.ToString("hh:mm:ss tt")</label>
+                                                        </td>
+                                                        <td>
+                                                            @if (item.In_Out == 0)
+                                                            {
+                                                            <label> @MyERP.Properties.Resources.Attend</label>
+                                                                <input hidden class="In_Out" value="@item.In_Out" />
+                                                            }
+                                                            else
+                                                            {
+                                                        <label class="In_Out"> @MyERP.Properties.Resources.Leave</label>
+                                                                <input hidden class="In_Out" value="@item.In_Out" />
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!--************************************ My Code End  *********************************************-->
+
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:left;">
+                            @if (Model == null)
+                            {
+                                <button onclick="addEdit('new')" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button onclick="addEdit()" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    @*<button onclick="addEdit()" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>*@
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    @*<a class="btn btn-danger" onclick="Delete(@Model.Id,'EmployeesAttendAndLeave')" role="button">@MyERP.Properties.Resources.Delete</a>*@
+
+                                }
+                            }
+
+                        </div>
+
+                        @*<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">
+                                Launch demo modal
+                            </button>*@
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title" id="exampleModalLongTitle"> @MyERP.Properties.Resources.NotMatchedData</h3>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-centered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.EmpCodeOnFingerPrintFromFile
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.EmployeeCodeFromFile
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.NameFromFile
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="UnmatchedEmployeesAttendLeaveDetais">
+                                                </tbody>
+                                            </table>
+                                            <p>
+                                                @MyERP.Properties.Resources.SystemNotMatchedWithFile
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer mr-auto">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Already Exist In DB Attend Leave Details Modal -->
+                        <div class="modal fade" id="alreadyExistInDBAttendLeaveDetails" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title" id="exampleModalLongTitle"> تم حذف هذه السجلات @*@MyERP.Properties.Resources.NotMatchedData*@</h3>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-centered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.EmpCodeOnFingerPrintFromFile
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.EmployeeCodeFromFile
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.NameFromFile
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="alreadyExistInDBAttendLeaveDetailsTbody">
+                                                </tbody>
+                                            </table>
+                                            <p>
+                                                تم حذف هذه السجلات لوجودها بالفعل
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer mr-auto">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--  Employees With No Contract Attend Leave Details Modal -->
+                        <div class="modal fade" id="EmployeesWithNoContractAttendLeaveDetails" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title" id="exampleModalLongTitle"> تم حذف هذه السجلات @*@MyERP.Properties.Resources.NotMatchedData*@</h3>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-centered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>
+                                                            @MyERP.Properties.Resources.EmpCodeOnFingerPrintFromFile
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.EmployeeCodeFromFile
+                                                        </th>
+
+                                                        <th>
+                                                            @MyERP.Properties.Resources.NameFromFile
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="EmployeesWithNoContractAttendLeaveDetailsTbody">
+                                                </tbody>
+                                            </table>
+                                            <p>
+                                                تم حذف هذه السجلات لعدم وجود عقود لهؤلاء الموظفين
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer mr-auto">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    let empOptions = '';
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            $('#Date').val('@ViewBag.Date');
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        }
+        else {
+            setDocNum();
+            var d = new Date();
+            $('#Date').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        }
+        $('.Gregorian').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        });
+        if ($("#SelectFile").prop('checked') == true) {
+            $("#excel-upload-form").show();
+        }
+        $('#DepartmentId').trigger('change');
+
+    });
+
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val() && !$('#Id').val()) {
+            setDocNum();
+            GetDepartmentEmployees();
+        }
+    });
+    $(document).on('change', '#Date', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+        }
+    });
+    $('.Gregorian').on('change', function () {
+
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+
+    });
+    //
+    $('#file').on('click', function () {
+
+        if ($('#Load').attr('disabled')) {
+            $('#Load').attr('disabled', false);
+
+        }
+
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function convertToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return (dt.getMonth() + 1) + "/" + dt.getDate() + "/" + dt.getFullYear() + ' ' + dt.toLocaleTimeString(navigator.language, {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+    function setDocNum() {
+        if ($('#DepartmentId').val()) {
+            $.get('/EmployeesAttendAndLeave/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+        }
+    }
+    function showTime(value) {
+        var Hours = (value.Hours < 10) ? "0" + value.Hours : value.Hours;
+        var Minutes = (value.Seconds < 10) ? "0" + value.Seconds : value.Seconds
+        var Seconds = (value.Minutes < 10) ? "0" + value.Minutes : value.Minutes;
+        var time = Hours + ":" + Minutes + ":" + Seconds;
+        return (time);
+    }
+
+    // Show or Hide (Select File / Add Manually )
+    function ShowData(e) {
+        if ($(e).val() == "SelectFile") {
+            if ($('#EmployeesAttendLeaveDetails tr').length > 0) {
+            //if (confirm("@MyERP.Properties.Resources.AllDataWillBeRemovedContinue")) {
+            alert("@MyERP.Properties.Resources.AllDataHasBeenRemoved");
+                    $('#EmployeesAttendLeaveDetails').empty();
+               // }
+               // else {
+                 //   //$('#EnterData').prop("checked", true);
+                 //   $('#EmpDiv').show();
+                //    $('#excel-upload-form').hide();
+               // }
+            }
+
+                $('#excel-upload-form').show();
+            $('#EmpDiv').hide();
+            $('#EmployeeId').prop('selectedIndex', 0).select2();
+
+
+        }
+        else if ($(e).val() == "EnterData") {
+            if ($('#EmployeesAttendLeaveDetails tr').length > 0) {
+               // if (confirm("@MyERP.Properties.Resources.AllDataWillBeRemovedContinue")) {
+            alert("@MyERP.Properties.Resources.AllDataHasBeenRemoved");
+                    $('#EmployeesAttendLeaveDetails').empty();
+               // }
+               // else {
+               //     //$('#SelectFile').prop("checked", true);
+               //     $('#excel-upload-form').show();
+                //    $('#EmpDiv').hide();
+                //}
+            }
+
+                $('#EmpDiv').show();
+                $('#excel-upload-form').hide();
+
+        }
+    }
+
+    // Get Employees Of Selected Department
+    function GetDepartmentEmployees() {
+        empOptions = '';
+        $.get('/Helper/GetDepartmentEmployees?DepartmentId='+$('#DepartmentId').val()).done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                empOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+            }
+            $('#EmployeeId').empty().append($('<option>', {
+                value: 0,
+                text: "@MyERP.Properties.Resources.Select"
+            })).append(empOptions);
+        });
+    }
+
+    // Add Attend And Leave Manual
+    function AddData() {
+        var EmployeeId = $('#EmployeeId').val();
+        if (EmployeeId > 0) {
+            $.get('/EmployeesAttendAndLeave/GetEmployeesAttendAndLeaveDetails?EmployeeId=' + EmployeeId).done(function (r) {
+                for (var i = 0; i < r.length; i++) {
+                    let tr = ' <tr><td hidden><input class="EmployeesAttendAndLeaveId" value="" /></td><td hidden><input class="EmployeeId" value="' +
+                        r[i].EmployeeId + '" /></td><td><label class="EmpCodeOnFingerPrint control-label ">' +
+                        r[i].EmpCodeOnFingerPrint + '</label></td ><td><label class="EmployeeCode control-label ">' +
+                        r[i].EmployeeCode + '</label></td><td><label class="EmployeeArName control-label ">' +
+                        r[i].EmployeeArName + '</label></td><td><input required class="Attend_LeaveDate form-control" type="date"/></td><td><input required class="Attend_LeaveTime form-control" type="time"/></td><td> <select class="In_Out form-control" ><option value="0">@MyERP.Properties.Resources.Attend</option><option value="1">@MyERP.Properties.Resources.Leave</option></select><td><button type="button" class="btn btn-danger" onclick="deleteElement(this)">@MyERP.Properties.Resources.Delete</button></td></tr > ';
+                $('#EmployeesAttendLeaveDetails').append(tr);
+                }
+            });
+        }
+    }
+
+    // load data from excel file
+    function GetFileData()
+    {
+        $('#preloader, #status').fadeIn();
+        var formData = new FormData($('#excel-upload-form')[0]);
+        $.ajax({
+            type: "POST",
+            data: formData,
+            contentType: "application/json",
+            cache: false,
+            contentType: false,
+            processData: false,
+            url: "/EmployeesAttendAndLeave/ImportExcelFile",
+            success: function (r)
+            {
+                if (r == "نوع الملف غير صحيح" || r == "من فضلك اختر ملف")
+                {
+                    $('#Message').text(r);
+                }
+                else
+                {
+                    $('#Message').text("");
+                    $('#Load').attr('disabled', 'true');
+                    $('#EmployeesAttendLeaveDetails').empty();
+                    for (let i = 0; i < r[0].length; i++)
+                    {
+                        r[0][i].Attend_LeaveDateTime = convertToJavaScriptDate(r[0][i].Attend_LeaveDateTime);
+                        var convert = r[0][i].Attend_LeaveDateTime;
+                        var split = convert.split(' ');
+                        var in_out = r[0][i].In_Out == 0 ? "حضور" : "انصراف";
+                        $('#EmployeesAttendLeaveDetails').append('<tr><td hidden><input class="EmployeesAttendAndLeaveId" value="' + r[0][i].EmployeesAttendAndLeaveId + '" /></td><td hidden><input class="EmployeeId" value="' + r[0][i].EmployeeId + '" /></td><td><label class="EmpCodeOnFingerPrint">' + r[0][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[0][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[0][i].EmployeeArName + '</label></td><td><label class="Attend_LeaveDate">' + split[0] + ' </label></td><td><label class="Attend_LeaveTime">' + split[1] + split[2] + '</label></td><td><label >' + in_out + '</label><input class="In_Out" hidden value="' + r[0][i].In_Out +'"/></td><td><button type = "button" class= "btn btn-danger" onclick = "deleteElement(this)" > ' + '@MyERP.Properties.Resources.Delete' + '</button ></td ></tr>')
+                    }
+                    if (r[1].length > 0)
+                    {
+                        $('#UnmatchedEmployeesAttendLeaveDetais').empty();
+                        for (let i = 0; i < r[1].length; i++)
+                        {
+                            $('#UnmatchedEmployeesAttendLeaveDetais').append('<tr><td><label class="EmpCodeOnFingerPrint">' + r[1][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[1][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[1][i].EmployeeArName + '</label></td></tr>')
+                            $('#exampleModalCenter').modal("show");
+                        }
+                    }
+
+                    if (r[2].length > 0) {
+                        $('#alreadyExistInDBAttendLeaveDetailsTbody').empty();
+                        for (let i = 0; i < r[2].length; i++) {
+                            $('#alreadyExistInDBAttendLeaveDetailsTbody').append('<tr><td><label class="EmpCodeOnFingerPrint">' + r[2][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[2][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[2][i].EmployeeArName + '</label></td></tr>')
+                            $('#alreadyExistInDBAttendLeaveDetails').modal("show");
+                        }
+                    }
+
+                    if (r[3].length > 0) {
+                        $('#EmployeesWithNoContractAttendLeaveDetailsTbody').empty();
+                        for (let i = 0; i < r[3].length; i++) {
+                            $('#EmployeesWithNoContractAttendLeaveDetailsTbody').append('<tr><td><label class="EmpCodeOnFingerPrint">' + r[3][i].EmpCodeOnFingerPrint + '</label></td><td><label class="EmployeeCode">' + r[3][i].EmployeeCode + '</label></td><td><label class="EmployeeArName">' + r[3][i].EmployeeArName + '</label></td></tr>')
+                            $('#EmployeesWithNoContractAttendLeaveDetails').modal("show");
+                        }
+                    }
+                    $('#preloader, #status').fadeOut();
+                }
+
+
+            },
+            error: function (r) {
+                            alert('@MyERP.Properties.Resources.FileNotUploaded');
+            }
+
+        });
+
+    }
+    // delete specific item (row) from EmployeesAttendAndLeaveDetails tabel
+    function deleteElement(e) {
+        var tr = $(e).closest('tr');
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+    }
+    //*********************************************************//
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/EmployeesAttendAndLeave/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/EmployeesAttendAndLeave');
+                        } else
+                        alert(' @MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+
+            if ($('#EmployeesAttendLeaveDetails tr').length == 0) {
+                alert("@MyERP.Properties.Resources.PleaseCompleteDetailsTable");
+                valid = false;
+            }
+            var dateTime;
+            var employeesAttendAndLeaveDetails = [];
+            $('#EmployeesAttendLeaveDetails tr').each(function () {
+                var td = $(this);
+                //if ($('#EnterData').prop("checked") == true) {
+                //    dateTime = td.find('.Attend_LeaveDate').val() + "T" + td.find('.Attend_LeaveTime').val()
+                //}
+                //else if ($('#SelectFile').prop("checked") == true) {
+                    dateTime = td.find('.Attend_LeaveDate').text() + td.find('.Attend_LeaveTime').text()
+              //  }
+                var employeesAttendAndLeaveDetail = {
+                    EmployeesAttendAndLeaveId: $('#Id').val(),
+                    EmployeeId: td.find('.EmployeeId').val(),
+                    EmpCodeOnFingerPrint: td.find('.EmpCodeOnFingerPrint').text(),
+                    EmployeeCode:td.find('.EmployeeCode').text(),
+                    EmployeeArName: td.find('.EmployeeArName').text(),
+                    Attend_LeaveDateTime: dateTime,
+                    // Attend_LeaveTime: td.find('.Attend_LeaveTime').text(),
+                    In_Out: td.find('.In_Out').val()
+                };
+                employeesAttendAndLeaveDetails.push(employeesAttendAndLeaveDetail);
+            });
+            var employeeAttendAndLeave =
+            {
+                Id: $('#Id').val(),
+                DocumentNumber: $('#DocumentNumber').val(),
+                Date: $('#Date').val(),
+                DepartmentId: $('#DepartmentId').val(),
+                IsActive: true,
+                IsDeleted: false,
+                EmployeesAttendAndLeaveDetails: employeesAttendAndLeaveDetails,
+            };
+            if (valid ==true && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                $.ajax({
+                    type: "POST",
+                    url: "/EmployeesAttendAndLeave/AddEdit",
+                    data: employeeAttendAndLeave,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/EmployeesAttendAndLeave/AddEdit");
+                            } else {
+                                window.location.replace("/EmployeesAttendAndLeave");
+                            }
+                        }
+                        else
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+            }
+        }
+    }
+    //--------------------------------------------------//
+
+</script>

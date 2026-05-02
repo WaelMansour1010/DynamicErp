@@ -1,0 +1,255 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "كيشني - شاشة البيع";
+    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+}
+
+<meta charset="utf-8" />
+<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+
+<div class="pos-page pos-mode-cash-in"
+     id="posPage"
+     dir="rtl"
+     data-save-url="@Url.Action("Save", "PosTransaction", new { area = "Pos" })"
+     data-items-url="@Url.Action("GetItems", "PosTransaction", new { area = "Pos" })"
+     data-default-service-url="@Url.Action("GetDefaultServiceItem", "PosTransaction", new { area = "Pos" })"
+     data-primary-services-url="@Url.Action("GetPrimaryServiceItems", "PosTransaction", new { area = "Pos" })"
+     data-secondary-services-url="@Url.Action("GetSecondaryServiceItems", "PosTransaction", new { area = "Pos" })"
+     data-commission-url="@Url.Action("CalculateCommission", "PosTransaction", new { area = "Pos" })"
+     data-customer-lookup-url="@Url.Action("LookupCustomerByPhone", "PosTransaction", new { area = "Pos" })"
+     data-customer-search-url="@Url.Action("SearchKeshniCardCustomers", "PosTransaction", new { area = "Pos" })"
+     data-save-keshni-card-url="@Url.Action("SaveKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
+     data-kyc-attachments-url="@Url.Action("List", "KycAttachment", new { area = "Pos" })"
+     data-open-kyc-attachment-url="@Url.Action("Open", "KycAttachment", new { area = "Pos" })"
+     data-payment-types-url="@Url.Action("GetPaymentTypes", "PosTransaction", new { area = "Pos" })"
+     data-cash-boxes-url="@Url.Action("GetCashBoxes", "PosTransaction", new { area = "Pos" })"
+     data-branches-url="@Url.Action("GetBranches", "PosTransaction", new { area = "Pos" })"
+     data-stores-url="@Url.Action("GetStoresByBranch", "PosTransaction", new { area = "Pos" })"
+     data-context-url="@Url.Action("GetContext", "PosTransaction", new { area = "Pos" })"
+     data-balances-url="@Url.Action("GetEmployeeBalances", "PosTransaction", new { area = "Pos" })"
+     data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
+     data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
+     data-print-url="@Url.Action("Print", "PosTransaction", new { area = "Pos" })"
+     data-save-customer-url="@Url.Action("SaveCashCustomer", "PosTransaction", new { area = "Pos" })"
+     data-default-emp-id="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")"
+     data-default-emp-name="@(posContext != null ? posContext.EmpName : "")"
+     data-default-branch-id="@(posContext != null && posContext.BranchId.HasValue ? posContext.BranchId.Value.ToString() : "")"
+     data-default-branch-name="@(posContext != null ? posContext.BranchName : "")"
+     data-default-store-id="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")"
+     data-default-store-name="@(posContext != null ? posContext.StoreName : "")"
+     data-default-box-id="@(posContext != null && posContext.BoxId.HasValue ? posContext.BoxId.Value.ToString() : "")"
+     data-default-box-name="@(posContext != null ? posContext.BoxName : "")"
+     data-default-payment-id="@(posContext != null && posContext.PaymentTypeId.HasValue ? posContext.PaymentTypeId.Value.ToString() : "")"
+     data-default-payment-name="@(posContext != null ? posContext.PaymentName : "")"
+     data-default-bank-id="@(posContext != null && posContext.BankId.HasValue ? posContext.BankId.Value.ToString() : "")"
+     data-default-bank-name="@(posContext != null ? posContext.BankName : "")"
+     data-can-save="@(posContext == null || posContext.CanSave ? "true" : "false")"
+     data-can-print="@(posContext != null && posContext.CanPrint ? "true" : "false")"
+     data-can-return="@(posContext != null && posContext.CanReturn ? "true" : "false")"
+     data-can-cash-customer="@(posContext != null && posContext.CanOpenCashCustomer ? "true" : "false")"
+     data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
+     data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")">
+    <div class="pos-shell">
+        <header class="pos-header">
+            <div>
+                <h1>كيشني - شاشة البيع</h1>
+                <p>هذه شاشة تجريبية على قاعدة CASH - لا يوجد قيد أو خصم مخزون حتى الآن</p>
+                <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الموظف: @(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | المخزن: @(posContext != null ? posContext.StoreName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
+                <div class="pos-balances">
+                    <span id="employeeBalanceText">ذمة الموظف: تحميل...</span>
+                    <span id="boxBalanceText">عهدة الخزنة: تحميل...</span>
+                    <button type="button" id="refreshBalancesBtn" class="link-action">تحديث الأرصدة</button>
+                    <a class="link-action" href="@Url.Action("Index", "PosClosing", new { area = "Pos" })">إغلاق</a>
+                </div>
+            </div>
+            <div class="pos-status" id="posModeLabel">كاش إن</div>
+        </header>
+
+        <section class="pos-type-selector" aria-label="نوع العملية">
+            <button type="button" class="pos-type-btn active" data-mode="cash-in">كاش إن</button>
+            <button type="button" class="pos-type-btn" data-mode="cash-out">كاش أوت</button>
+            <button type="button" class="pos-type-btn" data-mode="card">كارت كيشني</button>
+            <button type="button" class="pos-type-btn" data-mode="violations">مخالفات</button>
+        </section>
+
+        <div class="pos-workspace">
+        <form id="posForm" class="pos-form" autocomplete="off">
+            <input type="hidden" id="transactionType" value="cash-in" />
+            <input type="hidden" id="isCashOut" value="false" />
+            <input type="hidden" id="isPOS" value="false" />
+            <input type="hidden" id="otherItems" value="false" />
+            <input type="hidden" id="isRecharg" value="false" />
+            <input type="hidden" id="isWallet" value="false" />
+            <input type="hidden" id="haveGuarantee" value="false" />
+
+            <section class="pos-panel customer-panel">
+                <div class="panel-heading">
+                    <h2>بيانات العميل</h2>
+                    <button type="button" class="secondary-action kyc-only" id="searchCustomerBtn">بحث عن العميل</button>
+                </div>
+                <div class="pos-grid four-cols">
+                    <label>الفرع<select id="branchId" @(posContext != null && posContext.CanChangeDefaults ? "" : "disabled")><option value="">تحميل...</option></select></label>
+                    <label>المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
+                    <label>المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
+                    <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field" placeholder="أدخل رقم التليفون" /></label>
+                    <label>اسم العميل<input type="text" id="cashCustomerName" class="required-field" placeholder="اسم العميل" /></label>
+                    <label>ID<input type="text" id="ipn" class="required-field" placeholder="ID" /></label>
+                    <label>IPN<input type="text" id="manualNo" class="required-field" placeholder="IPN" /></label>
+                    <label class="kyc-only">تليفون آخر<input type="text" id="phone2" placeholder="تليفون إضافي" /></label>
+                    <label class="card-field">رقم الكارت<input type="text" id="visaNumber" placeholder="رقم المرجع" /></label>
+                    <label class="card-field">نوع الكارت<input type="text" id="cardTypeName" readonly /></label>
+                    <label class="card-field">الرقم القومي<input type="text" id="cardNationalId" placeholder="الرقم القومي" /></label>
+                    <label class="wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" placeholder="رقم المحفظة" /></label>
+                    <label class="card-field card-action-field"><span>&nbsp;</span><button type="button" class="primary-action" id="activateCardBtn">تفعيل الكارت</button></label>
+                </div>
+            </section>
+
+            <section class="pos-modal" id="cashCustomerPanel" aria-hidden="true">
+                <div class="pos-modal-backdrop" id="kycModalBackdrop"></div>
+                <div class="pos-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kycModalTitle">
+                <div class="panel-heading modal-heading">
+                    <h2 id="kycModalTitle">تفعيل كارت كيشني - بيانات KYC</h2>
+                    <button type="button" class="icon-action" id="closeKycModalBtn">إغلاق</button>
+                </div>
+                <input type="hidden" id="cashCustomerId" />
+                <div class="kyc-search-row">
+                    <input type="text" id="kycSearchTerm" placeholder="بحث بالموبايل أو رقم الكارت أو الرقم القومي" />
+                    <button type="button" class="secondary-action" id="kycSearchBtn">بحث</button>
+                </div>
+                <div id="kycSearchResults" class="kyc-results"></div>
+                <div class="pos-grid four-cols">
+                    <label>الاسم العربي الأول<input type="text" id="kycArabicName0" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>
+                    <label>الاسم العربي الثاني<input type="text" id="kycArabicName1" dir="rtl" lang="ar" /></label>
+                    <label>الاسم العربي الثالث<input type="text" id="kycArabicName2" dir="rtl" lang="ar" /></label>
+                    <label>اسم العميل كامل<input type="text" id="kycName" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>
+                    <label>الاسم الإنجليزي الأول<input type="text" id="kycEnglishName0" dir="ltr" lang="en" /></label>
+                    <label>الاسم الإنجليزي الثاني<input type="text" id="kycEnglishName1" dir="ltr" lang="en" /></label>
+                    <label>الاسم الإنجليزي الثالث<input type="text" id="kycEnglishName2" dir="ltr" lang="en" /></label>
+                    <label>الاسم الإنجليزي كامل<input type="text" id="kycNameE" dir="ltr" lang="en" /></label>
+                    <label>موبايل أساسي<input type="text" id="kycPhoneNo2" placeholder="أدخل رقم التليفون" /></label>
+                    <label>موبايل إضافي<input type="text" id="kycPhoneNo" placeholder="تليفون إضافي" /></label>
+                    <label>رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
+                    <label>الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
+                    <label>جهة الإصدار<input type="text" id="kycCardSource" /></label>
+                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" /></label>
+                    <label>تاريخ الإصدار<input type="date" id="kycCardDate" /></label>
+                    <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" /></label>
+                    <label>العنوان العربي<input type="text" id="kycAddress" dir="rtl" lang="ar" /></label>
+                    <label>العنوان الإنجليزي 1<input type="text" id="kycEnglishName5" dir="ltr" lang="en" /></label>
+                    <label>العنوان الإنجليزي 2<input type="text" id="kycEnglishName6" dir="ltr" lang="en" /></label>
+                    <label>العنوان الإنجليزي 3<input type="text" id="kycEnglishName7" dir="ltr" lang="en" /></label>
+                    <label>البريد/العنوان البريدي<input type="text" id="kycMailAddress" /></label>
+                    <label>مرفقات<input type="file" id="kycAttachments" multiple /></label>
+                    <label>تليفون قديم<input type="text" id="kycTel" /></label>
+                    <label>كارت قديم<input type="text" id="kycCard" /></label>
+                </div>
+                <div class="kyc-attachments-panel">
+                    <div class="panel-heading compact-heading">
+                        <h3>المرفقات</h3>
+                        <button type="button" class="secondary-action" id="showKycAttachmentsBtn">عرض المرفقات</button>
+                    </div>
+                    <div id="kycAttachmentsList" class="kyc-attachments-list">لا توجد مرفقات معروضة</div>
+                </div>
+                <div class="modal-actions">
+                    <span class="prototype-warning">المرفقات تحفظ بنفس منطق FrmCustCash: نوع العملية 0701201991 وملفات Doc</span>
+                    <button type="button" class="primary-action" id="saveCashCustomerBtn">حفظ وتفعيل الكارت</button>
+                </div>
+                </div>
+            </section>
+
+            <section class="pos-panel amount-panel">
+                <div class="panel-heading"><h2>المبالغ</h2></div>
+                <div class="pos-grid five-cols">
+                    <label class="service-primary-field">نوع الشحن<select id="serviceItemId"><option value="">تحميل...</option></select></label>
+                    <label class="service-secondary-field">المحفظة/البنك<select id="serviceItemId2"><option value="">تحميل...</option></select></label>
+                    <label class="recharge-field">قيمة الشحن<input type="number" id="rechargeValue" min="0" step="0.01" value="0" /></label>
+                    <label>قيمة الخدمة<input type="number" id="commissionValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label>الضريبة<input type="number" id="vatValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label>إجمالي الرسوم<input type="number" id="totalFees" min="0" step="0.01" value="0" readonly /></label>
+                    <label>الإجمالي<input type="number" id="netValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label>المدفوع<input type="number" id="payedValue" min="0" step="0.01" value="0" /></label>
+                    <label>المتبقي<input type="number" id="remainValue" min="0" step="0.01" value="0" readonly /></label>
+                </div>
+            </section>
+
+            <section class="pos-panel items-panel">
+                <div class="panel-heading">
+                    <h2>خدمات كيشني</h2>
+                    <button type="button" class="secondary-action" id="addItemBtn">إضافة خدمة</button>
+                </div>
+                <div class="pos-table-wrap">
+                    <datalist id="itemsLookup"></datalist>
+                    <table class="pos-table" id="itemsTable">
+                        <thead>
+                            <tr>
+                                <th>خدمة كيشني</th>
+                                <th class="hidden-service-column">الوحدة</th>
+                                <th class="hidden-service-column">الكمية</th>
+                                <th>السعر</th>
+                                <th>الضريبة</th>
+                                <th>الإجمالي</th>
+                                <th>حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" class="item-name" list="itemsLookup" placeholder="كود أو اسم الصنف" readonly /></td>
+                                <td class="hidden-service-column"><input type="number" class="unit-id" value="1" min="1" /></td>
+                                <td class="hidden-service-column"><input type="number" class="qty" value="1" min="0" step="0.01" /></td>
+                                <td><input type="number" class="price" value="0" min="0" step="0.01" /></td>
+                                <td><input type="number" class="vat" value="0" min="0" step="0.01" /></td>
+                                <td><input type="number" class="line-total" value="0" readonly /></td>
+                                <td><button type="button" class="icon-action remove-row" title="حذف">حذف</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="pos-panel payment-panel is-hidden-ui">
+                <div class="panel-heading"><h2>الدفع</h2></div>
+                <div class="pos-grid four-cols">
+                    <label>طريقة الدفع<select id="paymentType"><option value="">تحميل...</option></select></label>
+                    <label>الخزنة<select id="boxId" disabled><option value="">تحميل...</option></select></label>
+                    <label class="bank-field">البنك<input type="text" id="bankName" placeholder="البنك" value="@(posContext != null ? posContext.BankName : "")" readonly /></label>
+                    <label>رقم المرجع<input type="text" id="paymentCardNo" placeholder="رقم المرجع" /></label>
+                </div>
+            </section>
+
+            <section class="pos-panel violation-panel" id="violationPanel">
+                <div class="panel-heading"><h2>مخالفات</h2></div>
+                <div class="pos-grid four-cols">
+                    <label>قيمة المخالفات<input type="number" id="violationValue" min="0" step="0.01" value="0" /></label>
+                    <label class="radio-field">طريقة الدفع
+                        <span class="radio-row">
+                            <label><input type="radio" name="violationPayType" value="0" checked /> انستا باى</label>
+                            <label><input type="radio" name="violationPayType" value="1" /> تحويل</label>
+                        </span>
+                    </label>
+                    <label>رقم المحفظة<input type="text" id="violationWalletNo" placeholder="رقم المحفظة" /></label>
+                    <label>الحالة<input type="text" value="هذه شاشة تجريبية فقط" disabled /></label>
+                </div>
+            </section>
+
+            <div class="pos-validation" id="validationSummary"></div>
+            <div class="pos-save-result" id="saveResult"></div>
+
+            <footer class="pos-actions">
+                <span class="prototype-warning">هذه شاشة تجريبية على قاعدة CASH</span>
+                <button type="button" class="secondary-action" id="newBtn">جديد</button>
+                <button type="button" class="secondary-action" id="printBtn" disabled>طباعة</button>
+                <button type="button" class="secondary-action" id="returnLaterBtn">مرتجع لاحقًا</button>
+                <button type="submit" class="primary-action" id="saveBtn">حفظ تجريبي</button>
+            </footer>
+        </form>
+        <aside class="pos-panel today-invoices-panel">
+            <div class="panel-heading"><h2>فواتير اليوم</h2></div>
+            <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
+            <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
+            <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
+        </aside>
+        </div>
+    </div>
+</div>
+
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js")"></script>

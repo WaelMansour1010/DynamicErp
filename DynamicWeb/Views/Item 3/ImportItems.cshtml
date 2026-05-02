@@ -1,0 +1,79 @@
+﻿@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    //ViewBag.Title = "ImportItems";
+    ViewBag.Title = MyERP.Properties.Resources.Items;
+}
+
+<div style="text-align: left;padding-bottom: 23px;">
+</div>
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <div class="form-title">
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+                        <div class="hed"> @MyERP.Properties.Resources.Items</div>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label for="DepartmentId" class="control-label col-sm-1">@MyERP.Properties.Resources.Department</label>
+                                <div class="col-sm-5">
+
+                                    @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control" })
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-offset-2">
+                                    <button type="submit" onclick="importItems()" class="btn btn-success">
+                                        @MyERP.Properties.Resources.ImportItems
+                                    </button>
+                                    <button type="submit" onclick="updateQuantities()" class="btn btn-success">
+                                        @MyERP.Properties.Resources.AdjustingQuantitiesOfItems
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function importItems() {
+        $('#preloader, #status').fadeIn();
+        $.post('/Item/ImportItems?depId=' + $('#DepartmentId').val()).done(function (r) {
+            $('#preloader, #status').fadeOut();
+            if (r == 'true') {
+                alert(' @MyERP.Properties.Resources.ItemsWereSuccessfullySupplied'+'!');
+            } else {
+                alert('@MyERP.Properties.Resources.NoSupply'+'!');
+            }
+        }).fail(function () {
+            alert('@MyERP.Properties.Resources.NoSupply'+'!');
+            $('#preloader, #status').fadeOut();
+
+        });
+    }
+
+    function updateQuantities() {
+        $('#preloader, #status').fadeIn();
+        $.post('/Item/UpdateQuantities?depId=' + $('#DepartmentId').val()).done(function (r) {
+            $('#preloader, #status').fadeOut();
+            if (r == 'true') {
+                alert('@MyERP.Properties.Resources.ItemQuantitiesHaveBeenSuccessfullyAdjusted'+'!');
+            } else {
+                alert('@MyERP.Properties.Resources.NotModified'+'!');
+            }
+        }).fail(function () {
+            alert('@MyERP.Properties.Resources.NoSupply');
+            $('#preloader, #status').fadeOut();
+
+        });
+    }
+</script>

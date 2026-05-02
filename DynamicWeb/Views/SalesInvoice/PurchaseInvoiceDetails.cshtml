@@ -1,0 +1,142 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequestDetail>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+
+@foreach (var item in Model)
+{
+<tr>
+    <td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" value="@Html.Raw(item.ItemPrice!=null?item.ItemPrice.Barcode:"")" /></td>
+    <td class="tabledit-edit-mode popupCell">
+        <input type="hidden" class="item IsUpdated form-control tabledit-input form-control-sm" value="@item.ItemPriceId" required />
+        <input hidden type="text" class="item-name form-control tabledit-input form-control-sm" value="@item.Item.ArName - @item.ItemPrice.Barcode" required />
+        <label style="width:200px" class="name control-label tabledit-input ">@item.Item.ArName - @item.ItemPrice.Barcode</label>
+        <input hidden class="itemUnitArName" value=@item.ItemUnit.ArName />
+
+    </td>
+    <td class="tabledit-edit-mode expiry" style="display:none;">
+        @if (item.Patch != null && item.Patch.Code != null)
+        {
+            <input class="PatchCode form-control tabledit-input form-control-sm" readonly value="@item.Patch.Code" />
+        }
+        else
+        {
+            <input class="PatchCode form-control tabledit-input form-control-sm" readonly />
+        }
+
+    </td>
+    <td class="tabledit-edit-mode expiry" style="display:none;">
+        @if (item.ExpireDate.HasValue)
+        {
+            <input class="ExpiryDate expiry form-control tabledit-input form-control-sm" readonly value="@item.ExpireDate.Value.ToString("MM/dd/yyyy")" />
+        }
+        else
+        {
+            <input class="ExpiryDate expiry form-control tabledit-input form-control-sm" readonly />
+        }
+        <input class="PatchId form-control tabledit-input form-control-sm" hidden value="@item.PatchId" />
+        <input class="itemId form-control tabledit-input form-control-sm" hidden value="@item.ItemId" />
+
+    </td>
+    <td class="tabledit-edit-mode">
+        <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Qty" required />
+    </td>
+    <td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select></td>
+    <td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" value="@item.UnitEquivalent" required /></td>
+    <td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm" value="@item.Price" required /></td>
+
+    <td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountPerc form-control tabledit-input form-control-sm" value="@item.DiscountPerc" /></td>
+    <td class="tabledit-edit-mode IsDiscountTrue" style="display:none;"><input type="number" step="any" class="DiscountValue form-control tabledit-input form-control-sm" value="@item.DiscountValue" /></td>
+
+
+    <td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly value="@(item.Price*(decimal?)item.Qty)" /></td>
+    <td class="tabledit-edit-mode showProfit">
+        <input type="number" step="any" class="showProfit avgCost form-control form-control-sm" readonly value="@item.CostPrice" />
+    </td>
+    <td class="tabledit-edit-mode showProfit">
+        <input type="text" class="showProfit avgCostProfit quantityInWarehouse form-control form-control-sm" readonly />
+    </td>
+
+    <td class="tabledit-edit-mode"><input type="number" step="any" class="quantityOnSystem form-control tabledit-input form-control-sm" readonly /></td>
+
+    @*<td class="tabledit-edit-mode" style="display:none;"><select class="item-warehouseId form-control tabledit-input form-control-sm" @Html.Raw(Model != null ? "" : "")><option value="@item.WareHouseId">@Html.Raw(item.WareHouseId != null ? item.Warehouse.ArName : "")</option></select></td>*@
+    <td class="Warranty">
+        <button class="btn btn-info" data-toggle="modal" data-target="#itemWarranty" onclick="">@MyERP.Properties.Resources.WarrantyDetails</button>
+    </td>
+    <td>
+        <button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button>
+    </td>
+    <td><input class="IsAltItem" type="checkbox" hidden /><a href="javascript:void(0);" onclick="AlternativeItems(this)"><i class="fe-refresh-ccw"></i></a></td>
+    <td>
+        <a href="javascript:void(0);" onclick="deleteElement(this)">
+            <i class="fas fa-trash-alt"></i>
+        </a>
+    </td>
+</tr>
+
+
+
+
+    @*<tr>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="hidden" class="item" required value="@item.ItemId" />
+                <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="@item.Item.ArName" />
+                <input type="hidden" class="barcode" required value="@item.ItemPrice.Barcode" />
+                <input type="hidden" class="item-price-id" required value="@item.ItemPriceId" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" required value="@item.Qty" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <select class="item-unit form-control tabledit-input form-control-sm" required><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select>
+                <input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required value="@item.UnitEquivalent" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="@item.ItemPrice.FactoryPrice" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="money total form-control tabledit-input form-control-sm" required readonly value="@Html.Raw(item.Price*(decimal)item.Qty)" />
+            </td>
+            <td>
+                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </td>
+        </tr>*@
+}
+
+
+<script>
+    $(document).ready(function () {
+        if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+            $('.UnitClass').show();
+            $('.UnitEquivClass').show();
+        }
+        if (AllowDiscountPerItemInSalesInvoice == 'True') {
+            $('.IsDiscountTrue').show();
+        }
+        if (UseExpiryDateForItems == 'True') {
+            $('.expiry').show();
+        }
+        $('.ItemTax').hide();
+        $('.Warranty').hide();
+        $('#SalesInvoiceDetails tr').each(function () {
+            let tr = $(this);
+            // tr.find('.price').trigger('change');
+            ItemsId.push(parseInt(tr.closest('tr').find('.item').val()));
+            let item = tr.closest('tr').find('.item');
+            if (item.val() != '') {
+                let itemId = items.filter(function (i) { return i.ItemPriceId == item.val(); })[0].Id;
+                requestData('/Helper/ItemQuantityOnSystem?warehouseId=' + $('#WarehouseId').val() + '&itemId=' + itemId).done(function (r) {
+                    var qtyOnSystem = (r * 1 > 0 ? r * 1 : 0);
+                    var oldQuantity = tr.closest('tr').find('.quantity').val();
+                    var unitEquavalent = tr.closest('tr').find('.unit-equavalent').val();
+                    var newAvailabelQty = qtyOnSystem + (oldQuantity * unitEquavalent);
+                    tr.closest('tr').find('.quantityOnSystem').val(newAvailabelQty);
+                });
+            }
+        });
+    });
+</script>
+

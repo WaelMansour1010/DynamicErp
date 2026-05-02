@@ -1,0 +1,115 @@
+﻿@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+
+<div class="modal fade bs-example-modal-lg" id="LinkWithOtherDocModal" tabindex="-1" role="dialog"
+     aria-labelledby="salesInvoicesModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="salesInvoicesModalTitle">@MyERP.Properties.Resources.LinkWithOtherDoc</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row form-group">
+                    <label class="control-label col-sm-1">@MyERP.Properties.Resources.Department</label>
+                    <div class="col-sm-5">
+                        @Html.DropDownList("LinkWithDocModalDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                    </div>
+                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.DocumentType</label>
+                    <div class="col-sm-4">
+                        <select id="DocType">
+                            <option value="0"> @MyERP.Properties.Resources.Select </option>
+                            <option value="1"> @MyERP.Properties.Resources.PurchaseRequest </option>
+                            <option value="2">@MyERP.Properties.Resources.SalesInvoice</option>
+                            <option value="3">@MyERP.Properties.Resources.PurchaseQuotation</option>
+                            <option value="4">@MyERP.Properties.Resources.SalesQuotation</option>
+                            <option value="5">@MyERP.Properties.Resources.PurchaseReturn</option>
+                            <option value="6">@MyERP.Properties.Resources.SalesReturn</option>
+                            <option value="7">@MyERP.Properties.Resources.StockIssueVouchers</option>
+                            <option value="8">@MyERP.Properties.Resources.StockReceiptVoucher</option>
+                            <option value="9">@MyERP.Properties.Resources.SalesOrder</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row" id="salesInvoicesModalTable">
+                </div>
+            </div>
+            <div class="modal-footer" id="Footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#DocType').trigger('change');
+    });
+
+    $(document).on('change', '#DocType', function () {
+        $('#salesInvoicesModalTable').empty();
+        if ($(this).val() == 1) {
+            $.get('/SalesInvoice/LinkToPurchaseInvoice').done(function (r) {
+                $('#salesInvoicesModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+                let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.PurchaseRequestNo' + '</th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Branch' + '</th><th>' + '@MyERP.Properties.Resources.ItemsGroup' + '</th><th>' + '@MyERP.Properties.Resources.Details' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+                $('#salesInvoicesModalTable').empty().append(table);
+                let div = '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">' + "@MyERP.Properties.Resources.Close" + '</button><button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="PurchaseInvoiceDetails()">' + "@MyERP.Properties.Resources.Link" + '</button></div>';
+                $('#Footer').empty().append(div);
+            });
+        }
+        else if ($(this).val() == 4) {
+            $.get('/SalesInvoice/LinkToSalesQuotation').done(function (r) {
+                $('#salesInvoicesModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+                let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.SalesQuotationNo' + '</th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Branch' + '</th><th>' + '@MyERP.Properties.Resources.Details' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+                $('#salesInvoicesModalTable').empty().append(table);
+                // let div = '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">' + "@MyERP.Properties.Resources.Close" + '</button><button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="SalesQuotationDetails()">' + "@MyERP.Properties.Resources.Link" + '</button></div>';
+                $('#Footer').empty().append('<button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>');
+            });
+        }
+        else if ($(this).val() == 2) {
+            $.get('/SalesInvoice/LinkToSalesInvoice').done(function (r) {
+                $('#salesInvoicesModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+                let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.SalesInvoiceNo' + '</th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Branch' + '</th><th>' + '@MyERP.Properties.Resources.Details' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+                $('#salesInvoicesModalTable').empty().append(table);
+                $('#Footer').empty().append('<button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>');
+            });
+        }
+        else if ($(this).val() == 9) {
+            $.get('/SalesInvoice/LinkToSalesOrder').done(function (r) {
+                $('#salesInvoicesModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+                let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.SalesOrderNo' + '</th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Branch' + '</th><th>' + '@MyERP.Properties.Resources.Details' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+                $('#salesInvoicesModalTable').empty().append(table);
+                $('#Footer').empty().append('<button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>');
+            });
+        }
+             else if ($(this).val() == 5) {
+            $.get('/SalesInvoice/LinkToPurchaseReturn').done(function (r) {
+                $('#salesInvoicesModalTable').empty().append('<div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div>');
+                let table = '<div class="table-responsive"><table class="table table-centered table-sm mb-0"><thead><tr><th>' + '@MyERP.Properties.Resources.PurchaseReturnNo' + '</th><th>' + '@MyERP.Properties.Resources.Date' + '</th><th>' + '@MyERP.Properties.Resources.Branch' + '</th><th>' + '@MyERP.Properties.Resources.Details' + '</th><th>' + '@MyERP.Properties.Resources.Add' + '</th></tr></thead><tbody>' + r + '</tbody></table></div>';
+                $('#salesInvoicesModalTable').empty().append(table);
+                $('#Footer').empty().append('<button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>');
+            });
+        }
+        else {
+            $('#Footer').empty().append('<button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>');
+        }
+    });
+
+    $('#LinkWithDocModalDepartmentId').on('change', function () {
+        getSalesInvoices();
+    });
+
+    function getSalesInvoices() {
+        if ($('#LinkWithDocModalDepartmentId').val()) {
+            $('#salesInvoicesModalTable').empty().append('<div class="col-sm-12"><div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div></div>');
+            $.get('/PurchaseInvoice/SalesInvoicesByDepartment?id=' + $('#LinkWithDocModalDepartmentId').val()).done(function (r) {
+                $('#salesInvoicesModalTable').empty().append(r);
+            });
+        } else
+            $('#salesInvoicesModalTable').empty();
+    }
+
+
+</script>

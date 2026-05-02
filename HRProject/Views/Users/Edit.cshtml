@@ -1,0 +1,59 @@
+﻿@model EazyCash.Models.UserViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+ 
+<div class="ibox">
+    <div class="ibox-title">
+        <h5>Edit User</h5>
+    </div>
+    <div class="ibox-content">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id"/>
+            <div class="form-group">
+                <label asp-for="UserName" class="control-label"></label>
+                <input asp-for="UserName" class="form-control" readonly="readonly">
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+
+
+            <div class="form-group">
+                @*  <label asp-for="BranchId" class="control-label"></label>
+                <input asp-for="BranchId" class="form-control"/>*@
+                <select class="form-control" asp-for="BranchId" asp-items="@Model.Branches">
+                    <option>Please select one</option>
+                </select>
+                <span asp-validation-for="BranchId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="IsAdmin"/> @Html.DisplayNameFor(model => model.IsAdmin)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="IsActive"/> @Html.DisplayNameFor(model => model.IsActive)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-danger"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index" class="btn btn-warning">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+ 

@@ -1,0 +1,205 @@
+﻿@model MyERP.Models.Slider
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+}
+@{
+    ViewBag.Title = "Slider";
+
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+
+                    if (ViewBag.Previous > 0)
+                    {
+                        <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">الأول</a>
+                        <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                    }
+                    if (ViewBag.Next > 0)
+                    {
+                        <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                        <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">الأخير</a>
+                    }
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>
+
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">رجوع</a>}
+            </div>
+            <h4 class="page-title">Slider</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Slider/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.Image)
+                        @Html.HiddenFor(model => model.UserId)
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    البيانات الاساسية
+                                </h5>
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">URL</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.URL, new { htmlAttributes = new { @class = "form-control", placeholder = "URL", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            مطلوب URL
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @*<div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="Code">ترتيب الصورة</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.SliderOrder, new { htmlAttributes = new {@class = "form-control", placeholder = "ترتيب الصورة", } })
+
+                                        </div>
+                                    </div>*@
+
+                                <div class="tab-pane" id="5">
+                                    <div id="gallery" style="width: 100%;margin: 20px;">
+
+                                        @if (Model.Image != null)
+                                        {
+                                            <img src="https://mysoftecom.s3.us-east-2.amazonaws.com/Slider/@Model.Image" alt="" class="img_@Model.Id" style="max-width: 200px;max-height: 200px;" />
+                                            <i class="fas fa-trash-alt img_@Model.Id" style="cursor:pointer;" onclick="DeleteIMG('@Model.Id');$(this).prev().remove();$(this).remove();"></i>
+                                        }
+
+                                    </div>
+
+                                    <input type="file" id="BrowseImage" onchange="previewFile()" value="Browse" @*multiple*@ />
+
+                                    @*<input type="button" id="GetImage" value="GetImage" />*@
+
+
+                                    @*<div id="UploadImage" style="height:600px;width:600px;">
+
+                                        </div>*@
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <button type="submit" id="newbtn" class="btn btn-success">
+                                            حفظ و جديد
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                    else
+                                    {
+
+                                        <button type="submit" class="btn btn-success">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                        <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">حذف</a>
+
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function DeleteIMG(url) {
+
+        $("#ItemURLImages option[value='" + url + "']").remove();
+        $("#BrowseImage").val('')
+        //$("img[src='" + url + "']").remove();
+    }
+
+    function previewFile() {
+
+        var reader = new FileReader();
+
+        reader.addEventListener("load", function () {
+
+            $("#gallery").html('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + reader.result + '" alt="" /><i class="fas fa-trash-alt" style="cursor:pointer;" onclick="DeleteIMG(\'' + reader.result + '\');$(this).prev().remove();$(this).remove();"></i>');
+            $("#Image").val(reader.result);
+        }, false);
+
+        for (var i = 0; i < $("#BrowseImage")[0].files.length; i++) {
+            if ($("#BrowseImage")[0].files[i]) {
+                reader.readAsDataURL($("#BrowseImage")[0].files[i]);
+            }
+        }
+    }
+
+    $("#ItemURLImages option").attr('selected', 'selected');
+    $("#ItemURLImages").hide();
+    $("#GetImage").click(function () {
+        $("#GetImage").fadeOut();
+        $('#UploadImage').photobooth().on("image", function (event, dataUrl) {
+            $("#gallery").append('<img style="max-width: 200px;max-height: 200px;margin-left: 2%;margin-bottom: 2%;" src="' + dataUrl + '" alt="" /><i class="fa fa-trash-o" style="cursor:pointer;position: absolute;" onclick="DeleteIMG("' + dataUrl + '");;$(this).prev().remove();$(this).remove();"></i>');
+            $("#ItemURLImages").append("<option style='float: left;' selected=selected>" + dataUrl + "</option>");
+        });
+    });
+
+
+
+    function DeleteFunc(id) {
+        if (confirm('هل تريد الحذف؟')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Slider/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('لم يتم الحذف!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Slider');
+                        } else
+                            alert('لم يتم الحذف!');
+                    }
+                });
+        }
+    }
+</script>

@@ -1,0 +1,190 @@
+﻿@model IEnumerable<MyERP.Models.PosReceiptVoucher>
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.PosReceiptVoucher;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("AddEdit")" role="button" style="float:left; margin-right:4px">@MyERP.Properties.Resources.AddNew</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.PosReceiptVoucher</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group row">
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+                                <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder=@MyERP.Properties.Resources.Search>
+                            </div>
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+
+                                @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control searchtxt" })
+
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                                <a class="btn btn-info" href="@Url.Action("Index")" role="button"><i class="fe-refresh-ccw"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @MyERP.Properties.Resources.DocNo
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Date
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Branch
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.FromDate
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.ToDate
+                                    </th>
+                                   
+                                    <th>
+                                        @MyERP.Properties.Resources.Shift
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Cashier
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Edit
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Print
+                                    </th>
+                                    @*<th>
+                                        حذف
+                                    </th>*@
+                                </tr>
+                            </thead>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @*@Html.DisplayFor(modelItem => item.DocumentNumber)*@
+                                        @Html.Raw(item.DocumentNumber.ToString().Replace("-", ""))
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Date)
+                                    </td>
+
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Department.ArName)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.DateFrom)
+                                    </td>
+
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.DateTo)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Shift.ArName)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.ERPUser.UserName)
+                                    </td>
+
+                                    <td>
+                                        <a href="@Url.Action("AddEdit","PosReceiptVoucher",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="@Url.Action("PosReceiptVoucher", "Report", new { id = item.Id, print = true })" target="_blank">
+                                            <i class="remixicon-printer-fill"></i>
+                                        </a>
+                                    </td>
+                                    @*<td>
+                                        <a href="javascript:void(0);" @((item.IsLinked == true) ? "style=color:gray;cursor:no-drop;" : "onclick=Delete(" + @item.Id + ")")>
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+
+                                    </td>*@
+                                </tr>
+                            }
+
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">@MyERP.Properties.Resources.All</option>
+            </select>
+            <span style="font-size:12px;float:right;">@MyERP.Properties.Resources.NoOfResults : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> @MyERP.Properties.Resources.PageNo: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+    var pageNo = 1;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function paging() {
+        var link = '/PosReceiptVoucher/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord + '&departmentId=' + $('#DepartmentId').val();
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+           $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+    })
+
+
+
+</script>

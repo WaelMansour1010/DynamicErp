@@ -1,0 +1,575 @@
+﻿@model IEnumerable<MyERP.Models.ItemGroup>
+@{
+    //Layout = "~/Views/Shared/_CashierLayout.cshtml";
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.SalesReturn;
+}
+
+<input type="hidden" id="CashBoxId" value="@ViewBag.CashBoxId" />
+
+<div class="row p-0">
+    <div class="col-lg-12 p-0">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="form-group row">
+                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                    <div class="col-sm-2">
+                        <input id="DocumentNumber" class="form-control" readonly placeholder="@MyERP.Properties.Resources.DocNo" required />
+                        <div class="invalid-feedback">
+                            @MyERP.Properties.Resources.Required
+                        </div>
+                    </div>
+                    <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.VoucherDate</label>
+                    <div class="col-sm-2">
+                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />
+                        <div class="invalid-feedback">
+                            @MyERP.Properties.Resources.Required
+                        </div>
+                    </div>
+                    <label for="SalesInvoiceNo" class="control-label col-sm-1"> @MyERP.Properties.Resources.SalesInvoiceNo </label>
+                    <div class="col-sm-2">
+                        <input id="SalesInvoiceNo" name="SalesInvoiceNo" class="form-control" value="@ViewBag.SalesInvoiceNo" required />
+
+                    </div>
+                    <button class="btn btn-success" onclick="getSalesInvoiceDetails()">@MyERP.Properties.Resources.Link</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12 p-0">
+                    <div class="card m-1 p-1">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="row form-group m-0">
+                                <label for="VendorOrCustomerId" class="control-label col-sm-1"> @MyERP.Properties.Resources.Customer </label>
+                                <div class="col-sm-2">
+                                    @Html.DropDownList("VendorOrCustomerId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                <label for="DepartmentId" class="control-label col-sm-1"> @MyERP.Properties.Resources.Department</label>
+                                <div class="col-sm-2">
+                                    @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                <label for="WarehouseId" class="control-label col-sm-1">@MyERP.Properties.Resources.WareHouse</label>
+                                <div class="col-sm-2">
+                                    @Html.DropDownList("WarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-3">
+                                    <input type="datetime-local" class="form-control" id="VoucherDate" readonly style="display:none;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-8 p-0">
+                    <div class="card m-1 p-1">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                    @foreach (var item in Model)
+                                    {
+                                        <a class="nav-link mb-2" id="@item.Id-tab" data-toggle="pill" href="#v-@item.Id" role="tab" aria-controls="v-@item.Id" aria-selected="false">@item.ArName</a>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-sm-10">
+                                <div class="tab-content pt-0">
+                                    @foreach (var itemGroup in Model)
+                                    {
+                                        <div class="tab-pane fade" id="v-@itemGroup.Id" role="tabpanel" aria-labelledby="@itemGroup.Id-tab">
+                                            <div class="row">
+                                                <!-- Plans -->
+                                                @foreach (var item in itemGroup.Items.Where(x => x.IsDeleted == false && x.IsActive == true))
+                                                {
+                                                    <div class="col-xl-3 col-md-6 mb-1">
+                                                        <input type="hidden" class="item-id" value="@item.Id" />
+                                                        <button class="btn btn-outline-primary waves-effect waves-light col-sm-12" onclick="addItem(this)">@item.ArName</button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-4 p-0">
+                    <div class="card m-1 p-1">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="table-responsive">
+                                <table class="table table-centered table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th> @MyERP.Properties.Resources.Item </th>
+                                            <th> @MyERP.Properties.Resources.Qty </th>
+                                            <th> @MyERP.Properties.Resources.Unit </th>
+                                            <th> @MyERP.Properties.Resources.SalePrice </th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="SalesReturnsDetails">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="form-group row">
+                                <label for="VoucherDiscountValue" class="control-label col-sm-2">@MyERP.Properties.Resources.DiscountValue: </label>
+                                <div class="col-sm-4">
+                                    <input class="form-control money" id="DiscountValue" type="text" />
+                                    <input class="form-control" type="hidden" id="Total" required />
+                                    <input id="VoucherDiscountPercentage" class="form-control" type="hidden" />
+                                </div>
+                                <label for="NetTotal" class="control-label col-sm-2">@MyERP.Properties.Resources.TotalAfterDiscount:</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control money" type="text" readonly id="NetTotal" />
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="ServiceFees" class="control-label col-sm-2">@MyERP.Properties.Resources.ServiceFees:</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control money" type="text" readonly id="ServiceFees" />
+                                    <input type="hidden" id="ServiceFeesPercentage" value="@ViewBag.ServiceFeesPercentage" />
+                                </div>
+                                <label for="TotalAfterTaxes" class="control-label col-sm-2">@MyERP.Properties.Resources.Total:</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control money" type="text" id="TotalAfterTaxes" readonly />
+                                </div>
+                            </div>
+                            <div class="row form-group m-1">
+                                <button class="btn btn-success" onclick="addEdit()" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end row -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+
+</div> <!-- container -->
+
+<script>
+    $('.nav-link.mb-2').first().trigger('click');
+
+    let warehouseOptions = '';
+
+    function setWarehouseValues() {
+        warehouseOptions = '';
+        return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DepartmentId').val())
+            .done(function (r) {
+                warehouseOptions = '<option value>@MyERP.Properties.Resources.Select</option>';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+            });
+    }
+
+    function getItemUnits(itemId) {
+        return requestData('/Helper/ItemUnits?itemId=' + itemId);
+    }
+
+    function setDocNum() {
+        if ($('#DepartmentId').val())
+            $.get('/SalesReturn/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+            });
+    }
+    function getSalesInvoiceDetails() {
+        if (!$('#SalesInvoiceNo').val()) {
+           // alert('أدخل رقم فاتورة البيع')
+             Swal.fire({
+        title: '@MyERP.Properties.Resources.EnterSalesInvoiceNo',
+        text: " ",
+        icon: 'info',
+        showCancelButton: false,
+        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+        confirmButtonColor: '#3085d6'
+    });
+        }
+        else if (!$('#DepartmentId').val()) {
+           // alert('أختر الفرع')
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.DepartmentRequired',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        else {
+            $('#preloader, #status').fadeIn();
+
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/PointOfSale/GetSalesIvoiceDetails?salesInvoiceNo=" + $('#SalesInvoiceNo').val() + '&departmentId=' + $('#DepartmentId').val(),
+
+                success: function (r) {
+                    $('#SalesReturnsDetails').empty().append(r.view);
+                    $('#SalesReturnsDetails select').select2({
+                        matcher: matchCustom
+                    });
+                    $('#SalesReturnsDetails .money').inputmask({
+                        alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+                    });
+                    let docNums = $.map($('.salesOrderId:checked'), function (i) { return $(i).attr('doc-num'); });
+
+
+                    $('#DepartmentId, #WarehouseId, #CustomerType').attr('disabled', 'disabled');
+                    $('#VendorOrCustomerId').val(r.customerId).trigger('change').attr('disabled', 'disabled');
+                    $('#VoucherDate').val(r.VoucherDate);
+                    $('#Id').remove();
+                    SystemPageId = 58;
+                    isLinked = true;
+
+                    $('.tab-pane.fade').find('button').attr('disabled', 'disabled');
+                    setDocNum();
+                    $('#Paid').val('');
+                    salesOrdersPaid = r.Paid;
+                    CalculateTotals();
+                    $('#preloader, #status').fadeOut();
+                },
+                error: function () {
+                    $('#preloader, #status').fadeOut();
+                    //alert('لم يتم الربط!');
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotLinked',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            });
+        }
+    }
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            setWarehouseValues().then(function () {
+                $("#WarehouseId").empty().append(warehouseOptions);
+            });
+            setDocNum();
+        } else {
+            $('#DocumentNumber').val('');
+            $("#WarehouseId").empty().append('<option value>@MyERP.Properties.Resources.Select</option>');;
+        }
+    });
+
+    function addItem(e) {
+        let itemid = $(e).siblings('.item-id').val();
+        let tr = '<tr><td class="tabledit-edit-mode" colspan="1"><input type="hidden" class="item" required /><input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly /><input type="hidden" class="barcode" required /><input type="hidden" class="item-price-id" required /></td><td class="tabledit-edit-mode" colspan="1"><input class="money quantity form-control tabledit-input form-control-sm" type="text" required /></td><td class="tabledit-edit-mode" colspan="1"><select class="item-unit form-control tabledit-input form-control-sm" required></select><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required /></td><td class="tabledit-edit-mode" colspan="1"><input type="text" class="money price form-control tabledit-input form-control-sm" required readonly /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+
+        $('#SalesReturnsDetails').append(tr);
+        $('.item').last().val(itemid).closest('tr').find('.item-name').val($(e).text());
+        $('#SalesReturnsDetails tr:last select').select2({
+            matcher: matchCustom
+        });
+        $('#SalesReturnsDetails tr:last .money').inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+        });
+        getItemUnits(itemid).done(function (r) {
+            let units = '';
+            for (var i = 0; i < r.length; i++) {
+                units += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+            }
+            $('.item-unit').last().empty().append(units).trigger('change');
+        });
+    }
+
+    $(document).on('change', '.item-unit', function () {
+        let itemUnitId = $(this).val();
+        let item = $(this).closest('tr').find('.item');
+        getItemUnits(item.val()).done(function (r) {
+            let itemUnit = r.filter(function (i) { return i.Id == itemUnitId })[0];
+            item.closest('tr').find('.unit-equavalent').val(itemUnit.Equivalent);
+            item.closest('tr').find('.price').val(itemUnit.Price);
+            item.closest('tr').find('.barcode').val(itemUnit.Barcode);
+            item.closest('tr').find('.item-price-id').val(itemUnit.ItemPriceId);
+            CalculateTotals()
+        });
+    });
+
+    function deleteElement(e) {
+        $(e).closest('tr').remove();
+        CalculateTotals();
+    }
+
+    $(document).on('change', '#DiscountValue', function () {
+        let total = 0;
+        $('.price').each(function () {
+            total += $(this).val() * $(this).closest('tr').find('.quantity').val();
+        });
+        if (($(this).inputmask('unmaskedvalue') / total) >= 1) {
+            $(this).val(0);
+        }
+        $('#VoucherDiscountPercentage').val(($(this).inputmask('unmaskedvalue') * 100 / total));
+        CalculateTotals(total);
+    });
+
+    function CalculateTotals(total) {
+        if (!total) {
+            total = 0;
+            $('.price').each(function () {
+                total += $(this).inputmask('unmaskedvalue') * $(this).closest('tr').find('.quantity').val();
+            });
+        }
+
+        $('#Total').val(total);
+        if ($('#VoucherDiscountPercentage').inputmask('unmaskedvalue') < 100) {
+            $('#DiscountValue').val(($('#VoucherDiscountPercentage').inputmask('unmaskedvalue') / 100) * total);
+        } else {
+            $('#VoucherDiscountPercentage').val(0);
+            $('#DiscountValue').val(0);
+        }
+        if ($('#DiscountValue').val()) {
+            total -= $('#DiscountValue').inputmask('unmaskedvalue');
+        }
+        $('#NetTotal').val(total);
+        let ServiceFees = $('#ServiceFeesPercentage').val() * total;
+        $('#ServiceFees').val(ServiceFees);
+        total += ServiceFees;
+
+        $('#TotalAfterTaxes').val(total);
+    }
+
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+        var SalesReturnsDetails = [];
+        if (valid) {
+            $('#SalesReturnsDetails tr').each(function () {
+                var td = $(this);
+                if (td.find('.quantity').val() * 1 != 0 && td.find('.item').val() > 0) {
+                    var salesReturnsDetail = {
+                        ItemId: td.find('.item').val(),
+                        ItemPriceId: td.find('.item-price-id').val(),
+                        ItemUnitId: td.find('.item-unit').val(),
+                        UnitEquivalent: td.find('.unit-equavalent').val(),
+                        Price: td.find('.price').inputmask('unmaskedvalue') * 1,
+                        Qty: td.find('.quantity').val(),
+                        IsActive: true,
+                        IsDeleted: false,
+                    };
+
+                    SalesReturnsDetails.push(salesReturnsDetail);
+                }
+            });
+            valid = SalesReturnsDetails.length > 0 ? true : false;
+            valid == false ? Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                text: " ", icon: 'info', showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok', confirmButtonColor: '#3085d6'
+            }) : null;
+        }
+        let paymentMethods = [];
+        if (valid) {
+            let paymentMethod = {
+                SalesReturnId: $('#Id').val(),
+                PaymentMethodId: 1,
+                CashBoxId: $('#CashBoxId').val(),
+                Amount: $('#TotalAfterTaxes').inputmask('unmaskedvalue') * 1,
+                BankId: null,
+                BankAccountId: null
+            };
+            paymentMethods.push(paymentMethod);
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/SalesReturn/AddEdit",
+                        data:
+                            JSON.stringify({
+                                Id: $('#Id').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                BranchId: $('#BranchId').val(),
+                                WarehouseId: $('#WarehouseId').val(),
+                                VoucherDate: $('#VoucherDate').val(),
+                                VendorOrCustomerId: $('#VendorOrCustomerId').val(),
+                                CurrencyId: $('#CurrencyId').val(),
+                                CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                                Total: $('#Total').inputmask('unmaskedvalue'),
+                                SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+                                CommercialRevenueTaxAmount: $('#CommercialRevenueTaxAmount').inputmask('unmaskedvalue'),
+                                TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+                                VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+                                VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+                                NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                                TotalItemDirectExpenses: $('#TotalItemDirectExpenses').inputmask('unmaskedvalue'),
+                                SystemPageId: $('#SystemPageId').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                SalesReturnsDetails: SalesReturnsDetails,
+                                IsActive: $('#IsActive').val(),
+                                IsDeleted: $('#IsDeleted').val(),
+                                Notes: $('#Notes').val(),
+                                SalesReturnPaymentMethods: paymentMethods,
+                                IsCompleted: false
+                            }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                //alert("تم الحفظ");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                console.log(r.id);
+                                $('#preloader, #status').fadeOut();
+                                $.get('/Helper/CurrentTime').done(function (r) { $('#VoucherDate').val(r) });
+                                setDocNum();
+                                $('#SalesReturnsDetails').empty();
+                            } else {
+                                $('#preloader, #status').fadeOut();
+                                $('#save').prop('disabled', false);
+
+                                //alert("لم يتم الحفظ!");
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                        },
+                        error: function (r) {
+                            $('#preloader, #status').fadeOut();
+                            $('#save').prop('disabled', false);
+
+                            //alert("لم يتم الحفظ!");
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+        @*if (valid && confirm('هل تريد الحفظ؟')) {
+            $('#preloader, #status').fadeIn();
+            $('#save').prop('disabled', true);
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/SalesReturn/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: $('#Id').val(),
+                        DocumentNumber: $('#DocumentNumber').val(),
+                        BranchId: $('#BranchId').val(),
+                        WarehouseId: $('#WarehouseId').val(),
+                        VoucherDate: $('#VoucherDate').val(),
+                        VendorOrCustomerId: $('#VendorOrCustomerId').val(),
+                        CurrencyId: $('#CurrencyId').val(),
+                        CurrencyEquivalent: $('#CurrencyEquivalent').val(),
+                        Total: $('#Total').inputmask('unmaskedvalue'),
+                        SalesTaxes: $('#SalesTaxes').inputmask('unmaskedvalue'),
+                        CommercialRevenueTaxAmount: $('#CommercialRevenueTaxAmount').inputmask('unmaskedvalue'),
+                        TotalAfterTaxes: $('#TotalAfterTaxes').inputmask('unmaskedvalue'),
+                        VoucherDiscountValue: $('#DiscountValue').inputmask('unmaskedvalue'),
+                        VoucherDiscountPercentage: $('#VoucherDiscountPercentage').inputmask('unmaskedvalue'),
+                        NetTotal: $('#NetTotal').inputmask('unmaskedvalue'),
+                        TotalItemDirectExpenses: $('#TotalItemDirectExpenses').inputmask('unmaskedvalue'),
+                        SystemPageId: $('#SystemPageId').val(),
+                        DepartmentId: $('#DepartmentId').val(),
+                        SalesReturnsDetails: SalesReturnsDetails,
+                        IsActive: $('#IsActive').val(),
+                        IsDeleted: $('#IsDeleted').val(),
+                        Notes: $('#Notes').val(),
+                        SalesReturnPaymentMethods: paymentMethods,
+                        IsCompleted: false
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+                        //alert("تم الحفظ");
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.Saved',
+                            text: " ",
+                            icon: 'success',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        console.log(r.id);
+                        $('#preloader, #status').fadeOut();
+                        $.get('/Helper/CurrentTime').done(function (r) { $('#VoucherDate').val(r) });
+                        setDocNum();
+                        $('#SalesReturnsDetails').empty();
+                    } else {
+                        $('#preloader, #status').fadeOut();
+                        $('#save').prop('disabled', false);
+
+                        //alert("لم يتم الحفظ!");
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.NotSaved',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    $('#save').prop('disabled', false);
+
+                    //alert("لم يتم الحفظ!");
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.NotSaved',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            });
+        }*@
+    }
+</script>

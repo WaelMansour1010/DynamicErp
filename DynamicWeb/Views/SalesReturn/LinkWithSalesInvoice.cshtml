@@ -1,0 +1,104 @@
+﻿@model IEnumerable<MyERP.Models.LinkSalesReturnWithSalesInvoice_Result>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+}
+
+
+
+@foreach (var item in Model)
+{
+    <tr bgcolor="@Html.Raw(item.ExtraTypeId!= null ? "Pink" : "")">
+        <td class="tabledit-edit-mode"><input class="barcode form-control tabledit-input form-control-sm" value="@item.Barcode" /></td>
+        <td class="tabledit-edit-mode">
+            <input type="hidden" class="item form-control tabledit-input form-control-sm" value="@item.ItemPriceId" required />
+            <input type="text" class="item-name form-control tabledit-input form-control-sm" value="@item.ArName - @item.Barcode" hidden required />
+            <label style="width:200px" class="name control-label tabledit-input ">@item.ArName - @item.Barcode</label>
+            <input hidden class="itemUnitArName" value=@item.ItemUnitArName />
+
+        </td>
+        <td class="tabledit-edit-mode expiry" style="display:none;">
+            @if (item.ExpireDate.HasValue)
+            {
+                <input class="ExpiryDate form-control tabledit-input form-control-sm" value="@item.ExpireDate.Value.ToString("MM/dd/yyy")" readonly />
+            }
+            else
+            {
+                <input class="ExpiryDate form-control tabledit-input form-control-sm" readonly />
+            }
+            <input class="PatchId form-control tabledit-input form-control-sm" value="@item.PatchId" hidden />
+            <input class="itemId form-control tabledit-input form-control-sm" value=@item.ItemId hidden />
+        </td>
+        <td class="tabledit-edit-mode">
+            <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" value="@item.Qty" required />
+        </td>
+        <td class="tabledit-edit-mode UnitClass" style="display:none;"><select class="item-unit form-control tabledit-input form-control-sm" required disabled><option value="@item.ItemUnitId">@item.ItemUnitArName</option></select></td>
+        <td class="tabledit-edit-mode UnitEquivClass" style="display:none;"><input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="number" step="any" value="@item.UnitEquivalent" required /></td>
+        <td class="tabledit-edit-mode"><input type="text" class="money price form-control tabledit-input form-control-sm" value="@item.Price" required /></td>
+        <td class="tabledit-edit-mode"><input class="total money form-control tabledit-input form-control-sm" type="text" readonly value="0" /></td>
+        <td><button class="btn btn-info" data-toggle="modal" data-target="#itemDetails" onclick="showItemDetials(this)">@MyERP.Properties.Resources.Details</button></td>
+        <td>
+            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </td>
+    </tr>
+
+    @*<tr bgcolor="@Html.Raw(item.ExtraTypeId!= null ? "Pink" : "")">
+            <td hidden class="RowId"></td>
+            <td hidden class="@Html.Raw(item.ExtraTypeId== null ? "Main" : "")">Main</td>
+            <td class="tabledit-edit-mode" colspan="1" style="width:40%">
+                <input type="hidden" class="item" required value="@item.ItemId" />
+                <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="@item.ArName" />
+                <input type="hidden" class="barcode" required value="@item.Barcode" />
+                <input type="hidden" class="item-price-id" required value="@item.ItemPriceId" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" required value="@item.Qty" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <select class="item-unit form-control tabledit-input form-control-sm" required><option value="@item.ItemUnitId">@item.ItemUnitArName</option></select>
+                <input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required value="@item.UnitEquivalent" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="@item.Price" />
+                <input hidden type="text" class="money accessoryPrice form-control tabledit-input form-control-sm" readonly value="@item.AccessoryPrice" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="money total form-control tabledit-input form-control-sm" required readonly value="@Html.Raw(item.Price*(decimal)item.Qty)" />
+                <input hidden class="itemTotalAccessoryPrice" readonly value="@Html.Raw(item.AccessoryPrice*(decimal)item.Qty)" />
+            </td>
+            <td>
+                <a href="javascript:void(0);" onclick="deleteElement(this)">
+                    <i class="fas fa-trash-alt"></i>
+                </a>
+            </td>
+             @if (item.ExtraTypeId == null)
+              {
+                <td class="EnableAdditionalItemsOnPos text-center">
+                    <a href="javascript:void(0);" onclick="ShowExtra(this)">
+                       <i class="fa fa-plus" aria-hidden="true"></i>
+                    </a>
+                </td>
+              }
+            <td hidden ><input class="ExtraTypeId" required value="@item.ExtraTypeId" /></td>
+        </tr>*@
+}
+
+<script>
+    $(document).ready(function () {
+        // Expire date
+        if (UseExpiryDateForItems == 'True') {
+            $('.expiry').show();
+        }
+
+        if (window.sessionStorage.getItem("UseItemUnit") == 'true') {
+            $('.UnitClass').show();
+            $('.UnitEquivClass').show();
+        }
+
+        $('#SalesReturnsDetails select').select2({
+            matcher: matchCustom
+        });
+    });
+
+</script>

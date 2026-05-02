@@ -1,0 +1,31 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequestDetail>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td class="tabledit-edit-mode" colspan="1">
+            <input type="hidden" class="item" required value="@item.ItemId" />
+            <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="@item.Item.ArName" />
+            <input type="hidden" class="barcode" required value="@item.ItemPrice.Barcode" />
+            <input type="hidden" class="item-price-id" required value="@item.ItemPriceId" />
+        </td>
+        <td class="tabledit-edit-mode" colspan="1">
+            <input class="quantity form-control tabledit-input form-control-sm" type="number" step="any" required value="@item.Qty" />
+        </td>
+        <td class="tabledit-edit-mode" colspan="1">
+            <select class="item-unit form-control tabledit-input form-control-sm" required><option value="@item.ItemUnitId">@item.ItemUnit.ArName</option></select>
+            <input class="unit-equavalent form-control tabledit-input form-control-sm small-number" type="hidden" required value="@item.UnitEquivalent" />
+        </td>
+        <td class="tabledit-edit-mode" colspan="1">
+            <input type="text" class="money price form-control tabledit-input form-control-sm" required readonly value="@item.ItemPrice.FactoryPrice" />
+        </td>
+        <td class="tabledit-edit-mode" colspan="1">
+            <input type="text" class="money total form-control tabledit-input form-control-sm" required readonly value="@Html.Raw(item.Price*(decimal)item.Qty)" />
+        </td>
+        <td>
+            <a href="javascript:void(0);" onclick="deleteElement(this)">
+                <i class="fas fa-trash-alt"></i>
+            </a>
+        </td>
+    </tr>
+}

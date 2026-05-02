@@ -1,0 +1,253 @@
+﻿@model MyERP.Models.OfficialVacation
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.OfficialVacations;
+    }
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.OfficialVacations :</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/OfficialVacation/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data" id="FormId">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                    }
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName} })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Date" class="control-label col-sm-2"> @MyERP.Properties.Resources.VacationStartDate </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            @Html.Editor("StartDate", new { htmlAttributes = new { @class = "GregorianStart form-control", required = "required", type = "datetime-local" } })
+                                        }
+                                        else
+                                        {
+                                            @Html.Editor("StartDate", new { htmlAttributes = new { @Value = DateTime.Now, @class = "GregorianStart form-control", required = "required", type = "datetime-local" } })
+
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.VacationStartDateHijri</label>
+                                    <div class="col-sm-4">
+                                        <input readonly type="text" id="HijryDateStart" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Date" class="control-label col-sm-2"> @MyERP.Properties.Resources.VacationEndDate </label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            @Html.Editor("EndDate", new { htmlAttributes = new { @class = "GregorianEnd form-control", required = "required", type = "datetime-local" } })
+                                        }
+                                        else
+                                        {
+                                            @Html.Editor("EndDate", new { htmlAttributes = new { @Value = DateTime.Now, @class = "GregorianEnd form-control", required = "required", type = "datetime-local" } })
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2"> @MyERP.Properties.Resources.VacationEndDateHijri </label>
+                                    <div class="col-sm-4">
+                                        <input readonly type="text" id="HijryDateEnd" class="form-control" />
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        @Html.TextAreaFor(a => a.Notes, new { @class = "form-control" })
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="float:left;">
+                        <input id="new" name="newBtn" hidden />
+                        <div>
+                            @if (Model == null)
+                            {
+                                <input id="new" name="newBtn" hidden />
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                        <button type="submit" class="btn btn-success">
+                            @MyERP.Properties.Resources.Save
+                        </button>
+                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+//---------------- On Ready -------------------
+    $(document).ready(function () {
+        GetHijriDate();
+    });
+
+//--------------------- On Change -------------------
+    $('#StartDate').on('change', function () {
+        GetHijriDate();
+        if ($('#Id').val()>0)
+        alert('! سوف يتم تغيير مواعيد الاجازات الرسمية فى باقى الحركات');
+    });
+    $('#EndDate').on('change', function () {
+        GetHijriDate();
+        if ($('#Id').val() > 0)
+            alert('! سوف يتم تغيير مواعيد الاجازات الرسمية فى باقى الحركات');
+});
+
+//------------------------ Hijri Date -------------------------------
+    function GetHijriDate() {
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($('#StartDate').val())).toString();
+        $('#HijryDateStart').val(Hijry);
+
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($('#EndDate').val())).toString();
+        $('#HijryDateEnd').val(Hijry);
+    }
+
+//-------------------------- CodeNum---------------------------------//
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            $.get('/OfficialVacation/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+        setCodeNum();
+    }
+
+//------------------------------- ShowDate------------------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    if ($('#Id').val() > 0) {
+        $('#StartDate').val('@ViewBag.StartDate');
+        $('#EndDate').val('@ViewBag.EndDate');
+    }
+    else
+    {
+        var d = new Date();
+        $('#StartDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#EndDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+    }
+//---------------------------- Delete ----------
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/OfficialVacation/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/OfficialVacation');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+</script>
