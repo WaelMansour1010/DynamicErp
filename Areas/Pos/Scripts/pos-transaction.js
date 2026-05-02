@@ -26,6 +26,29 @@
     function selectedText(select) { return select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : ""; }
     function savedTransactionId() { var value = parseInt(lastSavedTransactionId, 10); return isNaN(value) ? 0 : value; }
     function enablePrintIfAllowed() { byId("printBtn").disabled = !(savedTransactionId() > 0 && currentContext && currentContext.CanPrint === true); }
+    function savedKycCustomerId() {
+        var element = byId("cashCustomerId");
+        if (!element) { return 0; }
+        var value = parseInt(element.value, 10);
+        return isNaN(value) ? 0 : value;
+    }
+    function enablePrintAcknowledgmentIfAllowed() {
+        var button = byId("printAcknowledgmentBtn");
+        if (!button) { return; }
+        button.disabled = !(savedKycCustomerId() > 0 && currentContext && currentContext.CanPrint === true);
+    }
+    function openPrintAcknowledgmentForCustomer(customerId) {
+        customerId = parseInt(customerId, 10) || 0;
+        if (customerId <= 0) {
+            setKycMessage("لا توجد بيانات كارت محفوظة لطباعة الإقرار", true);
+            return false;
+        }
+
+        var url = getUrl("data-kyc-print-acknowledgment-url");
+        if (!url) { return false; }
+        window.open(url.replace(/\/$/, "") + "/" + encodeURIComponent(customerId), "_blank");
+        return true;
+    }
     function openPrintForTransaction(transactionId) {
         transactionId = parseInt(transactionId, 10) || 0;
         if (transactionId <= 0) {
@@ -264,6 +287,7 @@
 
     function clearKycFields() {
         byId("cashCustomerId").value = "";
+        enablePrintAcknowledgmentIfAllowed();
         byId("phone2").value = "";
         byId("ipn").value = "";
         byId("manualNo").value = "";
@@ -1155,6 +1179,7 @@
     function applyKeshniCustomer(data) {
         if (!data) { return; }
         if (data.CustomerID) { byId("cashCustomerId").value = data.CustomerID; }
+        enablePrintAcknowledgmentIfAllowed();
         if (data.CustomerName) { byId("cashCustomerName").value = data.CustomerName; }
         if (data.Phone) { byId("cashCustomerPhone").value = data.Phone; }
         if (data.Phone2) { byId("phone2").value = data.Phone2; }
@@ -1437,6 +1462,7 @@
         resetServiceRows();
 
         byId("cashCustomerId").value = "";
+        enablePrintAcknowledgmentIfAllowed();
         byId("transactionType").value = "";
         byId("isCashOut").value = "false";
         byId("isPOS").value = "false";
@@ -1500,6 +1526,9 @@
         if (event.target.id === "printBtn") {
             var transactionId = savedTransactionId();
             openPrintForTransaction(transactionId);
+        }
+        if (event.target.id === "printAcknowledgmentBtn") {
+            openPrintAcknowledgmentForCustomer(savedKycCustomerId());
         }
         var invoiceButton = event.target.closest ? event.target.closest(".today-invoice-item") : null;
         if (invoiceButton) {

@@ -21,6 +21,7 @@
      data-save-keshni-card-url="@Url.Action("SaveKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
      data-kyc-attachments-url="@Url.Action("List", "KycAttachment", new { area = "Pos" })"
      data-open-kyc-attachment-url="@Url.Action("Open", "KycAttachment", new { area = "Pos" })"
+     data-kyc-print-acknowledgment-url="@Url.Action("PrintAcknowledgment", "KycAttachment", new { area = "Pos" })"
      data-payment-types-url="@Url.Action("GetPaymentTypes", "PosTransaction", new { area = "Pos" })"
      data-cash-boxes-url="@Url.Action("GetCashBoxes", "PosTransaction", new { area = "Pos" })"
      data-branches-url="@Url.Action("GetBranches", "PosTransaction", new { area = "Pos" })"
@@ -154,6 +155,7 @@
                 <div id="kycSaveMessage" class="kyc-save-message"></div>
                 <div class="modal-actions">
                     <span class="prototype-warning">المرفقات تحفظ بنفس منطق FrmCustCash: نوع العملية 0701201991 وملفات Doc</span>
+                    <button type="button" class="secondary-action" id="printAcknowledgmentBtn" disabled>طباعة الإقرار</button>
                     <button type="button" class="primary-action" id="saveCashCustomerBtn">حفظ وتفعيل الكارت</button>
                 </div>
                 </div>

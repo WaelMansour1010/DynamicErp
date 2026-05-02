@@ -1,5 +1,6 @@
 using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
+using MyERP.Areas.Pos.Reports;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -83,6 +84,43 @@ namespace MyERP.Areas.Pos.Controllers
                 : Path.GetFileName(attachment.FileName);
             var contentType = MimeMapping.GetMimeMapping(downloadName);
             return File(physicalPath, contentType, downloadName);
+        }
+
+        // Mirrors VB6 FrmCustCash.cmdPrint2_Click, which prints repCashCustomer4.rpt
+        // for the saved Keshni Card KYC customer. The customer record is loaded
+        // strictly by TblCusCsh.Id, never by token, Screen ID, IPN, or ManualNo.
+        [HttpGet]
+        public ActionResult PrintAcknowledgment(int? id)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return new HttpStatusCodeResult(401, "POS session context is missing.");
+            }
+
+            if (!context.CanPrint)
+            {
+                return new HttpStatusCodeResult(403, "POS user is not allowed to print.");
+            }
+
+            if (!id.HasValue || id.Value <= 0)
+            {
+                return HttpNotFound("لم يتم تحديد بيانات الكارت");
+            }
+
+            var customer = _repository.GetKeshniCardCustomerById(id.Value, context.BranchId, context.CanChangeDefaults);
+            if (customer == null)
+            {
+                return HttpNotFound("بيانات الكارت غير موجودة أو غير مسموح بطباعتها");
+            }
+
+            using (var report = new KycCardAcknowledgmentReport(customer, DateTime.Now))
+            using (var stream = new MemoryStream())
+            {
+                report.ExportToPdf(stream);
+                Response.AddHeader("Content-Disposition", "inline; filename=kyc-acknowledgment-" + id.Value + ".pdf");
+                return File(stream.ToArray(), "application/pdf");
+            }
         }
 
         private bool TryResolveAttachmentPath(PosKycAttachmentDto attachment, out string physicalPath)
