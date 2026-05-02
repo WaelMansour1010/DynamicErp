@@ -366,6 +366,17 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     font-weight: 800;
 }
 
+.kyc-save-message {
+    color: #047857;
+    font-size: 14px;
+    font-weight: 800;
+    min-height: 22px;
+}
+
+.kyc-save-message.is-error {
+    color: #b91c1c;
+}
+
 .modal-actions {
     align-items: center;
     display: flex;

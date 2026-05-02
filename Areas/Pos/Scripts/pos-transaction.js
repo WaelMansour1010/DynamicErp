@@ -18,6 +18,7 @@
     var serviceLoadSequence = 0;
     var reviewMode = false;
     var lastSavedTransactionId = null;
+    var kycSaveInProgress = false;
 
     function byId(id) { return document.getElementById(id); }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
@@ -32,7 +33,8 @@
             return false;
         }
 
-        window.open(getUrl("data-print-url").replace(/\/$/, "") + "/" + encodeURIComponent(transactionId), "_blank");
+        var previewUrl = getUrl("data-print-preview-url") || getUrl("data-print-url");
+        window.open(previewUrl.replace(/\/$/, "") + "/" + encodeURIComponent(transactionId), "_blank");
         return true;
     }
     function isValidEgyptianMobile(value) { return /^(010|011|012|015)[0-9]{8}$/.test(value || ""); }
@@ -158,6 +160,9 @@
 
             callback(xhr.status, data);
         };
+        xhr.onerror = function () {
+            callback(0, { success: false, message: "تعذر الاتصال بالسيرفر" });
+        };
         xhr.send(formData);
     }
 
@@ -280,6 +285,14 @@
         byId("kycCard").value = "";
         byId("kycSearchTerm").value = "";
         byId("kycSearchResults").innerHTML = "";
+        setKycMessage("");
+    }
+
+    function setKycMessage(message, isError) {
+        var messageBox = byId("kycSaveMessage");
+        if (!messageBox) { return; }
+        messageBox.innerText = message || "";
+        messageBox.className = "kyc-save-message" + (message ? (isError ? " is-error" : " is-success") : "");
     }
 
     function addItemRow() {
@@ -1046,6 +1059,7 @@
 
         byId("cashCustomerPanel").classList.add("is-open");
         byId("cashCustomerPanel").setAttribute("aria-hidden", "false");
+        setKycMessage("");
         byId("kycName").value = byId("kycName").value || byId("cashCustomerName").value;
         byId("kycPhoneNo2").value = byId("kycPhoneNo2").value || byId("cashCustomerPhone").value;
         byId("kycCardNo").value = byId("kycCardNo").value || byId("visaNumber").value;
@@ -1234,9 +1248,9 @@
             var vatPercent = parseFloat(data.VatPercent) || 0;
             var totalFees = parseFloat(data.TotalFees) || (commission + vatValue);
             var isCard = byId("transactionType").value === "card";
-            var totalValue = isCard ? commission : (parseFloat(data.TotalValue) || (numberValue("rechargeValue") + totalFees));
+            var totalValue = isCard ? totalFees : (parseFloat(data.TotalValue) || (numberValue("rechargeValue") + totalFees));
 
-            byId("commissionValue").value = commission.toFixed(2);
+            byId("commissionValue").value = isCard ? "0.00" : commission.toFixed(2);
             byId("vatValue").value = vatValue.toFixed(2);
             byId("totalFees").value = totalFees.toFixed(2);
             byId("netValue").value = totalValue.toFixed(2);
@@ -1254,25 +1268,39 @@
     }
 
     function saveCashCustomer() {
+        if (kycSaveInProgress) {
+            return;
+        }
+
         if (byId("transactionType").value !== "card") {
-            byId("validationSummary").innerText = "بيانات KYC مطلوبة فقط في كارت كيشني";
+            var wrongModeMessage = "بيانات KYC مطلوبة فقط في كارت كيشني";
+            byId("validationSummary").innerText = wrongModeMessage;
+            setKycMessage(wrongModeMessage, true);
             return;
         }
 
         if (!(byId("kycPhoneNo2").value || byId("cashCustomerPhone").value).trim()) {
-            byId("validationSummary").innerText = "من فضلك أدخل رقم التليفون";
+            var phoneMessage = "من فضلك أدخل رقم التليفون";
+            byId("validationSummary").innerText = phoneMessage;
+            setKycMessage(phoneMessage, true);
             return;
         }
         if (!(byId("kycName").value || byId("cashCustomerName").value).trim()) {
-            byId("validationSummary").innerText = "من فضلك أدخل اسم العميل";
+            var nameMessage = "من فضلك أدخل اسم العميل";
+            byId("validationSummary").innerText = nameMessage;
+            setKycMessage(nameMessage, true);
             return;
         }
         if (!byId("kycNationalId").value.trim()) {
-            byId("validationSummary").innerText = "من فضلك أدخل الرقم القومي";
+            var nationalIdMessage = "من فضلك أدخل الرقم القومي";
+            byId("validationSummary").innerText = nationalIdMessage;
+            setKycMessage(nationalIdMessage, true);
             return;
         }
         if (!byId("kycCardNo").value.trim()) {
-            byId("validationSummary").innerText = "من فضلك أدخل رقم الكارت";
+            var cardMessage = "من فضلك أدخل رقم الكارت";
+            byId("validationSummary").innerText = cardMessage;
+            setKycMessage(cardMessage, true);
             return;
         }
 
@@ -1309,11 +1337,28 @@
             formData.append("attachments", files[i]);
         }
 
+        var saveButton = byId("saveCashCustomerBtn");
+        var oldButtonText = saveButton.innerText;
+        kycSaveInProgress = true;
+        saveButton.disabled = true;
+        saveButton.innerText = "جاري الحفظ...";
+        byId("validationSummary").innerText = "";
+        byId("saveResult").innerText = "جاري حفظ بيانات الكارت...";
+        setKycMessage("جاري حفظ بيانات الكارت...");
+
         requestFormData(getUrl("data-save-keshni-card-url"), formData, function (status, data) {
+            kycSaveInProgress = false;
+            saveButton.disabled = !currentContext || currentContext.CanOpenCashCustomer !== true;
+            saveButton.innerText = oldButtonText;
+
             if (status >= 200 && status < 300 && data && data.success && data.customer) {
                 applyKeshniCustomer(data.customer);
                 renderKycAttachments(data.attachments || []);
-                byId("saveResult").innerText = "تم حفظ بيانات العميل وتفعيل الكارت";
+                byId("saveResult").innerText = data.message || "تم حفظ بيانات العميل وتفعيل الكارت";
+                byId("validationSummary").innerText = "";
+                setKycMessage(data.message || "تم حفظ بيانات العميل وتفعيل الكارت");
+                byId("kycAttachments").value = "";
+                calculateCommissionPreview();
                 closeKycModal();
                 return;
             }
@@ -1322,13 +1367,20 @@
             if (data && data.validationErrors) {
                 message += "\n" + Object.keys(data.validationErrors).map(function (key) { return data.validationErrors[key]; }).join("\n");
             }
+            if (data && data.technicalMessage) {
+                message += "\nالتفاصيل الفنية: " + data.technicalMessage;
+            }
+
             byId("validationSummary").innerText = message;
+            byId("saveResult").innerText = "";
+            setKycMessage(message, true);
         });
     }
 
     function clearMessages() {
         byId("validationSummary").innerHTML = "";
         byId("saveResult").innerHTML = "";
+        setKycMessage("");
     }
 
     function clearFormForNewTransaction() {

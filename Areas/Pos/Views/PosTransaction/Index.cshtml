@@ -30,6 +30,7 @@
      data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
      data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
      data-print-url="@Url.Action("Print", "PosTransaction", new { area = "Pos" })"
+     data-print-preview-url="@Url.Action("PrintPreview", "PosTransaction", new { area = "Pos" })"
      data-save-customer-url="@Url.Action("SaveCashCustomer", "PosTransaction", new { area = "Pos" })"
      data-default-emp-id="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")"
      data-default-emp-name="@(posContext != null ? posContext.EmpName : "")"
@@ -150,6 +151,7 @@
                     </div>
                     <div id="kycAttachmentsList" class="kyc-attachments-list">لا توجد مرفقات معروضة</div>
                 </div>
+                <div id="kycSaveMessage" class="kyc-save-message"></div>
                 <div class="modal-actions">
                     <span class="prototype-warning">المرفقات تحفظ بنفس منطق FrmCustCash: نوع العملية 0701201991 وملفات Doc</span>
                     <button type="button" class="primary-action" id="saveCashCustomerBtn">حفظ وتفعيل الكارت</button>

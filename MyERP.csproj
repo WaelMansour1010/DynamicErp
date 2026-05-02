@@ -418,7 +418,9 @@
     <Compile Include="Areas\Pos\Data\PosSqlRepository.cs" />
     <Compile Include="Areas\Pos\Models\PosClosingModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
-    <Compile Include="Areas\Pos\Reports\PosReceiptReport.cs" />
+    <Compile Include="Areas\Pos\Reports\PosReceiptReport.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\AccountSettings\AccountStatementController.cs" />
     <Compile Include="Controllers\AccountSettings\BalanceReviewController.cs" />
@@ -3937,6 +3939,7 @@
     <Content Include="Areas\Pos\Scripts\pos-transaction.js" />
     <Content Include="Areas\Pos\Views\Web.config" />
     <Content Include="Areas\Pos\Views\PosTransaction\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosTransaction\PrintPreview.cshtml" />
     <Content Include="Areas\Pos\Views\PosClosing\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
     <Content Include="Content\bootstrap-theme.css" />
@@ -5028,6 +5031,9 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Areas\Pos\Reports\PosReceiptReport.resx">
+      <DependentUpon>PosReceiptReport.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\licenses.licx" />
     <EmbeddedResource Include="Properties\Resources.ar.resx">
       <SubType>Designer</SubType>

@@ -226,7 +226,7 @@ FROM dbo.TblOptions;";
 
             if (isCard)
             {
-                var cardItem = request.ItemID.HasValue ? GetItemById(request.ItemID.Value) : null;
+                var cardItem = request.ItemID.HasValue ? GetItemById(request.ItemID.Value, request.BranchId) : null;
                 var cardFee = cardItem == null ? 0m : cardItem.Price;
                 return BuildCommissionResult(request.ItemID, 0m, cardFee, vatPercent, "FrmSaleBill6 Keshni Card UnitSalesPrice", 0, 0, 0, false);
             }
@@ -437,7 +437,7 @@ ORDER BY pt.PaymentID;";
             return paymentTypes;
         }
 
-        private PosItemLookupDto GetItemById(int itemId)
+        private PosItemLookupDto GetItemById(int itemId, int? branchId = null)
         {
             const string sql = @"
 SELECT TOP (1)
@@ -469,7 +469,11 @@ OUTER APPLY
         iu0.UnitSalesPrice
     FROM dbo.TblItemsUnits iu0
     WHERE iu0.ItemID = i.ItemID
-    ORDER BY CASE WHEN ISNULL(iu0.DefaultUnit, 0) = 1 THEN 0 ELSE 1 END, iu0.JunckID
+      AND (@branchId IS NULL OR ISNULL(iu0.BranchId, 0) = @branchId OR ISNULL(iu0.DefaultUnit, 0) = 1)
+    ORDER BY
+        CASE WHEN @branchId IS NOT NULL AND ISNULL(iu0.BranchId, 0) = @branchId THEN 0 ELSE 1 END,
+        CASE WHEN ISNULL(iu0.DefaultUnit, 0) = 1 THEN 0 ELSE 1 END,
+        iu0.JunckID
 ) iu
 OUTER APPLY
 (
@@ -487,6 +491,7 @@ WHERE i.ItemID = @itemId;";
             using (var command = new SqlCommand(sql, connection))
             {
                 command.Parameters.Add("@itemId", SqlDbType.Int).Value = itemId;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -564,11 +569,11 @@ END";
             return null;
         }
 
-        public IList<PosItemLookupDto> GetDefaultServiceItem(string serviceType, int? itemId = null)
+        public IList<PosItemLookupDto> GetDefaultServiceItem(string serviceType, int? itemId = null, int? branchId = null)
         {
             if (itemId.HasValue)
             {
-                var selectedItem = GetItemById(itemId.Value);
+                var selectedItem = GetItemById(itemId.Value, branchId);
                 if (selectedItem != null)
                 {
                     if (IsViolationsService(serviceType))
@@ -582,7 +587,7 @@ END";
 
             if (IsViolationsService(serviceType))
             {
-                var violationItem = GetItemById(20);
+                var violationItem = GetItemById(20, branchId);
                 if (violationItem != null)
                 {
                     NormalizeViolationServiceItem(violationItem);
@@ -592,7 +597,7 @@ END";
 
             if (IsCardService(serviceType))
             {
-                var cardItem = GetItemById(19);
+                var cardItem = GetItemById(19, branchId);
                 if (cardItem != null)
                 {
                     return new List<PosItemLookupDto> { cardItem };
@@ -602,7 +607,7 @@ END";
             var primaryService = GetPrimaryServiceItems(serviceType).FirstOrDefault();
             if (primaryService != null)
             {
-                var serviceItem = GetItemById(primaryService.Id);
+                var serviceItem = GetItemById(primaryService.Id, branchId);
                 if (serviceItem != null)
                 {
                     return new List<PosItemLookupDto> { serviceItem };
@@ -671,7 +676,7 @@ ORDER BY t.Transaction_ID DESC;";
 
             if (items.Count == 0 && IsViolationsService(serviceType))
             {
-                var violationItem = GetItemById(20);
+                var violationItem = GetItemById(20, branchId);
                 if (violationItem != null)
                 {
                     NormalizeViolationServiceItem(violationItem);
@@ -1741,18 +1746,24 @@ SELECT
             firstItem.Vatyo = commission.VatPercent;
             firstItem.TotalPrice = commission.TotalFees;
 
-            request.NetValue = commission.ServiceFee;
-            request.PayedValue = commission.ServiceFee;
-            request.RemainValue = 0;
-            request.ManualNo2 = ToArabicAmountText(commission.TotalValue);
-
             if (IsCardService(request.TransactionType))
             {
                 request.RechargeValue = 0;
+                request.NetValue = commission.TotalFees;
+                request.PayedValue = commission.TotalFees;
+                request.RemainValue = 0;
+                request.ManualNo2 = ToArabicAmountText(commission.TotalFees);
                 request.IsRecharg = false;
                 request.IsCashOut = false;
                 request.IsWallet = false;
                 request.ItemIDService = firstItem.Item_ID;
+            }
+            else
+            {
+                request.NetValue = commission.ServiceFee;
+                request.PayedValue = commission.ServiceFee;
+                request.RemainValue = 0;
+                request.ManualNo2 = ToArabicAmountText(commission.TotalValue);
             }
 
             if (request.SalesPayments != null && request.SalesPayments.Count > 0)

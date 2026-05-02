@@ -871,7 +871,7 @@ WHERE a.last_account = 1
 
         private int CreateNote(SqlConnection connection, SqlTransaction transaction, DateTime noteDate, int branchId, int noteType, decimal noteValue, string noteSerial, long noteSerial1, int userId)
         {
-            var noteId = ExecuteScalarInt(connection, transaction, "SELECT ISNULL(MAX(NoteID),0) + 1 FROM dbo.Notes WITH (UPDLOCK, HOLDLOCK)", null).GetValueOrDefault();
+            var noteId = GetNextIdFromSequence(connection, transaction, "Notes", "NoteID");
             ExecuteNonQuery(connection, transaction, @"
 INSERT INTO dbo.Notes
 (
@@ -892,6 +892,29 @@ VALUES
                 new SqlParameter("@UserID", userId),
                 new SqlParameter("@BranchNo", branchId));
             return noteId;
+        }
+
+        private static int GetNextIdFromSequence(SqlConnection connection, SqlTransaction transaction, string tableName, string fieldName)
+        {
+            using (var command = new SqlCommand("dbo.GetNextID_FromSequence", connection, transaction))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@TableName", SqlDbType.NVarChar, 100).Value = tableName;
+                command.Parameters.Add("@FieldName", SqlDbType.NVarChar, 100).Value = fieldName;
+                var nextValue = command.Parameters.Add("@NextValue", SqlDbType.BigInt);
+                nextValue.Direction = ParameterDirection.Output;
+                var error = command.Parameters.Add("@ErrorMsg", SqlDbType.NVarChar, 500);
+                error.Direction = ParameterDirection.Output;
+
+                command.ExecuteNonQuery();
+
+                if (error.Value != DBNull.Value && !string.IsNullOrWhiteSpace(Convert.ToString(error.Value, CultureInfo.InvariantCulture)))
+                {
+                    throw new InvalidOperationException(Convert.ToString(error.Value, CultureInfo.InvariantCulture));
+                }
+
+                return Convert.ToInt32(nextValue.Value, CultureInfo.InvariantCulture);
+            }
         }
 
         private void UpdateNoteValueText(SqlConnection connection, SqlTransaction transaction, int noteId, decimal noteValue)

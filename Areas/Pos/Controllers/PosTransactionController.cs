@@ -41,7 +41,8 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpGet]
         public JsonResult GetDefaultServiceItem(string serviceType, int? itemId)
         {
-            return Json(_repository.GetDefaultServiceItem(serviceType, itemId), JsonRequestBehavior.AllowGet);
+            var context = GetPosContext();
+            return Json(_repository.GetDefaultServiceItem(serviceType, itemId, context != null ? context.BranchId : null), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -249,6 +250,51 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
+        public ActionResult PrintPreview(int? transactionId)
+        {
+            var savedTransactionId = ResolvePrintTransactionId(transactionId);
+            if (savedTransactionId <= 0)
+            {
+                return HttpNotFound("لا توجد فاتورة محفوظة للطباعة");
+            }
+
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return new HttpStatusCodeResult(401, "POS session context is missing.");
+            }
+
+            if (!context.CanPrint)
+            {
+                return new HttpStatusCodeResult(403, "POS user is not allowed to print.");
+            }
+
+            if (!_repository.TransactionExists(savedTransactionId))
+            {
+                return HttpNotFound("الفاتورة غير موجودة");
+            }
+
+            if (!_repository.CanPrintTransaction(savedTransactionId, context.UserId, context.CanChangeDefaults))
+            {
+                return new HttpStatusCodeResult(403, "الفاتورة موجودة ولكن غير مسموح لهذا المستخدم بطباعتها");
+            }
+
+            if (!_repository.TransactionHasDetails(savedTransactionId))
+            {
+                return HttpNotFound("تم العثور على الفاتورة ولكن لا توجد تفاصيل للطباعة");
+            }
+
+            var receipt = _repository.GetReceipt(savedTransactionId, context.UserId, context.CanChangeDefaults);
+            if (receipt == null)
+            {
+                return HttpNotFound("تعذر تحميل بيانات الفاتورة للطباعة");
+            }
+
+            ViewBag.TransactionId = savedTransactionId;
+            return View(new PosReceiptReport(receipt));
+        }
+
+        [HttpGet]
         public ActionResult Print(int? transactionId)
         {
             var savedTransactionId = ResolvePrintTransactionId(transactionId);
@@ -378,7 +424,10 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new
                 {
                     success = true,
+                    message = "تم حفظ بيانات العميل وتفعيل الكارت",
                     customer = saved,
+                    customerId = saved.CustomerID,
+                    activationStatus = true,
                     attachmentSubject = attachmentSubject,
                     attachmentFolder = "Doc/" + DateTime.Today.ToString("yyyyMMdd"),
                     attachments = attachments
