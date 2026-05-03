@@ -1715,7 +1715,8 @@
             setKycMessage(cardMessage, true);
             return;
         }
-        if (!/^[0-9]{8}$|^[0-9]{18}$/.test(byId("kycCardNo").value.trim())) {
+        var kycCardNo = byId("kycCardNo").value.trim();
+        if (kycCardNo.length !== 8 && kycCardNo.length !== 18) {
             var cardFormatMessage = "رقم التوكن/الكارت يجب أن يكون 8 أو 18 رقم";
             byId("validationSummary").innerText = cardFormatMessage;
             setKycMessage(cardFormatMessage, true);

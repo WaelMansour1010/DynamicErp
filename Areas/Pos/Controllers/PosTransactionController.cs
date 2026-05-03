@@ -841,10 +841,6 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     errors["CardNo"] = "رقم التوكن/الكارت يجب أن يكون 18 أو 8 رقم";
                 }
-                else if (!Regex.IsMatch(cardNo, @"^[0-9]+$"))
-                {
-                    errors["CardNo"] = "رقم التوكن/الكارت يجب أن يحتوي على أرقام فقط";
-                }
             }
 
             if (!string.IsNullOrWhiteSpace(request.CardNo) && request.CardNo.Trim().Length != 8)
