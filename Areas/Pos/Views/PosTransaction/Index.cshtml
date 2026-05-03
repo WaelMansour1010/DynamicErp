@@ -2,11 +2,14 @@
     Layout = null;
     ViewBag.Title = "كيشني - شاشة البيع";
     var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
-    var primaryLogoPath = "~/assets/images/company-logo.png";
-    var alternateLogoPath = "~/Content/images/company-logo.png";
+    var primaryLogoPath = "~/Areas/Pos/assets/images/company-logo.png";
+    var alternateLogoPath = "~/Areas/Pos/assets/images/company-logo-1.png";
+    var legacyLogoPath = "~/Areas/Pos/assets/images/company-logo-2.png";
     var companyLogoPath = System.IO.File.Exists(Server.MapPath(primaryLogoPath))
         ? primaryLogoPath
-        : (System.IO.File.Exists(Server.MapPath(alternateLogoPath)) ? alternateLogoPath : null);
+        : (System.IO.File.Exists(Server.MapPath(alternateLogoPath))
+            ? alternateLogoPath
+            : (System.IO.File.Exists(Server.MapPath(legacyLogoPath)) ? legacyLogoPath : null));
 }
 
 <meta charset="utf-8" />
@@ -38,6 +41,7 @@
      data-today-summary-url="@Url.Action("TodaySummary", "PosTransaction", new { area = "Pos" })"
      data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
      data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
+     data-journal-url="@Url.Action("GetJournalEntry", "PosTransaction", new { area = "Pos" })"
      data-print-url="@Url.Action("Print", "PosTransaction", new { area = "Pos" })"
      data-print-preview-url="@Url.Action("PrintPreview", "PosTransaction", new { area = "Pos" })"
      data-save-customer-url="@Url.Action("SaveCashCustomer", "PosTransaction", new { area = "Pos" })"
@@ -57,10 +61,14 @@
      data-can-print="@(posContext != null && posContext.CanPrint ? "true" : "false")"
      data-can-return="@(posContext != null && posContext.CanReturn ? "true" : "false")"
      data-can-cash-customer="@(posContext != null && posContext.CanOpenCashCustomer ? "true" : "false")"
+     data-can-view-journal="@(posContext != null && posContext.CanViewJournalEntry ? "true" : "false")"
+     data-can-print-kyc-acknowledgment="@(posContext != null && posContext.CanPrintKycAcknowledgment ? "true" : "false")"
+     data-can-print-kyc-card="@(posContext != null && posContext.CanPrintKycCard ? "true" : "false")"
+     data-can-edit-kyc="@(posContext != null && posContext.CanEditKyc ? "true" : "false")"
      data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
      data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")">
     <div class="pos-shell">
-        <header class="pos-header">
+        <div class="pos-logo-strip">
             <div class="pos-brand">
                 @if (!string.IsNullOrWhiteSpace(companyLogoPath))
                 {
@@ -73,6 +81,9 @@
                     <span class="pos-company-logo-fallback">اسم الشركة</span>
                 }
             </div>
+        </div>
+
+        <header class="pos-header">
             <div class="pos-header-content">
                 <h1>كيشني - شاشة البيع</h1>
                 <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
@@ -266,6 +277,18 @@
                     <label>رقم المحفظة<input type="text" id="violationWalletNo" placeholder="رقم المحفظة" /></label>
                 </div>
             </section>
+
+            @if (posContext != null && posContext.CanViewJournalEntry)
+            {
+                <section class="pos-panel journal-panel is-hidden-ui" id="journalEntryPanel">
+                    <div class="panel-heading">
+                        <h2>القيد المحاسبي</h2>
+                        <button type="button" class="link-action" id="reloadJournalBtn">تحديث القيد</button>
+                    </div>
+                    <div id="journalEntryMessage" class="pos-validation"></div>
+                    <div id="journalEntryGrid" class="report-result"></div>
+                </section>
+            }
 
             <section class="pos-panel bottom-summary-panel" id="bottomSummaryPanel">
                 <div class="panel-heading"><h2 id="bottomSummaryTitle">ملخص العملية</h2></div>

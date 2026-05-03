@@ -1,0 +1,133 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "صلاحيات POS";
+    var users = ViewBag.Users as IEnumerable<MyERP.Areas.Pos.Models.PosPermissionUserDto>;
+    var permissions = ViewBag.Permissions as IEnumerable<MyERP.Areas.Pos.Models.PosPermissionItemDto>;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="pos-page pos-permissions-page"
+         data-load-url="@Url.Action("GetUserPermissions", "PosPermissions", new { area = "Pos" })"
+         data-save-url="@Url.Action("Save", "PosPermissions", new { area = "Pos" })">
+        <div class="pos-shell">
+            <section class="pos-panel">
+                <div class="panel-heading">
+                    <h2>إدارة صلاحيات POS المؤقتة</h2>
+                    <span>Admin only</span>
+                </div>
+                <div class="pos-grid two-cols">
+                    <label>
+                        المستخدم
+                        <select id="permissionUserId">
+                            <option value="">اختر المستخدم</option>
+                            @if (users != null)
+                            {
+                                foreach (var user in users)
+                                {
+                                    <option value="@user.UserId">@user.UserName @(string.IsNullOrWhiteSpace(user.EmpName) ? "" : " - " + user.EmpName)</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="pos-panel">
+                <div id="permissionsGrid" class="permissions-grid">
+                    @if (permissions != null)
+                    {
+                        foreach (var permission in permissions)
+                        {
+                            <label>
+                                <input type="checkbox" value="@permission.Key" />
+                                <span>@permission.Title</span>
+                            </label>
+                        }
+                    }
+                </div>
+                <div class="pos-actions">
+                    <button type="button" class="primary-action" id="savePosPermissionsBtn">حفظ الصلاحيات</button>
+                </div>
+                <div id="permissionsMessage" class="pos-validation"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var page = document.querySelector(".pos-permissions-page");
+            var userSelect = document.getElementById("permissionUserId");
+            var message = document.getElementById("permissionsMessage");
+
+            function setMessage(text) { message.innerText = text || ""; }
+            function request(method, url, body, callback) {
+                var xhr = new XMLHttpRequest();
+                xhr.open(method, url, true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    callback(xhr.status, data);
+                };
+                xhr.send(body ? JSON.stringify(body) : null);
+            }
+
+            function checkedItems() {
+                var items = [];
+                var inputs = document.querySelectorAll("#permissionsGrid input[type=checkbox]");
+                for (var i = 0; i < inputs.length; i++) {
+                    items.push({ Key: inputs[i].value, IsAllowed: inputs[i].checked });
+                }
+                return items;
+            }
+
+            function applyPermissions(items) {
+                var map = {};
+                for (var i = 0; items && i < items.length; i++) {
+                    map[items[i].Key] = items[i].IsAllowed === true;
+                }
+                var inputs = document.querySelectorAll("#permissionsGrid input[type=checkbox]");
+                for (var x = 0; x < inputs.length; x++) {
+                    inputs[x].checked = map[inputs[x].value] === true;
+                }
+            }
+
+            userSelect.addEventListener("change", function () {
+                var userId = parseInt(userSelect.value, 10) || 0;
+                applyPermissions([]);
+                if (userId <= 0) { return; }
+                setMessage("جاري تحميل الصلاحيات...");
+                request("GET", page.getAttribute("data-load-url") + "?userId=" + encodeURIComponent(userId), null, function (status, data) {
+                    if (status >= 200 && status < 300 && data && data.success) {
+                        applyPermissions(data.permissions || []);
+                        setMessage("");
+                        return;
+                    }
+                    setMessage((data && data.message) || "تعذر تحميل الصلاحيات");
+                });
+            });
+
+            document.getElementById("savePosPermissionsBtn").addEventListener("click", function () {
+                var userId = parseInt(userSelect.value, 10) || 0;
+                if (userId <= 0) {
+                    setMessage("اختر المستخدم أولاً");
+                    return;
+                }
+                setMessage("جاري الحفظ...");
+                request("POST", page.getAttribute("data-save-url"), { UserId: userId, Permissions: checkedItems() }, function (status, data) {
+                    setMessage((data && data.message) || (status >= 200 && status < 300 ? "تم الحفظ" : "تعذر حفظ الصلاحيات"));
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

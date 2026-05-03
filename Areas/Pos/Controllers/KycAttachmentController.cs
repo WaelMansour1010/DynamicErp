@@ -1,4 +1,4 @@
-using MyERP.Areas.Pos.Data;
+﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
 using MyERP.Areas.Pos.Reports;
 using System;
@@ -124,9 +124,9 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(401, "POS session context is missing.");
             }
 
-            if (!context.CanPrint)
+            if (!context.CanPrintKycAcknowledgment)
             {
-                return new HttpStatusCodeResult(403, "POS user is not allowed to print.");
+                return new HttpStatusCodeResult(403, "POS user is not allowed to print KYC acknowledgment.");
             }
 
             if (!id.HasValue || id.Value <= 0)
@@ -161,9 +161,9 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(401, "POS session context is missing.");
             }
 
-            if (!context.CanPrint)
+            if (!context.CanPrintKycCard)
             {
-                return new HttpStatusCodeResult(403, "POS user is not allowed to print.");
+                return new HttpStatusCodeResult(403, "POS user is not allowed to print KYC card.");
             }
 
             if (!id.HasValue || id.Value <= 0)

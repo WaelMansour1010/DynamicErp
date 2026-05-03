@@ -2,6 +2,14 @@
 @{
     Layout = null;
     ViewBag.Title = "تسجيل دخول نقطة البيع";
+    var primaryLogoPath = "~/Areas/Pos/assets/images/company-logo.png";
+    var alternateLogoPath = "~/Areas/Pos/assets/images/company-logo-1.png";
+    var legacyLogoPath = "~/Areas/Pos/assets/images/company-logo-2.png";
+    var companyLogoPath = System.IO.File.Exists(Server.MapPath(primaryLogoPath))
+        ? primaryLogoPath
+        : (System.IO.File.Exists(Server.MapPath(alternateLogoPath))
+            ? alternateLogoPath
+            : (System.IO.File.Exists(Server.MapPath(legacyLogoPath)) ? legacyLogoPath : null));
 }
 
 <!DOCTYPE html>
@@ -15,12 +23,22 @@
 
 <div class="pos-page pos-mode-card pos-login-page" dir="rtl">
     <div class="pos-shell login-shell">
-        <header class="pos-header">
+        <div class="login-brand-card">
+            @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+            {
+                <img src="@Url.Content(companyLogoPath)"
+                     alt="Company Logo"
+                     class="login-company-logo" />
+            }
+            else
+            {
+                <span class="pos-company-logo-fallback">اسم الشركة</span>
+            }
             <div>
                 <h1>كيشني - تسجيل دخول نقطة البيع</h1>
-                <p class="cash-db-warning">هذه شاشة تجريبية على قاعدة CASH - لا يوجد قيد أو خصم مخزون حتى الآن</p>
+                <p>أدخل بيانات مستخدم نقطة البيع للمتابعة</p>
             </div>
-        </header>
+        </div>
 
         <section class="pos-panel login-panel">
             @using (Html.BeginForm("Index", "PosLogin", new { area = "Pos" }, FormMethod.Post, new { autocomplete = "off" }))

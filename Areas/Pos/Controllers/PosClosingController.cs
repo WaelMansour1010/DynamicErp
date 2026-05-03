@@ -23,6 +23,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
+            if (!context.IsFullAccess && !context.CanOpenClosing)
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشة الإغلاق");
+            }
+
             ViewBag.PosContext = context;
             return View();
         }
@@ -37,6 +42,12 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     Response.StatusCode = 401;
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+                }
+
+                if (!context.IsFullAccess && !context.CanOpenClosing)
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية فتح شاشة الإغلاق", "CanOpenClosing is false."));
                 }
 
                 var closingDate = (request != null && request.ClosingDate.HasValue ? request.ClosingDate.Value : DateTime.Today).Date;
@@ -66,6 +77,12 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     Response.StatusCode = 401;
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+                }
+
+                if (!context.IsFullAccess && !context.CanExecuteClosing)
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية تنفيذ الإغلاق", "CanExecuteClosing is false."));
                 }
 
                 var closingDate = (request != null && request.ClosingDate.HasValue ? request.ClosingDate.Value : DateTime.Today).Date;

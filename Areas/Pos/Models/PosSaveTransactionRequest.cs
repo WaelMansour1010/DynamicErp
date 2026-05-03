@@ -72,6 +72,7 @@ namespace MyERP.Areas.Pos.Models
     {
         public int UserId { get; set; }
         public string UserName { get; set; }
+        public int? UserType { get; set; }
         public int? EmpId { get; set; }
         public string EmpName { get; set; }
         public int? BranchId { get; set; }
@@ -89,6 +90,34 @@ namespace MyERP.Areas.Pos.Models
         public bool CanPrint { get; set; }
         public bool CanReturn { get; set; }
         public bool CanOpenCashCustomer { get; set; }
+        public bool CanViewReports { get; set; }
+        public bool CanViewAdminDashboard { get; set; }
+        public bool CanViewJournalEntry { get; set; }
+        public bool CanOpenClosing { get; set; }
+        public bool CanExecuteClosing { get; set; }
+        public bool CanOpenSales { get; set; }
+        public bool CanCancelOrReturn { get; set; }
+        public bool CanEditKyc { get; set; }
+        public bool CanPrintKycAcknowledgment { get; set; }
+        public bool CanPrintKycCard { get; set; }
+        public bool CanReportSalesmen { get; set; }
+        public bool CanReportClosings { get; set; }
+        public bool CanReportFinanceClosing { get; set; }
+        public bool CanReportDiscounts { get; set; }
+        public bool CanReportIndicators { get; set; }
+        public bool CanReportDailyTransactions { get; set; }
+        public bool CanReportSalesComplete { get; set; }
+        public bool CanReportDailyTransactions2 { get; set; }
+        public bool CanReportDailyTransactionsSectors { get; set; }
+        public bool CanReportAllSales { get; set; }
+        public bool CanReportSalesComplete2 { get; set; }
+        public bool CanReportSalesCompleteGovernorates { get; set; }
+        public bool CanReportSalesCompleteDepartments { get; set; }
+        public bool CanReportSalesCompleteAnalytical { get; set; }
+        public bool CanReportStoreSerials { get; set; }
+        public bool CanTeller { get; set; }
+        public bool CanOpenPayments { get; set; }
+        public bool CanExecutePayments { get; set; }
         public bool IsFullAccess { get; set; }
         public bool CanChangeDefaults { get; set; }
         public PosSystemOptionsDto SystemOptions { get; set; }
@@ -417,5 +446,156 @@ namespace MyERP.Areas.Pos.Models
     {
         public string CompanyName { get; set; }
         public PosInvoiceReviewDto Invoice { get; set; }
+    }
+
+    public class PosDashboardSummaryDto
+    {
+        public PosDashboardKpiDto Kpis { get; set; }
+        public IList<PosDashboardBranchDto> BranchComparison { get; set; }
+        public IList<PosDashboardServiceDto> TopServices { get; set; }
+        public IList<PosDashboardOperationDto> OperationTypeSummary { get; set; }
+        public IList<PosDashboardTrendDto> DailyTrend { get; set; }
+
+        public PosDashboardSummaryDto()
+        {
+            Kpis = new PosDashboardKpiDto();
+            BranchComparison = new List<PosDashboardBranchDto>();
+            TopServices = new List<PosDashboardServiceDto>();
+            OperationTypeSummary = new List<PosDashboardOperationDto>();
+            DailyTrend = new List<PosDashboardTrendDto>();
+        }
+    }
+
+    public class PosDashboardKpiDto
+    {
+        public int TransactionCount { get; set; }
+        public decimal SalesTotal { get; set; }
+        public decimal FeesTotal { get; set; }
+        public decimal VatTotal { get; set; }
+        public decimal NetCollection { get; set; }
+        public int ActivatedKycCards { get; set; }
+        public int CancelledOrReturnedCount { get; set; }
+    }
+
+    public class PosDashboardBranchDto
+    {
+        public int? BranchId { get; set; }
+        public string BranchName { get; set; }
+        public int TransactionCount { get; set; }
+        public decimal TotalValue { get; set; }
+        public decimal FeesTotal { get; set; }
+    }
+
+    public class PosDashboardServiceDto
+    {
+        public int? ItemId { get; set; }
+        public string ItemName { get; set; }
+        public int SaleCount { get; set; }
+        public decimal TotalValue { get; set; }
+        public decimal FeesTotal { get; set; }
+    }
+
+    public class PosDashboardOperationDto
+    {
+        public string OperationType { get; set; }
+        public int TransactionCount { get; set; }
+        public decimal RechargeTotal { get; set; }
+        public decimal FeesTotal { get; set; }
+        public decimal VatTotal { get; set; }
+        public decimal NetCollection { get; set; }
+    }
+
+    public class PosDashboardTrendDto
+    {
+        public string Day { get; set; }
+        public int TransactionCount { get; set; }
+        public decimal NetCollection { get; set; }
+    }
+
+    public class PosJournalEntryDto
+    {
+        public string NoteSerial { get; set; }
+        public DateTime? RecordDate { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountCode { get; set; }
+        public string AccountName { get; set; }
+        public string Description { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
+    }
+
+    public class PosPermissionUserDto
+    {
+        public int UserId { get; set; }
+        public string UserName { get; set; }
+        public string EmpName { get; set; }
+    }
+
+    public class PosPermissionItemDto
+    {
+        public string Key { get; set; }
+        public string Title { get; set; }
+        public bool IsAllowed { get; set; }
+    }
+
+    public class PosPermissionSaveRequest
+    {
+        public int UserId { get; set; }
+        public IList<PosPermissionItemDto> Permissions { get; set; }
+
+        public PosPermissionSaveRequest()
+        {
+            Permissions = new List<PosPermissionItemDto>();
+        }
+    }
+
+    public class PosLookupDto
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Extra { get; set; }
+    }
+
+    public class PosPaymentRequestDto
+    {
+        public int BranchId { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public int CashingType { get; set; }
+        public string NameAccountCode { get; set; }
+        public string NameText { get; set; }
+        public int PaymentMethod { get; set; }
+        public decimal Value { get; set; }
+        public int? BoxId { get; set; }
+        public int? BankId { get; set; }
+        public string ReferenceNo { get; set; }
+        public DateTime? ReferenceDate { get; set; }
+        public int? EmpId { get; set; }
+        public string EmpAccountCode { get; set; }
+        public decimal BoxValue { get; set; }
+        public decimal EmpValue { get; set; }
+        public string Remarks { get; set; }
+        public string GeneralDescription { get; set; }
+    }
+
+    public class PosPaymentLineDto
+    {
+        public string AccountCode { get; set; }
+        public string AccountName { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
+        public string Description { get; set; }
+    }
+
+    public class PosPaymentResultDto
+    {
+        public int NoteId { get; set; }
+        public string NoteSerial { get; set; }
+        public string NoteSerial1 { get; set; }
+        public IList<PosPaymentLineDto> Lines { get; set; }
+
+        public PosPaymentResultDto()
+        {
+            Lines = new List<PosPaymentLineDto>();
+        }
     }
 }

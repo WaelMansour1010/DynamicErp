@@ -1,0 +1,294 @@
+@{
+    Layout = null;
+    ViewBag.Title = "تمويل واستعاضة الخزن والعهد";
+    var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+    var custodyAccounts = ViewBag.CustodyAccounts as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+    var boxAccounts = ViewBag.BoxAccounts as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+    var paymentBoxes = ViewBag.PaymentBoxes as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+    var banks = ViewBag.Banks as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+    var employees = ViewBag.Employees as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+    var canExecute = context != null && (context.IsFullAccess || context.CanExecutePayments);
+    var canViewJournal = context != null && (context.IsFullAccess || context.CanViewJournalEntry);
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="pos-page pos-payments-page"
+         data-preview-url="@Url.Action("Preview", "Payments", new { area = "Pos" })"
+         data-save-url="@Url.Action("Create", "Payments", new { area = "Pos" })">
+        <div class="pos-shell">
+            <section class="pos-panel">
+                <div class="panel-heading">
+                    <h2>تمويل واستعاضة الخزن والعهد</h2>
+                    <span>مطابقة منطق FrmPayments1: Notes.NoteType = 50</span>
+                </div>
+
+                <div class="payments-tabs">
+                    <button type="button" class="active" data-payment-tab="main">بيانات أساسية</button>
+                    <button type="button" data-payment-tab="pay">الدفع</button>
+                    <button type="button" data-payment-tab="accounts">الحسابات</button>
+                    <button type="button" data-payment-tab="journal">القيد</button>
+                </div>
+
+                <div class="payments-tab-panel active" data-payment-panel="main">
+                    <div class="pos-grid four-cols">
+                        <label>
+                            الفرع
+                            <select id="paymentBranchId" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            التاريخ
+                            <input type="date" id="paymentDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </label>
+                        <label>
+                            نوع المدفوعات
+                            <select id="paymentCashingType">
+                                <option value="5">استعاضة عهدة</option>
+                                <option value="6">تمويل خزينة</option>
+                            </select>
+                        </label>
+                        <label>
+                            القيمة
+                            <input type="number" id="paymentValue" min="0" step="0.01" />
+                        </label>
+                    </div>
+                    <div class="pos-grid two-cols">
+                        <label>
+                            الاسم / الحساب
+                            <select id="paymentNameAccount"></select>
+                        </label>
+                        <label>
+                            البيان
+                            <input type="text" id="paymentRemarks" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="payments-tab-panel" data-payment-panel="pay">
+                    <div class="pos-grid four-cols">
+                        <label>
+                            طريقة الدفع
+                            <select id="paymentMethod">
+                                <option value="0">نقدي</option>
+                                <option value="1">شيك</option>
+                                <option value="2">حوالة</option>
+                                <option value="3">شيك مسدد</option>
+                            </select>
+                        </label>
+                        <label>
+                            الخزنة
+                            <select id="paymentBoxId">
+                                <option value="">اختر الخزنة</option>
+                                @if (paymentBoxes != null)
+                                {
+                                    foreach (var item in paymentBoxes)
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            البنك
+                            <select id="paymentBankId">
+                                <option value="">اختر البنك</option>
+                                @if (banks != null)
+                                {
+                                    foreach (var item in banks)
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            رقم الشيك/الحوالة
+                            <input type="text" id="paymentReferenceNo" />
+                        </label>
+                    </div>
+                    <div class="pos-grid two-cols">
+                        <label>
+                            تاريخ الاستحقاق/الحوالة
+                            <input type="date" id="paymentReferenceDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </label>
+                        <label>
+                            وصف عام
+                            <input type="text" id="paymentGeneralDescription" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="payments-tab-panel" data-payment-panel="accounts">
+                    <div class="pos-grid four-cols">
+                        <label>
+                            قيمة الخزنة
+                            <input type="number" id="paymentBoxValue" min="0" step="0.01" />
+                        </label>
+                        <label>
+                            الموظف
+                            <select id="paymentEmpId">
+                                <option value="">اختر الموظف</option>
+                                @if (employees != null)
+                                {
+                                    foreach (var item in employees)
+                                    {
+                                        <option value="@item.Id" data-account="@item.Extra">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            حساب العهدة
+                            <input type="text" id="paymentEmpAccountCode" readonly />
+                        </label>
+                        <label>
+                            قيمة العهدة
+                            <input type="number" id="paymentEmpValue" min="0" step="0.01" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="payments-tab-panel" data-payment-panel="journal">
+                    @if (canViewJournal)
+                    {
+                        <div class="pos-actions">
+                            <button type="button" class="secondary-action" id="previewPaymentBtn">استعراض القيد</button>
+                        </div>
+                        <div id="paymentJournalResult" class="report-result"></div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">ليست لديك صلاحية استعراض القيد</div>
+                    }
+                </div>
+
+                <div class="pos-actions">
+                    <button type="button" class="primary-action" id="savePaymentBtn" @(canExecute ? "" : "disabled")>تنفيذ العملية</button>
+                    <span id="paymentMessage" class="pos-validation"></span>
+                </div>
+            </section>
+        </div>
+
+        <select id="custodyAccountSource" class="is-hidden-ui">
+            @if (custodyAccounts != null)
+            {
+                foreach (var item in custodyAccounts)
+                {
+                    <option value="@item.Extra">@item.Name</option>
+                }
+            }
+        </select>
+        <select id="boxAccountSource" class="is-hidden-ui">
+            @if (boxAccounts != null)
+            {
+                foreach (var item in boxAccounts)
+                {
+                    <option value="@item.Extra">@item.Name</option>
+                }
+            }
+        </select>
+    </div>
+
+    <script>
+        (function () {
+            var page = document.querySelector(".pos-payments-page");
+            var message = document.getElementById("paymentMessage");
+            function byId(id) { return document.getElementById(id); }
+            function setMessage(text, error) { message.innerText = text || ""; message.classList.toggle("error", !!error); }
+            function copySource() {
+                var source = byId(byId("paymentCashingType").value === "5" ? "custodyAccountSource" : "boxAccountSource");
+                var target = byId("paymentNameAccount");
+                target.innerHTML = source.innerHTML;
+            }
+            function requestPayload() {
+                var selected = byId("paymentNameAccount").options[byId("paymentNameAccount").selectedIndex];
+                return {
+                    BranchId: parseInt(byId("paymentBranchId").value, 10) || 0,
+                    PaymentDate: byId("paymentDate").value,
+                    CashingType: parseInt(byId("paymentCashingType").value, 10) || 0,
+                    NameAccountCode: byId("paymentNameAccount").value,
+                    NameText: selected ? selected.text : "",
+                    PaymentMethod: parseInt(byId("paymentMethod").value, 10) || 0,
+                    Value: parseFloat(byId("paymentValue").value || "0"),
+                    BoxId: parseInt(byId("paymentBoxId").value, 10) || null,
+                    BankId: parseInt(byId("paymentBankId").value, 10) || null,
+                    ReferenceNo: byId("paymentReferenceNo").value,
+                    ReferenceDate: byId("paymentReferenceDate").value,
+                    EmpId: parseInt(byId("paymentEmpId").value, 10) || null,
+                    EmpAccountCode: byId("paymentEmpAccountCode").value,
+                    BoxValue: parseFloat(byId("paymentBoxValue").value || "0"),
+                    EmpValue: parseFloat(byId("paymentEmpValue").value || "0"),
+                    Remarks: byId("paymentRemarks").value,
+                    GeneralDescription: byId("paymentGeneralDescription").value
+                };
+            }
+            function post(url, payload, done) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    done(xhr.status, data);
+                };
+                xhr.send(JSON.stringify(payload));
+            }
+            function renderLines(lines) {
+                var target = byId("paymentJournalResult");
+                if (!target) { return; }
+                if (!lines || !lines.length) { target.innerHTML = "<div class='empty-state'>لا توجد بيانات</div>"; return; }
+                var html = "<table class='pos-table'><thead><tr><th>الحساب</th><th>اسم الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead><tbody>";
+                var debit = 0, credit = 0;
+                lines.forEach(function (line) {
+                    debit += parseFloat(line.Debit || 0); credit += parseFloat(line.Credit || 0);
+                    html += "<tr><td>" + (line.AccountCode || "") + "</td><td>" + (line.AccountName || "") + "</td><td>" + (line.Description || "") + "</td><td>" + (line.Debit || 0).toFixed(2) + "</td><td>" + (line.Credit || 0).toFixed(2) + "</td></tr>";
+                });
+                html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + debit.toFixed(2) + "</td><td>" + credit.toFixed(2) + "</td></tr></tbody></table>";
+                target.innerHTML = html;
+            }
+            document.addEventListener("click", function (event) {
+                if (event.target.getAttribute("data-payment-tab")) {
+                    var tab = event.target.getAttribute("data-payment-tab");
+                    document.querySelectorAll("[data-payment-tab]").forEach(function (x) { x.classList.toggle("active", x === event.target); });
+                    document.querySelectorAll("[data-payment-panel]").forEach(function (x) { x.classList.toggle("active", x.getAttribute("data-payment-panel") === tab); });
+                }
+                if (event.target.id === "previewPaymentBtn") {
+                    post(page.getAttribute("data-preview-url"), requestPayload(), function (status, data) {
+                        if (data && data.success) { renderLines(data.lines || []); setMessage(""); } else { setMessage((data && data.message) || "تعذر استعراض القيد", true); }
+                    });
+                }
+                if (event.target.id === "savePaymentBtn") {
+                    setMessage("جاري الحفظ...");
+                    post(page.getAttribute("data-save-url"), requestPayload(), function (status, data) {
+                        if (data && data.success) { renderLines(data.result && data.result.Lines); setMessage(data.message + " - رقم السند: " + (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId), false); }
+                        else { setMessage((data && data.message) || "تعذر حفظ العملية", true); }
+                    });
+                }
+            });
+            byId("paymentCashingType").addEventListener("change", copySource);
+            byId("paymentEmpId").addEventListener("change", function () {
+                var selected = this.options[this.selectedIndex];
+                byId("paymentEmpAccountCode").value = selected ? (selected.getAttribute("data-account") || "") : "";
+            });
+            copySource();
+        })();
+    </script>
+</body>
+</html>

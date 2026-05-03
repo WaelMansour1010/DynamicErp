@@ -230,6 +230,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 UserId = context.UserId,
                 UserName = context.UserName,
+                UserType = context.UserType,
                 EmpId = context.EmpId,
                 EmpName = context.EmpName,
                 BranchId = context.BranchId,
@@ -251,6 +252,14 @@ namespace MyERP.Areas.Pos.Controllers
                 CanPrint = context.CanPrint,
                 CanReturn = context.CanReturn,
                 CanOpenCashCustomer = context.CanOpenCashCustomer,
+                CanViewJournalEntry = context.CanViewJournalEntry,
+                CanViewReports = context.CanViewReports,
+                CanPrintKycAcknowledgment = context.CanPrintKycAcknowledgment,
+                CanPrintKycCard = context.CanPrintKycCard,
+                CanEditKyc = context.CanEditKyc,
+                CanTeller = context.CanTeller,
+                CanOpenPayments = context.CanOpenPayments,
+                CanExecutePayments = context.CanExecutePayments,
                 IsFullAccess = context.IsFullAccess,
                 CanChangeDefaults = context.CanChangeDefaults
             }, JsonRequestBehavior.AllowGet);
@@ -326,6 +335,34 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return Json(invoice, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult GetJournalEntry(int transactionId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.CanViewJournalEntry)
+            {
+                Response.StatusCode = 403;
+                return Json(Fail("ليست لديك صلاحية استعراض القيد المحاسبي", "CanViewJournalEntry is false."), JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                var entries = _repository.GetJournalEntriesForTransaction(transactionId, context.UserId, context.CanChangeDefaults);
+                return Json(new { success = true, entries = entries }, JsonRequestBehavior.AllowGet);
+            }
+            catch (SqlException ex)
+            {
+                Response.StatusCode = 500;
+                return Json(Fail("تعذر تحميل القيد المحاسبي", ex.Message), JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
@@ -495,6 +532,12 @@ namespace MyERP.Areas.Pos.Controllers
                     LogKycFailure("SaveKeshniCardCustomer.NoSession", request, null, null);
                     SetJsonErrorStatus(401);
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+                }
+
+                if (!context.CanEditKyc)
+                {
+                    SetJsonErrorStatus(403);
+                    return Json(Fail("ليست لديك صلاحية تعديل بيانات KYC", "CanEditKyc is false."));
                 }
 
                 request.UserId = context.UserId;
