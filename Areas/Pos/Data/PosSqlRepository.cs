@@ -1301,7 +1301,7 @@ SELECT @id AS Id;";
             }
 
             request.CustomerID = newId;
-            return LookupKeshniCardCustomer(request.PhoneNo2 ?? request.PhoneNo, request.BranchId, true);
+            return GetKeshniCardCustomerById(newId, request.BranchId, true);
         }
 
         public void SaveKeshniCardAttachment(string subjectNo, string fileName, string title)
