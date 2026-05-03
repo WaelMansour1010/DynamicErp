@@ -81,6 +81,48 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(_repository.SearchKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults), JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public JsonResult LookupUnusedKeshniCardCustomer(string term)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            var matches = _repository.SearchUnusedKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults);
+            if (matches.Count == 1)
+            {
+                return Json(new
+                {
+                    success = true,
+                    found = true,
+                    customer = matches[0],
+                    message = "تم العثور على بيانات KYC محفوظة مسبقاً ولم يتم إصدار فاتورة لها، وتم تحميلها للتعديل/الاستخدام."
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (matches.Count > 1)
+            {
+                return Json(new
+                {
+                    success = false,
+                    found = false,
+                    multiple = true,
+                    customers = matches,
+                    message = "يوجد أكثر من عميل مطابق. برجاء اختيار العميل من النتائج أو البحث ببيانات أدق."
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new
+            {
+                success = true,
+                found = false,
+                message = string.Empty
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         [HttpPost]
         public JsonResult CalculateCommission(PosCommissionRequest request)
         {

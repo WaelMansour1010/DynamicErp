@@ -1024,6 +1024,95 @@ ORDER BY c.Id DESC;";
             return SearchKeshniCardCustomers(term, branchId, canChangeDefaults).FirstOrDefault();
         }
 
+        public IList<PosCustomerLookupDto> SearchUnusedKeshniCardCustomers(string term, int? branchId, bool canChangeDefaults)
+        {
+            var customers = new List<PosCustomerLookupDto>();
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                return customers;
+            }
+
+            const string sql = @"
+SELECT TOP (20)
+    c.Id,
+    c.name,
+    c.namee,
+    c.ArabicName0,
+    c.ArabicName1,
+    c.ArabicName2,
+    c.ArabicName3,
+    c.EnglishName0,
+    c.EnglishName1,
+    c.EnglishName2,
+    c.EnglishName3,
+    c.EnglishName5,
+    c.EnglishName6,
+    c.EnglishName7,
+    COALESCE(NULLIF(c.name, N''), NULLIF(c.CustName, N'')) AS CustomerName,
+    COALESCE(NULLIF(c.PhoneNo2, N''), NULLIF(c.PhoneNo, N''), NULLIF(c.tel, N'')) AS Phone,
+    c.PhoneNo2,
+    c.CardId,
+    c.CardNo,
+    c.card,
+    c.CardSource,
+    c.tel,
+    c.Tet_NumPoket,
+    c.Address,
+    c.MailAdress,
+    c.Nationality,
+    c.BirthDate,
+    c.CardDate,
+    c.CardEndDate,
+    c.OrderDate,
+    c.EasyCashType,
+    c.BranchID,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName
+FROM dbo.TblCusCsh c
+LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
+WHERE ISNULL(c.EasyCashType, 0) = 0
+  AND (@branchId IS NULL OR @canChangeDefaults = 1 OR c.BranchID = @branchId)
+  AND
+    (
+      c.PhoneNo2 = @term
+      OR c.PhoneNo = @term
+      OR c.CardNo = @term
+      OR c.CardId = @term
+      OR c.Tet_NumPoket = @term
+    )
+  AND NOT EXISTS
+    (
+      SELECT 1
+      FROM dbo.Transactions t
+      WHERE t.Transaction_Type = 21
+        AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL
+        AND
+          (
+            t.VisaNumber = c.CardNo
+            OR t.VisaNumber = c.CardId
+          )
+    )
+ORDER BY c.Id DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 255).Value = term.Trim();
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        customers.Add(MapKeshniCardCustomer(reader));
+                    }
+                }
+            }
+
+            return customers;
+        }
+
         public PosCustomerLookupDto GetKeshniCardCustomerById(int id, int? branchId, bool canChangeDefaults)
         {
             const string sql = @"

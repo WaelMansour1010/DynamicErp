@@ -11,6 +11,7 @@
     var itemLookup = {};
     var itemSearchTimer = null;
     var customerLookupTimer = null;
+    var kycUnusedLookupTimer = null;
     var commissionTimer = null;
     var todayInvoicesTimer = null;
     var todayInvoicesCache = [];
@@ -1659,6 +1660,59 @@
         });
     }
 
+    function renderKycCustomerChoices(items) {
+        var html = [];
+        for (var i = 0; i < items.length; i++) {
+            html.push('<button type="button" class="kyc-result-item" data-index="' + i + '"><strong>' +
+                escapeHtml(items[i].CustomerName || items[i].Name || "") + '</strong><span>' +
+                escapeHtml(items[i].Phone || "") + ' | ' + escapeHtml(items[i].VisaNumber || "") + ' | ' +
+                escapeHtml(items[i].Tet_NumPoket || "") + '</span></button>');
+        }
+        byId("kycSearchResults").innerHTML = html.join("");
+        byId("kycSearchResults")._items = items;
+    }
+
+    function isCompleteKycLookupTerm(value) {
+        value = (value || "").trim();
+        return /^(010|011|012|015)[0-9]{8}$/.test(value)
+            || /^[0-9]{14}$/.test(value)
+            || value.length === 8
+            || value.length === 18;
+    }
+
+    function scheduleUnusedKycLookup(value) {
+        if (byId("transactionType").value !== "card" || savedKycCustomerId() > 0) { return; }
+
+        value = (value || "").trim();
+        window.clearTimeout(kycUnusedLookupTimer);
+        if (!isCompleteKycLookupTerm(value)) { return; }
+
+        kycUnusedLookupTimer = window.setTimeout(function () {
+            lookupUnusedKycCustomer(value);
+        }, 350);
+    }
+
+    function lookupUnusedKycCustomer(term) {
+        var url = getUrl("data-unused-kyc-lookup-url");
+        if (!url || !term || savedKycCustomerId() > 0) { return; }
+
+        requestJson("GET", url + "?term=" + encodeURIComponent(term), null, function (status, data) {
+            if (status < 200 || status >= 300 || !data) { return; }
+            if (savedKycCustomerId() > 0) { return; }
+
+            if (data.found === true && data.customer) {
+                applyKeshniCustomer(data.customer);
+                setKycMessage(data.message || "تم العثور على بيانات KYC محفوظة مسبقاً ولم يتم إصدار فاتورة لها، وتم تحميلها للتعديل/الاستخدام.");
+                return;
+            }
+
+            if (data.multiple === true && data.customers && data.customers.length) {
+                renderKycCustomerChoices(data.customers);
+                setKycMessage(data.message || "يوجد أكثر من عميل مطابق. برجاء اختيار العميل من النتائج أو البحث ببيانات أدق.", true);
+            }
+        });
+    }
+
     function scheduleCommissionPreview() {
         window.clearTimeout(commissionTimer);
         commissionTimer = window.setTimeout(calculateCommissionPreview, 250);
@@ -2053,6 +2107,7 @@
         if (event.target.id === "visaNumber" && byId("transactionType").value === "card") {
             byId("paymentCardNo").value = event.target.value;
             byId("kycCardNo").value = event.target.value;
+            scheduleUnusedKycLookup(event.target.value);
             var cardItemId = cardServiceItemIdFromCardNo(event.target.value);
             var cardTypeName = cardTypeNameFromCardNo(event.target.value);
             if (byId("cardTypeName")) {
@@ -2064,6 +2119,7 @@
 
         if (event.target.id === "cardNationalId" && byId("transactionType").value === "card") {
             byId("kycNationalId").value = event.target.value;
+            scheduleUnusedKycLookup(event.target.value);
             var birthDate = extractBirthDateFromNationalId(event.target.value);
             if (birthDate) {
                 byId("kycBirthDate").value = birthDate;
@@ -2072,6 +2128,7 @@
 
         if (event.target.id === "kycNationalId") {
             var modalBirthDate = extractBirthDateFromNationalId(event.target.value);
+            scheduleUnusedKycLookup(event.target.value);
             if (modalBirthDate) {
                 byId("kycBirthDate").value = modalBirthDate;
                 byId("cardNationalId").value = event.target.value;
@@ -2085,9 +2142,13 @@
             customerLookupTimer = window.setTimeout(function () {
                 var phone = event.target.value.trim();
                 if (isValidEgyptianMobile(phone)) {
-                    lookupCustomerByPhone(phone);
+                    lookupUnusedKycCustomer(phone);
                 }
             }, 350);
+        }
+
+        if (event.target.id === "kycPhoneNo2" || event.target.id === "kycCardNo") {
+            scheduleUnusedKycLookup(event.target.value);
         }
 
         if (event.target.id === "kycCardDate") {
