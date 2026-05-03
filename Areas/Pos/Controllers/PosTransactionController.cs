@@ -867,23 +867,20 @@ namespace MyERP.Areas.Pos.Controllers
             var duplicateIds = new List<int>();
             var cardLength = string.IsNullOrWhiteSpace(request.CardNo) ? 0 : request.CardNo.Trim().Length;
 
-            // VB6 FrmCustCash blocks duplicate Tet_NumPoket for optEasyCash(0)
-            // only when the duplicate belongs to another Id and the card/token is not the 8-character type.
-            if (cardLength != 8)
+            // The same KYC customer can have one 8-character card and one 18-character card.
+            // Block duplicate national/mobile only within the same card type length.
+            var duplicateCustomerId = _repository.FindKeshniCardDuplicateId("Tet_NumPoket", request.Tet_NumPoket, request.CustomerID, cardLength > 0 ? (int?)cardLength : null);
+            if (duplicateCustomerId.HasValue)
             {
-                var duplicateCustomerId = _repository.FindKeshniCardDuplicateId("Tet_NumPoket", request.Tet_NumPoket, request.CustomerID);
-                if (duplicateCustomerId.HasValue)
-                {
-                    duplicateIds.Add(duplicateCustomerId.Value);
-                    errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل";
-                }
+                duplicateIds.Add(duplicateCustomerId.Value);
+                errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل لنفس نوع الكارت";
             }
 
-            var phoneDuplicateId = _repository.FindKeshniCardDuplicateId("PhoneNo2", request.PhoneNo2, request.CustomerID);
+            var phoneDuplicateId = _repository.FindKeshniCardDuplicateId("PhoneNo2", request.PhoneNo2, request.CustomerID, cardLength > 0 ? (int?)cardLength : null);
             if (phoneDuplicateId.HasValue)
             {
                 duplicateIds.Add(phoneDuplicateId.Value);
-                errors["PhoneNo2Duplicate"] = "رقم التليفون مسجل من قبل";
+                errors["PhoneNo2Duplicate"] = "رقم التليفون مسجل من قبل لنفس نوع الكارت";
             }
 
             var cardDuplicateId = _repository.FindKeshniCardDuplicateId("CardNo", request.CardNo, request.CustomerID);

@@ -1088,6 +1088,11 @@ WHERE c.Id = @id
 
         public int? FindKeshniCardDuplicateId(string columnName, string value, int? excludeId)
         {
+            return FindKeshniCardDuplicateId(columnName, value, excludeId, null);
+        }
+
+        public int? FindKeshniCardDuplicateId(string columnName, string value, int? excludeId, int? cardLength)
+        {
             if (string.IsNullOrWhiteSpace(value))
             {
                 return null;
@@ -1110,6 +1115,7 @@ SELECT TOP (1) Id
 FROM dbo.TblCusCsh
 WHERE " + columnName + @" = @value
   AND ISNULL(EasyCashType, 0) = 0
+  AND (@cardLength IS NULL OR LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = @cardLength)
   AND (@excludeId IS NULL OR Id <> @excludeId);";
 
             using (var connection = new SqlConnection(_connectionString))
@@ -1117,6 +1123,7 @@ WHERE " + columnName + @" = @value
             {
                 AddString(command, "@value", SqlDbType.NVarChar, 255, value.Trim());
                 Add(command, "@excludeId", SqlDbType.Int, excludeId);
+                Add(command, "@cardLength", SqlDbType.Int, cardLength);
                 connection.Open();
                 var result = command.ExecuteScalar();
                 return result == null || result == DBNull.Value
