@@ -21,6 +21,7 @@
     var reviewMode = false;
     var lastSavedTransactionId = null;
     var kycSaveInProgress = false;
+    var pendingDuplicateKycCustomer = null;
 
     function byId(id) { return document.getElementById(id); }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
@@ -431,6 +432,7 @@
 
     function clearKycFields() {
         byId("cashCustomerId").value = "";
+        pendingDuplicateKycCustomer = null;
         enablePrintAcknowledgmentIfAllowed();
         byId("phone2").value = "";
         byId("ipn").value = "";
@@ -471,6 +473,36 @@
         if (!messageBox) { return; }
         messageBox.innerText = message || "";
         messageBox.className = "kyc-save-message" + (message ? (isError ? " is-error" : " is-success") : "");
+    }
+
+    function showDuplicateKycCustomerAction(data, message) {
+        pendingDuplicateKycCustomer = data && data.existingCustomer ? data.existingCustomer : null;
+        setKycMessage(message, true);
+
+        var messageBox = byId("kycSaveMessage");
+        if (!messageBox || !pendingDuplicateKycCustomer) { return; }
+
+        var actionBox = document.createElement("div");
+        actionBox.className = "kyc-duplicate-action";
+        var button = document.createElement("button");
+        button.type = "button";
+        button.id = "loadDuplicateKycCustomerBtn";
+        button.className = "secondary-action";
+        button.innerText = "تحميل العميل المسجل";
+        actionBox.appendChild(button);
+        messageBox.appendChild(actionBox);
+    }
+
+    function loadPendingDuplicateKycCustomer() {
+        if (!pendingDuplicateKycCustomer) {
+            setKycMessage("لا توجد بيانات عميل مسجل للتحميل", true);
+            return;
+        }
+
+        applyKeshniCustomer(pendingDuplicateKycCustomer);
+        loadKycAttachments(pendingDuplicateKycCustomer.CustomerID);
+        setKycMessage("تم تحميل العميل المسجل. يمكنك تعديل البيانات ثم الحفظ.");
+        pendingDuplicateKycCustomer = null;
     }
 
     function addItemRow() {
@@ -1831,6 +1863,10 @@
 
                 byId("validationSummary").innerText = message;
                 byId("saveResult").innerText = "";
+                if (data && data.duplicate === true && data.existingCustomer) {
+                    showDuplicateKycCustomerAction(data, message);
+                    return;
+                }
                 setKycMessage(message, true);
             } catch (ex) {
                 resetKycSaveButton();
@@ -1864,6 +1900,7 @@
         resetServiceRows();
 
         byId("cashCustomerId").value = "";
+        pendingDuplicateKycCustomer = null;
         enablePrintAcknowledgmentIfAllowed();
         byId("transactionType").value = "";
         byId("isCashOut").value = "false";
@@ -1940,6 +1977,9 @@
         }
         if (event.target.id === "printAcknowledgmentBtn") {
             openPrintAcknowledgmentForCustomer(savedKycCustomerId());
+        }
+        if (event.target.id === "loadDuplicateKycCustomerBtn") {
+            loadPendingDuplicateKycCustomer();
         }
         var invoiceButton = event.target.closest ? event.target.closest(".today-invoice-item") : null;
         if (invoiceButton) {

@@ -465,12 +465,15 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var validationErrors = ValidateKeshniCardCustomer(request);
-                var duplicateCustomerId = AddKeshniCardDuplicateErrors(request, validationErrors);
+                var duplicateInfo = AddKeshniCardDuplicateErrors(request, validationErrors, context);
                 if (validationErrors.Count > 0)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.Validation", request, null, validationErrors);
                     Response.StatusCode = 400;
-                    return Json(Fail("راجع بيانات تفعيل الكارت", "Keshni Card KYC validation failed.", validationErrors, duplicateCustomerId));
+                    var message = duplicateInfo.HasDuplicate
+                        ? "هذا العميل/الكارت مسجل من قبل. برجاء البحث عن العميل واختياره أولاً ثم تعديل بياناته."
+                        : "راجع بيانات تفعيل الكارت";
+                    return Json(Fail(message, "Keshni Card KYC validation failed.", validationErrors, duplicateInfo.ExistingCustomerId, duplicateInfo.HasDuplicate, duplicateInfo.ExistingCustomer));
                 }
 
                 var saved = _repository.SaveCashCustomer(request);
@@ -859,29 +862,34 @@ namespace MyERP.Areas.Pos.Controllers
             return errors;
         }
 
-        private int? AddKeshniCardDuplicateErrors(PosCashCustomerSaveRequest request, IDictionary<string, string> errors)
+        private KeshniDuplicateInfo AddKeshniCardDuplicateErrors(PosCashCustomerSaveRequest request, IDictionary<string, string> errors, PosUserContext context)
         {
-            int? duplicateCustomerId = null;
+            var duplicateIds = new List<int>();
             var cardLength = string.IsNullOrWhiteSpace(request.CardNo) ? 0 : request.CardNo.Trim().Length;
 
             // VB6 FrmCustCash blocks duplicate Tet_NumPoket for optEasyCash(0)
             // only when the duplicate belongs to another Id and the card/token is not the 8-character type.
             if (cardLength != 8)
             {
-                duplicateCustomerId = _repository.FindKeshniCardDuplicateId("Tet_NumPoket", request.Tet_NumPoket, request.CustomerID);
+                var duplicateCustomerId = _repository.FindKeshniCardDuplicateId("Tet_NumPoket", request.Tet_NumPoket, request.CustomerID);
                 if (duplicateCustomerId.HasValue)
                 {
-                    errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل. ابحث عن العميل المسجل واستخدمه بدلاً من إنشاء سجل جديد";
+                    duplicateIds.Add(duplicateCustomerId.Value);
+                    errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل";
                 }
             }
 
-            if (_repository.KeshniCardDuplicateExists("PhoneNo2", request.PhoneNo2, request.CustomerID))
+            var phoneDuplicateId = _repository.FindKeshniCardDuplicateId("PhoneNo2", request.PhoneNo2, request.CustomerID);
+            if (phoneDuplicateId.HasValue)
             {
+                duplicateIds.Add(phoneDuplicateId.Value);
                 errors["PhoneNo2Duplicate"] = "رقم التليفون مسجل من قبل";
             }
 
-            if (_repository.KeshniCardDuplicateExists("CardNo", request.CardNo, request.CustomerID))
+            var cardDuplicateId = _repository.FindKeshniCardDuplicateId("CardNo", request.CardNo, request.CustomerID);
+            if (cardDuplicateId.HasValue)
             {
+                duplicateIds.Add(cardDuplicateId.Value);
                 errors["CardNoDuplicate"] = "رقم الكارت مسجل من قبل";
             }
 
@@ -890,7 +898,22 @@ namespace MyERP.Areas.Pos.Controllers
                 errors["CardNoNotIssued"] = "رقم الكارت غير موجود أو تم إدخاله بشكل خاطئ";
             }
 
-            return duplicateCustomerId;
+            var distinctDuplicateIds = duplicateIds.Distinct().ToList();
+            var duplicateInfo = new KeshniDuplicateInfo
+            {
+                HasDuplicate = distinctDuplicateIds.Count > 0
+            };
+
+            if (distinctDuplicateIds.Count == 1)
+            {
+                duplicateInfo.ExistingCustomerId = distinctDuplicateIds[0];
+                duplicateInfo.ExistingCustomer = _repository.GetKeshniCardCustomerById(
+                    distinctDuplicateIds[0],
+                    context == null ? (int?)null : context.BranchId,
+                    context != null && context.CanChangeDefaults);
+            }
+
+            return duplicateInfo;
         }
 
         private IList<PosKycAttachmentDto> SaveKeshniAttachments(string subjectNo)
@@ -1011,7 +1034,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
-        private static object Fail(string message, string technicalMessage, IDictionary<string, string> validationErrors = null, int? duplicateCustomerId = null)
+        private static object Fail(string message, string technicalMessage, IDictionary<string, string> validationErrors = null, int? duplicateCustomerId = null, bool duplicate = false, PosCustomerLookupDto existingCustomer = null)
         {
             var errors = validationErrors ?? new Dictionary<string, string>();
             var details = IsKycDebugEnabled() ? (technicalMessage ?? string.Empty) : string.Empty;
@@ -1024,8 +1047,18 @@ namespace MyERP.Areas.Pos.Controllers
                 technicalDetails = details,
                 validationErrors = errors,
                 validationErrorsList = errors.Values.ToArray(),
-                duplicateCustomerId = duplicateCustomerId
+                duplicate = duplicate,
+                duplicateCustomerId = duplicateCustomerId,
+                existingCustomerId = duplicateCustomerId,
+                existingCustomer = existingCustomer
             };
+        }
+
+        private sealed class KeshniDuplicateInfo
+        {
+            public bool HasDuplicate { get; set; }
+            public int? ExistingCustomerId { get; set; }
+            public PosCustomerLookupDto ExistingCustomer { get; set; }
         }
 
         private static bool IsKycDebugEnabled()
