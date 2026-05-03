@@ -419,6 +419,7 @@
     <Compile Include="Areas\Pos\Models\PosClosingModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs" />
+    <Compile Include="Areas\Pos\Reports\KycCardReport.cs" />
     <Compile Include="Areas\Pos\Reports\PosReceiptReport.cs">
       <SubType>Component</SubType>
     </Compile>

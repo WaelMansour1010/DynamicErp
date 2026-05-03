@@ -11,19 +11,19 @@ using System.Web.Hosting;
 
 namespace MyERP.Areas.Pos.Reports
 {
-    // Layout target: Areas/Pos/Doc/repCashCustomer4.pdf — exported from the
-    // legacy Crystal report repCashCustomer4.rpt opened by
-    // FrmCustCash.cmdPrint2_Click (SatriahMain VB6 project,
-    // \Cayshny\Frm\New frm\FrmCustCash.frm). Data is loaded strictly by
-    // TblCusCsh.Id through PosSqlRepository.GetKeshniCardCustomerById.
+    // Layout target: Areas/Pos/Doc/repCashCustomer4.pdf - the Crystal
+    // acknowledgment form referenced by the legacy Cayshny screen.
+    // Customer is loaded strictly by TblCusCsh.Id through
+    // PosSqlRepository.GetKeshniCardCustomerById.
     public class KycCardAcknowledgmentReport : XtraReport
     {
         private readonly Font _bodyFont = new Font("Tahoma", 11F, FontStyle.Regular);
         private readonly Font _bodyBold = new Font("Tahoma", 11F, FontStyle.Bold);
         private readonly Font _titleFont = new Font("Tahoma", 14F, FontStyle.Bold | FontStyle.Underline);
         private readonly Font _tokenLabelFont = new Font("Tahoma", 12F, FontStyle.Bold);
-        private readonly Font _tokenValueFont = new Font("Tahoma", 12F, FontStyle.Bold);
         private readonly Font _dynamicFont = new Font("Tahoma", 11F, FontStyle.Bold);
+
+        private readonly Color _underlineColor = Color.Black;
 
         public KycCardAcknowledgmentReport(PosCustomerLookupDto customer, DateTime issuedAt)
         {
@@ -65,113 +65,196 @@ namespace MyERP.Areas.Pos.Reports
                 RightToLeft = RightToLeft.Yes
             });
 
-            const float tokenY = 190F;
+            const float tokenY = 195F;
+            const float tokenLineHeight = 22F;
+            float tokenLabelWidth = 110F;
+            float tokenValueWidth = 240F;
+            float tokenBlockWidth = tokenLabelWidth + tokenValueWidth + 8F;
+            float tokenStartX = (width - tokenBlockWidth) / 2F;
+
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.55F, tokenY, width * 0.18F, 22),
-                Text = "Token رقم",
+                BoundsF = new RectangleF(tokenStartX + tokenValueWidth + 8F, tokenY, tokenLabelWidth, tokenLineHeight),
+                Text = "رقم Token :",
                 Font = _tokenLabelFont,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.No
+                RightToLeft = RightToLeft.Yes
             });
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.30F, tokenY, width * 0.25F, 22),
+                BoundsF = new RectangleF(tokenStartX, tokenY, tokenValueWidth, tokenLineHeight),
                 Text = tokenValue,
-                Font = _tokenValueFont,
-                TextAlignment = TextAlignment.MiddleCenter
+                Font = _tokenLabelFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderColor = _underlineColor,
+                BorderWidth = 0.6F,
+                WordWrap = false
             });
 
             float lineY = 270F;
             const float lineHeight = 30F;
+            const float labelHeight = 22F;
+
+            // Line 1 (RTL reading order):
+            //   [أقر أنا] [customerName underlined] [الموقع أدناه بأني إستلمت بطاقة بنك مصر - Easy Cash]
+            float rightPrefixWidth = 60F;
+            float leftSuffixWidth = width * 0.55F;
+            float namePartWidth = width - rightPrefixWidth - leftSuffixWidth;
+            float namePartX = rightPrefixWidth;
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0, lineY, width, 22),
-                Text = "أقر أنا ......................................................... الموقع أدناه بأني إستلمت بطاقة بنك مصر - Easy Cash",
+                BoundsF = new RectangleF(width - rightPrefixWidth, lineY, rightPrefixWidth, labelHeight),
+                Text = "أقر أنا",
                 Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
             });
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.45F, lineY - 4F, width * 0.30F, 22),
+                BoundsF = new RectangleF(namePartX, lineY, namePartWidth, labelHeight),
                 Text = customerName,
                 Font = _dynamicFont,
-                BackColor = Color.White,
                 TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                Borders = BorderSide.Bottom,
+                BorderColor = _underlineColor,
+                BorderWidth = 0.6F,
+                WordWrap = false
+            });
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(0, lineY, leftSuffixWidth, labelHeight),
+                Text = "الموقع أدناه بأني إستلمت بطاقة بنك مصر - Easy Cash",
+                Font = _bodyFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
             });
             lineY += lineHeight;
 
+            // Line 2 (RTL):
+            //   [ميزة المدفوعة مقدما المذكورة أعلاه بالرقم المرجعي لها] [tokenValue underlined]
+            float line2RightWidth = width * 0.55F;
+            float line2TokenWidth = width - line2RightWidth - 4F;
+
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0, lineY, width, 22),
+                BoundsF = new RectangleF(width - line2RightWidth, lineY, line2RightWidth, labelHeight),
                 Text = "ميزة المدفوعة مقدما المذكورة أعلاه بالرقم المرجعي لها",
                 Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
             });
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.40F, 22),
+                BoundsF = new RectangleF(0, lineY, line2TokenWidth, labelHeight),
                 Text = tokenValue,
                 Font = _dynamicFont,
-                BackColor = Color.White,
-                TextAlignment = TextAlignment.MiddleCenter
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderColor = _underlineColor,
+                BorderWidth = 0.6F,
+                WordWrap = false
             });
             lineY += lineHeight;
 
+            // Line 3 (RTL):
+            //   [في يوم وتاريخ] [date underlined] [الساعة] [time underlined]
+            //   [من السادة شركة أيزي كاش للدفع الإلكتروني]
+            float dateLabelW = 95F;
+            float dateValueW = 110F;
+            float timeLabelW = 55F;
+            float timeValueW = 90F;
+            float footerSuffixW = width - (dateLabelW + dateValueW + timeLabelW + timeValueW) - 4F;
+
+            float xRight = width;
+            xRight -= dateLabelW;
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0, lineY, width, 22),
-                Text = "في يوم وتاريخ ......................... الساعة ............ من السادة شركة أيزي كاش للدفع الإلكتروني",
+                BoundsF = new RectangleF(xRight, lineY, dateLabelW, labelHeight),
+                Text = "في يوم وتاريخ",
                 Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
             });
+
+            xRight -= dateValueW;
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.55F, lineY - 4F, width * 0.15F, 22),
+                BoundsF = new RectangleF(xRight, lineY, dateValueW, labelHeight),
                 Text = date,
                 Font = _dynamicFont,
-                BackColor = Color.White,
-                TextAlignment = TextAlignment.MiddleCenter
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderColor = _underlineColor,
+                BorderWidth = 0.6F,
+                WordWrap = false
             });
+
+            xRight -= timeLabelW;
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.32F, lineY - 4F, width * 0.13F, 22),
-                Text = time,
-                Font = _dynamicFont,
-                BackColor = Color.White,
+                BoundsF = new RectangleF(xRight, lineY, timeLabelW, labelHeight),
+                Text = "الساعة",
+                Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleCenter,
                 RightToLeft = RightToLeft.Yes
             });
+
+            xRight -= timeValueW;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(xRight, lineY, timeValueW, labelHeight),
+                Text = time,
+                Font = _dynamicFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderColor = _underlineColor,
+                BorderWidth = 0.6F,
+                WordWrap = false
+            });
+
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(0, lineY, footerSuffixW, labelHeight),
+                Text = "من السادة شركة أيزي كاش للدفع الإلكتروني",
+                Font = _bodyFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
+            });
             lineY += lineHeight;
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0, lineY, width, 22),
+                BoundsF = new RectangleF(0, lineY, width, labelHeight),
                 Text = "المقر بما فيه ,,",
                 Font = _bodyBold,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
             });
             lineY += lineHeight + 12F;
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0, lineY, width, 22),
+                BoundsF = new RectangleF(0, lineY, width, labelHeight),
                 Text = "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:",
                 Font = _bodyBold,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(0, 4, 0, 0)
             });
             lineY += lineHeight;
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.55F, 22),
+                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.55F, labelHeight),
                 Text = "إسم العميل: ..........................................",
                 Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleRight,
@@ -181,7 +264,7 @@ namespace MyERP.Areas.Pos.Reports
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.55F, 22),
+                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.55F, labelHeight),
                 Text = "التوقــــــيع: ..........................................",
                 Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleRight,
