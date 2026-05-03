@@ -1763,12 +1763,13 @@
                 if (status >= 200 && status < 300 && data && data.success && data.customer) {
                     applyKeshniCustomer(data.customer);
                     renderKycAttachments(data.attachments || []);
-                    byId("saveResult").innerText = data.message || "تم حفظ بيانات العميل وتفعيل الكارت";
+                    var successMessage = data.message || "تم حفظ بيانات العميل وتفعيل الكارت";
+                    byId("saveResult").innerText = successMessage;
                     byId("validationSummary").innerText = "";
-                    setKycMessage(data.message || "تم حفظ بيانات العميل وتفعيل الكارت");
+                    setKycMessage(successMessage + " — يمكنك الآن طباعة الإقرار.");
                     byId("kycAttachments").value = "";
                     calculateCommissionPreview();
-                    closeKycModal();
+                    enablePrintAcknowledgmentIfAllowed();
                     return;
                 }
 
