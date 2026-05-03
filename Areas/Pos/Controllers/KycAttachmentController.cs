@@ -149,6 +149,43 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
+        // Mirrors VB6 FrmCustCash.BtnPrint_Click -> print_report2 which loads
+        // repCashCustomer.rpt (the per-character pre-printed card body).
+        // Customer is loaded strictly by TblCusCsh.Id.
+        [HttpGet]
+        public ActionResult PrintCard(int? id)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return new HttpStatusCodeResult(401, "POS session context is missing.");
+            }
+
+            if (!context.CanPrint)
+            {
+                return new HttpStatusCodeResult(403, "POS user is not allowed to print.");
+            }
+
+            if (!id.HasValue || id.Value <= 0)
+            {
+                return HttpNotFound("لم يتم تحديد بيانات الكارت");
+            }
+
+            var customer = _repository.GetKeshniCardCustomerById(id.Value, context.BranchId, context.CanChangeDefaults);
+            if (customer == null)
+            {
+                return HttpNotFound("بيانات الكارت غير موجودة أو غير مسموح بطباعتها");
+            }
+
+            using (var report = new KycCardReport(customer, DateTime.Now))
+            using (var stream = new MemoryStream())
+            {
+                report.ExportToPdf(stream);
+                Response.AddHeader("Content-Disposition", "inline; filename=kyc-card-" + id.Value + ".pdf");
+                return File(stream.ToArray(), "application/pdf");
+            }
+        }
+
         private static string GetKycAttachmentRootPath()
         {
             var configuredPath = ConfigurationManager.AppSettings["PosKycAttachmentRootPath"];

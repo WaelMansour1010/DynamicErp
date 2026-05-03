@@ -36,9 +36,23 @@
         return isNaN(value) ? 0 : value;
     }
     function enablePrintAcknowledgmentIfAllowed() {
-        var button = byId("printAcknowledgmentBtn");
-        if (!button) { return; }
-        button.disabled = !(savedKycCustomerId() > 0 && currentContext && currentContext.CanPrint === true);
+        var allowed = savedKycCustomerId() > 0 && currentContext && currentContext.CanPrint === true;
+        var ackButton = byId("printAcknowledgmentBtn");
+        if (ackButton) { ackButton.disabled = !allowed; }
+        var cardButton = byId("printCardBtn");
+        if (cardButton) { cardButton.disabled = !allowed; }
+    }
+    function openPrintCardForCustomer(customerId) {
+        customerId = parseInt(customerId, 10) || 0;
+        if (customerId <= 0) {
+            setKycMessage("لا توجد بيانات كارت محفوظة لطباعة الكارت", true);
+            return false;
+        }
+
+        var url = getUrl("data-kyc-print-card-url");
+        if (!url) { return false; }
+        window.open(url.replace(/\/$/, "") + "/" + encodeURIComponent(customerId), "_blank");
+        return true;
     }
     function openPrintAcknowledgmentForCustomer(customerId) {
         customerId = parseInt(customerId, 10) || 0;
@@ -1977,6 +1991,9 @@
         }
         if (event.target.id === "printAcknowledgmentBtn") {
             openPrintAcknowledgmentForCustomer(savedKycCustomerId());
+        }
+        if (event.target.id === "printCardBtn") {
+            openPrintCardForCustomer(savedKycCustomerId());
         }
         if (event.target.id === "loadDuplicateKycCustomerBtn") {
             loadPendingDuplicateKycCustomer();
