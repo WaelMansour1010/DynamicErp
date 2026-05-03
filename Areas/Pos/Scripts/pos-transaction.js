@@ -202,6 +202,12 @@
                 if (xhr.status === 400) {
                     message = "رفض السيرفر طلب حفظ بيانات الكارت. راجع صيغة الحقول وحجم المرفقات ثم حاول مرة أخرى.";
                 }
+                if (window.console && console.error) {
+                    console.error("KYC save returned a non-JSON response", {
+                        status: xhr.status,
+                        responseText: responseText
+                    });
+                }
                 data = {
                     success: false,
                     message: message,
@@ -1678,6 +1684,13 @@
             setKycMessage(phoneMessage, true);
             return;
         }
+        var kycPhone = (byId("kycPhoneNo2").value || byId("cashCustomerPhone").value).trim();
+        if (!/^(010|011|012|015)[0-9]{8}$/.test(kycPhone)) {
+            var phoneFormatMessage = "رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015";
+            byId("validationSummary").innerText = phoneFormatMessage;
+            setKycMessage(phoneFormatMessage, true);
+            return;
+        }
         if (!(byId("kycName").value || byId("cashCustomerName").value).trim()) {
             var nameMessage = "من فضلك أدخل اسم العميل";
             byId("validationSummary").innerText = nameMessage;
@@ -1690,10 +1703,22 @@
             setKycMessage(nationalIdMessage, true);
             return;
         }
+        if (!/^[0-9]{14}$/.test(byId("kycNationalId").value.trim())) {
+            var nationalIdFormatMessage = "الرقم القومي يجب أن يكون 14 رقم";
+            byId("validationSummary").innerText = nationalIdFormatMessage;
+            setKycMessage(nationalIdFormatMessage, true);
+            return;
+        }
         if (!byId("kycCardNo").value.trim()) {
             var cardMessage = "من فضلك أدخل رقم الكارت";
             byId("validationSummary").innerText = cardMessage;
             setKycMessage(cardMessage, true);
+            return;
+        }
+        if (!/^[0-9]{8}$|^[0-9]{18}$/.test(byId("kycCardNo").value.trim())) {
+            var cardFormatMessage = "رقم التوكن/الكارت يجب أن يكون 8 أو 18 رقم";
+            byId("validationSummary").innerText = cardFormatMessage;
+            setKycMessage(cardFormatMessage, true);
             return;
         }
 
@@ -1767,7 +1792,6 @@
                     byId("saveResult").innerText = successMessage;
                     byId("validationSummary").innerText = "";
                     setKycMessage(successMessage + " — يمكنك الآن طباعة الإقرار.");
-                    byId("kycAttachments").value = "";
                     calculateCommissionPreview();
                     enablePrintAcknowledgmentIfAllowed();
                     return;
@@ -1792,7 +1816,16 @@
                     message += "\nيمكن البحث عن العميل المسجل واستخدامه. رقم العميل: " + data.duplicateCustomerId;
                 }
                 if (data && (data.details || data.technicalDetails || data.technicalMessage)) {
-                    message += "\nالتفاصيل الفنية: " + (data.details || data.technicalDetails || data.technicalMessage);
+                    var details = data.details || data.technicalDetails || data.technicalMessage;
+                    message += "\nالتفاصيل الفنية: " + details;
+                    if (window.console && console.error) {
+                        console.error("KYC save failed", {
+                            status: status,
+                            message: data.message,
+                            details: details,
+                            validationErrors: data.validationErrors || data.validationErrorsList
+                        });
+                    }
                 }
 
                 byId("validationSummary").innerText = message;

@@ -1202,10 +1202,20 @@ WHERE Id = @id;";
                     AddCashCustomerParameters(command, request);
                     command.Parameters.Add("@id", SqlDbType.Int).Value = request.CustomerID.Value;
                     connection.Open();
-                    command.ExecuteNonQuery();
+                    var affected = command.ExecuteNonQuery();
+                    if (affected <= 0)
+                    {
+                        throw new InvalidOperationException("لم يتم العثور على سجل KYC المطلوب تحديثه. أعد البحث عن العميل ثم حاول مرة أخرى.");
+                    }
                 }
 
-                return GetKeshniCardCustomerById(request.CustomerID.Value, request.BranchId, true);
+                var updated = GetKeshniCardCustomerById(request.CustomerID.Value, request.BranchId, true);
+                if (updated == null)
+                {
+                    throw new InvalidOperationException("تم تحديث بيانات KYC لكن تعذر تحميل نفس العميل بعد الحفظ.");
+                }
+
+                return updated;
             }
 
             const string insertSql = @"
@@ -1301,7 +1311,13 @@ SELECT @id AS Id;";
             }
 
             request.CustomerID = newId;
-            return GetKeshniCardCustomerById(newId, request.BranchId, true);
+            var inserted = GetKeshniCardCustomerById(newId, request.BranchId, true);
+            if (inserted == null)
+            {
+                throw new InvalidOperationException("تم حفظ بيانات KYC لكن تعذر تحميل نفس العميل الجديد برقم السجل.");
+            }
+
+            return inserted;
         }
 
         public void SaveKeshniCardAttachment(string subjectNo, string fileName, string title)
