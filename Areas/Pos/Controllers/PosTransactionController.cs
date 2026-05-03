@@ -451,7 +451,7 @@ namespace MyERP.Areas.Pos.Controllers
                 if (context == null)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.NoSession", request, null, null);
-                    Response.StatusCode = 401;
+                    SetJsonErrorStatus(401);
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
                 }
 
@@ -469,7 +469,7 @@ namespace MyERP.Areas.Pos.Controllers
                 if (validationErrors.Count > 0)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.Validation", request, null, validationErrors);
-                    Response.StatusCode = 400;
+                    SetJsonErrorStatus(400);
                     var message = duplicateInfo.HasDuplicate
                         ? "هذا العميل/الكارت مسجل من قبل. برجاء البحث عن العميل واختياره أولاً ثم تعديل بياناته."
                         : "راجع بيانات تفعيل الكارت";
@@ -490,25 +490,25 @@ namespace MyERP.Areas.Pos.Controllers
                 catch (UnauthorizedAccessException ex)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.AttachmentUnauthorized", request, ex, null);
-                    Response.StatusCode = 500;
+                    SetJsonErrorStatus(500);
                     return Json(Fail("تم حفظ بيانات العميل لكن لا توجد صلاحية لحفظ المرفقات. راجع صلاحيات مسار المرفقات.", ex.ToString()));
                 }
                 catch (IOException ex)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.AttachmentIO", request, ex, null);
-                    Response.StatusCode = 500;
+                    SetJsonErrorStatus(500);
                     return Json(Fail("تم حفظ بيانات العميل لكن حدث خطأ أثناء حفظ ملفات المرفقات.", ex.ToString()));
                 }
                 catch (SqlException ex)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.AttachmentSql", request, ex, null);
-                    Response.StatusCode = 500;
+                    SetJsonErrorStatus(500);
                     return Json(Fail("تم حفظ بيانات العميل لكن تعذر تسجيل بيانات المرفقات في قاعدة البيانات.", ex.ToString()));
                 }
                 catch (Exception ex)
                 {
                     LogKycFailure("SaveKeshniCardCustomer.AttachmentException", request, ex, null);
-                    Response.StatusCode = 500;
+                    SetJsonErrorStatus(500);
                     return Json(Fail("تم حفظ بيانات العميل لكن تعذر حفظ المرفقات. راجع نوع الملف وصلاحيات مسار المرفقات.", ex.ToString()));
                 }
 
@@ -530,13 +530,13 @@ namespace MyERP.Areas.Pos.Controllers
             catch (SqlException ex)
             {
                 LogKycFailure("SaveKeshniCardCustomer.SqlException", request, ex, null);
-                Response.StatusCode = 500;
+                SetJsonErrorStatus(500);
                 return Json(Fail(FriendlySqlKycMessage(ex), ex.ToString()));
             }
             catch (Exception ex)
             {
                 LogKycFailure("SaveKeshniCardCustomer.Exception", request, ex, null);
-                Response.StatusCode = 500;
+                SetJsonErrorStatus(500);
                 return Json(Fail("حدث خطأ أثناء حفظ بيانات الكارت", ex.ToString()));
             }
         }
@@ -1059,6 +1059,12 @@ namespace MyERP.Areas.Pos.Controllers
             public bool HasDuplicate { get; set; }
             public int? ExistingCustomerId { get; set; }
             public PosCustomerLookupDto ExistingCustomer { get; set; }
+        }
+
+        private void SetJsonErrorStatus(int statusCode)
+        {
+            Response.StatusCode = statusCode;
+            Response.TrySkipIisCustomErrors = true;
         }
 
         private static bool IsKycDebugEnabled()
