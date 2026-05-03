@@ -86,9 +86,35 @@ namespace MyERP.Areas.Pos.Controllers
             return File(physicalPath, contentType, downloadName);
         }
 
-        // Mirrors VB6 FrmCustCash.cmdPrint2_Click, which prints repCashCustomer4.rpt
-        // for the saved Keshni Card KYC customer. The customer record is loaded
-        // strictly by TblCusCsh.Id, never by token, Screen ID, IPN, or ManualNo.
+        private bool TryResolveAttachmentPath(PosKycAttachmentDto attachment, out string physicalPath)
+        {
+            var root = GetKycAttachmentRootPath();
+            var webRoot = Server.MapPath("~/Doc");
+            var dateFolder = attachment.ImageDate.HasValue
+                ? attachment.ImageDate.Value.ToString("yyyyMMdd")
+                : DateTime.Today.ToString("yyyyMMdd");
+            var legacyFileName = MakeSafeFileName((attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty));
+            var plainFileName = MakeSafeFileName(attachment.FileName ?? string.Empty);
+            var candidates = new List<string>
+            {
+                Path.Combine(root, dateFolder, legacyFileName),
+                Path.Combine(root, dateFolder, (attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty)),
+                Path.Combine(root, legacyFileName),
+                Path.Combine(root, plainFileName),
+                Path.Combine(webRoot, dateFolder, legacyFileName),
+                Path.Combine(webRoot, dateFolder, (attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty)),
+                Path.Combine(webRoot, legacyFileName),
+                Path.Combine(webRoot, plainFileName)
+            };
+
+            physicalPath = candidates.FirstOrDefault(System.IO.File.Exists);
+            return physicalPath != null;
+        }
+
+        // Mirrors VB6 FrmCustCash.cmdPrint2_Click (Cayshny\Frm\New frm\FrmCustCash.frm
+        // line 4646) which prints repCashCustomer4.rpt for the saved Keshni Card
+        // KYC customer. The customer record is loaded strictly by TblCusCsh.Id —
+        // never by token / ScreenID / IPN / ManualNo.
         [HttpGet]
         public ActionResult PrintAcknowledgment(int? id)
         {
@@ -121,31 +147,6 @@ namespace MyERP.Areas.Pos.Controllers
                 Response.AddHeader("Content-Disposition", "inline; filename=kyc-acknowledgment-" + id.Value + ".pdf");
                 return File(stream.ToArray(), "application/pdf");
             }
-        }
-
-        private bool TryResolveAttachmentPath(PosKycAttachmentDto attachment, out string physicalPath)
-        {
-            var root = GetKycAttachmentRootPath();
-            var webRoot = Server.MapPath("~/Doc");
-            var dateFolder = attachment.ImageDate.HasValue
-                ? attachment.ImageDate.Value.ToString("yyyyMMdd")
-                : DateTime.Today.ToString("yyyyMMdd");
-            var legacyFileName = MakeSafeFileName((attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty));
-            var plainFileName = MakeSafeFileName(attachment.FileName ?? string.Empty);
-            var candidates = new List<string>
-            {
-                Path.Combine(root, dateFolder, legacyFileName),
-                Path.Combine(root, dateFolder, (attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty)),
-                Path.Combine(root, legacyFileName),
-                Path.Combine(root, plainFileName),
-                Path.Combine(webRoot, dateFolder, legacyFileName),
-                Path.Combine(webRoot, dateFolder, (attachment.SubjectNo ?? string.Empty) + (attachment.FileName ?? string.Empty)),
-                Path.Combine(webRoot, legacyFileName),
-                Path.Combine(webRoot, plainFileName)
-            };
-
-            physicalPath = candidates.FirstOrDefault(System.IO.File.Exists);
-            return physicalPath != null;
         }
 
         private static string GetKycAttachmentRootPath()

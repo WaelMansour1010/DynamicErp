@@ -8,7 +8,9 @@ using System.Globalization;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -239,6 +241,32 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
+        public JsonResult TodaySummary()
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                return Json(_repository.GetTodaySummary(context.UserId, context.BranchId, context.CanChangeDefaults), JsonRequestBehavior.AllowGet);
+            }
+            catch (SqlException ex)
+            {
+                Response.StatusCode = 500;
+                return Json(Fail("تعذر تحميل ملخص اليوم من قاعدة البيانات", ex.Message), JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(Fail("تعذر تحميل ملخص اليوم", ex.Message), JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
         public JsonResult GetInvoice(int transactionId)
         {
             var context = GetPosContext();
@@ -372,27 +400,48 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SaveCashCustomer(PosCashCustomerSaveRequest request)
         {
-            request = request ?? new PosCashCustomerSaveRequest();
-            if (!IsValidEgyptianMobile(request.PhoneNo2))
+            try
             {
-                Response.StatusCode = 400;
-                return Json(Fail("ط±ظ‚ظ… ط§ظ„طھظ„ظٹظپظˆظ† ظٹط¬ط¨ ط£ظ† ظٹظƒظˆظ† 11 ط±ظ‚ظ… ظˆظٹط¨ط¯ط£ ط¨ظ€ 010 ط£ظˆ 011 ط£ظˆ 012 ط£ظˆ 015", "Invalid Egyptian mobile format."));
-            }
-
-            var context = GetPosContext();
-            if (context != null)
-            {
-                request.UserId = context.UserId;
-                if (!context.CanChangeDefaults || !request.BranchId.HasValue)
+                request = request ?? new PosCashCustomerSaveRequest();
+                if (!IsValidEgyptianMobile(request.PhoneNo2))
                 {
-                    request.BranchId = context.BranchId;
+                    var errors = new Dictionary<string, string>
+                    {
+                        { "PhoneNo2", "رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015" }
+                    };
+                    LogKycFailure("SaveCashCustomer.Validation", request, null, errors);
+                    Response.StatusCode = 400;
+                    return Json(Fail("راجع بيانات العميل", "Invalid Egyptian mobile format.", errors));
                 }
-            }
 
-            return Json(_repository.SaveCashCustomer(request));
+                var context = GetPosContext();
+                if (context != null)
+                {
+                    request.UserId = context.UserId;
+                    if (!context.CanChangeDefaults || !request.BranchId.HasValue)
+                    {
+                        request.BranchId = context.BranchId;
+                    }
+                }
+
+                return Json(_repository.SaveCashCustomer(request));
+            }
+            catch (SqlException ex)
+            {
+                LogKycFailure("SaveCashCustomer.SqlException", request, ex, null);
+                Response.StatusCode = 500;
+                return Json(Fail(FriendlySqlKycMessage(ex), ex.ToString()));
+            }
+            catch (Exception ex)
+            {
+                LogKycFailure("SaveCashCustomer.Exception", request, ex, null);
+                Response.StatusCode = 500;
+                return Json(Fail("حدث خطأ أثناء حفظ بيانات العميل", ex.ToString()));
+            }
         }
 
         [HttpPost]
+        [ValidateInput(false)]
         public JsonResult SaveKeshniCardCustomer(PosCashCustomerSaveRequest request)
         {
             try
@@ -401,6 +450,7 @@ namespace MyERP.Areas.Pos.Controllers
                 var context = GetPosContext();
                 if (context == null)
                 {
+                    LogKycFailure("SaveKeshniCardCustomer.NoSession", request, null, null);
                     Response.StatusCode = 401;
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
                 }
@@ -415,11 +465,12 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var validationErrors = ValidateKeshniCardCustomer(request);
-                AddKeshniCardDuplicateErrors(request, validationErrors);
+                var duplicateCustomerId = AddKeshniCardDuplicateErrors(request, validationErrors);
                 if (validationErrors.Count > 0)
                 {
+                    LogKycFailure("SaveKeshniCardCustomer.Validation", request, null, validationErrors);
                     Response.StatusCode = 400;
-                    return Json(Fail("راجع بيانات تفعيل الكارت", "Keshni Card KYC validation failed.", validationErrors));
+                    return Json(Fail("راجع بيانات تفعيل الكارت", "Keshni Card KYC validation failed.", validationErrors, duplicateCustomerId));
                 }
 
                 var saved = _repository.SaveCashCustomer(request);
@@ -428,12 +479,43 @@ namespace MyERP.Areas.Pos.Controllers
                     saved.ArabicName0,
                     saved.ArabicName1,
                     saved.Tet_NumPoket);
-                var attachments = SaveKeshniAttachments(attachmentSubject);
+                IList<PosKycAttachmentDto> attachments;
+                try
+                {
+                    attachments = SaveKeshniAttachments(attachmentSubject);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    LogKycFailure("SaveKeshniCardCustomer.AttachmentUnauthorized", request, ex, null);
+                    Response.StatusCode = 500;
+                    return Json(Fail("تم حفظ بيانات العميل لكن لا توجد صلاحية لحفظ المرفقات. راجع صلاحيات مسار المرفقات.", ex.ToString()));
+                }
+                catch (IOException ex)
+                {
+                    LogKycFailure("SaveKeshniCardCustomer.AttachmentIO", request, ex, null);
+                    Response.StatusCode = 500;
+                    return Json(Fail("تم حفظ بيانات العميل لكن حدث خطأ أثناء حفظ ملفات المرفقات.", ex.ToString()));
+                }
+                catch (SqlException ex)
+                {
+                    LogKycFailure("SaveKeshniCardCustomer.AttachmentSql", request, ex, null);
+                    Response.StatusCode = 500;
+                    return Json(Fail("تم حفظ بيانات العميل لكن تعذر تسجيل بيانات المرفقات في قاعدة البيانات.", ex.ToString()));
+                }
+                catch (Exception ex)
+                {
+                    LogKycFailure("SaveKeshniCardCustomer.AttachmentException", request, ex, null);
+                    Response.StatusCode = 500;
+                    return Json(Fail("تم حفظ بيانات العميل لكن تعذر حفظ المرفقات. راجع نوع الملف وصلاحيات مسار المرفقات.", ex.ToString()));
+                }
 
                 return Json(new
                 {
                     success = true,
                     message = "تم حفظ بيانات العميل وتفعيل الكارت",
+                    technicalMessage = string.Empty,
+                    technicalDetails = string.Empty,
+                    validationErrors = new Dictionary<string, string>(),
                     customer = saved,
                     customerId = saved.CustomerID,
                     activationStatus = true,
@@ -444,13 +526,15 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (SqlException ex)
             {
+                LogKycFailure("SaveKeshniCardCustomer.SqlException", request, ex, null);
                 Response.StatusCode = 500;
-                return Json(Fail("حدث خطأ من قاعدة البيانات أثناء حفظ بيانات الكارت", ex.Message));
+                return Json(Fail(FriendlySqlKycMessage(ex), ex.ToString()));
             }
             catch (Exception ex)
             {
+                LogKycFailure("SaveKeshniCardCustomer.Exception", request, ex, null);
                 Response.StatusCode = 500;
-                return Json(Fail("حدث خطأ أثناء حفظ بيانات الكارت", ex.Message));
+                return Json(Fail("حدث خطأ أثناء حفظ بيانات الكارت", ex.ToString()));
             }
         }
 
@@ -563,6 +647,7 @@ namespace MyERP.Areas.Pos.Controllers
             var isCard = IsKeshniCardTransaction(request.TransactionType);
             var isViolations = string.Equals(request.TransactionType, "violations", StringComparison.OrdinalIgnoreCase);
             var isCashOut = string.Equals(request.TransactionType, "cash-out", StringComparison.OrdinalIgnoreCase);
+            var isCashIn = string.Equals(request.TransactionType, "cash-in", StringComparison.OrdinalIgnoreCase);
 
             if (string.IsNullOrWhiteSpace(request.TransactionType))
             {
@@ -619,6 +704,24 @@ namespace MyERP.Areas.Pos.Controllers
             if (isCashOut && string.IsNullOrWhiteSpace(request.Tet_NumPoket))
             {
                 errors["Tet_NumPoket"] = "رقم المحفظة مطلوب";
+            }
+
+            if (isCard && (request.IsCashOut || request.IsWallet || request.ItemIDService2.HasValue))
+            {
+                errors["TransactionType"] = "بيانات العملية لا تطابق كارت كيشني. ابدأ عملية جديدة ثم اختر كارت كيشني مرة أخرى";
+            }
+
+            if ((isCashIn || isCashOut || isViolations)
+                && (request.TblCusCshId.HasValue
+                    || !string.IsNullOrWhiteSpace(request.VisaNumber)
+                    || !string.IsNullOrWhiteSpace(request.CardSerial)))
+            {
+                errors["VisaNumber"] = "بيانات الكارت لا تطابق نوع العملية المحدد. ابدأ عملية جديدة ثم اختر النوع الصحيح";
+            }
+
+            if (!isCashOut && !isCard && !isViolations && request.IsWallet)
+            {
+                errors["IsWallet"] = "بيانات المحفظة لا تطابق نوع العملية المحدد";
             }
 
             if (request.Items == null || request.Items.Count == 0 || !request.Items.Exists(i => i != null && i.Item_ID.HasValue))
@@ -722,6 +825,10 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 errors["Tet_NumPoket"] = "الرقم القومي مطلوب ويجب أن يكون 14 رقم";
             }
+            else if (!Regex.IsMatch(request.Tet_NumPoket.Trim(), @"^[0-9]{14}$"))
+            {
+                errors["Tet_NumPoket"] = "الرقم القومي يجب أن يحتوي على أرقام فقط";
+            }
 
             if (string.IsNullOrWhiteSpace(request.CardNo))
             {
@@ -734,6 +841,10 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     errors["CardNo"] = "رقم التوكن/الكارت يجب أن يكون 18 أو 8 رقم";
                 }
+                else if (!Regex.IsMatch(cardNo, @"^[0-9]+$"))
+                {
+                    errors["CardNo"] = "رقم التوكن/الكارت يجب أن يحتوي على أرقام فقط";
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(request.CardNo) && request.CardNo.Trim().Length != 8)
@@ -743,7 +854,7 @@ namespace MyERP.Areas.Pos.Controllers
                     errors["EnglishName"] = "الاسم الإنجليزي مطلوب";
                 }
 
-                if (string.IsNullOrWhiteSpace(request.EnglishName5) || string.IsNullOrWhiteSpace(request.EnglishName6) || string.IsNullOrWhiteSpace(request.EnglishName7))
+                if (string.IsNullOrWhiteSpace(request.EnglishName5))
                 {
                     errors["EnglishAddress"] = "العنوان الإنجليزي مطلوب";
                 }
@@ -752,11 +863,20 @@ namespace MyERP.Areas.Pos.Controllers
             return errors;
         }
 
-        private void AddKeshniCardDuplicateErrors(PosCashCustomerSaveRequest request, IDictionary<string, string> errors)
+        private int? AddKeshniCardDuplicateErrors(PosCashCustomerSaveRequest request, IDictionary<string, string> errors)
         {
-            if (_repository.KeshniCardDuplicateExists("Tet_NumPoket", request.Tet_NumPoket, request.CustomerID))
+            int? duplicateCustomerId = null;
+            var cardLength = string.IsNullOrWhiteSpace(request.CardNo) ? 0 : request.CardNo.Trim().Length;
+
+            // VB6 FrmCustCash blocks duplicate Tet_NumPoket for optEasyCash(0)
+            // only when the duplicate belongs to another Id and the card/token is not the 8-character type.
+            if (cardLength != 8)
             {
-                errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل";
+                duplicateCustomerId = _repository.FindKeshniCardDuplicateId("Tet_NumPoket", request.Tet_NumPoket, request.CustomerID);
+                if (duplicateCustomerId.HasValue)
+                {
+                    errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل. ابحث عن العميل المسجل واستخدمه بدلاً من إنشاء سجل جديد";
+                }
             }
 
             if (_repository.KeshniCardDuplicateExists("PhoneNo2", request.PhoneNo2, request.CustomerID))
@@ -773,6 +893,8 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 errors["CardNoNotIssued"] = "رقم الكارت غير موجود أو تم إدخاله بشكل خاطئ";
             }
+
+            return duplicateCustomerId;
         }
 
         private IList<PosKycAttachmentDto> SaveKeshniAttachments(string subjectNo)
@@ -785,6 +907,7 @@ namespace MyERP.Areas.Pos.Controllers
             var folderName = DateTime.Now.ToString("yyyyMMdd");
             var folderPath = Path.Combine(GetKycAttachmentRootPath(), folderName);
             Directory.CreateDirectory(folderPath);
+            var originalNames = Request.Form.GetValues("attachmentOriginalNamesBase64") ?? new string[0];
 
             for (var i = 0; i < Request.Files.Count; i++)
             {
@@ -794,7 +917,21 @@ namespace MyERP.Areas.Pos.Controllers
                     continue;
                 }
 
-                var originalName = Path.GetFileName(file.FileName);
+                if (file.ContentLength > GetKycMaxAttachmentBytes())
+                {
+                    throw new InvalidOperationException("حجم المرفق أكبر من الحد المسموح به: " + Path.GetFileName(file.FileName));
+                }
+
+                var originalName = DecodeAttachmentOriginalName(originalNames, i);
+                if (string.IsNullOrWhiteSpace(originalName))
+                {
+                    originalName = Path.GetFileName(file.FileName);
+                }
+                if (string.IsNullOrWhiteSpace(originalName))
+                {
+                    throw new InvalidOperationException("اسم ملف المرفق غير صالح.");
+                }
+
                 var safeOriginalName = MakeSafeFileName(originalName);
                 var imageName = MakeSafeFileName(DateTime.Now.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)
                     + "_" + i.ToString(CultureInfo.InvariantCulture)
@@ -817,6 +954,33 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return _repository.GetKeshniCardAttachments(subjectNo);
+        }
+
+        private static int GetKycMaxAttachmentBytes()
+        {
+            int configured;
+            return int.TryParse(ConfigurationManager.AppSettings["KycMaxAttachmentBytes"], out configured) && configured > 0
+                ? configured
+                : 100 * 1024 * 1024;
+        }
+
+        private static string DecodeAttachmentOriginalName(string[] encodedNames, int index)
+        {
+            if (encodedNames == null || index < 0 || index >= encodedNames.Length || string.IsNullOrWhiteSpace(encodedNames[index]))
+            {
+                return null;
+            }
+
+            try
+            {
+                var bytes = Convert.FromBase64String(encodedNames[index]);
+                return Path.GetFileName(Encoding.UTF8.GetString(bytes));
+            }
+            catch
+            {
+                System.Diagnostics.Trace.TraceWarning("Unable to decode KYC attachment original name at index " + index.ToString(CultureInfo.InvariantCulture));
+                return null;
+            }
         }
 
         private static string GetKycAttachmentRootPath()
@@ -851,15 +1015,156 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
-        private static object Fail(string message, string technicalMessage, IDictionary<string, string> validationErrors = null)
+        private static object Fail(string message, string technicalMessage, IDictionary<string, string> validationErrors = null, int? duplicateCustomerId = null)
         {
+            var errors = validationErrors ?? new Dictionary<string, string>();
+            var details = IsKycDebugEnabled() ? (technicalMessage ?? string.Empty) : string.Empty;
             return new
             {
                 success = false,
                 message = message,
-                technicalMessage = technicalMessage,
-                validationErrors = validationErrors
+                details = details,
+                technicalMessage = details,
+                technicalDetails = details,
+                validationErrors = errors,
+                validationErrorsList = errors.Values.ToArray(),
+                duplicateCustomerId = duplicateCustomerId
             };
+        }
+
+        private static bool IsKycDebugEnabled()
+        {
+            return string.Equals(ConfigurationManager.AppSettings["DebugKYC"], "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void LogKycFailure(string action, PosCashCustomerSaveRequest request, Exception exception, IDictionary<string, string> validationErrors)
+        {
+            try
+            {
+                var logRoot = System.Web.HttpContext.Current == null
+                    ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Logs")
+                    : System.Web.HttpContext.Current.Server.MapPath("~/App_Data/Logs");
+                Directory.CreateDirectory(logRoot);
+
+                var path = Path.Combine(logRoot, "pos-kyc-" + DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".log");
+                var lines = new List<string>
+                {
+                    "------------------------------------------------------------",
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                    "Action: " + action,
+                    "Request: " + BuildKycSafeSnapshot(request)
+                };
+
+                if (validationErrors != null && validationErrors.Count > 0)
+                {
+                    lines.Add("Validation: " + string.Join(" | ", validationErrors.Select(e => e.Key + "=" + e.Value)));
+                }
+
+                if (exception != null)
+                {
+                    lines.Add("Exception: " + exception.Message);
+                    lines.Add("StackTrace: " + exception);
+                }
+
+                System.IO.File.AppendAllLines(path, lines, Encoding.UTF8);
+            }
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Trace.TraceError("Failed to write POS KYC log: " + logEx);
+            }
+        }
+
+        private static string BuildKycSafeSnapshot(PosCashCustomerSaveRequest request)
+        {
+            if (request == null)
+            {
+                return "<null request>";
+            }
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "CustomerID={0}; BranchId={1}; UserId={2}; EmpId={3}; PhoneNo2={4}; NationalId={5}; CardNo={6}; EasyCashType={7}; Files={8}",
+                request.CustomerID,
+                request.BranchId,
+                request.UserId,
+                request.EmpId,
+                MaskValue(request.PhoneNo2),
+                MaskValue(request.Tet_NumPoket),
+                MaskValue(request.CardNo),
+                request.EasyCashType,
+                System.Web.HttpContext.Current != null && System.Web.HttpContext.Current.Request != null && System.Web.HttpContext.Current.Request.Files != null
+                    ? System.Web.HttpContext.Current.Request.Files.Count
+                    : 0);
+        }
+
+        private static string MaskValue(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            value = value.Trim();
+            if (value.Length <= 4)
+            {
+                return new string('*', value.Length);
+            }
+
+            return new string('*', value.Length - 4) + value.Substring(value.Length - 4);
+        }
+
+        private static string FriendlySqlKycMessage(SqlException ex)
+        {
+            var message = ex == null ? string.Empty : ex.Message;
+            if (ex != null && (ex.Number == 2601 || ex.Number == 2627))
+            {
+                return "البيانات مكررة. راجع رقم الهاتف أو الرقم القومي أو رقم الكارت.";
+            }
+
+            if (ex != null && ex.Number == 547)
+            {
+                return "هناك بيانات مرتبطة غير صحيحة. راجع الفرع أو المستخدم أو بيانات الكارت.";
+            }
+
+            if (ex != null && ex.Number == 515)
+            {
+                return "هناك بيانات أساسية ناقصة ولا يمكن حفظ الكارت قبل استكمالها.";
+            }
+
+            if (ex != null && (ex.Number == 245 || ex.Number == 8114))
+            {
+                return "هناك قيمة غير صالحة في بيانات الكارت. راجع الأرقام والتواريخ.";
+            }
+
+            if (ex != null && (ex.Number == 8152 || ex.Number == 2628))
+            {
+                return "إحدى القيم أطول من المسموح به في قاعدة البيانات.";
+            }
+
+            if (message.IndexOf("account is locked out", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "فشل الاتصال بقاعدة البيانات: حساب SQL مغلق. راجع مستخدم الاتصال في KishnyCashConnection.";
+            }
+
+            if (ex != null && ex.Number == 18456)
+            {
+                return "فشل تسجيل الدخول إلى قاعدة البيانات أثناء حفظ بيانات الكارت. راجع اسم المستخدم/كلمة المرور أو صلاحيات KishnyCashConnection.";
+            }
+
+            if (message.IndexOf("permission", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("denied", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "فشل حفظ بيانات الكارت بسبب صلاحيات غير كافية على قاعدة البيانات.";
+            }
+
+            if (message.IndexOf("duplicate", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("UNIQUE", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("PRIMARY KEY", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "تعذر حفظ بيانات الكارت بسبب تكرار بيانات مسجلة من قبل.";
+            }
+
+            return "حدث خطأ من قاعدة البيانات أثناء حفظ بيانات الكارت";
         }
 
         private static string FriendlySqlSaveMessage(SqlException ex)

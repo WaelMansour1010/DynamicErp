@@ -28,6 +28,7 @@
      data-stores-url="@Url.Action("GetStoresByBranch", "PosTransaction", new { area = "Pos" })"
      data-context-url="@Url.Action("GetContext", "PosTransaction", new { area = "Pos" })"
      data-balances-url="@Url.Action("GetEmployeeBalances", "PosTransaction", new { area = "Pos" })"
+     data-today-summary-url="@Url.Action("TodaySummary", "PosTransaction", new { area = "Pos" })"
      data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
      data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
      data-print-url="@Url.Action("Print", "PosTransaction", new { area = "Pos" })"
@@ -56,11 +57,12 @@
             <div>
                 <h1>كيشني - شاشة البيع</h1>
                 <p>هذه شاشة تجريبية على قاعدة CASH - لا يوجد قيد أو خصم مخزون حتى الآن</p>
-                <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الموظف: @(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | المخزن: @(posContext != null ? posContext.StoreName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
+                <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
                 <div class="pos-balances">
-                    <span id="employeeBalanceText">ذمة الموظف: تحميل...</span>
+                    <span id="employeeBalanceText" class="is-hidden-ui">ذمة الموظف: تحميل...</span>
                     <span id="boxBalanceText">عهدة الخزنة: تحميل...</span>
-                    <button type="button" id="refreshBalancesBtn" class="link-action">تحديث الأرصدة</button>
+                    <button type="button" id="refreshBalancesBtn" class="link-action is-hidden-ui">تحديث الأرصدة</button>
+                    <button type="button" id="todaySummaryBtn" class="link-action">ملخص اليوم</button>
                     <a class="link-action" href="@Url.Action("Index", "PosClosing", new { area = "Pos" })">إغلاق</a>
                 </div>
             </div>
@@ -91,13 +93,13 @@
                 </div>
                 <div class="pos-grid four-cols">
                     <label>الفرع<select id="branchId" @(posContext != null && posContext.CanChangeDefaults ? "" : "disabled")><option value="">تحميل...</option></select></label>
-                    <label>المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
-                    <label>المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
+                    <label class="employee-field is-hidden">المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
+                    <label class="store-field is-hidden">المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
                     <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field" placeholder="أدخل رقم التليفون" /></label>
                     <label>اسم العميل<input type="text" id="cashCustomerName" class="required-field" placeholder="اسم العميل" /></label>
                     <label>ID<input type="text" id="ipn" class="required-field" placeholder="ID" /></label>
                     <label>IPN<input type="text" id="manualNo" class="required-field" placeholder="IPN" /></label>
-                    <label class="kyc-only">تليفون آخر<input type="text" id="phone2" placeholder="تليفون إضافي" /></label>
+                    <input type="hidden" id="phone2" />
                     <label class="card-field">رقم الكارت<input type="text" id="visaNumber" placeholder="رقم المرجع" /></label>
                     <label class="card-field">نوع الكارت<input type="text" id="cardTypeName" readonly /></label>
                     <label class="card-field">الرقم القومي<input type="text" id="cardNationalId" placeholder="الرقم القومي" /></label>
@@ -129,21 +131,21 @@
                     <label>الاسم الإنجليزي الثالث<input type="text" id="kycEnglishName2" dir="ltr" lang="en" /></label>
                     <label>الاسم الإنجليزي كامل<input type="text" id="kycNameE" dir="ltr" lang="en" /></label>
                     <label>موبايل أساسي<input type="text" id="kycPhoneNo2" placeholder="أدخل رقم التليفون" /></label>
-                    <label>موبايل إضافي<input type="text" id="kycPhoneNo" placeholder="تليفون إضافي" /></label>
+                    <input type="hidden" id="kycPhoneNo" />
                     <label>رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
                     <label>الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
-                    <label>جهة الإصدار<input type="text" id="kycCardSource" /></label>
+                    <input type="hidden" id="kycCardSource" />
                     <label>تاريخ الميلاد<input type="date" id="kycBirthDate" /></label>
                     <label>تاريخ الإصدار<input type="date" id="kycCardDate" /></label>
                     <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" /></label>
                     <label>العنوان العربي<input type="text" id="kycAddress" dir="rtl" lang="ar" /></label>
                     <label>العنوان الإنجليزي 1<input type="text" id="kycEnglishName5" dir="ltr" lang="en" /></label>
-                    <label>العنوان الإنجليزي 2<input type="text" id="kycEnglishName6" dir="ltr" lang="en" /></label>
-                    <label>العنوان الإنجليزي 3<input type="text" id="kycEnglishName7" dir="ltr" lang="en" /></label>
-                    <label>البريد/العنوان البريدي<input type="text" id="kycMailAddress" /></label>
+                    <input type="hidden" id="kycEnglishName6" />
+                    <input type="hidden" id="kycEnglishName7" />
+                    <input type="hidden" id="kycMailAddress" />
                     <label>مرفقات<input type="file" id="kycAttachments" multiple /></label>
-                    <label>تليفون قديم<input type="text" id="kycTel" /></label>
-                    <label>كارت قديم<input type="text" id="kycCard" /></label>
+                    <input type="hidden" id="kycTel" />
+                    <input type="hidden" id="kycCard" />
                 </div>
                 <div class="kyc-attachments-panel">
                     <div class="panel-heading compact-heading">
@@ -161,18 +163,30 @@
                 </div>
             </section>
 
-            <section class="pos-panel amount-panel">
+            <section class="pos-modal" id="todaySummaryPanel" aria-hidden="true">
+                <div class="pos-modal-backdrop" id="todaySummaryBackdrop"></div>
+                <div class="pos-modal-dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="todaySummaryTitle">
+                    <div class="panel-heading modal-heading">
+                        <h2 id="todaySummaryTitle">ملخص اليوم</h2>
+                        <button type="button" class="icon-action" id="closeTodaySummaryBtn">إغلاق</button>
+                    </div>
+                    <div id="todaySummaryMessage" class="kyc-save-message"></div>
+                    <div id="todaySummaryCards" class="today-summary-cards"></div>
+                </div>
+            </section>
+
+            <section class="pos-panel amount-panel" id="amountPanel">
                 <div class="panel-heading"><h2>المبالغ</h2></div>
-                <div class="pos-grid five-cols">
+                <div class="pos-grid five-cols amount-grid" id="amountGrid">
                     <label class="service-primary-field">نوع الشحن<select id="serviceItemId"><option value="">تحميل...</option></select></label>
                     <label class="service-secondary-field">المحفظة/البنك<select id="serviceItemId2"><option value="">تحميل...</option></select></label>
                     <label class="recharge-field">قيمة الشحن<input type="number" id="rechargeValue" min="0" step="0.01" value="0" /></label>
-                    <label>قيمة الخدمة<input type="number" id="commissionValue" min="0" step="0.01" value="0" readonly /></label>
-                    <label>الضريبة<input type="number" id="vatValue" min="0" step="0.01" value="0" readonly /></label>
-                    <label>إجمالي الرسوم<input type="number" id="totalFees" min="0" step="0.01" value="0" readonly /></label>
-                    <label>الإجمالي<input type="number" id="netValue" min="0" step="0.01" value="0" readonly /></label>
-                    <label>المدفوع<input type="number" id="payedValue" min="0" step="0.01" value="0" /></label>
-                    <label>المتبقي<input type="number" id="remainValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label class="amount-service-field"><span id="commissionLabel">قيمة الخدمة</span><input type="number" id="commissionValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label class="amount-vat-field"><span id="vatLabel">الضريبة</span><input type="number" id="vatValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label class="amount-fees-field"><span id="totalFeesLabel">إجمالي الرسوم</span><input type="number" id="totalFees" min="0" step="0.01" value="0" readonly /></label>
+                    <label class="amount-net-field">الإجمالي<input type="number" id="netValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label class="payment-amount-field">المدفوع<input type="number" id="payedValue" min="0" step="0.01" value="0" /></label>
+                    <label class="payment-amount-field">المتبقي<input type="number" id="remainValue" min="0" step="0.01" value="0" readonly /></label>
                 </div>
             </section>
 
@@ -233,6 +247,11 @@
                     <label>رقم المحفظة<input type="text" id="violationWalletNo" placeholder="رقم المحفظة" /></label>
                     <label>الحالة<input type="text" value="هذه شاشة تجريبية فقط" disabled /></label>
                 </div>
+            </section>
+
+            <section class="pos-panel bottom-summary-panel" id="bottomSummaryPanel">
+                <div class="panel-heading"><h2 id="bottomSummaryTitle">ملخص العملية</h2></div>
+                <div class="bottom-summary-grid" id="bottomSummaryGrid"></div>
             </section>
 
             <div class="pos-validation" id="validationSummary"></div>

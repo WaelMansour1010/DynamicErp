@@ -147,6 +147,22 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .wallet-field.is-visible { display: grid !important; }
 .recharge-field { display: grid; }
 .recharge-field.is-hidden { display: none !important; }
+.service-primary-field.is-hidden,
+.service-secondary-field.is-hidden,
+.payment-amount-field.is-hidden,
+.amount-service-field.is-hidden,
+.amount-vat-field.is-hidden,
+.amount-fees-field.is-hidden,
+.amount-net-field.is-hidden,
+.store-field.is-hidden,
+.employee-field.is-hidden { display: none !important; }
+.amount-grid.amount-mode-cash-in,
+.amount-grid.amount-mode-cash-out {
+    grid-template-columns: minmax(260px, 1.2fr) minmax(260px, 1.2fr) minmax(200px, .8fr);
+}
+.amount-grid.amount-mode-violations {
+    grid-template-columns: minmax(420px, 2fr) minmax(220px, 1fr);
+}
 .radio-field { gap: 8px; }
 .radio-row {
     display: flex;
@@ -205,6 +221,46 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     white-space: pre-wrap;
 }
 .pos-actions { align-items: center; display: flex; gap: 10px; justify-content: flex-start; }
+
+.bottom-summary-panel {
+    border-color: var(--mode-color);
+    box-shadow: inset 0 4px 0 var(--mode-color);
+}
+
+.bottom-summary-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.pos-mode-card .bottom-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bottom-summary-grid div {
+    background: #f6f8fb;
+    border: 1px solid #d8dee6;
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+}
+
+.bottom-summary-grid span {
+    color: #44515f;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.bottom-summary-grid strong {
+    color: #111827;
+    direction: ltr;
+    font-size: 22px;
+    text-align: left;
+}
+
+.bottom-summary-grid .summary-total {
+    background: #fff7ed;
+    border-color: var(--mode-color);
+}
 
 .today-invoices-panel {
     position: sticky;
@@ -384,6 +440,45 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     justify-content: flex-start;
 }
 
+.small-dialog {
+    max-width: 760px;
+}
+
+.today-summary-cards {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 12px;
+}
+
+.summary-card {
+    background: #f8fafc;
+    border: 1px solid #d7dde8;
+    border-right: 4px solid #2563eb;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.summary-card h3 {
+    font-size: 16px;
+    margin: 0 0 10px;
+}
+
+.summary-card div {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+}
+
+.summary-card strong {
+    font-size: 18px;
+}
+
+.summary-cash-in { border-right: 4px solid #16a34a; }
+.summary-cash-out { border-right: 4px solid #dc2626; }
+.summary-violations { border-right: 4px solid #f59e0b; }
+
 .pos-closing-page .closing-actions {
     display: flex;
     flex-wrap: wrap;
@@ -451,7 +546,7 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 }
 
 @media (max-width: 1000px) {
-    .four-cols, .five-cols, .closing-values-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .four-cols, .five-cols, .closing-values-grid, .today-summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .pos-header, .pos-type-selector, .pos-actions { align-items: stretch; flex-direction: column; }
     .pos-workspace { grid-template-columns: 1fr; }
     .today-invoices-panel { position: static; }

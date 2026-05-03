@@ -1083,9 +1083,14 @@ WHERE c.Id = @id
 
         public bool KeshniCardDuplicateExists(string columnName, string value, int? excludeId)
         {
+            return FindKeshniCardDuplicateId(columnName, value, excludeId).HasValue;
+        }
+
+        public int? FindKeshniCardDuplicateId(string columnName, string value, int? excludeId)
+        {
             if (string.IsNullOrWhiteSpace(value))
             {
-                return false;
+                return null;
             }
 
             var allowedColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -1101,7 +1106,7 @@ WHERE c.Id = @id
             }
 
             var sql = @"
-SELECT TOP (1) 1
+SELECT TOP (1) Id
 FROM dbo.TblCusCsh
 WHERE " + columnName + @" = @value
   AND ISNULL(EasyCashType, 0) = 0
@@ -1113,7 +1118,10 @@ WHERE " + columnName + @" = @value
                 AddString(command, "@value", SqlDbType.NVarChar, 255, value.Trim());
                 Add(command, "@excludeId", SqlDbType.Int, excludeId);
                 connection.Open();
-                return command.ExecuteScalar() != null;
+                var result = command.ExecuteScalar();
+                return result == null || result == DBNull.Value
+                    ? (int?)null
+                    : Convert.ToInt32(result, CultureInfo.InvariantCulture);
             }
         }
 
@@ -1197,7 +1205,7 @@ WHERE Id = @id;";
                     command.ExecuteNonQuery();
                 }
 
-                return LookupCashCustomer(request.PhoneNo2 ?? request.PhoneNo);
+                return GetKeshniCardCustomerById(request.CustomerID.Value, request.BranchId, true);
             }
 
             const string insertSql = @"
@@ -2101,6 +2109,11 @@ SELECT TOP (100)
     t.CashCustomerName,
     t.CashCustomerPhone,
     CAST(ISNULL(t.PayedValue, 0) AS DECIMAL(18, 2)) AS PayedValue,
+    CAST(CASE
+        WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN ISNULL(t.PayedValue, 0)
+        WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN ISNULL(t.PayedValue, 0)
+        ELSE ISNULL(t.RechargeValue, 0) + ISNULL(t.VAT, 0) + ISNULL(t.NetValue, 0)
+    END AS DECIMAL(18, 2)) AS NetValue,
     CASE
         WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'مخالفات'
         WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'كارت كيشني'
@@ -2141,6 +2154,7 @@ ORDER BY t.Transaction_ID DESC;";
                             CustomerName = ReadString(reader, "CashCustomerName"),
                             CustomerPhone = ReadString(reader, "CashCustomerPhone"),
                             PayedValue = ReadDecimal(reader, "PayedValue").GetValueOrDefault(),
+                            NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
                             ServiceType = ReadString(reader, "ServiceType")
                         });
                     }
@@ -2148,6 +2162,67 @@ ORDER BY t.Transaction_ID DESC;";
             }
 
             return invoices;
+        }
+
+        public PosTodaySummaryDto GetTodaySummary(int userId, int? branchId, bool canChangeDefaults)
+        {
+            var summary = new PosTodaySummaryDto
+            {
+                GeneratedAt = DateTime.Now.ToString("yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture)
+            };
+
+            const string sql = @"
+SELECT
+    CASE
+        WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
+        WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
+        WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
+        ELSE N'cash-in'
+    END AS ServiceType,
+    COUNT(1) AS TransactionCount,
+    CAST(SUM(CASE
+        WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN ISNULL(t.PayedValue, 0)
+        WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN ISNULL(t.PayedValue, 0)
+        ELSE ISNULL(t.RechargeValue, 0) + ISNULL(t.VAT, 0) + ISNULL(t.NetValue, 0)
+    END) AS DECIMAL(18, 2)) AS NetValue,
+    CAST(SUM(ISNULL(t.PayedValue, 0)) AS DECIMAL(18, 2)) AS PayedValue
+FROM dbo.Transactions t
+WHERE t.Transaction_Type = 21
+  AND t.Transaction_Date >= CONVERT(DATE, GETDATE())
+  AND t.Transaction_Date < DATEADD(DAY, 1, CONVERT(DATE, GETDATE()))
+  AND (@branchId IS NULL OR t.BranchId = @branchId)
+  AND (@canChangeDefaults = 1 OR t.UserID = @userId)
+GROUP BY
+    CASE
+        WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
+        WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
+        WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
+        ELSE N'cash-in'
+    END;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        summary.Items.Add(new PosTodaySummaryItemDto
+                        {
+                            ServiceType = ReadString(reader, "ServiceType"),
+                            Count = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
+                            NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
+                            PayedValue = ReadDecimal(reader, "PayedValue").GetValueOrDefault()
+                        });
+                    }
+                }
+            }
+
+            return summary;
         }
 
         public PosInvoiceReviewDto GetInvoiceForReview(int transactionId, int userId, bool canChangeDefaults)
@@ -2621,6 +2696,8 @@ WHERE Transaction_ID = @transactionId;";
                 IPN = null,
                 VisaNumber = string.IsNullOrWhiteSpace(cardNo) ? cardId : cardNo,
                 CardSerial = ReadString(reader, "card"),
+                CardNo = cardNo,
+                CardId = cardId,
                 CardSource = ReadString(reader, "CardSource"),
                 Tel = ReadString(reader, "tel"),
                 Tet_NumPoket = ReadString(reader, "Tet_NumPoket"),

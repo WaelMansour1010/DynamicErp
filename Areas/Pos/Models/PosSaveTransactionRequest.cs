@@ -296,6 +296,8 @@ namespace MyERP.Areas.Pos.Models
         public string IPN { get; set; }
         public string VisaNumber { get; set; }
         public string CardSerial { get; set; }
+        public string CardNo { get; set; }
+        public string CardId { get; set; }
         public string CardSource { get; set; }
         public string Tel { get; set; }
         public string Tet_NumPoket { get; set; }
@@ -338,6 +340,25 @@ namespace MyERP.Areas.Pos.Models
         public decimal BoxBalance { get; set; }
     }
 
+    public class PosTodaySummaryDto
+    {
+        public string GeneratedAt { get; set; }
+        public IList<PosTodaySummaryItemDto> Items { get; set; }
+
+        public PosTodaySummaryDto()
+        {
+            Items = new List<PosTodaySummaryItemDto>();
+        }
+    }
+
+    public class PosTodaySummaryItemDto
+    {
+        public string ServiceType { get; set; }
+        public int Count { get; set; }
+        public decimal NetValue { get; set; }
+        public decimal PayedValue { get; set; }
+    }
+
     public class PosTodayInvoiceDto
     {
         public int Transaction_ID { get; set; }
@@ -346,6 +367,7 @@ namespace MyERP.Areas.Pos.Models
         public string CustomerName { get; set; }
         public string CustomerPhone { get; set; }
         public decimal PayedValue { get; set; }
+        public decimal NetValue { get; set; }
         public string ServiceType { get; set; }
     }
 

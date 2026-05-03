@@ -11,9 +11,11 @@ using System.Web.Hosting;
 
 namespace MyERP.Areas.Pos.Reports
 {
-    // Layout target: Areas/Pos/Doc/repCashCustomer4.pdf, exported from the legacy
-    // Crystal report used by FrmCustCash.cmdPrint2_Click. Data is loaded strictly
-    // by TblCusCsh.Id through PosSqlRepository.GetKeshniCardCustomerById.
+    // Layout target: Areas/Pos/Doc/repCashCustomer4.pdf — exported from the
+    // legacy Crystal report repCashCustomer4.rpt opened by
+    // FrmCustCash.cmdPrint2_Click (SatriahMain VB6 project,
+    // \Cayshny\Frm\New frm\FrmCustCash.frm). Data is loaded strictly by
+    // TblCusCsh.Id through PosSqlRepository.GetKeshniCardCustomerById.
     public class KycCardAcknowledgmentReport : XtraReport
     {
         private readonly Font _bodyFont = new Font("Tahoma", 11F, FontStyle.Regular);
@@ -40,16 +42,16 @@ namespace MyERP.Areas.Pos.Reports
             Bands.Add(detail);
 
             const float a4WidthHundredthInch = 827F;
-            var contentWidth = a4WidthHundredthInch - Margins.Left - Margins.Right;
+            float contentWidth = a4WidthHundredthInch - Margins.Left - Margins.Right;
             BuildBody(detail, customer, issuedAt, contentWidth);
         }
 
         private void BuildBody(DetailBand band, PosCustomerLookupDto customer, DateTime issuedAt, float width)
         {
-            var customerName = FirstNonEmpty(customer.CustomerName, customer.Name, customer.ArabicName0);
-            var tokenValue = FirstNonEmpty(customer.VisaNumber, customer.CardSerial);
-            var date = issuedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
-            var time = FormatArabicTime(issuedAt);
+            string customerName = FirstNonEmpty(customer.CustomerName, customer.Name, customer.ArabicName0);
+            string tokenValue = FirstNonEmpty(customer.CardNo, customer.CardId);
+            string date = issuedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+            string time = FormatArabicTime(issuedAt);
 
             DrawHeaderLogos(band, 0F, width);
 
@@ -80,7 +82,7 @@ namespace MyERP.Areas.Pos.Reports
                 TextAlignment = TextAlignment.MiddleCenter
             });
 
-            var lineY = 270F;
+            float lineY = 270F;
             const float lineHeight = 30F;
 
             band.Controls.Add(new XRLabel
@@ -195,7 +197,7 @@ namespace MyERP.Areas.Pos.Reports
             const float logoBoxWidth = 140F;
             const float logoBoxHeight = 80F;
 
-            var misrLogo = LoadImage(new[]
+            Image misrLogo = LoadImage(new[]
             {
                 "~/Areas/Pos/Doc/BanqueMisr.png",
                 "~/Areas/Pos/Doc/banque_misr.png",
@@ -203,7 +205,7 @@ namespace MyERP.Areas.Pos.Reports
                 "~/assets/images/banque-misr.png"
             });
 
-            var easyLogo = LoadImage(new[]
+            Image easyLogo = LoadImage(new[]
             {
                 "~/Areas/Pos/Doc/EasyCashLogo.png",
                 "~/Areas/Pos/Doc/easycash-logo.png",
@@ -269,12 +271,12 @@ namespace MyERP.Areas.Pos.Reports
                 return null;
             }
 
-            foreach (var virtualPath in virtualPaths)
+            foreach (var virt in virtualPaths)
             {
                 string path;
                 try
                 {
-                    path = HostingEnvironment.MapPath(virtualPath);
+                    path = HostingEnvironment.MapPath(virt);
                 }
                 catch
                 {
@@ -288,11 +290,12 @@ namespace MyERP.Areas.Pos.Reports
 
                 try
                 {
-                    return Image.FromStream(new MemoryStream(File.ReadAllBytes(path)));
+                    byte[] bytes = File.ReadAllBytes(path);
+                    return Image.FromStream(new MemoryStream(bytes));
                 }
                 catch
                 {
-                    // Try next candidate.
+                    // try next candidate
                 }
             }
 
@@ -303,7 +306,8 @@ namespace MyERP.Areas.Pos.Reports
         {
             try
             {
-                return value.ToString("tt hh:mm:ss", CultureInfo.GetCultureInfo("ar-EG"));
+                var ar = CultureInfo.GetCultureInfo("ar-EG");
+                return value.ToString("tt hh:mm:ss", ar);
             }
             catch (CultureNotFoundException)
             {

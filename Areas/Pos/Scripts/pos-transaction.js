@@ -16,6 +16,8 @@
     var todayInvoicesCache = [];
     var currentContext = null;
     var serviceLoadSequence = 0;
+    var primaryServiceCache = {};
+    var secondaryServiceCache = {};
     var reviewMode = false;
     var lastSavedTransactionId = null;
     var kycSaveInProgress = false;
@@ -162,7 +164,7 @@
             } catch (ignore) {
                 data = {
                     success: false,
-                    message: "تعذر قراءة رد السيرفر أثناء الحفظ التجريبي",
+                    message: "تعذر قراءة رد السيرفر",
                     technicalMessage: "HTTP " + xhr.status + (xhr.responseText ? " - " + xhr.responseText.substring(0, 500) : "")
                 };
             }
@@ -178,22 +180,81 @@
     function requestFormData(url, formData, callback) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", url, true);
+        xhr.timeout = 60000;
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) { return; }
 
             var data = null;
             try {
-                data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                if (xhr.responseText) {
+                    data = JSON.parse(xhr.responseText);
+                } else {
+                    data = {
+                        success: false,
+                        message: "لم يرجع السيرفر رداً أثناء حفظ بيانات الكارت",
+                        technicalMessage: "HTTP " + xhr.status + " - Empty response",
+                        technicalDetails: "HTTP " + xhr.status + " - Empty response"
+                    };
+                }
             } catch (ignore) {
-                data = null;
+                var responseText = xhr.responseText || "";
+                var message = "تعذر قراءة رد السيرفر أثناء حفظ بيانات الكارت";
+                if (xhr.status === 400) {
+                    message = "رفض السيرفر طلب حفظ بيانات الكارت. راجع صيغة الحقول وحجم المرفقات ثم حاول مرة أخرى.";
+                }
+                data = {
+                    success: false,
+                    message: message,
+                    technicalMessage: "HTTP " + xhr.status + (responseText ? " - " + responseText.substring(0, 1000) : ""),
+                    technicalDetails: "HTTP " + xhr.status + (responseText ? " - " + responseText.substring(0, 1000) : "")
+                };
             }
 
             callback(xhr.status, data);
         };
         xhr.onerror = function () {
-            callback(0, { success: false, message: "تعذر الاتصال بالسيرفر" });
+            callback(0, {
+                success: false,
+                message: "تعذر الاتصال بالسيرفر أثناء حفظ بيانات الكارت",
+                technicalMessage: "Network error",
+                technicalDetails: "Network error"
+            });
         };
-        xhr.send(formData);
+        xhr.ontimeout = function () {
+            callback(0, {
+                success: false,
+                message: "انتهت مهلة حفظ بيانات الكارت. راجع الاتصال أو قاعدة البيانات ثم حاول مرة أخرى.",
+                technicalMessage: "KYC save request timed out after 60 seconds.",
+                technicalDetails: "KYC save request timed out after 60 seconds."
+            });
+        };
+        try {
+            xhr.send(formData);
+        } catch (ex) {
+            callback(0, {
+                success: false,
+                message: "تعذر إرسال بيانات الكارت إلى السيرفر",
+                technicalMessage: ex && ex.message ? ex.message : String(ex),
+                technicalDetails: ex && ex.message ? ex.message : String(ex)
+            });
+        }
+    }
+
+    function base64Utf8(value) {
+        try {
+            return btoa(unescape(encodeURIComponent(value || "")));
+        } catch (ignore) {
+            return "";
+        }
+    }
+
+    function safeUploadFileName(fileName, index) {
+        var extension = "";
+        var match = (fileName || "").match(/(\.[A-Za-z0-9]{1,10})$/);
+        if (match) {
+            extension = match[1].toLowerCase();
+        }
+        return "kyc_attachment_" + (index + 1) + extension;
     }
 
     function saveDisabledByContext(mode) {
@@ -237,6 +298,27 @@
             rechargeFields[r].classList.toggle("is-hidden", mode === "violations" || mode === "card");
         }
 
+        var primaryServiceFields = document.querySelectorAll(".service-primary-field");
+        for (var ps = 0; ps < primaryServiceFields.length; ps++) {
+            primaryServiceFields[ps].classList.toggle("is-hidden", mode === "card");
+        }
+
+        var paymentAmountFields = document.querySelectorAll(".payment-amount-field");
+        for (var pa = 0; pa < paymentAmountFields.length; pa++) {
+            paymentAmountFields[pa].classList.toggle("is-hidden", mode === "card" || mode === "cash-in" || mode === "cash-out" || mode === "violations");
+        }
+
+        toggleFields(".service-secondary-field", mode === "card" || mode === "violations");
+        toggleFields(".amount-service-field", mode === "card" || mode === "cash-in" || mode === "cash-out" ? true : false);
+        toggleFields(".amount-vat-field", mode === "card" || mode === "cash-in" || mode === "cash-out" || mode === "violations");
+        toggleFields(".amount-fees-field", mode === "card" || mode === "cash-in" || mode === "cash-out" || mode === "violations");
+        toggleFields(".amount-net-field", mode === "card" || mode === "cash-in" || mode === "cash-out" || mode === "violations");
+        toggleFields(".store-field", true);
+        byId("amountPanel").classList.toggle("is-hidden-ui", mode === "card");
+        byId("amountGrid").className = "pos-grid five-cols amount-grid amount-mode-" + mode;
+
+        updateAmountLabels(mode);
+
         byId("violationPanel").style.display = mode === "violations" ? "block" : "none";
         byId("saveBtn").disabled = saveDisabledByContext(mode);
         byId("returnLaterBtn").disabled = mode === "violations" || !currentContext || currentContext.CanReturn !== true;
@@ -258,6 +340,7 @@
             byId("isWallet").value = "false";
             byId("isRecharg").value = "false";
             byId("rechargeValue").value = "0";
+            byId("serviceItemId2").value = "";
             byId("rechargeValue").disabled = true;
         } else {
             byId("rechargeValue").disabled = false;
@@ -282,7 +365,62 @@
             calculateTotals();
             scheduleCommissionPreview();
         }
+        updateBottomSummary();
         clearMessages();
+    }
+
+    function updateAmountLabels(mode) {
+        var isCard = mode === "card";
+        byId("commissionLabel").innerText = isCard ? "قيمة الخدمة" : "قيمة الخدمة";
+        byId("vatLabel").innerText = "الضريبة";
+        byId("totalFeesLabel").innerText = isCard ? "إجمالي الرسوم / الصافي" : "إجمالي الرسوم";
+    }
+
+    function updateBottomSummary() {
+        var mode = byId("transactionType").value;
+        var isCard = mode === "card";
+        var title = byId("bottomSummaryTitle");
+        var grid = byId("bottomSummaryGrid");
+        if (!title || !grid) { return; }
+
+        if (isCard) {
+            var total = numberValue("netValue");
+            var vat = numberValue("vatValue");
+            var netBeforeVat = Math.max(total - vat, 0);
+            title.innerText = "ملخص الكارت";
+            grid.innerHTML =
+                '<div><span>قيمة الكارت قبل الضريبة</span><strong>' + escapeHtml(decimalText(netBeforeVat)) + '</strong></div>' +
+                '<div><span>الضريبة</span><strong>' + escapeHtml(decimalText(vat)) + '</strong></div>' +
+                '<div class="summary-total"><span>الإجمالي</span><strong>' + escapeHtml(decimalText(total)) + '</strong></div>';
+            return;
+        }
+
+        title.innerText = "ملخص العملية";
+        if (mode === "cash-in" || mode === "cash-out") {
+            var recharge = numberValue("rechargeValue");
+            var fee = numberValue("commissionValue");
+            var tax = numberValue("vatValue");
+            var net = recharge + tax + fee;
+            grid.innerHTML =
+                '<div><span>قيمة الشحن</span><strong>' + escapeHtml(decimalText(recharge)) + '</strong></div>' +
+                '<div><span>الضريبة</span><strong>' + escapeHtml(decimalText(tax)) + '</strong></div>' +
+                '<div><span>إجمالي الرسوم</span><strong>' + escapeHtml(decimalText(fee)) + '</strong></div>' +
+                '<div class="summary-total"><span>الصافي</span><strong>' + escapeHtml(decimalText(net)) + '</strong></div>';
+            return;
+        }
+
+        grid.innerHTML =
+            '<div><span>قيمة الشحن</span><strong>' + escapeHtml(decimalText(numberValue("rechargeValue"))) + '</strong></div>' +
+            '<div><span>إجمالي الرسوم</span><strong>' + escapeHtml(decimalText(numberValue("totalFees"))) + '</strong></div>' +
+            '<div><span>المدفوع</span><strong>' + escapeHtml(decimalText(numberValue("payedValue"))) + '</strong></div>' +
+            '<div class="summary-total"><span>المتبقي</span><strong>' + escapeHtml(decimalText(numberValue("remainValue"))) + '</strong></div>';
+    }
+
+    function toggleFields(selector, hide) {
+        var fields = document.querySelectorAll(selector);
+        for (var i = 0; i < fields.length; i++) {
+            fields[i].classList.toggle("is-hidden", hide);
+        }
     }
 
     function clearKycFields() {
@@ -382,8 +520,8 @@
                 inputs[x].value = inputs[x].classList.contains("item-name") ? "" : "0";
             }
         }
-        byId("serviceItemId").innerHTML = '<option value="">تحميل...</option>';
-        byId("serviceItemId2").innerHTML = '<option value="">تحميل...</option>';
+        byId("serviceItemId").innerHTML = '<option value="">اختر نوع الشحن</option>';
+        byId("serviceItemId2").innerHTML = '<option value="">اختر المحفظة/البنك</option>';
     }
 
     function calculateTotals() {
@@ -399,8 +537,12 @@
         }
         var totalValue = itemTotal + numberValue("rechargeValue");
         byId("netValue").value = totalValue.toFixed(2);
+        if (byId("transactionType").value === "card") {
+            byId("payedValue").value = totalValue.toFixed(2);
+        }
         byId("remainValue").value = (totalValue - numberValue("payedValue")).toFixed(2);
         byId("totalFees").value = itemTotal.toFixed(2);
+        updateBottomSummary();
     }
 
     function validateForm() {
@@ -522,6 +664,7 @@
         var paymentType = parseInt(byId("paymentType").value, 10) || 0;
         var transactionType = byId("transactionType").value;
         var firstItemId = firstRow ? parseInt(firstRow.getAttribute("data-item-id"), 10) || null : null;
+        var isCard = transactionType === "card";
         var payType = transactionType === "violations"
             ? (parseInt(selectedRadioValue("violationPayType"), 10) || 0)
             : 1;
@@ -538,9 +681,9 @@
             DefaultCustomerId: 2,
             PaymentType: paymentType,
             BoxID: parseInt(byId("boxId").value, 10) || null,
-            PayedValue: numberValue("payedValue"),
+            PayedValue: isCard ? numberValue("netValue") : numberValue("payedValue"),
             NetValue: numberValue("netValue"),
-            RemainValue: numberValue("remainValue"),
+            RemainValue: isCard ? 0 : numberValue("remainValue"),
             PaymentNetid: null,
             IsCashOut: byId("isCashOut").value === "true",
             IsPOS: byId("isPOS").value === "true",
@@ -566,7 +709,7 @@
             TrafficViolations: transactionType === "violations",
             ViolationsValue: numberValue("violationValue"),
             ItemIDService: parseInt(byId("serviceItemId").value, 10) || firstItemId,
-            ItemIDService2: parseInt(byId("serviceItemId2").value, 10) || null,
+            ItemIDService2: isCard ? null : (parseInt(byId("serviceItemId2").value, 10) || null),
             ViolationPayType: parseInt(selectedRadioValue("violationPayType"), 10) || 0,
             Tet_NumPoket: transactionType === "card" ? byId("cardNationalId").value : byId("tetNumPoket").value,
             IsRecharg: transactionType !== "card" && transactionType !== "violations" && numberValue("rechargeValue") > 0,
@@ -688,7 +831,8 @@
             item.innerHTML =
                 '<strong>' + escapeHtml(invoices[i].NoteSerial1 || invoices[i].Transaction_ID) + '</strong>' +
                 '<span>' + escapeHtml(invoices[i].ServiceType || "") + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + '</span>' +
-                '<span>' + escapeHtml(invoices[i].CustomerName || "") + ' - ' + escapeHtml(invoices[i].CustomerPhone || "") + '</span>';
+                '<span>' + escapeHtml(invoices[i].CustomerName || "") + ' - ' + escapeHtml(invoices[i].CustomerPhone || "") + '</span>' +
+                '<span>الصافي: ' + escapeHtml(decimalText(invoices[i].NetValue || invoices[i].PayedValue || 0)) + '</span>';
             container.appendChild(item);
         }
     }
@@ -703,7 +847,7 @@
             '<div><strong>النوع:</strong> ' + escapeHtml(invoice.ServiceType || "") + '</div>' +
             '<div><strong>العميل:</strong> ' + escapeHtml(invoice.CustomerName || "") + '</div>' +
             '<div><strong>التليفون:</strong> ' + escapeHtml(invoice.CustomerPhone || "") + '</div>' +
-            '<div><strong>المدفوع:</strong> ' + escapeHtml(invoice.PayedValue || "0") + '</div>';
+            '<div><strong>الصافي:</strong> ' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</div>';
     }
 
     function setSelectSingleOption(selectId, value, text) {
@@ -770,8 +914,7 @@
             lastSavedTransactionId = parseInt(data.Transaction_ID || transactionId, 10) || null;
             reviewMode = true;
             setMode(data.TransactionType || "cash-in", true);
-            setSelectSingleOption("serviceItemId", data.ItemIDService || (data.Items && data.Items[0] ? data.Items[0].Item_ID : ""), data.Items && data.Items[0] ? data.Items[0].ItemName : "");
-            setSelectSingleOption("serviceItemId2", data.ItemIDService2 || "", data.ItemIDService2 ? String(data.ItemIDService2) : "");
+            bindReviewServiceSelects(data);
 
             byId("cashCustomerPhone").value = data.CashCustomerPhone || "";
             byId("cashCustomerName").value = data.CashCustomerName || "";
@@ -810,6 +953,7 @@
             byId("saveBtn").disabled = true;
             byId("saveResult").innerHTML = "وضع مراجعة فقط - رقم الفاتورة: " + escapeHtml(data.NoteSerial1 || "") + "<br />رقم الحركة: " + escapeHtml(data.Transaction_ID || "");
             enablePrintIfAllowed();
+            updateBottomSummary();
         });
     }
 
@@ -998,6 +1142,7 @@
         row.querySelector(".qty").value = selected.Quantity || 1;
         row.querySelector(".price").value = selected.Price || 0;
         row.querySelector(".vat").value = selected.Vat || 0;
+        row.querySelector(".line-total").value = decimalText(selected.TotalPrice || ((parseFloat(selected.Price) || 0) + (parseFloat(selected.Vat) || 0)));
 
         if (selected.BranchId && !byId("branchId").value && currentContext && currentContext.CanChangeDefaults === true) {
             byId("branchId").value = selected.BranchId;
@@ -1013,13 +1158,31 @@
         applyServiceItem(input.closest("tr"), itemLookup[input.value]);
     }
 
-    function populateServiceSelect(select, data, emptyText) {
+    function setSelectLoading(select, loadingText) {
         select.innerHTML = "";
+        var option = document.createElement("option");
+        option.value = "";
+        option.text = loadingText || "تحميل...";
+        select.appendChild(option);
+        select.disabled = true;
+    }
+
+    function populateServiceSelect(select, data, emptyText, selectedValue, selectedText) {
+        select.innerHTML = "";
+        select.disabled = false;
         if (!data || !data.length) {
             var emptyOption = document.createElement("option");
             emptyOption.value = "";
             emptyOption.text = emptyText || "لا توجد بيانات";
             select.appendChild(emptyOption);
+            if (selectedValue) {
+                var fallbackOption = document.createElement("option");
+                fallbackOption.value = selectedValue;
+                fallbackOption.text = selectedText || selectedValue;
+                select.appendChild(fallbackOption);
+                select.value = String(selectedValue);
+                return selectedValue;
+            }
             return null;
         }
 
@@ -1030,11 +1193,40 @@
             select.appendChild(option);
         }
 
+        if (selectedValue) {
+            var wanted = String(selectedValue);
+            for (var x = 0; x < select.options.length; x++) {
+                if (select.options[x].value === wanted) {
+                    select.value = wanted;
+                    return selectedValue;
+                }
+            }
+
+            var selectedOption = document.createElement("option");
+            selectedOption.value = selectedValue;
+            selectedOption.text = selectedText || selectedValue;
+            select.appendChild(selectedOption);
+            select.value = String(selectedValue);
+            return selectedValue;
+        }
+
         return data[0].Id;
+    }
+
+    function secondaryCacheKey(mode, itemId) {
+        return (mode || "") + "|" + (itemId || "");
     }
 
     function loadPrimaryServiceItems(mode) {
         var requestedMode = mode || "cash-in";
+        if (primaryServiceCache[requestedMode]) {
+            var cachedSelectedId = populateServiceSelect(byId("serviceItemId"), primaryServiceCache[requestedMode], "");
+            loadSecondaryServiceItems(requestedMode, cachedSelectedId);
+            loadDefaultServiceItem(requestedMode, false, cachedSelectedId);
+            return;
+        }
+
+        setSelectLoading(byId("serviceItemId"), "تحميل...");
         requestJson("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(requestedMode), null, function (status, data) {
             if (byId("transactionType").value !== requestedMode) {
                 return;
@@ -1046,6 +1238,7 @@
                 return;
             }
 
+            primaryServiceCache[requestedMode] = data;
             var selectedId = populateServiceSelect(byId("serviceItemId"), data, "");
             loadSecondaryServiceItems(requestedMode, selectedId);
             loadDefaultServiceItem(requestedMode, false, selectedId);
@@ -1065,6 +1258,13 @@
             return;
         }
 
+        var cacheKey = secondaryCacheKey(mode, itemId);
+        if (secondaryServiceCache[cacheKey]) {
+            populateServiceSelect(select, secondaryServiceCache[cacheKey], "");
+            return;
+        }
+
+        setSelectLoading(select, "تحميل...");
         requestJson("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
             if (byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
                 return;
@@ -1075,7 +1275,70 @@
                 return;
             }
 
+            secondaryServiceCache[cacheKey] = data || [];
             populateServiceSelect(select, data, "");
+        });
+    }
+
+    function bindReviewSecondaryServiceItems(mode, itemId, selectedValue, selectedText) {
+        var select = byId("serviceItemId2");
+        var hidden = mode === "card" || mode === "violations";
+        if (hidden || !itemId) {
+            populateServiceSelect(select, [], hidden ? "" : "لا توجد بيانات", selectedValue, selectedText);
+            return;
+        }
+
+        var cacheKey = secondaryCacheKey(mode, itemId);
+        if (secondaryServiceCache[cacheKey]) {
+            populateServiceSelect(select, secondaryServiceCache[cacheKey], "", selectedValue, selectedText);
+            return;
+        }
+
+        setSelectLoading(select, "تحميل...");
+        requestJson("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
+            if (byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
+                return;
+            }
+
+            if (status < 200 || status >= 300 || !data) {
+                populateServiceSelect(select, [], "تعذر التحميل", selectedValue, selectedText);
+                return;
+            }
+
+            secondaryServiceCache[cacheKey] = data || [];
+            populateServiceSelect(select, secondaryServiceCache[cacheKey], "", selectedValue, selectedText);
+        });
+    }
+
+    function bindReviewServiceSelects(data) {
+        var mode = data.TransactionType || "cash-in";
+        var firstItem = data.Items && data.Items.length ? data.Items[0] : null;
+        var primaryValue = data.ItemIDService || (firstItem ? firstItem.Item_ID : "");
+        var primaryText = firstItem ? firstItem.ItemName : "";
+        var secondaryValue = data.ItemIDService2 || "";
+        var secondaryText = secondaryValue ? String(secondaryValue) : "";
+
+        if (primaryServiceCache[mode]) {
+            var selectedPrimary = populateServiceSelect(byId("serviceItemId"), primaryServiceCache[mode], "", primaryValue, primaryText);
+            bindReviewSecondaryServiceItems(mode, selectedPrimary || primaryValue, secondaryValue, secondaryText);
+            return;
+        }
+
+        setSelectLoading(byId("serviceItemId"), "تحميل...");
+        requestJson("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(mode), null, function (status, services) {
+            if (byId("transactionType").value !== mode) {
+                return;
+            }
+
+            if (status < 200 || status >= 300 || !services || !services.length) {
+                populateServiceSelect(byId("serviceItemId"), [], "تعذر التحميل", primaryValue, primaryText);
+                bindReviewSecondaryServiceItems(mode, primaryValue, secondaryValue, secondaryText);
+                return;
+            }
+
+            primaryServiceCache[mode] = services;
+            var selectedPrimary = populateServiceSelect(byId("serviceItemId"), services, "", primaryValue, primaryText);
+            bindReviewSecondaryServiceItems(mode, selectedPrimary || primaryValue, secondaryValue, secondaryText);
         });
     }
 
@@ -1259,6 +1522,66 @@
         });
     }
 
+    function openTodaySummary() {
+        var panel = byId("todaySummaryPanel");
+        if (!panel) { return; }
+        panel.classList.add("is-open");
+        panel.setAttribute("aria-hidden", "false");
+        byId("todaySummaryCards").innerHTML = "";
+        byId("todaySummaryMessage").innerText = "جاري تحميل ملخص اليوم...";
+        byId("todaySummaryMessage").className = "kyc-save-message";
+
+        requestJson("GET", getUrl("data-today-summary-url"), null, function (status, data) {
+            if (status < 200 || status >= 300 || !data || data.success === false) {
+                byId("todaySummaryCards").innerHTML = "";
+                var message = data && data.message ? data.message : "تعذر تحميل ملخص اليوم";
+                if (data && data.technicalMessage) {
+                    message += "\nالتفاصيل الفنية: " + data.technicalMessage;
+                }
+                byId("todaySummaryMessage").innerText = message;
+                byId("todaySummaryMessage").className = "kyc-save-message is-error";
+                return;
+            }
+
+            byId("todaySummaryMessage").innerText = "آخر تحديث: " + (data.GeneratedAt || "");
+            renderTodaySummary(data.Items || []);
+        });
+    }
+
+    function closeTodaySummary() {
+        var panel = byId("todaySummaryPanel");
+        if (!panel) { return; }
+        panel.classList.remove("is-open");
+        panel.setAttribute("aria-hidden", "true");
+    }
+
+    function renderTodaySummary(items) {
+        var labels = {
+            "cash-in": "كاش إن",
+            "cash-out": "كاش أوت",
+            "card": "كارت كيشني",
+            "violations": "مخالفات"
+        };
+        var html = "";
+        for (var key in labels) {
+            if (!Object.prototype.hasOwnProperty.call(labels, key)) { continue; }
+            var item = null;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].ServiceType === key) {
+                    item = items[i];
+                    break;
+                }
+            }
+            item = item || { Count: 0, NetValue: 0, PayedValue: 0 };
+            html += '<article class="summary-card summary-' + key + '">' +
+                '<h3>' + labels[key] + '</h3>' +
+                '<div><span>عدد الحركات</span><strong>' + escapeHtml(item.Count || 0) + '</strong></div>' +
+                '<div><span>الصافي</span><strong>' + decimalText(item.NetValue) + '</strong></div>' +
+                '</article>';
+        }
+        byId("todaySummaryCards").innerHTML = html;
+    }
+
     function searchKeshniCardCustomers() {
         var term = byId("kycSearchTerm").value.trim() || byId("cashCustomerPhone").value.trim() || byId("visaNumber").value.trim() || byId("cardNationalId").value.trim();
         if (!term) {
@@ -1403,12 +1726,29 @@
         formData.append("BranchId", parseInt(byId("branchId").value, 10) || "");
 
         var files = byId("kycAttachments").files;
+        var totalAttachmentBytes = 0;
         for (var i = 0; i < files.length; i++) {
-            formData.append("attachments", files[i]);
+            totalAttachmentBytes += files[i].size || 0;
+        }
+        if (totalAttachmentBytes > 100 * 1024 * 1024) {
+            var sizeMessage = "حجم المرفقات أكبر من الحد المسموح به. الحد الأقصى الحالي 100 ميجا.";
+            byId("validationSummary").innerText = sizeMessage;
+            setKycMessage(sizeMessage, true);
+            return;
+        }
+        for (var i = 0; i < files.length; i++) {
+            formData.append("attachmentOriginalNamesBase64", base64Utf8(files[i].name || ""));
+            formData.append("attachments", files[i], safeUploadFileName(files[i].name, i));
         }
 
         var saveButton = byId("saveCashCustomerBtn");
         var oldButtonText = saveButton.innerText;
+        function resetKycSaveButton() {
+            kycSaveInProgress = false;
+            saveButton.disabled = !currentContext || currentContext.CanOpenCashCustomer !== true;
+            saveButton.innerText = oldButtonText;
+        }
+
         kycSaveInProgress = true;
         saveButton.disabled = true;
         saveButton.innerText = "جاري الحفظ...";
@@ -1417,33 +1757,56 @@
         setKycMessage("جاري حفظ بيانات الكارت...");
 
         requestFormData(getUrl("data-save-keshni-card-url"), formData, function (status, data) {
-            kycSaveInProgress = false;
-            saveButton.disabled = !currentContext || currentContext.CanOpenCashCustomer !== true;
-            saveButton.innerText = oldButtonText;
+            resetKycSaveButton();
 
-            if (status >= 200 && status < 300 && data && data.success && data.customer) {
-                applyKeshniCustomer(data.customer);
-                renderKycAttachments(data.attachments || []);
-                byId("saveResult").innerText = data.message || "تم حفظ بيانات العميل وتفعيل الكارت";
-                byId("validationSummary").innerText = "";
-                setKycMessage(data.message || "تم حفظ بيانات العميل وتفعيل الكارت");
-                byId("kycAttachments").value = "";
-                calculateCommissionPreview();
-                closeKycModal();
-                return;
-            }
+            try {
+                if (status >= 200 && status < 300 && data && data.success && data.customer) {
+                    applyKeshniCustomer(data.customer);
+                    renderKycAttachments(data.attachments || []);
+                    byId("saveResult").innerText = data.message || "تم حفظ بيانات العميل وتفعيل الكارت";
+                    byId("validationSummary").innerText = "";
+                    setKycMessage(data.message || "تم حفظ بيانات العميل وتفعيل الكارت");
+                    byId("kycAttachments").value = "";
+                    calculateCommissionPreview();
+                    closeKycModal();
+                    return;
+                }
 
-            var message = data && data.message ? data.message : "تعذر حفظ بيانات العميل";
-            if (data && data.validationErrors) {
-                message += "\n" + Object.keys(data.validationErrors).map(function (key) { return data.validationErrors[key]; }).join("\n");
-            }
-            if (data && data.technicalMessage) {
-                message += "\nالتفاصيل الفنية: " + data.technicalMessage;
-            }
+                var message = data && data.message ? data.message : "تعذر حفظ بيانات العميل";
+                if (!(status >= 200 && status < 300) && status) {
+                    message += "\nHTTP Status: " + status;
+                }
+                var validationList = data && data.validationErrorsList ? data.validationErrorsList : (data && data.validationErrors);
+                if (validationList) {
+                    if (Array.isArray(validationList) && validationList.length > 0) {
+                        message += "\nالسبب: " + validationList.join("\n");
+                    } else {
+                        var validationKeys = Object.keys(validationList);
+                        if (validationKeys.length > 0) {
+                            message += "\nالسبب: " + validationKeys.map(function (key) { return validationList[key]; }).join("\n");
+                        }
+                    }
+                }
+                if (data && data.duplicateCustomerId) {
+                    message += "\nيمكن البحث عن العميل المسجل واستخدامه. رقم العميل: " + data.duplicateCustomerId;
+                }
+                if (data && (data.details || data.technicalDetails || data.technicalMessage)) {
+                    message += "\nالتفاصيل الفنية: " + (data.details || data.technicalDetails || data.technicalMessage);
+                }
 
-            byId("validationSummary").innerText = message;
-            byId("saveResult").innerText = "";
-            setKycMessage(message, true);
+                byId("validationSummary").innerText = message;
+                byId("saveResult").innerText = "";
+                setKycMessage(message, true);
+            } catch (ex) {
+                resetKycSaveButton();
+                var scriptMessage = "حدث خطأ في عرض نتيجة حفظ بيانات الكارت";
+                if (ex && ex.message) {
+                    scriptMessage += "\nالتفاصيل الفنية: " + ex.message;
+                }
+                byId("validationSummary").innerText = scriptMessage;
+                byId("saveResult").innerText = "";
+                setKycMessage(scriptMessage, true);
+            }
         });
     }
 
@@ -1453,11 +1816,15 @@
         setKycMessage("");
     }
 
-    function clearFormForNewTransaction() {
+    function clearFormForNewTransaction(clearLastSavedTransaction) {
         byId("posForm").reset();
+        if (clearLastSavedTransaction) {
+            lastSavedTransactionId = null;
+        }
         byId("printBtn").disabled = true;
         reviewMode = false;
         clearMessages();
+        closeKycModal();
 
         resetServiceRows();
 
@@ -1487,6 +1854,15 @@
         byId("payedValue").value = "0";
         byId("rechargeValue").value = "0";
         calculateTotals();
+    }
+
+    function switchTransactionMode(mode) {
+        clearFormForNewTransaction(true);
+        loadContextControls();
+        setMode(mode || "cash-in");
+        applyPermissions();
+        calculateTotals();
+        enablePrintIfAllowed();
     }
 
     function reloadContextAndReset(messageHtml) {
@@ -1521,7 +1897,7 @@
     }
 
     document.addEventListener("click", function (event) {
-        if (event.target.classList.contains("pos-type-btn")) { setMode(event.target.getAttribute("data-mode")); }
+        if (event.target.classList.contains("pos-type-btn")) { switchTransactionMode(event.target.getAttribute("data-mode")); }
         if (event.target.id === "addItemBtn") { addItemRow(); }
         if (event.target.id === "printBtn") {
             var transactionId = savedTransactionId();
@@ -1549,6 +1925,8 @@
         if (event.target.id === "closeKycModalBtn" || event.target.id === "kycModalBackdrop") { closeKycModal(); }
         if (event.target.id === "kycSearchBtn") { searchKeshniCardCustomers(); }
         if (event.target.id === "showKycAttachmentsBtn") { loadKycAttachments(); }
+        if (event.target.id === "todaySummaryBtn") { openTodaySummary(); }
+        if (event.target.id === "closeTodaySummaryBtn" || event.target.id === "todaySummaryBackdrop") { closeTodaySummary(); }
         var kycResultButton = event.target.closest ? event.target.closest(".kyc-result-item") : null;
         if (kycResultButton) {
             var kycItems = byId("kycSearchResults")._items || [];
@@ -1570,13 +1948,6 @@
 
         if (event.target.id === "violationValue") {
             scheduleCommissionPreview();
-        }
-
-        if (event.target.id === "serviceItemId") {
-            var mode = byId("transactionType").value;
-            var itemId = parseInt(event.target.value, 10) || null;
-            loadSecondaryServiceItems(mode, itemId);
-            loadDefaultServiceItem(mode, false, itemId);
         }
 
         if (event.target.name === "violationPayType") {
