@@ -2,6 +2,11 @@
     Layout = null;
     ViewBag.Title = "كيشني - شاشة البيع";
     var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var primaryLogoPath = "~/assets/images/company-logo.png";
+    var alternateLogoPath = "~/Content/images/company-logo.png";
+    var companyLogoPath = System.IO.File.Exists(Server.MapPath(primaryLogoPath))
+        ? primaryLogoPath
+        : (System.IO.File.Exists(Server.MapPath(alternateLogoPath)) ? alternateLogoPath : null);
 }
 
 <meta charset="utf-8" />
@@ -56,9 +61,20 @@
      data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")">
     <div class="pos-shell">
         <header class="pos-header">
-            <div>
+            <div class="pos-brand">
+                @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+                {
+                    <img src="@Url.Content(companyLogoPath)"
+                         alt="Company Logo"
+                         class="pos-company-logo" />
+                }
+                else
+                {
+                    <span class="pos-company-logo-fallback">اسم الشركة</span>
+                }
+            </div>
+            <div class="pos-header-content">
                 <h1>كيشني - شاشة البيع</h1>
-                <p>هذه شاشة تجريبية على قاعدة CASH - لا يوجد قيد أو خصم مخزون حتى الآن</p>
                 <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
                 <div class="pos-balances">
                     <span id="employeeBalanceText" class="is-hidden-ui">ذمة الموظف: تحميل...</span>
@@ -248,7 +264,6 @@
                         </span>
                     </label>
                     <label>رقم المحفظة<input type="text" id="violationWalletNo" placeholder="رقم المحفظة" /></label>
-                    <label>الحالة<input type="text" value="هذه شاشة تجريبية فقط" disabled /></label>
                 </div>
             </section>
 
@@ -261,11 +276,10 @@
             <div class="pos-save-result" id="saveResult"></div>
 
             <footer class="pos-actions">
-                <span class="prototype-warning">هذه شاشة تجريبية على قاعدة CASH</span>
                 <button type="button" class="secondary-action" id="newBtn">جديد</button>
                 <button type="button" class="secondary-action" id="printBtn" disabled>طباعة</button>
                 <button type="button" class="secondary-action" id="returnLaterBtn">مرتجع لاحقًا</button>
-                <button type="submit" class="primary-action" id="saveBtn">حفظ تجريبي</button>
+                <button type="submit" class="primary-action" id="saveBtn">حفظ</button>
             </footer>
         </form>
         <aside class="pos-panel today-invoices-panel">
