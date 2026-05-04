@@ -30,6 +30,23 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض التقارير");
             }
 
+            return View("Index", BuildPageModel(context, filter));
+        }
+
+        [HttpPost]
+        public ActionResult Search(HtmlReportFilterModel filter)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!CanOpenReports(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض التقارير");
+            }
+
             var model = BuildPageModel(context, filter);
             if (!string.IsNullOrWhiteSpace(model.Filter.ReportKey))
             {
@@ -37,12 +54,6 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return View("Index", model);
-        }
-
-        [HttpPost]
-        public ActionResult Search(HtmlReportFilterModel filter)
-        {
-            return Index(filter);
         }
 
         [HttpPost]
@@ -74,10 +85,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (filter.ToDate == null) { filter.ToDate = DateTime.Today; }
 
             var reports = BuildReportDefinitions();
-            if (string.IsNullOrWhiteSpace(filter.ReportKey)) { filter.ReportKey = reports[0].Key; }
-
-            var activeReport = reports.FirstOrDefault(x => string.Equals(x.Key, filter.ReportKey, StringComparison.OrdinalIgnoreCase)) ?? reports[0];
-            filter.ReportKey = activeReport.Key;
+            var activeReport = !string.IsNullOrWhiteSpace(filter.ReportKey)
+                ? reports.FirstOrDefault(x => string.Equals(x.Key, filter.ReportKey, StringComparison.OrdinalIgnoreCase))
+                : null;
+            if (activeReport == null) { activeReport = reports[0]; }
+            if (string.IsNullOrWhiteSpace(filter.ReportKey)) { filter.ReportKey = activeReport.Key; }
 
             if (!IsAdmin(context) && context.BranchId.HasValue)
             {
@@ -148,7 +160,7 @@ namespace MyERP.Areas.Pos.Controllers
                 var item = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 foreach (DataColumn column in table.Columns)
                 {
-                    var value = row[column] == DBNull.Value ? null : row[column];
+                    var value = row[column] == DBNull.Value ? null : NormalizeReportValue(row[column]);
                     item[column.ColumnName] = value;
                     decimal number;
                     if (value != null && ShouldTotal(column.ColumnName) && decimal.TryParse(Convert.ToString(value), out number))
@@ -161,6 +173,28 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return result;
+        }
+
+        private static object NormalizeReportValue(object value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            var text = Convert.ToString(value);
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                text = text.Trim();
+                var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)(?:[+-]\d+)?\)\/");
+                long milliseconds;
+                if (match.Success && long.TryParse(match.Groups[1].Value, out milliseconds))
+                {
+                    return new DateTime(1970, 1, 1).AddMilliseconds(milliseconds).ToLocalTime();
+                }
+            }
+
+            return value;
         }
 
         private IEnumerable<HtmlReportLookupItem> GetAllowedBranches(PosUserContext context)
@@ -263,7 +297,55 @@ namespace MyERP.Areas.Pos.Controllers
                 { "BoxBalance", "رصيد العهدة أول اليوم" }
             };
 
+            var cleanMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "BranchName", "الفرع" },
+                { "BranchCode", "كود الفرع" },
+                { "Transaction_ID", "رقم الحركة" },
+                { "NoteSerial1", "رقم الفاتورة" },
+                { "Transaction_Date", "التاريخ" },
+                { "ReportType", "نوع العملية" },
+                { "CashCustomerName", "اسم العميل" },
+                { "CashCustomerPhone", "هاتف العميل" },
+                { "TransactionCount", "عدد الحركات" },
+                { "RechargeValue", "قيمة الشحن" },
+                { "RechargeTotal", "إجمالي الشحن" },
+                { "NetValue", "الرسوم" },
+                { "NetValueTotal", "إجمالي الرسوم" },
+                { "Vat", "الضريبة" },
+                { "VatTotal", "إجمالي الضريبة" },
+                { "TotalValue", "الإجمالي" },
+                { "FeesTotal", "إجمالي الرسوم" },
+                { "NetCollection", "صافي التحصيل" },
+                { "StoreName", "المخزن" },
+                { "ItemCode", "كود الصنف" },
+                { "ItemName", "اسم الصنف" },
+                { "ItemSerial", "السيريال" },
+                { "StockBalance", "رصيد السيريال" },
+                { "LastTransactionId", "آخر حركة" },
+                { "LastTransactionDate", "تاريخ الدخول/آخر حركة" },
+                { "SerialStatus", "حالة السيريال" },
+                { "NoteID", "رقم القيد" },
+                { "NoteSerial", "سيريال القيد" },
+                { "NoteDate", "تاريخ القيد" },
+                { "VoucherType", "نوع القيد" },
+                { "NoteValue", "قيمة القيد" },
+                { "UserName", "المستخدم" },
+                { "ClosingDate", "تاريخ الإغلاق" },
+                { "OpenBalance", "رصيد أول اليوم" },
+                { "LastBalance", "رصيد نهاية اليوم" },
+                { "TotalRechargeValue", "مبلغ الشحن" },
+                { "TotalRev", "مبلغ الرسوم" },
+                { "TotalVat", "الضريبة" },
+                { "TotalSupply", "إجمالي التوريد" },
+                { "CashOut", "Cash Out" },
+                { "CashOutTotal", "إجمالي Cash Out" },
+                { "CashOutDisc", "خصم Cash Out" },
+                { "BoxBalance", "رصيد العهدة أول اليوم" }
+            };
+
             string title;
+            if (cleanMap.TryGetValue(name, out title)) { return title; }
             return map.TryGetValue(name, out title) ? title : name;
         }
 
@@ -338,9 +420,10 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var text = Convert.ToString(value);
-            if (!string.IsNullOrWhiteSpace(text) && text.StartsWith("/Date(", StringComparison.Ordinal))
+            if (!string.IsNullOrWhiteSpace(text))
             {
-                var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)\)\/");
+                text = text.Trim();
+                var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)(?:[+-]\d+)?\)\/");
                 long milliseconds;
                 if (match.Success && long.TryParse(match.Groups[1].Value, out milliseconds))
                 {

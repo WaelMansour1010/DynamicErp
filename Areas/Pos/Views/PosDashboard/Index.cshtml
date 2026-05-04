@@ -71,6 +71,18 @@
                     <a href="@Url.Content("~/Pos/HtmlReports/Index")"
                        data-screen-url="@Url.Content("~/Pos/HtmlReports/Index")">التقارير الذكية</a>
                 }
+                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
+                {
+                    <a class="@(activeScreen == "accounting-reports" ? "active" : "")"
+                       href="@Url.Action("AccountingReports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/AccountingReports/Index")">تقارير الحسابات</a>
+                }
+                @if (isAdmin || (posContext != null && (posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry)))
+                {
+                    <a class="@(activeScreen == "journal-entries" ? "active" : "")"
+                       href="@Url.Action("JournalEntries", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")">إدخال واستعراض القيود</a>
+                }
                 @if (isAdmin || (posContext != null && posContext.CanOpenPayments))
                 {
                     <a class="@(activeScreen == "payments" ? "active" : "")"
@@ -140,7 +152,7 @@
                     <div id="adminDashboardMessage" class="pos-validation"></div>
                     <div id="adminDashboardKpis" class="admin-kpi-grid"></div>
                     <section class="pos-panel executive-insights-panel">
-                        <div class="panel-heading"><h2>رؤى ذكية</h2></div>
+                        <div class="panel-heading"><h2>مركز الرؤى الذكية</h2><span>تحليلات تشغيلية مبنية على بيانات حقيقية</span></div>
                         <div id="adminDashboardInsights" class="insight-grid"></div>
                     </section>
                     <section class="pos-panel executive-insights-panel">
@@ -438,6 +450,29 @@
                 target.innerHTML = html;
             }
 
+            function renderSmartInsights(targetId, rows) {
+                var target = document.getElementById(targetId);
+                if (!target) { return; }
+                if (!rows || !rows.length) {
+                    target.innerHTML = "<div class=\"empty-state\">لا توجد بيانات كافية لإصدار توصية موثوقة.</div>";
+                    return;
+                }
+
+                var html = "";
+                for (var i = 0; i < rows.length; i++) {
+                    var item = rows[i] || {};
+                    var severity = String(item.Severity || item.severity || "Low").toLowerCase();
+                    html += "<article class=\"smart-insight-card severity-" + escapeHtml(severity) + "\">"
+                        + "<div class=\"smart-insight-head\"><span class=\"smart-insight-icon\">" + escapeHtml(item.Icon || item.icon || "💡") + "</span>"
+                        + "<strong>" + escapeHtml(item.Title || item.title || "") + "</strong></div>"
+                        + "<p>" + escapeHtml(item.Description || item.description || "") + "</p>"
+                        + "<small>" + escapeHtml(item.Metric || item.metric || "") + "</small>"
+                        + "<em>" + escapeHtml(item.Action || item.action || "") + "</em>"
+                        + "</article>";
+                }
+                target.innerHTML = html;
+            }
+
             function loadAdminDashboard() {
                 if (!shell || shell.getAttribute("data-is-admin") !== "true") { return; }
                 var message = document.getElementById("adminDashboardMessage");
@@ -462,7 +497,7 @@
                     if (message) { message.innerText = "تم تحميل البيانات"; }
                     var data = response.data || {};
                     renderKpis(data.Kpis, data.KpiComparisons);
-                    renderList("adminDashboardInsights", data.Insights, "insight-card");
+                    renderSmartInsights("adminDashboardInsights", data.SmartInsights || data.smartInsights || data.Insights);
                     renderList("adminDashboardRecommendations", data.Recommendations, "recommendation-card");
                     renderTable("adminBranchComparison", [
                         { key: "BranchName", title: "الفرع" },

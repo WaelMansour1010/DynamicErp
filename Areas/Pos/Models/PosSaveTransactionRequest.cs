@@ -125,9 +125,73 @@ namespace MyERP.Areas.Pos.Models
         public bool CanOpenPayments { get; set; }
         public bool CanExecutePayments { get; set; }
         public bool CanEditPayments { get; set; }
+        public bool CanViewAccountingReports { get; set; }
+        public bool CanViewAccountStatement { get; set; }
+        public bool CanViewTrialBalance { get; set; }
+        public bool CanViewIncomeStatement { get; set; }
+        public bool CanViewGeneralLedgerAssistant { get; set; }
+        public bool CanCreateJournalEntry { get; set; }
+        public bool CanEditJournalEntry { get; set; }
+        public bool CanDeleteJournalEntry { get; set; }
         public bool IsFullAccess { get; set; }
         public bool CanChangeDefaults { get; set; }
         public PosSystemOptionsDto SystemOptions { get; set; }
+    }
+
+    public class PosJournalSearchRequest
+    {
+        public string VoucherNo { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public string AccountCode { get; set; }
+        public string Description { get; set; }
+        public int? BranchId { get; set; }
+    }
+
+    public class PosManualJournalSaveRequest
+    {
+        public int? NoteId { get; set; }
+        public DateTime NoteDate { get; set; }
+        public int? BranchId { get; set; }
+        public string Description { get; set; }
+        public string AdminPassword { get; set; }
+        public IList<PosManualJournalLineDto> Lines { get; set; }
+
+        public PosManualJournalSaveRequest()
+        {
+            Lines = new List<PosManualJournalLineDto>();
+        }
+    }
+
+    public class PosManualJournalLineDto
+    {
+        public string AccountCode { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountName { get; set; }
+        public string Description { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
+    }
+
+    public class PosJournalHeaderDto
+    {
+        public int NoteId { get; set; }
+        public string NoteSerial { get; set; }
+        public string NoteSerial1 { get; set; }
+        public DateTime? NoteDate { get; set; }
+        public int? BranchId { get; set; }
+        public string BranchName { get; set; }
+        public string Description { get; set; }
+        public bool IsManual { get; set; }
+        public string EntryKind { get; set; }
+        public decimal DebitTotal { get; set; }
+        public decimal CreditTotal { get; set; }
+        public IList<PosManualJournalLineDto> Lines { get; set; }
+
+        public PosJournalHeaderDto()
+        {
+            Lines = new List<PosManualJournalLineDto>();
+        }
     }
 
     [Serializable]
@@ -435,6 +499,7 @@ namespace MyERP.Areas.Pos.Models
         public string TransactionType { get; set; }
         public string IPN { get; set; }
         public string ManualNO { get; set; }
+        public string NoID { get; set; }
         public string CashCustomerPhone { get; set; }
         public string CashCustomerName { get; set; }
         public string Phone2 { get; set; }
@@ -490,6 +555,7 @@ namespace MyERP.Areas.Pos.Models
         public IList<PosDashboardTrendDto> DailyTrend { get; set; }
         public IList<string> Insights { get; set; }
         public IList<string> Recommendations { get; set; }
+        public IList<PosDashboardSmartInsightDto> SmartInsights { get; set; }
 
         public PosDashboardSummaryDto()
         {
@@ -504,7 +570,19 @@ namespace MyERP.Areas.Pos.Models
             DailyTrend = new List<PosDashboardTrendDto>();
             Insights = new List<string>();
             Recommendations = new List<string>();
+            SmartInsights = new List<PosDashboardSmartInsightDto>();
         }
+    }
+
+    public class PosDashboardSmartInsightDto
+    {
+        public string Type { get; set; }
+        public string Severity { get; set; }
+        public string Icon { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Action { get; set; }
+        public string Metric { get; set; }
     }
 
     public class PosDashboardKpiDto

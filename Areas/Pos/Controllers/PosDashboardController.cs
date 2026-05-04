@@ -45,6 +45,16 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("reports");
         }
 
+        public ActionResult AccountingReports()
+        {
+            return OpenShell("accounting-reports");
+        }
+
+        public ActionResult JournalEntries()
+        {
+            return OpenShell("journal-entries");
+        }
+
         public ActionResult Payments()
         {
             return OpenShell("payments");
@@ -103,6 +113,16 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية متابعة KYC والبنك");
             }
 
+            if (screen == "accounting-reports" && !CanOpenAccountingReports(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض تقارير الحسابات");
+            }
+
+            if (screen == "journal-entries" && !CanOpenJournalEntries(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدخال أو استعراض القيود");
+            }
+
             ViewBag.PosContext = context;
             ViewBag.ActiveScreen = screen;
             ViewBag.InitialScreenUrl = ScreenUrl(screen);
@@ -123,8 +143,24 @@ namespace MyERP.Areas.Pos.Controllers
             return IsAdmin(context) || (context != null && context.IsFullAccessCustomerService);
         }
 
+        private static bool CanOpenAccountingReports(PosUserContext context)
+        {
+            return IsAdmin(context) || (context != null && context.CanViewAccountingReports);
+        }
+
+        private static bool CanOpenJournalEntries(PosUserContext context)
+        {
+            return IsAdmin(context)
+                || (context != null && (context.CanViewJournalEntry || context.CanCreateJournalEntry || context.CanEditJournalEntry || context.CanDeleteJournalEntry));
+        }
+
         private static bool HasSalesDefaults(PosUserContext context)
         {
+            if (context != null && (context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0))
+            {
+                return true;
+            }
+
             return context != null
                 && context.BranchId.GetValueOrDefault() > 0
                 && context.EmpId.GetValueOrDefault() > 0
@@ -204,6 +240,16 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "reports")
             {
                 return Url.Content("~/Pos/PosReports/Index");
+            }
+
+            if (screen == "accounting-reports")
+            {
+                return Url.Content("~/Pos/AccountingReports/Index");
+            }
+
+            if (screen == "journal-entries")
+            {
+                return Url.Content("~/Pos/JournalEntries/Index");
             }
 
             if (screen == "payments")

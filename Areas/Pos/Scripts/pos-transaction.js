@@ -378,7 +378,11 @@
             firstRow.querySelector(".vat").value = "0.00";
             firstRow.querySelector(".line-total").value = "0.00";
             firstRow.setAttribute("data-show-price", "0");
+            firstRow.removeAttribute("data-bank-machine-commission");
+            firstRow.removeAttribute("data-cashout-machine-withdrawal");
         }
+        lastCashOutBankMachineCommission = 0;
+        lastCashOutMachineWithdrawalAmount = 0;
         byId("commissionValue").value = "0.00";
         byId("vatValue").value = "0.00";
         byId("totalFees").value = "0.00";
@@ -513,6 +517,21 @@
         byId("totalFeesLabel").innerText = isCard ? "إجمالي الرسوم / الصافي" : "إجمالي الرسوم";
     }
 
+    function currentCashOutMachineInfo() {
+        var firstRow = getFirstSelectedItemRow();
+        var bankCommission = lastCashOutBankMachineCommission;
+        var withdrawalAmount = lastCashOutMachineWithdrawalAmount;
+        if (firstRow) {
+            bankCommission = bankCommission || parseFloat(firstRow.getAttribute("data-bank-machine-commission")) || 0;
+            withdrawalAmount = withdrawalAmount || parseFloat(firstRow.getAttribute("data-cashout-machine-withdrawal")) || 0;
+        }
+
+        return {
+            bankCommission: bankCommission,
+            withdrawalAmount: withdrawalAmount
+        };
+    }
+
     function updateBottomSummary() {
         var mode = byId("transactionType").value;
         var isCard = mode === "card";
@@ -543,8 +562,9 @@
                 '<div><span>الضريبة</span><strong>' + escapeHtml(decimalText(tax)) + '</strong></div>' +
                 '<div><span>إجمالي الرسوم</span><strong>' + escapeHtml(decimalText(fee)) + '</strong></div>' +
                 '<div class="summary-total"><span>الصافي</span><strong>' + escapeHtml(decimalText(net)) + '</strong></div>';
-            if (mode === "cash-out" && lastCashOutMachineWithdrawalAmount > 0) {
-                summaryHtml += '<div class="summary-total cash-out-machine-alert"><span>اسحب من الماكينة</span><strong>' + escapeHtml(decimalText(lastCashOutMachineWithdrawalAmount)) + '</strong><small>عمولة الماكينة: ' + escapeHtml(decimalText(lastCashOutBankMachineCommission)) + '</small></div>';
+            var machineInfo = currentCashOutMachineInfo();
+            if (mode === "cash-out" && machineInfo.withdrawalAmount > 0) {
+                summaryHtml += '<div class="summary-total cash-out-machine-alert"><span>اسحب من الماكينة</span><strong>' + escapeHtml(decimalText(machineInfo.withdrawalAmount)) + '</strong><small>عمولة الماكينة: ' + escapeHtml(decimalText(machineInfo.bankCommission)) + '</small></div>';
             }
             grid.innerHTML = summaryHtml;
             return;
@@ -674,6 +694,8 @@
         row.removeAttribute("data-item-case");
         row.removeAttribute("data-cost-price");
         row.removeAttribute("data-saved-item-type");
+        row.removeAttribute("data-bank-machine-commission");
+        row.removeAttribute("data-cashout-machine-withdrawal");
     }
 
     function resetServiceRows() {
@@ -1064,6 +1086,30 @@
             '<div><strong>العميل:</strong> ' + escapeHtml(invoice.CustomerName || "") + '</div>' +
             '<div><strong>التليفون:</strong> ' + escapeHtml(invoice.CustomerPhone || "") + '</div>' +
             '<div><strong>الصافي:</strong> ' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</div>';
+    }
+
+    function setTodayInvoicesCollapsed(collapsed, persist) {
+        var page = byId("posPage");
+        var button = byId("toggleTodayInvoicesBtn");
+        if (!page || !button) { return; }
+
+        page.classList.toggle("today-invoices-collapsed", collapsed);
+        button.innerText = collapsed ? "إظهار" : "إخفاء";
+        button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        if (persist && window.localStorage) {
+            window.localStorage.setItem("posTodayInvoicesCollapsed", collapsed ? "true" : "false");
+        }
+    }
+
+    function initTodayInvoicesPanelState() {
+        var collapsed = false;
+        if (window.localStorage && window.localStorage.getItem("posTodayInvoicesCollapsed") === "true") {
+            collapsed = true;
+        }
+        if (window.innerWidth && window.innerWidth <= 1180 && (!window.localStorage || !window.localStorage.getItem("posTodayInvoicesCollapsed"))) {
+            collapsed = true;
+        }
+        setTodayInvoicesCollapsed(collapsed, false);
     }
 
     function clearJournalEntry() {
@@ -1540,41 +1586,26 @@
     }
 
     function preloadCommissionSettings(callback) {
-        var serviceTypes = ["cash-in", "cash-out", "card", "violations"];
-        var remaining = serviceTypes.length;
-        var failed = false;
-
         commissionsReady = false;
         updateSaveButtonState();
         setCommissionStatus("جاري تحميل إعدادات العمولات...");
 
-        function done() {
-            remaining--;
-            if (remaining > 0) { return; }
+        requestJson("GET", getUrl("data-commission-bootstrap-url"), null, function (status, data) {
+            var services = data && (data.primaryServices || data.PrimaryServices);
+            if (status >= 200 && status < 300 && services) {
+                primaryServiceCache["cash-in"] = services["cash-in"] || services.CashIn || services.cashIn || [];
+                primaryServiceCache["cash-out"] = services["cash-out"] || services.CashOut || services.cashOut || [];
+                primaryServiceCache.card = services.card || services.Card || [];
+                primaryServiceCache.violations = services.violations || services.Violations || [];
+                commissionsReady = true;
+            } else {
+                commissionsReady = false;
+            }
 
-            commissionsReady = failed === false;
             updateSaveButtonState();
-            setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", failed);
+            setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", !commissionsReady);
             if (callback) { callback(); }
-        }
-
-        for (var i = 0; i < serviceTypes.length; i++) {
-            (function (mode) {
-                if (primaryServiceCache[mode]) {
-                    done();
-                    return;
-                }
-
-                requestJson("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(mode), null, function (status, data) {
-                    if (status >= 200 && status < 300 && data) {
-                        primaryServiceCache[mode] = data;
-                    } else {
-                        failed = true;
-                    }
-                    done();
-                });
-            })(serviceTypes[i]);
-        }
+        });
     }
 
     function loadPrimaryServiceItems(mode) {
@@ -1800,6 +1831,47 @@
         if (isNaN(parsed.getTime())) { return ""; }
         parsed.setFullYear(parsed.getFullYear() + years);
         return parsed.toISOString().substring(0, 10);
+    }
+
+    function kycDateValidationMessage(id, label) {
+        var value = (byId(id).value || "").trim();
+        if (!value) { return ""; }
+        var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+        if (!match) {
+            return label + " غير صحيح. برجاء إدخال التاريخ بصيغة صحيحة.";
+        }
+
+        var year = parseInt(match[1], 10);
+        if (year < 1753 || year > 9999) {
+            return label + " غير صحيح. برجاء إدخال سنة كاملة وصحيحة مثل 2026.";
+        }
+
+        var parsed = new Date(value + "T00:00:00");
+        if (isNaN(parsed.getTime())
+            || parsed.getFullYear() !== year
+            || parsed.getMonth() + 1 !== parseInt(match[2], 10)
+            || parsed.getDate() !== parseInt(match[3], 10)) {
+            return label + " غير صحيح. برجاء مراجعة اليوم والشهر والسنة.";
+        }
+
+        return "";
+    }
+
+    function validateKycDatesBeforeSave() {
+        var errors = [
+            kycDateValidationMessage("kycBirthDate", "تاريخ الميلاد"),
+            kycDateValidationMessage("kycCardDate", "تاريخ الإصدار"),
+            kycDateValidationMessage("kycCardEndDate", "تاريخ الانتهاء")
+        ].filter(function (message) { return !!message; });
+
+        if (errors.length) {
+            var message = errors.join("\n");
+            byId("validationSummary").innerText = message;
+            setKycMessage(message, true);
+            return false;
+        }
+
+        return true;
     }
 
     function applyKeshniCustomer(data) {
@@ -2117,6 +2189,10 @@
         var isCashOut = byId("transactionType").value === "cash-out";
         lastCashOutBankMachineCommission = isCashOut ? (parseFloat(data.BankMachineCommission) || parseFloat(data.bankMachineCommission) || 0) : 0;
         lastCashOutMachineWithdrawalAmount = isCashOut ? (parseFloat(data.CashOutMachineWithdrawalAmount) || parseFloat(data.cashOutMachineWithdrawalAmount) || 0) : 0;
+        if (!isCashOut) {
+            firstRow.removeAttribute("data-bank-machine-commission");
+            firstRow.removeAttribute("data-cashout-machine-withdrawal");
+        }
 
         byId("commissionValue").value = isCard ? "0.00" : commission.toFixed(2);
         byId("vatValue").value = vatValue.toFixed(2);
@@ -2131,6 +2207,8 @@
         firstRow.querySelector(".qty").value = "1";
         firstRow.setAttribute("data-show-price", commission);
         firstRow.setAttribute("data-vatyo", vatPercent);
+        firstRow.setAttribute("data-bank-machine-commission", lastCashOutBankMachineCommission);
+        firstRow.setAttribute("data-cashout-machine-withdrawal", lastCashOutMachineWithdrawalAmount);
         calculateTotals();
     }
 
@@ -2228,6 +2306,9 @@
             var cardFormatMessage = "رقم التوكن/الكارت يجب أن يكون 8 أو 18 رقم";
             byId("validationSummary").innerText = cardFormatMessage;
             setKycMessage(cardFormatMessage, true);
+            return;
+        }
+        if (!validateKycDatesBeforeSave()) {
             return;
         }
 
@@ -2359,7 +2440,9 @@
 
     function clearMessages() {
         byId("validationSummary").innerHTML = "";
-        byId("saveResult").innerHTML = "";
+        if (byId("saveResult").getAttribute("data-commission-status") !== "true") {
+            byId("saveResult").innerHTML = "";
+        }
         setKycMessage("");
     }
 
@@ -2492,6 +2575,9 @@
         if (event.target.id === "showKycAttachmentsBtn") { loadKycAttachments(); }
         if (event.target.id === "todaySummaryBtn") { openTodaySummary(); }
         if (event.target.id === "closeTodaySummaryBtn" || event.target.id === "todaySummaryBackdrop") { closeTodaySummary(); }
+        if (event.target.id === "toggleTodayInvoicesBtn") {
+            setTodayInvoicesCollapsed(!byId("posPage").classList.contains("today-invoices-collapsed"), true);
+        }
         var kycResultButton = event.target.closest ? event.target.closest(".kyc-result-item") : null;
         if (kycResultButton) {
             var kycItems = byId("kycSearchResults")._items || [];
@@ -2594,6 +2680,12 @@
         }
     });
 
+    document.addEventListener("wheel", function (event) {
+        if (event.target && event.target.matches && event.target.matches('input[type="number"]')) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
     document.addEventListener("change", function (event) {
         if (event.target.id === "branchId") {
             if (currentContext && currentContext.CanChangeDefaults === true) {
@@ -2624,6 +2716,7 @@
 
     byId("posForm").addEventListener("submit", saveTransaction);
     setInitialContextFromPage();
+    initTodayInvoicesPanelState();
     loadContextControls();
     searchItems("");
     preloadCommissionSettings(function () {

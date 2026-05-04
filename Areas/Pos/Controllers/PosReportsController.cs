@@ -132,9 +132,10 @@ namespace MyERP.Areas.Pos.Controllers
                 new PosReportDefinition("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "sales", admin || context.CanReportDailyTransactionsSectors, true, "تقرير مبيعات حسب القطاعات"),
                 new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "تقرير تحليلي"),
                 new PosReportDefinition("general-sales", "تقرير المبيعات العام", "sales", admin || context.CanReportAllSales, true, "تقرير مبيعات عام"),
+                new PosReportDefinition("web-invoices", "تقرير فواتير الويب", "sales", admin || context.CanViewReports, true, "عدد فواتير الويب حسب المستخدم"),
                 new PosReportDefinition("salesmen", "تقرير المناديب", "closings", admin || context.CanReportSalesmen, false, "لم يتم تحديد مصدر التقرير بعد"),
-                new PosReportDefinition("closings", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, false, "مرتبط لاحقًا ببيانات project_status"),
-                new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي والخصومات", "closings", admin || context.CanReportFinanceClosing, false, "لم يتم تحديد مصدر التقرير بعد"),
+                new PosReportDefinition("finance-closing", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, true, "بيانات الإغلاقات من TBLClosePos و Notes"),
+                new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي والخصومات", "closings", admin || context.CanReportFinanceClosing, true, "بيانات الإغلاقات والخصومات من TBLClosePos و Notes"),
                 new PosReportDefinition("discounts", "تقرير الخصومات", "closings", admin || context.CanReportDiscounts, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("indicators", "تقرير المؤشرات العامة", "closings", admin || context.CanReportIndicators, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("store-serials", "تقرير سيريالات المخزن", "serials", admin || context.CanReportStoreSerials, true, "تقرير المخزون والسيريالات"),
@@ -173,6 +174,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (report.Key == "store-serials")
             {
                 return _repository.RunPosStoreSerialsReport(request.StoreId, request.SerialSearch, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+            }
+
+            if (report.Key == "web-invoices")
+            {
+                return _repository.RunPosWebInvoiceAuditReport(from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
             }
 
             return _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);

@@ -1,7 +1,7 @@
 ﻿@model MyERP.Models.Reports.HtmlReportPageViewModel
 @{ var showStore = Model.ActiveReport != null && Model.ActiveReport.SupportsStoreFilter; }
 
-@using (Html.BeginForm("Index", "HtmlReports", new { area = "Pos" }, FormMethod.Post, new { @class = "html-report-filters", id = "htmlReportFilterForm" }))
+@using (Html.BeginForm("Search", "HtmlReports", new { area = "Pos" }, FormMethod.Post, new { @class = "html-report-filters", id = "htmlReportFilterForm" }))
 {
     <input type="hidden" id="ReportKey" name="ReportKey" value="@Model.Filter.ReportKey" />
 

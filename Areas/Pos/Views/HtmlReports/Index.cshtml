@@ -17,8 +17,8 @@
     <main class="html-report-page">
         <header class="html-report-header">
             <div>
-                <h1>التقارير الذكية</h1>
-                <p>تقارير تشغيلية خفيفة قابلة للطباعة والتصدير</p>
+                <h1>&#1575;&#1604;&#1578;&#1602;&#1575;&#1585;&#1610;&#1585; &#1575;&#1604;&#1584;&#1603;&#1610;&#1577;</h1>
+                <p>&#1578;&#1602;&#1575;&#1585;&#1610;&#1585; &#1578;&#1588;&#1594;&#1610;&#1604;&#1610;&#1577; &#1582;&#1601;&#1610;&#1601;&#1577; &#1602;&#1575;&#1576;&#1604;&#1577; &#1604;&#1604;&#1591;&#1576;&#1575;&#1593;&#1577; &#1608;&#1575;&#1604;&#1578;&#1589;&#1583;&#1610;&#1585;</p>
             </div>
             <strong>Dynamic ERP</strong>
         </header>
@@ -35,7 +35,7 @@
                         <h2>@Model.ActiveReport.Title</h2>
                         <p>@Model.ActiveReport.Description</p>
                     </div>
-                    <span>تقرير تشغيلي</span>
+                    <span>&#1578;&#1602;&#1585;&#1610;&#1585; &#1578;&#1588;&#1594;&#1610;&#1604;&#1610;</span>
                 </div>
 
                 <div class="filter-summary">
@@ -143,13 +143,7 @@
 
                 var resultCard = document.getElementById("htmlReportResultCard");
                 if (resultCard && resultCard.getAttribute("data-report-key") !== reportKey) {
-                    resultCard.classList.add("is-loading-report");
-                    resultCard.innerHTML = '<div class="empty-cell">جاري تحميل التقرير...</div>';
-                }
-
-                var form = document.getElementById("htmlReportFilterForm");
-                if (form) {
-                    form.submit();
+                    resultCard.classList.add("is-hidden-ui");
                 }
             }
 
@@ -193,9 +187,10 @@
         }
 
         var text = Convert.ToString(value);
-        if (!string.IsNullOrWhiteSpace(text) && text.StartsWith("/Date(", StringComparison.Ordinal))
+        if (!string.IsNullOrWhiteSpace(text))
         {
-            var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)\)\/");
+            text = text.Trim();
+            var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)(?:[+-]\d+)?\)\/");
             long milliseconds;
             if (match.Success && long.TryParse(match.Groups[1].Value, out milliseconds))
             {

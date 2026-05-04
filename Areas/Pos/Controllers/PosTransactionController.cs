@@ -46,6 +46,11 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool HasRequiredSalesDefaults(PosUserContext context)
         {
+            if (context != null && (context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0))
+            {
+                return true;
+            }
+
             return context != null
                 && context.BranchId.GetValueOrDefault() > 0
                 && context.EmpId.GetValueOrDefault() > 0
@@ -71,6 +76,26 @@ namespace MyERP.Areas.Pos.Controllers
         public JsonResult GetPrimaryServiceItems(string serviceType)
         {
             return Json(_repository.GetPrimaryServiceItems(serviceType), JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult CommissionBootstrap()
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            var serviceTypes = new[] { "cash-in", "cash-out", "card", "violations" };
+            var primaryServices = serviceTypes.ToDictionary(serviceType => serviceType, serviceType => _repository.GetPrimaryServiceItems(serviceType));
+            return Json(new
+            {
+                success = true,
+                primaryServices = primaryServices,
+                loadedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
+            }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -513,6 +538,14 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(Fail("راجع بيانات العميل", "Invalid Egyptian mobile format.", errors));
                 }
 
+                var dateErrors = ValidateSqlDateRange(request);
+                if (dateErrors.Count > 0)
+                {
+                    LogKycFailure("SaveCashCustomer.DateValidation", request, null, dateErrors);
+                    Response.StatusCode = 400;
+                    return Json(Fail("راجع تواريخ العميل. يجب إدخال سنة كاملة وصحيحة مثل 2026.", "KYC date is outside SQL Server datetime range.", dateErrors));
+                }
+
                 var context = GetPosContext();
                 if (context != null)
                 {
@@ -697,6 +730,7 @@ namespace MyERP.Areas.Pos.Controllers
                     request.BoxID = originalInvoice.BoxID;
                     request.UserID = originalInvoice.CreatedUserId;
                     request.Emp_ID = originalInvoice.Emp_ID;
+                    request.NoID = originalInvoice.NoID;
                 }
 
                 var validationErrors = ValidateSaveRequest(request, context);
@@ -711,6 +745,7 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     request.UserID = context.UserId;
                     request.Emp_ID = context.EmpId;
+                    request.NoID = PosSqlRepository.WebInvoiceSourceMarker;
                 }
 
                 if (originalInvoice != null)
@@ -936,6 +971,35 @@ namespace MyERP.Areas.Pos.Controllers
             return errors;
         }
 
+        private static Dictionary<string, string> ValidateSqlDateRange(PosCashCustomerSaveRequest request)
+        {
+            var errors = new Dictionary<string, string>();
+            if (request == null)
+            {
+                return errors;
+            }
+
+            AddSqlDateRangeError(errors, "BirthDate", request.BirthDate, "تاريخ الميلاد");
+            AddSqlDateRangeError(errors, "CardDate", request.CardDate, "تاريخ الإصدار");
+            AddSqlDateRangeError(errors, "CardEndDate", request.CardEndDate, "تاريخ الانتهاء");
+            AddSqlDateRangeError(errors, "OrderDate", request.OrderDate, "تاريخ العملية");
+            return errors;
+        }
+
+        private static void AddSqlDateRangeError(IDictionary<string, string> errors, string key, DateTime? value, string label)
+        {
+            if (!value.HasValue)
+            {
+                return;
+            }
+
+            if (value.Value < System.Data.SqlTypes.SqlDateTime.MinValue.Value
+                || value.Value > System.Data.SqlTypes.SqlDateTime.MaxValue.Value)
+            {
+                errors[key] = label + " غير صحيح. برجاء إدخال تاريخ بسنة كاملة وصحيحة مثل 2026.";
+            }
+        }
+
         private void AddServiceTypeValidationErrors(PosSaveTransactionRequest request, IDictionary<string, string> errors)
         {
             if (request == null)
@@ -970,6 +1034,10 @@ namespace MyERP.Areas.Pos.Controllers
         private static Dictionary<string, string> ValidateKeshniCardCustomer(PosCashCustomerSaveRequest request)
         {
             var errors = new Dictionary<string, string>();
+            foreach (var dateError in ValidateSqlDateRange(request))
+            {
+                errors[dateError.Key] = dateError.Value;
+            }
 
             if (string.IsNullOrWhiteSpace(request.PhoneNo2))
             {

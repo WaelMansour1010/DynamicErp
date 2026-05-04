@@ -412,6 +412,8 @@
     <Compile Include="Areas\Pos\PosAreaRegistration.cs" />
     <Compile Include="Areas\Pos\Controllers\KycAttachmentController.cs" />
     <Compile Include="Areas\Pos\Controllers\KycBankFollowUpController.cs" />
+    <Compile Include="Areas\Pos\Controllers\AccountingReportsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\JournalEntriesController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosDashboardController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
@@ -3962,6 +3964,9 @@
     <Content Include="Areas\Pos\Sql\28_POS_Payments_Audit.sql" />
     <Content Include="Areas\Pos\Sql\29_POS_UserCategory_BulkPermissions.sql" />
     <Content Include="Areas\Pos\Sql\30_POS_SaveTransaction_UnicodeText.sql" />
+    <Content Include="Areas\Pos\Sql\31_POS_GetNextID_FromSequence_Concurrency.sql" />
+    <Content Include="Areas\Pos\Sql\32_POS_WebInvoiceAuditReport.sql" />
+    <Content Include="Areas\Pos\Sql\33_POS_JournalEntryAuditColumns.sql" />
     <Content Include="Areas\Pos\assets\images\company-logo.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-1.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-2.png" />
@@ -4198,6 +4203,8 @@
     <Content Include="Areas\Pos\Views\HtmlReports\Index.cshtml" />
     <Content Include="Areas\Pos\Views\HtmlReports\Shared\_FilterToolbar.cshtml" />
     <Content Include="Areas\Pos\Views\HtmlReports\Shared\_ReportActions.cshtml" />
+    <Content Include="Areas\Pos\Views\AccountingReports\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\JournalEntries\Index.cshtml" />
     <Content Include="Views\Account\_ExternalLoginsListPartial.cshtml" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />
     <Content Include="Views\Account\ExternalLoginConfirmation.cshtml" />

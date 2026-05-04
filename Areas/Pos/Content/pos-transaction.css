@@ -124,8 +124,11 @@
     align-items: start;
     display: grid;
     gap: 12px;
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) 280px;
     margin-top: 12px;
+}
+.pos-page.today-invoices-collapsed .pos-workspace {
+    grid-template-columns: minmax(0, 1fr) 74px;
 }
 .pos-form { display: grid; gap: 12px; }
 .pos-panel { background: #fff; border: 1px solid #d8dee6; padding: 14px; }
@@ -317,6 +320,39 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .today-invoices-panel {
     position: sticky;
     top: 12px;
+}
+
+.today-invoices-heading {
+    gap: 8px;
+}
+
+.compact-action {
+    min-height: 32px;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.pos-page.today-invoices-collapsed .today-invoices-panel {
+    padding: 10px;
+}
+
+.pos-page.today-invoices-collapsed .today-invoices-heading {
+    align-items: center;
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+    margin-bottom: 0;
+}
+
+.pos-page.today-invoices-collapsed .today-invoices-heading h2 {
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: center;
+    writing-mode: vertical-rl;
+}
+
+.pos-page.today-invoices-collapsed .today-invoices-body {
+    display: none;
 }
 
 .today-search {
@@ -1166,6 +1202,75 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 
 .insight-card {
     border-right: 4px solid #7c3aed;
+}
+
+.smart-insight-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    border-right: 5px solid #2563eb;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+    display: grid;
+    gap: 8px;
+    min-height: 150px;
+    padding: 14px;
+}
+
+.smart-insight-card.severity-high {
+    border-right-color: #ef4444;
+    background: linear-gradient(135deg, #ffffff 0%, #fff7f7 100%);
+}
+
+.smart-insight-card.severity-medium {
+    border-right-color: #f97316;
+    background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%);
+}
+
+.smart-insight-card.severity-low {
+    border-right-color: #2563eb;
+}
+
+.smart-insight-head {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.smart-insight-icon {
+    align-items: center;
+    background: #eff6ff;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 18px;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+}
+
+.smart-insight-card strong {
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.smart-insight-card p {
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.smart-insight-card small {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.smart-insight-card em {
+    color: #1d4ed8;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: 1.6;
 }
 
 .recommendation-card {

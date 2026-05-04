@@ -23,6 +23,7 @@
      data-default-service-url="@Url.Action("GetDefaultServiceItem", "PosTransaction", new { area = "Pos" })"
      data-primary-services-url="@Url.Action("GetPrimaryServiceItems", "PosTransaction", new { area = "Pos" })"
      data-secondary-services-url="@Url.Action("GetSecondaryServiceItems", "PosTransaction", new { area = "Pos" })"
+     data-commission-bootstrap-url="@Url.Action("CommissionBootstrap", "PosTransaction", new { area = "Pos" })"
      data-commission-url="@Url.Action("CalculateCommission", "PosTransaction", new { area = "Pos" })"
      data-customer-lookup-url="@Url.Action("LookupCustomerByPhone", "PosTransaction", new { area = "Pos" })"
      data-customer-search-url="@Url.Action("SearchKeshniCardCustomers", "PosTransaction", new { area = "Pos" })"
@@ -165,9 +166,9 @@
                     <label>رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
                     <label>الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
                     <input type="hidden" id="kycCardSource" />
-                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" /></label>
-                    <label>تاريخ الإصدار<input type="date" id="kycCardDate" /></label>
-                    <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" /></label>
+                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label>تاريخ الإصدار<input type="date" id="kycCardDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" min="1753-01-01" max="9999-12-31" /></label>
                     <label>العنوان العربي<input type="text" id="kycAddress" dir="rtl" lang="ar" /></label>
                     <label>العنوان الإنجليزي 1<input type="text" id="kycEnglishName5" dir="ltr" lang="en" /></label>
                     <input type="hidden" id="kycEnglishName6" />
@@ -306,11 +307,16 @@
                 <button type="submit" class="primary-action" id="saveBtn">حفظ</button>
             </footer>
         </form>
-        <aside class="pos-panel today-invoices-panel">
-            <div class="panel-heading"><h2>فواتير اليوم</h2></div>
-            <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
-            <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
-            <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
+        <aside class="pos-panel today-invoices-panel" id="todayInvoicesPanel">
+            <div class="panel-heading today-invoices-heading">
+                <h2>فواتير اليوم</h2>
+                <button type="button" class="secondary-action compact-action" id="toggleTodayInvoicesBtn" aria-expanded="true">إخفاء</button>
+            </div>
+            <div class="today-invoices-body" id="todayInvoicesBody">
+                <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
+                <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
+                <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
+            </div>
         </aside>
         </div>
     </div>

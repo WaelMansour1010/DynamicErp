@@ -11,6 +11,9 @@ namespace MyERP.Models.Reports
         public int? BranchId { get; set; }
         public int? StoreId { get; set; }
         public string SerialSearch { get; set; }
+        public string AccountFrom { get; set; }
+        public string AccountTo { get; set; }
+        public int? CostCenterId { get; set; }
     }
 
     public class HtmlReportPageViewModel
