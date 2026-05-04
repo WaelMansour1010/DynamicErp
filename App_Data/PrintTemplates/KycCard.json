@@ -1,0 +1,125 @@
+{
+  "Name": "KycCard",
+  "BackgroundFileName": null,
+  "PrintBackground": false,
+  "PageWidth": 827.0,
+  "PageHeight": 1170.0,
+  "ImageWidth": 827.0,
+  "ImageHeight": 1170.0,
+  "GlobalXShift": 0.0,
+  "GlobalYShift": 0.0,
+  "Fields": [
+    {
+      "FieldKey": "Token",
+      "Label": "رقم Token (فوق)",
+      "X": 75.0, "Y": 205.0, "Width": 660.0, "Height": 24.0,
+      "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
+      "Alignment": "Center", "Direction": "LTR",
+      "IsCellBased": true, "CellCount": 12, "CellWidth": 55.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "ArabicName",
+      "Label": "الاسم بالعربي",
+      "X": 0.0, "Y": 265.0, "Width": 827.0, "Height": 22.0,
+      "FontName": "Tahoma", "FontSize": 10.0, "Bold": true,
+      "Alignment": "Center", "Direction": "RTL",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "EnglishName",
+      "Label": "الاسم بالإنجليزي",
+      "X": 0.0, "Y": 310.0, "Width": 827.0, "Height": 22.0,
+      "FontName": "Tahoma", "FontSize": 10.0, "Bold": true,
+      "Alignment": "Center", "Direction": "LTR",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "Address",
+      "Label": "العنوان",
+      "X": 0.0, "Y": 360.0, "Width": 827.0, "Height": 22.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Center", "Direction": "LTR",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "Nationality",
+      "Label": "الجنسية",
+      "X": 580.0, "Y": 450.0, "Width": 200.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Right", "Direction": "RTL",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "BirthDate",
+      "Label": "تاريخ الميلاد",
+      "X": 580.0, "Y": 485.0, "Width": 200.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Right", "Direction": "LTR",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "NationalId",
+      "Label": "الرقم القومي",
+      "X": 95.0, "Y": 525.0, "Width": 616.0, "Height": 22.0,
+      "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
+      "Alignment": "Center", "Direction": "LTR",
+      "IsCellBased": true, "CellCount": 14, "CellWidth": 44.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "IssueDate",
+      "Label": "تاريخ الإصدار",
+      "X": 610.0, "Y": 580.0, "Width": 130.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Right", "Direction": "LTR",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "Source",
+      "Label": "جهة الإصدار",
+      "X": 290.0, "Y": 580.0, "Width": 290.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Center", "Direction": "RTL",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "ExpiryDate",
+      "Label": "تاريخ الانتهاء",
+      "X": 45.0, "Y": 580.0, "Width": 130.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Left", "Direction": "LTR",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "Phone",
+      "Label": "رقم المحمول",
+      "X": 130.0, "Y": 660.0, "Width": 550.0, "Height": 22.0,
+      "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
+      "Alignment": "Center", "Direction": "LTR",
+      "IsCellBased": true, "CellCount": 11, "CellWidth": 50.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "TokenNo",
+      "Label": "Token NO. (تحت)",
+      "X": 75.0, "Y": 925.0, "Width": 660.0, "Height": 24.0,
+      "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
+      "Alignment": "Center", "Direction": "LTR",
+      "IsCellBased": true, "CellCount": 12, "CellWidth": 55.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "SignatureName",
+      "Label": "اسم العميل (توقيع)",
+      "X": 420.0, "Y": 1110.0, "Width": 280.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Center", "Direction": "RTL",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    },
+    {
+      "FieldKey": "FooterDate",
+      "Label": "التاريخ",
+      "X": 0.0, "Y": 1150.0, "Width": 827.0, "Height": 20.0,
+      "FontName": "Tahoma", "FontSize": 9.0, "Bold": true,
+      "Alignment": "Center", "Direction": "RTL",
+      "IsCellBased": false, "CellCount": 0, "CellWidth": 0.0, "CharacterSpacing": 0.0
+    }
+  ]
+}

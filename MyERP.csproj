@@ -421,6 +421,9 @@
     <Compile Include="Areas\Pos\Controllers\PosPermissionsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosReportsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosClosingController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PrintTemplateController.cs" />
+    <Compile Include="Areas\Pos\Models\PrintTemplate.cs" />
+    <Compile Include="Areas\Pos\Services\PrintTemplateService.cs" />
     <Compile Include="Areas\Pos\Controllers\PosTransactionController.cs" />
     <Compile Include="Areas\Pos\Data\PosClosingSqlRepository.cs" />
     <Compile Include="Areas\Pos\Data\PosSystemHealthRepository.cs" />
@@ -3950,8 +3953,10 @@
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.js" />
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.min.js" />
     <Content Include="Areas\Pos\Content\pos-transaction.css" />
+    <Content Include="Areas\Pos\Content\print-template-designer.css" />
     <Content Include="Areas\Pos\Scripts\pos-closing.js" />
     <Content Include="Areas\Pos\Scripts\pos-transaction.js" />
+    <Content Include="Areas\Pos\Scripts\print-template-designer.js" />
     <Content Include="Areas\Pos\Scripts\account-selector.js" />
     <Content Include="Areas\Pos\Views\Web.config" />
     <Content Include="Areas\Pos\Views\PosTransaction\Index.cshtml" />
@@ -3961,6 +3966,8 @@
     <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
     <Content Include="Areas\Pos\Views\KycBankFollowUp\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PrintTemplate\Index.cshtml" />
+    <Content Include="App_Data\PrintTemplates\KycCard.json" />
     <Content Include="Areas\Pos\Views\Payments\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosPermissions\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosReports\Index.cshtml" />

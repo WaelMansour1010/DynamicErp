@@ -1,0 +1,107 @@
+@{
+    Layout = null;
+    ViewBag.Title = "مصمم نماذج الطباعة";
+    var templateName = (string)ViewBag.TemplateName ?? "KycCard";
+    var availableTemplates = (System.Collections.Generic.IList<string>)ViewBag.Templates
+        ?? new System.Collections.Generic.List<string>();
+}
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/print-template-designer.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="ptd-page" id="ptdPage"
+         data-template-name="@templateName"
+         data-get-url="@Url.Action("GetTemplate", "PrintTemplate", new { area = "Pos" })"
+         data-save-url="@Url.Action("SaveTemplate", "PrintTemplate", new { area = "Pos" })"
+         data-upload-url="@Url.Action("UploadBackground", "PrintTemplate", new { area = "Pos" })"
+         data-background-url="@Url.Action("Background", "PrintTemplate", new { area = "Pos" })"
+         data-preview-url="@Url.Action("Preview", "PrintTemplate", new { area = "Pos" })">
+
+        <header class="ptd-header">
+            <h1>مصمم نماذج الطباعة</h1>
+            <div class="ptd-header-actions">
+                <label>القالب:
+                    <select id="templateSelect">
+                        <option value="@templateName" selected>@templateName</option>
+                        @foreach (var t in availableTemplates)
+                        {
+                            if (t != templateName)
+                            {
+                                <option value="@t">@t</option>
+                            }
+                        }
+                    </select>
+                </label>
+                <button type="button" id="reloadBtn" class="ptd-btn">إعادة التحميل</button>
+                <button type="button" id="saveBtn" class="ptd-btn ptd-btn-primary">حفظ القالب</button>
+                <button type="button" id="previewBtn" class="ptd-btn">معاينة PDF</button>
+                <button type="button" id="exportJsonBtn" class="ptd-btn">تصدير JSON</button>
+                <button type="button" id="resetBtn" class="ptd-btn ptd-btn-warn">استعادة الافتراضي</button>
+            </div>
+        </header>
+
+        <div class="ptd-body">
+
+            <aside class="ptd-side ptd-side-left">
+                <h2>الحقول المتاحة</h2>
+                <p class="ptd-hint">اضغط لإضافة حقل جديد للقالب.</p>
+                <div class="ptd-field-palette" id="fieldPalette"></div>
+
+                <h2>إعدادات الصفحة</h2>
+                <label>عرض الصفحة <input type="number" id="pageWidth" step="1" /></label>
+                <label>ارتفاع الصفحة <input type="number" id="pageHeight" step="1" /></label>
+                <label>عرض الصورة <input type="number" id="imageWidth" step="1" /></label>
+                <label>ارتفاع الصورة <input type="number" id="imageHeight" step="1" /></label>
+                <label>إزاحة X (Global) <input type="number" id="globalXShift" step="1" /></label>
+                <label>إزاحة Y (Global) <input type="number" id="globalYShift" step="1" /></label>
+
+                <h2>الخلفية</h2>
+                <label>
+                    <input type="checkbox" id="printBackground" />
+                    <span>طباعة الخلفية مع البيانات</span>
+                </label>
+                <label class="ptd-file-label">
+                    <span>رفع صورة الخلفية (A4)</span>
+                    <input type="file" id="backgroundFile" accept="image/*" />
+                </label>
+                <div id="backgroundStatus" class="ptd-hint"></div>
+
+                <h2>عرض</h2>
+                <label>
+                    <input type="checkbox" id="showBackgroundDesigner" checked />
+                    <span>إظهار الخلفية في التصميم</span>
+                </label>
+                <label>التكبير
+                    <input type="range" id="zoomRange" min="0.4" max="1.5" step="0.05" value="0.85" />
+                    <span id="zoomValue">85%</span>
+                </label>
+            </aside>
+
+            <main class="ptd-canvas-wrap" id="canvasWrap">
+                <div class="ptd-canvas" id="canvas">
+                    <img id="canvasBackground" alt="" />
+                    <div id="fieldsLayer" class="ptd-fields-layer"></div>
+                </div>
+                <div class="ptd-canvas-status">
+                    <span id="cursorCoords">X: 0   Y: 0</span>
+                    <span id="saveStatus"></span>
+                </div>
+            </main>
+
+            <aside class="ptd-side ptd-side-right">
+                <h2>خصائص الحقل</h2>
+                <div id="propertiesPanel" class="ptd-properties">
+                    <p class="ptd-hint">اختر حقلاً من اللوحة لعرض خصائصه.</p>
+                </div>
+            </aside>
+
+        </div>
+    </div>
+
+    <script src="@Url.Content("~/Areas/Pos/Scripts/print-template-designer.js")"></script>
+</body>
+</html>

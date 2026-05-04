@@ -1,109 +1,57 @@
 using DevExpress.XtraPrinting;
 using DevExpress.XtraReports.UI;
 using MyERP.Areas.Pos.Models;
+using MyERP.Areas.Pos.Services;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 
 namespace MyERP.Areas.Pos.Reports
 {
-    // Layout target: Areas/Pos/Doc/repCashCustomer.pdf - the Crystal report
-    // opened by VB6 FrmCustCash.BtnPrint_Click -> print_report2 (
-    // SatriahMain Cayshny\New frm\FrmCustCash.frm). Prints dynamic data
-    // ON TOP of a pre-printed card application form. Customer is loaded
-    // strictly by TblCusCsh.Id.
+    // Layout consumer for repCashCustomer.pdf (the pre-printed card form
+    // VB6 FrmCustCash.BtnPrint_Click -> print_report2 prints over).
     //
-    // Coordinate system: hundredths of an inch. A4 portrait = 827 x 1170.
-    // Margins are zeroed; positions are absolute against the physical
-    // paper corner so they can be tweaked row-by-row.
+    // Field positions are now driven by a PrintTemplate JSON config
+    // managed visually through /Pos/PrintTemplate. If no config is
+    // present, BuildDefaultTemplate() returns the calibrated constants
+    // that used to live inline in this class - so existing deployments
+    // keep working unchanged.
     //
-    // CALIBRATION:
-    //   - GLOBAL_Y_SHIFT shifts every printed value vertically. Use it
-    //     to match the printer's physical paper feed.
-    //   - GLOBAL_X_SHIFT shifts every printed value horizontally.
-    //   - Each row has its own constant (TokenCellsY, NationalIdY, etc).
-    //     If only one row is off, change that constant.
-    //   - Cell widths: TokenCellWidth, NationalIdCellWidth, etc.
-    //     Adjust if a digit row drifts across multiple cells.
+    // Coordinate units: hundredths of an inch. A4 portrait = 827 x 1170.
     public class KycCardReport : XtraReport
     {
-        // ----- Tweakable layout constants -----
-        private const float GLOBAL_Y_SHIFT = 0F;
-        private const float GLOBAL_X_SHIFT = 0F;
-
-        // Top "رقم الـ Token" row - 12 alphanumeric cells.
-        private const float TokenCellsX = 75F;
-        private const float TokenCellsY = 205F;
-        private const float TokenCellWidth = 55F;
-        private const float TokenCellHeight = 24F;
-        private const int TokenCellCount = 12;
-
-        // Centered Arabic name row.
-        private const float ArabicNameY = 265F;
-        // Centered English name row.
-        private const float EnglishNameY = 310F;
-        // Centered address row.
-        private const float AddressY = 360F;
-
-        // Right-aligned single fields under "الجنسية" / "تاريخ الميلاد".
-        private const float RightFieldX = 580F;
-        private const float RightFieldWidth = 200F;
-        private const float NationalityY = 450F;
-        private const float BirthDateY = 485F;
-
-        // National ID row - 14 cells.
-        private const float NationalIdX = 95F;
-        private const float NationalIdY = 525F;
-        private const float NationalIdCellWidth = 44F;
-        private const float NationalIdCellHeight = 22F;
-        private const int NationalIdCellCount = 14;
-
-        // Issue date / source / expiry date row.
-        private const float IssueRowY = 580F;
-        // Issue date (right side).
-        private const float IssueDateX = 610F;
-        private const float IssueDateWidth = 130F;
-        // Issuing entity (middle).
-        private const float SourceX = 290F;
-        private const float SourceWidth = 290F;
-        // Expiry date (left side).
-        private const float ExpiryDateX = 45F;
-        private const float ExpiryDateWidth = 130F;
-
-        // Mobile phone row - 11 cells.
-        private const float PhoneX = 130F;
-        private const float PhoneY = 660F;
-        private const float PhoneCellWidth = 50F;
-        private const float PhoneCellHeight = 22F;
-        private const int PhoneCellCount = 11;
-
-        // Bottom "رقم حساب العميل (Token NO.)" row - 12 cells.
-        private const float TokenNoX = 75F;
-        private const float TokenNoY = 925F;
-
-        // "اسم العميل" signature line in الإقرار section.
-        private const float SignatureNameX = 420F;
-        private const float SignatureNameY = 1110F;
-        private const float SignatureNameWidth = 280F;
-
-        // Footer "Arabic long date".
-        private const float FooterDateY = 1150F;
-
-        private readonly Font _smallBold = new Font("Tahoma", 9F, FontStyle.Bold);
-        private readonly Font _normalBold = new Font("Tahoma", 10F, FontStyle.Bold);
-        private readonly Font _cellFont = new Font("Tahoma", 11F, FontStyle.Bold);
-
         private const float A4Width = 827F;
         private const float A4Height = 1170F;
 
+        private readonly PrintTemplate _template;
+        private readonly PosCustomerLookupDto _customer;
+        private readonly DateTime _issuedAt;
+        private readonly Dictionary<string, string> _values;
+
+        // Backwards-compatible constructor: callers that don't supply a
+        // template fall back to the JSON file (if any) and finally to the
+        // default constants via BuildDefaultTemplate().
         public KycCardReport(PosCustomerLookupDto customer, DateTime issuedAt)
+            : this(customer, issuedAt, null)
+        {
+        }
+
+        public KycCardReport(PosCustomerLookupDto customer, DateTime issuedAt,
+            PrintTemplate template)
         {
             if (customer == null)
             {
                 throw new ArgumentNullException("customer");
             }
+
+            _customer = customer;
+            _issuedAt = issuedAt;
+            _template = template ?? LoadStoredTemplate("KycCard") ?? BuildDefaultTemplate();
+            _values = BuildValues(customer, issuedAt);
 
             RightToLeft = RightToLeft.Yes;
             RightToLeftLayout = RightToLeftLayout.Yes;
@@ -112,125 +60,269 @@ namespace MyERP.Areas.Pos.Reports
             Margins = new Margins(0, 0, 0, 0);
 
             var detail = new DetailBand();
-            detail.HeightF = A4Height;
+            detail.HeightF = _template.PageHeight > 0 ? _template.PageHeight : A4Height;
             Bands.Add(detail);
 
-            BuildBody(detail, customer, issuedAt);
+            BuildBody(detail);
         }
 
-        private void BuildBody(DetailBand band, PosCustomerLookupDto customer, DateTime issuedAt)
+        // Used by the designer's "New" button when no JSON file exists
+        // yet, and as the print-time fallback if /App_Data is empty.
+        public static PrintTemplate BuildDefaultTemplate()
         {
-            string token = AlphaNumeric(FirstNonEmpty(customer.CardNo, customer.CardId, customer.VisaNumber));
-            string nationalId = OnlyDigits(customer.Tet_NumPoket);
-            string phone = OnlyDigits(FirstNonEmpty(customer.Phone2, customer.Phone, customer.Tel));
-            string birthDate = FormatDate(customer.BirthDate);
-            string cardStart = FormatDate(customer.CardDate);
-            string cardEnd = FormatDate(customer.CardEndDate);
-            string arabicName = FirstNonEmpty(JoinArabic(customer), customer.CustomerName, customer.Name);
-            string englishName = JoinEnglish(customer);
-            string address = FirstNonEmpty(customer.Address, customer.MailAdress);
-            string nationality = ResolveNationality(customer.Nationality);
-            string source = FirstNonEmpty(customer.CardSource, customer.BranchName);
-            string footerDate = FormatArabicLongDate(issuedAt);
-
-            DrawCells(band, token, TokenCellCount,
-                TokenCellsX, TokenCellsY, TokenCellWidth, TokenCellHeight);
-
-            DrawCenteredText(band, arabicName, ArabicNameY, _normalBold, RightToLeft.Yes);
-            DrawCenteredText(band, englishName, EnglishNameY, _normalBold, RightToLeft.No);
-            DrawCenteredText(band, address, AddressY, _smallBold, RightToLeft.No);
-
-            DrawRightField(band, nationality, NationalityY, RightToLeft.Yes);
-            DrawRightField(band, birthDate, BirthDateY, RightToLeft.No);
-
-            DrawCells(band, nationalId, NationalIdCellCount,
-                NationalIdX, NationalIdY, NationalIdCellWidth, NationalIdCellHeight);
-
-            DrawText(band, cardStart, IssueDateX, IssueRowY, IssueDateWidth, 20F,
-                TextAlignment.MiddleRight, RightToLeft.No);
-            DrawText(band, source, SourceX, IssueRowY, SourceWidth, 20F,
-                TextAlignment.MiddleCenter, RightToLeft.Yes);
-            DrawText(band, cardEnd, ExpiryDateX, IssueRowY, ExpiryDateWidth, 20F,
-                TextAlignment.MiddleLeft, RightToLeft.No);
-
-            DrawCells(band, phone, PhoneCellCount,
-                PhoneX, PhoneY, PhoneCellWidth, PhoneCellHeight);
-
-            DrawCells(band, token, TokenCellCount,
-                TokenNoX, TokenNoY, TokenCellWidth, TokenCellHeight);
-
-            DrawText(band, arabicName, SignatureNameX, SignatureNameY,
-                SignatureNameWidth, 20F, TextAlignment.MiddleCenter, RightToLeft.Yes);
-
-            DrawText(band, footerDate, 0F, FooterDateY, A4Width, 20F,
-                TextAlignment.MiddleCenter, RightToLeft.Yes);
-        }
-
-        private void DrawText(DetailBand band, string text, float x, float y,
-            float width, float height, TextAlignment alignment, RightToLeft rtl)
-        {
-            band.Controls.Add(new XRLabel
+            return new PrintTemplate
             {
-                BoundsF = new RectangleF(x + GLOBAL_X_SHIFT, y + GLOBAL_Y_SHIFT, width, height),
-                Text = text,
-                Font = _smallBold,
-                TextAlignment = alignment,
-                RightToLeft = rtl,
-                WordWrap = false
-            });
+                Name = "KycCard",
+                PrintBackground = false,
+                PageWidth = A4Width,
+                PageHeight = A4Height,
+                ImageWidth = A4Width,
+                ImageHeight = A4Height,
+                GlobalXShift = 0F,
+                GlobalYShift = 0F,
+                Fields = new List<PrintTemplateField>
+                {
+                    Cells("Token", "رقم Token (فوق)", 75F, 205F, 55F, 24F, 12),
+                    Text("ArabicName", "الاسم بالعربي", 0F, 265F, A4Width, 22F,
+                        true, "Center", "RTL", 10F),
+                    Text("EnglishName", "الاسم بالإنجليزي", 0F, 310F, A4Width, 22F,
+                        true, "Center", "LTR", 10F),
+                    Text("Address", "العنوان", 0F, 360F, A4Width, 22F,
+                        true, "Center", "LTR", 9F),
+                    Text("Nationality", "الجنسية", 580F, 450F, 200F, 20F,
+                        true, "Right", "RTL", 9F),
+                    Text("BirthDate", "تاريخ الميلاد", 580F, 485F, 200F, 20F,
+                        true, "Right", "LTR", 9F),
+                    Cells("NationalId", "الرقم القومي", 95F, 525F, 44F, 22F, 14),
+                    Text("IssueDate", "تاريخ الإصدار", 610F, 580F, 130F, 20F,
+                        true, "Right", "LTR", 9F),
+                    Text("Source", "جهة الإصدار", 290F, 580F, 290F, 20F,
+                        true, "Center", "RTL", 9F),
+                    Text("ExpiryDate", "تاريخ الانتهاء", 45F, 580F, 130F, 20F,
+                        true, "Left", "LTR", 9F),
+                    Cells("Phone", "رقم المحمول", 130F, 660F, 50F, 22F, 11),
+                    Cells("TokenNo", "Token NO. (تحت)", 75F, 925F, 55F, 24F, 12),
+                    Text("SignatureName", "اسم العميل (توقيع)", 420F, 1110F, 280F, 20F,
+                        true, "Center", "RTL", 9F),
+                    Text("FooterDate", "التاريخ", 0F, 1150F, A4Width, 20F,
+                        true, "Center", "RTL", 9F)
+                }
+            };
         }
 
-        private void DrawCenteredText(DetailBand band, string text, float y,
-            Font font, RightToLeft rtl)
+        private static PrintTemplateField Cells(string key, string label,
+            float x, float y, float cellWidth, float cellHeight, int count)
         {
-            band.Controls.Add(new XRLabel
+            return new PrintTemplateField
             {
-                BoundsF = new RectangleF(GLOBAL_X_SHIFT, y + GLOBAL_Y_SHIFT, A4Width, 22F),
-                Text = text,
-                Font = font,
-                TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = rtl,
-                WordWrap = false
-            });
+                FieldKey = key,
+                Label = label,
+                X = x,
+                Y = y,
+                Width = cellWidth * count,
+                Height = cellHeight,
+                FontName = "Tahoma",
+                FontSize = 11F,
+                Bold = true,
+                Alignment = "Center",
+                Direction = "LTR",
+                IsCellBased = true,
+                CellCount = count,
+                CellWidth = cellWidth,
+                CharacterSpacing = 0F
+            };
         }
 
-        private void DrawRightField(DetailBand band, string text, float y, RightToLeft rtl)
+        private static PrintTemplateField Text(string key, string label,
+            float x, float y, float w, float h, bool bold, string alignment,
+            string direction, float fontSize)
         {
-            band.Controls.Add(new XRLabel
+            return new PrintTemplateField
             {
-                BoundsF = new RectangleF(RightFieldX + GLOBAL_X_SHIFT, y + GLOBAL_Y_SHIFT,
-                    RightFieldWidth, 20F),
-                Text = text,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = rtl,
-                WordWrap = false
-            });
+                FieldKey = key,
+                Label = label,
+                X = x,
+                Y = y,
+                Width = w,
+                Height = h,
+                FontName = "Tahoma",
+                FontSize = fontSize,
+                Bold = bold,
+                Alignment = alignment,
+                Direction = direction,
+                IsCellBased = false,
+                CellCount = 0,
+                CellWidth = 0F,
+                CharacterSpacing = 0F
+            };
         }
 
-        private void DrawCells(DetailBand band, string value, int cellCount,
-            float startX, float y, float cellWidth, float cellHeight)
+        private static PrintTemplate LoadStoredTemplate(string name)
         {
-            string padded = (value ?? string.Empty).PadLeft(cellCount, ' ');
-            if (padded.Length > cellCount)
+            try
             {
-                padded = padded.Substring(padded.Length - cellCount);
+                return new PrintTemplateService().Load(name);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private void BuildBody(DetailBand band)
+        {
+            if (_template.PrintBackground && !string.IsNullOrWhiteSpace(_template.BackgroundFileName))
+            {
+                var bg = LoadBackgroundImage(_template.BackgroundFileName);
+                if (bg != null)
+                {
+                    band.Controls.Add(new XRPictureBox
+                    {
+                        BoundsF = new RectangleF(0F, 0F,
+                            _template.PageWidth > 0 ? _template.PageWidth : A4Width,
+                            _template.PageHeight > 0 ? _template.PageHeight : A4Height),
+                        Image = bg,
+                        Sizing = ImageSizeMode.StretchImage
+                    });
+                }
             }
 
-            for (int i = 0; i < cellCount; i++)
+            foreach (var field in _template.Fields)
+            {
+                if (field == null || string.IsNullOrWhiteSpace(field.FieldKey))
+                {
+                    continue;
+                }
+
+                string value;
+                _values.TryGetValue(field.FieldKey, out value);
+                value = value ?? string.Empty;
+
+                if (field.IsCellBased && field.CellCount > 0 && field.CellWidth > 0)
+                {
+                    DrawCells(band, value, field);
+                }
+                else
+                {
+                    DrawText(band, value, field);
+                }
+            }
+        }
+
+        private void DrawText(DetailBand band, string value, PrintTemplateField field)
+        {
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(
+                    field.X + _template.GlobalXShift,
+                    field.Y + _template.GlobalYShift,
+                    field.Width,
+                    field.Height),
+                Text = value,
+                Font = ResolveFont(field),
+                TextAlignment = ResolveAlignment(field.Alignment),
+                RightToLeft = ResolveRtl(field.Direction),
+                WordWrap = false
+            });
+        }
+
+        private void DrawCells(DetailBand band, string value, PrintTemplateField field)
+        {
+            string content = value ?? string.Empty;
+            string padded = content.PadLeft(field.CellCount, ' ');
+            if (padded.Length > field.CellCount)
+            {
+                padded = padded.Substring(padded.Length - field.CellCount);
+            }
+
+            float spacing = field.CharacterSpacing;
+            for (int i = 0; i < field.CellCount; i++)
             {
                 char ch = padded[i];
                 band.Controls.Add(new XRLabel
                 {
                     BoundsF = new RectangleF(
-                        startX + i * cellWidth + GLOBAL_X_SHIFT,
-                        y + GLOBAL_Y_SHIFT,
-                        cellWidth, cellHeight),
+                        field.X + i * (field.CellWidth + spacing) + _template.GlobalXShift,
+                        field.Y + _template.GlobalYShift,
+                        field.CellWidth,
+                        field.Height),
                     Text = ch == ' ' ? string.Empty : ch.ToString(CultureInfo.InvariantCulture),
-                    Font = _cellFont,
+                    Font = ResolveFont(field),
                     TextAlignment = TextAlignment.MiddleCenter
                 });
             }
+        }
+
+        private Font ResolveFont(PrintTemplateField field)
+        {
+            var name = string.IsNullOrWhiteSpace(field.FontName) ? "Tahoma" : field.FontName;
+            var size = field.FontSize > 0 ? field.FontSize : 10F;
+            return new Font(name, size, field.Bold ? FontStyle.Bold : FontStyle.Regular);
+        }
+
+        private static TextAlignment ResolveAlignment(string alignment)
+        {
+            switch ((alignment ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "left": return TextAlignment.MiddleLeft;
+                case "right": return TextAlignment.MiddleRight;
+                default: return TextAlignment.MiddleCenter;
+            }
+        }
+
+        private static RightToLeft ResolveRtl(string direction)
+        {
+            return string.Equals(direction, "RTL", StringComparison.OrdinalIgnoreCase)
+                ? RightToLeft.Yes
+                : RightToLeft.No;
+        }
+
+        private static Image LoadBackgroundImage(string fileName)
+        {
+            try
+            {
+                var service = new PrintTemplateService();
+                var bytes = service.LoadBackground(fileName);
+                if (bytes == null)
+                {
+                    return null;
+                }
+                using (var ms = new MemoryStream(bytes))
+                {
+                    return Image.FromStream(ms);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Dictionary<string, string> BuildValues(
+            PosCustomerLookupDto customer, DateTime issuedAt)
+        {
+            string token = AlphaNumeric(FirstNonEmpty(
+                customer.CardNo, customer.CardId, customer.VisaNumber));
+            string nationalId = OnlyDigits(customer.Tet_NumPoket);
+            string phone = OnlyDigits(FirstNonEmpty(customer.Phone2, customer.Phone, customer.Tel));
+
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Token", token },
+                { "TokenNo", token },
+                { "ArabicName", FirstNonEmpty(JoinArabic(customer), customer.CustomerName, customer.Name) },
+                { "EnglishName", JoinEnglish(customer) },
+                { "Address", FirstNonEmpty(customer.Address, customer.MailAdress) },
+                { "Nationality", ResolveNationality(customer.Nationality) },
+                { "BirthDate", FormatDate(customer.BirthDate) },
+                { "NationalId", nationalId },
+                { "IssueDate", FormatDate(customer.CardDate) },
+                { "Source", FirstNonEmpty(customer.CardSource, customer.BranchName) },
+                { "ExpiryDate", FormatDate(customer.CardEndDate) },
+                { "Phone", phone },
+                { "SignatureName", FirstNonEmpty(JoinArabic(customer), customer.CustomerName, customer.Name) },
+                { "FooterDate", FormatArabicLongDate(issuedAt) }
+            };
         }
 
         private static string OnlyDigits(string value)
