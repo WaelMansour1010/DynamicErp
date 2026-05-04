@@ -14,6 +14,9 @@ namespace MyERP.Areas.Pos.Data
     {
         public const string WebInvoiceSourceMarker = "WEB_POS";
 
+        private static readonly object PosSystemErrorLogEnsureLock = new object();
+        private static bool _posSystemErrorLogEnsured;
+
         private readonly string _connectionString;
 
         public PosSqlRepository()
@@ -2491,10 +2494,11 @@ ORDER BY Transaction_ID DESC;";
             };
         }
 
-        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term)
+        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType)
         {
             var invoices = new List<PosTodayInvoiceDto>();
             var searchTerm = (term ?? string.Empty).Trim();
+            var operation = NormalizeInvoiceOperationType(operationType);
             var hasSearchTerm = !string.IsNullOrWhiteSpace(searchTerm);
             const string sql = @"
 SELECT TOP (100)
@@ -2550,6 +2554,17 @@ WHERE t.Transaction_Type = 21
             AND ISNULL(d.ItemSerial, N'') LIKE N'%' + @term + N'%'
       )
   )
+  AND
+  (
+      @operationType = N''
+      OR (@operationType = N'cash-in'
+          AND ISNULL(t.TrafficViolations, 0) = 0
+          AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NULL
+          AND ISNULL(t.IsCashOut, 0) = 0)
+      OR (@operationType = N'cash-out' AND ISNULL(t.IsCashOut, 0) = 1)
+      OR (@operationType = N'card' AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL)
+      OR (@operationType = N'violations' AND ISNULL(t.TrafficViolations, 0) = 1)
+  )
 ORDER BY t.Transaction_ID DESC;";
 
             using (var connection = new SqlConnection(_connectionString))
@@ -2560,6 +2575,7 @@ ORDER BY t.Transaction_ID DESC;";
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
                 command.Parameters.Add("@allowExtendedSearch", SqlDbType.Bit).Value = hasSearchTerm && (canChangeDefaults || canEditInvoice);
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = searchTerm;
+                command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -2581,6 +2597,124 @@ ORDER BY t.Transaction_ID DESC;";
             }
 
             return invoices;
+        }
+
+        public void InsertPosSystemErrorLog(PosSystemErrorLogWriteRequest log)
+        {
+            EnsurePosSystemErrorLogTable();
+            const string sql = @"
+INSERT INTO dbo.POS_SystemErrorLog
+(
+    CreatedAt, Severity, Status, UserId, UserName, BranchId, ScreenName, ActionName,
+    OperationType, TransactionId, ErrorMessage, StackTrace, RequestSummary, IpAddress, UserAgent
+)
+VALUES
+(
+    GETDATE(), @Severity, @Status, @UserId, @UserName, @BranchId, @ScreenName, @ActionName,
+    @OperationType, @TransactionId, @ErrorMessage, @StackTrace, @RequestSummary, @IpAddress, @UserAgent
+);";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@Severity", SqlDbType.NVarChar, 20, log == null ? null : log.Severity);
+                AddString(command, "@Status", SqlDbType.NVarChar, 40, log == null ? null : log.Status);
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = log == null || !log.UserId.HasValue ? (object)DBNull.Value : log.UserId.Value;
+                AddString(command, "@UserName", SqlDbType.NVarChar, 100, log == null ? null : log.UserName);
+                command.Parameters.Add("@BranchId", SqlDbType.Int).Value = log == null || !log.BranchId.HasValue ? (object)DBNull.Value : log.BranchId.Value;
+                AddString(command, "@ScreenName", SqlDbType.NVarChar, 100, log == null ? null : log.ScreenName);
+                AddString(command, "@ActionName", SqlDbType.NVarChar, 100, log == null ? null : log.ActionName);
+                AddString(command, "@OperationType", SqlDbType.NVarChar, 50, log == null ? null : log.OperationType);
+                command.Parameters.Add("@TransactionId", SqlDbType.Int).Value = log == null || !log.TransactionId.HasValue ? (object)DBNull.Value : log.TransactionId.Value;
+                AddString(command, "@ErrorMessage", SqlDbType.NVarChar, 2000, log == null ? null : log.ErrorMessage);
+                AddString(command, "@StackTrace", SqlDbType.NVarChar, -1, log == null ? null : log.StackTrace);
+                AddString(command, "@RequestSummary", SqlDbType.NVarChar, -1, log == null ? null : log.RequestSummary);
+                AddString(command, "@IpAddress", SqlDbType.NVarChar, 64, log == null ? null : log.IpAddress);
+                AddString(command, "@UserAgent", SqlDbType.NVarChar, 512, log == null ? null : log.UserAgent);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public PosSystemErrorLogSearchResult SearchPosSystemErrorLogs(PosSystemErrorLogSearchRequest request)
+        {
+            EnsurePosSystemErrorLogTable();
+            request = request ?? new PosSystemErrorLogSearchRequest();
+            var pageSize = request.PageSize <= 0 || request.PageSize > 500 ? 200 : request.PageSize;
+            var items = new List<PosSystemErrorLogEntry>();
+            const string sql = @"
+SELECT TOP (@pageSize)
+    l.Id,
+    l.CreatedAt,
+    l.Severity,
+    l.Status,
+    l.UserId,
+    l.UserName,
+    l.BranchId,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), l.BranchId)) AS BranchName,
+    l.ScreenName,
+    l.ActionName,
+    l.OperationType,
+    l.TransactionId,
+    l.ErrorMessage,
+    l.RequestSummary,
+    l.IpAddress,
+    l.UserAgent
+FROM dbo.POS_SystemErrorLog l
+LEFT JOIN dbo.TblBranchesData b ON b.branch_id = l.BranchId
+WHERE (@fromDate IS NULL OR l.CreatedAt >= @fromDate)
+  AND (@toDate IS NULL OR l.CreatedAt < DATEADD(DAY, 1, @toDate))
+  AND (@userId IS NULL OR l.UserId = @userId)
+  AND (@branchId IS NULL OR l.BranchId = @branchId)
+  AND (@userKeyword = N'' OR ISNULL(l.UserName, N'') LIKE N'%' + @userKeyword + N'%' OR CONVERT(NVARCHAR(20), ISNULL(l.UserId, 0)) LIKE N'%' + @userKeyword + N'%')
+  AND (@screenAction = N'' OR ISNULL(l.ScreenName, N'') LIKE N'%' + @screenAction + N'%' OR ISNULL(l.ActionName, N'') LIKE N'%' + @screenAction + N'%')
+  AND (@operationType = N'' OR ISNULL(l.OperationType, N'') = @operationType)
+  AND (@severity = N'' OR ISNULL(l.Severity, N'') = @severity)
+  AND (@keyword = N'' OR ISNULL(l.ErrorMessage, N'') LIKE N'%' + @keyword + N'%' OR ISNULL(l.RequestSummary, N'') LIKE N'%' + @keyword + N'%')
+ORDER BY l.CreatedAt DESC, l.Id DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@pageSize", SqlDbType.Int).Value = pageSize;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = request.UserId.HasValue ? (object)request.UserId.Value : DBNull.Value;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = request.BranchId.HasValue ? (object)request.BranchId.Value : DBNull.Value;
+                command.Parameters.Add("@userKeyword", SqlDbType.NVarChar, 100).Value = (request.UserKeyword ?? string.Empty).Trim();
+                command.Parameters.Add("@screenAction", SqlDbType.NVarChar, 100).Value = (request.ScreenAction ?? string.Empty).Trim();
+                command.Parameters.Add("@operationType", SqlDbType.NVarChar, 50).Value = NormalizeInvoiceOperationType(request.OperationType);
+                command.Parameters.Add("@severity", SqlDbType.NVarChar, 20).Value = (request.Severity ?? string.Empty).Trim();
+                command.Parameters.Add("@keyword", SqlDbType.NVarChar, 200).Value = (request.Keyword ?? string.Empty).Trim();
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(new PosSystemErrorLogEntry
+                        {
+                            Id = ReadInt(reader, "Id").GetValueOrDefault(),
+                            CreatedAt = ReadDateTime(reader, "CreatedAt").GetValueOrDefault(),
+                            Severity = ReadString(reader, "Severity"),
+                            Status = ReadString(reader, "Status"),
+                            UserId = ReadInt(reader, "UserId"),
+                            UserName = ReadString(reader, "UserName"),
+                            BranchId = ReadInt(reader, "BranchId"),
+                            BranchName = ReadString(reader, "BranchName"),
+                            ScreenName = ReadString(reader, "ScreenName"),
+                            ActionName = ReadString(reader, "ActionName"),
+                            OperationType = ReadString(reader, "OperationType"),
+                            TransactionId = ReadInt(reader, "TransactionId"),
+                            ErrorMessage = ReadString(reader, "ErrorMessage"),
+                            RequestSummary = ReadString(reader, "RequestSummary"),
+                            IpAddress = ReadString(reader, "IpAddress"),
+                            UserAgent = ReadString(reader, "UserAgent")
+                        });
+                    }
+                }
+            }
+
+            return new PosSystemErrorLogSearchResult { Items = items, Count = items.Count };
         }
 
         public PosTodaySummaryDto GetTodaySummary(int userId, int? branchId, bool canChangeDefaults)
@@ -5088,6 +5222,65 @@ END";
             }
         }
 
+        private void EnsurePosSystemErrorLogTable()
+        {
+            if (_posSystemErrorLogEnsured)
+            {
+                return;
+            }
+
+            lock (PosSystemErrorLogEnsureLock)
+            {
+                if (_posSystemErrorLogEnsured)
+                {
+                    return;
+                }
+
+            const string sql = @"
+IF OBJECT_ID(N'dbo.POS_SystemErrorLog', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.POS_SystemErrorLog
+    (
+        Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_POS_SystemErrorLog PRIMARY KEY,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_SystemErrorLog_CreatedAt DEFAULT (GETDATE()),
+        Severity NVARCHAR(20) NULL,
+        Status NVARCHAR(40) NULL,
+        UserId INT NULL,
+        UserName NVARCHAR(100) NULL,
+        BranchId INT NULL,
+        ScreenName NVARCHAR(100) NULL,
+        ActionName NVARCHAR(100) NULL,
+        OperationType NVARCHAR(50) NULL,
+        TransactionId INT NULL,
+        ErrorMessage NVARCHAR(2000) NULL,
+        StackTrace NVARCHAR(MAX) NULL,
+        RequestSummary NVARCHAR(MAX) NULL,
+        IpAddress NVARCHAR(64) NULL,
+        UserAgent NVARCHAR(512) NULL
+    );
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SystemErrorLog_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SystemErrorLog'))
+BEGIN
+    CREATE INDEX IX_POS_SystemErrorLog_CreatedAt ON dbo.POS_SystemErrorLog(CreatedAt DESC);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SystemErrorLog_UserBranch' AND object_id = OBJECT_ID(N'dbo.POS_SystemErrorLog'))
+BEGIN
+    CREATE INDEX IX_POS_SystemErrorLog_UserBranch ON dbo.POS_SystemErrorLog(UserId, BranchId, CreatedAt DESC);
+END;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+
+                _posSystemErrorLogEnsured = true;
+            }
+        }
+
         private void EnsurePosUserCategoryColumn()
         {
             const string sql = @"
@@ -5224,6 +5417,20 @@ WHERE Transaction_ID = @transactionId;";
                 case "cash-in":
                 default:
                     return "ISNULL(t.IsCashOut, 0) = 0 AND (ISNULL(t.isRecharg, 0) = 1 OR ISNULL(t.RechargeValue, 0) > 0) AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NULL AND ISNULL(i.TrafficViolations, 0) = 0";
+            }
+        }
+
+        private static string NormalizeInvoiceOperationType(string operationType)
+        {
+            switch ((operationType ?? string.Empty).Trim().ToLowerInvariant())
+            {
+                case "cash-in":
+                case "cash-out":
+                case "card":
+                case "violations":
+                    return operationType.Trim().ToLowerInvariant();
+                default:
+                    return string.Empty;
             }
         }
 

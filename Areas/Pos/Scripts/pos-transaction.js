@@ -2,10 +2,10 @@
     "use strict";
 
     var modes = {
-        "cash-in": { label: "كاش إن", isCashOut: false, isPOS: false, colorClass: "pos-mode-cash-in" },
-        "cash-out": { label: "كاش أوت", isCashOut: true, isPOS: false, colorClass: "pos-mode-cash-out" },
-        "card": { label: "كارت كيشني", isCashOut: false, isPOS: true, colorClass: "pos-mode-card" },
-        "violations": { label: "مخالفات", isCashOut: false, isPOS: false, colorClass: "pos-mode-violations" }
+        "cash-in": { label: "كاش إن", operationLabel: "عملية شحن كيشني", isCashOut: false, isPOS: false, colorClass: "pos-mode-cash-in" },
+        "cash-out": { label: "كاش أوت", operationLabel: "عملية كاش أوت", isCashOut: true, isPOS: false, colorClass: "pos-mode-cash-out" },
+        "card": { label: "كارت كيشني", operationLabel: "عملية إصدار كارت كيشني", isCashOut: false, isPOS: true, colorClass: "pos-mode-card" },
+        "violations": { label: "مخالفات", operationLabel: "عملية سداد مخالفات", isCashOut: false, isPOS: false, colorClass: "pos-mode-violations" }
     };
 
     var itemLookup = {};
@@ -13,6 +13,7 @@
     var customerLookupTimer = null;
     var kycUnusedLookupTimer = null;
     var commissionTimer = null;
+    var amountCommitTimer = null;
     var todayInvoicesTimer = null;
     var todayInvoicesCache = [];
     var currentContext = null;
@@ -23,6 +24,9 @@
     var commissionsReady = false;
     var commissionCalculationPending = false;
     var commissionPreviewSequence = 0;
+    var commissionPreviewXhr = null;
+    var commissionPreviewUseOverlay = true;
+    var amountEnterAdvancePending = false;
     var lastCommissionKey = "";
     var lastCashOutMachineWithdrawalAmount = 0;
     var lastCashOutBankMachineCommission = 0;
@@ -40,6 +44,7 @@
     var uxLastActionAt = 0;
     var uxCurrentStep = "service";
     var uxDebounceMs = 200;
+    var amountCommitDelayMs = 400;
 
     function byId(id) { return document.getElementById(id); }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
@@ -235,11 +240,12 @@
             callback(0, { success: false, message: "تعذر الاتصال بالسيرفر", technicalMessage: "Network error" });
         };
         xhr.send(body ? JSON.stringify(body) : null);
+        return xhr;
     }
 
     function requestJsonWithLoading(method, url, body, callback, message) {
         uxBeginLoading(message || "جاري تحميل البيانات...");
-        requestJson(method, url, body, function (status, data) {
+        return requestJson(method, url, body, function (status, data) {
             uxEndLoading();
             callback(status, data);
         });
@@ -360,12 +366,239 @@
         return (currentContext && currentContext.CanAdd === false) || (!currentContext && getPageValue("data-can-save") === "false");
     }
 
+    function uxBeginLoading(message) {
+        uxLoadingCount++;
+        uxSetOverlay(true, message || "جاري تحميل البيانات...");
+        uxApplyFlow();
+    }
+
+    function uxEndLoading() {
+        uxLoadingCount = Math.max(uxLoadingCount - 1, 0);
+        if (uxLoadingCount === 0 && !uxSaving) {
+            uxSetOverlay(false);
+        }
+        uxApplyFlow();
+    }
+
+    function uxSetOverlay(visible, message) {
+        var page = byId("posPage");
+        var overlay = byId("posLoadingOverlay");
+        var text = byId("posLoadingText");
+        if (!page || !overlay) { return; }
+        if (text && message) { text.innerText = message; }
+        page.classList.toggle("is-loading", visible && !uxSaving);
+        page.classList.toggle("is-saving", uxSaving);
+        overlay.setAttribute("aria-hidden", visible || uxSaving ? "false" : "true");
+    }
+
+    function uxIsBusy() {
+        return uxLoadingCount > 0 || uxSaving;
+    }
+
+    function uxDebounced() {
+        var now = Date.now ? Date.now() : new Date().getTime();
+        if (now - uxLastActionAt < uxDebounceMs) { return true; }
+        uxLastActionAt = now;
+        return false;
+    }
+
+    function uxShowGuide(message) {
+        var text = message || "أكمل البيانات أولاً";
+        var validation = byId("validationSummary");
+        var saveButton = byId("saveBtn");
+        if (validation) {
+            validation.innerText = text;
+            validation.classList.remove("is-error");
+        }
+        if (saveButton) {
+            saveButton.title = text;
+        }
+    }
+
+    function uxIsServiceReady() {
+        var mode = byId("transactionType").value;
+        if (mode === "card") {
+            return !!byId("serviceItemId").value && hasItemRows() && hasValidItemSelection();
+        }
+        if (mode === "violations") {
+            return !!byId("serviceItemId").value;
+        }
+        return !!byId("serviceItemId").value && hasItemRows() && hasValidItemSelection();
+    }
+
+    function uxIsValueReady() {
+        var mode = byId("transactionType").value;
+        if (!uxIsServiceReady()) { return false; }
+        if (mode === "card") { return numberValue("netValue") > 0; }
+        if (mode === "violations") { return numberValue("violationValue") > 0 && numberValue("netValue") > 0; }
+        return numberValue("rechargeValue") > 0 && numberValue("netValue") > 0 && !commissionCalculationPending;
+    }
+
+    function uxIsPaymentReady() {
+        if (!uxIsValueReady()) { return false; }
+        if (!byId("paymentType").value || !byId("boxId").value) { return false; }
+        return numberValue("remainValue") <= 0;
+    }
+
+    function uxHasRequiredCustomerData() {
+        var mode = byId("transactionType").value;
+        if (!byId("cashCustomerPhone").value.trim()) { return false; }
+        if (!byId("cashCustomerName").value.trim()) { return false; }
+        if (!byId("ipn").value.trim()) { return false; }
+        if (!byId("manualNo").value.trim()) { return false; }
+        if (mode === "card" && (!byId("visaNumber").value.trim() || !byId("cashCustomerId").value)) { return false; }
+        if (mode === "violations" && !byId("violationWalletNo").value.trim()) { return false; }
+        return true;
+    }
+
+    function uxContextAllowsSave() {
+        var canEditLoadedInvoice = reviewMode && currentContext
+            && (currentContext.CanEditInvoice === true || (loadedInvoiceCreatedUserId && loadedInvoiceCreatedUserId === currentContext.UserId && currentContext.CanAdd === true));
+        return !(reviewMode && !canEditLoadedInvoice) && !saveDisabledByContext(byId("transactionType").value);
+    }
+
+    function uxIsSaveReady() {
+        return !uxIsBusy()
+            && uxIsPaymentReady()
+            && uxHasRequiredCustomerData()
+            && uxContextAllowsSave()
+            && commissionsReady
+            && !commissionCalculationPending;
+    }
+
+    function uxResolveStep() {
+        if (!uxIsServiceReady()) { return "service"; }
+        if (!uxIsValueReady()) { return "value"; }
+        if (!uxIsPaymentReady()) { return "payment"; }
+        return "save";
+    }
+
+    function uxStepRank(step) {
+        if (step === "service") { return 0; }
+        if (step === "value") { return 1; }
+        if (step === "payment") { return 2; }
+        return 3;
+    }
+
+    function uxCanEnterStep(step) {
+        if (step === "service") { return true; }
+        if (step === "value") { return uxIsServiceReady(); }
+        if (step === "payment") { return uxIsValueReady(); }
+        if (step === "save") { return uxIsPaymentReady(); }
+        return false;
+    }
+
+    function uxPaintWorkflow() {
+        var currentRank = uxStepRank(uxCurrentStep);
+        var steps = document.querySelectorAll(".workflow-step");
+        for (var i = 0; i < steps.length; i++) {
+            var stepName = steps[i].getAttribute("data-step");
+            var rank = uxStepRank(stepName);
+            var complete = rank < currentRank;
+            var current = rank === currentRank;
+            var allowed = uxCanEnterStep(stepName) && !uxIsBusy();
+            steps[i].classList.toggle("is-complete", rank < currentRank);
+            steps[i].classList.toggle("is-current", rank === currentRank);
+            steps[i].classList.toggle("is-pending", rank > currentRank);
+            steps[i].disabled = !allowed;
+            steps[i].setAttribute("aria-current", current ? "step" : "false");
+            steps[i].setAttribute("aria-disabled", allowed ? "false" : "true");
+            var circle = steps[i].querySelector(".workflow-step-circle");
+            if (circle) { circle.innerText = complete ? "✓" : String(rank + 1); }
+        }
+    }
+
+    function uxSetControlState(selector, disabled) {
+        var controls = document.querySelectorAll(selector);
+        for (var i = 0; i < controls.length; i++) {
+            controls[i].disabled = disabled;
+        }
+    }
+
+    function uxApplyFlow() {
+        var serviceReady = uxIsServiceReady();
+        var valueReady = uxIsValueReady();
+        var paymentReady = uxIsPaymentReady();
+        var busy = uxIsBusy();
+
+        uxCurrentStep = uxResolveStep();
+        uxPaintWorkflow();
+
+        byId("amountPanel").classList.toggle("pos-step-locked", !serviceReady || busy);
+        byId("bottomSummaryPanel").classList.toggle("pos-step-locked", !valueReady || busy);
+        var paymentPanel = document.querySelector(".payment-panel");
+        var canChangePayment = currentContext && currentContext.CanChangeDefaults === true;
+        if (paymentPanel) { paymentPanel.classList.toggle("pos-step-locked", !valueReady || busy); }
+
+        uxSetControlState("#rechargeValue, #violationValue, #violationWalletNo, input[name='violationPayType']", !serviceReady || busy);
+        uxSetControlState("#paymentType", !valueReady || busy || !canChangePayment);
+        uxSetControlState("#paymentCardNo, #payedValue", !valueReady || busy);
+        uxSetControlState(".qty, .price, .vat, .item-name, .remove-row, #addItemBtn", busy);
+
+        var saveButton = byId("saveBtn");
+        if (saveButton) {
+            var ready = uxIsSaveReady();
+            saveButton.disabled = !ready;
+            saveButton.title = ready ? "" : "أكمل البيانات أولاً";
+            saveButton.classList.toggle("is-saving", uxSaving);
+            saveButton.innerText = uxSaving ? "جاري الحفظ..." : "حفظ";
+        }
+    }
+
+    function uxFocusStep(step) {
+        var target = null;
+        if (step === "service") {
+            target = byId("serviceItemId");
+        } else if (step === "value") {
+            target = byId("transactionType").value === "violations" ? byId("violationValue") : byId("rechargeValue");
+        } else if (step === "payment") {
+            target = byId("paymentType");
+        } else {
+            target = byId("saveBtn");
+        }
+        if (target && !target.disabled && target.focus) { target.focus(); }
+    }
+
+    function uxHandleEnter(event) {
+        if (!event || event.key !== "Enter") { return false; }
+        var target = event.target;
+        if (target && (target.tagName === "TEXTAREA" || target.closest(".pos-modal"))) { return false; }
+        event.preventDefault();
+        if (uxIsBusy() || uxDebounced()) {
+            uxShowGuide();
+            return true;
+        }
+
+        uxApplyFlow();
+        if (uxCurrentStep === "save" && uxIsSaveReady()) {
+            byId("posForm").requestSubmit ? byId("posForm").requestSubmit() : byId("saveBtn").click();
+            return true;
+        }
+
+        uxShowGuide();
+        uxFocusStep(uxCurrentStep);
+        return true;
+    }
+
+    function uxHandleSaveShortcut(event) {
+        var isF9 = event.key === "F9";
+        var isCtrlS = (event.ctrlKey || event.metaKey) && (event.key || "").toLowerCase() === "s";
+        if (!isF9 && !isCtrlS) { return; }
+        event.preventDefault();
+        if (uxIsSaveReady() && !uxDebounced()) {
+            byId("posForm").requestSubmit ? byId("posForm").requestSubmit() : byId("saveBtn").click();
+            return;
+        }
+        uxShowGuide();
+        uxFocusStep(uxCurrentStep);
+    }
+
     function updateSaveButtonState() {
         var button = byId("saveBtn");
         if (!button) { return; }
-        var canEditLoadedInvoice = reviewMode && currentContext
-            && (currentContext.CanEditInvoice === true || (loadedInvoiceCreatedUserId && loadedInvoiceCreatedUserId === currentContext.UserId && currentContext.CanAdd === true));
-        button.disabled = (reviewMode && !canEditLoadedInvoice) || saveDisabledByContext(byId("transactionType").value) || !commissionsReady || commissionCalculationPending;
+        button.disabled = !uxIsSaveReady();
+        button.title = button.disabled ? "أكمل البيانات أولاً" : "";
+        uxApplyFlow();
     }
 
     function setCommissionStatus(message, isError) {
@@ -423,6 +656,9 @@
         byId("isCashOut").value = config.isCashOut ? "true" : "false";
         byId("isPOS").value = config.isPOS ? "true" : "false";
         byId("posModeLabel").innerText = config.label;
+        if (byId("workflowOperationTitle")) {
+            byId("workflowOperationTitle").innerText = config.operationLabel || ("عملية " + config.label);
+        }
 
         var buttons = document.querySelectorAll(".pos-type-btn");
         for (var i = 0; i < buttons.length; i++) {
@@ -750,6 +986,45 @@
         byId("remainValue").value = (totalValue - numberValue("payedValue")).toFixed(2);
         byId("totalFees").value = itemTotal.toFixed(2);
         updateBottomSummary();
+        uxApplyFlow();
+    }
+
+    function isAmountInput(target) {
+        return target && target.matches && target.matches("#rechargeValue, #violationValue, #payedValue");
+    }
+
+    function commitAmountInput(target, immediate) {
+        if (!target || !isAmountInput(target)) { return; }
+        window.clearTimeout(amountCommitTimer);
+        calculateTotals();
+
+        if (target.id === "rechargeValue" || target.id === "violationValue") {
+            scheduleCommissionPreview({
+                delay: immediate ? 0 : amountCommitDelayMs,
+                quiet: true,
+                useOverlay: false
+            });
+        } else if (immediate) {
+            amountEnterAdvancePending = false;
+            uxApplyFlow();
+            uxFocusStep(uxCurrentStep);
+        }
+    }
+
+    function scheduleAmountCommit(target) {
+        if (!target || !isAmountInput(target)) { return; }
+        window.clearTimeout(amountCommitTimer);
+        amountCommitTimer = window.setTimeout(function () {
+            commitAmountInput(target, false);
+        }, amountCommitDelayMs);
+        uxApplyFlow();
+    }
+
+    function uxAdvanceAfterAmountCommit() {
+        if (!amountEnterAdvancePending) { return; }
+        amountEnterAdvancePending = false;
+        uxApplyFlow();
+        uxFocusStep(uxCurrentStep);
     }
 
     function validateForm() {
@@ -968,10 +1243,20 @@
 
     function saveTransaction(event) {
         event.preventDefault();
+        if (uxIsBusy() || uxDebounced()) {
+            uxShowGuide();
+            return;
+        }
         calculateTotals();
         clearMessages();
 
         if (!ensureCommissionReadyForSave()) { return; }
+        uxApplyFlow();
+        if (!uxIsSaveReady()) {
+            uxShowGuide();
+            uxFocusStep(uxCurrentStep);
+            return;
+        }
         if (!validateForm()) { return; }
 
         var request = buildRequest();
@@ -984,8 +1269,13 @@
             request.EditPassword = password;
         }
 
+        uxSaving = true;
+        uxSetOverlay(true, "جاري الحفظ...");
+        uxApplyFlow();
         byId("saveBtn").disabled = true;
-        requestJson("POST", getUrl("data-save-url"), request, function (status, data) {
+        requestJsonWithLoading("POST", getUrl("data-save-url"), request, function (status, data) {
+            uxSaving = false;
+            uxSetOverlay(false);
             updateSaveButtonState();
 
             if (status >= 200 && status < 300 && data && data.success) {
@@ -1004,7 +1294,7 @@
             }
 
             showSaveError(data);
-        });
+        }, "جاري الحفظ...");
     }
 
     function showSaveError(data) {
@@ -1034,7 +1324,7 @@
         var url = getUrl("data-balances-url");
         if (!url) { return; }
 
-        requestJson("GET", url, null, function (status, data) {
+        requestJsonWithLoading("GET", url, null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 byId("employeeBalanceText").innerText = "ذمة الموظف: غير متاح";
                 byId("boxBalanceText").innerText = "عهدة الخزنة: غير متاح";
@@ -1051,8 +1341,10 @@
     function loadTodayInvoices(term) {
         var url = getUrl("data-today-invoices-url");
         if (!url) { return; }
+        var typeFilter = byId("todayInvoiceTypeFilter");
+        var operationType = typeFilter ? typeFilter.value : "";
 
-        requestJson("GET", url + "?term=" + encodeURIComponent(term || ""), null, function (status, data) {
+        requestJson("GET", url + "?term=" + encodeURIComponent(term || "") + "&operationType=" + encodeURIComponent(operationType || ""), null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
                 return;
@@ -1333,7 +1625,7 @@
     }
 
     function populatePaymentTypes() {
-        requestJson("GET", getUrl("data-payment-types-url"), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-payment-types-url"), null, function (status, data) {
             var select = byId("paymentType");
             select.innerHTML = "";
 
@@ -1401,7 +1693,7 @@
     }
 
     function populateCashBoxes() {
-        requestJson("GET", getUrl("data-cash-boxes-url"), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-cash-boxes-url"), null, function (status, data) {
             var select = byId("boxId");
             select.innerHTML = "";
 
@@ -1432,7 +1724,7 @@
     }
 
     function populateBranches() {
-        requestJson("GET", getUrl("data-branches-url"), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-branches-url"), null, function (status, data) {
             var select = byId("branchId");
             select.innerHTML = "";
 
@@ -1457,7 +1749,7 @@
     }
 
     function loadStoresForBranch(branchId) {
-        requestJson("GET", getUrl("data-stores-url") + "?branchId=" + encodeURIComponent(branchId || ""), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-stores-url") + "?branchId=" + encodeURIComponent(branchId || ""), null, function (status, data) {
             if (status < 200 || status >= 300 || !data || !data.length) { return; }
 
             var defaultStoreId = parseInt(contextValue("StoreID", "data-default-store-id"), 10) || 0;
@@ -1603,7 +1895,7 @@
         updateSaveButtonState();
         setCommissionStatus("جاري تحميل إعدادات العمولات...");
 
-        requestJson("GET", getUrl("data-commission-bootstrap-url"), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-commission-bootstrap-url"), null, function (status, data) {
             var services = data && (data.primaryServices || data.PrimaryServices);
             if (status >= 200 && status < 300 && services) {
                 primaryServiceCache["cash-in"] = services["cash-in"] || services.CashIn || services.cashIn || [];
@@ -1631,7 +1923,7 @@
         }
 
         setSelectLoading(byId("serviceItemId"), "تحميل...");
-        requestJson("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(requestedMode), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(requestedMode), null, function (status, data) {
             if (byId("transactionType").value !== requestedMode) {
                 return;
             }
@@ -1669,7 +1961,7 @@
         }
 
         setSelectLoading(select, "تحميل...");
-        requestJson("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
             if (byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
                 return;
             }
@@ -1699,7 +1991,7 @@
         }
 
         setSelectLoading(select, "تحميل...");
-        requestJson("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
+        requestJsonWithLoading("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
             if (byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
                 return;
             }
@@ -1729,7 +2021,7 @@
         }
 
         setSelectLoading(byId("serviceItemId"), "تحميل...");
-        requestJson("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(mode), null, function (status, services) {
+        requestJsonWithLoading("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(mode), null, function (status, services) {
             if (byId("transactionType").value !== mode) {
                 return;
             }
@@ -1755,7 +2047,7 @@
         }
 
         markCommissionPending("جاري تحميل خدمة كيشني وإعدادات العمولات...");
-        requestJson("GET", url, null, function (status, data) {
+        requestJsonWithLoading("GET", url, null, function (status, data) {
             if (requestId !== serviceLoadSequence || byId("transactionType").value !== requestedMode) {
                 return;
             }
@@ -2153,12 +2445,21 @@
         });
     }
 
-    function scheduleCommissionPreview() {
+    function scheduleCommissionPreview(options) {
+        options = options || {};
         window.clearTimeout(commissionTimer);
-        if (!reviewMode) {
-            markCommissionPending("جاري تحميل إعدادات العمولات، برجاء الانتظار لحظات.");
+        commissionPreviewUseOverlay = options.useOverlay !== false;
+        if (commissionPreviewXhr && commissionPreviewXhr.readyState !== 4 && commissionPreviewXhr.abort) {
+            commissionPreviewSequence++;
+            commissionPreviewXhr.abort();
         }
-        commissionTimer = window.setTimeout(calculateCommissionPreview, 250);
+        if (!reviewMode && options.quiet !== true) {
+            markCommissionPending("جاري تحميل إعدادات العمولات، برجاء الانتظار لحظات.");
+        } else {
+            commissionCalculationPending = true;
+            updateSaveButtonState();
+        }
+        commissionTimer = window.setTimeout(calculateCommissionPreview, options.delay === 0 ? 0 : (options.delay || 400));
     }
 
     function buildCommissionRequest() {
@@ -2229,6 +2530,7 @@
         var request = buildCommissionRequest();
         if (!request) {
             commissionCalculationPending = false;
+            amountEnterAdvancePending = false;
             updateSaveButtonState();
             return;
         }
@@ -2240,17 +2542,20 @@
             commissionCalculationPending = false;
             updateSaveButtonState();
             setCommissionStatus("");
+            uxAdvanceAfterAmountCommit();
             return;
         }
 
         var requestId = ++commissionPreviewSequence;
-        requestJson("POST", getUrl("data-commission-url"), request, function (status, data) {
+        var send = commissionPreviewUseOverlay ? requestJsonWithLoading : requestJson;
+        commissionPreviewXhr = send("POST", getUrl("data-commission-url"), request, function (status, data) {
             if (requestId !== commissionPreviewSequence || key !== commissionKey(buildCommissionRequest())) {
                 return;
             }
 
             if (status < 200 || status >= 300 || !data) {
                 commissionCalculationPending = false;
+                amountEnterAdvancePending = false;
                 updateSaveButtonState();
                 setCommissionStatus("تعذر تحميل إعدادات العمولات لهذا الاختيار", true);
                 return;
@@ -2262,6 +2567,7 @@
             commissionCalculationPending = false;
             updateSaveButtonState();
             setCommissionStatus("");
+            uxAdvanceAfterAmountCommit();
         });
     }
 
@@ -2573,6 +2879,16 @@
             showTodayInvoiceSummary(invoiceIndex);
             loadInvoiceForReview(invoiceButton.getAttribute("data-transaction-id"));
         }
+        var workflowButton = event.target.closest ? event.target.closest(".workflow-step") : null;
+        if (workflowButton) {
+            var requestedStep = workflowButton.getAttribute("data-step");
+            if (uxCanEnterStep(requestedStep)) {
+                uxFocusStep(requestedStep);
+            } else {
+                uxShowGuide();
+                uxFocusStep(uxCurrentStep);
+            }
+        }
         if (event.target.classList.contains("remove-row")) {
             var rows = byId("itemsTable").querySelectorAll("tbody tr");
             if (rows.length > 1) {
@@ -2599,19 +2915,30 @@
         if (event.target.id === "returnLaterBtn") { byId("saveResult").innerText = "هذه شاشة تجريبية فقط"; }
         if (event.target.id === "saveCashCustomerBtn") { saveCashCustomer(); }
         if (event.target.id === "refreshBalancesBtn") { loadEmployeeBalances(); }
+        uxApplyFlow();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && isAmountInput(event.target)) {
+            event.preventDefault();
+            amountEnterAdvancePending = true;
+            commitAmountInput(event.target, true);
+            if (event.target.id !== "payedValue") {
+                uxShowGuide("جاري حساب القيمة...");
+            }
+            return;
+        }
+        uxHandleSaveShortcut(event);
+        uxHandleEnter(event);
     });
 
     document.addEventListener("input", function (event) {
-        if (event.target.matches(".qty, .price, .vat, #rechargeValue, #commissionValue, #payedValue")) {
+        if (event.target.matches(".qty, .price, .vat, #commissionValue")) {
             calculateTotals();
         }
 
-        if (event.target.id === "rechargeValue") {
-            scheduleCommissionPreview();
-        }
-
-        if (event.target.id === "violationValue") {
-            scheduleCommissionPreview();
+        if (isAmountInput(event.target)) {
+            scheduleAmountCommit(event.target);
         }
 
         if (event.target.name === "violationPayType") {
@@ -2691,6 +3018,11 @@
                 loadTodayInvoices(event.target.value.trim());
             }, 250);
         }
+        if (event.target.id === "todayInvoiceTypeFilter") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }
+
+        uxApplyFlow();
     });
 
     document.addEventListener("wheel", function (event) {
@@ -2700,6 +3032,9 @@
     }, { passive: false });
 
     document.addEventListener("change", function (event) {
+        if (isAmountInput(event.target)) {
+            commitAmountInput(event.target, true);
+        }
         if (event.target.id === "branchId") {
             if (currentContext && currentContext.CanChangeDefaults === true) {
                 loadStoresForBranch(event.target.value);
@@ -2719,12 +3054,17 @@
         if (event.target.name === "violationPayType") {
             setMode(byId("transactionType").value);
         }
+        if (event.target.id === "todayInvoiceTypeFilter") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }
+        uxApplyFlow();
     });
 
     document.addEventListener("change", function (event) {
         if (event.target.classList.contains("item-name")) {
             applySelectedItem(event.target);
         }
+        uxApplyFlow();
     });
 
     byId("posForm").addEventListener("submit", saveTransaction);
@@ -2745,4 +3085,5 @@
     loadEmployeeBalances();
     loadTodayInvoices();
     updateSaveButtonState();
+    uxApplyFlow();
 })();

@@ -1,6 +1,7 @@
 ﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
 using MyERP.Areas.Pos.Reports;
+using MyERP.Areas.Pos.Services;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -326,7 +327,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetTodayInvoices(string term)
+        public JsonResult GetTodayInvoices(string term, string operationType)
         {
             var context = GetPosContext();
             if (context == null)
@@ -335,7 +336,16 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term), JsonRequestBehavior.AllowGet);
+            try
+            {
+                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType), JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "GetTodayInvoices", operationType, null, ex.Message, ex, "termLength=" + ((term ?? string.Empty).Length.ToString(CultureInfo.InvariantCulture)), "Error", "Exception");
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر تحميل فواتير اليوم", ex.Message), JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
@@ -354,11 +364,13 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (SqlException ex)
             {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "TodaySummary.SqlException", null, null, ex.Message, ex, "TodaySummary", "Error", "SqlException");
                 SetJsonErrorStatus(500);
                 return Json(Fail("تعذر تحميل ملخص اليوم من قاعدة البيانات", ex.Message), JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "TodaySummary.Exception", null, null, ex.Message, ex, "TodaySummary", "Error", "Exception");
                 SetJsonErrorStatus(500);
                 return Json(Fail("تعذر تحميل ملخص اليوم", ex.Message), JsonRequestBehavior.AllowGet);
             }
@@ -684,11 +696,12 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult Save(PosSaveTransactionRequest request)
         {
+            PosUserContext context = null;
             try
             {
                 request = request ?? new PosSaveTransactionRequest();
 
-                var context = GetPosContext();
+                context = GetPosContext();
                 if (context == null)
                 {
                     SetJsonErrorStatus(401);
@@ -739,6 +752,7 @@ namespace MyERP.Areas.Pos.Controllers
                 AddServiceTypeValidationErrors(request, validationErrors);
                 if (validationErrors.Count > 0)
                 {
+                    LogPosSystemIssue(context, "Save.Validation", request, null, "POS save validation failed", "Warning", "Validation", BuildSaveRequestSummary(request, validationErrors));
                     Response.StatusCode = 400;
                     return Json(Fail("راجع بيانات العملية قبل الحفظ", "Client request failed POS server validation.", validationErrors));
                 }
@@ -830,12 +844,14 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (SqlException ex)
             {
+                LogPosSystemIssue(context, "Save.SqlException", request, ex, ex.Message, "Error", "SqlException", BuildSaveRequestSummary(request, null));
                 LogPosSaveFailure("Save.SqlException", request, ex);
                 Response.StatusCode = 500;
                 return Json(Fail(FriendlySqlSaveMessage(ex), ex.Message));
             }
             catch (Exception ex)
             {
+                LogPosSystemIssue(context, "Save.Exception", request, ex, ex.Message, "Error", "Exception", BuildSaveRequestSummary(request, null));
                 LogPosSaveFailure("Save.Exception", request, ex);
                 Response.StatusCode = 500;
                 return Json(Fail("حدث خطأ أثناء الحفظ التجريبي", ex.Message));
@@ -1000,6 +1016,66 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 errors[key] = label + " غير صحيح. برجاء إدخال تاريخ بسنة كاملة وصحيحة مثل 2026.";
             }
+        }
+
+        private void LogPosSystemIssue(
+            PosUserContext context,
+            string actionName,
+            PosSaveTransactionRequest request,
+            Exception exception,
+            string message,
+            string severity,
+            string status,
+            string requestSummary)
+        {
+            PosSystemErrorLogger.Log(
+                _repository,
+                Request,
+                context,
+                "PosTransaction",
+                actionName,
+                request == null ? null : request.TransactionType,
+                request == null ? null : request.Transaction_ID,
+                message,
+                exception,
+                requestSummary,
+                severity,
+                status);
+        }
+
+        private static string BuildSaveRequestSummary(PosSaveTransactionRequest request, IDictionary<string, string> validationErrors)
+        {
+            if (request == null)
+            {
+                return "Request is null";
+            }
+
+            var parts = new List<string>
+            {
+                "Transaction_ID=" + (request.Transaction_ID.HasValue ? request.Transaction_ID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "TransactionType=" + (request.TransactionType ?? ""),
+                "BranchId=" + (request.BranchId.HasValue ? request.BranchId.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "StoreID=" + (request.StoreID.HasValue ? request.StoreID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "BoxID=" + (request.BoxID.HasValue ? request.BoxID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "PaymentType=" + request.PaymentType.ToString(CultureInfo.InvariantCulture),
+                "IsCashOut=" + request.IsCashOut,
+                "IsWallet=" + request.IsWallet,
+                "ItemIDService=" + (request.ItemIDService.HasValue ? request.ItemIDService.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "ItemIDService2=" + (request.ItemIDService2.HasValue ? request.ItemIDService2.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "RechargeValue=" + request.RechargeValue.GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
+                "CommissionValue=" + Convert.ToString(request.CommissionValue, CultureInfo.InvariantCulture),
+                "VatValue=" + Convert.ToString(request.VatValue, CultureInfo.InvariantCulture),
+                "NetValue=" + Convert.ToString(request.NetValue, CultureInfo.InvariantCulture),
+                "PayedValue=" + Convert.ToString(request.PayedValue, CultureInfo.InvariantCulture),
+                "Items=" + (request.Items == null ? "0" : request.Items.Count.ToString(CultureInfo.InvariantCulture))
+            };
+
+            if (validationErrors != null && validationErrors.Count > 0)
+            {
+                parts.Add("Validation=" + string.Join(" | ", validationErrors.Select(v => v.Key + ":" + v.Value)));
+            }
+
+            return string.Join("; ", parts);
         }
 
         private void AddServiceTypeValidationErrors(PosSaveTransactionRequest request, IDictionary<string, string> errors)

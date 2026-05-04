@@ -100,6 +100,9 @@
                     <a class="@(activeScreen == "system-health" ? "active" : "")"
                        href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })"
                        data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")">مراقبة النظام</a>
+                    <a class="@(activeScreen == "system-error-log" ? "active" : "")"
+                       href="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")">سجل أخطاء النظام</a>
                     <a class="@(activeScreen == "permissions" ? "active" : "")"
                        href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
                        data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")">صلاحيات POS</a>
@@ -223,6 +226,13 @@
                         loading="eager"></iframe>
             </section>
         </main>
+
+        <div class="pos-main-loading-overlay" id="posMainLoadingOverlay" aria-live="polite" aria-hidden="true">
+            <div class="pos-loading-box">
+                <span class="pos-loading-spinner" aria-hidden="true"></span>
+                <span id="posMainLoadingText">جاري تحميل البيانات...</span>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -234,6 +244,10 @@
             var dashboardPanel = document.getElementById("adminDashboardPanel");
             var frameSection = document.getElementById("posFrameSection");
             var homePanel = document.getElementById("posHomePanel");
+            var navLoadingOverlay = document.getElementById("posMainLoadingOverlay");
+            var navLoadingText = document.getElementById("posMainLoadingText");
+            var navigationLoading = false;
+            var navigationTimer = null;
             var charts = {};
 
             function escapeHtml(value) {
@@ -377,6 +391,40 @@
                 if (dashboardLink) { dashboardLink.classList.toggle("active", !!dashboard); }
             }
 
+            function setNavLinksDisabled(disabled) {
+                for (var i = 0; i < links.length; i++) {
+                    links[i].classList.toggle("is-disabled", disabled);
+                    links[i].setAttribute("aria-disabled", disabled ? "true" : "false");
+                }
+                if (dashboardLink) {
+                    dashboardLink.classList.toggle("is-disabled", disabled);
+                    dashboardLink.setAttribute("aria-disabled", disabled ? "true" : "false");
+                }
+            }
+
+            function showNavigationLoading(message) {
+                navigationLoading = true;
+                window.clearTimeout(navigationTimer);
+                if (navLoadingText) { navLoadingText.innerText = message || "جاري تحميل البيانات..."; }
+                if (navLoadingOverlay) { navLoadingOverlay.setAttribute("aria-hidden", "false"); }
+                if (shell) { shell.classList.add("is-nav-loading"); }
+                setNavLinksDisabled(true);
+                navigationTimer = window.setTimeout(function () {
+                    if (!navigationLoading) { return; }
+                    if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    window.setTimeout(hideNavigationLoading, 1800);
+                }, 45000);
+            }
+
+            function hideNavigationLoading() {
+                navigationLoading = false;
+                window.clearTimeout(navigationTimer);
+                if (shell) { shell.classList.remove("is-nav-loading"); }
+                if (navLoadingOverlay) { navLoadingOverlay.setAttribute("aria-hidden", "true"); }
+                if (navLoadingText) { navLoadingText.innerText = "جاري تحميل البيانات..."; }
+                setNavLinksDisabled(false);
+            }
+
             function showFrame(url) {
                 if (!url || !frame) { return; }
                 if (dashboardPanel) { dashboardPanel.classList.add("is-hidden-ui"); }
@@ -503,6 +551,7 @@
                     try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
                     if (xhr.status < 200 || xhr.status >= 300 || !response || !response.success) {
                         if (message) { message.innerText = (response && response.message) || "تعذر تحميل لوحة التحكم"; }
+                        hideNavigationLoading();
                         return;
                     }
                     if (message) { message.innerText = "تم تحميل البيانات"; }
@@ -520,6 +569,7 @@
                         for (var chartName in charts) {
                             if (charts.hasOwnProperty(chartName) && charts[chartName]) { charts[chartName].destroy(); charts[chartName] = null; }
                         }
+                        hideNavigationLoading();
                         return;
                     }
                     renderSmartInsights("adminDashboardInsights", data.SmartInsights || data.smartInsights || data.Insights);
@@ -592,22 +642,48 @@
                         "صافي التحصيل",
                         (data.OperationTypeSummary || []).map(function (x) { return parseFloat(x.FeesTotal || 0); }),
                         "الرسوم");
+                    hideNavigationLoading();
+                };
+                xhr.onerror = function () {
+                    if (message) { message.innerText = "تعذر تحميل لوحة التحكم"; }
+                    if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    window.setTimeout(hideNavigationLoading, 1200);
                 };
                 xhr.send();
             }
 
+            if (frame) {
+                frame.addEventListener("load", function () {
+                    hideNavigationLoading();
+                });
+                frame.addEventListener("error", function () {
+                    if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    window.setTimeout(hideNavigationLoading, 1200);
+                });
+            }
+
             for (var i = 0; i < links.length; i++) {
                 links[i].addEventListener("click", function (event) {
+                    if (navigationLoading) {
+                        event.preventDefault();
+                        return;
+                    }
                     var url = this.getAttribute("data-screen-url");
                     if (!url || !frame) { return; }
                     event.preventDefault();
+                    showNavigationLoading("جاري تحميل البيانات...");
                     showFrame(url);
                 });
             }
 
             if (dashboardLink) {
                 dashboardLink.addEventListener("click", function (event) {
+                    if (navigationLoading) {
+                        event.preventDefault();
+                        return;
+                    }
                     event.preventDefault();
+                    showNavigationLoading("جاري تحميل البيانات...");
                     showDashboard();
                 });
             }

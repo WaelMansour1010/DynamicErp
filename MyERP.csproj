@@ -417,6 +417,7 @@
     <Compile Include="Areas\Pos\Controllers\PosDashboardController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PosSystemErrorLogController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosPermissionsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosReportsController.cs" />
@@ -430,7 +431,9 @@
     <Compile Include="Areas\Pos\Data\PosSqlRepository.cs" />
     <Compile Include="Areas\Pos\Models\PosClosingModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
+    <Compile Include="Areas\Pos\Models\PosSystemErrorLogModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemHealthModels.cs" />
+    <Compile Include="Areas\Pos\Services\PosSystemErrorLogger.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemHealthMonitor.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardReport.cs" />
@@ -3963,6 +3966,7 @@
     <Content Include="Areas\Pos\Views\PosTransaction\PrintPreview.cshtml" />
     <Content Include="Areas\Pos\Views\PosClosing\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosDashboard\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosSystemErrorLog\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
     <Content Include="Areas\Pos\Views\KycBankFollowUp\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
@@ -3983,6 +3987,7 @@
     <Content Include="Areas\Pos\Sql\34_POS_PerformanceStoredProcedures.sql" />
     <Content Include="Areas\Pos\Sql\35_POS_SystemHealthPermissions.sql" />
     <Content Include="Areas\Pos\Sql\36_POS_PerformanceIndexRollback.sql" />
+    <Content Include="Areas\Pos\Sql\37_POS_SystemErrorLog.sql" />
     <Content Include="Areas\Pos\Sql\PerformanceDeployment\01_Apply_Final_Pos_Performance_Procedures.sql" />
     <Content Include="Areas\Pos\Sql\PerformanceDeployment\02_Rollback_Experimental_Indexes.sql" />
     <Content Include="Areas\Pos\Sql\PerformanceDeployment\03_Optional_SQL_Server_Memory_Settings.sql" />

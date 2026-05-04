@@ -85,45 +85,45 @@ namespace MyERP.Areas.Pos.Controllers
         {
             if (snapshot.Core.AverageResponseMs > 800)
             {
-                snapshot.Alerts.Add(Alert("High", "⚡", "زمن الاستجابة مرتفع", "متوسط زمن الاستجابة أكبر من 800ms في آخر دقائق."));
+                snapshot.Alerts.Add(Alert("High", "!", "زمن الاستجابة مرتفع", "متوسط زمن الاستجابة أكبر من 800ms في آخر دقائق."));
             }
             else if (snapshot.Core.AverageResponseMs > 300)
             {
-                snapshot.Alerts.Add(Alert("Medium", "⚡", "زمن الاستجابة يحتاج متابعة", "متوسط زمن الاستجابة أكبر من 300ms."));
+                snapshot.Alerts.Add(Alert("Medium", "!", "زمن الاستجابة يحتاج متابعة", "متوسط زمن الاستجابة أكبر من 300ms."));
             }
 
             if (snapshot.Core.ErrorRatePercent >= 5)
             {
-                snapshot.Alerts.Add(Alert("High", "🚨", "زيادة في الأخطاء", "معدل الأخطاء الحالي " + snapshot.Core.ErrorRatePercent.ToString("0.##") + "%."));
+                snapshot.Alerts.Add(Alert("High", "!", "زيادة في الأخطاء", "معدل الأخطاء الحالي " + snapshot.Core.ErrorRatePercent.ToString("0.##") + "%."));
             }
 
             if (snapshot.Core.SessionRestoresLastHour > 30)
             {
-                snapshot.Alerts.Add(Alert("High", "🧠", "ارتفاع غير طبيعي في استعادة الجلسات", "عدد استعادة جلسات POS في آخر ساعة مرتفع."));
+                snapshot.Alerts.Add(Alert("High", "!", "ارتفاع غير طبيعي في استعادة الجلسات", "عدد استعادة جلسات POS في آخر ساعة مرتفع."));
             }
             else if (snapshot.Core.SessionRestoresLastHour > 10)
             {
-                snapshot.Alerts.Add(Alert("Medium", "🧠", "استعادة الجلسات أعلى من المعتاد", "راجع إعدادات Session/AppPool إذا تكرر ذلك."));
+                snapshot.Alerts.Add(Alert("Medium", "!", "استعادة الجلسات أعلى من المعتاد", "راجع إعدادات Session/AppPool إذا تكرر ذلك."));
             }
 
             if (!string.IsNullOrWhiteSpace(snapshot.Database.StatusMessage))
             {
-                snapshot.Alerts.Add(Alert("Medium", "🔐", "صلاحيات مؤشرات قاعدة البيانات", snapshot.Database.StatusMessage));
+                snapshot.Alerts.Add(Alert("Medium", "i", "صلاحيات مؤشرات قاعدة البيانات", snapshot.Database.StatusMessage));
             }
 
             if (snapshot.Database.BlockingSessions.Count > 0)
             {
-                snapshot.Alerts.Add(Alert("High", "🚨", "يوجد عمليات حجز في قاعدة البيانات", "تم رصد جلسات SQL تقوم بحجز جلسات أخرى."));
+                snapshot.Alerts.Add(Alert("High", "!", "يوجد عمليات حجز في قاعدة البيانات", "تم رصد جلسات SQL تقوم بحجز جلسات أخرى."));
             }
 
             if (snapshot.Pos.FailedSavesCount > 0)
             {
-                snapshot.Alerts.Add(Alert("High", "💾", "فشل في حفظ فواتير", "يوجد محاولات حفظ فواتير فشلت خلال آخر ساعة."));
+                snapshot.Alerts.Add(Alert("High", "!", "فشل في حفظ فواتير", "يوجد محاولات حفظ فواتير فشلت خلال آخر ساعة."));
             }
 
             if (snapshot.Alerts.Count == 0)
             {
-                snapshot.Alerts.Add(Alert("Low", "✅", "النظام مستقر", "لا توجد إنذارات تشغيلية واضحة في القياسات الحالية."));
+                snapshot.Alerts.Add(Alert("Low", "OK", "النظام مستقر", "لا توجد إنذارات تشغيلية واضحة في القياسات الحالية."));
             }
         }
 
