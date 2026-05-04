@@ -75,10 +75,32 @@
                     <input type="checkbox" id="showBackgroundDesigner" checked />
                     <span>إظهار الخلفية في التصميم</span>
                 </label>
+                <label>
+                    <input type="checkbox" id="snapToGrid" />
+                    <span>محاذاة لشبكة (Snap to grid)</span>
+                </label>
+                <label>خطوة الشبكة
+                    <input type="number" id="gridStep" min="1" max="50" step="1" value="5" />
+                </label>
                 <label>التكبير
                     <input type="range" id="zoomRange" min="0.4" max="1.5" step="0.05" value="0.85" />
                     <span id="zoomValue">85%</span>
                 </label>
+                <div class="ptd-zoom-buttons">
+                    <button type="button" class="ptd-btn" id="zoomOutBtn">-</button>
+                    <button type="button" class="ptd-btn" id="zoomResetBtn">100%</button>
+                    <button type="button" class="ptd-btn" id="zoomInBtn">+</button>
+                </div>
+
+                <h2>اختصارات لوحة المفاتيح</h2>
+                <p class="ptd-hint">
+                    عند تحديد حقل:<br />
+                    أسهم = تحريك 1 وحدة<br />
+                    Shift + أسهم = 10 وحدات<br />
+                    Ctrl + أسهم = 0.5 وحدة (دقيق)<br />
+                    Delete = حذف الحقل<br />
+                    Ctrl+D = تكرار الحقل
+                </p>
             </aside>
 
             <main class="ptd-canvas-wrap" id="canvasWrap">

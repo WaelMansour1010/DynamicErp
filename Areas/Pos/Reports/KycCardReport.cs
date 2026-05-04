@@ -129,7 +129,8 @@ namespace MyERP.Areas.Pos.Reports
                 IsCellBased = true,
                 CellCount = count,
                 CellWidth = cellWidth,
-                CharacterSpacing = 0F
+                CharacterSpacing = 0F,
+                CellDirection = "LTR"
             };
         }
 
@@ -229,26 +230,43 @@ namespace MyERP.Areas.Pos.Reports
         private void DrawCells(DetailBand band, string value, PrintTemplateField field)
         {
             string content = value ?? string.Empty;
-            string padded = content.PadLeft(field.CellCount, ' ');
-            if (padded.Length > field.CellCount)
-            {
-                padded = padded.Substring(padded.Length - field.CellCount);
-            }
-
+            int cellCount = field.CellCount;
+            float cellWidth = field.CellWidth;
             float spacing = field.CharacterSpacing;
-            for (int i = 0; i < field.CellCount; i++)
+            float pitch = cellWidth + spacing;
+            bool isRtlCell = string.Equals(field.CellDirection, "RTL",
+                StringComparison.OrdinalIgnoreCase);
+
+            // Render only the chars that fit. char[0] always goes in the
+            // FIRST visual cell in the chosen reading direction:
+            //   CellDirection = "LTR" -> char[0] at the visual LEFT.
+            //   CellDirection = "RTL" -> char[0] at the visual RIGHT.
+            //
+            // The card report sets RightToLeftLayout = Yes, which makes
+            // BoundsF.X measure from the page's RIGHT edge. So for LTR
+            // cells we have to invert the X offset (cellCount-1-i) so
+            // that char[0] lands at the leftmost cell visually.
+            int charLimit = Math.Min(content.Length, cellCount);
+            for (int i = 0; i < charLimit; i++)
             {
-                char ch = padded[i];
+                char ch = content[i];
+                int physicalIndex = isRtlCell ? i : (cellCount - 1 - i);
+                float xOffset = physicalIndex * pitch;
+
                 band.Controls.Add(new XRLabel
                 {
                     BoundsF = new RectangleF(
-                        field.X + i * (field.CellWidth + spacing) + _template.GlobalXShift,
+                        field.X + xOffset + _template.GlobalXShift,
                         field.Y + _template.GlobalYShift,
-                        field.CellWidth,
+                        cellWidth,
                         field.Height),
                     Text = ch == ' ' ? string.Empty : ch.ToString(CultureInfo.InvariantCulture),
                     Font = ResolveFont(field),
-                    TextAlignment = TextAlignment.MiddleCenter
+                    TextAlignment = TextAlignment.MiddleCenter,
+                    // Single character - never apply RTL text shaping to
+                    // a one-char label, otherwise digits inside an
+                    // Arabic-context label can flip again.
+                    RightToLeft = RightToLeft.No
                 });
             }
         }

@@ -56,5 +56,16 @@ namespace MyERP.Areas.Pos.Models
         public int CellCount { get; set; }
         public float CellWidth { get; set; }
         public float CharacterSpacing { get; set; }
+
+        // Visual order of characters across cells, independent of the
+        // surrounding text direction:
+        //   "LTR" = char[0] in the leftmost cell, char[N-1] in the right.
+        //          For tokens, national IDs, phone numbers (digit/Latin
+        //          content), use LTR.
+        //   "RTL" = char[0] in the rightmost cell. Use only for Arabic
+        //          cell content where reading order should match.
+        // Default is LTR. The RightToLeft setting on the parent report
+        // does NOT affect this - cell order is positional, not RTL text.
+        public string CellDirection { get; set; } = "LTR";
     }
 }
