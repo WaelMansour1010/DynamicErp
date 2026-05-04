@@ -63,6 +63,12 @@
                        href="@Url.Action("KycBankFollowUp", "PosDashboard", new { area = "Pos" })"
                        data-screen-url="@Url.Content("~/Pos/KycBankFollowUp/Index")">متابعة KYC والبنك</a>
                 }
+                @if (isAdmin || (posContext != null && posContext.CanManagePrintTemplates))
+                {
+                    <a class="@(activeScreen == "print-templates" ? "active" : "")"
+                       href="@Url.Action("PrintTemplates", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PrintTemplate/Index?name=KycCard")">مصمم نماذج الطباعة</a>
+                }
                 @if (canViewReports)
                 {
                     <a class="@(activeScreen == "reports" ? "active" : "")"
