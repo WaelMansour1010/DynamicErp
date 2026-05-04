@@ -452,7 +452,8 @@ FROM dbo.TblOptions;";
                 var cashRange = request.ItemID.HasValue ? GetItemPriceRangeSalesCommission(rechargeValue, request.ItemID.Value) : null;
                 if (cashRange.HasValue && cashRange.Value > 0)
                 {
-                    return BuildCommissionResult(request.ItemID, rechargeValue, cashRange.Value, vatPercent, "CheckPriceRangeSales3/tblItemsCash", 0, 0, 0);
+                    var bankCommission = CalculateCashOutBankMachineCommission(rechargeValue, systemOptions);
+                    return BuildCommissionResult(request.ItemID, rechargeValue, cashRange.Value, vatPercent, "CheckPriceRangeSales3/tblItemsCash", 0, 0, 0, true, bankCommission);
                 }
 
                 if (item != null && HasSalesCommission(item))
@@ -471,7 +472,8 @@ FROM dbo.TblOptions;";
                 }
 
                 var purchaseCommission = ApplyMinMax(rechargeValue * percent / 100m, min, max);
-                return BuildCommissionResult(request.ItemID, rechargeValue, purchaseCommission, vatPercent, source, percent, min, max);
+                var machineCommission = CalculateCashOutBankMachineCommission(rechargeValue, systemOptions);
+                return BuildCommissionResult(request.ItemID, rechargeValue, purchaseCommission, vatPercent, source, percent, min, max, true, machineCommission);
             }
 
             var rangeCommission = GetPriceRangeSalesCommission(rechargeValue);
@@ -2390,12 +2392,16 @@ ORDER BY Transaction_ID DESC;";
             }
         }
 
-        private static PosCommissionResult BuildCommissionResult(int? itemId, decimal rechargeValue, decimal commissionValue, decimal vatPercent, string source, decimal percent, decimal min, decimal max, bool includeRechargeInTotal = true)
+        private static PosCommissionResult BuildCommissionResult(int? itemId, decimal rechargeValue, decimal commissionValue, decimal vatPercent, string source, decimal percent, decimal min, decimal max, bool includeRechargeInTotal = true, decimal bankMachineCommission = 0m)
         {
             var serviceFee = decimal.Round(commissionValue, 2, MidpointRounding.AwayFromZero);
             var vatValue = decimal.Round(serviceFee * vatPercent / 100m, 2, MidpointRounding.AwayFromZero);
             var totalFees = serviceFee + vatValue;
             var totalValue = includeRechargeInTotal ? rechargeValue + totalFees : totalFees;
+            bankMachineCommission = decimal.Round(bankMachineCommission, 2, MidpointRounding.AwayFromZero);
+            var machineWithdrawalAmount = bankMachineCommission > 0m
+                ? decimal.Round(totalValue - bankMachineCommission, 2, MidpointRounding.AwayFromZero)
+                : 0m;
 
             return new PosCommissionResult
             {
@@ -2407,6 +2413,8 @@ ORDER BY Transaction_ID DESC;";
                 VatPercent = vatPercent,
                 TotalFees = totalFees,
                 TotalValue = decimal.Round(totalValue, 2, MidpointRounding.AwayFromZero),
+                BankMachineCommission = bankMachineCommission,
+                CashOutMachineWithdrawalAmount = machineWithdrawalAmount < 0m ? 0m : machineWithdrawalAmount,
                 Source = source,
                 Percent = percent,
                 Min = min,
@@ -3384,6 +3392,16 @@ ORDER BY c.Id DESC;";
                 IsPositive = higherIsPositive ? change >= 0 : change <= 0,
                 Format = format
             };
+        }
+
+        private static decimal CalculateCashOutBankMachineCommission(decimal rechargeValue, PosSystemOptionsDto systemOptions)
+        {
+            if (systemOptions == null || rechargeValue <= 0m)
+            {
+                return 0m;
+            }
+
+            return ApplyMinMax(rechargeValue * systemOptions.PercentVisaPur / 100m, systemOptions.MinVisaPur, systemOptions.MaxVisaPur);
         }
 
         public IList<PosJournalEntryDto> GetJournalEntriesForTransaction(int transactionId, int userId, bool canChangeDefaults)
