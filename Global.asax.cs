@@ -3,6 +3,7 @@ using DevExpress.XtraReports.Web.WebDocumentViewer;
 using DevExpress.XtraReports.Configuration;
 using DevExpress.XtraReports.Security;
 
+using MyERP.Areas.Pos.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,6 +44,16 @@ namespace MyERP
             AntiForgeryConfig.UniqueClaimTypeIdentifier = ClaimTypes.Name;
 
             DevExpress.Web.Mvc.MVCxReportDesigner.StaticInitialize();
+        }
+
+        protected void Application_BeginRequest()
+        {
+            PosSystemHealthMonitor.BeginRequest(HttpContext.Current);
+        }
+
+        protected void Application_EndRequest()
+        {
+            PosSystemHealthMonitor.EndRequest(HttpContext.Current);
         }
     }
 }

@@ -144,8 +144,25 @@ namespace MyERP.Areas.Pos.Models
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public string AccountCode { get; set; }
+        public string AccountCodes { get; set; }
         public string Description { get; set; }
         public int? BranchId { get; set; }
+    }
+
+    public class PosAccountTreeDto
+    {
+        public string AccountCode { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountName { get; set; }
+        public string ParentAccountCode { get; set; }
+        public bool IsLastAccount { get; set; }
+        public bool HasChildren { get; set; }
+        public IList<PosAccountTreeDto> Children { get; set; }
+
+        public PosAccountTreeDto()
+        {
+            Children = new List<PosAccountTreeDto>();
+        }
     }
 
     public class PosManualJournalSaveRequest

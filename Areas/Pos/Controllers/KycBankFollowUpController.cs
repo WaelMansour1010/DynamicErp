@@ -176,7 +176,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
 
         private static string GetKycAttachmentRootPath()

@@ -91,6 +91,18 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(_repository.SearchAccounts(term).Select(x => new { id = x.Id, text = x.Name, serial = x.Extra }), JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public ActionResult AccountTree(string parentCode, string term)
+        {
+            var context = GetPosContext();
+            if (context == null || !CanOpen(context))
+            {
+                return new HttpStatusCodeResult(403);
+            }
+
+            return Json(_repository.GetChartOfAccountsChildren(parentCode, term), JsonRequestBehavior.AllowGet);
+        }
+
         private HtmlReportPageViewModel BuildPageModel(PosUserContext context, HtmlReportFilterModel filter)
         {
             filter = filter ?? new HtmlReportFilterModel();
@@ -122,7 +134,7 @@ namespace MyERP.Areas.Pos.Controllers
             var from = filter.FromDate.GetValueOrDefault(DateTime.Today).Date;
             var to = filter.ToDate.GetValueOrDefault(DateTime.Today).Date;
             var branchId = IsAdmin(context) ? filter.BranchId.GetValueOrDefault(0) : context.BranchId.GetValueOrDefault(0);
-            var table = _repository.RunAccountingReport(report.Key, from, to, branchId, filter.AccountFrom, filter.AccountTo, filter.CostCenterId, context.UserId, IsAdmin(context));
+            var table = _repository.RunAccountingReport(report.Key, from, to, branchId, filter.AccountFrom, filter.AccountTo, filter.AccountCodes, filter.CostCenterId, context.UserId, IsAdmin(context));
             return ToResult(report.Title, table);
         }
 
@@ -173,6 +185,11 @@ namespace MyERP.Areas.Pos.Controllers
             var result = new HtmlReportResultModel { Title = title };
             foreach (DataColumn column in table.Columns)
             {
+                if (string.Equals(column.ColumnName, "AccountCode", StringComparison.OrdinalIgnoreCase) && table.Columns.Contains("AccountSerial"))
+                {
+                    continue;
+                }
+
                 var numeric = IsNumeric(column);
                 result.Columns.Add(new HtmlReportColumnModel { Key = column.ColumnName, Title = MapColumn(column.ColumnName), IsNumeric = numeric, ShowTotal = numeric && ShouldTotal(column.ColumnName) });
             }
@@ -220,7 +237,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 { "SectionName", "البند" },
                 { "AccountSerial", "رقم الحساب" },
-                { "AccountCode", "كود الحساب" },
+                { "AccountCode", "رقم داخلي" },
                 { "AccountName", "اسم الحساب" },
                 { "OpeningBalance", "رصيد افتتاحي" },
                 { "Debit", "مدين" },
@@ -312,7 +329,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
     }
 }

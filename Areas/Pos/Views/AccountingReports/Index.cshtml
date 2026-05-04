@@ -14,7 +14,7 @@
     <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css")" rel="stylesheet" />
 </head>
 <body>
-    <main class="html-report-page">
+    <main class="html-report-page" data-account-tree-url="@Url.Action("AccountTree", "AccountingReports", new { area = "Pos" })">
         <header class="html-report-header">
             <div>
                 <h1>تقارير الحسابات</h1>
@@ -31,6 +31,7 @@
             @using (Html.BeginForm("Search", "AccountingReports", new { area = "Pos" }, FormMethod.Post, new { id = "accountingReportForm" }))
             {
                 @Html.HiddenFor(m => m.Filter.ReportKey, new { id = "ReportKey" })
+                @Html.HiddenFor(m => m.Filter.AccountCodes, new { id = "SelectedAccountCodes" })
                 <div class="html-report-selector">
                     <div>
                         <h2>اختر التقرير</h2>
@@ -56,9 +57,20 @@
                         الفرع
                         @Html.DropDownListFor(m => m.Filter.BranchId, new SelectList(Model.Branches, "Id", "Name", Model.Filter.BranchId), "كل الفروع")
                     </label>
-                    <label>الحساب من @Html.TextBoxFor(m => m.Filter.AccountFrom, new { placeholder = "كود الحساب أو اتركه فارغا" })</label>
-                    <label>الحساب إلى @Html.TextBoxFor(m => m.Filter.AccountTo, new { placeholder = "كود الحساب أو اتركه فارغا" })</label>
+                    @Html.HiddenFor(m => m.Filter.AccountFrom)
+                    @Html.HiddenFor(m => m.Filter.AccountTo)
                     <label>مركز تكلفة @Html.TextBoxFor(m => m.Filter.CostCenterId, new { type = "number", placeholder = "اختياري" })</label>
+                    <div class="account-selector-field">
+                        <span class="account-selector-label">الحسابات</span>
+                        <button type="button"
+                                class="secondary-action js-account-selector"
+                                data-target-input="SelectedAccountCodes"
+                                data-summary-target="accountTreeSummary"
+                                data-account-tree-url="@Url.Action("AccountTree", "AccountingReports", new { area = "Pos" })">
+                            اختيار الحسابات
+                        </button>
+                        <span id="accountTreeSummary" class="account-selector-summary">لم يتم اختيار حسابات</span>
+                    </div>
                     <div class="report-actions-inline">
                         <button type="submit" class="primary-action">بحث البيانات</button>
                         <button type="button" class="secondary-action" id="htmlReportPrintBtn">طباعة</button>
@@ -143,20 +155,24 @@
             <section class="html-report-card empty-state">اختر التقرير والفترة ثم اضغط بحث البيانات.</section>
         }
     </main>
+    <script src="@Url.Content("~/Areas/Pos/Scripts/account-selector.js")"></script>
     <script>
-        document.addEventListener("click", function (event) {
-            if (event.target && event.target.id === "htmlReportPrintBtn") { window.print(); }
-            var option = event.target && event.target.closest ? event.target.closest(".html-report-option") : null;
-            if (!option) { return; }
-            var key = option.getAttribute("data-report-key") || "";
-            var input = document.getElementById("ReportKey");
-            if (input) { input.value = key; }
-            var options = document.querySelectorAll(".html-report-option");
-            for (var i = 0; i < options.length; i++) {
-                options[i].classList.toggle("is-active", options[i] === option);
-                options[i].setAttribute("aria-pressed", options[i] === option ? "true" : "false");
-            }
-        });
+        (function () {
+            document.addEventListener("click", function (event) {
+                if (event.target && event.target.id === "htmlReportPrintBtn") { window.print(); }
+                var option = event.target && event.target.closest ? event.target.closest(".html-report-option") : null;
+                if (!option) { return; }
+                var key = option.getAttribute("data-report-key") || "";
+                var input = document.getElementById("ReportKey");
+                if (input) { input.value = key; }
+                var options = document.querySelectorAll(".html-report-option");
+                for (var i = 0; i < options.length; i++) {
+                    options[i].classList.toggle("is-active", options[i] === option);
+                    options[i].setAttribute("aria-pressed", options[i] === option ? "true" : "false");
+                }
+            });
+
+        })();
     </script>
 </body>
 </html>

@@ -60,8 +60,13 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("payments");
         }
 
+        public ActionResult SystemHealth()
+        {
+            return OpenShell("system-health");
+        }
+
         [HttpGet]
-        public JsonResult Summary(string periodType, DateTime? fromDate, DateTime? toDate, int? branchId, string operationType)
+        public JsonResult Summary(string periodType, DateTime? fromDate, DateTime? toDate, int? branchId, string operationType, bool? advanced)
         {
             var context = GetPosContext();
             if (context == null)
@@ -80,7 +85,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 var resolvedBranchId = branchId.HasValue && branchId.Value > 0 ? branchId : null;
                 var range = ResolveDashboardRange(periodType, fromDate, toDate);
-                var summary = _repository.GetAdminDashboardSummary(range.FromDate, range.ToDate, range.PreviousFromDate, range.PreviousToDate, resolvedBranchId, operationType, range.PeriodType);
+                var summary = _repository.GetAdminDashboardSummary(range.FromDate, range.ToDate, range.PreviousFromDate, range.PreviousToDate, resolvedBranchId, operationType, range.PeriodType, advanced.GetValueOrDefault(false));
                 return Json(new { success = true, period = range, data = summary }, JsonRequestBehavior.AllowGet);
             }
             catch (SqlException ex)
@@ -100,6 +105,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
+                TempData["PosLoginMessage"] = PosLoginController.PosSessionExpiredMessage;
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
@@ -123,6 +129,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدخال أو استعراض القيود");
             }
 
+            if (screen == "system-health" && !IsAdmin(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية مراقبة النظام");
+            }
+
             ViewBag.PosContext = context;
             ViewBag.ActiveScreen = screen;
             ViewBag.InitialScreenUrl = ScreenUrl(screen);
@@ -135,7 +146,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool IsAdmin(PosUserContext context)
         {
-            return context != null && context.UserType.GetValueOrDefault(-1) == 0;
+            return context != null && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess);
         }
 
         private static bool CanOpenKycBankFollowUp(PosUserContext context)
@@ -257,6 +268,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return Url.Content("~/Pos/Payments/Index");
             }
 
+            if (screen == "system-health")
+            {
+                return Url.Content("~/Pos/PosSystemHealth/Index");
+            }
+
             if (screen == "home")
             {
                 return string.Empty;
@@ -281,7 +297,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
 
         public class DashboardRange

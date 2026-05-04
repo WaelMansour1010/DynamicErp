@@ -31,6 +31,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
+                TempData["PosLoginMessage"] = PosLoginController.PosSessionExpiredMessage;
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
@@ -1511,7 +1512,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
 
         private static bool IsKeshniCardTransaction(string transactionType)

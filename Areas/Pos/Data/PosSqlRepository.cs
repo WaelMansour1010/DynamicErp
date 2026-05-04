@@ -3135,164 +3135,22 @@ WHERE UserID = @userId
             return table;
         }
 
-        public DataTable RunAccountingReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, string accountFrom, string accountTo, int? costCenterId, int userId, bool canChangeDefaults)
+        public DataTable RunAccountingReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, string accountFrom, string accountTo, string accountCodes, int? costCenterId, int userId, bool canChangeDefaults)
         {
             var table = new DataTable();
-            var key = (reportKey ?? string.Empty).Trim().ToLowerInvariant();
-            string sql;
-            switch (key)
-            {
-                case "trial-balance":
-                    sql = @"
-;WITH Movements AS
-(
-    SELECT
-        d.Account_Code,
-        SUM(CASE WHEN d.RecordDate < @fromDate THEN CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE -d.Value END ELSE 0 END) AS BeforeBalance,
-        SUM(CASE WHEN d.RecordDate >= @fromDate AND d.RecordDate < DATEADD(DAY, 1, @toDate) AND d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END) AS Debit,
-        SUM(CASE WHEN d.RecordDate >= @fromDate AND d.RecordDate < DATEADD(DAY, 1, @toDate) AND d.Credit_Or_Debit = 1 THEN d.Value ELSE 0 END) AS Credit
-    FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
-    WHERE (@branchId = 0 OR d.branch_id = @branchId)
-      AND (@accountFrom IS NULL OR d.Account_Code >= @accountFrom)
-      AND (@accountTo IS NULL OR d.Account_Code <= @accountTo)
-      AND (@costCenterId IS NULL OR d.project_id = @costCenterId)
-    GROUP BY d.Account_Code
-)
-SELECT
-    a.Account_Serial AS AccountSerial,
-    a.Account_Code AS AccountCode,
-    a.Account_Name AS AccountName,
-    ISNULL(a.opening_balance, 0) + ISNULL(m.BeforeBalance, 0) AS OpeningBalance,
-    ISNULL(m.Debit, 0) AS Debit,
-    ISNULL(m.Credit, 0) AS Credit,
-    ISNULL(a.opening_balance, 0) + ISNULL(m.BeforeBalance, 0) + ISNULL(m.Debit, 0) - ISNULL(m.Credit, 0) AS ClosingBalance
-FROM dbo.ACCOUNTS a WITH (NOLOCK)
-LEFT JOIN Movements m ON m.Account_Code = a.Account_Code
-WHERE ISNULL(a.last_account, 0) = 1
-  AND (@accountFrom IS NULL OR a.Account_Code >= @accountFrom)
-  AND (@accountTo IS NULL OR a.Account_Code <= @accountTo)
-  AND (ISNULL(a.opening_balance, 0) <> 0 OR ISNULL(m.BeforeBalance, 0) <> 0 OR ISNULL(m.Debit, 0) <> 0 OR ISNULL(m.Credit, 0) <> 0)
-ORDER BY a.Account_Serial;";
-                    break;
-                case "income-statement":
-                    sql = @"
-SELECT
-    CASE WHEN a.AccountTab = 2 THEN N'الإيرادات' WHEN a.AccountTab = 3 THEN N'المصروفات' ELSE N'أخرى' END AS SectionName,
-    a.Account_Serial AS AccountSerial,
-    a.Account_Code AS AccountCode,
-    a.Account_Name AS AccountName,
-    SUM(CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE 0 END) AS Credit,
-    SUM(CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END) AS Debit,
-    CASE
-        WHEN a.AccountTab = 2 THEN SUM(CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE -d.Value END)
-        WHEN a.AccountTab = 3 THEN SUM(CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE -d.Value END)
-        ELSE SUM(CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE -d.Value END)
-    END AS NetAmount
-FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
-INNER JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = d.Account_Code
-WHERE d.RecordDate >= @fromDate
-  AND d.RecordDate < DATEADD(DAY, 1, @toDate)
-  AND (@branchId = 0 OR d.branch_id = @branchId)
-  AND (@accountFrom IS NULL OR d.Account_Code >= @accountFrom)
-  AND (@accountTo IS NULL OR d.Account_Code <= @accountTo)
-  AND (@costCenterId IS NULL OR d.project_id = @costCenterId)
-  AND a.AccountTab IN (2, 3)
-GROUP BY a.AccountTab, a.Account_Serial, a.Account_Code, a.Account_Name
-HAVING SUM(d.Value) <> 0
-ORDER BY a.AccountTab, a.Account_Serial;";
-                    break;
-                case "account-statement":
-                    sql = @"
-;WITH Lines AS
-(
-    SELECT
-        d.RecordDate,
-        CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
-        CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
-        b.branch_name AS BranchName,
-        a.Account_Serial AS AccountSerial,
-        d.Account_Code AS AccountCode,
-        a.Account_Name AS AccountName,
-        d.Double_Entry_Vouchers_Description AS Description,
-        CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END AS Debit,
-        CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE 0 END AS Credit
-    FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
-    LEFT JOIN dbo.Notes n WITH (NOLOCK) ON n.NoteID = d.Notes_ID
-    LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = d.Account_Code
-    LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = d.branch_id
-    WHERE d.RecordDate >= @fromDate
-      AND d.RecordDate < DATEADD(DAY, 1, @toDate)
-      AND (@branchId = 0 OR d.branch_id = @branchId)
-      AND (@accountFrom IS NULL OR d.Account_Code >= @accountFrom)
-      AND (@accountTo IS NULL OR d.Account_Code <= @accountTo)
-      AND (@costCenterId IS NULL OR d.project_id = @costCenterId)
-)
-SELECT
-    RecordDate,
-    NoteSerial,
-    NoteSerial1,
-    BranchName,
-    AccountSerial,
-    AccountCode,
-    AccountName,
-    Description,
-    Debit,
-    Credit,
-    SUM(Debit - Credit) OVER (PARTITION BY AccountCode ORDER BY RecordDate, NoteSerial ROWS UNBOUNDED PRECEDING) AS RunningBalance
-FROM Lines
-ORDER BY AccountSerial, RecordDate, NoteSerial;";
-                    break;
-                default:
-                    sql = @"
-;WITH Lines AS
-(
-    SELECT
-        a.Account_Serial AS AccountSerial,
-        d.Account_Code AS AccountCode,
-        a.Account_Name AS AccountName,
-        d.RecordDate,
-        CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
-        b.branch_name AS BranchName,
-        d.Double_Entry_Vouchers_Description AS Description,
-        CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END AS Debit,
-        CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE 0 END AS Credit
-    FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
-    LEFT JOIN dbo.Notes n WITH (NOLOCK) ON n.NoteID = d.Notes_ID
-    LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = d.Account_Code
-    LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = d.branch_id
-    WHERE d.RecordDate >= @fromDate
-      AND d.RecordDate < DATEADD(DAY, 1, @toDate)
-      AND (@branchId = 0 OR d.branch_id = @branchId)
-      AND (@accountFrom IS NULL OR d.Account_Code >= @accountFrom)
-      AND (@accountTo IS NULL OR d.Account_Code <= @accountTo)
-      AND (@costCenterId IS NULL OR d.project_id = @costCenterId)
-)
-SELECT
-    AccountSerial,
-    AccountCode,
-    AccountName,
-    RecordDate,
-    NoteSerial,
-    BranchName,
-    Description,
-    Debit,
-    Credit,
-    SUM(Debit - Credit) OVER (PARTITION BY AccountCode ORDER BY RecordDate, NoteSerial ROWS UNBOUNDED PRECEDING) AS RunningBalance
-FROM Lines
-ORDER BY AccountSerial, RecordDate, NoteSerial;";
-                    break;
-            }
-
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(sql, connection))
+            using (var command = new SqlCommand("dbo.usp_POS_Accounting_Report", connection))
             using (var adapter = new SqlDataAdapter(command))
             {
+                command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = 120;
+                command.Parameters.Add("@reportKey", SqlDbType.NVarChar, 80).Value = (reportKey ?? string.Empty).Trim();
                 command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
                 command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
                 command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
                 AddString(command, "@accountFrom", SqlDbType.NVarChar, 50, accountFrom);
                 AddString(command, "@accountTo", SqlDbType.NVarChar, 50, accountTo);
+                AddString(command, "@accountCodes", SqlDbType.NVarChar, -1, accountCodes);
                 Add(command, "@costCenterId", SqlDbType.Int, costCenterId);
                 adapter.Fill(table);
             }
@@ -3306,7 +3164,7 @@ ORDER BY AccountSerial, RecordDate, NoteSerial;";
             const string sql = @"
 SELECT TOP (50)
     Account_Code AS Id,
-    COALESCE(NULLIF(Account_Serial, N''), Account_Code) + N' - ' + Account_Name AS Name,
+    COALESCE(NULLIF(Account_Serial, N'') + N' - ', N'') + Account_Name AS Name,
     Account_Serial AS Extra
 FROM dbo.ACCOUNTS WITH (NOLOCK)
 WHERE ISNULL(last_account, 0) = 1
@@ -3316,7 +3174,7 @@ WHERE ISNULL(last_account, 0) = 1
       OR Account_Serial LIKE N'%' + @term + N'%'
       OR Account_Name LIKE N'%' + @term + N'%'
   )
-ORDER BY Account_Serial;";
+ORDER BY Account_Serial, Account_Code;";
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
@@ -3339,43 +3197,128 @@ ORDER BY Account_Serial;";
             return list;
         }
 
+        public IList<PosAccountTreeDto> GetChartOfAccountsTree()
+        {
+            var flat = new List<PosAccountTreeDto>();
+            const string sql = @"
+SELECT
+    Account_Code,
+    Account_Name,
+    Parent_Account_Code,
+    ISNULL(last_account, 0) AS IsLastAccount
+FROM dbo.ACCOUNTS WITH (NOLOCK)
+WHERE NULLIF(LTRIM(RTRIM(ISNULL(Account_Code, N''))), N'') IS NOT NULL
+ORDER BY Account_Code;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        flat.Add(new PosAccountTreeDto
+                        {
+                            AccountCode = ReadString(reader, "Account_Code"),
+                            AccountName = ReadString(reader, "Account_Name"),
+                            ParentAccountCode = ReadString(reader, "Parent_Account_Code"),
+                            IsLastAccount = ReadBoolean(reader, "IsLastAccount")
+                        });
+                    }
+                }
+            }
+
+            var byCode = flat
+                .Where(x => !string.IsNullOrWhiteSpace(x.AccountCode))
+                .GroupBy(x => x.AccountCode, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(x => x.Key, x => x.First(), StringComparer.OrdinalIgnoreCase);
+            var roots = new List<PosAccountTreeDto>();
+            foreach (var account in flat)
+            {
+                PosAccountTreeDto parent;
+                if (!string.IsNullOrWhiteSpace(account.ParentAccountCode) && byCode.TryGetValue(account.ParentAccountCode, out parent) && !string.Equals(parent.AccountCode, account.AccountCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    parent.Children.Add(account);
+                }
+                else
+                {
+                    roots.Add(account);
+                }
+            }
+
+            return roots;
+        }
+
+        public IList<PosAccountTreeDto> GetChartOfAccountsChildren(string parentAccountCode, string term)
+        {
+            var list = new List<PosAccountTreeDto>();
+            var search = (term ?? string.Empty).Trim();
+            var hasSearch = search.Length >= 2;
+            const string sql = @"
+SELECT TOP (80)
+    a.Account_Code,
+    a.Account_Serial,
+    a.Account_Name,
+    a.Parent_Account_Code,
+    ISNULL(a.last_account, 0) AS IsLastAccount,
+    CASE WHEN EXISTS
+    (
+        SELECT 1
+        FROM dbo.ACCOUNTS c WITH (NOLOCK)
+        WHERE ISNULL(c.Parent_Account_Code, N'') = ISNULL(a.Account_Code, N'')
+    ) THEN 1 ELSE 0 END AS HasChildren
+FROM dbo.ACCOUNTS a WITH (NOLOCK)
+WHERE NULLIF(LTRIM(RTRIM(ISNULL(a.Account_Code, N''))), N'') IS NOT NULL
+  AND
+  (
+      (@hasSearch = 1 AND (a.Account_Serial LIKE N'%' + @term + N'%' OR a.Account_Name LIKE N'%' + @term + N'%' OR a.Account_Code LIKE N'%' + @term + N'%'))
+      OR
+      (@hasSearch = 0 AND ((@parentCode = N'' AND NULLIF(LTRIM(RTRIM(ISNULL(a.Parent_Account_Code, N''))), N'') IS NULL) OR ISNULL(a.Parent_Account_Code, N'') = @parentCode))
+  )
+ORDER BY a.Account_Serial, a.Account_Code;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@parentCode", SqlDbType.NVarChar, 50).Value = (parentAccountCode ?? string.Empty).Trim();
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = search;
+                command.Parameters.Add("@hasSearch", SqlDbType.Bit).Value = hasSearch;
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PosAccountTreeDto
+                        {
+                            AccountCode = ReadString(reader, "Account_Code"),
+                            AccountSerial = ReadString(reader, "Account_Serial"),
+                            AccountName = ReadString(reader, "Account_Name"),
+                            ParentAccountCode = ReadString(reader, "Parent_Account_Code"),
+                            IsLastAccount = ReadBoolean(reader, "IsLastAccount"),
+                            HasChildren = ReadBoolean(reader, "HasChildren")
+                        });
+                    }
+                }
+            }
+
+            return list;
+        }
+
         public IList<PosJournalHeaderDto> SearchJournalEntries(PosJournalSearchRequest request, int userId, bool canChangeDefaults)
         {
             var list = new List<PosJournalHeaderDto>();
             request = request ?? new PosJournalSearchRequest();
-            const string sql = @"
-SELECT TOP (200)
-    n.NoteID,
-    CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
-    CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
-    n.NoteDate,
-    n.branch_no AS BranchId,
-    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
-    ISNULL(n.Remark, N'') AS Description,
-    CASE WHEN ISNULL(n.NoteType, 0) = 101 THEN 1 ELSE 0 END AS IsManual,
-    SUM(CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END) AS DebitTotal,
-    SUM(CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE 0 END) AS CreditTotal
-FROM dbo.Notes n WITH (NOLOCK)
-INNER JOIN dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK) ON d.Notes_ID = n.NoteID
-LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = n.branch_no
-WHERE (@fromDate IS NULL OR n.NoteDate >= @fromDate)
-  AND (@toDate IS NULL OR n.NoteDate < DATEADD(DAY, 1, @toDate))
-  AND (@branchId IS NULL OR n.branch_no = @branchId)
-  AND (@voucherNo = N'' OR CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) LIKE N'%' + @voucherNo + N'%' OR CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) LIKE N'%' + @voucherNo + N'%')
-  AND (@description = N'' OR ISNULL(n.Remark, N'') LIKE N'%' + @description + N'%' OR d.Double_Entry_Vouchers_Description LIKE N'%' + @description + N'%')
-  AND (@accountCode = N'' OR d.Account_Code = @accountCode)
-  AND (@canChangeDefaults = 1 OR n.UserID = @userId OR d.UserID = @userId)
-GROUP BY n.NoteID, n.NoteSerial, n.NoteSerial1, n.NoteDate, n.branch_no, b.branch_name, b.branch_namee, n.Remark, n.NoteType
-ORDER BY n.NoteDate DESC, n.NoteID DESC;";
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(sql, connection))
+            using (var command = new SqlCommand("dbo.usp_POS_Journal_Search", connection))
             {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 90;
                 Add(command, "@fromDate", SqlDbType.DateTime, request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value);
                 Add(command, "@toDate", SqlDbType.DateTime, request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value);
                 Add(command, "@branchId", SqlDbType.Int, request.BranchId);
                 command.Parameters.Add("@voucherNo", SqlDbType.NVarChar, 100).Value = (request.VoucherNo ?? string.Empty).Trim();
                 command.Parameters.Add("@description", SqlDbType.NVarChar, 200).Value = (request.Description ?? string.Empty).Trim();
                 command.Parameters.Add("@accountCode", SqlDbType.NVarChar, 50).Value = (request.AccountCode ?? string.Empty).Trim();
+                AddString(command, "@accountCodes", SqlDbType.NVarChar, -1, request.AccountCodes);
                 command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
                 connection.Open();
@@ -3417,7 +3360,7 @@ SELECT TOP (1)
     n.branch_no AS BranchId,
     COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
     ISNULL(n.Remark, N'') AS Description,
-    CASE WHEN ISNULL(n.NoteType, 0) = 101 THEN 1 ELSE 0 END AS IsManual
+    CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN 1 ELSE 0 END AS IsManual
 FROM dbo.Notes n WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = n.branch_no
 WHERE n.NoteID = @noteId
@@ -3501,11 +3444,11 @@ ORDER BY d.DEV_ID_Line_No;";
                     try
                     {
                         var isUpdate = request.NoteId.HasValue && request.NoteId.Value > 0;
-                        var noteType = 101;
+                        var noteType = 57;
                         if (isUpdate)
                         {
                             noteType = ExecuteScalarInt(connection, transaction, "SELECT ISNULL(NoteType, 0) FROM dbo.Notes WHERE NoteID = @noteId", new SqlParameter("@noteId", request.NoteId.Value)).GetValueOrDefault();
-                            if (noteType != 101 && !allowAutomaticOverride)
+                            if (noteType != 57 && !allowAutomaticOverride)
                             {
                                 throw new InvalidOperationException("لا يمكن تعديل قيد آلي بدون كلمة مرور المدير العام");
                             }
@@ -3549,7 +3492,7 @@ INSERT INTO dbo.Notes
 )
 VALUES
 (
-    @noteId, @noteDate, 101, @noteSerial, @noteSerial, @noteValue, @userId,
+    @noteId, @noteDate, 57, @noteSerial, @noteSerial, @noteValue, @userId,
     @description, 0, @branchId, @userName, N''
 );",
                                 new SqlParameter("@noteId", noteId),
@@ -3595,62 +3538,13 @@ VALUES
             }
 
             var table = new DataTable();
-            const string sql = @"
-SELECT
-    Token = LTRIM(RTRIM(ISNULL(c.CardId, N''))),
-    EmbossingName = LEFT(UPPER(LTRIM(RTRIM(ISNULL(c.EnglishName0, N'') + N' ' + ISNULL(c.EnglishName1, N'') + N' ' + ISNULL(c.EnglishName3, N'')))), 25),
-    ExtensionName = LEFT(UPPER(LTRIM(RTRIM(ISNULL(c.EnglishName0, N'') + N' ' + ISNULL(c.EnglishName1, N'') + N' ' + ISNULL(c.EnglishName3, N'')))), 25),
-    MagstripeName = LEFT(UPPER(LTRIM(RTRIM(ISNULL(c.EnglishName0, N'') + N' ' + ISNULL(c.EnglishName1, N'') + N' ' + ISNULL(c.EnglishName3, N'')))), 25),
-    NationalId = LTRIM(RTRIM(ISNULL(c.Tet_NumPoket, N''))),
-    Address1 = LEFT(ISNULL(c.EnglishName5, N''), 35),
-    Address2 = LEFT(ISNULL(c.EnglishName6, N''), 35),
-    Address3 = LEFT(ISNULL(c.EnglishName7, N''), 35),
-    SmsFlag = N'1',
-    MobileNumber = N'002' + LTRIM(RTRIM(ISNULL(c.PhoneNo2, N''))),
-    BirthDate = CASE WHEN c.BirthDate IS NULL THEN N'' ELSE CONVERT(NVARCHAR(10), c.BirthDate, 103) END,
-    FullEnglishName = UPPER(LTRIM(RTRIM(ISNULL(c.EnglishName0, N'') + N' ' + ISNULL(c.EnglishName1, N'') + N' ' + ISNULL(c.EnglishName2, N'') + N' ' + ISNULL(c.EnglishName3, N'')))),
-    FullArabicName = LTRIM(RTRIM(ISNULL(c.ArabicName0, N'') + N' ' + ISNULL(c.ArabicName1, N'') + N' ' + ISNULL(c.ArabicName2, N'') + N' ' + ISNULL(c.ArabicName3, N''))),
-    BranchName = COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)),
-    BranchCode = b.branch_Code,
-    UserName = u.UserName,
-    EmpCode = e.Emp_Code,
-    EmpName = e.Emp_Name,
-    OrderDate = c.OrderDate,
-    CardNo = c.CardNo
-FROM dbo.TblCusCsh c
-INNER JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
-LEFT JOIN dbo.TblUsers u ON c.UserID = u.UserID
-LEFT JOIN dbo.TblEmployee e ON u.Empid = e.Emp_ID
-WHERE ISNULL(c.EasyCashType, 0) = 0
-  AND (@canChangeDefaults = 1 OR @branchId IS NULL OR c.BranchID = @branchId)
-  AND EXISTS
-  (
-      SELECT 1
-      FROM dbo.Transactions t1
-      WHERE t1.Transaction_Type = 21
-        AND NULLIF(LTRIM(RTRIM(ISNULL(t1.VisaNumber, N''))), N'') IS NOT NULL
-        AND LEN(LTRIM(RTRIM(ISNULL(t1.VisaNumber, N'')))) = @cardLength
-        AND t1.Transaction_Date >= @fromDate
-        AND t1.Transaction_Date < DATEADD(DAY, 1, @toDate)
-        AND LTRIM(RTRIM(CONVERT(NVARCHAR(50), CONVERT(DECIMAL(38, 0), ISNULL(t1.Tet_NumPoket, 0))))) = LTRIM(RTRIM(ISNULL(c.Tet_NumPoket, N'')))
-  )
-  AND EXISTS
-  (
-      SELECT 1
-      FROM dbo.Transactions t2
-      WHERE t2.Transaction_Type = 21
-        AND NULLIF(LTRIM(RTRIM(ISNULL(t2.VisaNumber, N''))), N'') IS NOT NULL
-        AND LEN(LTRIM(RTRIM(ISNULL(t2.VisaNumber, N'')))) = @cardLength
-        AND t2.Transaction_Date >= @fromDate
-        AND t2.Transaction_Date < DATEADD(DAY, 1, @toDate)
-        AND LTRIM(RTRIM(ISNULL(t2.VisaNumber, N''))) = LTRIM(RTRIM(ISNULL(c.CardNo, N'')))
-  )
-ORDER BY c.Id DESC;";
 
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(sql, connection))
+            using (var command = new SqlCommand("dbo.usp_POS_KycBank_Export", connection))
             using (var adapter = new SqlDataAdapter(command))
             {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 120;
                 command.Parameters.Add("@cardLength", SqlDbType.Int).Value = cardLength;
                 command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
                 command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
@@ -3662,7 +3556,7 @@ ORDER BY c.Id DESC;";
             return table;
         }
 
-        public PosDashboardSummaryDto GetAdminDashboardSummary(DateTime fromDate, DateTime toDate, DateTime previousFromDate, DateTime previousToDate, int? branchId, string operationType, string periodType)
+        public PosDashboardSummaryDto GetAdminDashboardSummary(DateTime fromDate, DateTime toDate, DateTime previousFromDate, DateTime previousToDate, int? branchId, string operationType, string periodType, bool loadAdvancedInsights = true)
         {
             var summary = new PosDashboardSummaryDto();
             using (var connection = new SqlConnection(_connectionString))
@@ -3796,7 +3690,10 @@ ORDER BY c.Id DESC;";
                 }
             }
 
-            PopulateDashboardSmartInsights(summary, fromDate, toDate, previousFromDate, previousToDate, branchId, operationType, periodType);
+            if (loadAdvancedInsights)
+            {
+                PopulateDashboardSmartInsights(summary, fromDate, toDate, previousFromDate, previousToDate, branchId, operationType, periodType);
+            }
             PopulateDashboardIntelligence(summary, periodType);
             return summary;
         }
@@ -3808,9 +3705,10 @@ ORDER BY c.Id DESC;";
             var sellerRows = new List<DashboardSmartMetricRow>();
 
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(DashboardSmartInsightsSql(), connection))
+            using (var command = new SqlCommand("dbo.usp_POS_Dashboard_SmartInsights", connection))
             {
-                command.CommandType = CommandType.Text;
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 120;
                 command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
                 command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
                 command.Parameters.Add("@previousFromDate", SqlDbType.DateTime).Value = previousFromDate.Date;
@@ -3836,235 +3734,6 @@ ORDER BY c.Id DESC;";
             {
                 AddSmartInsight(summary, "info", "Low", "💡", "بيانات غير كافية", "لا توجد بيانات كافية لإصدار توصية موثوقة في الفترة المحددة.", "استمر في متابعة البيانات بعد زيادة عدد الحركات.", "جودة البيانات");
             }
-        }
-
-        private static string DashboardSmartInsightsSql()
-        {
-            return @"
-DECLARE @from DATETIME = CONVERT(DATE, @fromDate);
-DECLARE @toExclusive DATETIME = DATEADD(DAY, 1, CONVERT(DATE, @toDate));
-DECLARE @previousFrom DATETIME = CONVERT(DATE, @previousFromDate);
-DECLARE @previousToExclusive DATETIME = DATEADD(DAY, 1, CONVERT(DATE, @previousToDate));
-SET @operationType = LTRIM(RTRIM(ISNULL(@operationType, N'')));
-
-;WITH CurrentBranch AS
-(
-    SELECT
-        t.BranchId AS EntityId,
-        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), t.BranchId)) AS EntityName,
-        COUNT(1) AS CurrentCount,
-        SUM(ISNULL(t.Transaction_NetValue, ISNULL(t.PayedValue, 0))) AS CurrentValue,
-        SUM(ISNULL(t.NetValue, 0)) AS CurrentFees
-    FROM dbo.Transactions t
-    INNER JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
-    WHERE t.Transaction_Type = 21
-      AND t.Transaction_Date >= @from
-      AND t.Transaction_Date < @toExclusive
-      AND ISNULL(b.IsStoped, 0) = 0
-      AND (@branchId IS NULL OR t.BranchId = @branchId)
-      AND
-      (
-          @operationType = N''
-          OR
-          CASE
-              WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
-              WHEN ISNULL(t.IsPOS, 0) = 1 OR NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
-              WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
-              ELSE N'cash-in'
-          END = @operationType
-      )
-    GROUP BY t.BranchId, COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), t.BranchId))
-),
-PreviousBranch AS
-(
-    SELECT
-        t.BranchId AS EntityId,
-        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), t.BranchId)) AS EntityName,
-        COUNT(1) AS PreviousCount,
-        SUM(ISNULL(t.Transaction_NetValue, ISNULL(t.PayedValue, 0))) AS PreviousValue,
-        SUM(ISNULL(t.NetValue, 0)) AS PreviousFees
-    FROM dbo.Transactions t
-    INNER JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
-    WHERE t.Transaction_Type = 21
-      AND t.Transaction_Date >= @previousFrom
-      AND t.Transaction_Date < @previousToExclusive
-      AND ISNULL(b.IsStoped, 0) = 0
-      AND (@branchId IS NULL OR t.BranchId = @branchId)
-      AND
-      (
-          @operationType = N''
-          OR
-          CASE
-              WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
-              WHEN ISNULL(t.IsPOS, 0) = 1 OR NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
-              WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
-              ELSE N'cash-in'
-          END = @operationType
-      )
-    GROUP BY t.BranchId, COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), t.BranchId))
-)
-SELECT
-    COALESCE(c.EntityId, p.EntityId) AS EntityId,
-    COALESCE(c.EntityName, p.EntityName) AS EntityName,
-    ISNULL(c.CurrentCount, 0) AS CurrentCount,
-    ISNULL(c.CurrentValue, 0) AS CurrentValue,
-    ISNULL(c.CurrentFees, 0) AS CurrentFees,
-    ISNULL(p.PreviousCount, 0) AS PreviousCount,
-    ISNULL(p.PreviousValue, 0) AS PreviousValue,
-    ISNULL(p.PreviousFees, 0) AS PreviousFees
-FROM CurrentBranch c
-FULL OUTER JOIN PreviousBranch p ON p.EntityId = c.EntityId
-WHERE ISNULL(c.CurrentCount, 0) > 0 OR ISNULL(p.PreviousCount, 0) > 0;
-
-;WITH CurrentService AS
-(
-    SELECT
-        d.Item_ID AS EntityId,
-        COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), CONVERT(NVARCHAR(50), d.Item_ID)) AS EntityName,
-        COUNT(1) AS CurrentCount,
-        SUM(ISNULL(d.TotalPrice, ISNULL(d.Price, 0) + ISNULL(d.Vat, 0))) AS CurrentValue,
-        SUM(ISNULL(d.showPrice, ISNULL(d.Price, 0))) AS CurrentFees
-    FROM dbo.Transaction_Details d
-    INNER JOIN dbo.Transactions t ON t.Transaction_ID = d.Transaction_ID
-    INNER JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
-    LEFT JOIN dbo.TblItems i ON i.ItemID = d.Item_ID
-    WHERE t.Transaction_Type = 21
-      AND t.Transaction_Date >= @from
-      AND t.Transaction_Date < @toExclusive
-      AND ISNULL(b.IsStoped, 0) = 0
-      AND (@branchId IS NULL OR t.BranchId = @branchId)
-      AND
-      (
-          @operationType = N''
-          OR
-          CASE
-              WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
-              WHEN ISNULL(t.IsPOS, 0) = 1 OR NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
-              WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
-              ELSE N'cash-in'
-          END = @operationType
-      )
-    GROUP BY d.Item_ID, COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), CONVERT(NVARCHAR(50), d.Item_ID))
-),
-PreviousService AS
-(
-    SELECT
-        d.Item_ID AS EntityId,
-        COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), CONVERT(NVARCHAR(50), d.Item_ID)) AS EntityName,
-        COUNT(1) AS PreviousCount,
-        SUM(ISNULL(d.TotalPrice, ISNULL(d.Price, 0) + ISNULL(d.Vat, 0))) AS PreviousValue,
-        SUM(ISNULL(d.showPrice, ISNULL(d.Price, 0))) AS PreviousFees
-    FROM dbo.Transaction_Details d
-    INNER JOIN dbo.Transactions t ON t.Transaction_ID = d.Transaction_ID
-    INNER JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
-    LEFT JOIN dbo.TblItems i ON i.ItemID = d.Item_ID
-    WHERE t.Transaction_Type = 21
-      AND t.Transaction_Date >= @previousFrom
-      AND t.Transaction_Date < @previousToExclusive
-      AND ISNULL(b.IsStoped, 0) = 0
-      AND (@branchId IS NULL OR t.BranchId = @branchId)
-      AND
-      (
-          @operationType = N''
-          OR
-          CASE
-              WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
-              WHEN ISNULL(t.IsPOS, 0) = 1 OR NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
-              WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
-              ELSE N'cash-in'
-          END = @operationType
-      )
-    GROUP BY d.Item_ID, COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), CONVERT(NVARCHAR(50), d.Item_ID))
-)
-SELECT
-    COALESCE(c.EntityId, p.EntityId) AS EntityId,
-    COALESCE(c.EntityName, p.EntityName) AS EntityName,
-    ISNULL(c.CurrentCount, 0) AS CurrentCount,
-    ISNULL(c.CurrentValue, 0) AS CurrentValue,
-    ISNULL(c.CurrentFees, 0) AS CurrentFees,
-    ISNULL(p.PreviousCount, 0) AS PreviousCount,
-    ISNULL(p.PreviousValue, 0) AS PreviousValue,
-    ISNULL(p.PreviousFees, 0) AS PreviousFees
-FROM CurrentService c
-FULL OUTER JOIN PreviousService p ON p.EntityId = c.EntityId
-WHERE ISNULL(c.CurrentCount, 0) > 0 OR ISNULL(p.PreviousCount, 0) > 0;
-
-;WITH CurrentSeller AS
-(
-    SELECT
-        t.UserID AS EntityId,
-        COALESCE(NULLIF(e.Emp_Name, N''), NULLIF(u.UserName, N''), CONVERT(NVARCHAR(50), t.UserID)) AS EntityName,
-        COUNT(1) AS CurrentCount,
-        SUM(ISNULL(t.Transaction_NetValue, ISNULL(t.PayedValue, 0))) AS CurrentValue,
-        SUM(ISNULL(t.NetValue, 0)) AS CurrentFees
-    FROM dbo.Transactions t
-    INNER JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
-    INNER JOIN dbo.TblUsers u ON u.UserID = t.UserID
-    LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = u.Empid
-    WHERE t.Transaction_Type = 21
-      AND t.Transaction_Date >= @from
-      AND t.Transaction_Date < @toExclusive
-      AND t.UserID IS NOT NULL
-      AND ISNULL(b.IsStoped, 0) = 0
-      AND ISNULL(u.isDeactivated, 0) = 0
-      AND (@branchId IS NULL OR t.BranchId = @branchId)
-      AND
-      (
-          @operationType = N''
-          OR
-          CASE
-              WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
-              WHEN ISNULL(t.IsPOS, 0) = 1 OR NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
-              WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
-              ELSE N'cash-in'
-          END = @operationType
-      )
-    GROUP BY t.UserID, COALESCE(NULLIF(e.Emp_Name, N''), NULLIF(u.UserName, N''), CONVERT(NVARCHAR(50), t.UserID))
-),
-PreviousSeller AS
-(
-    SELECT
-        t.UserID AS EntityId,
-        COALESCE(NULLIF(e.Emp_Name, N''), NULLIF(u.UserName, N''), CONVERT(NVARCHAR(50), t.UserID)) AS EntityName,
-        COUNT(1) AS PreviousCount,
-        SUM(ISNULL(t.Transaction_NetValue, ISNULL(t.PayedValue, 0))) AS PreviousValue,
-        SUM(ISNULL(t.NetValue, 0)) AS PreviousFees
-    FROM dbo.Transactions t
-    INNER JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
-    INNER JOIN dbo.TblUsers u ON u.UserID = t.UserID
-    LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = u.Empid
-    WHERE t.Transaction_Type = 21
-      AND t.Transaction_Date >= @previousFrom
-      AND t.Transaction_Date < @previousToExclusive
-      AND t.UserID IS NOT NULL
-      AND ISNULL(b.IsStoped, 0) = 0
-      AND ISNULL(u.isDeactivated, 0) = 0
-      AND (@branchId IS NULL OR t.BranchId = @branchId)
-      AND
-      (
-          @operationType = N''
-          OR
-          CASE
-              WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
-              WHEN ISNULL(t.IsPOS, 0) = 1 OR NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
-              WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
-              ELSE N'cash-in'
-          END = @operationType
-      )
-    GROUP BY t.UserID, COALESCE(NULLIF(e.Emp_Name, N''), NULLIF(u.UserName, N''), CONVERT(NVARCHAR(50), t.UserID))
-)
-SELECT
-    COALESCE(c.EntityId, p.EntityId) AS EntityId,
-    COALESCE(c.EntityName, p.EntityName) AS EntityName,
-    ISNULL(c.CurrentCount, 0) AS CurrentCount,
-    ISNULL(c.CurrentValue, 0) AS CurrentValue,
-    ISNULL(c.CurrentFees, 0) AS CurrentFees,
-    ISNULL(p.PreviousCount, 0) AS PreviousCount,
-    ISNULL(p.PreviousValue, 0) AS PreviousValue,
-    ISNULL(p.PreviousFees, 0) AS PreviousFees
-FROM CurrentSeller c
-FULL OUTER JOIN PreviousSeller p ON p.EntityId = c.EntityId
-WHERE ISNULL(c.CurrentCount, 0) > 0 OR ISNULL(p.PreviousCount, 0) > 0;";
         }
 
         private static void ReadSmartMetricRows(SqlDataReader reader, IList<DashboardSmartMetricRow> rows)
@@ -4164,30 +3833,33 @@ WHERE ISNULL(c.CurrentCount, 0) > 0 OR ISNULL(p.PreviousCount, 0) > 0;";
         private static void BuildSellerSmartInsights(PosDashboardSummaryDto summary, IList<DashboardSmartMetricRow> sellers)
         {
             var active = sellers.Where(x => x.CurrentCount > 0 && x.CurrentValue > 0).ToList();
-            if (active.Count == 0)
+            if (active.Count < 2)
             {
                 return;
             }
 
             var top = active.OrderByDescending(x => x.CurrentValue).ThenByDescending(x => x.CurrentCount).First();
+            var excludedEntityIds = new HashSet<int>();
+            if (top.EntityId.HasValue) { excludedEntityIds.Add(top.EntityId.Value); }
             AddSmartInsight(summary, "performance", "Low", "🏆", "بائع متميز",
                 top.EntityName + " يتصدر أداء البائعين في الفترة الحالية بصافي " + top.CurrentValue.ToString("0.00") + ".",
                 "استفد من أسلوبه في توجيه باقي الفريق.", "أداء البائعين");
 
             var averageTicket = active.Sum(x => x.CurrentValue) / Math.Max(1, active.Sum(x => x.CurrentCount));
             var sellerLowAverageTicket = active
-                .Where(x => x.CurrentCount >= 3 && (x.CurrentValue / Math.Max(1, x.CurrentCount)) < averageTicket * 0.60M)
+                .Where(x => x.CurrentCount >= 3 && (!x.EntityId.HasValue || !excludedEntityIds.Contains(x.EntityId.Value)) && (x.CurrentValue / Math.Max(1, x.CurrentCount)) < averageTicket * 0.60M)
                 .OrderBy(x => x.CurrentValue / Math.Max(1, x.CurrentCount))
                 .FirstOrDefault();
             if (sellerLowAverageTicket != null)
             {
+                if (sellerLowAverageTicket.EntityId.HasValue) { excludedEntityIds.Add(sellerLowAverageTicket.EntityId.Value); }
                 AddSmartInsight(summary, "opportunity", "Medium", "💡", "فرصة تحسين بائع",
                     sellerLowAverageTicket.EntityName + " لديه عدد حركات جيد لكن متوسط الحركة أقل من متوسط الفريق.",
                     "راجع نوع العمليات التي ينفذها وشجعه على الخدمات ذات القيمة الأعلى.", "الفرص الضائعة");
             }
 
             var decliningSeller = active
-                .Where(x => x.PreviousValue > 0 && PercentChange(x.CurrentValue, x.PreviousValue) <= -30)
+                .Where(x => x.PreviousValue > 0 && (!x.EntityId.HasValue || !excludedEntityIds.Contains(x.EntityId.Value)) && PercentChange(x.CurrentValue, x.PreviousValue) <= -30)
                 .OrderBy(x => PercentChange(x.CurrentValue, x.PreviousValue))
                 .FirstOrDefault();
             if (decliningSeller != null)
@@ -4619,52 +4291,12 @@ ORDER BY Emp_Name;";
             EnsurePosPaymentAuditColumns();
             request = request ?? new PosPaymentSearchRequestDto();
             var list = new List<PosPaymentMovementDto>();
-            const string sql = @"
-SELECT TOP (100)
-    n.NoteID,
-    CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
-    CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
-    n.NoteDate,
-    ISNULL(n.branch_no, 0) AS BranchId,
-    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
-    ISNULL(n.CashingType, 0) AS CashingType,
-    CASE WHEN ISNULL(n.CashingType, 0) = 5 THEN N'استعاضة عهدة' WHEN ISNULL(n.CashingType, 0) = 6 THEN N'تمويل خزينة' ELSE CONVERT(NVARCHAR(20), n.CashingType) END AS CashingTypeName,
-    ISNULL(n.BTCashAccountcode, N'') AS NameAccountCode,
-    ISNULL(n.person, N'') AS NameText,
-    ISNULL(n.NoteCashingType, 0) AS PaymentMethod,
-    CAST(ISNULL(n.Note_Value, 0) AS DECIMAL(18,2)) AS Value,
-    n.Emp_ID AS EmpId,
-    n.UserID AS CreatedUserId,
-    u.UserName AS CreatedUserName,
-    n.LastModifiedByUserId,
-    mu.UserName AS LastModifiedByUserName,
-    n.LastModifiedDate
-FROM dbo.Notes n
-LEFT JOIN dbo.TblBranchesData b ON b.branch_id = n.branch_no
-LEFT JOIN dbo.TblUsers u ON u.UserID = n.UserID
-LEFT JOIN dbo.TblUsers mu ON mu.UserID = n.LastModifiedByUserId
-WHERE n.NoteType = 50
-  AND (@fromDate IS NULL OR n.NoteDate >= @fromDate)
-  AND (@toDate IS NULL OR n.NoteDate < DATEADD(DAY, 1, @toDate))
-  AND (@branchId IS NULL OR n.branch_no = @branchId)
-  AND (@empId IS NULL OR n.Emp_ID = @empId)
-  AND (@canChangeDefaults = 1 OR n.UserID = @userId OR n.branch_no = @contextBranchId)
-  AND
-  (
-      @searchText = N''
-      OR CONVERT(NVARCHAR(50), n.NoteID) = @searchText
-      OR CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) LIKE N'%' + @searchText + N'%'
-      OR CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) LIKE N'%' + @searchText + N'%'
-      OR ISNULL(n.person, N'') LIKE N'%' + @searchText + N'%'
-      OR ISNULL(n.Remark, N'') LIKE N'%' + @searchText + N'%'
-      OR ISNULL(n.ChqueNum, N'') LIKE N'%' + @searchText + N'%'
-      OR ISNULL(n.BTCashAccountcode, N'') LIKE N'%' + @searchText + N'%'
-  )
-ORDER BY n.NoteDate DESC, n.NoteID DESC;";
 
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(sql, connection))
+            using (var command = new SqlCommand("dbo.usp_POS_Payments_Search", connection))
             {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 90;
                 command.Parameters.Add("@searchText", SqlDbType.NVarChar, 100).Value = (request.SearchText ?? string.Empty).Trim();
                 Add(command, "@fromDate", SqlDbType.DateTime, request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value);
                 Add(command, "@toDate", SqlDbType.DateTime, request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value);
@@ -5983,4 +5615,5 @@ VALUES
         }
     }
 }
+
 

@@ -9,10 +9,12 @@ namespace MyERP.Areas.Pos.Controllers
     public class PosClosingController : Controller
     {
         private readonly PosClosingSqlRepository _repository;
+        private readonly PosSqlRepository _posRepository;
 
         public PosClosingController()
         {
             _repository = new PosClosingSqlRepository();
+            _posRepository = new PosSqlRepository();
         }
 
         public ActionResult Index()
@@ -125,7 +127,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _posRepository);
         }
 
         private static bool CanOpenClosing(PosUserContext context)

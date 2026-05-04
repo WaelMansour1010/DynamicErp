@@ -7,7 +7,7 @@
     var initialScreenUrl = (ViewBag.InitialScreenUrl as string) ?? Url.Content("~/Pos/PosTransaction/Index");
     if (string.IsNullOrWhiteSpace(initialScreenUrl)) { initialScreenUrl = "about:blank"; }
     var canViewReports = posContext != null && posContext.CanViewReports;
-    var isAdmin = posContext != null && posContext.UserType.GetValueOrDefault(-1) == 0;
+    var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
     var logoPath = "~/Areas/Pos/assets/images/company-logo.png";
     var logoAltPath = "~/Areas/Pos/assets/images/company-logo-1.png";
     var companyLogoPath = System.IO.File.Exists(Server.MapPath(logoPath))
@@ -91,6 +91,9 @@
                 }
                 @if (isAdmin)
                 {
+                    <a class="@(activeScreen == "system-health" ? "active" : "")"
+                       href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")">مراقبة النظام</a>
                     <a class="@(activeScreen == "permissions" ? "active" : "")"
                        href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
                        data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")">صلاحيات POS</a>
@@ -120,7 +123,7 @@
                                 <h2>لوحة التحكم التنفيذية</h2>
                                 <span>لوحة مؤشرات ذكية لصاحب الشركة - للمدير فقط</span>
                             </div>
-                            <button type="button" class="link-action" id="reloadAdminDashboardBtn">تحديث</button>
+                            <button type="button" class="link-action" id="reloadAdminDashboardBtn">تحميل مؤشرات الأداء</button>
                         </div>
                         <div class="dashboard-period-toggle" id="dashboardPeriodToggle" role="radiogroup" aria-label="فترة لوحة التحكم">
                             <label><input type="radio" name="dashboardPeriodType" value="daily" checked /> يومي</label>
@@ -383,7 +386,7 @@
                 if (homePanel) { homePanel.classList.add("is-hidden-ui"); }
                 dashboardPanel.classList.remove("is-hidden-ui");
                 setActive("", true);
-                loadAdminDashboard();
+                loadAdminDashboard(false);
             }
 
             function renderTable(targetId, columns, rows, emptyMessage) {
@@ -473,17 +476,19 @@
                 target.innerHTML = html;
             }
 
-            function loadAdminDashboard() {
+            function loadAdminDashboard(loadAdvanced) {
                 if (!shell || shell.getAttribute("data-is-admin") !== "true") { return; }
+                loadAdvanced = loadAdvanced === true;
                 var message = document.getElementById("adminDashboardMessage");
-                if (message) { message.innerText = "جاري تحميل لوحة التحكم..."; }
+                if (message) { message.innerText = loadAdvanced ? "جاري تحميل مؤشرات الأداء..." : "جاري تحميل المؤشرات الأساسية..."; }
                 applyPeriodDates();
                 var url = shell.getAttribute("data-dashboard-summary-url")
                     + "?periodType=" + encodeURIComponent(selectedPeriodType())
                     + "&fromDate=" + encodeURIComponent(document.getElementById("dashboardFromDate").value)
                     + "&toDate=" + encodeURIComponent(document.getElementById("dashboardToDate").value)
                     + "&branchId=" + encodeURIComponent(document.getElementById("dashboardBranchId").value || "")
-                    + "&operationType=" + encodeURIComponent(document.getElementById("dashboardOperationType").value || "");
+                    + "&operationType=" + encodeURIComponent(document.getElementById("dashboardOperationType").value || "")
+                    + "&advanced=" + (loadAdvanced ? "true" : "false");
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", url, true);
                 xhr.onreadystatechange = function () {
@@ -497,6 +502,20 @@
                     if (message) { message.innerText = "تم تحميل البيانات"; }
                     var data = response.data || {};
                     renderKpis(data.Kpis, data.KpiComparisons);
+                    if (!loadAdvanced) {
+                        renderSmartInsights("adminDashboardInsights", []);
+                        renderList("adminDashboardRecommendations", ["اضغط تحميل مؤشرات الأداء لعرض التحليلات التفصيلية والتوصيات التشغيلية."], "recommendation-card");
+                        renderTable("adminBranchComparison", [], [], "اضغط تحميل مؤشرات الأداء لعرض مقارنة الفروع");
+                        renderTable("adminWorstBranches", [], [], "اضغط تحميل مؤشرات الأداء لعرض أقل الفروع أداءً");
+                        renderTable("adminTopServices", [], [], "اضغط تحميل مؤشرات الأداء لعرض الخدمات الأكثر استخدامًا");
+                        renderTable("adminTopSellers", [], [], "اضغط تحميل مؤشرات الأداء لعرض أفضل البائعين");
+                        renderTable("adminOperationSummary", [], [], "اضغط تحميل مؤشرات الأداء لعرض تحليل نوع العملية");
+                        renderTable("adminDailyTrend", [], [], "اضغط تحميل مؤشرات الأداء لعرض اتجاه التحصيل");
+                        for (var chartName in charts) {
+                            if (charts.hasOwnProperty(chartName) && charts[chartName]) { charts[chartName].destroy(); charts[chartName] = null; }
+                        }
+                        return;
+                    }
                     renderSmartInsights("adminDashboardInsights", data.SmartInsights || data.smartInsights || data.Insights);
                     renderList("adminDashboardRecommendations", data.Recommendations, "recommendation-card");
                     renderTable("adminBranchComparison", [
@@ -589,18 +608,18 @@
 
             document.addEventListener("click", function (event) {
                 if (event.target && event.target.id === "reloadAdminDashboardBtn") {
-                    loadAdminDashboard();
+                    loadAdminDashboard(true);
                 }
             });
 
             document.addEventListener("change", function (event) {
                 if (event.target && event.target.name === "dashboardPeriodType") {
                     applyPeriodDates();
-                    loadAdminDashboard();
+                    loadAdminDashboard(false);
                     return;
                 }
                 if (event.target && /dashboard(FromDate|ToDate|BranchId|OperationType)/.test(event.target.id)) {
-                    loadAdminDashboard();
+                    loadAdminDashboard(false);
                 }
             });
 
@@ -611,7 +630,7 @@
 
             if (dashboardPanel && !dashboardPanel.classList.contains("is-hidden-ui")) {
                 applyPeriodDates();
-                loadAdminDashboard();
+                loadAdminDashboard(false);
             }
         })();
     </script>

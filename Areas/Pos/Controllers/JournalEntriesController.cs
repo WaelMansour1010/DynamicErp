@@ -139,6 +139,18 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(_repository.SearchAccounts(term).Select(x => new { id = x.Id, text = x.Name, serial = x.Extra }), JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public ActionResult AccountTree(string parentCode, string term)
+        {
+            var context = GetPosContext();
+            if (context == null || !CanOpen(context))
+            {
+                return new HttpStatusCodeResult(403);
+            }
+
+            return Json(_repository.GetChartOfAccountsChildren(parentCode, term), JsonRequestBehavior.AllowGet);
+        }
+
         private static string ValidateSave(PosManualJournalSaveRequest request, PosUserContext context)
         {
             if (request == null)
@@ -221,7 +233,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
     }
 }

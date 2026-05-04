@@ -13,6 +13,7 @@ namespace MyERP.Models.Reports
         public string SerialSearch { get; set; }
         public string AccountFrom { get; set; }
         public string AccountTo { get; set; }
+        public string AccountCodes { get; set; }
         public int? CostCenterId { get; set; }
     }
 
