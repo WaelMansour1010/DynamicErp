@@ -24,6 +24,8 @@
     var commissionCalculationPending = false;
     var commissionPreviewSequence = 0;
     var lastCommissionKey = "";
+    var lastCashOutMachineWithdrawalAmount = 0;
+    var lastCashOutBankMachineCommission = 0;
     var reviewMode = false;
     var lastSavedTransactionId = null;
     var loadedInvoiceCreatedUserId = null;
@@ -536,11 +538,15 @@
             var fee = numberValue("commissionValue");
             var tax = numberValue("vatValue");
             var net = recharge + tax + fee;
-            grid.innerHTML =
+            var summaryHtml =
                 '<div><span>قيمة الشحن</span><strong>' + escapeHtml(decimalText(recharge)) + '</strong></div>' +
                 '<div><span>الضريبة</span><strong>' + escapeHtml(decimalText(tax)) + '</strong></div>' +
                 '<div><span>إجمالي الرسوم</span><strong>' + escapeHtml(decimalText(fee)) + '</strong></div>' +
                 '<div class="summary-total"><span>الصافي</span><strong>' + escapeHtml(decimalText(net)) + '</strong></div>';
+            if (mode === "cash-out" && lastCashOutMachineWithdrawalAmount > 0) {
+                summaryHtml += '<div class="summary-total cash-out-machine-alert"><span>اسحب من الماكينة</span><strong>' + escapeHtml(decimalText(lastCashOutMachineWithdrawalAmount)) + '</strong><small>عمولة الماكينة: ' + escapeHtml(decimalText(lastCashOutBankMachineCommission)) + '</small></div>';
+            }
+            grid.innerHTML = summaryHtml;
             return;
         }
 
@@ -2108,6 +2114,9 @@
         var totalFees = parseFloat(data.TotalFees) || (commission + vatValue);
         var isCard = byId("transactionType").value === "card";
         var totalValue = isCard ? totalFees : (parseFloat(data.TotalValue) || (numberValue("rechargeValue") + totalFees));
+        var isCashOut = byId("transactionType").value === "cash-out";
+        lastCashOutBankMachineCommission = isCashOut ? (parseFloat(data.BankMachineCommission) || parseFloat(data.bankMachineCommission) || 0) : 0;
+        lastCashOutMachineWithdrawalAmount = isCashOut ? (parseFloat(data.CashOutMachineWithdrawalAmount) || parseFloat(data.cashOutMachineWithdrawalAmount) || 0) : 0;
 
         byId("commissionValue").value = isCard ? "0.00" : commission.toFixed(2);
         byId("vatValue").value = vatValue.toFixed(2);
@@ -2395,6 +2404,8 @@
         byId("vatValue").value = "0";
         byId("totalFees").value = "0";
         byId("netValue").value = "0";
+        lastCashOutMachineWithdrawalAmount = 0;
+        lastCashOutBankMachineCommission = 0;
         byId("remainValue").value = "0";
         byId("payedValue").value = "0";
         byId("rechargeValue").value = "0";
