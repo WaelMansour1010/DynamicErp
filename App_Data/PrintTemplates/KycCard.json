@@ -15,7 +15,7 @@
       "X": 75.0, "Y": 205.0, "Width": 660.0, "Height": 24.0,
       "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
       "Alignment": "Center", "Direction": "LTR",
-      "IsCellBased": true, "CellCount": 12, "CellWidth": 55.0, "CharacterSpacing": 0.0
+      "IsCellBased": true, "CellCount": 12, "CellWidth": 55.0, "CharacterSpacing": 0.0, "CellDirection": "LTR"
     },
     {
       "FieldKey": "ArabicName",
@@ -63,7 +63,7 @@
       "X": 95.0, "Y": 525.0, "Width": 616.0, "Height": 22.0,
       "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
       "Alignment": "Center", "Direction": "LTR",
-      "IsCellBased": true, "CellCount": 14, "CellWidth": 44.0, "CharacterSpacing": 0.0
+      "IsCellBased": true, "CellCount": 14, "CellWidth": 44.0, "CharacterSpacing": 0.0, "CellDirection": "LTR"
     },
     {
       "FieldKey": "IssueDate",
@@ -95,7 +95,7 @@
       "X": 130.0, "Y": 660.0, "Width": 550.0, "Height": 22.0,
       "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
       "Alignment": "Center", "Direction": "LTR",
-      "IsCellBased": true, "CellCount": 11, "CellWidth": 50.0, "CharacterSpacing": 0.0
+      "IsCellBased": true, "CellCount": 11, "CellWidth": 50.0, "CharacterSpacing": 0.0, "CellDirection": "LTR"
     },
     {
       "FieldKey": "TokenNo",
@@ -103,7 +103,7 @@
       "X": 75.0, "Y": 925.0, "Width": 660.0, "Height": 24.0,
       "FontName": "Tahoma", "FontSize": 11.0, "Bold": true,
       "Alignment": "Center", "Direction": "LTR",
-      "IsCellBased": true, "CellCount": 12, "CellWidth": 55.0, "CharacterSpacing": 0.0
+      "IsCellBased": true, "CellCount": 12, "CellWidth": 55.0, "CharacterSpacing": 0.0, "CellDirection": "LTR"
     },
     {
       "FieldKey": "SignatureName",

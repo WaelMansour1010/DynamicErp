@@ -34,8 +34,16 @@
         templateName: pageEl.getAttribute("data-template-name") || "KycCard",
         template: null,
         selectedFieldKey: null,
-        scale: 0.85
+        scale: 0.85,
+        snapEnabled: false,
+        gridStep: 5
     };
+
+    function snap(value) {
+        if (!state.snapEnabled || state.gridStep <= 0) { return value; }
+        var step = state.gridStep;
+        return Math.round(value / step) * step;
+    }
 
     // ---------- DOM refs ----------
     var canvasEl = document.getElementById("canvas");
@@ -82,6 +90,12 @@
         canvasEl.style.height = heightPx + "px";
         canvasBgEl.style.width = widthPx + "px";
         canvasBgEl.style.height = heightPx + "px";
+        // Keep the snap-grid background sized in pixels that match the
+        // template's gridStep at the current zoom level.
+        if (state.gridStep > 0) {
+            var px = unitsToScreen(state.gridStep);
+            canvasEl.style.backgroundSize = px + "px " + px + "px";
+        }
     }
 
     function applyBackgroundSrc() {
@@ -201,17 +215,30 @@
     // ---------- Drag + resize ----------
     function attachFieldDrag(node, handle, field) {
         var dragState = null;
+        var pendingFrame = null;
+
+        function selectAndMark() {
+            if (state.selectedFieldKey === field.FieldKey) { return; }
+            state.selectedFieldKey = field.FieldKey;
+            // Just update the selected class and rebuild props once - not
+            // on every mousemove.
+            var prev = document.querySelector(".ptd-field.is-selected");
+            if (prev) { prev.classList.remove("is-selected"); }
+            node.classList.add("is-selected");
+            renderPropertiesPanel();
+            renderPalette();
+        }
 
         node.addEventListener("mousedown", function (e) {
             if (e.target === handle) { return; }
             e.preventDefault();
-            state.selectedFieldKey = field.FieldKey;
-            renderFields();
-            renderPropertiesPanel();
+            selectAndMark();
 
-            var startMouse = { x: e.clientX, y: e.clientY };
-            var startField = { x: field.X, y: field.Y };
-            dragState = { type: "move", startMouse: startMouse, startField: startField };
+            dragState = {
+                type: "move",
+                startMouse: { x: e.clientX, y: e.clientY },
+                startField: { x: field.X, y: field.Y }
+            };
 
             window.addEventListener("mousemove", onMove);
             window.addEventListener("mouseup", onUp);
@@ -220,13 +247,13 @@
         handle.addEventListener("mousedown", function (e) {
             e.preventDefault();
             e.stopPropagation();
-            state.selectedFieldKey = field.FieldKey;
-            renderFields();
-            renderPropertiesPanel();
+            selectAndMark();
 
-            var startMouse = { x: e.clientX, y: e.clientY };
-            var startField = { w: field.Width, h: field.Height };
-            dragState = { type: "resize", startMouse: startMouse, startField: startField };
+            dragState = {
+                type: "resize",
+                startMouse: { x: e.clientX, y: e.clientY },
+                startField: { w: field.Width, h: field.Height }
+            };
 
             window.addEventListener("mousemove", onMove);
             window.addEventListener("mouseup", onUp);
@@ -234,35 +261,62 @@
 
         function onMove(e) {
             if (!dragState) { return; }
-            var dx = e.clientX - dragState.startMouse.x;
-            var dy = e.clientY - dragState.startMouse.y;
-            // RTL canvas: dragging right (dx>0) on screen moves the
-            // element toward the LEFT edge in template coords. Since the
-            // canvas is a normal LTR HTML element underneath, treat
-            // screen X as direct horizontal motion - inset-inline-start
-            // already accounts for RTL on the wrapper.
+            // Coalesce mousemoves into a single frame so dragging stays
+            // smooth at 60fps even when the user drags fast.
+            dragState.lastMouse = { x: e.clientX, y: e.clientY };
+            if (pendingFrame) { return; }
+            pendingFrame = requestAnimationFrame(applyDrag);
+        }
+
+        function applyDrag() {
+            pendingFrame = null;
+            if (!dragState || !dragState.lastMouse) { return; }
+
+            var dx = dragState.lastMouse.x - dragState.startMouse.x;
+            var dy = dragState.lastMouse.y - dragState.startMouse.y;
             var dxUnits = screenToUnits(dx);
             var dyUnits = screenToUnits(dy);
 
             if (dragState.type === "move") {
-                field.X = Math.max(0, dragState.startField.x + dxUnits);
-                field.Y = Math.max(0, dragState.startField.y + dyUnits);
+                field.X = Math.max(0, snap(dragState.startField.x + dxUnits));
+                field.Y = Math.max(0, snap(dragState.startField.y + dyUnits));
             } else {
-                field.Width = Math.max(20, dragState.startField.w + dxUnits);
-                field.Height = Math.max(12, dragState.startField.h + dyUnits);
+                field.Width = Math.max(20, snap(dragState.startField.w + dxUnits));
+                field.Height = Math.max(12, snap(dragState.startField.h + dyUnits));
                 if (field.IsCellBased && field.CellCount > 0) {
                     field.CellWidth = Math.max(8, field.Width / field.CellCount);
                 }
             }
             updateFieldNode(node, field);
-            renderPropertiesPanel();
+            // Cheap update only - no full panel rebuild during drag.
+            syncSelectedInputs(field);
         }
 
         function onUp() {
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", onUp);
+            if (pendingFrame) {
+                cancelAnimationFrame(pendingFrame);
+                pendingFrame = null;
+            }
             dragState = null;
         }
+    }
+
+    // Update only the X/Y/W/H/CellWidth inputs in the properties panel
+    // without rebuilding the whole DOM. Keeps dragging snappy.
+    function syncSelectedInputs(field) {
+        var pairs = [
+            ["X", field.X], ["Y", field.Y],
+            ["Width", field.Width], ["Height", field.Height],
+            ["CellWidth", field.CellWidth]
+        ];
+        pairs.forEach(function (p) {
+            var el = propsEl.querySelector('[data-prop="' + p[0] + '"]');
+            if (el && document.activeElement !== el) {
+                el.value = (Math.round(p[1] * 100) / 100);
+            }
+        });
     }
 
     function updateFieldNode(node, field) {
@@ -343,25 +397,86 @@
             propsEl.appendChild(propRow("تباعد الحرف",
                 inputNumber("CharacterSpacing", field.CharacterSpacing, field, 0.5,
                     function () { renderFields(); })));
+            propsEl.appendChild(propRow("اتجاه الخانات (CellDirection)",
+                select("CellDirection", field.CellDirection || "LTR",
+                    ["LTR", "RTL"], field)));
+            var cellDirHint = document.createElement("p");
+            cellDirHint.className = "ptd-hint";
+            cellDirHint.textContent = "LTR للأرقام والحروف اللاتينية (Token, National ID, Phone). RTL فقط لو محتوى الحقل عربي.";
+            propsEl.appendChild(cellDirHint);
         }
 
         var hr3 = document.createElement("hr");
         propsEl.appendChild(hr3);
 
+        var actionsRow = document.createElement("div");
+        actionsRow.className = "ptd-prop-grid";
+
+        var duplicateBtn = document.createElement("button");
+        duplicateBtn.type = "button";
+        duplicateBtn.className = "ptd-btn";
+        duplicateBtn.textContent = "تكرار الحقل";
+        duplicateBtn.addEventListener("click", function () { duplicateField(field); });
+        actionsRow.appendChild(duplicateBtn);
+
+        var resetBtn = document.createElement("button");
+        resetBtn.type = "button";
+        resetBtn.className = "ptd-btn";
+        resetBtn.textContent = "إعادة الموقع للافتراضي";
+        resetBtn.addEventListener("click", function () { resetFieldPosition(field); });
+        actionsRow.appendChild(resetBtn);
+
+        propsEl.appendChild(actionsRow);
+
         var deleteBtn = document.createElement("button");
         deleteBtn.type = "button";
         deleteBtn.className = "ptd-btn ptd-btn-warn";
+        deleteBtn.style.marginTop = "8px";
+        deleteBtn.style.width = "100%";
         deleteBtn.textContent = "حذف الحقل من القالب";
-        deleteBtn.addEventListener("click", function () {
-            state.template.Fields = state.template.Fields.filter(function (f) {
-                return f.FieldKey !== field.FieldKey;
-            });
-            state.selectedFieldKey = null;
-            renderPalette();
-            renderFields();
-            renderPropertiesPanel();
-        });
+        deleteBtn.addEventListener("click", function () { removeField(field); });
         propsEl.appendChild(deleteBtn);
+    }
+
+    function removeField(field) {
+        state.template.Fields = state.template.Fields.filter(function (f) {
+            return f.FieldKey !== field.FieldKey;
+        });
+        state.selectedFieldKey = null;
+        renderPalette();
+        renderFields();
+        renderPropertiesPanel();
+    }
+
+    function duplicateField(field) {
+        var copy = JSON.parse(JSON.stringify(field));
+        // Offset slightly so the duplicate doesn't sit exactly under the
+        // original, and rename the key so palette/save don't collide.
+        copy.X = (copy.X || 0) + 20;
+        copy.Y = (copy.Y || 0) + 20;
+        copy.FieldKey = field.FieldKey + "_copy";
+        copy.Label = (field.Label || field.FieldKey) + " (نسخة)";
+        // Avoid duplicate keys if user already made copies.
+        var i = 2;
+        while (findField(copy.FieldKey)) {
+            copy.FieldKey = field.FieldKey + "_copy" + i;
+            i++;
+        }
+        state.template.Fields.push(copy);
+        state.selectedFieldKey = copy.FieldKey;
+        renderPalette();
+        renderFields();
+        renderPropertiesPanel();
+    }
+
+    function resetFieldPosition(field) {
+        // Resetting an arbitrary field needs a known default. We can ask
+        // the server's GetTemplate (no name) to give us defaults, but a
+        // simpler local fallback: place the field roughly in page center.
+        field.X = Math.max(0, (state.template.PageWidth || 800) / 2 - (field.Width || 200) / 2);
+        field.Y = Math.max(0, (state.template.PageHeight || 1100) / 2 - (field.Height || 22) / 2);
+        renderFields();
+        renderPropertiesPanel();
     }
 
     function syncCellWidth(field) {
@@ -420,6 +535,7 @@
     function inputText(propKey, value, field) {
         var input = document.createElement("input");
         input.type = "text";
+        input.setAttribute("data-prop", propKey);
         input.value = value || "";
         input.addEventListener("input", function () {
             field[propKey] = input.value;
@@ -431,6 +547,7 @@
     function inputNumber(propKey, value, field, step, onChange) {
         var input = document.createElement("input");
         input.type = "number";
+        input.setAttribute("data-prop", propKey);
         input.step = step || 1;
         input.value = (value === undefined || value === null) ? 0 : value;
         input.addEventListener("input", function () {
@@ -610,8 +727,95 @@
             });
     }
 
+    function bindKeyboard() {
+        document.addEventListener("keydown", function (e) {
+            // Don't hijack typing in inputs/selects/textareas.
+            var t = e.target;
+            if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" ||
+                      t.tagName === "TEXTAREA" || t.isContentEditable)) {
+                return;
+            }
+            if (!state.selectedFieldKey) { return; }
+            var field = findField(state.selectedFieldKey);
+            if (!field) { return; }
+
+            // Ctrl+D = duplicate, Delete = remove
+            if (e.key === "d" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                duplicateField(field);
+                return;
+            }
+            if (e.key === "Delete" || e.key === "Del") {
+                e.preventDefault();
+                removeField(field);
+                return;
+            }
+
+            var step;
+            if (e.shiftKey) { step = 10; }
+            else if (e.ctrlKey || e.metaKey) { step = 0.5; }
+            else { step = 1; }
+
+            var dx = 0, dy = 0;
+            if (e.key === "ArrowLeft") { dx = -step; }
+            else if (e.key === "ArrowRight") { dx = step; }
+            else if (e.key === "ArrowUp") { dy = -step; }
+            else if (e.key === "ArrowDown") { dy = step; }
+            else { return; }
+
+            e.preventDefault();
+            field.X = Math.max(0, field.X + dx);
+            field.Y = Math.max(0, field.Y + dy);
+            renderFields();
+            syncSelectedInputs(field);
+        });
+    }
+
+    function bindZoom() {
+        var zoomRange = document.getElementById("zoomRange");
+        function applyZoom(value) {
+            state.scale = Math.max(0.4, Math.min(1.5, value));
+            zoomRange.value = state.scale;
+            document.getElementById("zoomValue").textContent =
+                Math.round(state.scale * 100) + "%";
+            applyCanvasSize();
+            renderFields();
+        }
+        document.getElementById("zoomOutBtn").addEventListener("click", function () {
+            applyZoom(state.scale - 0.05);
+        });
+        document.getElementById("zoomInBtn").addEventListener("click", function () {
+            applyZoom(state.scale + 0.05);
+        });
+        document.getElementById("zoomResetBtn").addEventListener("click", function () {
+            applyZoom(1);
+        });
+    }
+
+    function bindSnap() {
+        var snapEl = document.getElementById("snapToGrid");
+        var stepEl = document.getElementById("gridStep");
+        var canvas = document.getElementById("canvas");
+
+        function refresh() {
+            state.snapEnabled = snapEl.checked;
+            state.gridStep = Math.max(1, parseInt(stepEl.value, 10) || 5);
+            canvas.classList.toggle("is-grid", state.snapEnabled);
+            // Map grid step (template units) to screen pixels for the
+            // CSS background-size so the visual grid matches.
+            var px = unitsToScreen(state.gridStep);
+            canvas.style.backgroundSize = px + "px " + px + "px";
+        }
+        snapEl.addEventListener("change", refresh);
+        stepEl.addEventListener("input", refresh);
+        refresh();
+    }
+
     bindToolbar();
     bindPageSettings();
     bindCursor();
+    bindKeyboard();
+    bindZoom();
+    bindSnap();
     loadTemplate();
 })();
