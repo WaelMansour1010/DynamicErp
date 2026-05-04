@@ -1341,8 +1341,10 @@
     function loadTodayInvoices(term) {
         var url = getUrl("data-today-invoices-url");
         if (!url) { return; }
+        var typeFilter = byId("todayInvoiceTypeFilter");
+        var operationType = typeFilter ? typeFilter.value : "";
 
-        requestJson("GET", url + "?term=" + encodeURIComponent(term || ""), null, function (status, data) {
+        requestJson("GET", url + "?term=" + encodeURIComponent(term || "") + "&operationType=" + encodeURIComponent(operationType || ""), null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
                 return;
@@ -3016,6 +3018,9 @@
                 loadTodayInvoices(event.target.value.trim());
             }, 250);
         }
+        if (event.target.id === "todayInvoiceTypeFilter") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }
 
         uxApplyFlow();
     });
@@ -3048,6 +3053,9 @@
         }
         if (event.target.name === "violationPayType") {
             setMode(byId("transactionType").value);
+        }
+        if (event.target.id === "todayInvoiceTypeFilter") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
         }
         uxApplyFlow();
     });

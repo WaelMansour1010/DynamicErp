@@ -343,6 +343,13 @@
             </div>
             <div class="today-invoices-body" id="todayInvoicesBody">
                 <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
+                <select id="todayInvoiceTypeFilter" class="today-type-filter" aria-label="فلتر نوع الفاتورة">
+                    <option value="">كل الفواتير</option>
+                    <option value="cash-in">كاش إن</option>
+                    <option value="cash-out">كاش أوت</option>
+                    <option value="card">كارت كيشني / KYC</option>
+                    <option value="violations">مخالفات</option>
+                </select>
                 <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
                 <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
             </div>

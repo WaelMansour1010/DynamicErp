@@ -1,0 +1,189 @@
+@{
+    Layout = null;
+    ViewBag.Title = "سجل أخطاء النظام";
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <style>
+        body { background:#f8fafc; color:#0f172a; direction:rtl; font-family:"Tahoma","Arial",sans-serif; margin:0; padding:22px; }
+        .error-log-shell { display:grid; gap:16px; max-width:1500px; margin:0 auto; }
+        .error-log-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 8px 24px rgba(15,23,42,.06); padding:18px; }
+        .error-log-title { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .error-log-title h1 { font-size:26px; margin:0; }
+        .error-log-title p { color:#64748b; margin:6px 0 0; }
+        .error-filter-grid { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; }
+        .error-filter-grid label { color:#334155; display:grid; gap:6px; font-weight:700; }
+        .error-filter-grid input, .error-filter-grid select { border:1px solid #cbd5e1; border-radius:10px; font:inherit; min-height:42px; padding:8px 10px; }
+        .error-filter-actions { align-items:end; display:flex; gap:8px; justify-content:flex-start; }
+        .error-filter-actions .primary-action { min-width:160px; }
+        .error-table-wrap { overflow:auto; max-height:620px; }
+        .error-log-table { border-collapse:collapse; min-width:1180px; width:100%; }
+        .error-log-table th, .error-log-table td { border-bottom:1px solid #e2e8f0; padding:10px; text-align:right; vertical-align:top; }
+        .error-log-table th { background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:1; }
+        .error-log-table tr:nth-child(even) td { background:#fbfdff; }
+        .severity-error { color:#b91c1c; font-weight:700; }
+        .severity-warning { color:#b45309; font-weight:700; }
+        .muted { color:#64748b; }
+        @@media (max-width: 900px) { .error-filter-grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+    <main class="error-log-shell">
+        <section class="error-log-card error-log-title">
+            <div>
+                <h1>سجل أخطاء النظام</h1>
+                <p>تتبع أخطاء نقطة البيع بدون عرض بيانات حساسة.</p>
+            </div>
+            <button type="button" class="primary-action" id="loadErrorsBtn">بحث البيانات</button>
+        </section>
+
+        <section class="error-log-card">
+            <div class="error-filter-grid">
+                <label>من تاريخ<input type="date" id="fromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                <label>إلى تاريخ<input type="date" id="toDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                <label>
+                    الفرع
+                    <select id="branchId">
+                        <option value="">كل الفروع</option>
+                        @if (branches != null)
+                        {
+                            foreach (var branch in branches)
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        }
+                    </select>
+                </label>
+                <label>المستخدم<input type="text" id="userKeyword" placeholder="اسم أو رقم المستخدم" /></label>
+                <label>الشاشة / الإجراء<input type="text" id="screenAction" placeholder="مثال: Save أو PosTransaction" /></label>
+                <label>
+                    نوع العملية
+                    <select id="operationType">
+                        <option value="">كل العمليات</option>
+                        <option value="cash-in">كاش إن</option>
+                        <option value="cash-out">كاش أوت</option>
+                        <option value="card">كارت كيشني / KYC</option>
+                        <option value="violations">مخالفات</option>
+                    </select>
+                </label>
+                <label>
+                    الحالة
+                    <select id="severity">
+                        <option value="">كل الحالات</option>
+                        <option value="Error">Error</option>
+                        <option value="Warning">Warning</option>
+                    </select>
+                </label>
+                <label>كلمة بحث<input type="text" id="keyword" placeholder="رسالة أو تفاصيل مختصرة" /></label>
+                <div class="error-filter-actions">
+                    <button type="button" class="primary-action" id="loadErrorsBtnInline">بحث البيانات</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="error-log-card">
+            <div id="errorLogMessage" class="muted">اضغط بحث البيانات لعرض السجل.</div>
+            <div class="error-table-wrap">
+                <table class="error-log-table" id="errorLogTable" hidden>
+                    <thead>
+                        <tr>
+                            <th>الوقت</th>
+                            <th>المستخدم</th>
+                            <th>الفرع</th>
+                            <th>الشاشة</th>
+                            <th>الإجراء</th>
+                            <th>العملية</th>
+                            <th>الفاتورة</th>
+                            <th>الحالة</th>
+                            <th>الرسالة</th>
+                            <th>ملخص الطلب</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        (function () {
+            var url = '@Url.Action("Search", "PosSystemErrorLog", new { area = "Pos" })';
+            function byId(id) { return document.getElementById(id); }
+            function value(id) { return (byId(id).value || "").trim(); }
+            function escapeHtml(text) {
+                return String(text === null || text === undefined ? "" : text)
+                    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+            function displayDate(value) {
+                if (!value) { return ""; }
+                if (typeof value === "string" && value.indexOf("/Date(") === 0) {
+                    var match = /\/Date\((-?\d+)\)\//.exec(value);
+                    if (match) { value = new Date(parseInt(match[1], 10)); }
+                } else {
+                    value = new Date(value);
+                }
+                if (!(value instanceof Date) || isNaN(value.getTime())) { return ""; }
+                return value.toLocaleString("ar-EG");
+            }
+            function load() {
+                var query = "?FromDate=" + encodeURIComponent(value("fromDate")) +
+                    "&ToDate=" + encodeURIComponent(value("toDate")) +
+                    "&BranchId=" + encodeURIComponent(value("branchId")) +
+                    "&UserKeyword=" + encodeURIComponent(value("userKeyword")) +
+                    "&ScreenAction=" + encodeURIComponent(value("screenAction")) +
+                    "&OperationType=" + encodeURIComponent(value("operationType")) +
+                    "&Severity=" + encodeURIComponent(value("severity")) +
+                    "&Keyword=" + encodeURIComponent(value("keyword")) +
+                    "&PageSize=300";
+                var message = byId("errorLogMessage");
+                var table = byId("errorLogTable");
+                var body = table.querySelector("tbody");
+                message.textContent = "جاري تحميل سجل الأخطاء...";
+                table.hidden = true;
+                body.innerHTML = "";
+                fetch(url + query, { credentials: "same-origin" })
+                    .then(function (response) { return response.json().then(function (data) { return { status: response.status, data: data }; }); })
+                    .then(function (result) {
+                        if (result.status < 200 || result.status >= 300 || !result.data || result.data.success === false) {
+                            message.textContent = (result.data && result.data.message) || "تعذر تحميل سجل الأخطاء";
+                            return;
+                        }
+                        var rows = result.data.data || [];
+                        message.textContent = rows.length ? ("عدد السجلات: " + rows.length) : "لا توجد أخطاء مطابقة للفلاتر.";
+                        table.hidden = !rows.length;
+                        rows.forEach(function (row) {
+                            var tr = document.createElement("tr");
+                            var sevClass = String(row.Severity || "").toLowerCase() === "warning" ? "severity-warning" : "severity-error";
+                            tr.innerHTML =
+                                "<td>" + escapeHtml(displayDate(row.CreatedAt)) + "</td>" +
+                                "<td>" + escapeHtml((row.UserName || "") + (row.UserId ? " (" + row.UserId + ")" : "")) + "</td>" +
+                                "<td>" + escapeHtml(row.BranchName || row.BranchId || "") + "</td>" +
+                                "<td>" + escapeHtml(row.ScreenName || "") + "</td>" +
+                                "<td>" + escapeHtml(row.ActionName || "") + "</td>" +
+                                "<td>" + escapeHtml(row.OperationType || "") + "</td>" +
+                                "<td>" + escapeHtml(row.TransactionId || "") + "</td>" +
+                                "<td class='" + sevClass + "'>" + escapeHtml(row.Severity || "") + "</td>" +
+                                "<td>" + escapeHtml(row.ErrorMessage || "") + "</td>" +
+                                "<td>" + escapeHtml(row.RequestSummary || "") + "</td>" +
+                                "<td>" + escapeHtml(row.IpAddress || "") + "</td>";
+                            body.appendChild(tr);
+                        });
+                    })
+                    .catch(function (error) {
+                        message.textContent = "تعذر قراءة رد السيرفر: " + error.message;
+                    });
+            }
+            byId("loadErrorsBtn").addEventListener("click", load);
+            byId("loadErrorsBtnInline").addEventListener("click", load);
+        })();
+    </script>
+</body>
+</html>

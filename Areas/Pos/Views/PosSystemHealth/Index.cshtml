@@ -71,34 +71,34 @@
         </section>
 
         <section class="health-panel">
-            <h2>🚨 التنبيهات الذكية</h2>
+            <h2>التنبيهات الذكية</h2>
             <div class="health-alerts" id="healthAlerts"><div class="health-empty">اضغط تحديث مؤشرات النظام لعرض التنبيهات.</div></div>
         </section>
 
         <section class="health-panels">
             <article class="health-panel">
-                <h2>⚡ أداء الحفظ في POS</h2>
+                <h2>أداء الحفظ في POS</h2>
                 <div class="health-chart"><canvas id="posSaveChart"></canvas></div>
                 <div id="posHealthDetails"></div>
             </article>
             <article class="health-panel">
-                <h2>🧠 آخر أخطاء التطبيق</h2>
+                <h2>آخر أخطاء التطبيق</h2>
                 <div id="lastErrors"></div>
             </article>
             <article class="health-panel">
-                <h2>📊 أبطأ الاستعلامات الحالية</h2>
+                <h2>أبطأ الاستعلامات الحالية</h2>
                 <div id="slowQueries"></div>
             </article>
             <article class="health-panel">
-                <h2>🚦 الحجز في قاعدة البيانات</h2>
+                <h2>الحجز في قاعدة البيانات</h2>
                 <div id="blockingSessions"></div>
             </article>
             <article class="health-panel">
-                <h2>💾 مؤشرات قاعدة البيانات</h2>
+                <h2>مؤشرات قاعدة البيانات</h2>
                 <div id="dbCounters"></div>
             </article>
             <article class="health-panel">
-                <h2>🖥️ موارد النظام</h2>
+                <h2>موارد النظام</h2>
                 <div id="resourceHints"></div>
             </article>
         </section>
@@ -156,7 +156,7 @@
                 var out = "";
                 rows.forEach(function (a) {
                     var severity = String(read(a, "Severity") || "Low").toLowerCase();
-                    out += "<article class=\"health-alert " + html(severity) + "\"><strong>" + html(read(a, "Icon") || "💡") + " " + html(read(a, "Title")) + "</strong><span>" + html(read(a, "Message")) + "</span></article>";
+                    out += "<article class=\"health-alert " + html(severity) + "\"><strong>" + html(read(a, "Icon") || "تنبيه") + " " + html(read(a, "Title")) + "</strong><span>" + html(read(a, "Message")) + "</span></article>";
                 });
                 document.getElementById("healthAlerts").innerHTML = out;
             }
@@ -249,7 +249,7 @@
                     var response = null;
                     try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
                     if (xhr.status < 200 || xhr.status >= 300 || !response || !response.success) {
-                        document.getElementById("healthAlerts").innerHTML = "<article class=\"health-alert high\"><strong>🚨 تعذر تحميل المراقبة</strong><span>" + html((response && response.message) || "تعذر قراءة رد السيرفر") + "</span></article>";
+                        document.getElementById("healthAlerts").innerHTML = "<article class=\"health-alert high\"><strong>تعذر تحميل المراقبة</strong><span>" + html((response && response.message) || "تعذر قراءة رد السيرفر") + "</span></article>";
                         return;
                     }
                     var data = response.data || {};

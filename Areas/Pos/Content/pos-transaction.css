@@ -533,7 +533,8 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     display: none;
 }
 
-.today-search {
+.today-search,
+.today-type-filter {
     border: 1px solid #cbd5df;
     direction: rtl;
     font-family: "Tahoma", "Arial", sans-serif;
@@ -542,6 +543,11 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     padding: 8px 10px;
     text-align: right;
     width: 100%;
+}
+
+.today-type-filter {
+    background: #fff;
+    margin-top: 8px;
 }
 
 .today-invoices-list {
@@ -1098,6 +1104,29 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 
 .pos-main-nav a.active {
     border-right: 4px solid var(--brand-rose);
+}
+
+.pos-main-nav a.is-disabled {
+    cursor: wait;
+    opacity: .58;
+    pointer-events: none;
+}
+
+.pos-main-loading-overlay {
+    align-items: center;
+    background: rgba(248, 250, 252, .88);
+    bottom: 0;
+    display: none;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 10000;
+}
+
+.pos-main-shell.is-nav-loading .pos-main-loading-overlay {
+    display: flex;
 }
 
 .pos-main-content {
