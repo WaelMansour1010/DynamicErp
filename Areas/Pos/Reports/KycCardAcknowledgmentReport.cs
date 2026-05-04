@@ -100,8 +100,8 @@ namespace MyERP.Areas.Pos.Reports
             //   [أقر أنا] [customerName underlined] [الموقع أدناه بأني إستلمت بطاقة بنك مصر - Easy Cash]
             float rightPrefixWidth = 60F;
             float leftSuffixWidth = width * 0.55F;
-            float namePartWidth = width - rightPrefixWidth - leftSuffixWidth;
-            float namePartX = rightPrefixWidth;
+            float namePartWidth = width - rightPrefixWidth - leftSuffixWidth - 8F;
+            float namePartX = leftSuffixWidth + 4F;
 
             band.Controls.Add(new XRLabel
             {
