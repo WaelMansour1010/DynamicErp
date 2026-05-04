@@ -5,6 +5,7 @@ namespace MyERP.Areas.Pos.Models
 {
     public class PosSaveTransactionRequest
     {
+        public int? Transaction_ID { get; set; }
         public string TransactionType { get; set; }
         public string TransactionDate { get; set; }
         public int? BranchId { get; set; }
@@ -51,6 +52,7 @@ namespace MyERP.Areas.Pos.Models
         public bool IsRecharg { get; set; }
         public bool IsWallet { get; set; }
         public bool HaveGuarantee { get; set; }
+        public string EditPassword { get; set; }
         public List<PosTransactionItemDto> Items { get; set; }
         public List<PosSalesPaymentDto> SalesPayments { get; set; }
 
@@ -73,6 +75,7 @@ namespace MyERP.Areas.Pos.Models
         public int UserId { get; set; }
         public string UserName { get; set; }
         public int? UserType { get; set; }
+        public string UserCategory { get; set; }
         public int? EmpId { get; set; }
         public string EmpName { get; set; }
         public int? BranchId { get; set; }
@@ -96,8 +99,11 @@ namespace MyERP.Areas.Pos.Models
         public bool CanOpenClosing { get; set; }
         public bool CanExecuteClosing { get; set; }
         public bool CanOpenSales { get; set; }
+        public bool CanEditInvoice { get; set; }
         public bool CanCancelOrReturn { get; set; }
         public bool CanEditKyc { get; set; }
+        public bool CustomerService { get; set; }
+        public bool IsFullAccessCustomerService { get; set; }
         public bool CanPrintKycAcknowledgment { get; set; }
         public bool CanPrintKycCard { get; set; }
         public bool CanReportSalesmen { get; set; }
@@ -118,6 +124,7 @@ namespace MyERP.Areas.Pos.Models
         public bool CanTeller { get; set; }
         public bool CanOpenPayments { get; set; }
         public bool CanExecutePayments { get; set; }
+        public bool CanEditPayments { get; set; }
         public bool IsFullAccess { get; set; }
         public bool CanChangeDefaults { get; set; }
         public PosSystemOptionsDto SystemOptions { get; set; }
@@ -373,6 +380,7 @@ namespace MyERP.Areas.Pos.Models
     {
         public string GeneratedAt { get; set; }
         public IList<PosTodaySummaryItemDto> Items { get; set; }
+        public PosSellerRankDto SellerRank { get; set; }
 
         public PosTodaySummaryDto()
         {
@@ -386,6 +394,23 @@ namespace MyERP.Areas.Pos.Models
         public int Count { get; set; }
         public decimal NetValue { get; set; }
         public decimal PayedValue { get; set; }
+    }
+
+    public class PosSellerRankDto
+    {
+        public int SellerId { get; set; }
+        public decimal NetValue { get; set; }
+        public int? RankNo { get; set; }
+        public int ActiveSellersCount { get; set; }
+        public string PercentileBucket { get; set; }
+        public decimal AmountToNextRank { get; set; }
+        public string Message { get; set; }
+        public bool IsLeading { get; set; }
+        public string RankIcon { get; set; }
+        public string RankBadgeText { get; set; }
+        public string RankCssClass { get; set; }
+        public string MotivationMessage { get; set; }
+        public decimal ProgressPercent { get; set; }
     }
 
     public class PosTodayInvoiceDto
@@ -412,6 +437,8 @@ namespace MyERP.Areas.Pos.Models
         public string CashCustomerName { get; set; }
         public string Phone2 { get; set; }
         public string VisaNumber { get; set; }
+        public int? CreatedUserId { get; set; }
+        public string CreatedUserName { get; set; }
         public int? BranchId { get; set; }
         public string BranchName { get; set; }
         public string BranchCode { get; set; }
@@ -451,18 +478,30 @@ namespace MyERP.Areas.Pos.Models
     public class PosDashboardSummaryDto
     {
         public PosDashboardKpiDto Kpis { get; set; }
+        public PosDashboardKpiDto PreviousKpis { get; set; }
+        public IList<PosDashboardKpiComparisonDto> KpiComparisons { get; set; }
         public IList<PosDashboardBranchDto> BranchComparison { get; set; }
+        public IList<PosDashboardBranchDto> WorstBranches { get; set; }
         public IList<PosDashboardServiceDto> TopServices { get; set; }
+        public IList<PosDashboardSellerDto> TopSellers { get; set; }
         public IList<PosDashboardOperationDto> OperationTypeSummary { get; set; }
         public IList<PosDashboardTrendDto> DailyTrend { get; set; }
+        public IList<string> Insights { get; set; }
+        public IList<string> Recommendations { get; set; }
 
         public PosDashboardSummaryDto()
         {
             Kpis = new PosDashboardKpiDto();
+            PreviousKpis = new PosDashboardKpiDto();
+            KpiComparisons = new List<PosDashboardKpiComparisonDto>();
             BranchComparison = new List<PosDashboardBranchDto>();
+            WorstBranches = new List<PosDashboardBranchDto>();
             TopServices = new List<PosDashboardServiceDto>();
+            TopSellers = new List<PosDashboardSellerDto>();
             OperationTypeSummary = new List<PosDashboardOperationDto>();
             DailyTrend = new List<PosDashboardTrendDto>();
+            Insights = new List<string>();
+            Recommendations = new List<string>();
         }
     }
 
@@ -475,6 +514,17 @@ namespace MyERP.Areas.Pos.Models
         public decimal NetCollection { get; set; }
         public int ActivatedKycCards { get; set; }
         public int CancelledOrReturnedCount { get; set; }
+    }
+
+    public class PosDashboardKpiComparisonDto
+    {
+        public string Key { get; set; }
+        public string Title { get; set; }
+        public decimal CurrentValue { get; set; }
+        public decimal PreviousValue { get; set; }
+        public decimal ChangePercent { get; set; }
+        public bool IsPositive { get; set; }
+        public string Format { get; set; }
     }
 
     public class PosDashboardBranchDto
@@ -493,6 +543,16 @@ namespace MyERP.Areas.Pos.Models
         public int SaleCount { get; set; }
         public decimal TotalValue { get; set; }
         public decimal FeesTotal { get; set; }
+    }
+
+    public class PosDashboardSellerDto
+    {
+        public int RankNo { get; set; }
+        public string RankIcon { get; set; }
+        public int? SellerId { get; set; }
+        public string SellerName { get; set; }
+        public int TransactionCount { get; set; }
+        public decimal NetValue { get; set; }
     }
 
     public class PosDashboardOperationDto
@@ -529,6 +589,7 @@ namespace MyERP.Areas.Pos.Models
         public int UserId { get; set; }
         public string UserName { get; set; }
         public string EmpName { get; set; }
+        public string UserCategory { get; set; }
     }
 
     public class PosPermissionItemDto
@@ -549,6 +610,19 @@ namespace MyERP.Areas.Pos.Models
         }
     }
 
+    public class PosUserCategorySaveRequest
+    {
+        public int UserId { get; set; }
+        public string UserCategory { get; set; }
+    }
+
+    public class PosBulkPermissionRequest
+    {
+        public string UserCategory { get; set; }
+        public string PermissionKey { get; set; }
+        public bool IsAllowed { get; set; }
+    }
+
     public class PosLookupDto
     {
         public string Id { get; set; }
@@ -558,6 +632,7 @@ namespace MyERP.Areas.Pos.Models
 
     public class PosPaymentRequestDto
     {
+        public int? NoteId { get; set; }
         public int BranchId { get; set; }
         public DateTime PaymentDate { get; set; }
         public int CashingType { get; set; }
@@ -594,6 +669,52 @@ namespace MyERP.Areas.Pos.Models
         public IList<PosPaymentLineDto> Lines { get; set; }
 
         public PosPaymentResultDto()
+        {
+            Lines = new List<PosPaymentLineDto>();
+        }
+    }
+
+    public class PosPaymentSearchRequestDto
+    {
+        public string SearchText { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public int? BranchId { get; set; }
+        public int? EmpId { get; set; }
+    }
+
+    public class PosPaymentMovementDto
+    {
+        public int NoteId { get; set; }
+        public string NoteSerial { get; set; }
+        public string NoteSerial1 { get; set; }
+        public DateTime? NoteDate { get; set; }
+        public int BranchId { get; set; }
+        public string BranchName { get; set; }
+        public int CashingType { get; set; }
+        public string CashingTypeName { get; set; }
+        public string NameAccountCode { get; set; }
+        public string NameText { get; set; }
+        public int PaymentMethod { get; set; }
+        public decimal Value { get; set; }
+        public int? BoxId { get; set; }
+        public int? BankId { get; set; }
+        public string ReferenceNo { get; set; }
+        public DateTime? ReferenceDate { get; set; }
+        public int? EmpId { get; set; }
+        public string EmpAccountCode { get; set; }
+        public decimal BoxValue { get; set; }
+        public decimal EmpValue { get; set; }
+        public string Remarks { get; set; }
+        public string GeneralDescription { get; set; }
+        public int? CreatedUserId { get; set; }
+        public string CreatedUserName { get; set; }
+        public int? LastModifiedByUserId { get; set; }
+        public string LastModifiedByUserName { get; set; }
+        public DateTime? LastModifiedDate { get; set; }
+        public IList<PosPaymentLineDto> Lines { get; set; }
+
+        public PosPaymentMovementDto()
         {
             Lines = new List<PosPaymentLineDto>();
         }

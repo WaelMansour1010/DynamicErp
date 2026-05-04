@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     ViewBag.Title = "تقارير كيشني";
     var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
@@ -187,21 +187,62 @@
                 xhr.send(JSON.stringify(payload(key)));
             }
             function exportReport(key) {
-                var form = document.createElement("form");
-                form.method = "post";
-                form.action = document.querySelector(".pos-reports-page").getAttribute("data-export-report-url");
-                form.target = "_blank";
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-export-report-url"), true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+                xhr.responseType = "blob";
+                byId("reportMessage").innerText = "جاري تجهيز ملف Excel...";
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+
+                    var contentType = xhr.getResponseHeader("Content-Type") || "";
+                    if (xhr.status >= 200 && xhr.status < 300 && contentType.indexOf("spreadsheetml") >= 0) {
+                        var fileName = "POS_Report_" + (byId("reportFromDate").value || "") + "_" + (byId("reportToDate").value || "") + ".xlsx";
+                        var url = window.URL.createObjectURL(xhr.response);
+                        var link = document.createElement("a");
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        byId("reportMessage").innerText = "تم تنزيل ملف Excel";
+                        return;
+                    }
+
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var text = reader.result || "";
+                        try {
+                            var data = text ? JSON.parse(text) : null;
+                            byId("reportMessage").innerText = (data && data.message) || "تعذر تصدير Excel";
+                            if (data && data.technicalMessage && window.console) {
+                                console.error(data.technicalMessage);
+                            }
+                        } catch (ignore) {
+                            byId("reportMessage").innerText = text || "تعذر تصدير Excel";
+                        }
+                    };
+                    reader.onerror = function () {
+                        byId("reportMessage").innerText = "تعذر تصدير Excel";
+                    };
+                    reader.readAsText(xhr.response || new Blob(), "utf-8");
+                };
+                xhr.onerror = function () {
+                    byId("reportMessage").innerText = "تعذر الاتصال بالسيرفر أثناء تصدير Excel";
+                };
                 var data = payload(key);
-                Object.keys(data).forEach(function (name) {
-                    var input = document.createElement("input");
-                    input.type = "hidden";
-                    input.name = name.charAt(0).toUpperCase() + name.slice(1);
-                    input.value = data[name] === null ? "" : data[name];
-                    form.appendChild(input);
-                });
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
+                var form = [
+                    ["ReportKey", data.reportKey || ""],
+                    ["FromDate", data.fromDate || ""],
+                    ["ToDate", data.toDate || ""],
+                    ["BranchId", data.branchId || ""],
+                    ["StoreId", data.storeId || ""],
+                    ["SerialSearch", data.serialSearch || ""]
+                ].map(function (item) {
+                    return encodeURIComponent(item[0]) + "=" + encodeURIComponent(item[1]);
+                }).join("&");
+                xhr.send(form);
             }
 
             document.addEventListener("click", function (event) {

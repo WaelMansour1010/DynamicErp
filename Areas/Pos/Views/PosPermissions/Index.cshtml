@@ -3,6 +3,7 @@
     ViewBag.Title = "صلاحيات POS";
     var users = ViewBag.Users as IEnumerable<MyERP.Areas.Pos.Models.PosPermissionUserDto>;
     var permissions = ViewBag.Permissions as IEnumerable<MyERP.Areas.Pos.Models.PosPermissionItemDto>;
+    var categories = ViewBag.UserCategories as IEnumerable<string>;
 }
 
 <!DOCTYPE html>
@@ -16,7 +17,9 @@
 <body>
     <div class="pos-page pos-permissions-page"
          data-load-url="@Url.Action("GetUserPermissions", "PosPermissions", new { area = "Pos" })"
-         data-save-url="@Url.Action("Save", "PosPermissions", new { area = "Pos" })">
+         data-save-url="@Url.Action("Save", "PosPermissions", new { area = "Pos" })"
+         data-save-category-url="@Url.Action("SaveUserCategory", "PosPermissions", new { area = "Pos" })"
+         data-bulk-url="@Url.Action("BulkApply", "PosPermissions", new { area = "Pos" })">
         <div class="pos-shell">
             <section class="pos-panel">
                 <div class="panel-heading">
@@ -32,11 +35,27 @@
                             {
                                 foreach (var user in users)
                                 {
-                                    <option value="@user.UserId">@user.UserName @(string.IsNullOrWhiteSpace(user.EmpName) ? "" : " - " + user.EmpName)</option>
+                                    <option value="@user.UserId" data-category="@user.UserCategory">@user.UserName @(string.IsNullOrWhiteSpace(user.EmpName) ? "" : " - " + user.EmpName)</option>
                                 }
                             }
                         </select>
                     </label>
+                    <label>
+                        فئة المستخدم
+                        <select id="permissionUserCategory">
+                            <option value="">بدون فئة</option>
+                            @if (categories != null)
+                            {
+                                foreach (var category in categories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                </div>
+                <div class="pos-actions">
+                    <button type="button" class="secondary-action" id="saveUserCategoryBtn">حفظ فئة المستخدم</button>
                 </div>
             </section>
 
@@ -58,6 +77,52 @@
                 </div>
                 <div id="permissionsMessage" class="pos-validation"></div>
             </section>
+
+            <section class="pos-panel">
+                <div class="panel-heading">
+                    <h2>تطبيق صلاحية على فئة كاملة</h2>
+                    <span>Bulk permissions</span>
+                </div>
+                <div class="pos-grid three-cols">
+                    <label>
+                        الفئة
+                        <select id="bulkCategory">
+                            <option value="">اختر الفئة</option>
+                            @if (categories != null)
+                            {
+                                foreach (var category in categories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        الصلاحية
+                        <select id="bulkPermissionKey">
+                            <option value="">اختر الصلاحية</option>
+                            @if (permissions != null)
+                            {
+                                foreach (var permission in permissions)
+                                {
+                                    <option value="@permission.Key">@permission.Title</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        الإجراء
+                        <select id="bulkIsAllowed">
+                            <option value="true">منح الصلاحية</option>
+                            <option value="false">سحب الصلاحية</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="pos-actions">
+                    <button type="button" class="primary-action" id="bulkApplyPermissionsBtn">تطبيق على الفئة</button>
+                </div>
+                <div id="bulkPermissionsMessage" class="pos-validation"></div>
+            </section>
         </div>
     </div>
 
@@ -65,9 +130,12 @@
         (function () {
             var page = document.querySelector(".pos-permissions-page");
             var userSelect = document.getElementById("permissionUserId");
+            var categorySelect = document.getElementById("permissionUserCategory");
             var message = document.getElementById("permissionsMessage");
+            var bulkMessage = document.getElementById("bulkPermissionsMessage");
 
             function setMessage(text) { message.innerText = text || ""; }
+            function setBulkMessage(text) { bulkMessage.innerText = text || ""; }
             function request(method, url, body, callback) {
                 var xhr = new XMLHttpRequest();
                 xhr.open(method, url, true);
@@ -104,6 +172,8 @@
             userSelect.addEventListener("change", function () {
                 var userId = parseInt(userSelect.value, 10) || 0;
                 applyPermissions([]);
+                var selectedOption = userSelect.options[userSelect.selectedIndex];
+                categorySelect.value = selectedOption ? (selectedOption.getAttribute("data-category") || "") : "";
                 if (userId <= 0) { return; }
                 setMessage("جاري تحميل الصلاحيات...");
                 request("GET", page.getAttribute("data-load-url") + "?userId=" + encodeURIComponent(userId), null, function (status, data) {
@@ -116,6 +186,25 @@
                 });
             });
 
+            document.getElementById("saveUserCategoryBtn").addEventListener("click", function () {
+                var userId = parseInt(userSelect.value, 10) || 0;
+                if (userId <= 0) {
+                    setMessage("اختر المستخدم أولاً");
+                    return;
+                }
+
+                setMessage("جاري حفظ فئة المستخدم...");
+                request("POST", page.getAttribute("data-save-category-url"), { UserId: userId, UserCategory: categorySelect.value }, function (status, data) {
+                    if (status >= 200 && status < 300 && data && data.success) {
+                        var selectedOption = userSelect.options[userSelect.selectedIndex];
+                        if (selectedOption) {
+                            selectedOption.setAttribute("data-category", categorySelect.value || "");
+                        }
+                    }
+                    setMessage((data && data.message) || (status >= 200 && status < 300 ? "تم الحفظ" : "تعذر حفظ فئة المستخدم"));
+                });
+            });
+
             document.getElementById("savePosPermissionsBtn").addEventListener("click", function () {
                 var userId = parseInt(userSelect.value, 10) || 0;
                 if (userId <= 0) {
@@ -125,6 +214,30 @@
                 setMessage("جاري الحفظ...");
                 request("POST", page.getAttribute("data-save-url"), { UserId: userId, Permissions: checkedItems() }, function (status, data) {
                     setMessage((data && data.message) || (status >= 200 && status < 300 ? "تم الحفظ" : "تعذر حفظ الصلاحيات"));
+                });
+            });
+
+            document.getElementById("bulkApplyPermissionsBtn").addEventListener("click", function () {
+                var category = document.getElementById("bulkCategory").value;
+                var permissionKey = document.getElementById("bulkPermissionKey").value;
+                var isAllowed = document.getElementById("bulkIsAllowed").value === "true";
+                if (!category || !permissionKey) {
+                    setBulkMessage("اختر الفئة والصلاحية أولاً");
+                    return;
+                }
+
+                if (!window.confirm("سيتم تعديل صلاحيات كل مستخدمي فئة " + category + "، هل تريد المتابعة؟")) {
+                    return;
+                }
+
+                setBulkMessage("جاري التطبيق...");
+                request("POST", page.getAttribute("data-bulk-url"), { UserCategory: category, PermissionKey: permissionKey, IsAllowed: isAllowed }, function (status, data) {
+                    if (status >= 200 && status < 300 && data && data.success) {
+                        setBulkMessage((data.message || "تم التطبيق") + " - عدد المستخدمين: " + data.affectedUsers + " - صفوف الصلاحيات المحدثة: " + data.updatedRows);
+                        return;
+                    }
+
+                    setBulkMessage((data && data.message) || "تعذر تطبيق الصلاحية على الفئة");
                 });
             });
         })();

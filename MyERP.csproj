@@ -411,6 +411,7 @@
     <Compile Include="App_Start\Startup.Auth.cs" />
     <Compile Include="Areas\Pos\PosAreaRegistration.cs" />
     <Compile Include="Areas\Pos\Controllers\KycAttachmentController.cs" />
+    <Compile Include="Areas\Pos\Controllers\KycBankFollowUpController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosDashboardController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
@@ -494,6 +495,7 @@
     <Compile Include="Controllers\ElderController.cs" />
     <Compile Include="Controllers\EmployeeJobRecommendationController.cs" />
     <Compile Include="Controllers\ERPRoleReportsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\HtmlReportsController.cs" />
     <Compile Include="Controllers\ERPRolesController.cs" />
     <Compile Include="Controllers\ERPUsersController.cs" />
     <Compile Include="Controllers\ExpenseAmortizationController.cs" />
@@ -694,6 +696,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Reports\HtmlReportModels.cs" />
     <Compile Include="Models\Activity.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -3948,12 +3951,17 @@
     <Content Include="Areas\Pos\Views\PosTransaction\PrintPreview.cshtml" />
     <Content Include="Areas\Pos\Views\PosClosing\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosDashboard\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\KycBankFollowUp\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
     <Content Include="Areas\Pos\Views\Payments\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosPermissions\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosReports\Index.cshtml" />
     <Content Include="Areas\Pos\Sql\25_POS_TemporaryPermissions.sql" />
     <Content Include="Areas\Pos\Sql\26_POS_TellerPermission_ECUsers.sql" />
+    <Content Include="Areas\Pos\Sql\27_POS_ReportStoredProcedures.sql" />
+    <Content Include="Areas\Pos\Sql\28_POS_Payments_Audit.sql" />
+    <Content Include="Areas\Pos\Sql\29_POS_UserCategory_BulkPermissions.sql" />
+    <Content Include="Areas\Pos\Sql\30_POS_SaveTransaction_UnicodeText.sql" />
     <Content Include="Areas\Pos\assets\images\company-logo.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-1.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-2.png" />
@@ -3962,6 +3970,7 @@
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Areas\Pos\Content\html-reports.css" />
     <Content Include="Content\numpad-dark.css" />
     <Content Include="Content\numpad-light.css" />
     <Content Include="favicon.ico" />
@@ -4186,6 +4195,9 @@
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\HtmlReports\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\HtmlReports\Shared\_FilterToolbar.cshtml" />
+    <Content Include="Areas\Pos\Views\HtmlReports\Shared\_ReportActions.cshtml" />
     <Content Include="Views\Account\_ExternalLoginsListPartial.cshtml" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />
     <Content Include="Views\Account\ExternalLoginConfirmation.cshtml" />

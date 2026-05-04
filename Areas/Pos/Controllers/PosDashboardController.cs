@@ -35,6 +35,11 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("kyc");
         }
 
+        public ActionResult KycBankFollowUp()
+        {
+            return OpenShell("kyc-bank-follow-up");
+        }
+
         public ActionResult Reports()
         {
             return OpenShell("reports");
@@ -46,7 +51,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult Summary(DateTime? fromDate, DateTime? toDate, int? branchId, string operationType)
+        public JsonResult Summary(string periodType, DateTime? fromDate, DateTime? toDate, int? branchId, string operationType)
         {
             var context = GetPosContext();
             if (context == null)
@@ -55,27 +60,28 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.IsFullAccess)
+            if (!IsAdmin(context))
             {
                 Response.StatusCode = 403;
-                return Json(new { success = false, message = "ليست لديك صلاحية عرض Dashboard الإدارة" }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "ليست لديك صلاحية عرض لوحة التحكم" }, JsonRequestBehavior.AllowGet);
             }
 
             try
             {
                 var resolvedBranchId = branchId.HasValue && branchId.Value > 0 ? branchId : null;
-                var summary = _repository.GetAdminDashboardSummary((fromDate ?? DateTime.Today).Date, (toDate ?? DateTime.Today).Date, resolvedBranchId, operationType);
-                return Json(new { success = true, data = summary }, JsonRequestBehavior.AllowGet);
+                var range = ResolveDashboardRange(periodType, fromDate, toDate);
+                var summary = _repository.GetAdminDashboardSummary(range.FromDate, range.ToDate, range.PreviousFromDate, range.PreviousToDate, resolvedBranchId, operationType, range.PeriodType);
+                return Json(new { success = true, period = range, data = summary }, JsonRequestBehavior.AllowGet);
             }
             catch (SqlException ex)
             {
                 Response.StatusCode = 500;
-                return Json(new { success = false, message = "تعذر تحميل Dashboard الإدارة", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "تعذر تحميل لوحة التحكم", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
                 Response.StatusCode = 500;
-                return Json(new { success = false, message = "تعذر تحميل Dashboard الإدارة", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "تعذر تحميل لوحة التحكم", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -87,18 +93,95 @@ namespace MyERP.Areas.Pos.Controllers
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
-            if (screen == "dashboard" && !context.IsFullAccess)
+            if (screen == "dashboard" && !IsAdmin(context))
             {
-                screen = "sales";
+                screen = HasSalesDefaults(context) ? "sales" : "home";
+            }
+
+            if (screen == "kyc-bank-follow-up" && !CanOpenKycBankFollowUp(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية متابعة KYC والبنك");
             }
 
             ViewBag.PosContext = context;
             ViewBag.ActiveScreen = screen;
             ViewBag.InitialScreenUrl = ScreenUrl(screen);
-            ViewBag.Branches = context.IsFullAccess
+            ViewBag.HasSalesDefaults = HasSalesDefaults(context);
+            ViewBag.Branches = IsAdmin(context)
                 ? _repository.GetBranches()
                 : new[] { new PosBranchDto { BranchId = context.BranchId.GetValueOrDefault(), BranchName = context.BranchName } };
             return View("Index");
+        }
+
+        private static bool IsAdmin(PosUserContext context)
+        {
+            return context != null && context.UserType.GetValueOrDefault(-1) == 0;
+        }
+
+        private static bool CanOpenKycBankFollowUp(PosUserContext context)
+        {
+            return IsAdmin(context) || (context != null && context.IsFullAccessCustomerService);
+        }
+
+        private static bool HasSalesDefaults(PosUserContext context)
+        {
+            return context != null
+                && context.BranchId.GetValueOrDefault() > 0
+                && context.EmpId.GetValueOrDefault() > 0
+                && context.StoreId.GetValueOrDefault() > 0
+                && context.BoxId.GetValueOrDefault() > 0
+                && context.PaymentTypeId.GetValueOrDefault() > 0;
+        }
+
+        private static DashboardRange ResolveDashboardRange(string periodType, DateTime? fromDate, DateTime? toDate)
+        {
+            var today = DateTime.Today;
+            var period = (periodType ?? "daily").Trim().ToLowerInvariant();
+            DateTime from;
+            DateTime to;
+
+            if (period == "weekly")
+            {
+                to = today;
+                from = today.AddDays(-6);
+            }
+            else if (period == "monthly")
+            {
+                from = new DateTime(today.Year, today.Month, 1);
+                to = from.AddMonths(1).AddDays(-1);
+            }
+            else if (period == "yearly")
+            {
+                from = new DateTime(today.Year, 1, 1);
+                to = new DateTime(today.Year, 12, 31);
+            }
+            else if (period == "custom")
+            {
+                from = (fromDate ?? today).Date;
+                to = (toDate ?? from).Date;
+                if (to < from)
+                {
+                    var temp = from;
+                    from = to;
+                    to = temp;
+                }
+            }
+            else
+            {
+                period = "daily";
+                from = today;
+                to = today;
+            }
+
+            var dayCount = Math.Max(1, (to - from).Days + 1);
+            return new DashboardRange
+            {
+                PeriodType = period,
+                FromDate = from,
+                ToDate = to,
+                PreviousFromDate = from.AddDays(-dayCount),
+                PreviousToDate = from.AddDays(-1)
+            };
         }
 
         private string ScreenUrl(string screen)
@@ -113,6 +196,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return Url.Content("~/Pos/PosTransaction/Index?openKyc=true");
             }
 
+            if (screen == "kyc-bank-follow-up")
+            {
+                return Url.Content("~/Pos/KycBankFollowUp/Index");
+            }
+
             if (screen == "reports")
             {
                 return Url.Content("~/Pos/PosReports/Index");
@@ -121,6 +209,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "payments")
             {
                 return Url.Content("~/Pos/Payments/Index");
+            }
+
+            if (screen == "home")
+            {
+                return string.Empty;
             }
 
             return Url.Content("~/Pos/PosTransaction/Index");
@@ -143,6 +236,15 @@ namespace MyERP.Areas.Pos.Controllers
         private PosUserContext GetPosContext()
         {
             return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+        }
+
+        public class DashboardRange
+        {
+            public string PeriodType { get; set; }
+            public DateTime FromDate { get; set; }
+            public DateTime ToDate { get; set; }
+            public DateTime PreviousFromDate { get; set; }
+            public DateTime PreviousToDate { get; set; }
         }
     }
 }

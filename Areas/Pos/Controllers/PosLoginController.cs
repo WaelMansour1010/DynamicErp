@@ -40,19 +40,12 @@ namespace MyERP.Areas.Pos.Controllers
                 return View(request);
             }
 
-            var contextError = ValidateContextDefaults(context);
-            if (!string.IsNullOrWhiteSpace(contextError))
-            {
-                ViewBag.ErrorMessage = contextError;
-                return View(request);
-            }
-
             Session[PosContextSessionKey] = context;
             Session["PosUserId"] = context.UserId;
             Session["PosUserName"] = context.UserName;
             Session["PosEmpId"] = context.EmpId;
 
-            return RedirectToAction("Index", "PosTransaction", new { area = "Pos" });
+            return RedirectToAction("Index", "PosDashboard", new { area = "Pos" });
         }
 
         [HttpPost]
@@ -64,36 +57,6 @@ namespace MyERP.Areas.Pos.Controllers
             Session.Remove("PosUserName");
             Session.Remove("PosEmpId");
             return RedirectToAction("Index");
-        }
-
-        private static string ValidateContextDefaults(PosUserContext context)
-        {
-            if (context.BranchId.GetValueOrDefault() <= 0)
-            {
-                return "لا يوجد فرع افتراضي مضبوط لهذا المستخدم";
-            }
-
-            if (context.EmpId.GetValueOrDefault() <= 0)
-            {
-                return "لا يوجد موظف / مندوب مبيعات مضبوط لهذا المستخدم";
-            }
-
-            if (context.StoreId.GetValueOrDefault() <= 0)
-            {
-                return "لا يوجد مخزن افتراضي مضبوط لهذا المستخدم";
-            }
-
-            if (context.BoxId.GetValueOrDefault() <= 0)
-            {
-                return "لا توجد خزنة افتراضية مضبوطة لهذا المستخدم";
-            }
-
-            if (context.PaymentTypeId.GetValueOrDefault() <= 0)
-            {
-                return "لا توجد طريقة دفع نقدي افتراضية مضبوطة لهذا المستخدم";
-            }
-
-            return null;
         }
     }
 }

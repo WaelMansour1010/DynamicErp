@@ -15,6 +15,8 @@ using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
 {
+    [AllowAnonymous]
+    [SkipERPAuthorize]
     public class PosTransactionController : Controller
     {
         private readonly PosSqlRepository _repository;
@@ -32,8 +34,24 @@ namespace MyERP.Areas.Pos.Controllers
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
+            if (!HasRequiredSalesDefaults(context))
+            {
+                ViewBag.Message = "لا توجد إعدادات بيع افتراضية لهذا المستخدم، برجاء مراجعة الإدارة";
+                return View("MissingSalesDefaults");
+            }
+
             ViewBag.PosContext = context;
             return View();
+        }
+
+        private static bool HasRequiredSalesDefaults(PosUserContext context)
+        {
+            return context != null
+                && context.BranchId.GetValueOrDefault() > 0
+                && context.EmpId.GetValueOrDefault() > 0
+                && context.StoreId.GetValueOrDefault() > 0
+                && context.BoxId.GetValueOrDefault() > 0
+                && context.PaymentTypeId.GetValueOrDefault() > 0;
         }
 
         [HttpGet]
@@ -74,7 +92,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
+                SetJsonErrorStatus(401);
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
@@ -222,8 +240,8 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
-                return Json(Fail("ظٹط¬ط¨ طھط³ط¬ظٹظ„ ط¯ط®ظˆظ„ ظ†ظ‚ط·ط© ط§ظ„ط¨ظٹط¹ ط£ظˆظ„ط§ظ‹", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
             return Json(new
@@ -231,6 +249,7 @@ namespace MyERP.Areas.Pos.Controllers
                 UserId = context.UserId,
                 UserName = context.UserName,
                 UserType = context.UserType,
+                UserCategory = context.UserCategory,
                 EmpId = context.EmpId,
                 EmpName = context.EmpName,
                 BranchId = context.BranchId,
@@ -260,6 +279,7 @@ namespace MyERP.Areas.Pos.Controllers
                 CanTeller = context.CanTeller,
                 CanOpenPayments = context.CanOpenPayments,
                 CanExecutePayments = context.CanExecutePayments,
+                CanEditInvoice = context.CanEditInvoice,
                 IsFullAccess = context.IsFullAccess,
                 CanChangeDefaults = context.CanChangeDefaults
             }, JsonRequestBehavior.AllowGet);
@@ -271,8 +291,8 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
-                return Json(Fail("ظٹط¬ط¨ طھط³ط¬ظٹظ„ ط¯ط®ظˆظ„ ظ†ظ‚ط·ط© ط§ظ„ط¨ظٹط¹ ط£ظˆظ„ط§ظ‹", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
             return Json(_repository.GetEmployeeBalances(context.UserId, context.BoxId), JsonRequestBehavior.AllowGet);
@@ -284,11 +304,11 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
+                SetJsonErrorStatus(401);
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            return Json(_repository.GetTodayInvoices(context.UserId, context.CanChangeDefaults, term), JsonRequestBehavior.AllowGet);
+            return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -297,7 +317,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
+                SetJsonErrorStatus(401);
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
@@ -307,12 +327,12 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (SqlException ex)
             {
-                Response.StatusCode = 500;
+                SetJsonErrorStatus(500);
                 return Json(Fail("تعذر تحميل ملخص اليوم من قاعدة البيانات", ex.Message), JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 500;
+                SetJsonErrorStatus(500);
                 return Json(Fail("تعذر تحميل ملخص اليوم", ex.Message), JsonRequestBehavior.AllowGet);
             }
         }
@@ -323,11 +343,11 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
+                SetJsonErrorStatus(401);
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            var invoice = _repository.GetInvoiceForReview(transactionId, context.UserId, context.CanChangeDefaults);
+            var invoice = _repository.GetInvoiceForReview(transactionId, context.UserId, context.CanChangeDefaults || context.CanEditInvoice);
             if (invoice == null)
             {
                 Response.StatusCode = 404;
@@ -343,7 +363,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                Response.StatusCode = 401;
+                SetJsonErrorStatus(401);
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
@@ -636,17 +656,48 @@ namespace MyERP.Areas.Pos.Controllers
                 var context = GetPosContext();
                 if (context == null)
                 {
-                    Response.StatusCode = 401;
+                    SetJsonErrorStatus(401);
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
                 }
 
-                if (!context.CanSave)
+                var isExistingInvoiceSave = request.Transaction_ID.HasValue && request.Transaction_ID.Value > 0;
+                if (!context.CanSave && !(isExistingInvoiceSave && context.CanEditInvoice))
                 {
                     Response.StatusCode = 403;
-                    return Json(Fail("ليس لديك صلاحية الحفظ", "ScreenJuncUser does not allow CanAdd/FullAccess for FrmSaleBill6."));
+                    return Json(Fail("ليس لديك صلاحية الحفظ", "ScreenJuncUser does not allow CanAdd/FullAccess for FrmSaleBill6, and this is not an allowed edit operation."));
                 }
 
                 ApplyCashOutSecondaryDefault(request);
+
+                PosInvoiceReviewDto originalInvoice = null;
+                if (isExistingInvoiceSave)
+                {
+                    originalInvoice = _repository.GetInvoiceForReview(request.Transaction_ID.Value, context.UserId, context.CanChangeDefaults || context.CanEditInvoice);
+                    if (originalInvoice == null)
+                    {
+                        Response.StatusCode = 404;
+                        return Json(Fail("لم يتم العثور على الفاتورة أو لا تملك صلاحية تعديلها", "Existing invoice not found or not allowed."));
+                    }
+
+                    if (!context.CanEditInvoice)
+                    {
+                        Response.StatusCode = 403;
+                        return Json(Fail("ليست لديك صلاحية تعديل هذه الفاتورة", "CanEditInvoice is false."));
+                    }
+
+                    if (originalInvoice.CreatedUserId.HasValue && originalInvoice.CreatedUserId.Value != context.UserId
+                        && !_repository.ValidatePosUserPassword(context.UserId, request.EditPassword))
+                    {
+                        Response.StatusCode = 403;
+                        return Json(Fail("كلمة المرور غير صحيحة، لم يتم حفظ التعديل", "Current POS user password validation failed."));
+                    }
+
+                    request.BranchId = originalInvoice.BranchId;
+                    request.StoreID = originalInvoice.StoreID;
+                    request.BoxID = originalInvoice.BoxID;
+                    request.UserID = originalInvoice.CreatedUserId;
+                    request.Emp_ID = originalInvoice.Emp_ID;
+                }
 
                 var validationErrors = ValidateSaveRequest(request, context);
                 AddServiceTypeValidationErrors(request, validationErrors);
@@ -656,10 +707,19 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(Fail("راجع بيانات العملية قبل الحفظ", "Client request failed POS server validation.", validationErrors));
                 }
 
-                request.UserID = context.UserId;
-                request.Emp_ID = context.EmpId;
+                if (originalInvoice == null)
+                {
+                    request.UserID = context.UserId;
+                    request.Emp_ID = context.EmpId;
+                }
 
-                if (context.CanChangeDefaults)
+                if (originalInvoice != null)
+                {
+                    request.BranchId = originalInvoice.BranchId;
+                    request.StoreID = originalInvoice.StoreID;
+                    request.BoxID = originalInvoice.BoxID;
+                }
+                else if (context.CanChangeDefaults)
                 {
                     request.BranchId = request.BranchId ?? context.BranchId;
                     request.StoreID = request.StoreID ?? context.StoreId;
@@ -710,20 +770,36 @@ namespace MyERP.Areas.Pos.Controllers
                 request.CustomerID = 2;
 
                 var result = _repository.SaveTransaction(request);
+                if (result == null || result.Transaction_ID <= 0 || !_repository.TransactionExists(result.Transaction_ID))
+                {
+                    Response.StatusCode = 500;
+                    return Json(Fail("تعذر تأكيد حفظ الفاتورة في قاعدة البيانات", "usp_POS_SaveTransaction returned success but the transaction row was not found after save."));
+                }
+
+                if (!_repository.TransactionHasDetails(result.Transaction_ID))
+                {
+                    Response.StatusCode = 500;
+                    return Json(Fail("تم إنشاء رأس الفاتورة ولكن لا توجد تفاصيل محفوظة", "Transaction header exists, but Transaction_Details has no rows after save."));
+                }
+
                 return Json(new
                 {
                     success = true,
                     transactionId = result.Transaction_ID,
-                    noteSerial1 = result.NoteSerial1
+                    noteSerial1 = result.NoteSerial1,
+                    branchId = request.BranchId,
+                    userId = request.UserID
                 });
             }
             catch (SqlException ex)
             {
+                LogPosSaveFailure("Save.SqlException", request, ex);
                 Response.StatusCode = 500;
                 return Json(Fail(FriendlySqlSaveMessage(ex), ex.Message));
             }
             catch (Exception ex)
             {
+                LogPosSaveFailure("Save.Exception", request, ex);
                 Response.StatusCode = 500;
                 return Json(Fail("حدث خطأ أثناء الحفظ التجريبي", ex.Message));
             }
@@ -817,7 +893,7 @@ namespace MyERP.Areas.Pos.Controllers
                 errors["Items"] = "لا توجد خدمة كيشني محملة";
             }
 
-            if (context.EmpId.GetValueOrDefault() <= 0)
+            if (request.Emp_ID.GetValueOrDefault(context.EmpId.GetValueOrDefault()) <= 0)
             {
                 errors["Emp_ID"] = "لا يوجد موظف / مندوب مبيعات مضبوط لهذا المستخدم";
             }
@@ -832,17 +908,17 @@ namespace MyERP.Areas.Pos.Controllers
                 errors["PaymentType"] = "طريقة الدفع مطلوبة";
             }
 
-            if (!context.BoxId.HasValue)
+            if (!request.BoxID.HasValue && !context.BoxId.HasValue)
             {
                 errors["BoxID"] = "الخزنة غير محددة";
             }
 
-            if (!context.BranchId.HasValue)
+            if (!request.BranchId.HasValue && !context.BranchId.HasValue)
             {
                 errors["BranchId"] = "الفرع غير محدد";
             }
 
-            if (!context.StoreId.HasValue)
+            if (!request.StoreID.HasValue && !context.StoreId.HasValue)
             {
                 errors["StoreID"] = "المخزن غير محدد";
             }
@@ -1145,8 +1221,11 @@ namespace MyERP.Areas.Pos.Controllers
 
         private void SetJsonErrorStatus(int statusCode)
         {
-            Response.StatusCode = statusCode;
+            // OWIN cookie auth converts 401 responses into the main ERP login HTML.
+            // POS AJAX endpoints need to keep returning JSON, so use 440 for expired POS sessions.
+            Response.StatusCode = statusCode == 401 ? 440 : statusCode;
             Response.TrySkipIisCustomErrors = true;
+            Response.SuppressFormsAuthenticationRedirect = true;
         }
 
         private static bool IsKycDebugEnabled()
@@ -1306,6 +1385,62 @@ namespace MyERP.Areas.Pos.Controllers
             return "حدث خطأ من قاعدة البيانات أثناء الحفظ التجريبي";
         }
 
+        private static void LogPosSaveFailure(string action, PosSaveTransactionRequest request, Exception exception)
+        {
+            try
+            {
+                var logRoot = System.Web.HttpContext.Current == null
+                    ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Logs")
+                    : System.Web.HttpContext.Current.Server.MapPath("~/App_Data/Logs");
+                Directory.CreateDirectory(logRoot);
+
+                var path = Path.Combine(logRoot, "pos-save-" + DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".log");
+                var lines = new List<string>
+                {
+                    "------------------------------------------------------------",
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                    "Action: " + action,
+                    "Request: " + BuildSaveSafeSnapshot(request)
+                };
+
+                if (exception != null)
+                {
+                    lines.Add("Exception: " + exception.Message);
+                    lines.Add("StackTrace: " + exception);
+                }
+
+                System.IO.File.AppendAllLines(path, lines, Encoding.UTF8);
+            }
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Trace.TraceError("Failed to write POS save log: " + logEx);
+            }
+        }
+
+        private static string BuildSaveSafeSnapshot(PosSaveTransactionRequest request)
+        {
+            if (request == null)
+            {
+                return "<null request>";
+            }
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "Transaction_ID={0}; Type={1}; BranchId={2}; StoreID={3}; BoxID={4}; UserID={5}; Emp_ID={6}; Items={7}; Net={8}; Paid={9}; ManualNO={10}; IPN={11}",
+                request.Transaction_ID,
+                request.TransactionType,
+                request.BranchId,
+                request.StoreID,
+                request.BoxID,
+                request.UserID,
+                request.Emp_ID,
+                request.Items == null ? 0 : request.Items.Count,
+                request.NetValue,
+                request.PayedValue,
+                MaskValue(request.ManualNO),
+                MaskValue(request.IPN));
+        }
+
         private PosUserContext GetPosContext()
         {
             return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
@@ -1322,3 +1457,4 @@ namespace MyERP.Areas.Pos.Controllers
         }
     }
 }
+

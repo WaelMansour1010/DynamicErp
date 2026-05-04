@@ -1,4 +1,4 @@
-using DocumentFormat.OpenXml;
+﻿using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using MyERP.Areas.Pos.Data;
@@ -54,7 +54,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 var context = GetPosContext();
                 var validation = ValidateReportRequest(context, request);
-                if (validation != null)
+                if (validation != null && validation.StatusCode != 0)
                 {
                     Response.StatusCode = validation.StatusCode;
                     return Json(Fail(validation.Message, validation.TechnicalMessage));
@@ -82,25 +82,27 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
-        [HttpPost]
+        [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
         public ActionResult Export(PosReportRunRequest request)
         {
             Response.ContentEncoding = System.Text.Encoding.UTF8;
             Response.Charset = "utf-8";
+            request = request ?? new PosReportRunRequest();
 
             try
             {
                 var context = GetPosContext();
                 var validation = ValidateReportRequest(context, request);
-                if (validation != null)
+                if (validation != null && validation.StatusCode != 0)
                 {
-                    return new HttpStatusCodeResult(validation.StatusCode, validation.Message);
+                    Response.StatusCode = validation.StatusCode;
+                    return Json(Fail(validation.Message, validation.TechnicalMessage), JsonRequestBehavior.AllowGet);
                 }
 
                 var report = validation.Report;
                 if (!report.Enabled)
                 {
-                    return new HttpStatusCodeResult(400, "لم يتم تحديد مصدر التقرير بعد");
+                    return Json(Fail("لم يتم تحديد مصدر التقرير بعد", "Report source is not enabled."), JsonRequestBehavior.AllowGet);
                 }
 
                 var from = request.FromDate.GetValueOrDefault(DateTime.Today);
@@ -112,7 +114,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                return new HttpStatusCodeResult(500, "تعذر تصدير Excel: " + ex.Message);
+                return Json(Fail("تعذر تصدير Excel: " + ex.Message, ex.ToString()), JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -121,21 +123,21 @@ namespace MyERP.Areas.Pos.Controllers
             var admin = IsAdmin(context);
             return new List<PosReportDefinition>
             {
-                new PosReportDefinition("daily-trans", "تقرير يومي بالحركات", "sales", admin || context.CanReportDailyTransactions, true, "VB6 XPChk(90) / ShowSallingTime 966"),
-                new PosReportDefinition("daily-trans-2", "تقرير يومي بالحركات 2", "sales", admin || context.CanReportDailyTransactions2, true, "VB6 XPChk(93) / ShowSallingTime 968"),
-                new PosReportDefinition("sales-complete", "تقرير المبيعات الشامل 1", "sales", admin || context.CanReportSalesComplete, true, "VB6 XPChk(91) / ShowSallingTime 967"),
-                new PosReportDefinition("sales-complete-2", "تقرير المبيعات الشامل 2", "sales", admin || context.CanReportSalesComplete2, true, "Web POS query مؤقت"),
-                new PosReportDefinition("sales-governorates", "تقرير المبيعات الشامل بالمحافظات", "sales", admin || context.CanReportSalesCompleteGovernorates, true, "VB6 XPChk(92) / ShowSallingTime 969"),
-                new PosReportDefinition("sales-departments", "تقرير المبيعات الشامل بالإدارات", "sales", admin || context.CanReportSalesCompleteDepartments, true, "VB6 XPChk(94) / ShowSallingTime 970"),
-                new PosReportDefinition("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "sales", admin || context.CanReportDailyTransactionsSectors, true, "VB6 XPChk(96) / ShowSallingTime 972"),
-                new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "VB6 XPChk(95) / ShowSallingTime 971"),
-                new PosReportDefinition("general-sales", "تقرير المبيعات العام", "sales", admin || context.CanReportAllSales, true, "Query مؤقت من Transactions"),
+                new PosReportDefinition("daily-trans", "تقرير يومي بالحركات", "sales", admin || context.CanReportDailyTransactions, true, "تقرير تشغيلي"),
+                new PosReportDefinition("daily-trans-2", "تقرير يومي بالحركات 2", "sales", admin || context.CanReportDailyTransactions2, true, "تقرير تشغيلي تفصيلي"),
+                new PosReportDefinition("sales-complete", "تقرير المبيعات الشامل 1", "sales", admin || context.CanReportSalesComplete, true, "تقرير مبيعات شامل"),
+                new PosReportDefinition("sales-complete-2", "تقرير المبيعات الشامل 2", "sales", admin || context.CanReportSalesComplete2, true, "تقرير مبيعات شامل"),
+                new PosReportDefinition("sales-governorates", "تقرير المبيعات الشامل بالمحافظات", "sales", admin || context.CanReportSalesCompleteGovernorates, true, "تقرير مبيعات حسب المحافظات"),
+                new PosReportDefinition("sales-departments", "تقرير المبيعات الشامل بالإدارات", "sales", admin || context.CanReportSalesCompleteDepartments, true, "تقرير مبيعات حسب الإدارات"),
+                new PosReportDefinition("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "sales", admin || context.CanReportDailyTransactionsSectors, true, "تقرير مبيعات حسب القطاعات"),
+                new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "تقرير تحليلي"),
+                new PosReportDefinition("general-sales", "تقرير المبيعات العام", "sales", admin || context.CanReportAllSales, true, "تقرير مبيعات عام"),
                 new PosReportDefinition("salesmen", "تقرير المناديب", "closings", admin || context.CanReportSalesmen, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("closings", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, false, "مرتبط لاحقًا ببيانات project_status"),
                 new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي والخصومات", "closings", admin || context.CanReportFinanceClosing, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("discounts", "تقرير الخصومات", "closings", admin || context.CanReportDiscounts, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("indicators", "تقرير المؤشرات العامة", "closings", admin || context.CanReportIndicators, false, "لم يتم تحديد مصدر التقرير بعد"),
-                new PosReportDefinition("store-serials", "تقرير سيريالات المخزن", "serials", admin || context.CanReportStoreSerials, true, "Transaction_Details.ItemSerial + TransactionTypes.StockEffect"),
+                new PosReportDefinition("store-serials", "تقرير سيريالات المخزن", "serials", admin || context.CanReportStoreSerials, true, "تقرير المخزون والسيريالات"),
                 new PosReportDefinition("export-excel", "تصدير ملف الإكسيل", "excel", admin || context.CanViewReports, false, "استخدم زر تصدير Excel الخاص بكل تقرير"),
                 new PosReportDefinition("import-excel", "استيراد ملف الإكسيل", "excel", admin || context.CanViewReports, false, "لم يتم تحديد صيغة الاستيراد")
             };
@@ -170,10 +172,10 @@ namespace MyERP.Areas.Pos.Controllers
             var to = (request.ToDate ?? DateTime.Today).Date;
             if (report.Key == "store-serials")
             {
-                return _repository.RunPosStoreSerialsReport(request.StoreId, request.SerialSearch, branchId, context.UserId, IsAdmin(context));
+                return _repository.RunPosStoreSerialsReport(request.StoreId, request.SerialSearch, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
             }
 
-            return _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, IsAdmin(context));
+            return _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
         }
 
         private IEnumerable<PosBranchDto> GetAllowedBranches(PosUserContext context)

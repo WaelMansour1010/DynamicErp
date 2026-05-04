@@ -60,22 +60,50 @@ namespace MyERP.Controllers
                 skipRowsNo = (pageIndex - 1) * wantedRowsNo;
             Repository<SalesInvoice> repository = new Repository<SalesInvoice>(db);
             IQueryable<SalesInvoice> salesInvoices;
+            var canEditAnySalesInvoice = CanEditSalesInvoice(userId);
+            var salesInvoicePageId = QueryHelper.SourcePageId("SalesInvoice");
+            var normalizedSearchWord = (searchWord ?? string.Empty).Trim();
+            var baseQuery = repository.GetAll()
+                .Where(s => s.IsDeleted == false
+                    && s.SystemPageId != 10366
+                    && (canEditAnySalesInvoice || depIds.Contains(s.DepartmentId))
+                    && (departmentId == 0 || s.DepartmentId == departmentId)
+                    && s.PosId == null);
 
-            if (string.IsNullOrEmpty(searchWord))
+            if (string.IsNullOrEmpty(normalizedSearchWord))
             {
-                salesInvoices = repository.GetAll().Where(s => s.IsDeleted == false && s.SystemPageId != 10366 && depIds.Contains(s.DepartmentId) && (departmentId == 0 || s.DepartmentId == departmentId) && s.PosId == null).Include(s => s.Department).Include(s => s.Warehouse).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
-                ViewBag.Count = await repository.GetAll().Where(s => s.IsDeleted == false && s.SystemPageId != 10366 && depIds.Contains(s.DepartmentId) && (departmentId == 0 || s.DepartmentId == departmentId) && s.PosId == null).CountAsync();
+                salesInvoices = baseQuery.Include(s => s.Department).Include(s => s.Warehouse).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
+                ViewBag.Count = await baseQuery.CountAsync();
             }
             else
             {
-                salesInvoices = repository.GetAll().Where(s => s.IsDeleted == false && s.SystemPageId != 10366 && depIds.Contains(s.DepartmentId) && (s.DocumentNumber.Contains(searchWord) || s.Branch.ArName.Contains(searchWord) || s.Department.ArName.Contains(searchWord) || s.Customer.ArName.Contains(searchWord) || s.Warehouse.ArName.Contains(searchWord) || s.VoucherDate.ToString().Contains(searchWord)) && (departmentId == 0 || s.DepartmentId == departmentId) && s.PosId == null).Include(s => s.Branch).Include(s => s.Currency).Include(s => s.Department).Include(s => s.Warehouse).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
-                ViewBag.Count = await repository.GetAll().Where(s => s.IsDeleted == false && s.SystemPageId != 10366 && depIds.Contains(s.DepartmentId) && (s.DocumentNumber.Contains(searchWord) || s.Branch.ArName.Contains(searchWord) || s.Department.ArName.Contains(searchWord) || s.Customer.ArName.Contains(searchWord) || s.Warehouse.ArName.Contains(searchWord) || s.VoucherDate.ToString().Contains(searchWord)) && (departmentId == 0 || s.DepartmentId == departmentId) && s.PosId == null).CountAsync();
+                baseQuery = baseQuery.Where(s =>
+                    s.DocumentNumber.Contains(normalizedSearchWord)
+                    || s.Branch.ArName.Contains(normalizedSearchWord)
+                    || s.Department.ArName.Contains(normalizedSearchWord)
+                    || s.Customer.ArName.Contains(normalizedSearchWord)
+                    || s.Customer.EnName.Contains(normalizedSearchWord)
+                    || s.Customer.Mobile.Contains(normalizedSearchWord)
+                    || s.Customer.PhoneNo.Contains(normalizedSearchWord)
+                    || s.PosCustomer.ArName.Contains(normalizedSearchWord)
+                    || s.PosCustomer.EnName.Contains(normalizedSearchWord)
+                    || s.PosCustomer.Mobile1.Contains(normalizedSearchWord)
+                    || s.PosCustomer.Mobile2.Contains(normalizedSearchWord)
+                    || s.Warehouse.ArName.Contains(normalizedSearchWord)
+                    || s.VoucherDate.ToString().Contains(normalizedSearchWord)
+                    || db.PurchaseSaleSerialNumbers.Any(serial =>
+                        serial.PageSourceId == salesInvoicePageId
+                        && serial.SelectedId == s.Id
+                        && serial.IsDeleted == false
+                        && serial.SerialNumber.Contains(normalizedSearchWord)));
+                salesInvoices = baseQuery.Include(s => s.Branch).Include(s => s.Currency).Include(s => s.Department).Include(s => s.Warehouse).OrderByDescending(s => s.Id).Skip(skipRowsNo).Take(wantedRowsNo);
+                ViewBag.Count = await baseQuery.CountAsync();
             }
 
 
 
 
-            ViewBag.searchWord = searchWord;
+            ViewBag.searchWord = normalizedSearchWord;
             ViewBag.wantedRowsNo = wantedRowsNo;
             QueryHelper.AddLog(new MyLog()
             {
@@ -376,10 +404,18 @@ namespace MyERP.Controllers
                     ViewBag.BankAccountIdForVisa = new SelectList(db.BankAccounts.Where(a => a.IsActive == true && a.IsDeleted == false && a.BankId == method.BankId), "Id", "AccountNumber", method.BankAccountId);
                 }
             }
-            ViewBag.DepartmentId = new SelectList(departmentRepository.UserDepartments(userId), "Id", "ArName", salesInvoice.DepartmentId);
-            ViewBag.WarehouseId = new SelectList(warehouseRepository.UserWarehouses(userId, salesInvoice.DepartmentId), "Id", "ArName", salesInvoice.WarehouseId);
+            var canEditSalesInvoice = CanEditSalesInvoice(userId);
+            ViewBag.DepartmentId = canEditSalesInvoice
+                ? new SelectList(db.Departments.Where(d => d.IsActive == true && d.IsDeleted == false).Select(d => new { d.Id, ArName = d.Code + " - " + d.ArName }), "Id", "ArName", salesInvoice.DepartmentId)
+                : new SelectList(departmentRepository.UserDepartments(userId), "Id", "ArName", salesInvoice.DepartmentId);
+            ViewBag.WarehouseId = canEditSalesInvoice
+                ? new SelectList(db.Warehouses.Where(w => w.IsActive == true && w.IsDeleted == false && w.DepartmentId == salesInvoice.DepartmentId).Select(w => new { w.Id, ArName = w.Code + " - " + w.ArName }), "Id", "ArName", salesInvoice.WarehouseId)
+                : new SelectList(warehouseRepository.UserWarehouses(userId, salesInvoice.DepartmentId), "Id", "ArName", salesInvoice.WarehouseId);
 
             ViewBag.VoucherDate = salesInvoice.VoucherDate.ToString("yyyy-MM-ddTHH:mm");
+            ViewBag.RequiresEditOverridePassword = salesInvoice.Id > 0;
+            ViewBag.CanEditSalesInvoice = canEditSalesInvoice;
+            ViewBag.InvoiceAudit = GetSalesInvoiceAuditInfo(salesInvoice.Id);
 
             if (salesInvoice.IsLinked == true)
             {
@@ -419,7 +455,7 @@ namespace MyERP.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         //[ValidateAntiForgeryToken]
-        public JsonResult AddEdit(SalesInvoice salesInvoice, ICollection<PurchaseSaleSerialNumber> serialNumbers, int? OrderId, string Status, bool? IsPos/*, string WaitersName*/,string DocName,int? DocId)
+        public JsonResult AddEdit(SalesInvoice salesInvoice, ICollection<PurchaseSaleSerialNumber> serialNumbers, int? OrderId, string Status, bool? IsPos/*, string WaitersName*/,string DocName,int? DocId, string editOverridePassword)
         {
             var chassisValidationMessage = ValidateVehicleChassisNumbers(salesInvoice.SalesInvoiceDetails, salesInvoice.Id);
             if (!string.IsNullOrEmpty(chassisValidationMessage))
@@ -428,9 +464,12 @@ namespace MyERP.Controllers
             var systemSetting = db.SystemSettings.FirstOrDefault();
             int userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
             var user = db.ERPUsers.Where(a => a.IsActive == true && a.IsDeleted == false && a.Id == userId).FirstOrDefault();
-            
+            var originalInvoice = salesInvoice.Id > 0 ? db.SalesInvoices.AsNoTracking().FirstOrDefault(x => x.Id == salesInvoice.Id && x.IsDeleted == false) : null;
             var ProjectName = System.Web.Configuration.WebConfigurationManager.AppSettings["ProjectName"];
-            salesInvoice.UserId = userId;
+            if (salesInvoice.Id <= 0)
+            {
+                salesInvoice.UserId = userId;
+            }
             int? cashierUserId = null;
             int? posId = null, shiftId = null;
             if (IsPos == false)
@@ -583,6 +622,33 @@ namespace MyERP.Controllers
 
                 if (salesInvoice.Id > 0)
                 {
+                    if (originalInvoice == null)
+                    {
+                        return Json(new { success = "false", message = "الفاتورة غير موجودة" });
+                    }
+
+                    var originalUserId = originalInvoice.UserId;
+                    var isCrossUserEdit = originalUserId.HasValue && originalUserId.Value != userId;
+                    if (!ValidateCurrentUserPassword(userId, editOverridePassword))
+                    {
+                        return Json(new { success = "false", message = "كلمة المرور غير صحيحة، لم يتم حفظ التعديل" });
+                    }
+
+                    if (isCrossUserEdit)
+                    {
+                        if (!CanEditSalesInvoice(userId))
+                        {
+                            return Json(new { success = "false", message = "ليست لديك صلاحية تعديل فواتير مستخدم آخر" });
+                        }
+                    }
+
+                    var updateUserId = originalUserId ?? userId;
+                    salesInvoice.BranchId = originalInvoice.BranchId;
+                    posId = originalInvoice.PosId;
+                    cashierUserId = originalInvoice.CashierUserId;
+                    shiftId = originalInvoice.ShiftId;
+                    salesInvoice.WaiterId = originalInvoice.WaiterId;
+
                     var InabilityToEditSalesAndPurchaseInvoicesAndReturns = systemSetting.InabilityToEditSalesAndPurchaseInvoicesAndReturns;
                     if (InabilityToEditSalesAndPurchaseInvoicesAndReturns == true)
                     {
@@ -595,7 +661,7 @@ namespace MyERP.Controllers
                         return Json(new { success = "IsLinkedWithOrderSalesInvoice" });
 
                     }
-                    if (db.SalesInvoices.Find(salesInvoice.Id).IsPosted == true)
+                    if (originalInvoice.IsPosted == true)
                     {
                         return Json(new { success = "false" });
                     }
@@ -617,7 +683,8 @@ namespace MyERP.Controllers
                     var SalesOrdersXml = MyXML.GetXML(salesInvoice.SalesOrdersSalesInvoices);
                     MyXML.xPathName = "PurchaseRequests";
                     var PurchaseRequestsXml = MyXML.GetXML(salesInvoice.SalesInvoicePurchaseRequests);
-                    db.SalesInvoice_Update(salesInvoice.Id, salesInvoice.DocumentNumber, salesInvoice.BranchId, salesInvoice.WarehouseId, salesInvoice.DepartmentId, salesInvoice.VoucherDate, salesInvoice.VendorOrCustomerId, salesInvoice.CurrencyId, salesInvoice.CurrencyEquivalent, salesInvoice.Total, salesInvoice.TotalItemsDiscount, salesInvoice.SalesTaxes, salesInvoice.TotalAfterTaxes, salesInvoice.VoucherDiscountValue, salesInvoice.VoucherDiscountPercentage, salesInvoice.NetTotal, salesInvoice.Paid, salesInvoice.ValidityPeriod, salesInvoice.DeliveryPeriod, salesInvoice.CostCenterId, salesInvoice.CurrentQuantity, salesInvoice.DestinationWarehouseId, salesInvoice.SystemPageId, salesInvoice.SelectedId, salesInvoice.TotalCostPrice, salesInvoice.TotalItemDirectExpenses, salesInvoice.CommercialRevenueTaxAmount, salesInvoice.IsDelivered, salesInvoice.IsAccepted, salesInvoice.IsLinked, salesInvoice.IsCompleted, salesInvoice.IsPosted, userId, salesInvoice.IsActive, salesInvoice.IsDeleted, salesInvoice.AutoCreated, salesInvoice.Notes, salesInvoice.Image, salesInvoice.UpdatedId, salesInvoice.CarNumber, salesInvoice.DeliveredTo, salesInvoice.InstallmentAdvance, salesInvoice.TotalInstallmentBeforeProfit, salesInvoice.TotalInstallmentAfterProfit, salesInvoice.InsallmentProfitPercentage, salesInvoice.InstallmentProfitAmount, salesInvoice.InstallmentPaymentAmount, salesInvoice.InstallmentPaymentCount, salesInvoice.TotalAfterTotalInstallment, salesInvoice.FirstInstallmentPaymentDueDate, salesInvoice.IsInstallmentPlan, salesInvoice.DaysBetweenInstallments, SalesInvoiceDetails, InvoicePaymentMethods, SerialNumbersXML, SalesOrdersXml, salesInvoice.ServiceFees, salesInvoice.CustomerType, PurchaseRequestsXml, posId, cashierUserId, shiftId, false, false, salesInvoice.CustomerRepId, salesInvoice.WarehouseItemDistribution, salesInvoice.RefundableInsurance, salesInvoice.DueDate, salesInvoice.PosCustomerId, salesInvoice.IsCollectedByCashier, salesInvoice.TableId, salesInvoice.DeliveryCost, salesInvoice.DeliveryDate, salesInvoice.DeliveryStartDate, salesInvoice.DeliveryEndDate, salesInvoice.DriverId, salesInvoice.CarId, salesInvoice.PaymentType, salesInvoice.IssueMethodId, salesInvoice.SmokingTax/*, WaitersName*/, salesInvoice.WaiterId);
+                    db.SalesInvoice_Update(salesInvoice.Id, salesInvoice.DocumentNumber, salesInvoice.BranchId, salesInvoice.WarehouseId, salesInvoice.DepartmentId, salesInvoice.VoucherDate, salesInvoice.VendorOrCustomerId, salesInvoice.CurrencyId, salesInvoice.CurrencyEquivalent, salesInvoice.Total, salesInvoice.TotalItemsDiscount, salesInvoice.SalesTaxes, salesInvoice.TotalAfterTaxes, salesInvoice.VoucherDiscountValue, salesInvoice.VoucherDiscountPercentage, salesInvoice.NetTotal, salesInvoice.Paid, salesInvoice.ValidityPeriod, salesInvoice.DeliveryPeriod, salesInvoice.CostCenterId, salesInvoice.CurrentQuantity, salesInvoice.DestinationWarehouseId, salesInvoice.SystemPageId, salesInvoice.SelectedId, salesInvoice.TotalCostPrice, salesInvoice.TotalItemDirectExpenses, salesInvoice.CommercialRevenueTaxAmount, salesInvoice.IsDelivered, salesInvoice.IsAccepted, salesInvoice.IsLinked, salesInvoice.IsCompleted, salesInvoice.IsPosted, updateUserId, salesInvoice.IsActive, salesInvoice.IsDeleted, salesInvoice.AutoCreated, salesInvoice.Notes, salesInvoice.Image, salesInvoice.UpdatedId, salesInvoice.CarNumber, salesInvoice.DeliveredTo, salesInvoice.InstallmentAdvance, salesInvoice.TotalInstallmentBeforeProfit, salesInvoice.TotalInstallmentAfterProfit, salesInvoice.InsallmentProfitPercentage, salesInvoice.InstallmentProfitAmount, salesInvoice.InstallmentPaymentAmount, salesInvoice.InstallmentPaymentCount, salesInvoice.TotalAfterTotalInstallment, salesInvoice.FirstInstallmentPaymentDueDate, salesInvoice.IsInstallmentPlan, salesInvoice.DaysBetweenInstallments, SalesInvoiceDetails, InvoicePaymentMethods, SerialNumbersXML, SalesOrdersXml, salesInvoice.ServiceFees, salesInvoice.CustomerType, PurchaseRequestsXml, posId, cashierUserId, shiftId, false, false, salesInvoice.CustomerRepId, salesInvoice.WarehouseItemDistribution, salesInvoice.RefundableInsurance, salesInvoice.DueDate, salesInvoice.PosCustomerId, salesInvoice.IsCollectedByCashier, salesInvoice.TableId, salesInvoice.DeliveryCost, salesInvoice.DeliveryDate, salesInvoice.DeliveryStartDate, salesInvoice.DeliveryEndDate, salesInvoice.DriverId, salesInvoice.CarId, salesInvoice.PaymentType, salesInvoice.IssueMethodId, salesInvoice.SmokingTax/*, WaitersName*/, salesInvoice.WaiterId);
+                    MarkSalesInvoiceModified(salesInvoice.Id, userId);
                     Notification.GetNotification("SalesInvoice", "Edit", "AddEdit", id, null, "فواتير البيع");
                     //if (systemSetting.UsePrintingAssistantProgram == true)
                     //{
@@ -762,6 +829,76 @@ namespace MyERP.Controllers
                     .ToArray();
 
             return Json(new { success = "false", errors });
+        }
+
+        private bool CanEditSalesInvoice(int userId)
+        {
+            if (userId == 1)
+            {
+                return true;
+            }
+
+            var userPrivilege = db.UserPrivileges
+                .Where(u => u.PageAction.PageId == 56 && u.PageAction.EnName == "Edit" && u.PageAction.Action == "AddEdit" && u.UserId == userId)
+                .Select(u => u.Privileged)
+                .FirstOrDefault();
+
+            if (userPrivilege.HasValue)
+            {
+                return userPrivilege.Value;
+            }
+
+            var roleId = db.ERPUsers.Where(u => u.Id == userId).Select(u => u.RoleId).FirstOrDefault();
+            var rolePrivilege = db.RolePrivileges
+                .Where(u => u.PageAction.PageId == 56 && u.PageAction.EnName == "Edit" && u.PageAction.Action == "AddEdit" && u.RoleId == roleId)
+                .Select(u => u.Privileged)
+                .FirstOrDefault();
+
+            return rolePrivilege == true;
+        }
+
+        private bool ValidateCurrentUserPassword(int userId, string password)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
+            var userName = db.ERPUsers.Where(u => u.Id == userId && u.IsActive == true && u.IsDeleted == false).Select(u => u.UserName).FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                return false;
+            }
+
+            var hashPassword = new ObjectParameter("HashPW", typeof(string));
+            db.ERPUser_GetHashPw(userName, hashPassword);
+            var storedHash = hashPassword.Value == null ? string.Empty : hashPassword.Value.ToString();
+            return PasswordEncrypt.VerifyHashPwd(password, storedHash);
+        }
+
+        private void MarkSalesInvoiceModified(int invoiceId, int userId)
+        {
+            db.Database.ExecuteSqlCommand(
+                "UPDATE dbo.SalesInvoice SET LastModifiedByUserId = @p0, LastModifiedDate = GETDATE() WHERE Id = @p1",
+                userId,
+                invoiceId);
+        }
+
+        private SalesInvoiceAuditInfo GetSalesInvoiceAuditInfo(int invoiceId)
+        {
+            return db.Database.SqlQuery<SalesInvoiceAuditInfo>(@"
+SELECT TOP (1)
+    u.Name AS LastModifiedByName,
+    s.LastModifiedDate
+FROM dbo.SalesInvoice s
+LEFT JOIN dbo.ERPUsers u ON u.Id = s.LastModifiedByUserId
+WHERE s.Id = @p0", invoiceId).FirstOrDefault();
+        }
+
+        public class SalesInvoiceAuditInfo
+        {
+            public string LastModifiedByName { get; set; }
+            public DateTime? LastModifiedDate { get; set; }
         }
 
         [SkipERPAuthorize]

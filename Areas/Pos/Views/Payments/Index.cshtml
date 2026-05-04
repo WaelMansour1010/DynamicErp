@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     ViewBag.Title = "تمويل واستعاضة الخزن والعهد";
     var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
@@ -9,6 +9,7 @@
     var banks = ViewBag.Banks as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
     var employees = ViewBag.Employees as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
     var canExecute = context != null && (context.IsFullAccess || context.CanExecutePayments);
+    var canEdit = context != null && (context.IsFullAccess || context.CanEditPayments);
     var canViewJournal = context != null && (context.IsFullAccess || context.CanViewJournalEntry);
 }
 
@@ -23,12 +24,45 @@
 <body>
     <div class="pos-page pos-payments-page"
          data-preview-url="@Url.Action("Preview", "Payments", new { area = "Pos" })"
-         data-save-url="@Url.Action("Create", "Payments", new { area = "Pos" })">
+         data-save-url="@Url.Action("Create", "Payments", new { area = "Pos" })"
+         data-search-url="@Url.Action("Search", "Payments", new { area = "Pos" })"
+         data-get-url="@Url.Action("Get", "Payments", new { area = "Pos" })"
+         data-can-edit="@(canEdit ? "true" : "false")">
         <div class="pos-shell">
             <section class="pos-panel">
                 <div class="panel-heading">
                     <h2>تمويل واستعاضة الخزن والعهد</h2>
                     <span>مطابقة منطق FrmPayments1: Notes.NoteType = 50</span>
+                </div>
+
+                <div class="pos-panel soft-panel payment-search-panel">
+                    <div class="panel-heading">
+                        <h3>بحث الحركات السابقة</h3>
+                        <span>افتح الحركة للمراجعة أو التعديل حسب الصلاحية</span>
+                    </div>
+                    <div class="pos-grid four-cols">
+                        <label>رقم/بحث عام<input type="text" id="paymentSearchText" placeholder="رقم الحركة، السند، الاسم، البيان" /></label>
+                        <label>من تاريخ<input type="date" id="paymentSearchFrom" /></label>
+                        <label>إلى تاريخ<input type="date" id="paymentSearchTo" /></label>
+                        <label>
+                            الموظف
+                            <select id="paymentSearchEmpId">
+                                <option value="">كل الموظفين</option>
+                                @if (employees != null)
+                                {
+                                    foreach (var item in employees)
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                    </div>
+                    <div class="pos-actions">
+                        <button type="button" class="secondary-action" id="searchPaymentBtn">بحث</button>
+                        <button type="button" class="secondary-action" id="newPaymentBtn">حركة جديدة</button>
+                    </div>
+                    <div id="paymentSearchResult" class="report-result compact-result"></div>
                 </div>
 
                 <div class="payments-tabs">
@@ -39,6 +73,7 @@
                 </div>
 
                 <div class="payments-tab-panel active" data-payment-panel="main">
+                    <input type="hidden" id="paymentNoteId" />
                     <div class="pos-grid four-cols">
                         <label>
                             الفرع
@@ -219,6 +254,7 @@
             function requestPayload() {
                 var selected = byId("paymentNameAccount").options[byId("paymentNameAccount").selectedIndex];
                 return {
+                    NoteId: parseInt(byId("paymentNoteId").value, 10) || null,
                     BranchId: parseInt(byId("paymentBranchId").value, 10) || 0,
                     PaymentDate: byId("paymentDate").value,
                     CashingType: parseInt(byId("paymentCashingType").value, 10) || 0,
@@ -236,6 +272,15 @@
                     EmpValue: parseFloat(byId("paymentEmpValue").value || "0"),
                     Remarks: byId("paymentRemarks").value,
                     GeneralDescription: byId("paymentGeneralDescription").value
+                };
+            }
+            function searchPayload() {
+                return {
+                    SearchText: byId("paymentSearchText").value || "",
+                    FromDate: byId("paymentSearchFrom").value || null,
+                    ToDate: byId("paymentSearchTo").value || null,
+                    BranchId: parseInt(byId("paymentBranchId").value, 10) || null,
+                    EmpId: parseInt(byId("paymentSearchEmpId").value, 10) || null
                 };
             }
             function post(url, payload, done) {
@@ -263,6 +308,73 @@
                 html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + debit.toFixed(2) + "</td><td>" + credit.toFixed(2) + "</td></tr></tbody></table>";
                 target.innerHTML = html;
             }
+            function renderSearch(rows) {
+                var target = byId("paymentSearchResult");
+                if (!target) { return; }
+                if (!rows || !rows.length) {
+                    target.innerHTML = "<div class='empty-state'>لا توجد حركات مطابقة</div>";
+                    return;
+                }
+                var html = "<table class='pos-table'><thead><tr><th>رقم الحركة</th><th>رقم السند</th><th>التاريخ</th><th>الفرع</th><th>النوع</th><th>الاسم</th><th>القيمة</th><th></th></tr></thead><tbody>";
+                rows.forEach(function (row) {
+                    html += "<tr><td>" + (row.NoteId || "") + "</td><td>" + (row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + dateText(row.NoteDate) + "</td><td>" + (row.BranchName || "") + "</td><td>" + (row.CashingTypeName || "") + "</td><td>" + (row.NameText || "") + "</td><td>" + (parseFloat(row.Value || 0)).toFixed(2) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + row.NoteId + "'>فتح</button></td></tr>";
+                });
+                html += "</tbody></table>";
+                target.innerHTML = html;
+            }
+            function setSelectValue(id, value) {
+                var element = byId(id);
+                if (!element) { return; }
+                element.value = value === null || value === undefined ? "" : value;
+            }
+            function dateText(value) {
+                if (!value) { return ""; }
+                if (typeof value === "string" && value.indexOf("/Date(") === 0) {
+                    return new Date(parseInt(value.replace(/[^0-9-]/g, ""), 10)).toISOString().substring(0, 10);
+                }
+                return String(value).substring(0, 10);
+            }
+            function resetPaymentForm() {
+                byId("paymentNoteId").value = "";
+                ["paymentValue", "paymentReferenceNo", "paymentEmpAccountCode", "paymentBoxValue", "paymentEmpValue", "paymentRemarks", "paymentGeneralDescription"].forEach(function (id) { byId(id).value = ""; });
+                byId("paymentDate").value = new Date().toISOString().substring(0, 10);
+                byId("paymentReferenceDate").value = new Date().toISOString().substring(0, 10);
+                setSelectValue("paymentCashingType", "5");
+                setSelectValue("paymentMethod", "0");
+                setSelectValue("paymentBoxId", "");
+                setSelectValue("paymentBankId", "");
+                setSelectValue("paymentEmpId", "");
+                copySource();
+                renderLines([]);
+                byId("savePaymentBtn").disabled = @(canExecute ? "false" : "true");
+                byId("savePaymentBtn").innerText = "تنفيذ العملية";
+                setMessage("");
+            }
+            function applyMovement(movement, canEdit, editMessage) {
+                if (!movement) { return; }
+                byId("paymentNoteId").value = movement.NoteId || "";
+                setSelectValue("paymentBranchId", movement.BranchId);
+                byId("paymentDate").value = dateText(movement.NoteDate);
+                setSelectValue("paymentCashingType", movement.CashingType);
+                copySource();
+                setSelectValue("paymentNameAccount", movement.NameAccountCode || "");
+                setSelectValue("paymentMethod", movement.PaymentMethod);
+                byId("paymentValue").value = movement.Value || 0;
+                setSelectValue("paymentBoxId", movement.BoxId);
+                setSelectValue("paymentBankId", movement.BankId);
+                byId("paymentReferenceNo").value = movement.ReferenceNo || "";
+                byId("paymentReferenceDate").value = dateText(movement.ReferenceDate);
+                setSelectValue("paymentEmpId", movement.EmpId);
+                byId("paymentEmpAccountCode").value = movement.EmpAccountCode || "";
+                byId("paymentBoxValue").value = movement.BoxValue || 0;
+                byId("paymentEmpValue").value = movement.EmpValue || 0;
+                byId("paymentRemarks").value = movement.Remarks || "";
+                byId("paymentGeneralDescription").value = movement.GeneralDescription || "";
+                renderLines(movement.Lines || []);
+                byId("savePaymentBtn").disabled = !canEdit;
+                byId("savePaymentBtn").innerText = canEdit ? "حفظ التعديل" : "عرض فقط";
+                setMessage(canEdit ? "تم تحميل الحركة للتعديل" : (editMessage || "ليس لديك صلاحية تعديل هذه الحركة"), !canEdit);
+            }
             document.addEventListener("click", function (event) {
                 if (event.target.getAttribute("data-payment-tab")) {
                     var tab = event.target.getAttribute("data-payment-tab");
@@ -280,6 +392,32 @@
                         if (data && data.success) { renderLines(data.result && data.result.Lines); setMessage(data.message + " - رقم السند: " + (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId), false); }
                         else { setMessage((data && data.message) || "تعذر حفظ العملية", true); }
                     });
+                }
+                if (event.target.id === "searchPaymentBtn") {
+                    setMessage("جاري البحث...");
+                    post(page.getAttribute("data-search-url"), searchPayload(), function (status, data) {
+                        if (data && data.success) { renderSearch(data.rows || []); setMessage("تم البحث", false); }
+                        else { setMessage((data && data.message) || "تعذر البحث", true); }
+                    });
+                }
+                if (event.target.id === "newPaymentBtn") {
+                    resetPaymentForm();
+                }
+                if (event.target.classList && event.target.classList.contains("load-payment-row")) {
+                    var id = event.target.getAttribute("data-note-id");
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", page.getAttribute("data-get-url").replace(/\/$/, "") + "/" + encodeURIComponent(id), true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState !== 4) { return; }
+                        var data = null;
+                        try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                        if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
+                            applyMovement(data.movement, data.canEdit, data.editMessage);
+                        } else {
+                            setMessage((data && data.message) || "تعذر تحميل الحركة", true);
+                        }
+                    };
+                    xhr.send();
                 }
             });
             byId("paymentCashingType").addEventListener("change", copySource);

@@ -1,4 +1,4 @@
-using MyERP.Areas.Pos.Data;
+﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
 using System;
 using System.Data.SqlClient;
@@ -68,6 +68,71 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpPost]
+        public JsonResult Search(PosPaymentSearchRequestDto request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
+            }
+
+            if (!context.IsFullAccess && !context.CanOpenPayments)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" });
+            }
+
+            request = request ?? new PosPaymentSearchRequestDto();
+            if (!context.IsFullAccess)
+            {
+                request.BranchId = context.BranchId;
+            }
+
+            try
+            {
+                return Json(new { success = true, rows = _repository.SearchPosPayments(request, context.UserId, context.IsFullAccess) });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "تعذر البحث في الحركات السابقة", technicalMessage = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public JsonResult Get(int id)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.IsFullAccess && !context.CanOpenPayments)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var movement = _repository.GetPosPayment(id, context.UserId, context.IsFullAccess, context.BranchId);
+            if (movement == null)
+            {
+                Response.StatusCode = 404;
+                return Json(new { success = false, message = "لم يتم العثور على الحركة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new
+            {
+                success = true,
+                movement = movement,
+                canEdit = context.IsFullAccess || context.CanEditPayments,
+                editMessage = (context.IsFullAccess || context.CanEditPayments) ? "" : "ليس لديك صلاحية تعديل هذه الحركة"
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
         public JsonResult Create(PosPaymentRequestDto request)
         {
             var context = GetPosContext();
@@ -77,17 +142,18 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
             }
 
-            if (!context.IsFullAccess && !context.CanExecutePayments)
+            var isUpdate = request != null && request.NoteId.HasValue && request.NoteId.Value > 0;
+            if (!context.IsFullAccess && (!context.CanExecutePayments || (isUpdate && !context.CanEditPayments)))
             {
                 Response.StatusCode = 403;
-                return Json(new { success = false, message = "ليست لديك صلاحية تنفيذ التمويل والاستعاضة" });
+                return Json(new { success = false, message = isUpdate ? "ليس لديك صلاحية تعديل هذه الحركة" : "ليست لديك صلاحية تنفيذ التمويل والاستعاضة" });
             }
 
             ForceContext(request, context);
             try
             {
                 var result = _repository.SavePosPayment(request, context.UserId, context.IsFullAccess || context.CanExecutePayments);
-                return Json(new { success = true, message = "تم حفظ عملية التمويل والاستعاضة", result = result });
+                return Json(new { success = true, message = isUpdate ? "تم تعديل حركة التمويل والاستعاضة" : "تم حفظ عملية التمويل والاستعاضة", result = result });
             }
             catch (SqlException ex)
             {

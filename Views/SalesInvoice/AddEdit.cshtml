@@ -52,6 +52,8 @@
     @Html.HiddenFor(model => model.SelectedId)
     @Html.HiddenFor(model => model.SystemPageId)
     @Html.HiddenFor(model => model.WaiterId)
+    <input type="hidden" id="RequiresEditOverridePassword" value="@((ViewBag.RequiresEditOverridePassword == true) ? "true" : "false")" />
+    <input type="hidden" id="CanEditSalesInvoice" value="@((ViewBag.CanEditSalesInvoice == true) ? "true" : "false")" />
 }
 @*<input type="hidden" id="ServiceFeesPercentage" value="@ViewBag.ServiceFeesPercentage" />*@
 <div class="row">
@@ -66,6 +68,14 @@
                                 <h5 class="header-title">
                                     @MyERP.Properties.Resources.MainData
                                 </h5>
+                                @if (ViewBag.InvoiceAudit != null && ViewBag.InvoiceAudit.LastModifiedDate != null)
+                                {
+                                    <div class="alert alert-info py-2">
+                                        <strong>آخر تعديل بواسطة:</strong> @ViewBag.InvoiceAudit.LastModifiedByName
+                                        <span class="mx-2">|</span>
+                                        <strong>تاريخ آخر تعديل:</strong> @(((DateTime)ViewBag.InvoiceAudit.LastModifiedDate).ToString("yyyy-MM-dd HH:mm"))
+                                    </div>
+                                }
                                 <div class="form-group row">
                                     <label class=" col-sm-2 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
                                     <div class="col-sm-4">
@@ -4528,6 +4538,34 @@
                 });
         }*@
     }
+    function requestEditOverridePasswordIfNeeded() {
+        if ($('#RequiresEditOverridePassword').val() !== 'true') {
+            return Promise.resolve('');
+        }
+
+        return Swal.fire({
+            title: 'تأكيد كلمة المرور',
+            text: 'هذه الفاتورة منشأة بواسطة مستخدم آخر. أدخل كلمة مرورك الحالية لتأكيد التعديل.',
+            input: 'password',
+            inputPlaceholder: 'كلمة المرور',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true,
+            inputValidator: function (value) {
+                if (!value) {
+                    return 'كلمة المرور مطلوبة';
+                }
+                return null;
+            }
+        }).then(function (result) {
+            return result.isConfirmed ? result.value : false;
+        });
+    }
+
     function addEdit(n) {
         var serialNumbers = [];
         let valid = true;
@@ -4821,6 +4859,10 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
+                    requestEditOverridePasswordIfNeeded().then(function (editOverridePassword) {
+                        if (editOverridePassword === false) {
+                            return;
+                        }
                     $('#preloader, #status').fadeIn();
                     $('#newbtn').prop('disabled', true);
                     $('#save').prop('disabled', true);
@@ -4877,6 +4919,7 @@
                                 IssueMethodId: $('#IssueMethodId').val(),
                                 SmokingTax: $('#SmokingTax').val(),
                                 WaiterId: $('#WaiterId').val(),
+                                editOverridePassword: editOverridePassword,
                                 SalesInvoicePurchaseRequests: purchaseReqeustIds.map(function (i) { return { SalesInvoiceId: $('#Id').val(), PurchaseRequestId: i } }),
 
                             }),
@@ -4964,7 +5007,7 @@
                                 $('#save').prop('disabled', false);
                                 $('#saveAndPrint').prop('disabled', false);
                                 Swal.fire({
-                                    title: '@MyERP.Properties.Resources.NotSaved',
+                                    title: r.message || '@MyERP.Properties.Resources.NotSaved',
                                     text: " ",
                                     icon: 'error',
                                     showCancelButton: false,
@@ -4987,6 +5030,7 @@
                                 confirmButtonColor: '#3085d6'
                             });
                         }
+                    });
                     });
                 }
                 else { result.dismiss; }
