@@ -112,10 +112,28 @@
         </section>
 
         <section class="pos-workflow" id="posWorkflow" aria-label="مسار العملية">
-            <div class="workflow-step is-current" data-step="service">الخدمة</div>
-            <div class="workflow-step" data-step="value">القيمة</div>
-            <div class="workflow-step" data-step="payment">الدفع</div>
-            <div class="workflow-step" data-step="save">الحفظ</div>
+            <div class="workflow-heading">
+                <span class="workflow-eyebrow">اسم العملية</span>
+                <strong id="workflowOperationTitle">عملية شحن كيشني</strong>
+            </div>
+            <div class="workflow-steps" role="list">
+                <button type="button" class="workflow-step is-current" data-step="service" role="listitem" aria-current="step">
+                    <span class="workflow-step-circle">1</span>
+                    <span class="workflow-step-label">اختيار الخدمة</span>
+                </button>
+                <button type="button" class="workflow-step" data-step="value" role="listitem">
+                    <span class="workflow-step-circle">2</span>
+                    <span class="workflow-step-label">إدخال القيمة</span>
+                </button>
+                <button type="button" class="workflow-step" data-step="payment" role="listitem">
+                    <span class="workflow-step-circle">3</span>
+                    <span class="workflow-step-label">اختيار وسيلة الدفع</span>
+                </button>
+                <button type="button" class="workflow-step" data-step="save" role="listitem">
+                    <span class="workflow-step-circle">4</span>
+                    <span class="workflow-step-label">تأكيد العملية</span>
+                </button>
+            </div>
         </section>
 
         <div class="pos-workspace">

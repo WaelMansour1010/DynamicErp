@@ -2,10 +2,10 @@
     "use strict";
 
     var modes = {
-        "cash-in": { label: "كاش إن", isCashOut: false, isPOS: false, colorClass: "pos-mode-cash-in" },
-        "cash-out": { label: "كاش أوت", isCashOut: true, isPOS: false, colorClass: "pos-mode-cash-out" },
-        "card": { label: "كارت كيشني", isCashOut: false, isPOS: true, colorClass: "pos-mode-card" },
-        "violations": { label: "مخالفات", isCashOut: false, isPOS: false, colorClass: "pos-mode-violations" }
+        "cash-in": { label: "كاش إن", operationLabel: "عملية شحن كيشني", isCashOut: false, isPOS: false, colorClass: "pos-mode-cash-in" },
+        "cash-out": { label: "كاش أوت", operationLabel: "عملية كاش أوت", isCashOut: true, isPOS: false, colorClass: "pos-mode-cash-out" },
+        "card": { label: "كارت كيشني", operationLabel: "عملية إصدار كارت كيشني", isCashOut: false, isPOS: true, colorClass: "pos-mode-card" },
+        "violations": { label: "مخالفات", operationLabel: "عملية سداد مخالفات", isCashOut: false, isPOS: false, colorClass: "pos-mode-violations" }
     };
 
     var itemLookup = {};
@@ -13,6 +13,7 @@
     var customerLookupTimer = null;
     var kycUnusedLookupTimer = null;
     var commissionTimer = null;
+    var amountCommitTimer = null;
     var todayInvoicesTimer = null;
     var todayInvoicesCache = [];
     var currentContext = null;
@@ -23,6 +24,9 @@
     var commissionsReady = false;
     var commissionCalculationPending = false;
     var commissionPreviewSequence = 0;
+    var commissionPreviewXhr = null;
+    var commissionPreviewUseOverlay = true;
+    var amountEnterAdvancePending = false;
     var lastCommissionKey = "";
     var lastCashOutMachineWithdrawalAmount = 0;
     var lastCashOutBankMachineCommission = 0;
@@ -40,6 +44,7 @@
     var uxLastActionAt = 0;
     var uxCurrentStep = "service";
     var uxDebounceMs = 200;
+    var amountCommitDelayMs = 400;
 
     function byId(id) { return document.getElementById(id); }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
@@ -235,11 +240,12 @@
             callback(0, { success: false, message: "تعذر الاتصال بالسيرفر", technicalMessage: "Network error" });
         };
         xhr.send(body ? JSON.stringify(body) : null);
+        return xhr;
     }
 
     function requestJsonWithLoading(method, url, body, callback, message) {
         uxBeginLoading(message || "جاري تحميل البيانات...");
-        requestJson(method, url, body, function (status, data) {
+        return requestJson(method, url, body, function (status, data) {
             uxEndLoading();
             callback(status, data);
         });
@@ -474,13 +480,31 @@
         return 3;
     }
 
+    function uxCanEnterStep(step) {
+        if (step === "service") { return true; }
+        if (step === "value") { return uxIsServiceReady(); }
+        if (step === "payment") { return uxIsValueReady(); }
+        if (step === "save") { return uxIsPaymentReady(); }
+        return false;
+    }
+
     function uxPaintWorkflow() {
         var currentRank = uxStepRank(uxCurrentStep);
         var steps = document.querySelectorAll(".workflow-step");
         for (var i = 0; i < steps.length; i++) {
-            var rank = uxStepRank(steps[i].getAttribute("data-step"));
+            var stepName = steps[i].getAttribute("data-step");
+            var rank = uxStepRank(stepName);
+            var complete = rank < currentRank;
+            var current = rank === currentRank;
+            var allowed = uxCanEnterStep(stepName) && !uxIsBusy();
             steps[i].classList.toggle("is-complete", rank < currentRank);
             steps[i].classList.toggle("is-current", rank === currentRank);
+            steps[i].classList.toggle("is-pending", rank > currentRank);
+            steps[i].disabled = !allowed;
+            steps[i].setAttribute("aria-current", current ? "step" : "false");
+            steps[i].setAttribute("aria-disabled", allowed ? "false" : "true");
+            var circle = steps[i].querySelector(".workflow-step-circle");
+            if (circle) { circle.innerText = complete ? "✓" : String(rank + 1); }
         }
     }
 
@@ -632,6 +656,9 @@
         byId("isCashOut").value = config.isCashOut ? "true" : "false";
         byId("isPOS").value = config.isPOS ? "true" : "false";
         byId("posModeLabel").innerText = config.label;
+        if (byId("workflowOperationTitle")) {
+            byId("workflowOperationTitle").innerText = config.operationLabel || ("عملية " + config.label);
+        }
 
         var buttons = document.querySelectorAll(".pos-type-btn");
         for (var i = 0; i < buttons.length; i++) {
@@ -960,6 +987,44 @@
         byId("totalFees").value = itemTotal.toFixed(2);
         updateBottomSummary();
         uxApplyFlow();
+    }
+
+    function isAmountInput(target) {
+        return target && target.matches && target.matches("#rechargeValue, #violationValue, #payedValue");
+    }
+
+    function commitAmountInput(target, immediate) {
+        if (!target || !isAmountInput(target)) { return; }
+        window.clearTimeout(amountCommitTimer);
+        calculateTotals();
+
+        if (target.id === "rechargeValue" || target.id === "violationValue") {
+            scheduleCommissionPreview({
+                delay: immediate ? 0 : amountCommitDelayMs,
+                quiet: true,
+                useOverlay: false
+            });
+        } else if (immediate) {
+            amountEnterAdvancePending = false;
+            uxApplyFlow();
+            uxFocusStep(uxCurrentStep);
+        }
+    }
+
+    function scheduleAmountCommit(target) {
+        if (!target || !isAmountInput(target)) { return; }
+        window.clearTimeout(amountCommitTimer);
+        amountCommitTimer = window.setTimeout(function () {
+            commitAmountInput(target, false);
+        }, amountCommitDelayMs);
+        uxApplyFlow();
+    }
+
+    function uxAdvanceAfterAmountCommit() {
+        if (!amountEnterAdvancePending) { return; }
+        amountEnterAdvancePending = false;
+        uxApplyFlow();
+        uxFocusStep(uxCurrentStep);
     }
 
     function validateForm() {
@@ -2378,12 +2443,21 @@
         });
     }
 
-    function scheduleCommissionPreview() {
+    function scheduleCommissionPreview(options) {
+        options = options || {};
         window.clearTimeout(commissionTimer);
-        if (!reviewMode) {
-            markCommissionPending("جاري تحميل إعدادات العمولات، برجاء الانتظار لحظات.");
+        commissionPreviewUseOverlay = options.useOverlay !== false;
+        if (commissionPreviewXhr && commissionPreviewXhr.readyState !== 4 && commissionPreviewXhr.abort) {
+            commissionPreviewSequence++;
+            commissionPreviewXhr.abort();
         }
-        commissionTimer = window.setTimeout(calculateCommissionPreview, 250);
+        if (!reviewMode && options.quiet !== true) {
+            markCommissionPending("جاري تحميل إعدادات العمولات، برجاء الانتظار لحظات.");
+        } else {
+            commissionCalculationPending = true;
+            updateSaveButtonState();
+        }
+        commissionTimer = window.setTimeout(calculateCommissionPreview, options.delay === 0 ? 0 : (options.delay || 400));
     }
 
     function buildCommissionRequest() {
@@ -2454,6 +2528,7 @@
         var request = buildCommissionRequest();
         if (!request) {
             commissionCalculationPending = false;
+            amountEnterAdvancePending = false;
             updateSaveButtonState();
             return;
         }
@@ -2465,17 +2540,20 @@
             commissionCalculationPending = false;
             updateSaveButtonState();
             setCommissionStatus("");
+            uxAdvanceAfterAmountCommit();
             return;
         }
 
         var requestId = ++commissionPreviewSequence;
-        requestJsonWithLoading("POST", getUrl("data-commission-url"), request, function (status, data) {
+        var send = commissionPreviewUseOverlay ? requestJsonWithLoading : requestJson;
+        commissionPreviewXhr = send("POST", getUrl("data-commission-url"), request, function (status, data) {
             if (requestId !== commissionPreviewSequence || key !== commissionKey(buildCommissionRequest())) {
                 return;
             }
 
             if (status < 200 || status >= 300 || !data) {
                 commissionCalculationPending = false;
+                amountEnterAdvancePending = false;
                 updateSaveButtonState();
                 setCommissionStatus("تعذر تحميل إعدادات العمولات لهذا الاختيار", true);
                 return;
@@ -2487,6 +2565,7 @@
             commissionCalculationPending = false;
             updateSaveButtonState();
             setCommissionStatus("");
+            uxAdvanceAfterAmountCommit();
         });
     }
 
@@ -2798,6 +2877,16 @@
             showTodayInvoiceSummary(invoiceIndex);
             loadInvoiceForReview(invoiceButton.getAttribute("data-transaction-id"));
         }
+        var workflowButton = event.target.closest ? event.target.closest(".workflow-step") : null;
+        if (workflowButton) {
+            var requestedStep = workflowButton.getAttribute("data-step");
+            if (uxCanEnterStep(requestedStep)) {
+                uxFocusStep(requestedStep);
+            } else {
+                uxShowGuide();
+                uxFocusStep(uxCurrentStep);
+            }
+        }
         if (event.target.classList.contains("remove-row")) {
             var rows = byId("itemsTable").querySelectorAll("tbody tr");
             if (rows.length > 1) {
@@ -2828,21 +2917,26 @@
     });
 
     document.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && isAmountInput(event.target)) {
+            event.preventDefault();
+            amountEnterAdvancePending = true;
+            commitAmountInput(event.target, true);
+            if (event.target.id !== "payedValue") {
+                uxShowGuide("جاري حساب القيمة...");
+            }
+            return;
+        }
         uxHandleSaveShortcut(event);
         uxHandleEnter(event);
     });
 
     document.addEventListener("input", function (event) {
-        if (event.target.matches(".qty, .price, .vat, #rechargeValue, #commissionValue, #payedValue")) {
+        if (event.target.matches(".qty, .price, .vat, #commissionValue")) {
             calculateTotals();
         }
 
-        if (event.target.id === "rechargeValue") {
-            scheduleCommissionPreview();
-        }
-
-        if (event.target.id === "violationValue") {
-            scheduleCommissionPreview();
+        if (isAmountInput(event.target)) {
+            scheduleAmountCommit(event.target);
         }
 
         if (event.target.name === "violationPayType") {
@@ -2933,6 +3027,9 @@
     }, { passive: false });
 
     document.addEventListener("change", function (event) {
+        if (isAmountInput(event.target)) {
+            commitAmountInput(event.target, true);
+        }
         if (event.target.id === "branchId") {
             if (currentContext && currentContext.CanChangeDefaults === true) {
                 loadStoresForBranch(event.target.value);
