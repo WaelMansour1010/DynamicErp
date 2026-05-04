@@ -35,6 +35,11 @@
     var loadedInvoiceEmpId = null;
     var kycSaveInProgress = false;
     var pendingDuplicateKycCustomer = null;
+    var uxLoadingCount = 0;
+    var uxSaving = false;
+    var uxLastActionAt = 0;
+    var uxCurrentStep = "service";
+    var uxDebounceMs = 200;
 
     function byId(id) { return document.getElementById(id); }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
@@ -230,6 +235,14 @@
             callback(0, { success: false, message: "تعذر الاتصال بالسيرفر", technicalMessage: "Network error" });
         };
         xhr.send(body ? JSON.stringify(body) : null);
+    }
+
+    function requestJsonWithLoading(method, url, body, callback, message) {
+        uxBeginLoading(message || "جاري تحميل البيانات...");
+        requestJson(method, url, body, function (status, data) {
+            uxEndLoading();
+            callback(status, data);
+        });
     }
 
     function nonJsonResponse(defaultMessage, status, responseText) {
