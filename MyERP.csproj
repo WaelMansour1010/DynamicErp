@@ -411,16 +411,27 @@
     <Compile Include="App_Start\Startup.Auth.cs" />
     <Compile Include="Areas\Pos\PosAreaRegistration.cs" />
     <Compile Include="Areas\Pos\Controllers\KycAttachmentController.cs" />
+    <Compile Include="Areas\Pos\Controllers\KycBankFollowUpController.cs" />
+    <Compile Include="Areas\Pos\Controllers\AccountingReportsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\JournalEntriesController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PosDashboardController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PosPermissionsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PosReportsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosClosingController.cs" />
     <Compile Include="Areas\Pos\Controllers\PrintTemplateController.cs" />
     <Compile Include="Areas\Pos\Models\PrintTemplate.cs" />
     <Compile Include="Areas\Pos\Services\PrintTemplateService.cs" />
     <Compile Include="Areas\Pos\Controllers\PosTransactionController.cs" />
     <Compile Include="Areas\Pos\Data\PosClosingSqlRepository.cs" />
+    <Compile Include="Areas\Pos\Data\PosSystemHealthRepository.cs" />
     <Compile Include="Areas\Pos\Data\PosSqlRepository.cs" />
     <Compile Include="Areas\Pos\Models\PosClosingModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
+    <Compile Include="Areas\Pos\Models\PosSystemHealthModels.cs" />
+    <Compile Include="Areas\Pos\Services\PosSystemHealthMonitor.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardReport.cs" />
     <Compile Include="Areas\Pos\Reports\PosReceiptReport.cs">
@@ -493,6 +504,7 @@
     <Compile Include="Controllers\ElderController.cs" />
     <Compile Include="Controllers\EmployeeJobRecommendationController.cs" />
     <Compile Include="Controllers\ERPRoleReportsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\HtmlReportsController.cs" />
     <Compile Include="Controllers\ERPRolesController.cs" />
     <Compile Include="Controllers\ERPUsersController.cs" />
     <Compile Include="Controllers\ExpenseAmortizationController.cs" />
@@ -693,6 +705,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Reports\HtmlReportModels.cs" />
     <Compile Include="Models\Activity.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -3944,17 +3957,41 @@
     <Content Include="Areas\Pos\Scripts\pos-closing.js" />
     <Content Include="Areas\Pos\Scripts\pos-transaction.js" />
     <Content Include="Areas\Pos\Scripts\print-template-designer.js" />
+    <Content Include="Areas\Pos\Scripts\account-selector.js" />
     <Content Include="Areas\Pos\Views\Web.config" />
     <Content Include="Areas\Pos\Views\PosTransaction\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosTransaction\PrintPreview.cshtml" />
     <Content Include="Areas\Pos\Views\PosClosing\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosDashboard\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\KycBankFollowUp\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PrintTemplate\Index.cshtml" />
     <Content Include="App_Data\PrintTemplates\KycCard.json" />
+    <Content Include="Areas\Pos\Views\Payments\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosPermissions\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosReports\Index.cshtml" />
+    <Content Include="Areas\Pos\Sql\25_POS_TemporaryPermissions.sql" />
+    <Content Include="Areas\Pos\Sql\26_POS_TellerPermission_ECUsers.sql" />
+    <Content Include="Areas\Pos\Sql\27_POS_ReportStoredProcedures.sql" />
+    <Content Include="Areas\Pos\Sql\28_POS_Payments_Audit.sql" />
+    <Content Include="Areas\Pos\Sql\29_POS_UserCategory_BulkPermissions.sql" />
+    <Content Include="Areas\Pos\Sql\30_POS_SaveTransaction_UnicodeText.sql" />
+    <Content Include="Areas\Pos\Sql\31_POS_GetNextID_FromSequence_Concurrency.sql" />
+    <Content Include="Areas\Pos\Sql\32_POS_WebInvoiceAuditReport.sql" />
+    <Content Include="Areas\Pos\Sql\33_POS_JournalEntryAuditColumns.sql" />
+    <Content Include="Areas\Pos\Sql\34_POS_PerformanceStoredProcedures.sql" />
+    <Content Include="Areas\Pos\Sql\35_POS_SystemHealthPermissions.sql" />
+    <Content Include="Areas\Pos\Sql\36_POS_PerformanceIndexRollback.sql" />
+    <Content Include="Areas\Pos\assets\images\company-logo.png" />
+    <Content Include="Areas\Pos\assets\images\company-logo-1.png" />
+    <Content Include="Areas\Pos\assets\images\company-logo-2.png" />
+    <Content Include="Areas\Pos\assets\images\company-logo-3.png" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Areas\Pos\Content\html-reports.css" />
     <Content Include="Content\numpad-dark.css" />
     <Content Include="Content\numpad-light.css" />
     <Content Include="favicon.ico" />
@@ -4179,6 +4216,11 @@
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\HtmlReports\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\HtmlReports\Shared\_FilterToolbar.cshtml" />
+    <Content Include="Areas\Pos\Views\HtmlReports\Shared\_ReportActions.cshtml" />
+    <Content Include="Areas\Pos\Views\AccountingReports\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\JournalEntries\Index.cshtml" />
     <Content Include="Views\Account\_ExternalLoginsListPartial.cshtml" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />
     <Content Include="Views\Account\ExternalLoginConfirmation.cshtml" />

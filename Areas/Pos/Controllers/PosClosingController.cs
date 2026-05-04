@@ -9,10 +9,12 @@ namespace MyERP.Areas.Pos.Controllers
     public class PosClosingController : Controller
     {
         private readonly PosClosingSqlRepository _repository;
+        private readonly PosSqlRepository _posRepository;
 
         public PosClosingController()
         {
             _repository = new PosClosingSqlRepository();
+            _posRepository = new PosSqlRepository();
         }
 
         public ActionResult Index()
@@ -21,6 +23,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (context == null)
             {
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!CanOpenClosing(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشة الإغلاق");
             }
 
             ViewBag.PosContext = context;
@@ -37,6 +44,12 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     Response.StatusCode = 401;
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+                }
+
+                if (!CanOpenClosing(context))
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية فتح شاشة الإغلاق", "CanOpenClosing is false."));
                 }
 
                 var closingDate = (request != null && request.ClosingDate.HasValue ? request.ClosingDate.Value : DateTime.Today).Date;
@@ -66,6 +79,12 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     Response.StatusCode = 401;
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+                }
+
+                if (!CanExecuteClosing(context))
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية تنفيذ الإغلاق", "CanExecuteClosing is false."));
                 }
 
                 var closingDate = (request != null && request.ClosingDate.HasValue ? request.ClosingDate.Value : DateTime.Today).Date;
@@ -108,7 +127,17 @@ namespace MyERP.Areas.Pos.Controllers
 
         private PosUserContext GetPosContext()
         {
-            return Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            return PosLoginController.RestorePosContext(Request, Session, _posRepository);
+        }
+
+        private static bool CanOpenClosing(PosUserContext context)
+        {
+            return context != null && (context.IsFullAccess || context.CanTeller || context.CanOpenClosing);
+        }
+
+        private static bool CanExecuteClosing(PosUserContext context)
+        {
+            return context != null && (context.IsFullAccess || context.CanTeller || context.CanExecuteClosing);
         }
 
         private static object Fail(string message, string technicalMessage)

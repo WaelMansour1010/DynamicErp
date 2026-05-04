@@ -2,6 +2,14 @@
     Layout = null;
     ViewBag.Title = "كيشني - شاشة البيع";
     var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var primaryLogoPath = "~/Areas/Pos/assets/images/company-logo.png";
+    var alternateLogoPath = "~/Areas/Pos/assets/images/company-logo-1.png";
+    var legacyLogoPath = "~/Areas/Pos/assets/images/company-logo-2.png";
+    var companyLogoPath = System.IO.File.Exists(Server.MapPath(primaryLogoPath))
+        ? primaryLogoPath
+        : (System.IO.File.Exists(Server.MapPath(alternateLogoPath))
+            ? alternateLogoPath
+            : (System.IO.File.Exists(Server.MapPath(legacyLogoPath)) ? legacyLogoPath : null));
 }
 
 <meta charset="utf-8" />
@@ -15,9 +23,11 @@
      data-default-service-url="@Url.Action("GetDefaultServiceItem", "PosTransaction", new { area = "Pos" })"
      data-primary-services-url="@Url.Action("GetPrimaryServiceItems", "PosTransaction", new { area = "Pos" })"
      data-secondary-services-url="@Url.Action("GetSecondaryServiceItems", "PosTransaction", new { area = "Pos" })"
+     data-commission-bootstrap-url="@Url.Action("CommissionBootstrap", "PosTransaction", new { area = "Pos" })"
      data-commission-url="@Url.Action("CalculateCommission", "PosTransaction", new { area = "Pos" })"
      data-customer-lookup-url="@Url.Action("LookupCustomerByPhone", "PosTransaction", new { area = "Pos" })"
      data-customer-search-url="@Url.Action("SearchKeshniCardCustomers", "PosTransaction", new { area = "Pos" })"
+     data-unused-kyc-lookup-url="@Url.Action("LookupUnusedKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
      data-save-keshni-card-url="@Url.Action("SaveKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
      data-kyc-attachments-url="@Url.Action("List", "KycAttachment", new { area = "Pos" })"
      data-open-kyc-attachment-url="@Url.Action("Open", "KycAttachment", new { area = "Pos" })"
@@ -32,6 +42,7 @@
      data-today-summary-url="@Url.Action("TodaySummary", "PosTransaction", new { area = "Pos" })"
      data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
      data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
+     data-journal-url="@Url.Action("GetJournalEntry", "PosTransaction", new { area = "Pos" })"
      data-print-url="@Url.Action("Print", "PosTransaction", new { area = "Pos" })"
      data-print-preview-url="@Url.Action("PrintPreview", "PosTransaction", new { area = "Pos" })"
      data-save-customer-url="@Url.Action("SaveCashCustomer", "PosTransaction", new { area = "Pos" })"
@@ -51,13 +62,32 @@
      data-can-print="@(posContext != null && posContext.CanPrint ? "true" : "false")"
      data-can-return="@(posContext != null && posContext.CanReturn ? "true" : "false")"
      data-can-cash-customer="@(posContext != null && posContext.CanOpenCashCustomer ? "true" : "false")"
+     data-can-view-journal="@(posContext != null && posContext.CanViewJournalEntry ? "true" : "false")"
+     data-can-print-kyc-acknowledgment="@(posContext != null && posContext.CanPrintKycAcknowledgment ? "true" : "false")"
+     data-can-print-kyc-card="@(posContext != null && posContext.CanPrintKycCard ? "true" : "false")"
+     data-can-edit-kyc="@(posContext != null && posContext.CanEditKyc ? "true" : "false")"
+     data-can-edit-invoice="@(posContext != null && posContext.CanEditInvoice ? "true" : "false")"
      data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
      data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")">
     <div class="pos-shell">
+        <div class="pos-logo-strip">
+            <div class="pos-brand">
+                @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+                {
+                    <img src="@Url.Content(companyLogoPath)"
+                         alt="Company Logo"
+                         class="pos-company-logo" />
+                }
+                else
+                {
+                    <span class="pos-company-logo-fallback">اسم الشركة</span>
+                }
+            </div>
+        </div>
+
         <header class="pos-header">
-            <div>
+            <div class="pos-header-content">
                 <h1>كيشني - شاشة البيع</h1>
-                <p>هذه شاشة تجريبية على قاعدة CASH - لا يوجد قيد أو خصم مخزون حتى الآن</p>
                 <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
                 <div class="pos-balances">
                     <span id="employeeBalanceText" class="is-hidden-ui">ذمة الموظف: تحميل...</span>
@@ -136,9 +166,9 @@
                     <label>رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
                     <label>الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
                     <input type="hidden" id="kycCardSource" />
-                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" /></label>
-                    <label>تاريخ الإصدار<input type="date" id="kycCardDate" /></label>
-                    <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" /></label>
+                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label>تاريخ الإصدار<input type="date" id="kycCardDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" min="1753-01-01" max="9999-12-31" /></label>
                     <label>العنوان العربي<input type="text" id="kycAddress" dir="rtl" lang="ar" /></label>
                     <label>العنوان الإنجليزي 1<input type="text" id="kycEnglishName5" dir="ltr" lang="en" /></label>
                     <input type="hidden" id="kycEnglishName6" />
@@ -247,9 +277,20 @@
                         </span>
                     </label>
                     <label>رقم المحفظة<input type="text" id="violationWalletNo" placeholder="رقم المحفظة" /></label>
-                    <label>الحالة<input type="text" value="هذه شاشة تجريبية فقط" disabled /></label>
                 </div>
             </section>
+
+            @if (posContext != null && posContext.CanViewJournalEntry)
+            {
+                <section class="pos-panel journal-panel is-hidden-ui" id="journalEntryPanel">
+                    <div class="panel-heading">
+                        <h2>القيد المحاسبي</h2>
+                        <button type="button" class="link-action" id="reloadJournalBtn">تحديث القيد</button>
+                    </div>
+                    <div id="journalEntryMessage" class="pos-validation"></div>
+                    <div id="journalEntryGrid" class="report-result"></div>
+                </section>
+            }
 
             <section class="pos-panel bottom-summary-panel" id="bottomSummaryPanel">
                 <div class="panel-heading"><h2 id="bottomSummaryTitle">ملخص العملية</h2></div>
@@ -260,18 +301,22 @@
             <div class="pos-save-result" id="saveResult"></div>
 
             <footer class="pos-actions">
-                <span class="prototype-warning">هذه شاشة تجريبية على قاعدة CASH</span>
                 <button type="button" class="secondary-action" id="newBtn">جديد</button>
                 <button type="button" class="secondary-action" id="printBtn" disabled>طباعة</button>
                 <button type="button" class="secondary-action" id="returnLaterBtn">مرتجع لاحقًا</button>
-                <button type="submit" class="primary-action" id="saveBtn">حفظ تجريبي</button>
+                <button type="submit" class="primary-action" id="saveBtn">حفظ</button>
             </footer>
         </form>
-        <aside class="pos-panel today-invoices-panel">
-            <div class="panel-heading"><h2>فواتير اليوم</h2></div>
-            <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
-            <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
-            <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
+        <aside class="pos-panel today-invoices-panel" id="todayInvoicesPanel">
+            <div class="panel-heading today-invoices-heading">
+                <h2>فواتير اليوم</h2>
+                <button type="button" class="secondary-action compact-action" id="toggleTodayInvoicesBtn" aria-expanded="true">إخفاء</button>
+            </div>
+            <div class="today-invoices-body" id="todayInvoicesBody">
+                <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
+                <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
+                <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
+            </div>
         </aside>
         </div>
     </div>

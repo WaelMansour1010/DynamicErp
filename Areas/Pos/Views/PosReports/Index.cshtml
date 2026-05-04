@@ -1,0 +1,274 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "تقارير كيشني";
+    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var reports = (ViewBag.ReportDefinitions as IEnumerable<MyERP.Areas.Pos.Controllers.PosReportDefinition>) ?? Enumerable.Empty<MyERP.Areas.Pos.Controllers.PosReportDefinition>();
+    var branches = (ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosBranchDto>();
+    var stores = (ViewBag.Stores as IEnumerable<MyERP.Areas.Pos.Models.PosStoreDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosStoreDto>();
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="pos-page pos-reports-page"
+         dir="rtl"
+         data-run-report-url="@Url.Action("Run", "PosReports", new { area = "Pos" })"
+         data-export-report-url="@Url.Action("Export", "PosReports", new { area = "Pos" })">
+        <div class="pos-shell">
+            <section class="pos-panel">
+                <div class="panel-heading">
+                    <h2>تقارير</h2>
+                    <span>المستخدم: @(posContext != null ? posContext.UserName : "")</span>
+                </div>
+
+                <div class="pos-grid four-cols reports-filter-grid">
+                    <label>
+                        الفرع
+                        <select id="reportBranchId">
+                            <option value="">كل الفروع المتاحة</option>
+                            @foreach (var branch in branches)
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        </select>
+                    </label>
+                    <label>من تاريخ<input type="date" id="reportFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>إلى تاريخ<input type="date" id="reportToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label class="serial-filter is-hidden-ui">
+                        المخزن
+                        <select id="reportStoreId">
+                            <option value="">كل المخازن المتاحة</option>
+                            @foreach (var store in stores)
+                            {
+                                <option value="@store.StoreID">@store.StoreName</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="serial-filter is-hidden-ui">بحث سيريال/صنف<input type="text" id="reportSerialSearch" /></label>
+                </div>
+            </section>
+
+            <section class="pos-panel">
+                <div class="report-tabs" id="reportTabs">
+                    <button type="button" class="active" data-report-group="sales">تقارير المبيعات</button>
+                    <button type="button" data-report-group="closings">تقارير الإغلاقات</button>
+                    <button type="button" data-report-group="serials">المخزون والسيريالات</button>
+                    <button type="button" data-report-group="excel">تصدير/استيراد Excel</button>
+                </div>
+
+                <div class="reports-button-grid">
+                    @foreach (var report in reports)
+                    {
+                        if (!report.Allowed)
+                        {
+                            continue;
+                        }
+
+                        <div class="report-card" data-report-group="@report.Group">
+                            <button type="button"
+                                    class="report-action"
+                                    data-report-key="@report.Key"
+                                    @(report.Enabled ? "" : "disabled")>
+                                <strong>@report.Title</strong>
+                                <span>@(report.Enabled ? "تشغيل مبدئي" : "لم يتم ربط التقرير بعد")</span>
+                            </button>
+                            <button type="button"
+                                    class="report-export"
+                                    data-report-key="@report.Key"
+                                    @(report.Enabled ? "" : "disabled")>
+                                تصدير Excel
+                            </button>
+                            <small>@report.Source</small>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="pos-panel">
+                <div id="reportMessage" class="pos-validation"></div>
+                <div id="reportResult" class="report-result"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            function byId(id) { return document.getElementById(id); }
+            function escapeHtml(value) {
+                return String(value === null || value === undefined ? "" : value)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+            function activeGroup() {
+                var active = document.querySelector("#reportTabs button.active");
+                return active ? active.getAttribute("data-report-group") : "sales";
+            }
+            function updateGroups(group) {
+                var cards = document.querySelectorAll(".report-card");
+                for (var i = 0; i < cards.length; i++) {
+                    cards[i].style.display = cards[i].getAttribute("data-report-group") === group ? "" : "none";
+                }
+                var serialFilters = document.querySelectorAll(".serial-filter");
+                for (var s = 0; s < serialFilters.length; s++) {
+                    serialFilters[s].classList.toggle("is-hidden-ui", group !== "serials");
+                }
+            }
+            function payload(key) {
+                return {
+                    reportKey: key,
+                    fromDate: byId("reportFromDate").value,
+                    toDate: byId("reportToDate").value,
+                    branchId: parseInt(byId("reportBranchId").value, 10) || null,
+                    storeId: parseInt(byId("reportStoreId").value, 10) || null,
+                    serialSearch: byId("reportSerialSearch").value || ""
+                };
+            }
+            function renderTable(data) {
+                if (!data || !data.columns || !data.rows) {
+                    byId("reportResult").innerHTML = "";
+                    return;
+                }
+
+                if (!data.rows.length) {
+                    byId("reportResult").innerHTML = '<div class="empty-state">لا توجد بيانات</div>';
+                    return;
+                }
+
+                var html = '<div class="responsive-table"><table class="pos-table"><thead><tr>';
+                for (var c = 0; c < data.columns.length; c++) {
+                    html += "<th>" + escapeHtml(data.columns[c].Title || data.columns[c].title || data.columns[c].Key || data.columns[c].key) + "</th>";
+                }
+                html += "</tr></thead><tbody>";
+
+                for (var r = 0; r < data.rows.length; r++) {
+                    html += "<tr>";
+                    for (var x = 0; x < data.columns.length; x++) {
+                        var key = data.columns[x].Key || data.columns[x].key;
+                        html += "<td>" + escapeHtml(data.rows[r][key]) + "</td>";
+                    }
+                    html += "</tr>";
+                }
+
+                html += "</tbody></table></div>";
+                byId("reportResult").innerHTML = html;
+            }
+            function runReport(key) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-run-report-url"), true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                byId("reportMessage").innerText = "جاري تشغيل التقرير...";
+                byId("reportResult").innerHTML = "";
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var data = null;
+                    try {
+                        data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                    } catch (ignore) {
+                        data = { success: false, message: "تعذر قراءة رد السيرفر" };
+                    }
+
+                    if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
+                        byId("reportMessage").innerText = data.reportName || "تم تشغيل التقرير";
+                        renderTable(data);
+                        return;
+                    }
+
+                    byId("reportMessage").innerText = (data && data.message) || "تعذر تشغيل التقرير";
+                };
+                xhr.send(JSON.stringify(payload(key)));
+            }
+            function exportReport(key) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-export-report-url"), true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+                xhr.responseType = "blob";
+                byId("reportMessage").innerText = "جاري تجهيز ملف Excel...";
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+
+                    var contentType = xhr.getResponseHeader("Content-Type") || "";
+                    if (xhr.status >= 200 && xhr.status < 300 && contentType.indexOf("spreadsheetml") >= 0) {
+                        var fileName = "POS_Report_" + (byId("reportFromDate").value || "") + "_" + (byId("reportToDate").value || "") + ".xlsx";
+                        var url = window.URL.createObjectURL(xhr.response);
+                        var link = document.createElement("a");
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        byId("reportMessage").innerText = "تم تنزيل ملف Excel";
+                        return;
+                    }
+
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var text = reader.result || "";
+                        try {
+                            var data = text ? JSON.parse(text) : null;
+                            byId("reportMessage").innerText = (data && data.message) || "تعذر تصدير Excel";
+                            if (data && data.technicalMessage && window.console) {
+                                console.error(data.technicalMessage);
+                            }
+                        } catch (ignore) {
+                            byId("reportMessage").innerText = text || "تعذر تصدير Excel";
+                        }
+                    };
+                    reader.onerror = function () {
+                        byId("reportMessage").innerText = "تعذر تصدير Excel";
+                    };
+                    reader.readAsText(xhr.response || new Blob(), "utf-8");
+                };
+                xhr.onerror = function () {
+                    byId("reportMessage").innerText = "تعذر الاتصال بالسيرفر أثناء تصدير Excel";
+                };
+                var data = payload(key);
+                var form = [
+                    ["ReportKey", data.reportKey || ""],
+                    ["FromDate", data.fromDate || ""],
+                    ["ToDate", data.toDate || ""],
+                    ["BranchId", data.branchId || ""],
+                    ["StoreId", data.storeId || ""],
+                    ["SerialSearch", data.serialSearch || ""]
+                ].map(function (item) {
+                    return encodeURIComponent(item[0]) + "=" + encodeURIComponent(item[1]);
+                }).join("&");
+                xhr.send(form);
+            }
+
+            document.addEventListener("click", function (event) {
+                var tab = event.target.closest ? event.target.closest("#reportTabs button") : null;
+                if (tab) {
+                    var buttons = document.querySelectorAll("#reportTabs button");
+                    for (var i = 0; i < buttons.length; i++) { buttons[i].classList.remove("active"); }
+                    tab.classList.add("active");
+                    updateGroups(activeGroup());
+                    return;
+                }
+
+                var reportButton = event.target.closest ? event.target.closest(".report-action") : null;
+                if (reportButton && !reportButton.disabled) {
+                    runReport(reportButton.getAttribute("data-report-key"));
+                    return;
+                }
+
+                var exportButton = event.target.closest ? event.target.closest(".report-export") : null;
+                if (exportButton && !exportButton.disabled) {
+                    exportReport(exportButton.getAttribute("data-report-key"));
+                }
+            });
+
+            updateGroups("sales");
+        })();
+    </script>
+</body>
+</html>
