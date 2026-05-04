@@ -65,6 +65,11 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("system-health");
         }
 
+        public ActionResult PrintTemplates()
+        {
+            return OpenShell("print-templates");
+        }
+
         [HttpGet]
         public JsonResult Summary(string periodType, DateTime? fromDate, DateTime? toDate, int? branchId, string operationType, bool? advanced)
         {
@@ -134,6 +139,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية مراقبة النظام");
             }
 
+            if (screen == "print-templates" && !CanOpenPrintTemplates(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدارة نماذج الطباعة");
+            }
+
             ViewBag.PosContext = context;
             ViewBag.ActiveScreen = screen;
             ViewBag.InitialScreenUrl = ScreenUrl(screen);
@@ -163,6 +173,11 @@ namespace MyERP.Areas.Pos.Controllers
         {
             return IsAdmin(context)
                 || (context != null && (context.CanViewJournalEntry || context.CanCreateJournalEntry || context.CanEditJournalEntry || context.CanDeleteJournalEntry));
+        }
+
+        private static bool CanOpenPrintTemplates(PosUserContext context)
+        {
+            return IsAdmin(context) || (context != null && context.CanManagePrintTemplates);
         }
 
         private static bool HasSalesDefaults(PosUserContext context)
@@ -271,6 +286,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "system-health")
             {
                 return Url.Content("~/Pos/PosSystemHealth/Index");
+            }
+
+            if (screen == "print-templates")
+            {
+                return Url.Content("~/Pos/PrintTemplate/Index?name=KycCard");
             }
 
             if (screen == "home")
