@@ -15,14 +15,82 @@ namespace MyERP.Areas.Pos.Reports
     // ON TOP of a pre-printed card application form. Customer is loaded
     // strictly by TblCusCsh.Id.
     //
-    // Positions below are calibrated against repCashCustomer.pdf assuming
-    // A4 portrait at the standard print scaling. They may need 5-15 unit
-    // tweaks per cell row when running against a specific physical
-    // printer/paper batch (printers and pre-printed runs vary). To
-    // recalibrate a row, change only its y coordinate or the cell start
-    // X. Cell widths are derived once and reused.
+    // Coordinate system: hundredths of an inch. A4 portrait = 827 x 1170.
+    // Margins are zeroed; positions are absolute against the physical
+    // paper corner so they can be tweaked row-by-row.
+    //
+    // CALIBRATION:
+    //   - GLOBAL_Y_SHIFT shifts every printed value vertically. Use it
+    //     to match the printer's physical paper feed.
+    //   - GLOBAL_X_SHIFT shifts every printed value horizontally.
+    //   - Each row has its own constant (TokenCellsY, NationalIdY, etc).
+    //     If only one row is off, change that constant.
+    //   - Cell widths: TokenCellWidth, NationalIdCellWidth, etc.
+    //     Adjust if a digit row drifts across multiple cells.
     public class KycCardReport : XtraReport
     {
+        // ----- Tweakable layout constants -----
+        private const float GLOBAL_Y_SHIFT = 0F;
+        private const float GLOBAL_X_SHIFT = 0F;
+
+        // Top "رقم الـ Token" row - 12 alphanumeric cells.
+        private const float TokenCellsX = 75F;
+        private const float TokenCellsY = 205F;
+        private const float TokenCellWidth = 55F;
+        private const float TokenCellHeight = 24F;
+        private const int TokenCellCount = 12;
+
+        // Centered Arabic name row.
+        private const float ArabicNameY = 265F;
+        // Centered English name row.
+        private const float EnglishNameY = 310F;
+        // Centered address row.
+        private const float AddressY = 360F;
+
+        // Right-aligned single fields under "الجنسية" / "تاريخ الميلاد".
+        private const float RightFieldX = 580F;
+        private const float RightFieldWidth = 200F;
+        private const float NationalityY = 450F;
+        private const float BirthDateY = 485F;
+
+        // National ID row - 14 cells.
+        private const float NationalIdX = 95F;
+        private const float NationalIdY = 525F;
+        private const float NationalIdCellWidth = 44F;
+        private const float NationalIdCellHeight = 22F;
+        private const int NationalIdCellCount = 14;
+
+        // Issue date / source / expiry date row.
+        private const float IssueRowY = 580F;
+        // Issue date (right side).
+        private const float IssueDateX = 610F;
+        private const float IssueDateWidth = 130F;
+        // Issuing entity (middle).
+        private const float SourceX = 290F;
+        private const float SourceWidth = 290F;
+        // Expiry date (left side).
+        private const float ExpiryDateX = 45F;
+        private const float ExpiryDateWidth = 130F;
+
+        // Mobile phone row - 11 cells.
+        private const float PhoneX = 130F;
+        private const float PhoneY = 660F;
+        private const float PhoneCellWidth = 50F;
+        private const float PhoneCellHeight = 22F;
+        private const int PhoneCellCount = 11;
+
+        // Bottom "رقم حساب العميل (Token NO.)" row - 12 cells.
+        private const float TokenNoX = 75F;
+        private const float TokenNoY = 925F;
+
+        // "اسم العميل" signature line in الإقرار section.
+        private const float SignatureNameX = 420F;
+        private const float SignatureNameY = 1110F;
+        private const float SignatureNameWidth = 280F;
+
+        // Footer "Arabic long date".
+        private const float FooterDateY = 1150F;
+
         private readonly Font _smallBold = new Font("Tahoma", 9F, FontStyle.Bold);
         private readonly Font _normalBold = new Font("Tahoma", 10F, FontStyle.Bold);
         private readonly Font _cellFont = new Font("Tahoma", 11F, FontStyle.Bold);
@@ -41,8 +109,6 @@ namespace MyERP.Areas.Pos.Reports
             RightToLeftLayout = RightToLeftLayout.Yes;
             PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
             Landscape = false;
-            // Margins zeroed: positions below are absolute and assume the
-            // page origin is the physical paper corner.
             Margins = new Margins(0, 0, 0, 0);
 
             var detail = new DetailBand();
@@ -67,96 +133,76 @@ namespace MyERP.Areas.Pos.Reports
             string source = FirstNonEmpty(customer.CardSource, customer.BranchName);
             string footerDate = FormatArabicLongDate(issuedAt);
 
-            // ---- Top "رقم الـ Token" cells (12 alphanumeric cells) ----
-            DrawCells(band, token, 12, 75F, 250F, 55F, 26F);
+            DrawCells(band, token, TokenCellCount,
+                TokenCellsX, TokenCellsY, TokenCellWidth, TokenCellHeight);
 
-            // ---- Arabic / English / Address rows (centered text) ----
-            DrawCenteredText(band, arabicName, 295F, _normalBold, RightToLeft.Yes);
-            DrawCenteredText(band, englishName, 332F, _normalBold, RightToLeft.No);
-            DrawCenteredText(band, address, 378F, _smallBold, RightToLeft.No);
+            DrawCenteredText(band, arabicName, ArabicNameY, _normalBold, RightToLeft.Yes);
+            DrawCenteredText(band, englishName, EnglishNameY, _normalBold, RightToLeft.No);
+            DrawCenteredText(band, address, AddressY, _smallBold, RightToLeft.No);
 
-            // ---- Right column: nationality + birth date ----
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(580F, 470F, 200F, 20F),
-                Text = nationality,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
-            });
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(580F, 505F, 200F, 20F),
-                Text = birthDate,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.No
-            });
+            DrawRightField(band, nationality, NationalityY, RightToLeft.Yes);
+            DrawRightField(band, birthDate, BirthDateY, RightToLeft.No);
 
-            // ---- National ID cells (14 digits) ----
-            DrawCells(band, nationalId, 14, 95F, 545F, 44F, 24F);
+            DrawCells(band, nationalId, NationalIdCellCount,
+                NationalIdX, NationalIdY, NationalIdCellWidth, NationalIdCellHeight);
 
-            // ---- Issue date (right) | Source (middle) | Expiry date (left) ----
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(610F, 593F, 130F, 20F),
-                Text = cardStart,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.No
-            });
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(290F, 593F, 290F, 20F),
-                Text = source,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes
-            });
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(45F, 593F, 130F, 20F),
-                Text = cardEnd,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleLeft,
-                RightToLeft = RightToLeft.No
-            });
+            DrawText(band, cardStart, IssueDateX, IssueRowY, IssueDateWidth, 20F,
+                TextAlignment.MiddleRight, RightToLeft.No);
+            DrawText(band, source, SourceX, IssueRowY, SourceWidth, 20F,
+                TextAlignment.MiddleCenter, RightToLeft.Yes);
+            DrawText(band, cardEnd, ExpiryDateX, IssueRowY, ExpiryDateWidth, 20F,
+                TextAlignment.MiddleLeft, RightToLeft.No);
 
-            // ---- Mobile phone cells (11 digits) ----
-            DrawCells(band, phone, 11, 130F, 663F, 50F, 24F);
+            DrawCells(band, phone, PhoneCellCount,
+                PhoneX, PhoneY, PhoneCellWidth, PhoneCellHeight);
 
-            // ---- Bottom "رقم حساب العميل (Token NO.)" cells (12 alphanumeric) ----
-            DrawCells(band, token, 12, 75F, 905F, 55F, 26F);
+            DrawCells(band, token, TokenCellCount,
+                TokenNoX, TokenNoY, TokenCellWidth, TokenCellHeight);
 
-            // ---- "اسم العميل" signature line (الإقرار section) ----
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(420F, 1075F, 280F, 20F),
-                Text = arabicName,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes
-            });
+            DrawText(band, arabicName, SignatureNameX, SignatureNameY,
+                SignatureNameWidth, 20F, TextAlignment.MiddleCenter, RightToLeft.Yes);
 
-            // ---- Footer date (Arabic long form) ----
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(0F, 1140F, A4Width, 20F),
-                Text = footerDate,
-                Font = _smallBold,
-                TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes
-            });
+            DrawText(band, footerDate, 0F, FooterDateY, A4Width, 20F,
+                TextAlignment.MiddleCenter, RightToLeft.Yes);
         }
 
-        private void DrawCenteredText(DetailBand band, string text, float y, Font font, RightToLeft rtl)
+        private void DrawText(DetailBand band, string text, float x, float y,
+            float width, float height, TextAlignment alignment, RightToLeft rtl)
         {
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0F, y, A4Width, 22F),
+                BoundsF = new RectangleF(x + GLOBAL_X_SHIFT, y + GLOBAL_Y_SHIFT, width, height),
+                Text = text,
+                Font = _smallBold,
+                TextAlignment = alignment,
+                RightToLeft = rtl,
+                WordWrap = false
+            });
+        }
+
+        private void DrawCenteredText(DetailBand band, string text, float y,
+            Font font, RightToLeft rtl)
+        {
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(GLOBAL_X_SHIFT, y + GLOBAL_Y_SHIFT, A4Width, 22F),
                 Text = text,
                 Font = font,
                 TextAlignment = TextAlignment.MiddleCenter,
+                RightToLeft = rtl,
+                WordWrap = false
+            });
+        }
+
+        private void DrawRightField(DetailBand band, string text, float y, RightToLeft rtl)
+        {
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(RightFieldX + GLOBAL_X_SHIFT, y + GLOBAL_Y_SHIFT,
+                    RightFieldWidth, 20F),
+                Text = text,
+                Font = _smallBold,
+                TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = rtl,
                 WordWrap = false
             });
@@ -176,7 +222,10 @@ namespace MyERP.Areas.Pos.Reports
                 char ch = padded[i];
                 band.Controls.Add(new XRLabel
                 {
-                    BoundsF = new RectangleF(startX + i * cellWidth, y, cellWidth, cellHeight),
+                    BoundsF = new RectangleF(
+                        startX + i * cellWidth + GLOBAL_X_SHIFT,
+                        y + GLOBAL_Y_SHIFT,
+                        cellWidth, cellHeight),
                     Text = ch == ' ' ? string.Empty : ch.ToString(CultureInfo.InvariantCulture),
                     Font = _cellFont,
                     TextAlignment = TextAlignment.MiddleCenter
