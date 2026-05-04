@@ -166,6 +166,8 @@ namespace MyERP.Areas.Pos.Models
         public decimal VatPercent { get; set; }
         public decimal TotalFees { get; set; }
         public decimal TotalValue { get; set; }
+        public decimal BankMachineCommission { get; set; }
+        public decimal CashOutMachineWithdrawalAmount { get; set; }
         public string Source { get; set; }
         public decimal Percent { get; set; }
         public decimal Min { get; set; }
