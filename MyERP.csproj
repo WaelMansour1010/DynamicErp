@@ -413,6 +413,9 @@
     <Compile Include="Areas\Pos\Controllers\KycAttachmentController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosClosingController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PrintTemplateController.cs" />
+    <Compile Include="Areas\Pos\Models\PrintTemplate.cs" />
+    <Compile Include="Areas\Pos\Services\PrintTemplateService.cs" />
     <Compile Include="Areas\Pos\Controllers\PosTransactionController.cs" />
     <Compile Include="Areas\Pos\Data\PosClosingSqlRepository.cs" />
     <Compile Include="Areas\Pos\Data\PosSqlRepository.cs" />
@@ -3937,13 +3940,17 @@
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.js" />
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.min.js" />
     <Content Include="Areas\Pos\Content\pos-transaction.css" />
+    <Content Include="Areas\Pos\Content\print-template-designer.css" />
     <Content Include="Areas\Pos\Scripts\pos-closing.js" />
     <Content Include="Areas\Pos\Scripts\pos-transaction.js" />
+    <Content Include="Areas\Pos\Scripts\print-template-designer.js" />
     <Content Include="Areas\Pos\Views\Web.config" />
     <Content Include="Areas\Pos\Views\PosTransaction\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosTransaction\PrintPreview.cshtml" />
     <Content Include="Areas\Pos\Views\PosClosing\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PrintTemplate\Index.cshtml" />
+    <Content Include="App_Data\PrintTemplates\KycCard.json" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />
     <Content Include="Content\bootstrap.css" />
