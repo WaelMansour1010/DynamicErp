@@ -183,6 +183,7 @@ WHERE u.UserID = @userId;";
                     context.CanPrint = permissions.CanPrint;
                     context.CanReturn = context.CanReturn || permissions.CanReturn;
                     context.CanOpenCashCustomer = context.CanOpenCashCustomer || permissions.CanOpenCashCustomer;
+                    context.CanManagePrintTemplates = context.IsFullAccess || permissions.CanManagePrintTemplates;
                     ApplyFullAccessReportPermissions(context);
                     ApplyTemporaryPosPermissions(context);
                     if (context.CanTeller)
@@ -209,10 +210,11 @@ SELECT
     MAX(CASE WHEN ScreenName = N'FrmSaleBill6' THEN CONVERT(INT, ISNULL(CanPrint, 0)) ELSE 0 END) AS CanPrint,
     MAX(CASE WHEN ScreenName = N'FrmSaleBill6' THEN CONVERT(INT, ISNULL(CanDelete, 0)) ELSE 0 END) AS CanReturn,
     MAX(CASE WHEN ScreenName = N'FrmCustCash' AND (ISNULL(CanAdd, 0) = 1 OR ISNULL(CanEdit, 0) = 1 OR ISNULL(FullAccess, 0) = 1) THEN 1 ELSE 0 END) AS CanOpenCashCustomer,
+    MAX(CASE WHEN ScreenName = N'FrmPosPrintTemplate' AND (ISNULL(CanAdd, 0) = 1 OR ISNULL(CanEdit, 0) = 1 OR ISNULL(FullAccess, 0) = 1) THEN 1 ELSE 0 END) AS CanManagePrintTemplates,
     MAX(CONVERT(INT, ISNULL(FullAccess, 0))) AS FullAccess
 FROM dbo.ScreenJuncUser
 WHERE User_ID = @userId
-  AND ScreenName IN (N'FrmSaleBill6', N'FrmCustCash');";
+  AND ScreenName IN (N'FrmSaleBill6', N'FrmCustCash', N'FrmPosPrintTemplate');";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -234,7 +236,8 @@ WHERE User_ID = @userId
                         CanSave = !hasSalePermissionRows || fullAccess || ReadInt(reader, "CanSave").GetValueOrDefault() > 0,
                         CanPrint = fullAccess || ReadInt(reader, "CanPrint").GetValueOrDefault() > 0,
                         CanReturn = fullAccess || ReadInt(reader, "CanReturn").GetValueOrDefault() > 0,
-                        CanOpenCashCustomer = fullAccess || ReadInt(reader, "CanOpenCashCustomer").GetValueOrDefault() > 0
+                        CanOpenCashCustomer = fullAccess || ReadInt(reader, "CanOpenCashCustomer").GetValueOrDefault() > 0,
+                        CanManagePrintTemplates = fullAccess || ReadInt(reader, "CanManagePrintTemplates").GetValueOrDefault() > 0
                     };
                 }
             }

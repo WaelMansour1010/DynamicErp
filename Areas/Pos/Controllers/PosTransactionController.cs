@@ -307,7 +307,8 @@ namespace MyERP.Areas.Pos.Controllers
                 CanExecutePayments = context.CanExecutePayments,
                 CanEditInvoice = context.CanEditInvoice,
                 IsFullAccess = context.IsFullAccess,
-                CanChangeDefaults = context.CanChangeDefaults
+                CanChangeDefaults = context.CanChangeDefaults,
+                CanManagePrintTemplates = context.CanManagePrintTemplates
             }, JsonRequestBehavior.AllowGet);
         }
 

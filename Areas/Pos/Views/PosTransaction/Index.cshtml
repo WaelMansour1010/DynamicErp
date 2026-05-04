@@ -94,6 +94,10 @@
                     <span id="boxBalanceText">عهدة الخزنة: تحميل...</span>
                     <button type="button" id="refreshBalancesBtn" class="link-action is-hidden-ui">تحديث الأرصدة</button>
                     <button type="button" id="todaySummaryBtn" class="link-action">ملخص اليوم</button>
+                    @if (posContext != null && posContext.CanManagePrintTemplates)
+                    {
+                        <a class="link-action" href="@Url.Action("Index", "PrintTemplate", new { area = "Pos", name = "KycCard" })">مصمم نماذج الطباعة</a>
+                    }
                     <a class="link-action" href="@Url.Action("Index", "PosClosing", new { area = "Pos" })">إغلاق</a>
                 </div>
             </div>
