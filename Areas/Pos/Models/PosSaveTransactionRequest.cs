@@ -135,6 +135,7 @@ namespace MyERP.Areas.Pos.Models
         public bool CanDeleteJournalEntry { get; set; }
         public bool IsFullAccess { get; set; }
         public bool CanChangeDefaults { get; set; }
+        public bool CanManagePrintTemplates { get; set; }
         public PosSystemOptionsDto SystemOptions { get; set; }
     }
 

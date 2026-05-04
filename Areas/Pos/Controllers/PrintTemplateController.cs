@@ -22,25 +22,68 @@ namespace MyERP.Areas.Pos.Controllers
             _repository = new PosSqlRepository();
         }
 
+        // Permission gate: this whole controller is only for users with
+        // "إدارة نماذج الطباعة" (CanManagePrintTemplates) - i.e. admins
+        // / super-users or anyone explicitly granted access via the
+        // FrmPosPrintTemplate row in dbo.ScreenJuncUser. Returns null
+        // when the user is allowed to continue, or an ActionResult to
+        // short-circuit the action otherwise.
+        private ActionResult RequireTemplateAdmin()
+        {
+            var context = Session[PosLoginController.PosContextSessionKey] as PosUserContext;
+            if (context == null)
+            {
+                if (Request.IsAjaxRequest() ||
+                    string.Equals(Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
+                {
+                    Response.StatusCode = 401;
+                    return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
+                }
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!context.CanManagePrintTemplates)
+            {
+                if (Request.IsAjaxRequest() ||
+                    string.Equals(Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
+                {
+                    Response.StatusCode = 403;
+                    return Json(new { success = false, message = "لا تمتلك صلاحية إدارة نماذج الطباعة" });
+                }
+                return new HttpStatusCodeResult(403, "لا تمتلك صلاحية إدارة نماذج الطباعة");
+            }
+
+            return null;
+        }
+
         // GET /Pos/PrintTemplate?name=KycCard
         public ActionResult Index(string name = "KycCard")
         {
+            var gate = RequireTemplateAdmin();
+            if (gate != null) { return gate; }
+
             ViewBag.TemplateName = PrintTemplateService.SafeName(name);
             ViewBag.Templates = _service.ListNames().ToList();
             return View();
         }
 
         [HttpGet]
-        public JsonResult GetTemplate(string name)
+        public ActionResult GetTemplate(string name)
         {
+            var gate = RequireTemplateAdmin();
+            if (gate != null) { return gate; }
+
             var template = _service.Load(name) ?? KycCardReport.BuildDefaultTemplate();
             return Json(template, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]
         [ValidateInput(false)]
-        public JsonResult SaveTemplate()
+        public ActionResult SaveTemplate()
         {
+            var gate = RequireTemplateAdmin();
+            if (gate != null) { return gate; }
+
             try
             {
                 var name = Request.QueryString["name"];
@@ -75,8 +118,11 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpPost]
-        public JsonResult UploadBackground(string name)
+        public ActionResult UploadBackground(string name)
         {
+            var gate = RequireTemplateAdmin();
+            if (gate != null) { return gate; }
+
             try
             {
                 if (Request.Files == null || Request.Files.Count == 0)
@@ -113,6 +159,9 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpGet]
         public ActionResult Background(string fileName)
         {
+            var gate = RequireTemplateAdmin();
+            if (gate != null) { return gate; }
+
             var bytes = _service.LoadBackground(fileName);
             if (bytes == null)
             {
@@ -126,6 +175,9 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpGet]
         public ActionResult Preview(string name, int? customerId)
         {
+            var gate = RequireTemplateAdmin();
+            if (gate != null) { return gate; }
+
             var template = _service.Load(name);
             PosCustomerLookupDto sample = null;
 
