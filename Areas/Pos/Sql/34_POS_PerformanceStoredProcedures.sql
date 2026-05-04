@@ -1,4 +1,4 @@
-/*
+﻿/*
     POS performance stored procedures.
     SQL Server 2012 compatible. This file belongs to DynamicErp POS only.
     Do not mirror these changes into the old SatriahMain AllScripts.sql.
@@ -134,7 +134,7 @@ BEGIN
     IF @reportKey = N'income-statement'
     BEGIN
         SELECT
-            CASE WHEN a.AccountTab = 2 THEN N'الإيرادات' WHEN a.AccountTab = 3 THEN N'المصروفات' ELSE N'أخرى' END AS SectionName,
+            CASE WHEN a.AccountTab = 2 THEN N'ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ' WHEN a.AccountTab = 3 THEN N'ط§ظ„ظ…طµط±ظˆظپط§طھ' ELSE N'ط£ط®ط±ظ‰' END AS SectionName,
             a.Account_Serial AS AccountSerial,
             a.Account_Code AS AccountCode,
             a.Account_Name AS AccountName,
@@ -227,7 +227,7 @@ BEGIN
         CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
         n.NoteDate,
         n.branch_no AS BranchId,
-        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
+        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'ظپط±ط¹ ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
         ISNULL(n.Remark, N'') AS Description,
         CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN 1 ELSE 0 END AS IsManual,
         SUM(CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END) AS DebitTotal,
@@ -378,9 +378,9 @@ BEGIN
         CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
         n.NoteDate,
         ISNULL(n.branch_no, 0) AS BranchId,
-        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
+        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'ظپط±ط¹ ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
         ISNULL(n.CashingType, 0) AS CashingType,
-        CASE WHEN ISNULL(n.CashingType, 0) = 5 THEN N'استعاضة عهدة' WHEN ISNULL(n.CashingType, 0) = 6 THEN N'تمويل خزينة' ELSE CONVERT(NVARCHAR(20), n.CashingType) END AS CashingTypeName,
+        CASE WHEN ISNULL(n.CashingType, 0) = 5 THEN N'ط§ط³طھط¹ط§ط¶ط© ط¹ظ‡ط¯ط©' WHEN ISNULL(n.CashingType, 0) = 6 THEN N'طھظ…ظˆظٹظ„ ط®ط²ظٹظ†ط©' ELSE CONVERT(NVARCHAR(20), n.CashingType) END AS CashingTypeName,
         ISNULL(n.BTCashAccountcode, N'') AS NameAccountCode,
         ISNULL(n.person, N'') AS NameText,
         ISNULL(n.NoteCashingType, 0) AS PaymentMethod,
@@ -460,7 +460,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        SET @statusMessage = N'لا توجد صلاحية كافية لقراءة مؤشرات الخادم. يتطلب هذا الجزء صلاحية VIEW SERVER STATE.';
+        SET @statusMessage = N'ظ„ط§ طھظˆط¬ط¯ طµظ„ط§ط­ظٹط© ظƒط§ظپظٹط© ظ„ظ‚ط±ط§ط،ط© ظ…ط¤ط´ط±ط§طھ ط§ظ„ط®ط§ط¯ظ…. ظٹطھط·ظ„ط¨ ظ‡ط°ط§ ط§ظ„ط¬ط²ط، طµظ„ط§ط­ظٹط© VIEW SERVER STATE.';
 
         SELECT TOP (0)
             CAST(0 AS INT) AS session_id,
@@ -488,82 +488,13 @@ BEGIN
 END;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_Transactions_TypeDateBranchUser' AND object_id = OBJECT_ID(N'dbo.Transactions'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_Transactions_TypeDateBranchUser
-    ON dbo.Transactions(Transaction_Type, Transaction_Date, BranchId, UserID)
-    INCLUDE (Transaction_ID, RechargeValue, NetValue, Vat, Transaction_NetValue, PayedValue, IsCashOut, IsPOS, TrafficViolations, VisaNumber);
-END;
-GO
+/*
+    Index validation note - 2026-05-04:
+    The candidate reporting indexes were tested on local Cash with a 120-worker mixed load
+    (40 saves, 40 reports, 40 dashboard workers for 10 minutes).
+    Result: invoice save latency increased noticeably after adding the indexes.
+    Therefore this script intentionally creates stored procedures only.
+    Do not add reporting indexes to production until a separate read-heavy benchmark proves
+    the benefit is greater than the write overhead.
+*/
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_TransactionDetails_TransactionItem' AND object_id = OBJECT_ID(N'dbo.Transaction_Details'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_TransactionDetails_TransactionItem
-    ON dbo.Transaction_Details(Transaction_ID, Item_ID)
-    INCLUDE (Price, Vat, TotalPrice, showPrice, ItemSerial, StoreID2, Quantity);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_TransactionDetails_ItemTransaction' AND object_id = OBJECT_ID(N'dbo.Transaction_Details'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_TransactionDetails_ItemTransaction
-    ON dbo.Transaction_Details(Item_ID, Transaction_ID)
-    INCLUDE (Price, Vat, TotalPrice, showPrice, ItemSerial, StoreID2, Quantity);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_Transactions_TypeIPN' AND object_id = OBJECT_ID(N'dbo.Transactions'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_Transactions_TypeIPN
-    ON dbo.Transactions(Transaction_Type, IPN)
-    INCLUDE (Transaction_ID, Transaction_Date, BranchId, UserID, CashCustomerName, CashCustomerPhone, Transaction_NetValue, PayedValue);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_Transactions_TypeCustomerSearch' AND object_id = OBJECT_ID(N'dbo.Transactions'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_Transactions_TypeCustomerSearch
-    ON dbo.Transactions(Transaction_Type, CashCustomerPhone, CashCustomerName)
-    INCLUDE (Transaction_ID, Transaction_Date, BranchId, UserID, IPN, Transaction_NetValue, PayedValue);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_DEV_RecordBranchAccountNotes' AND object_id = OBJECT_ID(N'dbo.DOUBLE_ENTREY_VOUCHERS'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_DEV_RecordBranchAccountNotes
-    ON dbo.DOUBLE_ENTREY_VOUCHERS(RecordDate, branch_id, Account_Code, Notes_ID)
-    INCLUDE (Credit_Or_Debit, Value, project_id, UserID);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_Notes_TypeDateBranchUser' AND object_id = OBJECT_ID(N'dbo.Notes'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_Notes_TypeDateBranchUser
-    ON dbo.Notes(NoteType, NoteDate, branch_no, UserID)
-    INCLUDE (NoteID, NoteSerial, NoteSerial1);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_TblCusCsh_KycCardNo' AND object_id = OBJECT_ID(N'dbo.TblCusCsh'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_TblCusCsh_KycCardNo
-    ON dbo.TblCusCsh(EasyCashType, BranchID, CardNo)
-    INCLUDE (Id, CardId, Tet_NumPoket, PhoneNo2, OrderDate);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_TblCusCsh_KycCardId' AND object_id = OBJECT_ID(N'dbo.TblCusCsh'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_TblCusCsh_KycCardId
-    ON dbo.TblCusCsh(EasyCashType, BranchID, CardId)
-    INCLUDE (Id, CardNo, Tet_NumPoket, PhoneNo2, OrderDate);
-END;
-GO
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_TblCusCsh_KycNationalId' AND object_id = OBJECT_ID(N'dbo.TblCusCsh'))
-BEGIN
-    CREATE NONCLUSTERED INDEX IX_POS_TblCusCsh_KycNationalId
-    ON dbo.TblCusCsh(EasyCashType, BranchID, Tet_NumPoket)
-    INCLUDE (Id, CardNo, CardId, PhoneNo2, OrderDate);
-END;
-GO

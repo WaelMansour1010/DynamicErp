@@ -3975,6 +3975,7 @@
     <Content Include="Areas\Pos\Sql\33_POS_JournalEntryAuditColumns.sql" />
     <Content Include="Areas\Pos\Sql\34_POS_PerformanceStoredProcedures.sql" />
     <Content Include="Areas\Pos\Sql\35_POS_SystemHealthPermissions.sql" />
+    <Content Include="Areas\Pos\Sql\36_POS_PerformanceIndexRollback.sql" />
     <Content Include="Areas\Pos\assets\images\company-logo.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-1.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-2.png" />
