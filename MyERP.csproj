@@ -3983,6 +3983,12 @@
     <Content Include="Areas\Pos\Sql\34_POS_PerformanceStoredProcedures.sql" />
     <Content Include="Areas\Pos\Sql\35_POS_SystemHealthPermissions.sql" />
     <Content Include="Areas\Pos\Sql\36_POS_PerformanceIndexRollback.sql" />
+    <Content Include="Areas\Pos\Sql\PerformanceDeployment\01_Apply_Final_Pos_Performance_Procedures.sql" />
+    <Content Include="Areas\Pos\Sql\PerformanceDeployment\02_Rollback_Experimental_Indexes.sql" />
+    <Content Include="Areas\Pos\Sql\PerformanceDeployment\03_Optional_SQL_Server_Memory_Settings.sql" />
+    <Content Include="Areas\Pos\Sql\PerformanceDeployment\04_WebConfig_ConnectionString_Recommendation.txt" />
+    <Content Include="Areas\Pos\Sql\PerformanceDeployment\05_Test_Commands.ps1" />
+    <Content Include="Areas\Pos\Sql\PerformanceDeployment\README_POS_Performance_Deployment.md" />
     <Content Include="Areas\Pos\assets\images\company-logo.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-1.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-2.png" />

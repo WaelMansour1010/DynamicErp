@@ -107,6 +107,13 @@
             <button type="button" class="pos-type-btn" data-mode="violations">مخالفات</button>
         </section>
 
+        <section class="pos-workflow" id="posWorkflow" aria-label="مسار العملية">
+            <div class="workflow-step is-current" data-step="service">الخدمة</div>
+            <div class="workflow-step" data-step="value">القيمة</div>
+            <div class="workflow-step" data-step="payment">الدفع</div>
+            <div class="workflow-step" data-step="save">الحفظ</div>
+        </section>
+
         <div class="pos-workspace">
         <form id="posForm" class="pos-form" autocomplete="off">
             <input type="hidden" id="transactionType" value="cash-in" />
@@ -318,6 +325,12 @@
                 <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
             </div>
         </aside>
+        </div>
+    </div>
+    <div class="pos-loading-overlay" id="posLoadingOverlay" aria-live="polite" aria-hidden="true">
+        <div class="pos-loading-box">
+            <span class="pos-loading-spinner" aria-hidden="true"></span>
+            <span id="posLoadingText">جاري تحميل البيانات...</span>
         </div>
     </div>
 </div>

@@ -120,6 +120,53 @@
     transform: translateY(-1px);
 }
 
+.pos-workflow {
+    background: #fff;
+    border: 1px solid #d8dee6;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 12px;
+    padding: 10px;
+}
+
+.workflow-step {
+    background: #e5e7eb;
+    border: 1px solid #cbd5df;
+    color: #374151;
+    font-size: 15px;
+    font-weight: 800;
+    min-height: 38px;
+    padding: 9px 10px;
+    text-align: center;
+}
+
+.workflow-step.is-current {
+    background: #facc15;
+    border-color: #b7791f;
+    color: #111827;
+}
+
+.workflow-step.is-complete {
+    background: #16a34a;
+    border-color: #12803b;
+    color: #fff;
+}
+
+.pos-step-locked {
+    opacity: .58;
+}
+
+.pos-step-locked input,
+.pos-step-locked select,
+.pos-step-locked button {
+    cursor: not-allowed;
+}
+
+.pos-field-warning {
+    box-shadow: 0 0 0 3px rgba(250, 204, 21, .45);
+}
+
 .pos-workspace {
     align-items: start;
     display: grid;
@@ -240,6 +287,8 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .icon-action { background: #f4d7d4; color: #9f1f15; min-height: 38px; min-width: 58px; padding: 8px 10px; }
 .pos-validation { color: #b42318; font-weight: 700; }
 .pos-save-result { color: #1769aa; font-weight: 700; }
+.pos-save-result.is-error,
+.pos-validation.is-error { color: #b42318; }
 .save-error-block { margin-bottom: 6px; }
 .save-error-technical {
     background: #fff1f0;
@@ -257,6 +306,51 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     white-space: pre-wrap;
 }
 .pos-actions { align-items: center; display: flex; gap: 10px; justify-content: flex-start; }
+
+.pos-loading-overlay {
+    align-items: center;
+    background: rgba(244, 246, 248, .86);
+    bottom: 0;
+    display: none;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 9999;
+}
+
+.pos-page.is-loading .pos-loading-overlay,
+.pos-page.is-saving .pos-loading-overlay {
+    display: flex;
+}
+
+.pos-loading-box {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cbd5df;
+    box-shadow: 0 18px 42px rgba(17, 24, 39, .18);
+    color: #1f2933;
+    display: inline-flex;
+    font-size: 22px;
+    font-weight: 800;
+    gap: 14px;
+    min-width: 320px;
+    padding: 22px 28px;
+}
+
+.pos-loading-spinner {
+    animation: pos-spin .8s linear infinite;
+    border: 4px solid #d8dee6;
+    border-top-color: var(--mode-color);
+    display: inline-block;
+    height: 28px;
+    width: 28px;
+}
+
+@keyframes pos-spin {
+    to { transform: rotate(360deg); }
+}
 
 .bottom-summary-panel {
     border-color: var(--mode-color);
