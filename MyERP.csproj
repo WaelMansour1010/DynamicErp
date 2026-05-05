@@ -433,10 +433,15 @@
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemErrorLogModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemHealthModels.cs" />
+    <Compile Include="Areas\Pos\Services\PosPerformanceLogger.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemErrorLogger.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemHealthMonitor.cs" />
-    <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs" />
-    <Compile Include="Areas\Pos\Reports\KycCardReport.cs" />
+    <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Areas\Pos\Reports\KycCardReport.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Areas\Pos\Reports\PosReceiptReport.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -3988,6 +3993,8 @@
     <Content Include="Areas\Pos\Sql\35_POS_SystemHealthPermissions.sql" />
     <Content Include="Areas\Pos\Sql\36_POS_PerformanceIndexRollback.sql" />
     <Content Include="Areas\Pos\Sql\37_POS_SystemErrorLog.sql" />
+    <Content Include="Areas\Pos\Sql\40_POS_Dashboard_DailySnapshots.sql" />
+    <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\PerformanceDeployment\01_Apply_Final_Pos_Performance_Procedures.sql" />
     <Content Include="Areas\Pos\Sql\PerformanceDeployment\02_Rollback_Experimental_Indexes.sql" />
     <Content Include="Areas\Pos\Sql\PerformanceDeployment\03_Optional_SQL_Server_Memory_Settings.sql" />
@@ -5054,7 +5061,6 @@
     <Content Include="Views\Report\PrintBatchInvoice.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="App_Data\" />
     <Folder Include="assets\Audio\" />
     <Folder Include="assets\images\Hotel\PayPalFile\" />
     <Folder Include="assets\images\Party\PayPalFile\" />

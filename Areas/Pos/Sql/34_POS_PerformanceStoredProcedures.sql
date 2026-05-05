@@ -460,7 +460,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        SET @statusMessage = N'ظ„ط§ طھظˆط¬ط¯ طµظ„ط§ط­ظٹط© ظƒط§ظپظٹط© ظ„ظ‚ط±ط§ط،ط© ظ…ط¤ط´ط±ط§طھ ط§ظ„ط®ط§ط¯ظ…. ظٹطھط·ظ„ط¨ ظ‡ط°ط§ ط§ظ„ط¬ط²ط، طµظ„ط§ط­ظٹط© VIEW SERVER STATE.';
+        SET @statusMessage = N'لا توجد صلاحية كافية لقراءة مؤشرات الخادم. يتطلب هذا الجزء صلاحية VIEW SERVER STATE.';
 
         SELECT TOP (0)
             CAST(0 AS INT) AS session_id,

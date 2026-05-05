@@ -3,11 +3,15 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
+using MyERP.Areas.Pos.Services;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -41,6 +45,7 @@ namespace MyERP.Areas.Pos.Controllers
             ViewBag.ReportDefinitions = BuildReports(context);
             ViewBag.Branches = GetAllowedBranches(context);
             ViewBag.Stores = GetAllowedStores(context);
+            ViewBag.Users = _repository.GetPosReportUsers();
             return View();
         }
 
@@ -66,7 +71,10 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(new { success = false, message = "لم يتم تحديد مصدر التقرير بعد" });
                 }
 
+                var stopwatch = Stopwatch.StartNew();
                 var table = LoadReportTable(report, request, context, validation.BranchId);
+                stopwatch.Stop();
+                PosPerformanceLogger.LogQuery("PosReports.Run", report.Key, stopwatch.ElapsedMilliseconds, table != null ? table.Rows.Count : 0, context);
                 return Json(new
                 {
                     success = true,
@@ -107,7 +115,10 @@ namespace MyERP.Areas.Pos.Controllers
 
                 var from = request.FromDate.GetValueOrDefault(DateTime.Today);
                 var to = request.ToDate.GetValueOrDefault(DateTime.Today);
+                var stopwatch = Stopwatch.StartNew();
                 var table = LoadReportTable(report, request, context, validation.BranchId);
+                stopwatch.Stop();
+                PosPerformanceLogger.LogQuery("PosReports.Export", report.Key, stopwatch.ElapsedMilliseconds, table != null ? table.Rows.Count : 0, context);
                 var bytes = BuildExcel(report.Title, from, to, validation.BranchId, table);
                 var fileName = string.Format("{0}_{1}_{2}.xlsx", SafeFileName(report.Title), from.ToString("yyyyMMdd"), to.ToString("yyyyMMdd"));
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
@@ -133,6 +144,7 @@ namespace MyERP.Areas.Pos.Controllers
                 new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "تقرير تحليلي"),
                 new PosReportDefinition("general-sales", "تقرير المبيعات العام", "sales", admin || context.CanReportAllSales, true, "تقرير مبيعات عام"),
                 new PosReportDefinition("web-invoices", "تقرير فواتير الويب", "sales", admin || context.CanViewReports, true, "عدد فواتير الويب حسب المستخدم"),
+                new PosReportDefinition("non-web-login-users", "مستخدمين دخلوا من غير الويب", "sales", admin || context.CanViewReports, true, "Non-Web Login Users"),
                 new PosReportDefinition("salesmen", "تقرير المناديب", "closings", admin || context.CanReportSalesmen, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("finance-closing", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, true, "بيانات الإغلاقات من TBLClosePos و Notes"),
                 new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي والخصومات", "closings", admin || context.CanReportFinanceClosing, true, "بيانات الإغلاقات والخصومات من TBLClosePos و Notes"),
@@ -179,6 +191,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (report.Key == "web-invoices")
             {
                 return _repository.RunPosWebInvoiceAuditReport(from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+            }
+
+            if (report.Key == "non-web-login-users")
+            {
+                return _repository.RunPosNonWebLoginUsersReport(from, to, branchId, request.UserId, request.LoginSource, context.UserId, IsAdmin(context) || context.CanViewReports);
             }
 
             return _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
@@ -242,21 +259,51 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
-        private static IEnumerable<Dictionary<string, object>> ToRows(DataTable table)
-        {
-            foreach (DataRow row in table.Rows)
-            {
-                var item = new Dictionary<string, object>();
-                foreach (DataColumn column in table.Columns)
-                {
-                    item[column.ColumnName] = row[column] == DBNull.Value ? null : row[column];
-                }
-                yield return item;
-            }
-        }
-
-        private static string MapColumnTitle(string name)
-        {
+         private static IEnumerable<Dictionary<string, object>> ToRows(DataTable table)
+         {
+             foreach (DataRow row in table.Rows)
+             {
+                 var item = new Dictionary<string, object>();
+                 foreach (DataColumn column in table.Columns)
+                 {
+                     item[column.ColumnName] = FormatReportValue(row[column]);
+                 }
+                 yield return item;
+             }
+         }
+ 
+         private static object FormatReportValue(object value)
+         {
+             if (value == null || value == DBNull.Value)
+             {
+                 return null;
+             }
+ 
+             var date = value as DateTime?;
+             if (date.HasValue)
+             {
+                 return date.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+             }
+ 
+             var text = value as string;
+             if (!string.IsNullOrWhiteSpace(text))
+             {
+                 var match = Regex.Match(text.Trim(), @"^/Date\((-?\d+)\)/$");
+                 if (match.Success)
+                 {
+                     long milliseconds;
+                     if (long.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out milliseconds))
+                     {
+                        return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(milliseconds).ToLocalTime().ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+                     }
+                 }
+             }
+ 
+             return value;
+         }
+ 
+         private static string MapColumnTitle(string name)
+         {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 { "BranchName", "الفرع" },
@@ -278,12 +325,35 @@ namespace MyERP.Areas.Pos.Controllers
                 { "StoreName", "المخزن" },
                 { "ItemCode", "كود الصنف" },
                 { "ItemName", "اسم الصنف" },
-                { "ItemSerial", "السيريال" },
-                { "StockBalance", "رصيد السيريال" },
-                { "LastTransactionId", "آخر حركة" },
-                { "LastTransactionDate", "تاريخ الدخول/آخر حركة" },
-                { "SerialStatus", "حالة السيريال" }
-            };
+                 { "ItemSerial", "السيريال" },
+                 { "StockBalance", "رصيد السيريال" },
+                 { "LastTransactionId", "آخر حركة" },
+                 { "LastTransactionDate", "تاريخ الدخول/آخر حركة" },
+                 { "SerialStatus", "حالة السيريال" },
+                 { "ClosingDate", "تاريخ الإغلاق" },
+                 { "NoteDate", "تاريخ القيد" },
+                 { "NoteID", "رقم القيد" },
+                 { "NoteSerial", "مسلسل القيد" },
+                 { "VoucherType", "نوع القيد" },
+                 { "VoucherNo", "رقم الفاتورة" },
+                 { "OpenBalance", "رصيد افتتاحي" },
+                 { "LastBalance", "رصيد ختامي" },
+                 { "TotalRechargeValue", "إجمالي الشحن" },
+                 { "TotalRev", "إجمالي الإيرادات" },
+                 { "TotalVat", "إجمالي الضريبة" },
+                 { "UserId", "رقم المستخدم" },
+                 { "UserName", "اسم المستخدم" },
+                 { "EmployeeName", "اسم الموظف" },
+                 { "BranchId", "رقم الفرع" },
+                 { "LoginCount", "عدد مرات الدخول" },
+                 { "LastLoginDate", "آخر دخول" },
+                 { "LoginSource", "مصدر الدخول" },
+                 { "LoginType", "نوع الدخول" },
+                 { "IpAddress", "IP Address" },
+                 { "MachineName", "اسم الجهاز" },
+                 { "AppName", "التطبيق" },
+                 { "ClientType", "نوع العميل" }
+             };
 
             string title;
             return map.TryGetValue(name, out title) ? title : name;
@@ -310,10 +380,14 @@ namespace MyERP.Areas.Pos.Controllers
                     sheetData.Append(new Row());
                     sheetData.Append(RowFromValues(table.Columns.Cast<DataColumn>().Select(c => MapColumnTitle(c.ColumnName)).ToArray()));
 
-                    foreach (DataRow row in table.Rows)
-                    {
-                        sheetData.Append(RowFromValues(table.Columns.Cast<DataColumn>().Select(c => row[c] == DBNull.Value ? string.Empty : Convert.ToString(row[c])).ToArray()));
-                    }
+                     foreach (DataRow row in table.Rows)
+                     {
+                         sheetData.Append(RowFromValues(table.Columns.Cast<DataColumn>().Select(c =>
+                         {
+                             var formatted = FormatReportValue(row[c]);
+                             return formatted == null ? string.Empty : Convert.ToString(formatted, CultureInfo.InvariantCulture);
+                         }).ToArray()));
+                     }
 
                     worksheetPart.Worksheet.Append(new AutoFilter { Reference = "A4:" + GetExcelColumnName(Math.Max(1, table.Columns.Count)) + Math.Max(4, table.Rows.Count + 4) });
 
@@ -379,6 +453,8 @@ namespace MyERP.Areas.Pos.Controllers
         public DateTime? ToDate { get; set; }
         public int? BranchId { get; set; }
         public int? StoreId { get; set; }
+        public int? UserId { get; set; }
+        public string LoginSource { get; set; }
         public string SerialSearch { get; set; }
     }
 

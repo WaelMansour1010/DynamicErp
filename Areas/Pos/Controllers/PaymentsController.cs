@@ -2,6 +2,7 @@
 using MyERP.Areas.Pos.Models;
 using System;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -28,15 +29,85 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة");
             }
 
-            var branchId = context.IsFullAccess ? (int?)null : context.BranchId;
             ViewBag.Context = context;
             ViewBag.Branches = context.IsFullAccess ? _repository.GetBranches() : new[] { new PosBranchDto { BranchId = context.BranchId.GetValueOrDefault(), BranchName = context.BranchName } };
-            ViewBag.CustodyAccounts = _repository.GetPosPaymentBoxes(branchId, 1);
-            ViewBag.BoxAccounts = _repository.GetPosPaymentBoxes(branchId, 0);
-            ViewBag.PaymentBoxes = _repository.GetPosPaymentBoxes(branchId, null);
-            ViewBag.Banks = _repository.GetPosPaymentBanks();
-            ViewBag.Employees = _repository.GetPosPaymentEmployees();
             return View();
+        }
+
+        [HttpGet]
+        public JsonResult Lookups()
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.IsFullAccess && !context.CanOpenPayments)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var branchId = context.IsFullAccess ? (int?)null : context.BranchId;
+            return Json(new
+            {
+                success = true,
+                custodyAccounts = _repository.GetPosPaymentBoxes(branchId, 1),
+                boxAccounts = _repository.GetPosPaymentBoxes(branchId, 0),
+                paymentBoxes = _repository.GetPosPaymentBoxes(branchId, null),
+                banks = _repository.GetPosPaymentBanks(),
+                employees = _repository.GetPosPaymentEmployees()
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult Lookup(string kind, string term, int? cashingType)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.IsFullAccess && !context.CanOpenPayments)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            term = (term ?? string.Empty).Trim();
+            if (term.Length < 2)
+            {
+                return Json(new { success = true, rows = new PosLookupDto[0] }, JsonRequestBehavior.AllowGet);
+            }
+
+            var branchId = context.IsFullAccess ? (int?)null : context.BranchId;
+            var normalizedKind = (kind ?? string.Empty).Trim().ToLowerInvariant();
+            var rows = new System.Collections.Generic.List<PosLookupDto>();
+            switch (normalizedKind)
+            {
+                case "name-account":
+                    rows.AddRange(_repository.SearchPosPaymentNameAccounts(branchId, cashingType.GetValueOrDefault(5) == 6 ? 0 : 1, term));
+                    break;
+                case "box":
+                    rows.AddRange(_repository.SearchPosPaymentBoxes(branchId, null, term));
+                    break;
+                case "bank":
+                    rows.AddRange(_repository.SearchPosPaymentBanks(term));
+                    break;
+                case "employee":
+                    rows.AddRange(_repository.SearchPosPaymentEmployees(term));
+                    break;
+            }
+
+            return Json(new
+            {
+                success = true,
+                rows = rows.Select(x => new { id = x.Id, text = x.Name, extra = x.Extra })
+            }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]

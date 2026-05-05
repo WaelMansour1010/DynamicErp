@@ -1,4 +1,4 @@
-using MyERP.Areas.Pos.Data;
+﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
 using System;
 using System.Configuration;

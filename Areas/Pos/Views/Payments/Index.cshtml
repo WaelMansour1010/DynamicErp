@@ -3,11 +3,6 @@
     ViewBag.Title = "تمويل واستعاضة الخزن والعهد";
     var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
     var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
-    var custodyAccounts = ViewBag.CustodyAccounts as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
-    var boxAccounts = ViewBag.BoxAccounts as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
-    var paymentBoxes = ViewBag.PaymentBoxes as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
-    var banks = ViewBag.Banks as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
-    var employees = ViewBag.Employees as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
     var canExecute = context != null && (context.IsFullAccess || context.CanExecutePayments);
     var canEdit = context != null && (context.IsFullAccess || context.CanEditPayments);
     var canViewJournal = context != null && (context.IsFullAccess || context.CanViewJournalEntry);
@@ -27,6 +22,7 @@
          data-save-url="@Url.Action("Create", "Payments", new { area = "Pos" })"
          data-search-url="@Url.Action("Search", "Payments", new { area = "Pos" })"
          data-get-url="@Url.Action("Get", "Payments", new { area = "Pos" })"
+         data-lookup-url="@Url.Action("Lookup", "Payments", new { area = "Pos" })"
          data-can-edit="@(canEdit ? "true" : "false")">
         <div class="pos-shell">
             <section class="pos-panel">
@@ -46,16 +42,12 @@
                         <label>إلى تاريخ<input type="date" id="paymentSearchTo" /></label>
                         <label>
                             الموظف
-                            <select id="paymentSearchEmpId">
-                                <option value="">كل الموظفين</option>
-                                @if (employees != null)
-                                {
-                                    foreach (var item in employees)
-                                    {
-                                        <option value="@item.Id">@item.Name</option>
-                                    }
-                                }
-                            </select>
+                            <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentSearchEmpId" data-text-id="paymentSearchEmpText">
+                                <input type="hidden" id="paymentSearchEmpId" />
+                                <input type="text" id="paymentSearchEmpText" class="lookup-input" placeholder="اكتب كود أو اسم الموظف" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
                         </label>
                     </div>
                     <div class="pos-actions">
@@ -106,7 +98,12 @@
                     <div class="pos-grid two-cols">
                         <label>
                             الاسم / الحساب
-                            <select id="paymentNameAccount"></select>
+                            <span class="smart-lookup" data-lookup-kind="name-account" data-target-id="paymentNameAccount" data-text-id="paymentNameAccountText">
+                                <input type="hidden" id="paymentNameAccount" />
+                                <input type="text" id="paymentNameAccountText" class="lookup-input" placeholder="اكتب كود أو اسم الحساب" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
                         </label>
                         <label>
                             البيان
@@ -128,29 +125,21 @@
                         </label>
                         <label>
                             الخزنة
-                            <select id="paymentBoxId">
-                                <option value="">اختر الخزنة</option>
-                                @if (paymentBoxes != null)
-                                {
-                                    foreach (var item in paymentBoxes)
-                                    {
-                                        <option value="@item.Id">@item.Name</option>
-                                    }
-                                }
-                            </select>
+                            <span class="smart-lookup" data-lookup-kind="box" data-target-id="paymentBoxId" data-text-id="paymentBoxText">
+                                <input type="hidden" id="paymentBoxId" />
+                                <input type="text" id="paymentBoxText" class="lookup-input" placeholder="اكتب كود أو اسم الخزنة" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
                         </label>
                         <label>
                             البنك
-                            <select id="paymentBankId">
-                                <option value="">اختر البنك</option>
-                                @if (banks != null)
-                                {
-                                    foreach (var item in banks)
-                                    {
-                                        <option value="@item.Id">@item.Name</option>
-                                    }
-                                }
-                            </select>
+                            <span class="smart-lookup" data-lookup-kind="bank" data-target-id="paymentBankId" data-text-id="paymentBankText">
+                                <input type="hidden" id="paymentBankId" />
+                                <input type="text" id="paymentBankText" class="lookup-input" placeholder="اكتب كود أو اسم البنك" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
                         </label>
                         <label>
                             رقم الشيك/الحوالة
@@ -177,16 +166,12 @@
                         </label>
                         <label>
                             الموظف
-                            <select id="paymentEmpId">
-                                <option value="">اختر الموظف</option>
-                                @if (employees != null)
-                                {
-                                    foreach (var item in employees)
-                                    {
-                                        <option value="@item.Id" data-account="@item.Extra">@item.Name</option>
-                                    }
-                                }
-                            </select>
+                            <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentEmpId" data-text-id="paymentEmpText" data-extra-target-id="paymentEmpAccountCode">
+                                <input type="hidden" id="paymentEmpId" />
+                                <input type="text" id="paymentEmpText" class="lookup-input" placeholder="اكتب كود أو اسم الموظف" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
                         </label>
                         <label>
                             حساب العهدة
@@ -220,24 +205,6 @@
             </section>
         </div>
 
-        <select id="custodyAccountSource" class="is-hidden-ui">
-            @if (custodyAccounts != null)
-            {
-                foreach (var item in custodyAccounts)
-                {
-                    <option value="@item.Extra">@item.Name</option>
-                }
-            }
-        </select>
-        <select id="boxAccountSource" class="is-hidden-ui">
-            @if (boxAccounts != null)
-            {
-                foreach (var item in boxAccounts)
-                {
-                    <option value="@item.Extra">@item.Name</option>
-                }
-            }
-        </select>
     </div>
 
     <script>
@@ -246,20 +213,110 @@
             var message = document.getElementById("paymentMessage");
             function byId(id) { return document.getElementById(id); }
             function setMessage(text, error) { message.innerText = text || ""; message.classList.toggle("error", !!error); }
-            function copySource() {
-                var source = byId(byId("paymentCashingType").value === "5" ? "custodyAccountSource" : "boxAccountSource");
-                var target = byId("paymentNameAccount");
-                target.innerHTML = source.innerHTML;
+            function escapeHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+                });
+            }
+            function lookupUrl(kind, term) {
+                var url = page.getAttribute("data-lookup-url") + "?kind=" + encodeURIComponent(kind || "") + "&term=" + encodeURIComponent(term || "");
+                if (kind === "name-account") {
+                    url += "&cashingType=" + encodeURIComponent(byId("paymentCashingType").value || "5");
+                }
+                return url;
+            }
+            function setLookupValue(hiddenId, textId, id, text, extra) {
+                var hidden = byId(hiddenId);
+                var input = byId(textId);
+                if (hidden) { hidden.value = id === null || id === undefined ? "" : id; hidden.setAttribute("data-extra", extra || ""); }
+                if (input) { input.value = text || ""; }
+            }
+            function clearLookup(wrapper) {
+                if (!wrapper) { return; }
+                setLookupValue(wrapper.getAttribute("data-target-id"), wrapper.getAttribute("data-text-id"), "", "", "");
+                var extraTarget = wrapper.getAttribute("data-extra-target-id");
+                if (extraTarget && byId(extraTarget)) { byId(extraTarget).value = ""; }
+                var results = wrapper.querySelector(".lookup-results");
+                if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+            }
+            function selectLookupRow(wrapper, row) {
+                setLookupValue(wrapper.getAttribute("data-target-id"), wrapper.getAttribute("data-text-id"), row.id, row.text, row.extra);
+                var extraTarget = wrapper.getAttribute("data-extra-target-id");
+                if (extraTarget && byId(extraTarget)) { byId(extraTarget).value = row.extra || ""; }
+                var results = wrapper.querySelector(".lookup-results");
+                if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+            }
+            function renderLookupRows(wrapper, rows) {
+                var results = wrapper.querySelector(".lookup-results");
+                if (!results) { return; }
+                if (!rows || !rows.length) {
+                    results.innerHTML = "<button type='button' class='lookup-row empty' disabled>لا توجد نتائج</button>";
+                    results.classList.add("is-open");
+                    return;
+                }
+                results.innerHTML = rows.map(function (row, index) {
+                    return "<button type='button' class='lookup-row' data-index='" + index + "'><strong>" + escapeHtml(row.text || "") + "</strong></button>";
+                }).join("");
+                results._rows = rows;
+                results.classList.add("is-open");
+            }
+            function setupLookup(wrapper) {
+                var input = byId(wrapper.getAttribute("data-text-id"));
+                var clearButton = wrapper.querySelector(".lookup-clear");
+                var timer = null;
+                if (!input) { return; }
+                input.addEventListener("input", function () {
+                    var term = input.value.trim();
+                    byId(wrapper.getAttribute("data-target-id")).value = "";
+                    window.clearTimeout(timer);
+                    if (term.length < 2) {
+                        var results = wrapper.querySelector(".lookup-results");
+                        if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+                        return;
+                    }
+                    timer = window.setTimeout(function () {
+                        var results = wrapper.querySelector(".lookup-results");
+                        if (results) { results.innerHTML = "<button type='button' class='lookup-row empty' disabled>جاري البحث...</button>"; results.classList.add("is-open"); }
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("GET", lookupUrl(wrapper.getAttribute("data-lookup-kind"), term), true);
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState !== 4) { return; }
+                            var data = null;
+                            try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                            renderLookupRows(wrapper, data && data.success ? (data.rows || []) : []);
+                        };
+                        xhr.send();
+                    }, 250);
+                });
+                input.addEventListener("keydown", function (event) {
+                    var results = wrapper.querySelector(".lookup-results");
+                    if (!results || !results.classList.contains("is-open")) { return; }
+                    var rows = Array.prototype.slice.call(results.querySelectorAll(".lookup-row:not(.empty)"));
+                    if (!rows.length) { return; }
+                    var current = results.querySelector(".lookup-row.is-active");
+                    var index = current ? rows.indexOf(current) : -1;
+                    if (event.key === "ArrowDown") { event.preventDefault(); index = Math.min(rows.length - 1, index + 1); }
+                    else if (event.key === "ArrowUp") { event.preventDefault(); index = Math.max(0, index - 1); }
+                    else if (event.key === "Enter" && current) { event.preventDefault(); current.click(); return; }
+                    else if (event.key === "Escape") { results.innerHTML = ""; results.classList.remove("is-open"); return; }
+                    rows.forEach(function (row, rowIndex) { row.classList.toggle("is-active", rowIndex === index); });
+                });
+                if (clearButton) { clearButton.addEventListener("click", function () { clearLookup(wrapper); input.focus(); }); }
+                wrapper.addEventListener("click", function (event) {
+                    var rowButton = event.target.closest ? event.target.closest(".lookup-row:not(.empty)") : null;
+                    if (!rowButton) { return; }
+                    var rows = wrapper.querySelector(".lookup-results")._rows || [];
+                    selectLookupRow(wrapper, rows[parseInt(rowButton.getAttribute("data-index"), 10)] || {});
+                });
             }
             function requestPayload() {
-                var selected = byId("paymentNameAccount").options[byId("paymentNameAccount").selectedIndex];
                 return {
                     NoteId: parseInt(byId("paymentNoteId").value, 10) || null,
                     BranchId: parseInt(byId("paymentBranchId").value, 10) || 0,
                     PaymentDate: byId("paymentDate").value,
                     CashingType: parseInt(byId("paymentCashingType").value, 10) || 0,
                     NameAccountCode: byId("paymentNameAccount").value,
-                    NameText: selected ? selected.text : "",
+                    NameText: byId("paymentNameAccountText").value,
                     PaymentMethod: parseInt(byId("paymentMethod").value, 10) || 0,
                     Value: parseFloat(byId("paymentValue").value || "0"),
                     BoxId: parseInt(byId("paymentBoxId").value, 10) || null,
@@ -341,10 +398,11 @@
                 byId("paymentReferenceDate").value = new Date().toISOString().substring(0, 10);
                 setSelectValue("paymentCashingType", "5");
                 setSelectValue("paymentMethod", "0");
-                setSelectValue("paymentBoxId", "");
-                setSelectValue("paymentBankId", "");
-                setSelectValue("paymentEmpId", "");
-                copySource();
+                clearLookup(document.querySelector('[data-target-id="paymentNameAccount"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentBoxId"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentBankId"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentEmpId"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentSearchEmpId"]'));
                 renderLines([]);
                 byId("savePaymentBtn").disabled = @(canExecute ? "false" : "true");
                 byId("savePaymentBtn").innerText = "تنفيذ العملية";
@@ -356,15 +414,14 @@
                 setSelectValue("paymentBranchId", movement.BranchId);
                 byId("paymentDate").value = dateText(movement.NoteDate);
                 setSelectValue("paymentCashingType", movement.CashingType);
-                copySource();
-                setSelectValue("paymentNameAccount", movement.NameAccountCode || "");
+                setLookupValue("paymentNameAccount", "paymentNameAccountText", movement.NameAccountCode || "", movement.NameText || "", "");
                 setSelectValue("paymentMethod", movement.PaymentMethod);
                 byId("paymentValue").value = movement.Value || 0;
-                setSelectValue("paymentBoxId", movement.BoxId);
-                setSelectValue("paymentBankId", movement.BankId);
+                setLookupValue("paymentBoxId", "paymentBoxText", movement.BoxId || "", movement.BoxName || "", "");
+                setLookupValue("paymentBankId", "paymentBankText", movement.BankId || "", movement.BankName || "", "");
                 byId("paymentReferenceNo").value = movement.ReferenceNo || "";
                 byId("paymentReferenceDate").value = dateText(movement.ReferenceDate);
-                setSelectValue("paymentEmpId", movement.EmpId);
+                setLookupValue("paymentEmpId", "paymentEmpText", movement.EmpId || "", movement.EmpName || "", movement.EmpAccountCode || "");
                 byId("paymentEmpAccountCode").value = movement.EmpAccountCode || "";
                 byId("paymentBoxValue").value = movement.BoxValue || 0;
                 byId("paymentEmpValue").value = movement.EmpValue || 0;
@@ -420,12 +477,10 @@
                     xhr.send();
                 }
             });
-            byId("paymentCashingType").addEventListener("change", copySource);
-            byId("paymentEmpId").addEventListener("change", function () {
-                var selected = this.options[this.selectedIndex];
-                byId("paymentEmpAccountCode").value = selected ? (selected.getAttribute("data-account") || "") : "";
+            byId("paymentCashingType").addEventListener("change", function () {
+                clearLookup(document.querySelector('[data-target-id="paymentNameAccount"]'));
             });
-            copySource();
+            document.querySelectorAll(".smart-lookup").forEach(setupLookup);
         })();
     </script>
 </body>

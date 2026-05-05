@@ -816,6 +816,54 @@ Heavy dashboard insights must be loaded on demand:
 
 Do not auto-load expensive dashboard/report queries on initial page load.
 
+### Dashboard KPI Snapshots
+
+Daily KPI snapshots are implemented as the first approved step only.
+
+Script:
+
+```text
+Areas/Pos/Sql/40_POS_Dashboard_DailySnapshots.sql
+```
+
+Objects:
+
+```text
+POS_DashboardSnapshotHeader
+POS_DashboardSnapshotKpi
+POS_DashboardSnapshotBranch
+POS_DashboardSnapshotService
+POS_DashboardSnapshotOperation
+POS_DashboardSnapshotTrend
+POS_DashboardSnapshotSeller
+POS_DashboardSnapshotSmartMetric
+usp_POS_DashboardSnapshot_GenerateDaily
+usp_POS_DashboardSnapshot_ReadDaily
+```
+
+Current behavior:
+
+- Only `daily` snapshots are supported.
+- Past daily periods read from snapshot tables.
+- If a past daily snapshot is missing, the dashboard returns a clear missing-state message:
+
+```text
+لم يتم تجهيز مؤشرات هذه الفترة بعد
+```
+
+- Pressing the dashboard load/refresh button can generate the missing past daily snapshot for the selected day/filter.
+- Today/current open day still uses the live dashboard path; do not precompute current-day analytics automatically during work hours.
+- Weekly/monthly/yearly are intentionally deferred. When implemented later, they must aggregate from verified daily snapshots rather than recalculating from large raw tables.
+
+Verification performed during implementation:
+
+```text
+2026-05-04 daily snapshot was generated on local Cash.
+The first live dashboard KPI resultset matched the snapshot read resultset for the same date/filter.
+```
+
+Do not add weekly/monthly/yearly snapshot objects until daily results are approved against the live dashboard.
+
 ### Encoding
 
 Arabic encoding has been a recurring issue. Ensure:

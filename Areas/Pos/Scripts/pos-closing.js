@@ -235,8 +235,8 @@
     }
 
     byId('closingDate').value = todayIso();
-    byId('loadClosingBtn').addEventListener('click', loadValues);
-    byId('executeClosingBtn').addEventListener('click', executeClosing);
-    byId('actValue').addEventListener('input', updateDiff);
-    loadValues();
-})();
+     byId('loadClosingBtn').addEventListener('click', loadValues);
+     byId('executeClosingBtn').addEventListener('click', executeClosing);
+     byId('actValue').addEventListener('input', updateDiff);
+     showMessage('اضغط تحديث البيانات لعرض أرقام الإغلاق.', false);
+ })();

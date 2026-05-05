@@ -90,8 +90,8 @@
                 <h1>كيشني - شاشة البيع</h1>
                 <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
                 <div class="pos-balances">
-                    <span id="employeeBalanceText" class="is-hidden-ui">ذمة الموظف: تحميل...</span>
-                    <span id="boxBalanceText">عهدة الخزنة: تحميل...</span>
+                    <span id="employeeBalanceText" class="is-hidden-ui">ذمة الموظف: غير محملة</span>
+                    <span id="boxBalanceText">عهدة الخزنة: غير محملة</span>
                     <button type="button" id="refreshBalancesBtn" class="link-action is-hidden-ui">تحديث الأرصدة</button>
                     <button type="button" id="todaySummaryBtn" class="link-action">ملخص اليوم</button>
                     @if (posContext != null && posContext.CanManagePrintTemplates)
@@ -119,19 +119,19 @@
             <div class="workflow-steps" role="list">
                 <button type="button" class="workflow-step is-current" data-step="service" role="listitem" aria-current="step">
                     <span class="workflow-step-circle">1</span>
-                    <span class="workflow-step-label">اختيار الخدمة</span>
+                    <span class="workflow-step-label">الخدمة</span>
                 </button>
                 <button type="button" class="workflow-step" data-step="value" role="listitem">
                     <span class="workflow-step-circle">2</span>
-                    <span class="workflow-step-label">إدخال القيمة</span>
+                    <span class="workflow-step-label">المبلغ</span>
                 </button>
                 <button type="button" class="workflow-step" data-step="payment" role="listitem">
                     <span class="workflow-step-circle">3</span>
-                    <span class="workflow-step-label">اختيار وسيلة الدفع</span>
+                    <span class="workflow-step-label">الدفع</span>
                 </button>
                 <button type="button" class="workflow-step" data-step="save" role="listitem">
                     <span class="workflow-step-circle">4</span>
-                    <span class="workflow-step-label">تأكيد العملية</span>
+                    <span class="workflow-step-label">تأكيد</span>
                 </button>
             </div>
         </section>
@@ -153,6 +153,7 @@
                 </div>
                 <div class="pos-grid four-cols">
                     <label>الفرع<select id="branchId" @(posContext != null && posContext.CanChangeDefaults ? "" : "disabled")><option value="">تحميل...</option></select></label>
+                    <label>تاريخ الفاتورة<input type="date" id="transactionDate" min="1753-01-01" max="9999-12-31" disabled /></label>
                     <label class="employee-field is-hidden">المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
                     <label class="store-field is-hidden">المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
                     <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field" placeholder="أدخل رقم التليفون" /></label>
@@ -160,7 +161,7 @@
                     <label>ID<input type="text" id="ipn" class="required-field" placeholder="ID" /></label>
                     <label>IPN<input type="text" id="manualNo" class="required-field" placeholder="IPN" /></label>
                     <input type="hidden" id="phone2" />
-                    <label class="card-field">رقم الكارت<input type="text" id="visaNumber" placeholder="رقم المرجع" /></label>
+                    <label class="card-field">رقم الكارت / التوكن<input type="text" id="visaNumber" placeholder="رقم الكارت أو التوكن" /></label>
                     <label class="card-field">نوع الكارت<input type="text" id="cardTypeName" readonly /></label>
                     <label class="card-field">الرقم القومي<input type="text" id="cardNationalId" placeholder="الرقم القومي" /></label>
                     <label class="wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" placeholder="رقم المحفظة" /></label>
@@ -177,7 +178,7 @@
                 </div>
                 <input type="hidden" id="cashCustomerId" />
                 <div class="kyc-search-row">
-                    <input type="text" id="kycSearchTerm" placeholder="بحث بالموبايل أو رقم الكارت أو الرقم القومي" />
+                    <input type="text" id="kycSearchTerm" placeholder="ابحث برقم الهاتف أو التوكن أو الرقم القومي أو اسم العميل" />
                     <button type="button" class="secondary-action" id="kycSearchBtn">بحث</button>
                 </div>
                 <div id="kycSearchResults" class="kyc-results"></div>
@@ -342,7 +343,7 @@
                 <button type="button" class="secondary-action compact-action" id="toggleTodayInvoicesBtn" aria-expanded="true">إخفاء</button>
             </div>
             <div class="today-invoices-body" id="todayInvoicesBody">
-                <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="بحث برقم الفاتورة أو العميل" />
+                <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="ابحث برقم الفاتورة أو الهاتف أو التوكن أو اسم العميل أو IPN" />
                 <select id="todayInvoiceTypeFilter" class="today-type-filter" aria-label="فلتر نوع الفاتورة">
                     <option value="">كل الفواتير</option>
                     <option value="cash-in">كاش إن</option>
@@ -350,7 +351,8 @@
                     <option value="card">كارت كيشني / KYC</option>
                     <option value="violations">مخالفات</option>
                 </select>
-                <div id="todayInvoicesList" class="today-invoices-list">تحميل...</div>
+                <button type="button" class="secondary-action compact-action today-clear-search" id="clearTodayInvoiceSearchBtn">مسح البحث</button>
+                <div id="todayInvoicesList" class="today-invoices-list">اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.</div>
                 <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
             </div>
         </aside>

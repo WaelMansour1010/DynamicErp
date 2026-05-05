@@ -1,5 +1,6 @@
 ﻿using System.Web;
 using System.Web.Mvc;
+using MyERP.Areas.Pos.Services;
 
 namespace MyERP
 {
@@ -10,6 +11,7 @@ namespace MyERP
             filters.Add(new HandleErrorAttribute());
             filters.Add(new ERPAuthorizeAttribute());
             filters.Add(new PosAwareAuthorizeAttribute());
+            filters.Add(new PosPerformanceLogAttribute());
             filters.Add(new HandleErrorAttribute());
         }
     }

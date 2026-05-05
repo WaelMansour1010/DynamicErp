@@ -30,6 +30,8 @@
     var lastCommissionKey = "";
     var lastCashOutMachineWithdrawalAmount = 0;
     var lastCashOutBankMachineCommission = 0;
+    var contextControlsLoaded = false;
+    var contextControlsLoading = false;
     var reviewMode = false;
     var lastSavedTransactionId = null;
     var loadedInvoiceCreatedUserId = null;
@@ -41,6 +43,7 @@
     var pendingDuplicateKycCustomer = null;
     var uxLoadingCount = 0;
     var uxSaving = false;
+    var saveRequestInFlight = false;
     var uxLastActionAt = 0;
     var uxCurrentStep = "service";
     var uxDebounceMs = 200;
@@ -56,6 +59,35 @@
         var month = String(value.getMonth() + 1);
         var day = String(value.getDate());
         return value.getFullYear() + "-" + (month.length === 1 ? "0" + month : month) + "-" + (day.length === 1 ? "0" + day : day);
+    }
+    function dateInputValue(value) {
+        if (!value) { return localIsoDate(); }
+        if (Object.prototype.toString.call(value) === "[object Date]") {
+            return isNaN(value.getTime()) ? localIsoDate() : localIsoDate(value);
+        }
+
+        var text = String(value).trim();
+        var jsonDate = text.match(/\/Date\((-?\d+)\)\//);
+        if (jsonDate) {
+            var parsedJsonDate = new Date(parseInt(jsonDate[1], 10));
+            return isNaN(parsedJsonDate.getTime()) ? localIsoDate() : localIsoDate(parsedJsonDate);
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+            return text.substring(0, 10);
+        }
+
+        var parts = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (parts) {
+            return parts[3] + "-" + ("0" + parts[2]).slice(-2) + "-" + ("0" + parts[1]).slice(-2);
+        }
+
+        var parsed = new Date(text);
+        return isNaN(parsed.getTime()) ? localIsoDate() : localIsoDate(parsed);
+    }
+    function currentTransactionDate() {
+        var dateInput = byId("transactionDate");
+        return dateInput && dateInput.value ? dateInput.value : localIsoDate();
     }
     function enablePrintIfAllowed() { byId("printBtn").disabled = !(savedTransactionId() > 0 && currentContext && currentContext.CanPrint === true); }
     function savedKycCustomerId() {
@@ -392,7 +424,7 @@
     }
 
     function uxIsBusy() {
-        return uxLoadingCount > 0 || uxSaving;
+        return uxLoadingCount > 0 || uxSaving || saveRequestInFlight;
     }
 
     function uxDebounced() {
@@ -755,6 +787,7 @@
             calculateTotals();
             scheduleCommissionPreview();
         }
+        updateCashOutMachineDisplay();
         updateBottomSummary();
         clearMessages();
     }
@@ -779,6 +812,11 @@
             bankCommission: bankCommission,
             withdrawalAmount: withdrawalAmount
         };
+    }
+
+    function updateCashOutMachineDisplay() {
+        var mode = byId("transactionType").value;
+        updateBottomSummary();
     }
 
     function updateBottomSummary() {
@@ -812,8 +850,11 @@
                 '<div><span>إجمالي الرسوم</span><strong>' + escapeHtml(decimalText(fee)) + '</strong></div>' +
                 '<div class="summary-total"><span>الصافي</span><strong>' + escapeHtml(decimalText(net)) + '</strong></div>';
             var machineInfo = currentCashOutMachineInfo();
-            if (mode === "cash-out" && machineInfo.withdrawalAmount > 0) {
-                summaryHtml += '<div class="summary-total cash-out-machine-alert"><span>اسحب من الماكينة</span><strong>' + escapeHtml(decimalText(machineInfo.withdrawalAmount)) + '</strong><small>عمولة الماكينة: ' + escapeHtml(decimalText(machineInfo.bankCommission)) + '</small></div>';
+            if (mode === "cash-out") {
+                var machineHint = commissionCalculationPending
+                    ? "جاري حساب عمولة الماكينة"
+                    : (machineInfo.bankCommission > 0 ? ("عمولة الماكينة: " + decimalText(machineInfo.bankCommission)) : "عمولة الماكينة غير محسوبة بعد");
+                summaryHtml += '<div class="summary-total cash-out-machine-alert' + (commissionCalculationPending ? ' is-pending' : '') + '"><span>المبلغ المطلوب سحبه من الماكينة</span><strong>' + escapeHtml(decimalText(machineInfo.withdrawalAmount)) + '</strong><small>' + escapeHtml(machineHint) + '</small></div>';
             }
             grid.innerHTML = summaryHtml;
             return;
@@ -985,6 +1026,7 @@
         }
         byId("remainValue").value = (totalValue - numberValue("payedValue")).toFixed(2);
         byId("totalFees").value = itemTotal.toFixed(2);
+        updateCashOutMachineDisplay();
         updateBottomSummary();
         uxApplyFlow();
     }
@@ -1045,6 +1087,9 @@
             if (!byId("violationWalletNo").value.trim()) { errors.push("رقم المحفظة مطلوب"); }
         } else if (mode !== "card" && numberValue("rechargeValue") <= 0) {
             errors.push("مبلغ الشحن يجب أن يكون أكبر من صفر");
+        }
+        if (mode === "cash-out" && byId("isWallet").value === "true" && !byId("tetNumPoket").value.trim()) {
+            errors.push("رقم المحفظة مطلوب");
         }
         var primaryServiceId = parseInt(byId("serviceItemId").value, 10) || 0;
         if (mode !== "card" && mode !== "violations" && (primaryServiceId === 6 || primaryServiceId === 7 || primaryServiceId === 8 || primaryServiceId === 10) && !byId("serviceItemId2").value) {
@@ -1156,7 +1201,7 @@
         return {
             Transaction_ID: reviewMode ? savedTransactionId() : null,
             TransactionType: transactionType,
-            TransactionDate: localIsoDate(),
+            TransactionDate: currentTransactionDate(),
             BranchId: branchId,
             StoreID: storeId,
             UserID: null,
@@ -1200,6 +1245,8 @@
             IsRecharg: transactionType !== "card" && transactionType !== "violations" && numberValue("rechargeValue") > 0,
             IsWallet: transactionType === "violations" ? false : byId("isWallet").value === "true",
             HaveGuarantee: byId("haveGuarantee").value === "true",
+            BankMachineCommission: currentCashOutMachineInfo().bankCommission,
+            CashOutMachineWithdrawalAmount: currentCashOutMachineInfo().withdrawalAmount,
             EditPassword: "",
             Items: items,
             SalesPayments: [{
@@ -1243,7 +1290,7 @@
 
     function saveTransaction(event) {
         event.preventDefault();
-        if (uxIsBusy() || uxDebounced()) {
+        if (saveRequestInFlight || uxIsBusy() || uxDebounced()) {
             uxShowGuide();
             return;
         }
@@ -1269,32 +1316,42 @@
             request.EditPassword = password;
         }
 
+        saveRequestInFlight = true;
         uxSaving = true;
         uxSetOverlay(true, "جاري الحفظ...");
         uxApplyFlow();
         byId("saveBtn").disabled = true;
-        requestJsonWithLoading("POST", getUrl("data-save-url"), request, function (status, data) {
+        try {
+            requestJsonWithLoading("POST", getUrl("data-save-url"), request, function (status, data) {
+                saveRequestInFlight = false;
+                uxSaving = false;
+                uxSetOverlay(false);
+                updateSaveButtonState();
+
+                if (status >= 200 && status < 300 && data && data.success) {
+                    var successMessage = "تم الحفظ التجريبي بنجاح<br />رقم الفاتورة: " + (data.noteSerial1 || "") + "<br />رقم الحركة: " + (data.transactionId || "");
+                    lastSavedTransactionId = parseInt(data.transactionId, 10) || null;
+                    enablePrintIfAllowed();
+                    loadEmployeeBalances();
+                    loadTodayInvoices();
+                    byId("saveResult").innerHTML = successMessage;
+                    if (window.confirm("تم الحفظ بنجاح. هل تريد الطباعة؟")) {
+                        openPrintForTransaction(lastSavedTransactionId);
+                    }
+
+                    reloadContextAndReset(successMessage);
+                    return;
+                }
+
+                showSaveError(data);
+            }, "جاري الحفظ...");
+        } catch (error) {
+            saveRequestInFlight = false;
             uxSaving = false;
             uxSetOverlay(false);
             updateSaveButtonState();
-
-            if (status >= 200 && status < 300 && data && data.success) {
-                var successMessage = "تم الحفظ التجريبي بنجاح<br />رقم الفاتورة: " + (data.noteSerial1 || "") + "<br />رقم الحركة: " + (data.transactionId || "");
-                lastSavedTransactionId = parseInt(data.transactionId, 10) || null;
-                enablePrintIfAllowed();
-                loadEmployeeBalances();
-                loadTodayInvoices();
-                byId("saveResult").innerHTML = successMessage;
-                if (window.confirm("تم الحفظ بنجاح. هل تريد الطباعة؟")) {
-                    openPrintForTransaction(lastSavedTransactionId);
-                }
-
-                reloadContextAndReset(successMessage);
-                return;
-            }
-
-            showSaveError(data);
-        }, "جاري الحفظ...");
+            throw error;
+        }
     }
 
     function showSaveError(data) {
@@ -1343,24 +1400,32 @@
         if (!url) { return; }
         var typeFilter = byId("todayInvoiceTypeFilter");
         var operationType = typeFilter ? typeFilter.value : "";
+        var trimmedTerm = (term || "").trim();
+        var list = byId("todayInvoicesList");
+        if (trimmedTerm && trimmedTerm.length < 2) {
+            if (list) { list.innerText = "اكتب حرفين على الأقل للبحث في الفواتير."; }
+            byId("todayInvoiceSummary").innerHTML = "";
+            return;
+        }
 
-        requestJson("GET", url + "?term=" + encodeURIComponent(term || "") + "&operationType=" + encodeURIComponent(operationType || ""), null, function (status, data) {
+        if (list) { list.innerText = "جاري البحث..."; }
+        requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || ""), null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
                 return;
             }
 
             todayInvoicesCache = data;
-            renderTodayInvoices(data);
+            renderTodayInvoices(data, !!trimmedTerm);
         });
     }
 
-    function renderTodayInvoices(invoices) {
+    function renderTodayInvoices(invoices, hasSearchTerm) {
         var container = byId("todayInvoicesList");
         container.innerHTML = "";
 
         if (!invoices || !invoices.length) {
-            container.innerText = "لا توجد فواتير اليوم";
+            container.innerText = hasSearchTerm ? "لا توجد نتائج مطابقة" : "لا توجد فواتير اليوم";
             byId("todayInvoiceSummary").innerHTML = "";
             return;
         }
@@ -1563,6 +1628,12 @@
             loadedInvoiceEmpId = parseInt(data.Emp_ID, 10) || null;
             reviewMode = true;
             setMode(data.TransactionType || "cash-in", true);
+            if (byId("transactionDate")) {
+                byId("transactionDate").value = dateInputValue(data.TransactionDate);
+                byId("transactionDate").disabled = true;
+            }
+            lastCashOutBankMachineCommission = (data.TransactionType || "") === "cash-out" ? (parseFloat(data.BankMachineCommission) || 0) : 0;
+            lastCashOutMachineWithdrawalAmount = (data.TransactionType || "") === "cash-out" ? (parseFloat(data.CashOutMachineWithdrawalAmount) || 0) : 0;
             bindReviewServiceSelects(data);
 
             if (data.BranchId) { ensureSelectOption("branchId", data.BranchId, data.BranchName || ("فرع " + data.BranchId)); }
@@ -1596,6 +1667,11 @@
 
             if (data.Items && data.Items.length) {
                 applyReviewItem(data.Items[0]);
+                var reviewRow = getFirstSelectedItemRow();
+                if (reviewRow && (data.TransactionType || "") === "cash-out") {
+                    reviewRow.setAttribute("data-bank-machine-commission", lastCashOutBankMachineCommission);
+                    reviewRow.setAttribute("data-cashout-machine-withdrawal", lastCashOutMachineWithdrawalAmount);
+                }
             }
 
             byId("rechargeValue").value = decimalText(data.RechargeValue);
@@ -1611,6 +1687,7 @@
             byId("saveResult").innerHTML = "وضع مراجعة فقط - رقم الفاتورة: " + escapeHtml(data.NoteSerial1 || "") + "<br />رقم الحركة: " + escapeHtml(data.Transaction_ID || "");
             enablePrintIfAllowed();
             loadJournalEntry(lastSavedTransactionId);
+            updateCashOutMachineDisplay();
             updateBottomSummary();
         });
     }
@@ -1678,18 +1755,38 @@
         byId("bankName").readOnly = true;
     }
 
+    function seedChangeableContextControls() {
+        applyDefaultContextControls();
+        byId("branchId").disabled = false;
+        byId("paymentType").disabled = false;
+        byId("boxId").disabled = true;
+        byId("storeName").readOnly = true;
+        byId("bankName").readOnly = true;
+    }
+
     function loadContextControls() {
         if (!currentContext || currentContext.CanChangeDefaults !== true) {
             applyDefaultContextControls();
             return;
         }
 
+        seedChangeableContextControls();
+    }
+
+    function ensureContextControlsLoaded() {
+        if (!currentContext || currentContext.CanChangeDefaults !== true || contextControlsLoaded || contextControlsLoading) {
+            return;
+        }
+
+        contextControlsLoading = true;
         populatePaymentTypes();
         populateCashBoxes();
         populateBranches();
         loadStoresForBranch(contextValue("BranchId", "data-default-branch-id"));
         byId("paymentType").disabled = false;
         byId("bankName").readOnly = true;
+        contextControlsLoaded = true;
+        contextControlsLoading = false;
     }
 
     function populateCashBoxes() {
@@ -2010,9 +2107,9 @@
         var mode = data.TransactionType || "cash-in";
         var firstItem = data.Items && data.Items.length ? data.Items[0] : null;
         var primaryValue = data.ItemIDService || (firstItem ? firstItem.Item_ID : "");
-        var primaryText = firstItem ? firstItem.ItemName : "";
+        var primaryText = data.ItemIDServiceName || (firstItem ? firstItem.ItemName : "") || (primaryValue ? String(primaryValue) : "");
         var secondaryValue = data.ItemIDService2 || "";
-        var secondaryText = secondaryValue ? String(secondaryValue) : "";
+        var secondaryText = data.ItemIDService2Name || (secondaryValue ? String(secondaryValue) : "");
 
         if (primaryServiceCache[mode]) {
             var selectedPrimary = populateServiceSelect(byId("serviceItemId"), primaryServiceCache[mode], "", primaryValue, primaryText);
@@ -2370,10 +2467,15 @@
     function searchKeshniCardCustomers() {
         var term = byId("kycSearchTerm").value.trim() || byId("cashCustomerPhone").value.trim() || byId("visaNumber").value.trim() || byId("cardNationalId").value.trim();
         if (!term) {
-            byId("kycSearchResults").innerHTML = "أدخل رقم موبايل أو كارت أو رقم قومي للبحث";
+            byId("kycSearchResults").innerHTML = "أدخل رقم موبايل أو توكن أو رقم قومي أو اسم عميل للبحث";
+            return;
+        }
+        if (term.length < 2) {
+            byId("kycSearchResults").innerHTML = "اكتب حرفين على الأقل للبحث";
             return;
         }
 
+        byId("kycSearchResults").innerHTML = "جاري البحث...";
         requestJson("GET", getUrl("data-customer-search-url") + "?term=" + encodeURIComponent(term), null, function (status, data) {
             if (status < 200 || status >= 300 || !data || !data.length) {
                 byId("kycSearchResults").innerHTML = "لا توجد نتائج";
@@ -2384,7 +2486,7 @@
             for (var i = 0; i < data.length; i++) {
                 html.push('<button type="button" class="kyc-result-item" data-index="' + i + '"><strong>' +
                     escapeHtml(data[i].CustomerName || data[i].Name || "") + '</strong><span>' +
-                    escapeHtml(data[i].Phone || "") + ' | ' + escapeHtml(data[i].VisaNumber || "") + ' | ' +
+                    escapeHtml(data[i].Phone || "") + ' | ' + escapeHtml(data[i].VisaNumber || data[i].CardNo || data[i].CardId || "") + ' | ' +
                     escapeHtml(data[i].Tet_NumPoket || "") + '</span></button>');
             }
             byId("kycSearchResults").innerHTML = html.join("");
@@ -2397,7 +2499,7 @@
         for (var i = 0; i < items.length; i++) {
             html.push('<button type="button" class="kyc-result-item" data-index="' + i + '"><strong>' +
                 escapeHtml(items[i].CustomerName || items[i].Name || "") + '</strong><span>' +
-                escapeHtml(items[i].Phone || "") + ' | ' + escapeHtml(items[i].VisaNumber || "") + ' | ' +
+                escapeHtml(items[i].Phone || "") + ' | ' + escapeHtml(items[i].VisaNumber || items[i].CardNo || items[i].CardId || "") + ' | ' +
                 escapeHtml(items[i].Tet_NumPoket || "") + '</span></button>');
         }
         byId("kycSearchResults").innerHTML = html.join("");
@@ -2459,6 +2561,7 @@
             commissionCalculationPending = true;
             updateSaveButtonState();
         }
+        updateCashOutMachineDisplay();
         commissionTimer = window.setTimeout(calculateCommissionPreview, options.delay === 0 ? 0 : (options.delay || 400));
     }
 
@@ -2532,6 +2635,7 @@
             commissionCalculationPending = false;
             amountEnterAdvancePending = false;
             updateSaveButtonState();
+            updateCashOutMachineDisplay();
             return;
         }
 
@@ -2541,6 +2645,7 @@
             lastCommissionKey = key;
             commissionCalculationPending = false;
             updateSaveButtonState();
+            updateCashOutMachineDisplay();
             setCommissionStatus("");
             uxAdvanceAfterAmountCommit();
             return;
@@ -2557,6 +2662,7 @@
                 commissionCalculationPending = false;
                 amountEnterAdvancePending = false;
                 updateSaveButtonState();
+                updateCashOutMachineDisplay();
                 setCommissionStatus("تعذر تحميل إعدادات العمولات لهذا الاختيار", true);
                 return;
             }
@@ -2566,6 +2672,7 @@
             lastCommissionKey = key;
             commissionCalculationPending = false;
             updateSaveButtonState();
+            updateCashOutMachineDisplay();
             setCommissionStatus("");
             uxAdvanceAfterAmountCommit();
         });
@@ -2793,6 +2900,10 @@
         byId("isRecharg").value = "false";
         byId("isWallet").value = "false";
         byId("haveGuarantee").value = "false";
+        if (byId("transactionDate")) {
+            byId("transactionDate").value = localIsoDate();
+            byId("transactionDate").disabled = true;
+        }
         byId("tetNumPoket").value = "";
         byId("violationWalletNo").value = "";
         byId("violationValue").value = "0";
@@ -2907,6 +3018,13 @@
         if (event.target.id === "toggleTodayInvoicesBtn") {
             setTodayInvoicesCollapsed(!byId("posPage").classList.contains("today-invoices-collapsed"), true);
         }
+        if (event.target.id === "clearTodayInvoiceSearchBtn") {
+            if (byId("todayInvoiceSearch")) { byId("todayInvoiceSearch").value = ""; }
+            if (byId("todayInvoiceTypeFilter")) { byId("todayInvoiceTypeFilter").value = ""; }
+            todayInvoicesCache = [];
+            byId("todayInvoicesList").innerText = "اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.";
+            byId("todayInvoiceSummary").innerHTML = "";
+        }
         var kycResultButton = event.target.closest ? event.target.closest(".kyc-result-item") : null;
         if (kycResultButton) {
             var kycItems = byId("kycSearchResults")._items || [];
@@ -3018,9 +3136,6 @@
                 loadTodayInvoices(event.target.value.trim());
             }, 250);
         }
-        if (event.target.id === "todayInvoiceTypeFilter") {
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
-        }
 
         uxApplyFlow();
     });
@@ -3030,6 +3145,18 @@
             event.preventDefault();
         }
     }, { passive: false });
+
+    document.addEventListener("focusin", function (event) {
+        if (event.target && (event.target.id === "branchId" || event.target.id === "paymentType" || event.target.id === "boxId")) {
+            ensureContextControlsLoaded();
+        }
+    });
+
+    document.addEventListener("mousedown", function (event) {
+        if (event.target && (event.target.id === "branchId" || event.target.id === "paymentType" || event.target.id === "boxId")) {
+            ensureContextControlsLoaded();
+        }
+    });
 
     document.addEventListener("change", function (event) {
         if (isAmountInput(event.target)) {
@@ -3069,9 +3196,12 @@
 
     byId("posForm").addEventListener("submit", saveTransaction);
     setInitialContextFromPage();
+    if (byId("transactionDate")) {
+        byId("transactionDate").value = localIsoDate();
+        byId("transactionDate").disabled = true;
+    }
     initTodayInvoicesPanelState();
     loadContextControls();
-    searchItems("");
     preloadCommissionSettings(function () {
         var initialMode = queryValue("openKyc") === "true" ? "card" : "cash-in";
         setMode(initialMode);
@@ -3082,8 +3212,6 @@
         }
         setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", !commissionsReady);
     });
-    loadEmployeeBalances();
-    loadTodayInvoices();
     updateSaveButtonState();
     uxApplyFlow();
 })();

@@ -76,7 +76,7 @@ namespace MyERP.Areas.Pos.Controllers
             snapshot.Resources.Add(new PosSystemHealthResourceDto
             {
                 Name = "موارد السيرفر",
-                Value = "يمكن ربط CPU/Memory لاحقا من Performance Counters حسب صلاحيات السيرفر",
+                Value = "يمكن ربط CPU/Memory لاحقاً من Performance Counters حسب صلاحيات السيرفر",
                 Status = "info"
             });
         }

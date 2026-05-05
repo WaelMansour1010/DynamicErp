@@ -42,6 +42,8 @@ namespace MyERP.Areas.Pos.Models
         public decimal? CommissionValue { get; set; }
         public decimal? VatValue { get; set; }
         public decimal? TotalFees { get; set; }
+        public decimal BankMachineCommission { get; set; }
+        public decimal CashOutMachineWithdrawalAmount { get; set; }
         public string RechargeType { get; set; }
         public bool TrafficViolations { get; set; }
         public decimal? ViolationsValue { get; set; }
@@ -541,8 +543,12 @@ namespace MyERP.Areas.Pos.Models
         public decimal RemainValue { get; set; }
         public decimal VatValue { get; set; }
         public decimal TotalFees { get; set; }
+        public decimal BankMachineCommission { get; set; }
+        public decimal CashOutMachineWithdrawalAmount { get; set; }
         public int? ItemIDService { get; set; }
         public int? ItemIDService2 { get; set; }
+        public string ItemIDServiceName { get; set; }
+        public string ItemIDService2Name { get; set; }
         public decimal? ViolationsValue { get; set; }
         public string Tet_NumPoket { get; set; }
         public IList<PosTransactionItemDto> Items { get; set; }
@@ -574,6 +580,10 @@ namespace MyERP.Areas.Pos.Models
         public IList<string> Insights { get; set; }
         public IList<string> Recommendations { get; set; }
         public IList<PosDashboardSmartInsightDto> SmartInsights { get; set; }
+        public string SnapshotStatus { get; set; }
+        public DateTime? SnapshotGeneratedAt { get; set; }
+        public string SnapshotMessage { get; set; }
+        public bool IsSnapshotData { get; set; }
 
         public PosDashboardSummaryDto()
         {
@@ -796,10 +806,13 @@ namespace MyERP.Areas.Pos.Models
         public int PaymentMethod { get; set; }
         public decimal Value { get; set; }
         public int? BoxId { get; set; }
+        public string BoxName { get; set; }
         public int? BankId { get; set; }
+        public string BankName { get; set; }
         public string ReferenceNo { get; set; }
         public DateTime? ReferenceDate { get; set; }
         public int? EmpId { get; set; }
+        public string EmpName { get; set; }
         public string EmpAccountCode { get; set; }
         public decimal BoxValue { get; set; }
         public decimal EmpValue { get; set; }

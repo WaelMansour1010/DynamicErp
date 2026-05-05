@@ -161,7 +161,7 @@
                         </div>
                     </div>
 
-                    <div id="adminDashboardMessage" class="pos-validation"></div>
+                    <div id="adminDashboardMessage" class="pos-validation">اضغط تحميل مؤشرات الأداء لعرض بيانات لوحة التحكم.</div>
                     <div id="adminDashboardKpis" class="admin-kpi-grid"></div>
                     <section class="pos-panel executive-insights-panel">
                         <div class="panel-heading"><h2>مركز الرؤى الذكية</h2><span>تحليلات تشغيلية مبنية على بيانات حقيقية</span></div>
@@ -440,7 +440,8 @@
                 if (homePanel) { homePanel.classList.add("is-hidden-ui"); }
                 dashboardPanel.classList.remove("is-hidden-ui");
                 setActive("", true);
-                loadAdminDashboard(false);
+                var message = document.getElementById("adminDashboardMessage");
+                if (message) { message.innerText = "اضغط تحميل مؤشرات الأداء لعرض بيانات لوحة التحكم."; }
             }
 
             function renderTable(targetId, columns, rows, emptyMessage) {
@@ -542,7 +543,8 @@
                     + "&toDate=" + encodeURIComponent(document.getElementById("dashboardToDate").value)
                     + "&branchId=" + encodeURIComponent(document.getElementById("dashboardBranchId").value || "")
                     + "&operationType=" + encodeURIComponent(document.getElementById("dashboardOperationType").value || "")
-                    + "&advanced=" + (loadAdvanced ? "true" : "false");
+                    + "&advanced=" + (loadAdvanced ? "true" : "false")
+                    + "&refreshSnapshot=" + (loadAdvanced ? "true" : "false");
                 var xhr = new XMLHttpRequest();
                 xhr.open("GET", url, true);
                 xhr.onreadystatechange = function () {
@@ -554,8 +556,18 @@
                         hideNavigationLoading();
                         return;
                     }
-                    if (message) { message.innerText = "تم تحميل البيانات"; }
                     var data = response.data || {};
+                    if (message) {
+                        var snapshotStatus = data.SnapshotStatus || data.snapshotStatus || "";
+                        var snapshotMessage = data.SnapshotMessage || data.snapshotMessage || "";
+                        if (snapshotStatus && snapshotStatus !== "Completed") {
+                            message.innerText = snapshotMessage || "لم يتم تجهيز مؤشرات هذه الفترة بعد";
+                        } else if (data.IsSnapshotData || data.isSnapshotData) {
+                            message.innerText = "تم تحميل البيانات من مؤشرات محفوظة" + ((data.SnapshotGeneratedAt || data.snapshotGeneratedAt) ? " - آخر تجهيز: " + (data.SnapshotGeneratedAt || data.snapshotGeneratedAt) : "");
+                        } else {
+                            message.innerText = "تم تحميل البيانات";
+                        }
+                    }
                     renderKpis(data.Kpis, data.KpiComparisons);
                     if (!loadAdvanced) {
                         renderSmartInsights("adminDashboardInsights", []);
@@ -682,11 +694,12 @@
                         event.preventDefault();
                         return;
                     }
-                    event.preventDefault();
-                    showNavigationLoading("جاري تحميل البيانات...");
-                    showDashboard();
-                });
-            }
+                     event.preventDefault();
+                     showNavigationLoading("جاري تحميل البيانات...");
+                     showDashboard();
+                     hideNavigationLoading();
+                 });
+             }
 
             document.addEventListener("click", function (event) {
                 if (event.target && event.target.id === "reloadAdminDashboardBtn") {
@@ -697,11 +710,13 @@
             document.addEventListener("change", function (event) {
                 if (event.target && event.target.name === "dashboardPeriodType") {
                     applyPeriodDates();
-                    loadAdminDashboard(false);
+                    var message = document.getElementById("adminDashboardMessage");
+                    if (message) { message.innerText = "تم تغيير الفلاتر. اضغط تحميل مؤشرات الأداء لعرض البيانات."; }
                     return;
                 }
                 if (event.target && /dashboard(FromDate|ToDate|BranchId|OperationType)/.test(event.target.id)) {
-                    loadAdminDashboard(false);
+                    var filterMessage = document.getElementById("adminDashboardMessage");
+                    if (filterMessage) { filterMessage.innerText = "تم تغيير الفلاتر. اضغط تحميل مؤشرات الأداء لعرض البيانات."; }
                 }
             });
 
@@ -712,7 +727,6 @@
 
             if (dashboardPanel && !dashboardPanel.classList.contains("is-hidden-ui")) {
                 applyPeriodDates();
-                loadAdminDashboard(false);
             }
         })();
     </script>

@@ -5,8 +5,10 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace MyERP.Areas.Pos.Data
 {
@@ -14,6 +16,8 @@ namespace MyERP.Areas.Pos.Data
     {
         public const string WebInvoiceSourceMarker = "WEB_POS";
 
+        private const int DeadlockSqlErrorNumber = 1205;
+        private static readonly int[] SaveDeadlockRetryDelaysMs = { 150, 300, 600 };
         private static readonly object PosSystemErrorLogEnsureLock = new object();
         private static bool _posSystemErrorLogEnsured;
 
@@ -1217,7 +1221,7 @@ ORDER BY b.BoxID;";
             }
 
             const string sql = @"
-SELECT TOP (20)
+SELECT TOP (50)
     c.Id,
     c.name,
     c.namee,
@@ -1263,7 +1267,23 @@ WHERE ISNULL(c.EasyCashType, 0) = 0
       OR c.CardNo = @term
       OR c.CardId = @term
       OR c.Tet_NumPoket = @term
+      OR c.PhoneNo2 LIKE N'%' + @term + N'%'
+      OR c.PhoneNo LIKE N'%' + @term + N'%'
+      OR c.tel LIKE N'%' + @term + N'%'
+      OR c.CardNo LIKE N'%' + @term + N'%'
+      OR c.CardId LIKE N'%' + @term + N'%'
+      OR c.Tet_NumPoket LIKE N'%' + @term + N'%'
       OR c.name LIKE N'%' + @term + N'%'
+      OR c.CustName LIKE N'%' + @term + N'%'
+      OR c.namee LIKE N'%' + @term + N'%'
+      OR c.ArabicName0 LIKE N'%' + @term + N'%'
+      OR c.ArabicName1 LIKE N'%' + @term + N'%'
+      OR c.ArabicName2 LIKE N'%' + @term + N'%'
+      OR c.ArabicName3 LIKE N'%' + @term + N'%'
+      OR c.EnglishName0 LIKE N'%' + @term + N'%'
+      OR c.EnglishName1 LIKE N'%' + @term + N'%'
+      OR c.EnglishName2 LIKE N'%' + @term + N'%'
+      OR c.EnglishName3 LIKE N'%' + @term + N'%'
   )
 ORDER BY c.Id DESC;";
 
@@ -1982,6 +2002,44 @@ SELECT
             var itemsTable = BuildItemsTable(request.Items);
             var paymentsTable = BuildPaymentsTable(request);
 
+            return ExecuteSaveTransactionWithDeadlockRetry(request, itemsTable, paymentsTable);
+        }
+
+        private PosSaveTransactionResult ExecuteSaveTransactionWithDeadlockRetry(PosSaveTransactionRequest request, DataTable itemsTable, DataTable paymentsTable)
+        {
+            var attempt = 0;
+
+            while (true)
+            {
+                attempt++;
+
+                try
+                {
+                    var result = ExecuteSaveTransactionProcedure(request, itemsTable, paymentsTable);
+                    if (attempt > 1)
+                    {
+                        LogSaveDeadlockRetry(request, attempt - 1, 0, null, result.Transaction_ID);
+                    }
+
+                    return result;
+                }
+                catch (SqlException ex)
+                {
+                    var retryAttempt = attempt;
+                    if (!IsDeadlock(ex) || retryAttempt > SaveDeadlockRetryDelaysMs.Length)
+                    {
+                        throw;
+                    }
+
+                    var delayMs = SaveDeadlockRetryDelaysMs[retryAttempt - 1];
+                    LogSaveDeadlockRetry(request, retryAttempt, delayMs, ex, null);
+                    Thread.Sleep(delayMs);
+                }
+            }
+        }
+
+        private PosSaveTransactionResult ExecuteSaveTransactionProcedure(PosSaveTransactionRequest request, DataTable itemsTable, DataTable paymentsTable)
+        {
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("dbo.usp_POS_SaveTransaction", connection))
             {
@@ -2054,6 +2112,110 @@ SELECT
                     };
                 }
             }
+        }
+
+        private static bool IsDeadlock(SqlException exception)
+        {
+            if (exception == null || exception.Errors == null)
+            {
+                return false;
+            }
+
+            foreach (SqlError error in exception.Errors)
+            {
+                if (error != null && error.Number == DeadlockSqlErrorNumber)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void LogSaveDeadlockRetry(PosSaveTransactionRequest request, int retryAttempt, int delayMs, SqlException exception, int? transactionId)
+        {
+            try
+            {
+                var logRoot = System.Web.HttpContext.Current == null
+                    ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "App_Data", "Logs")
+                    : System.Web.HttpContext.Current.Server.MapPath("~/App_Data/Logs");
+                Directory.CreateDirectory(logRoot);
+
+                var path = Path.Combine(logRoot, "pos-deadlock-retry-" + DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".log");
+                var lines = new List<string>
+                {
+                    "------------------------------------------------------------",
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                    "Action: " + (transactionId.HasValue ? "SaveTransaction.RetrySucceeded" : "SaveTransaction.DeadlockRetry"),
+                    "RetryAttempt: " + retryAttempt.ToString(CultureInfo.InvariantCulture),
+                    "DelayMs: " + delayMs.ToString(CultureInfo.InvariantCulture),
+                    "Request: " + BuildDeadlockRetrySnapshot(request)
+                };
+
+                if (transactionId.HasValue)
+                {
+                    lines.Add("Transaction_ID: " + transactionId.Value.ToString(CultureInfo.InvariantCulture));
+                }
+
+                if (exception != null)
+                {
+                    lines.Add("SqlErrors: " + BuildSqlErrorNumberSummary(exception));
+                    lines.Add("Exception: " + exception.Message);
+                }
+
+                File.AppendAllLines(path, lines, Encoding.UTF8);
+            }
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Trace.TraceWarning("Failed to write POS deadlock retry log: " + logEx);
+            }
+        }
+
+        private static string BuildDeadlockRetrySnapshot(PosSaveTransactionRequest request)
+        {
+            if (request == null)
+            {
+                return "<null request>";
+            }
+
+            var parts = new List<string>
+            {
+                "Transaction_ID=" + (request.Transaction_ID.HasValue ? request.Transaction_ID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "TransactionType=" + (request.TransactionType ?? string.Empty),
+                "BranchId=" + (request.BranchId.HasValue ? request.BranchId.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "StoreID=" + (request.StoreID.HasValue ? request.StoreID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "BoxID=" + (request.BoxID.HasValue ? request.BoxID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "UserID=" + (request.UserID.HasValue ? request.UserID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "Emp_ID=" + (request.Emp_ID.HasValue ? request.Emp_ID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "PaymentType=" + request.PaymentType.ToString(CultureInfo.InvariantCulture),
+                "IsCashOut=" + request.IsCashOut,
+                "IsWallet=" + request.IsWallet,
+                "ItemIDService=" + (request.ItemIDService.HasValue ? request.ItemIDService.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "ItemIDService2=" + (request.ItemIDService2.HasValue ? request.ItemIDService2.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "RechargeValue=" + request.RechargeValue.GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
+                "Items=" + (request.Items == null ? "0" : request.Items.Count.ToString(CultureInfo.InvariantCulture))
+            };
+
+            return string.Join("; ", parts);
+        }
+
+        private static string BuildSqlErrorNumberSummary(SqlException exception)
+        {
+            if (exception == null || exception.Errors == null)
+            {
+                return string.Empty;
+            }
+
+            var numbers = new List<string>();
+            foreach (SqlError error in exception.Errors)
+            {
+                if (error != null)
+                {
+                    numbers.Add(error.Number.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            return string.Join(",", numbers.Distinct());
         }
 
         private static DataTable BuildItemsTable(IEnumerable<PosTransactionItemDto> items)
@@ -2169,6 +2331,8 @@ SELECT
             request.CommissionValue = commission.CommissionValue;
             request.VatValue = commission.VatValue;
             request.TotalFees = commission.TotalFees;
+            request.BankMachineCommission = commission.BankMachineCommission;
+            request.CashOutMachineWithdrawalAmount = commission.CashOutMachineWithdrawalAmount;
 
             firstItem.Quantity = firstItem.Quantity <= 0 ? 1 : firstItem.Quantity;
             firstItem.ShowQty = firstItem.Quantity;
@@ -2500,8 +2664,11 @@ ORDER BY Transaction_ID DESC;";
             var searchTerm = (term ?? string.Empty).Trim();
             var operation = NormalizeInvoiceOperationType(operationType);
             var hasSearchTerm = !string.IsNullOrWhiteSpace(searchTerm);
+            var canSearchAllDates = hasSearchTerm && (canChangeDefaults || canEditInvoice);
+            var today = DateTime.Today;
+            var searchFromDate = today.AddDays(-2);
             const string sql = @"
-SELECT TOP (100)
+SELECT TOP (50)
     t.Transaction_ID,
     t.NoteSerial1,
     CONVERT(VARCHAR(5), t.Transaction_Date, 108) AS TransactionTime,
@@ -2522,14 +2689,14 @@ SELECT TOP (100)
 FROM dbo.Transactions t
 WHERE t.Transaction_Type = 21
   AND (
-      @allowExtendedSearch = 1
+      @canSearchAllDates = 1
       OR (
-          t.Transaction_Date >= CONVERT(DATE, GETDATE())
-          AND t.Transaction_Date < DATEADD(DAY, 1, CONVERT(DATE, GETDATE()))
+          t.Transaction_Date >= CASE WHEN @hasSearchTerm = 1 THEN @searchFromDate ELSE @today END
+          AND t.Transaction_Date < DATEADD(DAY, 1, @today)
       )
   )
   AND (
-      @allowExtendedSearch = 1
+      @canSearchAllDates = 1
       OR (
           (@branchId IS NULL OR t.BranchId = @branchId)
           AND (@canChangeDefaults = 1 OR t.UserID = @userId)
@@ -2573,7 +2740,10 @@ ORDER BY t.Transaction_ID DESC;";
                 command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
                 command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
-                command.Parameters.Add("@allowExtendedSearch", SqlDbType.Bit).Value = hasSearchTerm && (canChangeDefaults || canEditInvoice);
+                command.Parameters.Add("@hasSearchTerm", SqlDbType.Bit).Value = hasSearchTerm;
+                command.Parameters.Add("@canSearchAllDates", SqlDbType.Bit).Value = canSearchAllDates;
+                command.Parameters.Add("@today", SqlDbType.DateTime).Value = today;
+                command.Parameters.Add("@searchFromDate", SqlDbType.DateTime).Value = searchFromDate;
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = searchTerm;
                 command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
                 connection.Open();
@@ -2993,6 +3163,8 @@ SELECT TOP (1)
     CAST(ISNULL(t.VAT, 0) AS DECIMAL(18, 2)) AS VatValue,
     t.ItemIDService,
     t.ItemIDService2,
+    COALESCE(NULLIF(primaryServiceItem.ItemName, N''), NULLIF(primaryServiceItem.ItemNamee, N''), primaryServiceItem.ItemCode, CONVERT(NVARCHAR(50), t.ItemIDService)) AS ItemIDServiceName,
+    COALESCE(NULLIF(secondaryServiceItem.ItemName, N''), NULLIF(secondaryServiceItem.ItemNamee, N''), secondaryServiceItem.ItemCode, CONVERT(NVARCHAR(50), t.ItemIDService2)) AS ItemIDService2Name,
     CAST(t.ViolationsValue AS DECIMAL(18, 2)) AS ViolationsValue,
     CASE
         WHEN t.Tet_NumPoket IS NULL THEN NULL
@@ -3010,6 +3182,8 @@ LEFT JOIN dbo.TblStore s ON s.StoreID = t.StoreID
 LEFT JOIN dbo.TblBoxesData box ON box.BoxID = t.BoxID
 LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = t.Emp_ID
 LEFT JOIN dbo.TblUsers creator ON creator.UserID = t.UserID
+LEFT JOIN dbo.TblItems primaryServiceItem ON primaryServiceItem.ItemID = t.ItemIDService
+LEFT JOIN dbo.TblItems secondaryServiceItem ON secondaryServiceItem.ItemID = t.ItemIDService2
 WHERE t.Transaction_ID = @transactionId
   AND t.Transaction_Type = 21
   AND (@canChangeDefaults = 1 OR t.UserID = @userId);";
@@ -3086,6 +3260,8 @@ ORDER BY d.Item_ID;";
                             VatValue = ReadDecimal(reader, "VatValue").GetValueOrDefault(),
                             ItemIDService = ReadInt(reader, "ItemIDService"),
                             ItemIDService2 = ReadInt(reader, "ItemIDService2"),
+                            ItemIDServiceName = ReadString(reader, "ItemIDServiceName"),
+                            ItemIDService2Name = ReadString(reader, "ItemIDService2Name"),
                             ViolationsValue = ReadDecimal(reader, "ViolationsValue"),
                             Tet_NumPoket = ReadString(reader, "Tet_NumPoket")
                         };
@@ -3125,6 +3301,22 @@ ORDER BY d.Item_ID;";
             }
 
             invoice.TotalFees = invoice.Items.Sum(i => i.Price + i.Vat.GetValueOrDefault());
+            if (string.Equals(invoice.TransactionType, "cash-out", StringComparison.OrdinalIgnoreCase) && invoice.Items.Count > 0)
+            {
+                var firstItem = invoice.Items[0];
+                var commission = CalculateCommission(new PosCommissionRequest
+                {
+                    ServiceType = invoice.TransactionType,
+                    ItemID = invoice.ItemIDService ?? firstItem.Item_ID,
+                    BranchId = invoice.BranchId,
+                    RechargeValue = invoice.RechargeValue,
+                    Vatyo = firstItem.Vatyo,
+                    IsWallet = true,
+                    HaveGuarantee = false
+                });
+                invoice.BankMachineCommission = commission.BankMachineCommission;
+                invoice.CashOutMachineWithdrawalAmount = commission.CashOutMachineWithdrawalAmount;
+            }
             if (string.Equals(invoice.TransactionType, "card", StringComparison.OrdinalIgnoreCase))
             {
                 invoice.KycCustomer = ResolveInvoiceKeshniCustomer(invoice, canChangeDefaults);
@@ -3272,6 +3464,61 @@ WHERE UserID = @userId
             return table;
         }
 
+        public DataTable RunPosNonWebLoginUsersReport(DateTime fromDate, DateTime toDate, int branchId, int? filterUserId, string loginSource, int userId, bool canChangeDefaults)
+        {
+            var table = new DataTable();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_Report_NonWebLoginUsers", connection))
+            using (var adapter = new SqlDataAdapter(command))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@filterUserId", SqlDbType.Int).Value = filterUserId.HasValue ? (object)filterUserId.Value : DBNull.Value;
+                command.Parameters.Add("@loginSource", SqlDbType.NVarChar, 80).Value = (loginSource ?? string.Empty).Trim();
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                adapter.Fill(table);
+            }
+
+            return table;
+        }
+
+        public IList<PosPermissionUserDto> GetPosReportUsers()
+        {
+            var users = new List<PosPermissionUserDto>();
+            const string sql = @"
+SELECT TOP (500)
+    u.UserID,
+    u.UserName,
+    e.Emp_Name
+FROM dbo.TblUsers u
+LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = u.Empid
+WHERE ISNULL(u.isDeactivated, 0) = 0
+ORDER BY u.UserName;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        users.Add(new PosPermissionUserDto
+                        {
+                            UserId = ReadInt(reader, "UserID").GetValueOrDefault(),
+                            UserName = ReadString(reader, "UserName"),
+                            EmpName = ReadString(reader, "Emp_Name")
+                        });
+                    }
+                }
+            }
+
+            return users;
+        }
+
         public DataTable RunAccountingReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, string accountFrom, string accountTo, string accountCodes, int? costCenterId, int userId, bool canChangeDefaults)
         {
             var table = new DataTable();
@@ -3410,7 +3657,23 @@ WHERE NULLIF(LTRIM(RTRIM(ISNULL(a.Account_Code, N''))), N'') IS NOT NULL
   (
       (@hasSearch = 1 AND (a.Account_Serial LIKE N'%' + @term + N'%' OR a.Account_Name LIKE N'%' + @term + N'%' OR a.Account_Code LIKE N'%' + @term + N'%'))
       OR
-      (@hasSearch = 0 AND ((@parentCode = N'' AND NULLIF(LTRIM(RTRIM(ISNULL(a.Parent_Account_Code, N''))), N'') IS NULL) OR ISNULL(a.Parent_Account_Code, N'') = @parentCode))
+        (@hasSearch = 0 AND
+            (
+                (@parentCode = N'' AND
+                    (
+                        NULLIF(LTRIM(RTRIM(ISNULL(a.Parent_Account_Code, N''))), N'') IS NULL
+                        OR NOT EXISTS
+                        (
+                            SELECT 1
+                            FROM dbo.ACCOUNTS p WITH (NOLOCK)
+                            WHERE ISNULL(p.Account_Code, N'') = ISNULL(a.Parent_Account_Code, N'')
+                        )
+                        OR ISNULL(a.Parent_Account_Code, N'') = ISNULL(a.Account_Code, N'')
+                    )
+                )
+                OR (@parentCode <> N'' AND ISNULL(a.Parent_Account_Code, N'') = @parentCode)
+            )
+        )
   )
 ORDER BY a.Account_Serial, a.Account_Code;";
             using (var connection = new SqlConnection(_connectionString))
@@ -3709,121 +3972,7 @@ VALUES
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
-                    if (reader.Read())
-                    {
-                        summary.Kpis.TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault();
-                        summary.Kpis.SalesTotal = ReadDecimal(reader, "SalesTotal").GetValueOrDefault();
-                        summary.Kpis.FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault();
-                        summary.Kpis.VatTotal = ReadDecimal(reader, "VatTotal").GetValueOrDefault();
-                        summary.Kpis.NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault();
-                        summary.Kpis.ActivatedKycCards = ReadInt(reader, "ActivatedKycCards").GetValueOrDefault();
-                        summary.Kpis.CancelledOrReturnedCount = ReadInt(reader, "CancelledOrReturnedCount").GetValueOrDefault();
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        if (reader.Read())
-                        {
-                            summary.PreviousKpis.TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault();
-                            summary.PreviousKpis.SalesTotal = ReadDecimal(reader, "SalesTotal").GetValueOrDefault();
-                            summary.PreviousKpis.FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault();
-                            summary.PreviousKpis.VatTotal = ReadDecimal(reader, "VatTotal").GetValueOrDefault();
-                            summary.PreviousKpis.NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault();
-                            summary.PreviousKpis.ActivatedKycCards = ReadInt(reader, "ActivatedKycCards").GetValueOrDefault();
-                            summary.PreviousKpis.CancelledOrReturnedCount = ReadInt(reader, "CancelledOrReturnedCount").GetValueOrDefault();
-                        }
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        while (reader.Read())
-                        {
-                            summary.BranchComparison.Add(new PosDashboardBranchDto
-                            {
-                                BranchId = ReadInt(reader, "BranchId"),
-                                BranchName = ReadString(reader, "BranchName"),
-                                TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
-                                TotalValue = ReadDecimal(reader, "TotalValue").GetValueOrDefault(),
-                                FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault()
-                            });
-                        }
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        while (reader.Read())
-                        {
-                            summary.WorstBranches.Add(new PosDashboardBranchDto
-                            {
-                                BranchId = ReadInt(reader, "BranchId"),
-                                BranchName = ReadString(reader, "BranchName"),
-                                TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
-                                TotalValue = ReadDecimal(reader, "TotalValue").GetValueOrDefault(),
-                                FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault()
-                            });
-                        }
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        while (reader.Read())
-                        {
-                            summary.TopServices.Add(new PosDashboardServiceDto
-                            {
-                                ItemId = ReadInt(reader, "Item_ID"),
-                                ItemName = ReadString(reader, "ItemName"),
-                                SaleCount = ReadInt(reader, "SaleCount").GetValueOrDefault(),
-                                TotalValue = ReadDecimal(reader, "TotalValue").GetValueOrDefault(),
-                                FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault()
-                            });
-                        }
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        while (reader.Read())
-                        {
-                            summary.OperationTypeSummary.Add(new PosDashboardOperationDto
-                            {
-                                OperationType = ReadString(reader, "OperationType"),
-                                TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
-                                RechargeTotal = ReadDecimal(reader, "RechargeTotal").GetValueOrDefault(),
-                                FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault(),
-                                VatTotal = ReadDecimal(reader, "VatTotal").GetValueOrDefault(),
-                                NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault()
-                            });
-                        }
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        while (reader.Read())
-                        {
-                            summary.DailyTrend.Add(new PosDashboardTrendDto
-                            {
-                                Day = ReadString(reader, "Day"),
-                                TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
-                                NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault()
-                            });
-                        }
-                    }
-
-                    if (reader.NextResult())
-                    {
-                        while (reader.Read())
-                        {
-                            var rankNo = ReadInt(reader, "RankNo").GetValueOrDefault();
-                            summary.TopSellers.Add(new PosDashboardSellerDto
-                            {
-                                RankNo = rankNo,
-                                RankIcon = DashboardSellerRankIcon(rankNo),
-                                SellerId = ReadInt(reader, "SellerId"),
-                                SellerName = ReadString(reader, "SellerName"),
-                                TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
-                                NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault()
-                            });
-                        }
-                    }
+                    ReadDashboardSummaryResultSets(reader, summary);
                 }
             }
 
@@ -3833,6 +3982,204 @@ VALUES
             }
             PopulateDashboardIntelligence(summary, periodType);
             return summary;
+        }
+
+        public PosDashboardSummaryDto GetAdminDashboardDailySnapshot(DateTime snapshotDate, int? branchId, string operationType, string periodType, bool loadAdvancedInsights)
+        {
+            var summary = new PosDashboardSummaryDto { IsSnapshotData = true };
+            var branchRows = new List<DashboardSmartMetricRow>();
+            var serviceRows = new List<DashboardSmartMetricRow>();
+            var sellerRows = new List<DashboardSmartMetricRow>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_DashboardSnapshot_ReadDaily", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 60;
+                command.Parameters.Add("@snapshotDate", SqlDbType.DateTime).Value = snapshotDate.Date;
+                Add(command, "@branchId", SqlDbType.Int, branchId);
+                command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = (operationType ?? string.Empty).Trim();
+                command.Parameters.Add("@includeSmartMetrics", SqlDbType.Bit).Value = loadAdvancedInsights;
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        summary.SnapshotStatus = ReadString(reader, "Status");
+                        summary.SnapshotGeneratedAt = ReadDateTime(reader, "GeneratedAt");
+                        summary.SnapshotMessage = ReadString(reader, "Message");
+                    }
+                    else
+                    {
+                        summary.SnapshotStatus = "Missing";
+                        summary.SnapshotMessage = "لم يتم تجهيز مؤشرات هذه الفترة بعد";
+                    }
+
+                    if (reader.NextResult())
+                    {
+                        ReadDashboardSummaryResultSets(reader, summary);
+                    }
+
+                    if (loadAdvancedInsights && string.Equals(summary.SnapshotStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (reader.NextResult()) { ReadSmartMetricRows(reader, branchRows); }
+                        if (reader.NextResult()) { ReadSmartMetricRows(reader, serviceRows); }
+                        if (reader.NextResult()) { ReadSmartMetricRows(reader, sellerRows); }
+                    }
+                }
+            }
+
+            if (!string.Equals(summary.SnapshotStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                return summary;
+            }
+
+            if (loadAdvancedInsights)
+            {
+                BuildBranchSmartInsights(summary, branchRows, periodType);
+                BuildServiceSmartInsights(summary, serviceRows);
+                BuildSellerSmartInsights(summary, sellerRows);
+                BuildCollectionQualityInsights(summary, periodType);
+                if (!summary.SmartInsights.Any())
+                {
+                    AddSmartInsight(summary, "info", "Low", "💡", "بيانات غير كافية", "لا توجد بيانات كافية لإصدار توصية موثوقة في الفترة المحددة.", "استمر في متابعة البيانات بعد زيادة عدد الحركات.", "جودة البيانات");
+                }
+            }
+
+            PopulateDashboardIntelligence(summary, periodType);
+            return summary;
+        }
+
+        public void GenerateAdminDashboardDailySnapshot(DateTime snapshotDate, int? branchId, string operationType, int? userId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_DashboardSnapshot_GenerateDaily", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 180;
+                command.Parameters.Add("@snapshotDate", SqlDbType.DateTime).Value = snapshotDate.Date;
+                Add(command, "@branchId", SqlDbType.Int, branchId);
+                command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = (operationType ?? string.Empty).Trim();
+                Add(command, "@generatedByUserId", SqlDbType.Int, userId);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private static void ReadDashboardSummaryResultSets(SqlDataReader reader, PosDashboardSummaryDto summary)
+        {
+            if (reader.Read())
+            {
+                summary.Kpis.TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault();
+                summary.Kpis.SalesTotal = ReadDecimal(reader, "SalesTotal").GetValueOrDefault();
+                summary.Kpis.FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault();
+                summary.Kpis.VatTotal = ReadDecimal(reader, "VatTotal").GetValueOrDefault();
+                summary.Kpis.NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault();
+                summary.Kpis.ActivatedKycCards = ReadInt(reader, "ActivatedKycCards").GetValueOrDefault();
+                summary.Kpis.CancelledOrReturnedCount = ReadInt(reader, "CancelledOrReturnedCount").GetValueOrDefault();
+            }
+
+            if (reader.NextResult() && reader.Read())
+            {
+                summary.PreviousKpis.TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault();
+                summary.PreviousKpis.SalesTotal = ReadDecimal(reader, "SalesTotal").GetValueOrDefault();
+                summary.PreviousKpis.FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault();
+                summary.PreviousKpis.VatTotal = ReadDecimal(reader, "VatTotal").GetValueOrDefault();
+                summary.PreviousKpis.NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault();
+                summary.PreviousKpis.ActivatedKycCards = ReadInt(reader, "ActivatedKycCards").GetValueOrDefault();
+                summary.PreviousKpis.CancelledOrReturnedCount = ReadInt(reader, "CancelledOrReturnedCount").GetValueOrDefault();
+            }
+
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                    summary.BranchComparison.Add(new PosDashboardBranchDto
+                    {
+                        BranchId = ReadInt(reader, "BranchId"),
+                        BranchName = ReadString(reader, "BranchName"),
+                        TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
+                        TotalValue = ReadDecimal(reader, "TotalValue").GetValueOrDefault(),
+                        FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault()
+                    });
+                }
+            }
+
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                    summary.WorstBranches.Add(new PosDashboardBranchDto
+                    {
+                        BranchId = ReadInt(reader, "BranchId"),
+                        BranchName = ReadString(reader, "BranchName"),
+                        TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
+                        TotalValue = ReadDecimal(reader, "TotalValue").GetValueOrDefault(),
+                        FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault()
+                    });
+                }
+            }
+
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                    summary.TopServices.Add(new PosDashboardServiceDto
+                    {
+                        ItemId = ReadInt(reader, "Item_ID"),
+                        ItemName = ReadString(reader, "ItemName"),
+                        SaleCount = ReadInt(reader, "SaleCount").GetValueOrDefault(),
+                        TotalValue = ReadDecimal(reader, "TotalValue").GetValueOrDefault(),
+                        FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault()
+                    });
+                }
+            }
+
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                    summary.OperationTypeSummary.Add(new PosDashboardOperationDto
+                    {
+                        OperationType = ReadString(reader, "OperationType"),
+                        TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
+                        RechargeTotal = ReadDecimal(reader, "RechargeTotal").GetValueOrDefault(),
+                        FeesTotal = ReadDecimal(reader, "FeesTotal").GetValueOrDefault(),
+                        VatTotal = ReadDecimal(reader, "VatTotal").GetValueOrDefault(),
+                        NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault()
+                    });
+                }
+            }
+
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                    summary.DailyTrend.Add(new PosDashboardTrendDto
+                    {
+                        Day = ReadString(reader, "Day"),
+                        TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
+                        NetCollection = ReadDecimal(reader, "NetCollection").GetValueOrDefault()
+                    });
+                }
+            }
+
+            if (reader.NextResult())
+            {
+                while (reader.Read())
+                {
+                    var rankNo = ReadInt(reader, "RankNo").GetValueOrDefault();
+                    summary.TopSellers.Add(new PosDashboardSellerDto
+                    {
+                        RankNo = rankNo,
+                        RankIcon = DashboardSellerRankIcon(rankNo),
+                        SellerId = ReadInt(reader, "SellerId"),
+                        SellerName = ReadString(reader, "SellerName"),
+                        TransactionCount = ReadInt(reader, "TransactionCount").GetValueOrDefault(),
+                        NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault()
+                    });
+                }
+            }
         }
 
         private void PopulateDashboardSmartInsights(PosDashboardSummaryDto summary, DateTime fromDate, DateTime toDate, DateTime previousFromDate, DateTime previousToDate, int? branchId, string operationType, string periodType)
@@ -4387,6 +4734,161 @@ ORDER BY Emp_Name;";
             return list;
         }
 
+        public IList<PosLookupDto> SearchPosPaymentNameAccounts(int? branchId, int? boxType, string term)
+        {
+            var list = new List<PosLookupDto>();
+            const string sql = @"
+SELECT TOP (50)
+    b.Account_Code AS Id,
+    COALESCE(
+        NULLIF(COALESCE(NULLIF(a.Account_Serial, N'') + N' - ', N'') + NULLIF(a.Account_Name, N''), N''),
+        COALESCE(NULLIF(b.BoxName, N''), NULLIF(b.BoxNameE, N''), N'خزنة ' + CONVERT(NVARCHAR(20), b.BoxID))
+    ) AS Name,
+    CONVERT(NVARCHAR(50), b.BoxID) AS Extra
+FROM dbo.TblBoxesData b WITH (NOLOCK)
+LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = b.Account_Code
+WHERE NULLIF(LTRIM(RTRIM(ISNULL(b.Account_Code, N''))), N'') IS NOT NULL
+  AND (@branchId IS NULL OR b.BranchId = @branchId)
+  AND (@boxType IS NULL OR b.[Type] = @boxType)
+  AND (
+      @term = N''
+      OR CONVERT(NVARCHAR(50), b.BoxID) LIKE N'%' + @term + N'%'
+      OR b.BoxName LIKE N'%' + @term + N'%'
+      OR b.BoxNameE LIKE N'%' + @term + N'%'
+      OR b.Account_Code LIKE N'%' + @term + N'%'
+      OR a.Account_Serial LIKE N'%' + @term + N'%'
+      OR a.Account_Name LIKE N'%' + @term + N'%'
+  )
+ORDER BY a.Account_Serial, b.BoxName, b.BoxID;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
+                Add(command, "@boxType", SqlDbType.Int, boxType);
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = (term ?? string.Empty).Trim();
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PosLookupDto { Id = ReadString(reader, "Id"), Name = ReadString(reader, "Name"), Extra = ReadString(reader, "Extra") });
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        public IList<PosLookupDto> SearchPosPaymentBoxes(int? branchId, int? boxType, string term)
+        {
+            var list = new List<PosLookupDto>();
+            const string sql = @"
+SELECT TOP (50)
+    CONVERT(NVARCHAR(50), b.BoxID) AS Id,
+    CONVERT(NVARCHAR(50), b.BoxID) + N' - ' + COALESCE(NULLIF(b.BoxName, N''), NULLIF(b.BoxNameE, N''), N'خزنة ' + CONVERT(NVARCHAR(20), b.BoxID)) AS Name,
+    b.Account_Code AS Extra
+FROM dbo.TblBoxesData b WITH (NOLOCK)
+LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = b.Account_Code
+WHERE (@branchId IS NULL OR b.BranchId = @branchId)
+  AND (@boxType IS NULL OR b.[Type] = @boxType)
+  AND (
+      @term = N''
+      OR CONVERT(NVARCHAR(50), b.BoxID) LIKE N'%' + @term + N'%'
+      OR b.BoxName LIKE N'%' + @term + N'%'
+      OR b.BoxNameE LIKE N'%' + @term + N'%'
+      OR b.Account_Code LIKE N'%' + @term + N'%'
+      OR a.Account_Serial LIKE N'%' + @term + N'%'
+      OR a.Account_Name LIKE N'%' + @term + N'%'
+  )
+ORDER BY b.BoxName, b.BoxID;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
+                Add(command, "@boxType", SqlDbType.Int, boxType);
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = (term ?? string.Empty).Trim();
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PosLookupDto { Id = ReadString(reader, "Id"), Name = ReadString(reader, "Name"), Extra = ReadString(reader, "Extra") });
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        public IList<PosLookupDto> SearchPosPaymentBanks(string term)
+        {
+            var list = new List<PosLookupDto>();
+            const string sql = @"
+SELECT TOP (50)
+    CONVERT(NVARCHAR(50), b.BankID) AS Id,
+    CONVERT(NVARCHAR(50), b.BankID) + N' - ' + COALESCE(NULLIF(b.BankName, N''), NULLIF(b.BankNameE, N''), N'بنك ' + CONVERT(NVARCHAR(20), b.BankID)) AS Name,
+    b.Account_Code AS Extra
+FROM dbo.BanksData b WITH (NOLOCK)
+LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = b.Account_Code
+WHERE @term = N''
+   OR CONVERT(NVARCHAR(50), b.BankID) LIKE N'%' + @term + N'%'
+   OR b.BankName LIKE N'%' + @term + N'%'
+   OR b.BankNameE LIKE N'%' + @term + N'%'
+   OR b.Account_Code LIKE N'%' + @term + N'%'
+   OR a.Account_Serial LIKE N'%' + @term + N'%'
+   OR a.Account_Name LIKE N'%' + @term + N'%'
+ORDER BY b.BankName, b.BankID;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = (term ?? string.Empty).Trim();
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PosLookupDto { Id = ReadString(reader, "Id"), Name = ReadString(reader, "Name"), Extra = ReadString(reader, "Extra") });
+                    }
+                }
+            }
+
+            return list;
+        }
+
+        public IList<PosLookupDto> SearchPosPaymentEmployees(string term)
+        {
+            var list = new List<PosLookupDto>();
+            const string sql = @"
+SELECT TOP (50)
+    CONVERT(NVARCHAR(50), Emp_ID) AS Id,
+    CONVERT(NVARCHAR(50), Emp_ID) + N' - ' + ISNULL(Emp_Name, N'') AS Name,
+    Account_Code AS Extra
+FROM dbo.TblEmployee WITH (NOLOCK)
+WHERE Emp_ID IS NOT NULL
+  AND (
+      @term = N''
+      OR CONVERT(NVARCHAR(50), Emp_ID) LIKE N'%' + @term + N'%'
+      OR Emp_Name LIKE N'%' + @term + N'%'
+      OR Account_Code LIKE N'%' + @term + N'%'
+  )
+ORDER BY Emp_Name, Emp_ID;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = (term ?? string.Empty).Trim();
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new PosLookupDto { Id = ReadString(reader, "Id"), Name = ReadString(reader, "Name"), Extra = ReadString(reader, "Extra") });
+                    }
+                }
+            }
+
+            return list;
+        }
+
         public IList<PosPaymentLineDto> PreviewPosPayment(PosPaymentRequestDto request)
         {
             request = request ?? new PosPaymentRequestDto();
@@ -4493,10 +4995,13 @@ SELECT TOP (1)
     ISNULL(n.NoteCashingType, 0) AS PaymentMethod,
     CAST(ISNULL(n.Note_Value, 0) AS DECIMAL(18,2)) AS Value,
     n.BoxID,
+    CASE WHEN n.BoxID IS NULL THEN N'' ELSE CONVERT(NVARCHAR(50), n.BoxID) + N' - ' + COALESCE(NULLIF(pb.BoxName, N''), NULLIF(pb.BoxNameE, N''), N'خزنة ' + CONVERT(NVARCHAR(20), n.BoxID)) END AS BoxName,
     n.BankID,
+    CASE WHEN n.BankID IS NULL THEN N'' ELSE CONVERT(NVARCHAR(50), n.BankID) + N' - ' + COALESCE(NULLIF(bd.BankName, N''), NULLIF(bd.BankNameE, N''), N'بنك ' + CONVERT(NVARCHAR(20), n.BankID)) END AS BankName,
     n.ChqueNum AS ReferenceNo,
     n.DueDate AS ReferenceDate,
     n.Emp_ID AS EmpId,
+    CASE WHEN n.Emp_ID IS NULL THEN N'' ELSE CONVERT(NVARCHAR(50), n.Emp_ID) + N' - ' + ISNULL(e.Emp_Name, N'') END AS EmpName,
     n.AccountEmpCode AS EmpAccountCode,
     CAST(ISNULL(n.boxValue, 0) AS DECIMAL(18,2)) AS BoxValue,
     CAST(ISNULL(n.EmpValue, 0) AS DECIMAL(18,2)) AS EmpValue,
@@ -4511,6 +5016,9 @@ FROM dbo.Notes n
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = n.branch_no
 LEFT JOIN dbo.TblUsers u ON u.UserID = n.UserID
 LEFT JOIN dbo.TblUsers mu ON mu.UserID = n.LastModifiedByUserId
+LEFT JOIN dbo.TblBoxesData pb ON pb.BoxID = n.BoxID
+LEFT JOIN dbo.BanksData bd ON bd.BankID = n.BankID
+LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = n.Emp_ID
 WHERE n.NoteID = @noteId
   AND n.NoteType = 50
   AND (@canChangeDefaults = 1 OR n.UserID = @userId OR n.branch_no = @branchId);";
@@ -4541,10 +5049,13 @@ WHERE n.NoteID = @noteId
                             PaymentMethod = ReadInt(reader, "PaymentMethod").GetValueOrDefault(),
                             Value = ReadDecimal(reader, "Value").GetValueOrDefault(),
                             BoxId = ReadInt(reader, "BoxID"),
+                            BoxName = ReadString(reader, "BoxName"),
                             BankId = ReadInt(reader, "BankID"),
+                            BankName = ReadString(reader, "BankName"),
                             ReferenceNo = ReadString(reader, "ReferenceNo"),
                             ReferenceDate = ReadDateTime(reader, "ReferenceDate"),
                             EmpId = ReadInt(reader, "EmpId"),
+                            EmpName = ReadString(reader, "EmpName"),
                             EmpAccountCode = ReadString(reader, "EmpAccountCode"),
                             BoxValue = ReadDecimal(reader, "BoxValue").GetValueOrDefault(),
                             EmpValue = ReadDecimal(reader, "EmpValue").GetValueOrDefault(),

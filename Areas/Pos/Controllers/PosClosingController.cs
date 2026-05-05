@@ -1,7 +1,9 @@
 ﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
+using MyERP.Areas.Pos.Services;
 using System;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -52,11 +54,14 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(Fail("ليست لديك صلاحية فتح شاشة الإغلاق", "CanOpenClosing is false."));
                 }
 
-                var closingDate = (request != null && request.ClosingDate.HasValue ? request.ClosingDate.Value : DateTime.Today).Date;
-                var branchId = ResolveBranchId(request != null ? request.BranchId : null, context);
-                var values = _repository.GetClosingValues(closingDate, branchId, context.UserId, context.CanChangeDefaults);
-                return Json(new { success = true, values = values });
-            }
+                 var closingDate = (request != null && request.ClosingDate.HasValue ? request.ClosingDate.Value : DateTime.Today).Date;
+                 var branchId = ResolveBranchId(request != null ? request.BranchId : null, context);
+                 var stopwatch = Stopwatch.StartNew();
+                 var values = _repository.GetClosingValues(closingDate, branchId, context.UserId, context.CanChangeDefaults);
+                 stopwatch.Stop();
+                 PosPerformanceLogger.LogQuery("PosClosing.LoadValues", "GetClosingValues", stopwatch.ElapsedMilliseconds, 1, context);
+                 return Json(new { success = true, values = values });
+             }
             catch (SqlException ex)
             {
                 Response.StatusCode = 500;

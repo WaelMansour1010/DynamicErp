@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     "use strict";
 
     var recentKey = "pos.accountSelector.recent";
@@ -17,26 +17,48 @@
         });
     }
 
-    function getProp(obj, pascal, camel) {
-        return obj ? (obj[pascal] !== undefined ? obj[pascal] : obj[camel]) : "";
+    function getProp(obj) {
+        if (!obj) { return ""; }
+        for (var i = 1; i < arguments.length; i++) {
+            var key = arguments[i];
+            if (obj[key] !== undefined && obj[key] !== null) {
+                return obj[key];
+            }
+        }
+        return "";
+    }
+
+    function asText(value) {
+        return value === undefined || value === null ? "" : String(value).trim();
+    }
+
+    function asBool(value) {
+        return value === true || value === 1 || value === "1" || value === "true" || value === "True";
     }
 
     function normalizeAccount(raw) {
         raw = raw || {};
+        var code = asText(getProp(raw, "Account_Code", "AccountCode", "account_code", "accountCode", "Id", "id", "Code", "code"));
+        var serial = asText(getProp(raw, "Account_serial", "Account_Serial", "AccountSerial", "account_serial", "accountSerial", "Serial", "serial", "Extra", "extra"));
+        var name = asText(getProp(raw, "Account_Name", "AccountName", "account_name", "accountName", "Name", "name", "Text", "text"));
+        if (serial && name.indexOf(serial + " - ") === 0) {
+            name = name.substring((serial + " - ").length).trim();
+        }
         return {
-            code: getProp(raw, "AccountCode", "accountCode") || "",
-            serial: getProp(raw, "AccountSerial", "accountSerial") || "",
-            name: getProp(raw, "AccountName", "accountName") || "",
-            hasChildren: getProp(raw, "HasChildren", "hasChildren") === true,
-            isLastAccount: getProp(raw, "IsLastAccount", "isLastAccount") === true
+            code: code,
+            serial: serial,
+            name: name,
+            hasChildren: asBool(getProp(raw, "HasChildren", "hasChildren", "has_children")),
+            isLastAccount: asBool(getProp(raw, "IsLastAccount", "isLastAccount", "last_account", "LastAccount"))
         };
     }
 
     function displayLabel(account) {
         account = normalizeAccount(account);
         var label = "";
-        if (account.serial) { label += account.serial + " - "; }
-        label += account.name || "حساب بدون اسم";
+        if (account.serial) { label += account.serial; }
+        if (account.serial && account.name) { label += " - "; }
+        label += account.name || (account.serial ? "" : "حساب بدون اسم");
         return label;
     }
 
@@ -188,7 +210,6 @@
         renderSavedLists();
         renderSelected();
         switchMode("tree");
-        loadRoots();
     }
 
     function closeModal() {
@@ -216,6 +237,7 @@
         });
         treePanel.hidden = mode !== "tree";
         searchPanel.hidden = mode !== "list";
+        if (mode === "tree") { loadRoots(); }
     }
 
     function loadRoots() {
@@ -245,6 +267,14 @@
             loadedChildren[code] = true;
             container.innerHTML = renderRows(rows || [], 1);
             button.classList.add("is-open");
+            if (selected[code]) {
+                container.querySelectorAll(".account-row").forEach(function (childRow) {
+                    var child = readAccountFromElement(childRow);
+                    if (child.code) {
+                        selected[child.code] = child;
+                    }
+                });
+            }
             syncChecks();
         }).catch(function () {
             container.innerHTML = "<div class='account-empty'>تعذر تحميل الحسابات الفرعية.</div>";

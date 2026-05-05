@@ -71,6 +71,10 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var model = BuildPageModel(context, filter);
+            if (model.ActiveReport == null || string.IsNullOrWhiteSpace(model.Filter.ReportKey))
+            {
+                return new HttpStatusCodeResult(400, "اختر التقرير أولاً");
+            }
             model.Result = RunReport(context, model.Filter, model.ActiveReport);
             var bytes = BuildExcel(model);
             var from = model.Filter.FromDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
@@ -88,8 +92,7 @@ namespace MyERP.Areas.Pos.Controllers
             var activeReport = !string.IsNullOrWhiteSpace(filter.ReportKey)
                 ? reports.FirstOrDefault(x => string.Equals(x.Key, filter.ReportKey, StringComparison.OrdinalIgnoreCase))
                 : null;
-            if (activeReport == null) { activeReport = reports[0]; }
-            if (string.IsNullOrWhiteSpace(filter.ReportKey)) { filter.ReportKey = activeReport.Key; }
+            if (activeReport == null && !string.IsNullOrWhiteSpace(filter.ReportKey)) { activeReport = reports[0]; }
 
             if (!IsAdmin(context) && context.BranchId.HasValue)
             {

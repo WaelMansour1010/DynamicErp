@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -91,7 +92,10 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var serviceTypes = new[] { "cash-in", "cash-out", "card", "violations" };
+            var stopwatch = Stopwatch.StartNew();
             var primaryServices = serviceTypes.ToDictionary(serviceType => serviceType, serviceType => _repository.GetPrimaryServiceItems(serviceType));
+            stopwatch.Stop();
+            PosPerformanceLogger.LogQuery("PosTransaction.CommissionBootstrap", "GetPrimaryServiceItems", stopwatch.ElapsedMilliseconds, primaryServices.Sum(x => x.Value != null ? x.Value.Count : 0), context);
             return Json(new
             {
                 success = true,
@@ -123,6 +127,12 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
+            term = (term ?? string.Empty).Trim();
+            if (term.Length < 2)
+            {
+                return Json(new List<object>(), JsonRequestBehavior.AllowGet);
+            }
+
             return Json(_repository.SearchKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults), JsonRequestBehavior.AllowGet);
         }
 
@@ -134,6 +144,17 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 SetJsonErrorStatus(401);
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            term = (term ?? string.Empty).Trim();
+            if (term.Length < 2)
+            {
+                return Json(new
+                {
+                    success = true,
+                    found = false,
+                    message = string.Empty
+                }, JsonRequestBehavior.AllowGet);
             }
 
             var matches = _repository.SearchUnusedKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults);
@@ -173,12 +194,33 @@ namespace MyERP.Areas.Pos.Controllers
         {
             request = request ?? new PosCommissionRequest();
             var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+            }
+
             if (context != null && !request.BranchId.HasValue)
             {
                 request.BranchId = context.BranchId;
             }
 
-            return Json(_repository.CalculateCommission(request));
+            try
+            {
+                return Json(_repository.CalculateCommission(request));
+            }
+            catch (SqlException ex)
+            {
+                LogCommissionFailure(context, "CalculateCommission.SqlException", request, ex, "SqlException");
+                SetJsonErrorStatus(500);
+                return Json(Fail(GetCommissionFailureMessage(request), ex.Message));
+            }
+            catch (Exception ex)
+            {
+                LogCommissionFailure(context, "CalculateCommission.Exception", request, ex, "Exception");
+                SetJsonErrorStatus(500);
+                return Json(Fail(GetCommissionFailureMessage(request), ex.Message));
+            }
         }
 
         [HttpGet]
@@ -711,7 +753,7 @@ namespace MyERP.Areas.Pos.Controllers
                 var isExistingInvoiceSave = request.Transaction_ID.HasValue && request.Transaction_ID.Value > 0;
                 if (!context.CanSave && !(isExistingInvoiceSave && context.CanEditInvoice))
                 {
-                    Response.StatusCode = 403;
+                    SetJsonErrorStatus(403);
                     return Json(Fail("ليس لديك صلاحية الحفظ", "ScreenJuncUser does not allow CanAdd/FullAccess for FrmSaleBill6, and this is not an allowed edit operation."));
                 }
 
@@ -723,20 +765,20 @@ namespace MyERP.Areas.Pos.Controllers
                     originalInvoice = _repository.GetInvoiceForReview(request.Transaction_ID.Value, context.UserId, context.CanChangeDefaults || context.CanEditInvoice);
                     if (originalInvoice == null)
                     {
-                        Response.StatusCode = 404;
+                        SetJsonErrorStatus(404);
                         return Json(Fail("لم يتم العثور على الفاتورة أو لا تملك صلاحية تعديلها", "Existing invoice not found or not allowed."));
                     }
 
                     if (!context.CanEditInvoice)
                     {
-                        Response.StatusCode = 403;
+                        SetJsonErrorStatus(403);
                         return Json(Fail("ليست لديك صلاحية تعديل هذه الفاتورة", "CanEditInvoice is false."));
                     }
 
                     if (originalInvoice.CreatedUserId.HasValue && originalInvoice.CreatedUserId.Value != context.UserId
                         && !_repository.ValidatePosUserPassword(context.UserId, request.EditPassword))
                     {
-                        Response.StatusCode = 403;
+                        SetJsonErrorStatus(403);
                         return Json(Fail("كلمة المرور غير صحيحة، لم يتم حفظ التعديل", "Current POS user password validation failed."));
                     }
 
@@ -746,6 +788,9 @@ namespace MyERP.Areas.Pos.Controllers
                     request.UserID = originalInvoice.CreatedUserId;
                     request.Emp_ID = originalInvoice.Emp_ID;
                     request.NoID = originalInvoice.NoID;
+                    request.TransactionDate = originalInvoice.TransactionDate.HasValue
+                        ? originalInvoice.TransactionDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                        : request.TransactionDate;
                 }
 
                 var validationErrors = ValidateSaveRequest(request, context);
@@ -753,7 +798,7 @@ namespace MyERP.Areas.Pos.Controllers
                 if (validationErrors.Count > 0)
                 {
                     LogPosSystemIssue(context, "Save.Validation", request, null, "POS save validation failed", "Warning", "Validation", BuildSaveRequestSummary(request, validationErrors));
-                    Response.StatusCode = 400;
+                    SetJsonErrorStatus(400);
                     return Json(Fail("راجع بيانات العملية قبل الحفظ", "Client request failed POS server validation.", validationErrors));
                 }
 
@@ -823,13 +868,13 @@ namespace MyERP.Areas.Pos.Controllers
                 var result = _repository.SaveTransaction(request);
                 if (result == null || result.Transaction_ID <= 0 || !_repository.TransactionExists(result.Transaction_ID))
                 {
-                    Response.StatusCode = 500;
+                    SetJsonErrorStatus(500);
                     return Json(Fail("تعذر تأكيد حفظ الفاتورة في قاعدة البيانات", "usp_POS_SaveTransaction returned success but the transaction row was not found after save."));
                 }
 
                 if (!_repository.TransactionHasDetails(result.Transaction_ID))
                 {
-                    Response.StatusCode = 500;
+                    SetJsonErrorStatus(500);
                     return Json(Fail("تم إنشاء رأس الفاتورة ولكن لا توجد تفاصيل محفوظة", "Transaction header exists, but Transaction_Details has no rows after save."));
                 }
 
@@ -844,16 +889,16 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (SqlException ex)
             {
-                LogPosSystemIssue(context, "Save.SqlException", request, ex, ex.Message, "Error", "SqlException", BuildSaveRequestSummary(request, null));
+                LogPosSystemIssue(context, "Save.SqlException", request, ex, ex.Message, "Error", "SqlException", AppendSqlErrorSummary(BuildSaveRequestSummary(request, null), ex));
                 LogPosSaveFailure("Save.SqlException", request, ex);
-                Response.StatusCode = 500;
+                SetJsonErrorStatus(500);
                 return Json(Fail(FriendlySqlSaveMessage(ex), ex.Message));
             }
             catch (Exception ex)
             {
                 LogPosSystemIssue(context, "Save.Exception", request, ex, ex.Message, "Error", "Exception", BuildSaveRequestSummary(request, null));
                 LogPosSaveFailure("Save.Exception", request, ex);
-                Response.StatusCode = 500;
+                SetJsonErrorStatus(500);
                 return Json(Fail("حدث خطأ أثناء الحفظ التجريبي", ex.Message));
             }
         }
@@ -1043,6 +1088,54 @@ namespace MyERP.Areas.Pos.Controllers
                 status);
         }
 
+        private void LogCommissionFailure(PosUserContext context, string actionName, PosCommissionRequest request, Exception exception, string status)
+        {
+            PosSystemErrorLogger.Log(
+                _repository,
+                Request,
+                context,
+                "PosTransaction",
+                actionName,
+                request == null ? null : request.ServiceType,
+                null,
+                exception == null ? null : exception.Message,
+                exception,
+                BuildCommissionRequestSummary(request),
+                "Error",
+                status);
+        }
+
+        private static string BuildCommissionRequestSummary(PosCommissionRequest request)
+        {
+            if (request == null)
+            {
+                return "Request is null";
+            }
+
+            var parts = new List<string>
+            {
+                "ServiceType=" + (request.ServiceType ?? ""),
+                "ItemID=" + (request.ItemID.HasValue ? request.ItemID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "BranchId=" + (request.BranchId.HasValue ? request.BranchId.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "RechargeValue=" + request.RechargeValue.ToString(CultureInfo.InvariantCulture),
+                "Vatyo=" + (request.Vatyo.HasValue ? request.Vatyo.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "IsWallet=" + request.IsWallet,
+                "HaveGuarantee=" + request.HaveGuarantee
+            };
+
+            return string.Join("; ", parts);
+        }
+
+        private static string GetCommissionFailureMessage(PosCommissionRequest request)
+        {
+            if (request != null && string.Equals(request.ServiceType, "cash-out", StringComparison.OrdinalIgnoreCase))
+            {
+                return "تعذر حساب عمولة كاش أوت. راجع نوع الخدمة والمحفظة/البنك والمبلغ ثم حاول مرة أخرى.";
+            }
+
+            return "تعذر حساب عمولة العملية. راجع نوع الخدمة والمبلغ ثم حاول مرة أخرى.";
+        }
+
         private static string BuildSaveRequestSummary(PosSaveTransactionRequest request, IDictionary<string, string> validationErrors)
         {
             if (request == null)
@@ -1076,6 +1169,36 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return string.Join("; ", parts);
+        }
+
+        private static string AppendSqlErrorSummary(string requestSummary, SqlException exception)
+        {
+            var sqlErrors = BuildSqlErrorSummary(exception);
+            if (string.IsNullOrWhiteSpace(sqlErrors))
+            {
+                return requestSummary;
+            }
+
+            return (requestSummary ?? string.Empty) + "; SqlErrors=" + sqlErrors;
+        }
+
+        private static string BuildSqlErrorSummary(SqlException exception)
+        {
+            if (exception == null || exception.Errors == null)
+            {
+                return string.Empty;
+            }
+
+            var parts = new List<string>();
+            foreach (SqlError error in exception.Errors)
+            {
+                if (error != null)
+                {
+                    parts.Add(error.Number.ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            return string.Join(",", parts.Distinct());
         }
 
         private void AddServiceTypeValidationErrors(PosSaveTransactionRequest request, IDictionary<string, string> errors)
@@ -1512,6 +1635,11 @@ namespace MyERP.Areas.Pos.Controllers
         private static string FriendlySqlSaveMessage(SqlException ex)
         {
             var message = ex == null ? string.Empty : ex.Message;
+            if (HasSqlError(ex, 1205))
+            {
+                return "حدث تزاحم مؤقت أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";
+            }
+
             if (message.IndexOf("account is locked out", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "فشل الاتصال بقاعدة البيانات: حساب SQL مغلق. راجع مستخدم الاتصال في KishnyCashConnection.";
@@ -1529,6 +1657,24 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return "حدث خطأ من قاعدة البيانات أثناء الحفظ التجريبي";
+        }
+
+        private static bool HasSqlError(SqlException exception, int errorNumber)
+        {
+            if (exception == null || exception.Errors == null)
+            {
+                return false;
+            }
+
+            foreach (SqlError error in exception.Errors)
+            {
+                if (error != null && error.Number == errorNumber)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void LogPosSaveFailure(string action, PosSaveTransactionRequest request, Exception exception)

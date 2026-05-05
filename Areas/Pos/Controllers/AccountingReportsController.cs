@@ -73,6 +73,10 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var model = BuildPageModel(context, filter);
+            if (model.ActiveReport == null || string.IsNullOrWhiteSpace(model.Filter.ReportKey))
+            {
+                return new HttpStatusCodeResult(400, "اختر التقرير أولاً");
+            }
             model.Result = RunReport(context, model.Filter, model.ActiveReport);
             var from = model.Filter.FromDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
             var to = model.Filter.ToDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
@@ -110,10 +114,14 @@ namespace MyERP.Areas.Pos.Controllers
             if (filter.ToDate == null) { filter.ToDate = DateTime.Today; }
 
             var reports = BuildDefinitions();
-            var active = reports.FirstOrDefault(x => string.Equals(x.Key, filter.ReportKey, StringComparison.OrdinalIgnoreCase))
-                ?? reports.FirstOrDefault(x => CanRun(context, x.Key))
-                ?? reports.First();
-            filter.ReportKey = active.Key;
+            var active = !string.IsNullOrWhiteSpace(filter.ReportKey)
+                ? reports.FirstOrDefault(x => string.Equals(x.Key, filter.ReportKey, StringComparison.OrdinalIgnoreCase))
+                : null;
+            if (active == null && !string.IsNullOrWhiteSpace(filter.ReportKey))
+            {
+                active = reports.FirstOrDefault(x => CanRun(context, x.Key)) ?? reports.First();
+                filter.ReportKey = active.Key;
+            }
             if (!IsAdmin(context) && context.BranchId.HasValue)
             {
                 filter.BranchId = context.BranchId.Value;

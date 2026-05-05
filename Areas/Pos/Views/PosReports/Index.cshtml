@@ -5,6 +5,7 @@
     var reports = (ViewBag.ReportDefinitions as IEnumerable<MyERP.Areas.Pos.Controllers.PosReportDefinition>) ?? Enumerable.Empty<MyERP.Areas.Pos.Controllers.PosReportDefinition>();
     var branches = (ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosBranchDto>();
     var stores = (ViewBag.Stores as IEnumerable<MyERP.Areas.Pos.Models.PosStoreDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosStoreDto>();
+    var users = (ViewBag.Users as IEnumerable<MyERP.Areas.Pos.Models.PosPermissionUserDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosPermissionUserDto>();
 }
 
 <!DOCTYPE html>
@@ -41,6 +42,17 @@
                     </label>
                     <label>من تاريخ<input type="date" id="reportFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
                     <label>إلى تاريخ<input type="date" id="reportToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>
+                        المستخدم
+                        <select id="reportUserId">
+                            <option value="">كل المستخدمين</option>
+                            @foreach (var user in users)
+                            {
+                                <option value="@user.UserId">@user.UserName</option>
+                            }
+                        </select>
+                    </label>
+                    <label>مصدر الدخول<input type="text" id="reportLoginSource" placeholder="مثال: Desktop / VB6" /></label>
                     <label class="serial-filter is-hidden-ui">
                         المخزن
                         <select id="reportStoreId">
@@ -129,6 +141,8 @@
                     toDate: byId("reportToDate").value,
                     branchId: parseInt(byId("reportBranchId").value, 10) || null,
                     storeId: parseInt(byId("reportStoreId").value, 10) || null,
+                    userId: parseInt(byId("reportUserId").value, 10) || null,
+                    loginSource: byId("reportLoginSource").value || "",
                     serialSearch: byId("reportSerialSearch").value || ""
                 };
             }
@@ -238,6 +252,8 @@
                     ["ToDate", data.toDate || ""],
                     ["BranchId", data.branchId || ""],
                     ["StoreId", data.storeId || ""],
+                    ["UserId", data.userId || ""],
+                    ["LoginSource", data.loginSource || ""],
                     ["SerialSearch", data.serialSearch || ""]
                 ].map(function (item) {
                     return encodeURIComponent(item[0]) + "=" + encodeURIComponent(item[1]);

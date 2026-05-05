@@ -185,6 +185,18 @@
         if (value is decimal) { return ((decimal)value).ToString("0.##"); }
         if (value is double) { return ((double)value).ToString("0.##"); }
         if (value is float) { return ((float)value).ToString("0.##"); }
-        return Convert.ToString(value);
+        var text = Convert.ToString(value);
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            text = text.Trim();
+            var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)(?:[+-]\d+)?\)\/");
+            long milliseconds;
+            if (match.Success && long.TryParse(match.Groups[1].Value, out milliseconds))
+            {
+                return new DateTime(1970, 1, 1).AddMilliseconds(milliseconds).ToLocalTime().ToString("dd/MM/yyyy");
+            }
+        }
+
+        return text;
     }
 }

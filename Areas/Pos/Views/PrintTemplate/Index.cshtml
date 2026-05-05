@@ -1,4 +1,4 @@
-@{
+﻿@{
     Layout = null;
     ViewBag.Title = "مصمم نماذج الطباعة";
     var templateName = (string)ViewBag.TemplateName ?? "KycCard";
@@ -9,6 +9,7 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>@ViewBag.Title</title>
     <link href="@Url.Content("~/Areas/Pos/Content/print-template-designer.css")" rel="stylesheet" />
 </head>
@@ -117,7 +118,7 @@
             <aside class="ptd-side ptd-side-right">
                 <h2>خصائص الحقل</h2>
                 <div id="propertiesPanel" class="ptd-properties">
-                    <p class="ptd-hint">اختر حقلاً من اللوحة لعرض خصائصه.</p>
+                    <p class="ptd-hint">اختر حقلا من اللوحة لعرض خصائصه.</p>
                 </div>
             </aside>
 

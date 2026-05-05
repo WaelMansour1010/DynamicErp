@@ -5,7 +5,6 @@ using MyERP.Areas.Pos.Services;
 using System;
 using System.IO;
 using System.Linq;
-using System.Web;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -37,7 +36,7 @@ namespace MyERP.Areas.Pos.Controllers
                     string.Equals(Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
                 {
                     Response.StatusCode = 401;
-                    return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
+                    return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولا" });
                 }
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }

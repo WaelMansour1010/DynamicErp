@@ -1,7 +1,9 @@
 ﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
+using MyERP.Areas.Pos.Services;
 using System;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -71,7 +73,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult Summary(string periodType, DateTime? fromDate, DateTime? toDate, int? branchId, string operationType, bool? advanced)
+        public JsonResult Summary(string periodType, DateTime? fromDate, DateTime? toDate, int? branchId, string operationType, bool? advanced, bool? refreshSnapshot)
         {
             var context = GetPosContext();
             if (context == null)
@@ -86,13 +88,40 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية عرض لوحة التحكم" }, JsonRequestBehavior.AllowGet);
             }
 
-            try
-            {
-                var resolvedBranchId = branchId.HasValue && branchId.Value > 0 ? branchId : null;
-                var range = ResolveDashboardRange(periodType, fromDate, toDate);
-                var summary = _repository.GetAdminDashboardSummary(range.FromDate, range.ToDate, range.PreviousFromDate, range.PreviousToDate, resolvedBranchId, operationType, range.PeriodType, advanced.GetValueOrDefault(false));
-                return Json(new { success = true, period = range, data = summary }, JsonRequestBehavior.AllowGet);
-            }
+             try
+             {
+                 var resolvedBranchId = branchId.HasValue && branchId.Value > 0 ? branchId : null;
+                 var range = ResolveDashboardRange(periodType, fromDate, toDate);
+                 var stopwatch = Stopwatch.StartNew();
+                 PosDashboardSummaryDto summary;
+                 var useDailySnapshot = string.Equals(range.PeriodType, "daily", StringComparison.OrdinalIgnoreCase)
+                     && range.FromDate.Date == range.ToDate.Date
+                     && range.ToDate.Date < DateTime.Today;
+
+                 if (useDailySnapshot)
+                 {
+                     if (refreshSnapshot.GetValueOrDefault(false))
+                     {
+                         _repository.GenerateAdminDashboardDailySnapshot(range.FromDate, resolvedBranchId, operationType, context.UserId);
+                     }
+
+                     summary = _repository.GetAdminDashboardDailySnapshot(range.FromDate, resolvedBranchId, operationType, range.PeriodType, advanced.GetValueOrDefault(false));
+                     if (!string.Equals(summary.SnapshotStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+                     {
+                         summary.SnapshotMessage = string.IsNullOrWhiteSpace(summary.SnapshotMessage)
+                             ? "لم يتم تجهيز مؤشرات هذه الفترة بعد"
+                             : summary.SnapshotMessage;
+                     }
+                 }
+                 else
+                 {
+                     summary = _repository.GetAdminDashboardSummary(range.FromDate, range.ToDate, range.PreviousFromDate, range.PreviousToDate, resolvedBranchId, operationType, range.PeriodType, advanced.GetValueOrDefault(false));
+                 }
+
+                 stopwatch.Stop();
+                 PosPerformanceLogger.LogQuery("PosDashboard.Summary", useDailySnapshot ? "GetAdminDashboardDailySnapshot" : "GetAdminDashboardSummary", stopwatch.ElapsedMilliseconds, null, context);
+                 return Json(new { success = true, period = range, data = summary }, JsonRequestBehavior.AllowGet);
+             }
             catch (SqlException ex)
             {
                 Response.StatusCode = 500;
