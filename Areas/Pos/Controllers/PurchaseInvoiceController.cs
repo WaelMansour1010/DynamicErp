@@ -103,6 +103,40 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(new { success = true, rows = _repository.GetStoresByBranch(resolvedBranchId) }, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpPost]
+        public JsonResult Search(PosPurchaseInvoiceSearchRequestDto request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" });
+            }
+
+            if (!CanOpen(context))
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية عرض فواتير المشتريات" });
+            }
+
+            var rows = _repository.SearchPurchaseInvoices(request, context);
+            return Json(new
+            {
+                success = true,
+                rows = rows.Select(x => new
+                {
+                    x.TransactionId,
+                    x.InvoiceNumber,
+                    InvoiceDate = x.InvoiceDate.HasValue ? x.InvoiceDate.Value.ToString("dd/MM/yyyy") : "",
+                    x.SupplierName,
+                    x.BranchName,
+                    x.StoreName,
+                    x.NetTotal,
+                    x.Status
+                })
+            });
+        }
+
         [HttpGet]
         public JsonResult Units(int itemId)
         {

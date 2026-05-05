@@ -805,6 +805,29 @@ namespace MyERP.Areas.Pos.Models
         }
     }
 
+    public class PosPurchaseInvoiceSearchRequestDto
+    {
+        public string InvoiceNumber { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public string SupplierTerm { get; set; }
+        public int? BranchId { get; set; }
+        public int? StoreId { get; set; }
+        public int? PaymentType { get; set; }
+    }
+
+    public class PosPurchaseInvoiceIndexRowDto
+    {
+        public int TransactionId { get; set; }
+        public string InvoiceNumber { get; set; }
+        public DateTime? InvoiceDate { get; set; }
+        public string SupplierName { get; set; }
+        public string BranchName { get; set; }
+        public string StoreName { get; set; }
+        public decimal NetTotal { get; set; }
+        public string Status { get; set; }
+    }
+
     public class PosPurchaseInvoiceLineDto
     {
         public int ItemId { get; set; }
@@ -874,6 +897,29 @@ namespace MyERP.Areas.Pos.Models
         {
             Items = new List<PosStockTransferLineDto>();
         }
+    }
+
+    public class PosStockTransferSearchRequestDto
+    {
+        public string VoucherNumber { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public int? BranchId { get; set; }
+        public int? SourceStoreId { get; set; }
+        public int? DestinationStoreId { get; set; }
+        public string ItemOrSerialTerm { get; set; }
+    }
+
+    public class PosStockTransferIndexRowDto
+    {
+        public int SourceTransactionId { get; set; }
+        public int DestinationTransactionId { get; set; }
+        public string VoucherNumber { get; set; }
+        public DateTime? TransferDate { get; set; }
+        public string SourceStoreName { get; set; }
+        public string DestinationStoreName { get; set; }
+        public int ItemCount { get; set; }
+        public decimal TotalQuantity { get; set; }
     }
 
     public class PosStockTransferLineDto

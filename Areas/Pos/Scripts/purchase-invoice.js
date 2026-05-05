@@ -505,6 +505,91 @@
         }
     });
 
+    function bindIndexWorkflow() {
+        var indexPanel = byId("purchaseIndexPanel");
+        var entryPanel = byId("purchaseEntryPanel");
+        var searchBody = byId("purchaseIndexBody");
+        if (!indexPanel || !entryPanel || !searchBody) { return; }
+
+        function showEntry() {
+            indexPanel.classList.add("is-hidden-ui");
+            entryPanel.classList.remove("is-hidden-ui");
+            window.scrollTo(0, 0);
+        }
+
+        function showIndex() {
+            entryPanel.classList.add("is-hidden-ui");
+            indexPanel.classList.remove("is-hidden-ui");
+            window.scrollTo(0, 0);
+        }
+
+        function emptyRow(messageText) {
+            searchBody.innerHTML = "<tr><td colspan=\"8\" class=\"empty-index-row\">" + escapeHtml(messageText) + "</td></tr>";
+        }
+
+        function renderSearchRows(items) {
+            if (!items || !items.length) {
+                emptyRow("لا توجد فواتير مطابقة للفلاتر.");
+                return;
+            }
+
+            searchBody.innerHTML = items.map(function (row) {
+                return "<tr>" +
+                    "<td>" + escapeHtml(row.InvoiceNumber) + "</td>" +
+                    "<td>" + escapeHtml(row.InvoiceDate) + "</td>" +
+                    "<td>" + escapeHtml(row.SupplierName) + "</td>" +
+                    "<td>" + escapeHtml(row.BranchName) + "</td>" +
+                    "<td>" + escapeHtml(row.StoreName) + "</td>" +
+                    "<td>" + escapeHtml(toMoney(row.NetTotal)) + "</td>" +
+                    "<td>" + escapeHtml(row.Status) + "</td>" +
+                    "<td><button type=\"button\" class=\"btn btn-default btn-sm\" data-purchase-view=\"" + escapeHtml(row.TransactionId) + "\">عرض</button></td>" +
+                    "</tr>";
+            }).join("");
+        }
+
+        function search() {
+            emptyRow("جاري البحث...");
+            fetch(getUrl("data-search-url"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    InvoiceNumber: byId("purchaseSearchInvoice").value,
+                    FromDate: byId("purchaseSearchFrom").value,
+                    ToDate: byId("purchaseSearchTo").value,
+                    SupplierTerm: byId("purchaseSearchSupplier").value,
+                    BranchId: byId("purchaseSearchBranch").value || null,
+                    StoreId: byId("purchaseSearchStore").value || null,
+                    PaymentType: byId("purchaseSearchPayment").value || null
+                })
+            })
+                .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+                .then(function (result) {
+                    if (!result.ok || !result.data.success) {
+                        throw new Error((result.data && result.data.message) || "تعذر البحث");
+                    }
+                    renderSearchRows(result.data.rows || []);
+                })
+                .catch(function (error) { emptyRow(error.message); });
+        }
+
+        byId("purchaseAddNewBtn").addEventListener("click", showEntry);
+        byId("purchaseBackToIndexBtn").addEventListener("click", showIndex);
+        byId("purchaseSearchBtn").addEventListener("click", search);
+        byId("purchaseClearSearchBtn").addEventListener("click", function () {
+            byId("purchaseSearchInvoice").value = "";
+            byId("purchaseSearchSupplier").value = "";
+            byId("purchaseSearchPayment").value = "";
+            emptyRow("اضغط بحث لعرض فواتير المشتريات.");
+        });
+        searchBody.addEventListener("click", function (event) {
+            var button = event.target.closest("[data-purchase-view]");
+            if (!button) { return; }
+            message("العرض التفصيلي للفواتير السابقة سيستخدم نفس شاشة الإدخال بعد ربط تحميل التفاصيل.", true);
+        });
+    }
+
+    bindIndexWorkflow();
     bindSupplierLookup();
     bindGrid();
     bindPaymentFields();

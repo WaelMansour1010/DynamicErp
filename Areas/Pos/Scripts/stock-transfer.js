@@ -246,7 +246,6 @@
                         return "<option value=\"" + escapeHtml(store.StoreID) + "\">" + escapeHtml(store.StoreName) + "</option>";
                     }).join("");
                     byId("transferSourceStoreId").innerHTML = options;
-                    byId("transferDestinationStoreId").innerHTML = options;
                 });
         });
     }
@@ -481,7 +480,90 @@
         });
     });
 
+    function bindIndexWorkflow() {
+        var indexPanel = byId("stockIndexPanel");
+        var entryPanel = byId("stockEntryPanel");
+        var searchBody = byId("stockIndexBody");
+        if (!indexPanel || !entryPanel || !searchBody) { return; }
+
+        function showEntry() {
+            indexPanel.classList.add("is-hidden-ui");
+            entryPanel.classList.remove("is-hidden-ui");
+            window.scrollTo(0, 0);
+        }
+
+        function showIndex() {
+            entryPanel.classList.add("is-hidden-ui");
+            indexPanel.classList.remove("is-hidden-ui");
+            window.scrollTo(0, 0);
+        }
+
+        function emptyRow(messageText) {
+            searchBody.innerHTML = "<tr><td colspan=\"7\" class=\"empty-index-row\">" + escapeHtml(messageText) + "</td></tr>";
+        }
+
+        function renderSearchRows(items) {
+            if (!items || !items.length) {
+                emptyRow("لا توجد سندات مطابقة للفلاتر.");
+                return;
+            }
+
+            searchBody.innerHTML = items.map(function (row) {
+                return "<tr>" +
+                    "<td>" + escapeHtml(row.VoucherNumber) + "</td>" +
+                    "<td>" + escapeHtml(row.TransferDate) + "</td>" +
+                    "<td>" + escapeHtml(row.SourceStoreName) + "</td>" +
+                    "<td>" + escapeHtml(row.DestinationStoreName) + "</td>" +
+                    "<td>" + escapeHtml(row.ItemCount) + "</td>" +
+                    "<td>" + escapeHtml(toNumber(row.TotalQuantity).toFixed(3)) + "</td>" +
+                    "<td><button type=\"button\" class=\"btn btn-default btn-sm\" data-stock-view=\"" + escapeHtml(row.SourceTransactionId) + "\">عرض</button></td>" +
+                    "</tr>";
+            }).join("");
+        }
+
+        function search() {
+            emptyRow("جاري البحث...");
+            fetch(getUrl("data-search-url"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    VoucherNumber: byId("stockSearchVoucher").value,
+                    FromDate: byId("stockSearchFrom").value,
+                    ToDate: byId("stockSearchTo").value,
+                    BranchId: byId("stockSearchBranch").value || null,
+                    SourceStoreId: byId("stockSearchSourceStore").value || null,
+                    DestinationStoreId: byId("stockSearchDestinationStore").value || null,
+                    ItemOrSerialTerm: byId("stockSearchItem").value
+                })
+            })
+                .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+                .then(function (result) {
+                    if (!result.ok || !result.data.success) {
+                        throw new Error((result.data && result.data.message) || "تعذر البحث");
+                    }
+                    renderSearchRows(result.data.rows || []);
+                })
+                .catch(function (error) { emptyRow(error.message); });
+        }
+
+        byId("stockAddNewBtn").addEventListener("click", showEntry);
+        byId("stockBackToIndexBtn").addEventListener("click", showIndex);
+        byId("stockSearchBtn").addEventListener("click", search);
+        byId("stockClearSearchBtn").addEventListener("click", function () {
+            byId("stockSearchVoucher").value = "";
+            byId("stockSearchItem").value = "";
+            emptyRow("اضغط بحث لعرض سندات التحويل.");
+        });
+        searchBody.addEventListener("click", function (event) {
+            var button = event.target.closest("[data-stock-view]");
+            if (!button) { return; }
+            message("العرض التفصيلي لسندات التحويل السابقة سيستخدم نفس شاشة الإدخال بعد ربط تحميل التفاصيل.", true);
+        });
+    }
+
     rows.push(createRow());
+    bindIndexWorkflow();
     bindGrid();
     bindBranchStores();
     bindImport();

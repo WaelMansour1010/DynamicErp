@@ -295,6 +295,60 @@
         .stock-message.is-error { color: #b42318; }
         .stock-message.is-success { color: #027a48; }
 
+        .pos-breadcrumb {
+            align-items: center;
+            color: #64748b;
+            display: flex;
+            flex-wrap: wrap;
+            font-size: 13px;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .pos-breadcrumb a {
+            color: #2563eb;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .index-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .index-table-wrap {
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            margin-top: 14px;
+            overflow-x: auto;
+        }
+
+        .index-table {
+            margin: 0;
+            min-width: 980px;
+        }
+
+        .index-table th {
+            background: #f0f3f7;
+            color: #344054;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .empty-index-row {
+            color: #667085;
+            padding: 24px !important;
+            text-align: center;
+        }
+
+        .is-hidden-ui {
+            display: none !important;
+        }
+
         @@media (max-width: 992px) {
             .stock-title,
             .stock-toolbar,
@@ -316,8 +370,121 @@
          data-stores-url="@Url.Action("Stores", "StockTransfer", new { area = "Pos" })"
          data-import-url="@Url.Action("ImportSerials", "StockTransfer", new { area = "Pos" })"
          data-import-excel-url="@Url.Action("ImportExcel", "StockTransfer", new { area = "Pos" })"
-         data-save-url="@Url.Action("Save", "StockTransfer", new { area = "Pos" })">
+         data-save-url="@Url.Action("Save", "StockTransfer", new { area = "Pos" })"
+         data-search-url="@Url.Action("Search", "StockTransfer", new { area = "Pos" })">
         <div class="stock-shell">
+            <nav class="pos-breadcrumb" aria-label="breadcrumb">
+                <a href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })" target="_top">لوحة التحكم</a>
+                <span>/</span>
+                <span>العمليات</span>
+                <span>/</span>
+                <strong>تحويل مخزون</strong>
+            </nav>
+
+            <section class="stock-card" id="stockIndexPanel">
+                <div class="stock-title">
+                    <div>
+                        <h1>سندات تحويل المخزون</h1>
+                        <span>ابحث عن سند سابق أو ابدأ سند تحويل جديد.</span>
+                    </div>
+                    <button type="button" class="btn btn-success" id="stockAddNewBtn">إضافة سند تحويل جديد</button>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>رقم السند</label>
+                            <input type="text" id="stockSearchVoucher" class="form-control" placeholder="رقم سند التحويل" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>من تاريخ</label>
+                            <input type="date" id="stockSearchFrom" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>إلى تاريخ</label>
+                            <input type="date" id="stockSearchTo" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>الفرع</label>
+                            <select id="stockSearchBranch" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                <option value="">كل الفروع</option>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>المخزن المحول منه</label>
+                            <select id="stockSearchSourceStore" class="form-control">
+                                <option value="">كل المخازن</option>
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID">@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>المخزن المحول إليه</label>
+                            <select id="stockSearchDestinationStore" class="form-control">
+                                <option value="">كل المخازن</option>
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID">@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>الصنف / السيريال</label>
+                            <input type="text" id="stockSearchItem" class="form-control" placeholder="اسم الصنف أو السيريال" />
+                        </div>
+                    </div>
+                </div>
+                <div class="index-actions">
+                    <button type="button" class="btn btn-primary" id="stockSearchBtn">بحث</button>
+                    <button type="button" class="btn btn-default" id="stockClearSearchBtn">مسح الفلاتر</button>
+                </div>
+                <div class="index-table-wrap">
+                    <table class="table table-bordered index-table">
+                        <thead>
+                            <tr>
+                                <th>رقم السند</th>
+                                <th>التاريخ</th>
+                                <th>من مخزن</th>
+                                <th>إلى مخزن</th>
+                                <th>عدد الأصناف</th>
+                                <th>إجمالي الكمية</th>
+                                <th>إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockIndexBody">
+                            <tr><td colspan="7" class="empty-index-row">اضغط بحث لعرض سندات التحويل.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="stockEntryPanel" class="is-hidden-ui">
             <section class="stock-card">
                 <div class="stock-title">
                     <div>
@@ -484,11 +651,13 @@
                 </div>
 
                 <div class="stock-footer">
+                    <button type="button" class="btn btn-default" id="stockBackToIndexBtn">العودة للقائمة</button>
                     <button type="button" class="btn btn-default" id="clearTransferBtn">مسح الأصناف</button>
                     <button type="button" class="btn btn-primary" id="saveTransferBtn">حفظ سند التحويل</button>
                     <span id="transferMessage" class="stock-message"></span>
                 </div>
             </section>
+            </div>
         </div>
     </div>
 

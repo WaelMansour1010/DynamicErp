@@ -1004,6 +1004,79 @@ ORDER BY
             }
         }
 
+        public IList<PosPurchaseInvoiceIndexRowDto> SearchPurchaseInvoices(PosPurchaseInvoiceSearchRequestDto request, PosUserContext context)
+        {
+            var rows = new List<PosPurchaseInvoiceIndexRowDto>();
+            request = request ?? new PosPurchaseInvoiceSearchRequestDto();
+
+            const string sql = @"
+SELECT TOP (100)
+    t.Transaction_ID,
+    t.NoteSerial1 AS InvoiceNumber,
+    t.Transaction_Date AS InvoiceDate,
+    COALESCE(NULLIF(c.CusName, N''), NULLIF(c.CusNamee, N''), N'مورد ' + CONVERT(NVARCHAR(20), t.CusID)) AS SupplierName,
+    COALESCE(NULLIF(bd.branch_name, N''), NULLIF(bd.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), t.BranchId)) AS BranchName,
+    COALESCE(NULLIF(s.StoreName, N''), NULLIF(s.StoreNamee, N''), N'مخزن ' + CONVERT(NVARCHAR(20), t.StoreID)) AS StoreName,
+    CAST(ISNULL(t.NetValue, ISNULL(t.Transaction_NetValue, 0)) AS DECIMAL(18, 4)) AS NetTotal,
+    N'نشطة' AS Status
+FROM dbo.Transactions t
+LEFT JOIN dbo.TblCustemers c ON c.CusID = t.CusID
+LEFT JOIN dbo.TblStore s ON s.StoreID = t.StoreID
+LEFT JOIN dbo.TblBranchesData bd ON bd.branch_id = t.BranchId
+WHERE t.Transaction_Type = 22
+  AND (@FromDate IS NULL OR t.Transaction_Date >= @FromDate)
+  AND (@ToDate IS NULL OR t.Transaction_Date < DATEADD(DAY, 1, @ToDate))
+  AND (@BranchId IS NULL OR t.BranchId = @BranchId)
+  AND (@StoreId IS NULL OR t.StoreID = @StoreId)
+  AND (@PaymentType IS NULL OR t.PaymentType = @PaymentType)
+  AND (@InvoiceNumber = N'' OR ISNULL(t.NoteSerial1, N'') LIKE @InvoiceLike OR ISNULL(t.ManualNO, N'') LIKE @InvoiceLike)
+  AND (@SupplierTerm = N''
+       OR ISNULL(c.CusName, N'') LIKE @SupplierLike
+       OR ISNULL(c.CusNamee, N'') LIKE @SupplierLike
+       OR CONVERT(NVARCHAR(30), t.CusID) LIKE @SupplierLike)
+ORDER BY t.Transaction_Date DESC, t.Transaction_ID DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.CommandTimeout = 30;
+                var branchId = context != null && !context.IsFullAccess ? context.BranchId : request.BranchId;
+                var invoiceNumber = (request.InvoiceNumber ?? string.Empty).Trim();
+                var supplierTerm = (request.SupplierTerm ?? string.Empty).Trim();
+
+                Add(command, "@FromDate", SqlDbType.SmallDateTime, request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value);
+                Add(command, "@ToDate", SqlDbType.SmallDateTime, request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value);
+                Add(command, "@BranchId", SqlDbType.Int, branchId);
+                Add(command, "@StoreId", SqlDbType.Int, request.StoreId);
+                Add(command, "@PaymentType", SqlDbType.Int, request.PaymentType);
+                AddString(command, "@InvoiceNumber", SqlDbType.NVarChar, 50, invoiceNumber);
+                AddString(command, "@InvoiceLike", SqlDbType.NVarChar, 80, "%" + invoiceNumber + "%");
+                AddString(command, "@SupplierTerm", SqlDbType.NVarChar, 100, supplierTerm);
+                AddString(command, "@SupplierLike", SqlDbType.NVarChar, 130, "%" + supplierTerm + "%");
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new PosPurchaseInvoiceIndexRowDto
+                        {
+                            TransactionId = ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
+                            InvoiceNumber = ReadString(reader, "InvoiceNumber"),
+                            InvoiceDate = ReadDateTime(reader, "InvoiceDate"),
+                            SupplierName = FixArabicMojibakeForDisplay(ReadString(reader, "SupplierName")),
+                            BranchName = FixArabicMojibakeForDisplay(ReadString(reader, "BranchName")),
+                            StoreName = FixArabicMojibakeForDisplay(ReadString(reader, "StoreName")),
+                            NetTotal = ReadDecimal(reader, "NetTotal").GetValueOrDefault(),
+                            Status = ReadString(reader, "Status")
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
         public IList<PosItemLookupDto> GetStockTransferItems(string term)
         {
             var items = new List<PosItemLookupDto>();
@@ -1190,6 +1263,94 @@ ORDER BY i.ItemID;";
                     };
                 }
             }
+        }
+
+        public IList<PosStockTransferIndexRowDto> SearchStockTransfers(PosStockTransferSearchRequestDto request, PosUserContext context)
+        {
+            var rows = new List<PosStockTransferIndexRowDto>();
+            request = request ?? new PosStockTransferSearchRequestDto();
+
+            const string sql = @"
+SELECT TOP (100)
+    src.Transaction_ID AS SourceTransactionId,
+    dest.Transaction_ID AS DestinationTransactionId,
+    src.NoteSerial1 AS VoucherNumber,
+    src.Transaction_Date AS TransferDate,
+    COALESCE(NULLIF(ss.StoreName, N''), NULLIF(ss.StoreNamee, N''), N'مخزن ' + CONVERT(NVARCHAR(20), src.StoreID)) AS SourceStoreName,
+    COALESCE(NULLIF(ds.StoreName, N''), NULLIF(ds.StoreNamee, N''), N'مخزن ' + CONVERT(NVARCHAR(20), dest.StoreID)) AS DestinationStoreName,
+    COUNT(DISTINCT td.Item_ID) AS ItemCount,
+    CAST(SUM(ISNULL(td.Quantity, 0)) AS DECIMAL(18, 4)) AS TotalQuantity
+FROM dbo.Transactions src
+LEFT JOIN dbo.Transactions dest ON dest.ReturnID = src.Transaction_ID AND dest.Transaction_Type IN (11, 993)
+LEFT JOIN dbo.TblStore ss ON ss.StoreID = src.StoreID
+LEFT JOIN dbo.TblStore ds ON ds.StoreID = dest.StoreID
+LEFT JOIN dbo.Transaction_Details td ON td.Transaction_ID = src.Transaction_ID
+LEFT JOIN dbo.TblItems i ON i.ItemID = td.Item_ID
+WHERE src.Transaction_Type IN (10, 992)
+  AND (@FromDate IS NULL OR src.Transaction_Date >= @FromDate)
+  AND (@ToDate IS NULL OR src.Transaction_Date < DATEADD(DAY, 1, @ToDate))
+  AND (@BranchId IS NULL OR src.BranchId = @BranchId)
+  AND (@SourceStoreId IS NULL OR src.StoreID = @SourceStoreId)
+  AND (@DestinationStoreId IS NULL OR dest.StoreID = @DestinationStoreId)
+  AND (@VoucherNumber = N'' OR ISNULL(src.NoteSerial1, N'') LIKE @VoucherLike OR ISNULL(src.OldNoteSerial1, N'') LIKE @VoucherLike)
+  AND (@ItemTerm = N''
+       OR ISNULL(td.ItemSerial, N'') LIKE @ItemLike
+       OR ISNULL(i.ItemCode, N'') LIKE @ItemLike
+       OR ISNULL(i.Fullcode, N'') LIKE @ItemLike
+       OR ISNULL(i.ItemName, N'') LIKE @ItemLike
+       OR ISNULL(i.ItemNamee, N'') LIKE @ItemLike)
+GROUP BY
+    src.Transaction_ID,
+    dest.Transaction_ID,
+    src.NoteSerial1,
+    src.Transaction_Date,
+    src.StoreID,
+    dest.StoreID,
+    ss.StoreName,
+    ss.StoreNamee,
+    ds.StoreName,
+    ds.StoreNamee
+ORDER BY src.Transaction_Date DESC, src.Transaction_ID DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.CommandTimeout = 30;
+                var branchId = context != null && !context.IsFullAccess ? context.BranchId : request.BranchId;
+                var voucherNumber = (request.VoucherNumber ?? string.Empty).Trim();
+                var itemTerm = (request.ItemOrSerialTerm ?? string.Empty).Trim();
+
+                Add(command, "@FromDate", SqlDbType.SmallDateTime, request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value);
+                Add(command, "@ToDate", SqlDbType.SmallDateTime, request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value);
+                Add(command, "@BranchId", SqlDbType.Int, branchId);
+                Add(command, "@SourceStoreId", SqlDbType.Int, request.SourceStoreId);
+                Add(command, "@DestinationStoreId", SqlDbType.Int, request.DestinationStoreId);
+                AddString(command, "@VoucherNumber", SqlDbType.NVarChar, 50, voucherNumber);
+                AddString(command, "@VoucherLike", SqlDbType.NVarChar, 80, "%" + voucherNumber + "%");
+                AddString(command, "@ItemTerm", SqlDbType.NVarChar, 100, itemTerm);
+                AddString(command, "@ItemLike", SqlDbType.NVarChar, 130, "%" + itemTerm + "%");
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new PosStockTransferIndexRowDto
+                        {
+                            SourceTransactionId = ReadInt(reader, "SourceTransactionId").GetValueOrDefault(),
+                            DestinationTransactionId = ReadInt(reader, "DestinationTransactionId").GetValueOrDefault(),
+                            VoucherNumber = ReadString(reader, "VoucherNumber"),
+                            TransferDate = ReadDateTime(reader, "TransferDate"),
+                            SourceStoreName = FixArabicMojibakeForDisplay(ReadString(reader, "SourceStoreName")),
+                            DestinationStoreName = FixArabicMojibakeForDisplay(ReadString(reader, "DestinationStoreName")),
+                            ItemCount = ReadInt(reader, "ItemCount").GetValueOrDefault(),
+                            TotalQuantity = ReadDecimal(reader, "TotalQuantity").GetValueOrDefault()
+                        });
+                    }
+                }
+            }
+
+            return rows;
         }
 
         public IList<string> ReadSerialsFromExcel(Stream stream)

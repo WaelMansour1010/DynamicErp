@@ -84,6 +84,40 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpPost]
+        public JsonResult Search(PosStockTransferSearchRequestDto request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" });
+            }
+
+            if (!CanOpen(context))
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية عرض سندات تحويل المخزون" });
+            }
+
+            var rows = _repository.SearchStockTransfers(request, context);
+            return Json(new
+            {
+                success = true,
+                rows = rows.Select(x => new
+                {
+                    x.SourceTransactionId,
+                    x.DestinationTransactionId,
+                    x.VoucherNumber,
+                    TransferDate = x.TransferDate.HasValue ? x.TransferDate.Value.ToString("dd/MM/yyyy") : "",
+                    x.SourceStoreName,
+                    x.DestinationStoreName,
+                    x.ItemCount,
+                    x.TotalQuantity
+                })
+            });
+        }
+
+        [HttpPost]
         public JsonResult ImportSerials(PosStockTransferImportRequestDto request)
         {
             var context = GetPosContext();

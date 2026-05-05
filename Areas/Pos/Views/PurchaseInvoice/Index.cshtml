@@ -273,6 +273,60 @@
             color: #027a48;
         }
 
+        .pos-breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .pos-breadcrumb a {
+            color: #2563eb;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .index-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .index-table-wrap {
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            margin-top: 14px;
+            overflow-x: auto;
+        }
+
+        .index-table {
+            min-width: 980px;
+            margin: 0;
+        }
+
+        .index-table th {
+            background: #f0f3f7;
+            color: #344054;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .empty-index-row {
+            color: #667085;
+            padding: 24px !important;
+            text-align: center;
+        }
+
+        .is-hidden-ui {
+            display: none !important;
+        }
+
         .import-result {
             display: none;
             margin-top: 12px;
@@ -329,8 +383,116 @@
          data-units-url="@Url.Action("Units", "PurchaseInvoice", new { area = "Pos" })"
          data-stores-url="@Url.Action("Stores", "PurchaseInvoice", new { area = "Pos" })"
          data-import-url="@Url.Action("ImportExcel", "PurchaseInvoice", new { area = "Pos" })"
-         data-save-url="@Url.Action("Save", "PurchaseInvoice", new { area = "Pos" })">
+         data-save-url="@Url.Action("Save", "PurchaseInvoice", new { area = "Pos" })"
+         data-search-url="@Url.Action("Search", "PurchaseInvoice", new { area = "Pos" })">
         <div class="purchase-shell">
+            <nav class="pos-breadcrumb" aria-label="breadcrumb">
+                <a href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })" target="_top">لوحة التحكم</a>
+                <span>/</span>
+                <span>العمليات</span>
+                <span>/</span>
+                <strong>فواتير مشتريات</strong>
+            </nav>
+
+            <section class="purchase-card" id="purchaseIndexPanel">
+                <div class="purchase-title">
+                    <h1>فواتير مشتريات</h1>
+                    <span>ابحث عن فاتورة موجودة أو ابدأ فاتورة شراء جديدة.</span>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchInvoice">رقم الفاتورة</label>
+                            <input type="text" id="purchaseSearchInvoice" class="form-control" placeholder="رقم الفاتورة أو رقم المورد" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchFrom">من تاريخ</label>
+                            <input type="date" id="purchaseSearchFrom" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchTo">إلى تاريخ</label>
+                            <input type="date" id="purchaseSearchTo" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchSupplier">المورد</label>
+                            <input type="text" id="purchaseSearchSupplier" class="form-control" placeholder="كود أو اسم المورد" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchBranch">الفرع</label>
+                            <select id="purchaseSearchBranch" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                <option value="">كل الفروع</option>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchStore">المخزن</label>
+                            <select id="purchaseSearchStore" class="form-control">
+                                <option value="">كل المخازن</option>
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID">@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSearchPayment">طريقة الدفع</label>
+                            <select id="purchaseSearchPayment" class="form-control">
+                                <option value="">كل الطرق</option>
+                                <option value="1">آجل / على المورد</option>
+                                <option value="0">نقدي</option>
+                                <option value="3">بنك</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="index-actions">
+                    <button type="button" class="btn btn-primary" id="purchaseSearchBtn">بحث</button>
+                    <button type="button" class="btn btn-default" id="purchaseClearSearchBtn">مسح الفلاتر</button>
+                    <button type="button" class="btn btn-success" id="purchaseAddNewBtn">إضافة فاتورة جديدة</button>
+                </div>
+                <div class="index-table-wrap">
+                    <table class="table table-bordered index-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>التاريخ</th>
+                                <th>المورد</th>
+                                <th>الفرع</th>
+                                <th>المخزن</th>
+                                <th>الصافي</th>
+                                <th>الحالة</th>
+                                <th>إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseIndexBody">
+                            <tr><td colspan="8" class="empty-index-row">اضغط بحث لعرض فواتير المشتريات.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="purchaseEntryPanel" class="is-hidden-ui">
             <section class="purchase-card">
                 <div class="purchase-title">
                     <h1>فاتورة مشتريات</h1>
@@ -489,9 +651,11 @@
 
                 <div class="purchase-footer">
                     <span id="purchaseMessage" class="purchase-message"></span>
+                    <button type="button" class="btn btn-default btn-lg" id="purchaseBackToIndexBtn">العودة للقائمة</button>
                     <button type="button" class="btn btn-primary btn-lg" id="savePurchaseBtn">حفظ الفاتورة</button>
                 </div>
             </section>
+            </div>
         </div>
     </div>
 

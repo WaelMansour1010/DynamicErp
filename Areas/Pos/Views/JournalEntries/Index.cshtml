@@ -15,6 +15,38 @@
     <title>@ViewBag.Title</title>
     <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
     <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css")" rel="stylesheet" />
+    <style>
+        .journal-entry-page:not(.is-editing) .journal-form-card,
+        .journal-entry-page:not(.is-editing) .journal-lines-card,
+        .journal-entry-page:not(.is-editing) .journal-totals-card {
+            display: none;
+        }
+
+        .journal-browse-inline {
+            background: transparent;
+            display: block;
+            inset: auto;
+            margin-bottom: 18px;
+            opacity: 1;
+            pointer-events: auto;
+            position: static;
+            visibility: visible;
+        }
+
+        .journal-browse-inline .erp-modal-backdrop,
+        .journal-browse-inline .erp-icon-btn {
+            display: none;
+        }
+
+        .journal-browse-inline .erp-modal-dialog {
+            box-shadow: 0 16px 36px rgba(15, 23, 42, .08);
+            margin: 0;
+            max-height: none;
+            max-width: none;
+            overflow: visible;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <main class="html-report-page erp-ui-page journal-entry-page"
@@ -134,7 +166,7 @@
             </div>
         </section>
 
-        <div class="erp-modal" id="journalBrowseModal" aria-hidden="true">
+        <div class="erp-modal journal-browse-inline" id="journalBrowseModal" aria-hidden="false">
             <div class="erp-modal-backdrop" id="journalBrowseBackdrop"></div>
             <div class="erp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="journalBrowseTitle">
                 <div class="erp-modal-head">
@@ -251,11 +283,13 @@
                 });
             }
             function openBrowseModal() {
+                root.classList.remove("is-editing");
                 byId("journalBrowseModal").classList.add("is-open");
                 document.body.classList.add("account-modal-open");
                 byId("searchVoucherNo").focus();
             }
             function closeBrowseModal() {
+                if (byId("journalBrowseModal").classList.contains("journal-browse-inline")) { return; }
                 byId("journalBrowseModal").classList.remove("is-open");
                 document.body.classList.remove("account-modal-open");
             }
@@ -329,6 +363,7 @@
             }
 
             function clearForm() {
+                root.classList.add("is-editing");
                 byId("noteId").value = "";
                 byId("noteSerialDisplay").value = "";
                 byId("entryDescription").value = "";
@@ -402,6 +437,7 @@
                     .then(function (data) {
                         if (!data.success) { msg(data.message || "تعذر فتح القيد", true); return; }
                         var entry = data.entry;
+                        root.classList.add("is-editing");
                         loadedIsManual = entry.IsManual === true;
                         byId("noteId").value = entry.NoteId || "";
                         byId("noteSerialDisplay").value = entry.NoteSerial || entry.NoteSerial1 || entry.NoteId || "";
