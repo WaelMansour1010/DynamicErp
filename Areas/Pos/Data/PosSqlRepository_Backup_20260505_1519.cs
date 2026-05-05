@@ -766,8 +766,7 @@ WITH CandidateItems AS
         i.PurchasePrice,
         i.CostPrice,
         i.ItemCase,
-        i.ItemType,
-        i.HaveSerial
+        i.ItemType
     FROM dbo.TblItems i
     WHERE ISNULL(i.IsArchive, 0) = 0
       AND (@term = N''
@@ -788,8 +787,7 @@ SELECT
     CAST(COALESCE(iu.UnitFactor, 1) AS DECIMAL(18, 4)) AS QtyBySmalltUnit,
     COALESCE(i.ItemCase, 1) AS ItemCase,
     CAST(COALESCE(i.CostPrice, i.PurchasePrice, 0) AS DECIMAL(18, 4)) AS CostPrice,
-    COALESCE(i.ItemType, 0) AS SavedItemType,
-    CAST(COALESCE(i.HaveSerial, 0) AS BIT) AS HaveSerial
+    COALESCE(i.ItemType, 0) AS SavedItemType
 FROM CandidateItems i
 OUTER APPLY
 (
@@ -828,131 +826,13 @@ ORDER BY i.ItemID;";
                             QtyBySmalltUnit = ReadDecimal(reader, "QtyBySmalltUnit").GetValueOrDefault(1),
                             ItemCase = ReadInt(reader, "ItemCase").GetValueOrDefault(1),
                             CostPrice = ReadDecimal(reader, "CostPrice").GetValueOrDefault(),
-                            SavedItemType = ReadInt(reader, "SavedItemType").GetValueOrDefault(),
-                            HaveSerial = ReadBoolean(reader, "HaveSerial")
+                            SavedItemType = ReadInt(reader, "SavedItemType").GetValueOrDefault()
                         });
                     }
                 }
             }
 
             return items;
-        }
-
-        public IList<PosPurchaseItemUnitDto> GetPurchaseItemUnits(int itemId)
-        {
-            var units = new List<PosPurchaseItemUnitDto>();
-            const string sql = @"
-SELECT
-    iu.UnitID AS UnitId,
-    COALESCE(NULLIF(u.UnitName, N''), NULLIF(u.UnitNamee, N''), CONVERT(NVARCHAR(50), iu.UnitID)) AS UnitName,
-    CAST(COALESCE(iu.UnitFactor, 1) AS DECIMAL(18, 4)) AS UnitFactor,
-    CAST(COALESCE(NULLIF(iu.UnitPurPrice, 0), i.PurchasePrice, i.CostPrice, 0) AS DECIMAL(18, 4)) AS PurchasePrice,
-    CAST(CASE WHEN ISNULL(iu.DefaultUnit, 0) = 1 THEN 1 ELSE 0 END AS BIT) AS IsDefault
-FROM dbo.TblItemsUnits iu
-INNER JOIN dbo.TblItems i ON i.ItemID = iu.ItemID
-LEFT JOIN dbo.TblUnites u ON u.UnitID = iu.UnitID
-WHERE iu.ItemID = @itemId
-ORDER BY CASE WHEN ISNULL(iu.DefaultUnit, 0) = 1 THEN 0 ELSE 1 END, iu.JunckID;";
-
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(sql, connection))
-            {
-                command.Parameters.Add("@itemId", SqlDbType.Int).Value = itemId;
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        units.Add(new PosPurchaseItemUnitDto
-                        {
-                            UnitId = ReadInt(reader, "UnitId").GetValueOrDefault(),
-                            UnitName = ReadString(reader, "UnitName"),
-                            UnitFactor = ReadDecimal(reader, "UnitFactor").GetValueOrDefault(1),
-                            PurchasePrice = ReadDecimal(reader, "PurchasePrice").GetValueOrDefault(),
-                            IsDefault = ReadBoolean(reader, "IsDefault")
-                        });
-                    }
-                }
-            }
-
-            return units;
-        }
-
-        public PosItemLookupDto FindPurchaseItemForImport(string itemText)
-        {
-            var text = (itemText ?? string.Empty).Trim();
-            if (text.Length == 0)
-            {
-                return null;
-            }
-
-            const string sql = @"
-SELECT TOP (1)
-    i.ItemID AS Item_ID,
-    COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(50), i.ItemID)) AS ItemName,
-    COALESCE(NULLIF(i.Fullcode, N''), NULLIF(i.ItemCode, N''), CONVERT(NVARCHAR(50), i.ItemID)) AS ItemCode,
-    iu.UnitID AS UnitId,
-    COALESCE(NULLIF(u.UnitName, N''), NULLIF(u.UnitNamee, N''), CONVERT(NVARCHAR(50), iu.UnitID)) AS UnitName,
-    CAST(COALESCE(NULLIF(iu.UnitPurPrice, 0), i.PurchasePrice, i.CostPrice, 0) AS DECIMAL(18, 4)) AS Price,
-    CAST(COALESCE(iu.UnitFactor, 1) AS DECIMAL(18, 4)) AS QtyBySmalltUnit,
-    COALESCE(i.ItemCase, 1) AS ItemCase,
-    CAST(COALESCE(i.CostPrice, i.PurchasePrice, 0) AS DECIMAL(18, 4)) AS CostPrice,
-    COALESCE(i.ItemType, 0) AS SavedItemType,
-    CAST(COALESCE(i.HaveSerial, 0) AS BIT) AS HaveSerial
-FROM dbo.TblItems i
-OUTER APPLY
-(
-    SELECT TOP (1) iu0.UnitID, iu0.UnitFactor, iu0.UnitPurPrice, iu0.JunckID
-    FROM dbo.TblItemsUnits iu0
-    WHERE iu0.ItemID = i.ItemID
-    ORDER BY CASE WHEN ISNULL(iu0.DefaultUnit, 0) = 1 THEN 0 ELSE 1 END, iu0.JunckID
-) iu
-LEFT JOIN dbo.TblUnites u ON u.UnitID = iu.UnitID
-WHERE ISNULL(i.IsArchive, 0) = 0
-  AND
-  (
-      CONVERT(NVARCHAR(50), i.ItemID) = @text
-      OR ISNULL(i.ItemCode, N'') = @text
-      OR ISNULL(i.Fullcode, N'') = @text
-      OR ISNULL(i.ItemName, N'') = @text
-      OR ISNULL(i.ItemNamee, N'') = @text
-  )
-ORDER BY
-    CASE WHEN CONVERT(NVARCHAR(50), i.ItemID) = @text THEN 0
-         WHEN ISNULL(i.ItemCode, N'') = @text THEN 1
-         WHEN ISNULL(i.Fullcode, N'') = @text THEN 2
-         ELSE 3 END,
-    i.ItemID;";
-
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(sql, connection))
-            {
-                command.Parameters.Add("@text", SqlDbType.NVarChar, 255).Value = text;
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    if (!reader.Read())
-                    {
-                        return null;
-                    }
-
-                    return new PosItemLookupDto
-                    {
-                        Item_ID = ReadInt(reader, "Item_ID").GetValueOrDefault(),
-                        ItemName = ReadString(reader, "ItemName"),
-                        ItemCode = ReadString(reader, "ItemCode"),
-                        UnitId = ReadInt(reader, "UnitId"),
-                        UnitName = ReadString(reader, "UnitName"),
-                        Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
-                        ShowPrice = ReadDecimal(reader, "Price").GetValueOrDefault(),
-                        QtyBySmalltUnit = ReadDecimal(reader, "QtyBySmalltUnit").GetValueOrDefault(1),
-                        ItemCase = ReadInt(reader, "ItemCase").GetValueOrDefault(1),
-                        CostPrice = ReadDecimal(reader, "CostPrice").GetValueOrDefault(),
-                        SavedItemType = ReadInt(reader, "SavedItemType").GetValueOrDefault(),
-                        HaveSerial = ReadBoolean(reader, "HaveSerial")
-                    };
-                }
-            }
         }
 
         public PosPurchaseInvoiceResultDto SavePurchaseInvoice(PosPurchaseInvoiceRequestDto request, int userId, int? empId)
@@ -1195,53 +1075,34 @@ ORDER BY i.ItemID;";
         public IList<string> ReadSerialsFromExcel(Stream stream)
         {
             var serials = new List<string>();
-            var rows = new List<List<string>>();
             using (var reader = ExcelReaderFactory.CreateReader(stream))
             {
                 do
                 {
                     while (reader.Read())
                     {
-                        var row = new List<string>();
                         for (var i = 0; i < reader.FieldCount; i++)
                         {
-                            row.Add((Convert.ToString(reader.GetValue(i), CultureInfo.InvariantCulture) ?? string.Empty).Trim());
-                        }
+                            var value = Convert.ToString(reader.GetValue(i), CultureInfo.InvariantCulture);
+                            if (string.IsNullOrWhiteSpace(value))
+                            {
+                                continue;
+                            }
 
-                        rows.Add(row);
+                            var trimmed = value.Trim();
+                            if (trimmed.Equals("TOKEN", StringComparison.OrdinalIgnoreCase) ||
+                                trimmed.Equals("Serial", StringComparison.OrdinalIgnoreCase) ||
+                                trimmed.Equals("ItemSerial", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            serials.Add(trimmed);
+                            break;
+                        }
                     }
                 }
                 while (reader.NextResult() && serials.Count == 0);
-            }
-
-            var tokenColumn = -1;
-            var startRow = 0;
-            for (var rowIndex = 0; rowIndex < rows.Count && tokenColumn < 0; rowIndex++)
-            {
-                for (var columnIndex = 0; columnIndex < rows[rowIndex].Count; columnIndex++)
-                {
-                    if (rows[rowIndex][columnIndex].Equals("TOKEN", StringComparison.OrdinalIgnoreCase) ||
-                        rows[rowIndex][columnIndex].Equals("Serial", StringComparison.OrdinalIgnoreCase) ||
-                        rows[rowIndex][columnIndex].Equals("ItemSerial", StringComparison.OrdinalIgnoreCase))
-                    {
-                        tokenColumn = columnIndex;
-                        startRow = rowIndex + 1;
-                        break;
-                    }
-                }
-            }
-
-            for (var rowIndex = startRow; rowIndex < rows.Count; rowIndex++)
-            {
-                var row = rows[rowIndex];
-                var value = tokenColumn >= 0 && tokenColumn < row.Count
-                    ? row[tokenColumn]
-                    : row.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
-
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    serials.Add(value.Trim());
-                }
             }
 
             return serials;
@@ -2820,7 +2681,6 @@ SELECT
             table.Columns.Add("DiscountValue", typeof(decimal));
             table.Columns.Add("VatValue", typeof(decimal));
             table.Columns.Add("VatPercent", typeof(decimal));
-            table.Columns.Add("ItemSerial", typeof(string));
 
             foreach (var item in items ?? Enumerable.Empty<PosPurchaseInvoiceLineDto>())
             {
@@ -2831,8 +2691,7 @@ SELECT
                     item.PurchasePrice,
                     item.DiscountValue,
                     item.VatValue,
-                    item.VatPercent,
-                    string.IsNullOrWhiteSpace(item.ItemSerial) ? (object)DBNull.Value : item.ItemSerial.Trim());
+                    item.VatPercent);
             }
 
             return table;
@@ -2893,17 +2752,6 @@ SELECT
             if (request.Items.Any(x => x.ItemId <= 0)) { throw new InvalidOperationException("يوجد صنف غير محدد"); }
             if (request.Items.Any(x => x.Quantity <= 0)) { throw new InvalidOperationException("كمية كل صنف يجب أن تكون أكبر من صفر"); }
             if (request.Items.Any(x => x.PurchasePrice < 0 || x.DiscountValue < 0 || x.VatValue < 0)) { throw new InvalidOperationException("القيم المالية لا يمكن أن تكون سالبة"); }
-            if (request.Items.Any(x => x.HaveSerial && x.Quantity != 1)) { throw new InvalidOperationException("كمية الصنف المسلسل يجب أن تكون 1"); }
-            if (request.Items.Any(x => x.HaveSerial && string.IsNullOrWhiteSpace(x.ItemSerial))) { throw new InvalidOperationException("السيريال مطلوب للأصناف المسلسلة"); }
-
-            var duplicatedSerial = request.Items
-                .Where(x => !string.IsNullOrWhiteSpace(x.ItemSerial))
-                .GroupBy(x => x.ItemSerial.Trim(), StringComparer.OrdinalIgnoreCase)
-                .FirstOrDefault(g => g.Count() > 1);
-            if (duplicatedSerial != null)
-            {
-                throw new InvalidOperationException("يوجد سيريال مكرر في نفس الفاتورة: " + duplicatedSerial.Key);
-            }
         }
 
         private static void ValidateStockTransfer(PosStockTransferRequestDto request)

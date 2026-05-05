@@ -1,4 +1,4 @@
-﻿using System.Web;
+using System.Text;
 using System.Web.Mvc;
 using MyERP.Areas.Pos.Services;
 
@@ -11,8 +11,24 @@ namespace MyERP
             filters.Add(new HandleErrorAttribute());
             filters.Add(new ERPAuthorizeAttribute());
             filters.Add(new PosAwareAuthorizeAttribute());
+            filters.Add(new Utf8ResponseEncodingAttribute());
             filters.Add(new PosPerformanceLogAttribute());
             filters.Add(new HandleErrorAttribute());
+        }
+    }
+
+    public class Utf8ResponseEncodingAttribute : ActionFilterAttribute
+    {
+        public override void OnResultExecuting(ResultExecutingContext filterContext)
+        {
+            var result = filterContext.Result;
+            if (result is ViewResultBase || result is JsonResult || result is ContentResult)
+            {
+                filterContext.HttpContext.Response.ContentEncoding = Encoding.UTF8;
+                filterContext.HttpContext.Response.Charset = "utf-8";
+            }
+
+            base.OnResultExecuting(filterContext);
         }
     }
 

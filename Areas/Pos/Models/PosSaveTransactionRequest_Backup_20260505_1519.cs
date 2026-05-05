@@ -808,18 +808,14 @@ namespace MyERP.Areas.Pos.Models
     public class PosPurchaseInvoiceLineDto
     {
         public int ItemId { get; set; }
-        public string ItemCode { get; set; }
         public string ItemName { get; set; }
         public int? UnitId { get; set; }
-        public string UnitName { get; set; }
         public decimal Quantity { get; set; }
         public decimal PurchasePrice { get; set; }
         public decimal DiscountValue { get; set; }
         public decimal VatValue { get; set; }
         public decimal VatPercent { get; set; }
         public decimal LineTotal { get; set; }
-        public bool HaveSerial { get; set; }
-        public string ItemSerial { get; set; }
     }
 
     public class PosPurchaseInvoiceResultDto
@@ -829,35 +825,6 @@ namespace MyERP.Areas.Pos.Models
         public int NoteId { get; set; }
         public int? ReceiveTransactionId { get; set; }
         public string ReceiveVoucherNumber { get; set; }
-    }
-
-    public class PosPurchaseItemUnitDto
-    {
-        public int UnitId { get; set; }
-        public string UnitName { get; set; }
-        public decimal UnitFactor { get; set; }
-        public decimal PurchasePrice { get; set; }
-        public bool IsDefault { get; set; }
-    }
-
-    public class PosPurchaseImportResultDto
-    {
-        public IList<PosPurchaseInvoiceLineDto> Accepted { get; set; }
-        public IList<PosPurchaseImportRejectedRowDto> Rejected { get; set; }
-
-        public PosPurchaseImportResultDto()
-        {
-            Accepted = new List<PosPurchaseInvoiceLineDto>();
-            Rejected = new List<PosPurchaseImportRejectedRowDto>();
-        }
-    }
-
-    public class PosPurchaseImportRejectedRowDto
-    {
-        public int RowNumber { get; set; }
-        public string ItemText { get; set; }
-        public string Serial { get; set; }
-        public string Reason { get; set; }
     }
 
     public class PosStockTransferRequestDto

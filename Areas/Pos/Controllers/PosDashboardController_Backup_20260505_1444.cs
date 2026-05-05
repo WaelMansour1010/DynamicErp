@@ -62,16 +62,6 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("payments");
         }
 
-        public ActionResult PurchaseInvoice()
-        {
-            return OpenShell("purchase-invoice");
-        }
-
-        public ActionResult StockTransfer()
-        {
-            return OpenShell("stock-transfer");
-        }
-
         public ActionResult SystemHealth()
         {
             return OpenShell("system-health");
@@ -183,16 +173,6 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدارة نماذج الطباعة");
             }
 
-            if (screen == "purchase-invoice" && !CanOpenPurchaseInvoice(context))
-            {
-                return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح فاتورة المشتريات");
-            }
-
-            if (screen == "stock-transfer" && !CanOpenPurchaseInvoice(context))
-            {
-                return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح سند تحويل المخزون");
-            }
-
             ViewBag.PosContext = context;
             ViewBag.ActiveScreen = screen;
             ViewBag.InitialScreenUrl = ScreenUrl(screen);
@@ -227,11 +207,6 @@ namespace MyERP.Areas.Pos.Controllers
         private static bool CanOpenPrintTemplates(PosUserContext context)
         {
             return IsAdmin(context) || (context != null && context.CanManagePrintTemplates);
-        }
-
-        private static bool CanOpenPurchaseInvoice(PosUserContext context)
-        {
-            return IsAdmin(context) || (context != null && context.CanSave);
         }
 
         private static bool HasSalesDefaults(PosUserContext context)
@@ -335,16 +310,6 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "payments")
             {
                 return Url.Content("~/Pos/Payments/Index");
-            }
-
-            if (screen == "purchase-invoice")
-            {
-                return Url.Content("~/Pos/PurchaseInvoice/Index");
-            }
-
-            if (screen == "stock-transfer")
-            {
-                return Url.Content("~/Pos/StockTransfer/Index");
             }
 
             if (screen == "system-health")

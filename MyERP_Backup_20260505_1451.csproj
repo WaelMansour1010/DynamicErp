@@ -419,8 +419,6 @@
     <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemErrorLogController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
-    <Compile Include="Areas\Pos\Controllers\PurchaseInvoiceController.cs" />
-    <Compile Include="Areas\Pos\Controllers\StockTransferController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosPermissionsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosReportsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosClosingController.cs" />
@@ -3968,10 +3966,6 @@
     <Content Include="Areas\Pos\Scripts\pos-transaction.js" />
     <Content Include="Areas\Pos\Scripts\print-template-designer.js" />
     <Content Include="Areas\Pos\Scripts\account-selector.js" />
-    <Content Include="Areas\Pos\Scripts\purchase-invoice.js" />
-    <Content Include="Areas\Pos\Scripts\stock-transfer.js" />
-    <Content Include="Areas\Pos\Sql\41_POS_PurchaseInvoice.sql" />
-    <Content Include="Areas\Pos\Sql\42_POS_StockTransfer.sql" />
     <Content Include="Areas\Pos\Views\Web.config" />
     <Content Include="Areas\Pos\Views\PosTransaction\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosTransaction\PrintPreview.cshtml" />
@@ -3979,8 +3973,6 @@
     <Content Include="Areas\Pos\Views\PosDashboard\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemErrorLog\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
-    <Content Include="Areas\Pos\Views\PurchaseInvoice\Index.cshtml" />
-    <Content Include="Areas\Pos\Views\StockTransfer\Index.cshtml" />
     <Content Include="Areas\Pos\Views\KycBankFollowUp\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PrintTemplate\Index.cshtml" />

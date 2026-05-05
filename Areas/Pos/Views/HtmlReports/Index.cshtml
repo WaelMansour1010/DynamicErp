@@ -113,6 +113,68 @@
 
     <script>
         (function () {
+            function enhanceSelectSearch(select, placeholder) {
+                if (!select || select.getAttribute("data-enhanced") === "true") { return; }
+                select.setAttribute("data-enhanced", "true");
+                var parent = select.parentNode;
+                var wrap = document.createElement("span");
+                wrap.className = "html-smart-select";
+                parent.insertBefore(wrap, select);
+                wrap.appendChild(select);
+                var input = document.createElement("input");
+                input.type = "text";
+                input.className = "html-smart-select-input";
+                input.placeholder = placeholder || "اكتب للبحث";
+                input.autocomplete = "off";
+                var results = document.createElement("div");
+                results.className = "html-smart-select-results";
+                wrap.insertBefore(input, select);
+                wrap.appendChild(results);
+                function text(opt) { return opt ? (opt.textContent || opt.innerText || "").trim() : ""; }
+                function sync() { input.value = select.value ? text(select.options[select.selectedIndex]) : ""; }
+                function close() { results.classList.remove("is-open"); }
+                function choose(opt) {
+                    select.value = opt.value;
+                    sync();
+                    close();
+                    select.dispatchEvent(new Event("change"));
+                }
+                function render() {
+                    var term = input.value.trim().toLowerCase();
+                    var opts = Array.prototype.slice.call(select.options).filter(function (opt) {
+                        if (!opt.value) { return term.length === 0; }
+                        return text(opt).toLowerCase().indexOf(term) >= 0 || String(opt.value).toLowerCase().indexOf(term) >= 0;
+                    }).slice(0, 40);
+                    results.innerHTML = "";
+                    if (!opts.length) {
+                        var empty = document.createElement("div");
+                        empty.className = "html-smart-select-option is-empty";
+                        empty.textContent = "لا توجد نتائج";
+                        results.appendChild(empty);
+                    } else {
+                        opts.forEach(function (opt) {
+                            var row = document.createElement("button");
+                            row.type = "button";
+                            row.className = "html-smart-select-option";
+                            row.textContent = text(opt);
+                            row.addEventListener("mousedown", function (event) {
+                                event.preventDefault();
+                                choose(opt);
+                            });
+                            results.appendChild(row);
+                        });
+                    }
+                    results.classList.add("is-open");
+                }
+                input.addEventListener("input", render);
+                input.addEventListener("focus", render);
+                input.addEventListener("blur", function () { window.setTimeout(close, 150); });
+                sync();
+            }
+
+            enhanceSelectSearch(document.querySelector("select[name='BranchId']"), "اكتب اسم الفرع أو الكود");
+            enhanceSelectSearch(document.querySelector("select[name='StoreId']"), "اكتب اسم المخزن أو الكود");
+
             document.addEventListener("click", function (event) {
                 if (event.target && event.target.id === "htmlReportPrintBtn") {
                     window.print();

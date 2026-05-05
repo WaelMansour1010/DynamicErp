@@ -1,0 +1,497 @@
+@{
+    Layout = null;
+    ViewBag.Title = "سند تحويل مخزون";
+    var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+    var stores = ViewBag.Stores as IEnumerable<MyERP.Areas.Pos.Models.PosStoreDto>;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <style>
+        body {
+            direction: rtl;
+            background: #f4f6f8;
+            color: #17202a;
+            font-family: Tahoma, Arial, sans-serif;
+            margin: 0;
+        }
+
+        .stock-page {
+            padding: 18px;
+        }
+
+        .stock-shell {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .stock-card {
+            background: #fff;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+            margin-bottom: 14px;
+            padding: 18px;
+        }
+
+        .stock-title {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .stock-title h1,
+        .stock-toolbar h2 {
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .stock-title h1 {
+            font-size: 24px;
+        }
+
+        .stock-title span,
+        .stock-help {
+            color: #667085;
+            font-size: 13px;
+        }
+
+        label {
+            color: #344054;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        .form-control {
+            border-color: #cfd6df;
+            border-radius: 4px;
+            box-shadow: none;
+            height: 38px;
+        }
+
+        textarea.form-control {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .lookup-wrap {
+            position: relative;
+        }
+
+        .lookup-results {
+            background: #fff;
+            border: 1px solid #b8c2cc;
+            border-radius: 4px;
+            box-shadow: 0 8px 20px rgba(16, 24, 40, .14);
+            display: none;
+            left: 0;
+            max-height: 260px;
+            overflow: auto;
+            position: absolute;
+            right: 0;
+            top: 39px;
+            z-index: 40;
+        }
+
+        .lookup-results.is-open {
+            display: block;
+        }
+
+        .lookup-results button {
+            background: #fff;
+            border: 0;
+            color: #17202a;
+            display: block;
+            padding: 9px 10px;
+            text-align: right;
+            width: 100%;
+        }
+
+        .lookup-results button:hover,
+        .lookup-results button:focus {
+            background: #eef4ff;
+        }
+
+        .stock-toolbar {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stock-toolbar h2 {
+            font-size: 20px;
+        }
+
+        .grid-actions,
+        .stock-footer {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .items-scroll {
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        .stock-table {
+            background: #fff;
+            margin: 0;
+            min-width: 1040px;
+        }
+
+        .stock-table th {
+            background: #f0f3f7;
+            color: #344054;
+            font-size: 13px;
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .stock-table td {
+            position: relative;
+            vertical-align: top;
+        }
+
+        .stock-table .item-cell { width: 320px; }
+        .stock-table .unit-cell { width: 140px; }
+        .stock-table .number-cell { width: 125px; }
+        .stock-table .serial-cell { width: 210px; }
+        .stock-table .remove-cell { text-align: center; width: 70px; }
+
+        .serial-badge {
+            color: #b54708;
+            display: none;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        tr.is-serial .serial-badge {
+            display: block;
+        }
+
+        .import-card {
+            background: #fbfcfe;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            display: grid;
+            gap: 14px;
+            grid-template-columns: minmax(280px, .9fr) minmax(360px, 1.1fr);
+            padding: 14px;
+        }
+
+        .import-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .file-picker {
+            align-items: center;
+            background: #fff;
+            border: 1px dashed #98a2b3;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 8px;
+            max-width: 100%;
+            min-height: 38px;
+            padding: 8px 12px;
+        }
+
+        .file-picker input {
+            display: none;
+        }
+
+        .file-name {
+            color: #667085;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .import-results {
+            margin-top: 14px;
+        }
+
+        .status-pill {
+            border-radius: 999px;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 9px;
+        }
+
+        .status-pill.accepted {
+            background: #ecfdf3;
+            color: #027a48;
+        }
+
+        .status-pill.rejected {
+            background: #fff1f3;
+            color: #b42318;
+        }
+
+        .summary-strip {
+            align-items: stretch;
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-top: 14px;
+        }
+
+        .summary-item {
+            background: #fbfcfe;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            padding: 12px 14px;
+        }
+
+        .summary-item span {
+            color: #667085;
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .summary-item strong {
+            color: #1d2939;
+            font-size: 20px;
+        }
+
+        .stock-footer {
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+
+        .stock-message {
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .stock-message.is-error { color: #b42318; }
+        .stock-message.is-success { color: #027a48; }
+
+        @@media (max-width: 992px) {
+            .stock-title,
+            .stock-toolbar,
+            .stock-footer {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .import-card,
+            .summary-strip {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stock-page"
+         data-lookup-url="@Url.Action("Lookup", "StockTransfer", new { area = "Pos" })"
+         data-stores-url="@Url.Action("Stores", "StockTransfer", new { area = "Pos" })"
+         data-import-url="@Url.Action("ImportSerials", "StockTransfer", new { area = "Pos" })"
+         data-import-excel-url="@Url.Action("ImportExcel", "StockTransfer", new { area = "Pos" })"
+         data-save-url="@Url.Action("Save", "StockTransfer", new { area = "Pos" })">
+        <div class="stock-shell">
+            <section class="stock-card">
+                <div class="stock-title">
+                    <div>
+                        <h1>سند تحويل مخزون</h1>
+                        <span>تحويل الأصناف والكروت المسلسلة بين المخازن بنفس منطق FrmMoving</span>
+                    </div>
+                    <span>POS Stock Transfer</span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2 col-sm-6">
+                        <div class="form-group">
+                            <label>سند التحويل</label>
+                            <input type="text" id="transferVoucherNumber" class="form-control" placeholder="يولد تلقائياً" />
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6">
+                        <div class="form-group">
+                            <label>التاريخ</label>
+                            <input type="date" id="transferDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-6">
+                        <div class="form-group">
+                            <label>الفرع</label>
+                            <select id="transferBranchId" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>المخزن المحول منه</label>
+                            <select id="transferSourceStoreId" class="form-control">
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID" @(context != null && context.StoreId == store.StoreID ? "selected" : "")>@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="form-group">
+                            <label>المخزن المحول إليه</label>
+                            <select id="transferDestinationStoreId" class="form-control">
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID">@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات</label>
+                    <input type="text" id="transferRemarks" class="form-control" />
+                </div>
+            </section>
+
+            <section class="stock-card">
+                <div class="stock-toolbar">
+                    <div>
+                        <h2>الأصناف والسيريالات</h2>
+                        <div class="stock-help">أضف صفاً، اختر الصنف، ثم أدخل الكمية أو السيريال. الأصناف المسلسلة كميتها دائماً 1.</div>
+                    </div>
+                    <div class="grid-actions">
+                        <button type="button" class="btn btn-default" id="addTransferRowBtn">إضافة صنف</button>
+                    </div>
+                </div>
+
+                <div class="items-scroll">
+                    <table class="table table-bordered stock-table">
+                        <thead>
+                            <tr>
+                                <th>كود/اسم الصنف</th>
+                                <th>الوحدة</th>
+                                <th>الكمية</th>
+                                <th>السيريال</th>
+                                <th>التكلفة</th>
+                                <th>حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transferItemsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="stock-card">
+                <div class="stock-toolbar">
+                    <div>
+                        <h2>استيراد وفحص السيريالات</h2>
+                        <div class="stock-help">يمكن لصق السيريالات أو استيراد ملف Excel. يتم عرض كل سيريال مقبول أو مرفوض بسبب واضح.</div>
+                    </div>
+                </div>
+
+                <div class="import-card">
+                    <div>
+                        <label>سيريالات ملصقة</label>
+                        <textarea id="serialText" class="form-control" placeholder="كل سيريال في سطر مستقل"></textarea>
+                        <div class="import-actions">
+                            <button type="button" class="btn btn-default" id="importSerialTextBtn">فحص السيريالات</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label>ملف Excel</label>
+                        <div>
+                            <label class="file-picker">
+                                <input type="file" id="serialExcelFile" accept=".xlsx,.xls,.csv" />
+                                <strong>اختيار ملف</strong>
+                                <span class="file-name" id="serialFileName">لم يتم اختيار ملف</span>
+                            </label>
+                        </div>
+                        <div class="stock-help" style="margin-top:8px;">يفضل وجود عمود باسم TOKEN أو Serial. في الملفات البسيطة سيتم قراءة أول قيمة في كل صف.</div>
+                        <div class="import-actions">
+                            <button type="button" class="btn btn-primary" id="importExcelBtn">استيراد من Excel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="importResultsPanel" class="import-results" hidden>
+                    <div class="items-scroll">
+                        <table class="table table-bordered stock-table">
+                            <thead>
+                                <tr>
+                                    <th>السيريال</th>
+                                    <th>الصنف</th>
+                                    <th>الحالة</th>
+                                    <th>سبب الرفض</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importResultsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stock-card">
+                <div class="summary-strip">
+                    <div class="summary-item">
+                        <span>إجمالي الأصناف</span>
+                        <strong id="transferItemTotal">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>إجمالي الكمية</span>
+                        <strong id="transferQuantityTotal">0.000</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>إجمالي التكلفة</span>
+                        <strong id="transferCostTotal">0.00</strong>
+                    </div>
+                </div>
+
+                <div class="stock-footer">
+                    <button type="button" class="btn btn-default" id="clearTransferBtn">مسح الأصناف</button>
+                    <button type="button" class="btn btn-primary" id="saveTransferBtn">حفظ سند التحويل</button>
+                    <span id="transferMessage" class="stock-message"></span>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="@Url.Content("~/Areas/Pos/Scripts/stock-transfer.js")"></script>
+</body>
+</html>

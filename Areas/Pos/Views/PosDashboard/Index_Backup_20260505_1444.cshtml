@@ -21,7 +21,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewBag.Title</title>
-    <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
     <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
     <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
 </head>
@@ -30,7 +29,86 @@
          data-dashboard-summary-url="@Url.Action("Summary", "PosDashboard", new { area = "Pos" })"
          data-sales-url="@Url.Content("~/Pos/PosTransaction/Index")"
          data-is-admin="@(isAdmin ? "true" : "false")">
-        @Html.Partial("_Sidebar")
+        <aside class="pos-main-sidebar">
+            <div class="pos-main-logo">
+                @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+                {
+                    <img src="@Url.Content(companyLogoPath)" alt="Keshni" />
+                }
+                else
+                {
+                    <strong>كيشني</strong>
+                }
+            </div>
+
+            <nav class="pos-main-nav" aria-label="قائمة نقطة البيع">
+                @if (isAdmin)
+                {
+                    <a class="@(activeScreen == "dashboard" ? "active" : "")"
+                       href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })"
+                       data-dashboard-screen="true">لوحة التحكم</a>
+                }
+                <a class="@(activeScreen == "sales" ? "active" : "")"
+                   href="@Url.Action("Sales", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index")">شاشة البيع</a>
+                <a class="@(activeScreen == "closing" ? "active" : "")"
+                   href="@Url.Action("Closing", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosClosing/Index")">الإغلاق</a>
+                <a class="@(activeScreen == "kyc" ? "active" : "")"
+                   href="@Url.Action("Kyc", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index?openKyc=true")">KYC</a>
+                @if (isAdmin || (posContext != null && posContext.IsFullAccessCustomerService))
+                {
+                    <a class="@(activeScreen == "kyc-bank-follow-up" ? "active" : "")"
+                       href="@Url.Action("KycBankFollowUp", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/KycBankFollowUp/Index")">متابعة KYC والبنك</a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanManagePrintTemplates))
+                {
+                    <a class="@(activeScreen == "print-templates" ? "active" : "")"
+                       href="@Url.Action("PrintTemplates", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PrintTemplate/Index?name=KycCard")">مصمم نماذج الطباعة</a>
+                }
+                @if (canViewReports)
+                {
+                    <a class="@(activeScreen == "reports" ? "active" : "")"
+                       href="@Url.Action("Reports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosReports/Index")">تقارير</a>
+                    <a href="@Url.Content("~/Pos/HtmlReports/Index")"
+                       data-screen-url="@Url.Content("~/Pos/HtmlReports/Index")">التقارير الذكية</a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
+                {
+                    <a class="@(activeScreen == "accounting-reports" ? "active" : "")"
+                       href="@Url.Action("AccountingReports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/AccountingReports/Index")">تقارير الحسابات</a>
+                }
+                @if (isAdmin || (posContext != null && (posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry)))
+                {
+                    <a class="@(activeScreen == "journal-entries" ? "active" : "")"
+                       href="@Url.Action("JournalEntries", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")">إدخال واستعراض القيود</a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanOpenPayments))
+                {
+                    <a class="@(activeScreen == "payments" ? "active" : "")"
+                       href="@Url.Action("Payments", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/Payments/Index")">تمويل العهدة</a>
+                }
+                @if (isAdmin)
+                {
+                    <a class="@(activeScreen == "system-health" ? "active" : "")"
+                       href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")">مراقبة النظام</a>
+                    <a class="@(activeScreen == "system-error-log" ? "active" : "")"
+                       href="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")">سجل أخطاء النظام</a>
+                    <a class="@(activeScreen == "permissions" ? "active" : "")"
+                       href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")">صلاحيات POS</a>
+                }
+            </nav>
+        </aside>
 
         <main class="pos-main-content">
             <header class="pos-main-topbar">
@@ -171,8 +249,6 @@
             var navigationLoading = false;
             var navigationTimer = null;
             var charts = {};
-            var sidebar = document.getElementById("posMainSidebar");
-            var sidebarCollapseBtn = document.getElementById("posSidebarCollapseBtn");
 
             function escapeHtml(value) {
                 return String(value === null || value === undefined ? "" : value)
@@ -313,20 +389,6 @@
                     links[i].classList.toggle("active", !dashboard && linkUrl === url);
                 }
                 if (dashboardLink) { dashboardLink.classList.toggle("active", !!dashboard); }
-                refreshNavSections();
-            }
-
-            function refreshNavSections() {
-                var sections = document.querySelectorAll(".pos-nav-section");
-                for (var s = 0; s < sections.length; s++) {
-                    var activeChild = sections[s].querySelector(".pos-nav-link.active, [data-dashboard-screen].active");
-                    sections[s].classList.toggle("has-active", !!activeChild);
-                    if (activeChild) {
-                        for (var x = 0; x < sections.length; x++) {
-                            sections[x].classList.toggle("is-open", sections[x] === sections[s]);
-                        }
-                    }
-                }
             }
 
             function setNavLinksDisabled(disabled) {
@@ -353,25 +415,6 @@
                     window.setTimeout(hideNavigationLoading, 1800);
                 }, 45000);
             }
-
-            document.addEventListener("click", function (event) {
-                var toggle = event.target && event.target.closest ? event.target.closest("[data-menu-toggle]") : null;
-                if (toggle) {
-                    var section = toggle.closest(".pos-nav-section");
-                    var sections = document.querySelectorAll(".pos-nav-section");
-                    var willOpen = section && !section.classList.contains("is-open");
-                    for (var i = 0; i < sections.length; i++) { sections[i].classList.remove("is-open"); }
-                    if (section && willOpen) { section.classList.add("is-open"); }
-                }
-                if (event.target && event.target.closest && event.target.closest("#posSidebarCollapseBtn")) {
-                    if (shell) { shell.classList.toggle("is-sidebar-collapsed"); }
-                    if (sidebarCollapseBtn && shell) {
-                        var collapsed = shell.classList.contains("is-sidebar-collapsed");
-                        sidebarCollapseBtn.setAttribute("title", collapsed ? "توسيع القائمة" : "تصغير القائمة");
-                        sidebarCollapseBtn.setAttribute("aria-label", collapsed ? "توسيع القائمة" : "تصغير القائمة");
-                    }
-                }
-            });
 
             function hideNavigationLoading() {
                 navigationLoading = false;
@@ -657,7 +700,6 @@
                      hideNavigationLoading();
                  });
              }
-            refreshNavSections();
 
             document.addEventListener("click", function (event) {
                 if (event.target && event.target.id === "reloadAdminDashboardBtn") {

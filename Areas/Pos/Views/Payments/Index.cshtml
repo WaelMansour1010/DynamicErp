@@ -1,6 +1,6 @@
 ﻿@{
     Layout = null;
-    ViewBag.Title = "تمويل واستعاضة الخزن والعهد";
+    ViewBag.Title = "تمويل العهدة";
     var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
     var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
     var canExecute = context != null && (context.IsFullAccess || context.CanExecutePayments);
@@ -27,7 +27,7 @@
         <div class="pos-shell">
             <section class="pos-panel">
                 <div class="panel-heading">
-                    <h2>تمويل واستعاضة الخزن والعهد</h2>
+                    <h2>تمويل العهدة</h2>
                     <span>مطابقة منطق FrmPayments1: Notes.NoteType = 50</span>
                 </div>
 
@@ -57,14 +57,12 @@
                     <div id="paymentSearchResult" class="report-result compact-result"></div>
                 </div>
 
-                <div class="payments-tabs">
-                    <button type="button" class="active" data-payment-tab="main">بيانات أساسية</button>
-                    <button type="button" data-payment-tab="pay">الدفع</button>
-                    <button type="button" data-payment-tab="accounts">الحسابات</button>
-                    <button type="button" data-payment-tab="journal">القيد</button>
+                <div class="payments-section-title">
+                    <h3>بيانات الحركة</h3>
+                    <span>حدد نوع الحركة والحساب الرئيسي للحركة</span>
                 </div>
 
-                <div class="payments-tab-panel active" data-payment-panel="main">
+                <div class="payments-tab-panel active payment-section" data-payment-panel="main">
                     <input type="hidden" id="paymentNoteId" />
                     <div class="pos-grid four-cols">
                         <label>
@@ -112,7 +110,12 @@
                     </div>
                 </div>
 
-                <div class="payments-tab-panel" data-payment-panel="pay">
+                <div class="payments-section-title">
+                    <h3>القيم والدفع</h3>
+                    <span>اختر طريقة الدفع والخزنة أو البنك عند الحاجة</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="pay">
                     <div class="pos-grid four-cols">
                         <label>
                             طريقة الدفع
@@ -158,7 +161,12 @@
                     </div>
                 </div>
 
-                <div class="payments-tab-panel" data-payment-panel="accounts">
+                <div class="payments-section-title">
+                    <h3>الحسابات</h3>
+                    <span>ابحث عن الموظف عند وجود جزء عهدة في الحركة</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="accounts">
                     <div class="pos-grid four-cols">
                         <label>
                             قيمة الخزنة
@@ -184,7 +192,12 @@
                     </div>
                 </div>
 
-                <div class="payments-tab-panel" data-payment-panel="journal">
+                <div class="payments-section-title">
+                    <h3>القيد المحاسبي / المعاينة</h3>
+                    <span>استعرض القيد قبل الحفظ حسب الصلاحية</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="journal">
                     @if (canViewJournal)
                     {
                         <div class="pos-actions">

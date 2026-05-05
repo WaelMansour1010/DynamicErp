@@ -174,6 +174,76 @@ body {
     outline: 2px solid rgba(37, 99, 235, .12);
 }
 
+.html-smart-select {
+    position: relative;
+}
+
+.html-smart-select-input {
+    width: 100%;
+}
+
+.html-smart-select select {
+    display: none;
+}
+
+.html-smart-select-results {
+    background: #fff;
+    border: 1px solid #dbe3ed;
+    border-radius: 10px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, .14);
+    display: none;
+    left: 0;
+    max-height: 260px;
+    overflow: auto;
+    padding: 6px;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 80;
+}
+
+.html-smart-select-results.is-open {
+    display: grid;
+    gap: 4px;
+}
+
+.html-smart-select-option {
+    background: #fff;
+    border: 0;
+    border-radius: 8px;
+    color: #1f2937;
+    cursor: pointer;
+    font: inherit;
+    padding: 9px 10px;
+    text-align: right;
+}
+
+.html-smart-select-option:hover,
+.html-smart-select-option.is-active {
+    background: #eff6ff;
+    color: var(--html-report-primary);
+}
+
+.html-smart-select-option.is-empty {
+    color: #64748b;
+    cursor: default;
+}
+
+.journal-search-panel .panel-heading {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.journal-search-panel .journal-search-body {
+    margin-top: 16px;
+}
+
+.journal-search-panel.is-collapsed .journal-search-body {
+    display: none;
+}
+
 .accounting-filter-grid .account-tree-panel,
 .reports-filter-grid .account-tree-panel {
     grid-column: 1 / -1;
@@ -780,5 +850,503 @@ body {
 
     .html-report-table th {
         position: static;
+    }
+}
+
+/* Professional ERP layout polish for accounting reports and journal entry screens. */
+.erp-ui-page {
+    max-width: 1440px;
+    padding: 24px;
+}
+
+.erp-hero-card,
+.erp-card,
+.erp-alert {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+    margin-bottom: 18px;
+    padding: 22px 24px;
+}
+
+.erp-hero-card {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    min-height: 112px;
+}
+
+.erp-hero-card h1,
+.erp-card h2,
+.erp-modal h2 {
+    color: #0f172a;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 1.3;
+    margin: 0 0 8px;
+}
+
+.erp-card h2,
+.erp-modal h2 {
+    font-size: 20px;
+}
+
+.erp-hero-card p,
+.erp-card p,
+.erp-modal p {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.erp-card-head {
+    align-items: flex-start;
+    border-bottom: 1px solid #eef2f7;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+}
+
+.erp-filter-grid {
+    align-items: end;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(4, minmax(210px, 1fr));
+}
+
+.erp-field {
+    color: #334155;
+    display: grid;
+    font-size: 14px;
+    font-weight: 900;
+    gap: 7px;
+    min-width: 0;
+}
+
+.erp-field-wide {
+    grid-column: span 2;
+}
+
+.erp-field input,
+.erp-field select,
+.erp-field textarea,
+.journal-lines-table input,
+.html-smart-select-input {
+    background: #fff;
+    border: 1px solid #dbe3ed;
+    border-radius: 10px;
+    color: #0f172a;
+    font: inherit;
+    min-height: 44px;
+    padding: 9px 12px;
+    transition: border-color .16s ease, box-shadow .16s ease;
+    width: 100%;
+}
+
+.erp-field input:focus,
+.erp-field select:focus,
+.erp-field textarea:focus,
+.journal-lines-table input:focus,
+.html-smart-select-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    outline: 0;
+}
+
+.erp-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+    margin-top: 18px;
+}
+
+.erp-actions-inline {
+    margin-top: 0;
+}
+
+.erp-btn,
+.primary-action,
+.secondary-action,
+.danger-action {
+    align-items: center;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 900;
+    justify-content: center;
+    min-height: 42px;
+    padding: 9px 18px;
+    text-decoration: none;
+    transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease;
+}
+
+.erp-btn-primary,
+.primary-action {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, .18);
+}
+
+.erp-btn-primary:hover,
+.primary-action:hover {
+    background: #1d4ed8;
+}
+
+.erp-btn-secondary,
+.secondary-action {
+    background: #f8fafc;
+    border-color: #dbe3ed;
+    color: #0f172a;
+}
+
+.erp-btn-secondary:hover,
+.secondary-action:hover {
+    background: #eff6ff;
+    border-color: rgba(37, 99, 235, .35);
+    color: #1d4ed8;
+}
+
+.erp-btn-danger,
+.danger-action {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.erp-btn:disabled,
+.primary-action:disabled,
+.secondary-action:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.erp-report-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.erp-report-tile {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .04);
+    color: #0f172a;
+    cursor: pointer;
+    display: grid;
+    gap: 10px;
+    min-height: 132px;
+    padding: 18px;
+    position: relative;
+    text-align: right;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.erp-report-tile:hover {
+    border-color: rgba(37, 99, 235, .45);
+    box-shadow: 0 14px 28px rgba(37, 99, 235, .12);
+    transform: translateY(-1px);
+}
+
+.erp-report-tile.is-active {
+    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+    border-color: #2563eb;
+    box-shadow: 0 14px 30px rgba(37, 99, 235, .16);
+}
+
+.erp-report-dot {
+    background: #dbeafe;
+    border-radius: 999px;
+    height: 12px;
+    left: 16px;
+    position: absolute;
+    top: 16px;
+    width: 12px;
+}
+
+.erp-report-tile.is-active .erp-report-dot {
+    background: #2563eb;
+    box-shadow: 0 0 0 5px rgba(37, 99, 235, .12);
+}
+
+.erp-report-tile strong {
+    font-size: 17px;
+    font-weight: 900;
+    padding-left: 24px;
+}
+
+.erp-report-tile small {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.7;
+}
+
+.erp-account-picker {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    gap: 14px;
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding: 14px;
+}
+
+.erp-account-picker > div {
+    display: grid;
+    gap: 4px;
+}
+
+.erp-account-picker strong {
+    color: #0f172a;
+    font-weight: 900;
+}
+
+.erp-account-picker span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.erp-filter-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.erp-filter-summary span,
+.erp-badge {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    color: #475569;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 900;
+    padding: 7px 12px;
+}
+
+.erp-empty-state {
+    color: #64748b;
+    font-size: 18px;
+    font-weight: 900;
+    text-align: center;
+}
+
+.erp-alert-danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+    font-weight: 900;
+}
+
+.erp-data-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 900px;
+}
+
+.erp-data-table th {
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 900;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.erp-data-table td,
+.erp-data-table th {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px;
+    vertical-align: middle;
+}
+
+.erp-data-table tbody tr:nth-child(even) td {
+    background: #fbfdff;
+}
+
+.journal-command-card .pos-validation {
+    margin-top: 8px;
+}
+
+.journal-header-grid {
+    grid-template-columns: 190px 190px 230px minmax(280px, 1fr);
+}
+
+.journal-lines-table {
+    min-width: 980px;
+}
+
+.journal-lines-table th:nth-child(1),
+.journal-lines-table th:nth-child(2) {
+    min-width: 220px;
+}
+
+.journal-lines-table th:nth-child(4),
+.journal-lines-table th:nth-child(5) {
+    min-width: 140px;
+}
+
+.journal-totals-card {
+    align-items: center;
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+}
+
+.journal-totals-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+    width: min(760px, 100%);
+}
+
+.journal-totals-grid div {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+}
+
+.journal-totals-grid span {
+    color: #64748b;
+    font-weight: 900;
+}
+
+.journal-totals-grid strong {
+    color: #0f172a;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+#journalDifference:not(.is-balanced) {
+    color: #b91c1c;
+}
+
+#journalDifference.is-balanced {
+    color: #047857;
+}
+
+.erp-modal {
+    display: none;
+    inset: 0;
+    position: fixed;
+    z-index: 1000;
+}
+
+.erp-modal.is-open {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.erp-modal-backdrop {
+    background: rgba(15, 23, 42, .48);
+    inset: 0;
+    position: absolute;
+}
+
+.erp-modal-dialog {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, .28);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    padding: 22px;
+    position: relative;
+    width: min(1180px, calc(100vw - 44px));
+}
+
+.erp-modal-head {
+    align-items: flex-start;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+}
+
+.erp-icon-btn {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #dbe3ed;
+    border-radius: 10px;
+    color: #0f172a;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 24px;
+    font-weight: 900;
+    height: 42px;
+    justify-content: center;
+    line-height: 1;
+    width: 42px;
+}
+
+.journal-browse-grid {
+    grid-template-columns: repeat(4, minmax(190px, 1fr));
+}
+
+.journal-browse-results {
+    margin-top: 16px;
+    max-height: 420px;
+}
+
+@media (max-width: 1100px) {
+    .erp-filter-grid,
+    .journal-header-grid,
+    .journal-browse-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .journal-totals-card {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .journal-totals-grid {
+        width: 100%;
+    }
+}
+
+@media (max-width: 720px) {
+    .erp-ui-page {
+        padding: 14px;
+    }
+
+    .erp-hero-card,
+    .erp-card-head,
+    .erp-account-picker {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .erp-filter-grid,
+    .journal-header-grid,
+    .journal-browse-grid,
+    .journal-totals-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .erp-field-wide {
+        grid-column: auto;
     }
 }
