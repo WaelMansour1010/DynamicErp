@@ -14,11 +14,16 @@ namespace MyERP
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
             routes.MapMvcAttributeRoutes();
             routes.MapRoute(
+                name: "RunMode",
+                url: "RunMode",
+                defaults: new { controller = "DevStart", action = "Index" }
+            );
+
+            routes.MapRoute(
                 name: "PosRoot",
                 url: "",
-                defaults: new { controller = "PosLogin", action = "Root" },
-                namespaces: new[] { "MyERP.Areas.Pos.Controllers" }
-            ).DataTokens["area"] = "Pos";
+                defaults: new { controller = "DevStart", action = "Root" }
+            );
 
             routes.MapRoute(
                 name: "Default",

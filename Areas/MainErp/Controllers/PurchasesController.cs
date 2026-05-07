@@ -6,6 +6,7 @@ namespace MyERP.Areas.MainErp.Controllers
     {
         public ActionResult Index()
         {
+            ViewBag.ActiveScreen = "purchases";
             return View();
         }
     }

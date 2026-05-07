@@ -91,7 +91,36 @@ Test:
 - Open `/MainErp/AccountingReports/AccountMovement`.
 - Open `/MainErp/SalesReports/SalesSummary`.
 
-Authenticated UI testing requires a valid web login session because MainErp controllers inherit `[Authorize]`.
+Authenticated UI testing now uses the MainErp-specific login route:
+
+- `/MainErp/Login`
+
+MainErp no longer depends only on the old generic web login. MainErp pages require the session context stored under `MainErp.UserContext`.
+
+## Debug Startup Selector
+
+DEBUG/local route:
+
+- `/DevStart`
+- `/RunMode`
+- `/` also opens the selector in DEBUG/local mode.
+
+The selector lets a developer open:
+
+- Kishny/POS: `/Pos`
+- original big MyErp web: `/Home/Index`
+- MainErp migration: `/MainErp`
+
+It also shows the active configured database names for:
+
+- `KishnyCashConnection`
+- `MyERP_ConnectionString`
+- `MainErp_ConnectionString`
+
+For MainErp only, DEBUG/local can override the selected database in Session through `MainErp.Debug.DatabaseName`.
+This does not write to Web.config and is ignored outside DEBUG/local requests.
+
+Outside DEBUG/local, the `/` route keeps the previous application behavior and redirects to the POS root.
 
 ## Switching MainErp To Another Legacy Database
 

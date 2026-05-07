@@ -416,12 +416,14 @@
     <Compile Include="Areas\MainErp\Controllers\HomeController.cs" />
     <Compile Include="Areas\MainErp\Controllers\JournalEntriesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\LCController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\LoginController.cs" />
     <Compile Include="Areas\MainErp\Controllers\MainErpControllerBase.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectExtractsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PurchasesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\SalesReportsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\StockTransfersController.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpDbConnectionFactory.cs" />
+    <Compile Include="Areas\MainErp\Infrastructure\MainErpDebugDatabaseOverride.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpUnitOfWork.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\ManualIdAllocation.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\ManualIdTarget.cs" />
@@ -439,6 +441,7 @@
     <Compile Include="Areas\MainErp\Models\Accounting\VoucherBatch.cs" />
     <Compile Include="Areas\MainErp\Models\Accounting\VoucherEntry.cs" />
     <Compile Include="Areas\MainErp\Models\Accounting\VoucherEntryType.cs" />
+    <Compile Include="Areas\MainErp\Models\Security\MainErpUserContext.cs" />
     <Compile Include="Areas\MainErp\Repositories\Accounting\VoucherRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\LC\LcReadRepository.cs" />
@@ -451,6 +454,8 @@
     <Compile Include="Areas\MainErp\Services\Accounting\NoteNumberingService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\PostingPreviewService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\VoucherPostingService.cs" />
+    <Compile Include="Areas\MainErp\Security\MainErpSessionKeys.cs" />
+    <Compile Include="Areas\MainErp\Services\Security\MainErpLoginService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs" />
@@ -458,6 +463,7 @@
     <Compile Include="Areas\MainErp\ViewModels\PagedReadResult.cs" />
     <Compile Include="Areas\MainErp\ViewModels\ProjectExtracts\ProjectExtractsIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Reports\ReportRowViewModels.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\Security\MainErpLoginViewModel.cs" />
     <Compile Include="Areas\Sync\SyncAreaRegistration.cs" />
     <Compile Include="Areas\Sync\Controllers\AdminAuditController.cs" />
     <Compile Include="Areas\Sync\Controllers\AdminOperationsController.cs" />
@@ -585,6 +591,7 @@
     <Compile Include="Controllers\CustomerSourceTypeController.cs" />
     <Compile Include="Controllers\DebitAgesTypeController.cs" />
     <Compile Include="Controllers\DeliveryInvoicesController.cs" />
+    <Compile Include="Controllers\DevStartController.cs" />
     <Compile Include="Controllers\DepartmentsController.cs" />
     <Compile Include="Controllers\DriversController.cs" />
     <Compile Include="Controllers\DriversWithInvoicesController.cs" />
@@ -4061,13 +4068,16 @@
     <Content Include="Areas\MainErp\Views\JournalEntries\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\Login\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\ProjectExtracts\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\ProjectExtracts\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Purchases\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\SalesReports\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\SalesReports\SalesSummary.cshtml" />
     <Content Include="Areas\MainErp\Views\Shared\_MainErpLayout.cshtml" />
+    <Content Include="Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml" />
     <Content Include="Areas\MainErp\Views\StockTransfers\Index.cshtml" />
+    <Content Include="Views\DevStart\Index.cshtml" />
     <Content Include="Areas\Sync\Content\sync-ops.css" />
     <Content Include="Areas\Sync\Scripts\sync-dashboard.js" />
     <Content Include="Areas\Sync\Sql\001_Sync_AdminAudit_Draft.sql" />

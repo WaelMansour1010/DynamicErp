@@ -21,11 +21,13 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult Index()
         {
+            ViewBag.ActiveScreen = "sales-reports";
             return View();
         }
 
         public ActionResult SalesSummary(DateTime? fromDate, DateTime? toDate, int? branchId, int? userId, int? customerId)
         {
+            ViewBag.ActiveScreen = "sales-summary";
             return View(_repository.GetSalesSummary(fromDate, toDate, branchId, userId, customerId));
         }
     }

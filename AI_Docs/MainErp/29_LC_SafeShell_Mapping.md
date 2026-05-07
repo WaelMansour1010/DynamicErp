@@ -1,4 +1,4 @@
-# LC Safe Shell Mapping
+# LC Safe Shell Mapping - Phase 2
 
 Date: 2026-05-07
 
@@ -18,6 +18,109 @@ Current status:
 - Real migrated from VB6 / Safe Shell.
 - Read/search/view only.
 - Dangerous actions are disabled and marked `Not migrated yet`.
+- Dangerous action buttons show: `هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode`.
+- Phase 2 added a status panel and more VB6 controls as read-only fields or `Not mapped yet` placeholders.
+
+## Full VB6 Control Inventory
+
+This inventory is extracted from the active `FrmLC.frm` file. Status values:
+
+- `Present read-only`: visible in MainErp and bound to confirmed read-only data.
+- `Present placeholder`: visible in MainErp, but source/table mapping still needs validation.
+- `Grid shell`: visible as preview shell only; no grid editing or saving.
+- `Disabled action`: visible but no write/post/delete behavior.
+- `Not in web yet`: still absent from the current shell.
+
+| VB6 control | Type | Expected source / behavior | Web status | Save later? |
+| --- | --- | --- | --- | --- |
+| `TXTTblLCID` | TextBox | `TblLC.TblLCID` | Present read-only | Yes, create allocation later |
+| `TXTLCNO` | TextBox | `TblLC.LCNO` | Present read-only | Yes |
+| `txtName` | TextBox | `TblLC.Name` | Present read-only | Yes |
+| `txtNameE` | TextBox | English LC name, column not confirmed in live doc | Present placeholder | Yes if column found |
+| `TXTBank2` | TextBox | Secondary bank text / legacy helper, source unclear | Not in web yet | Needs source validation |
+| `txtProjectName` | TextBox | `TblLC.projectName` | Present read-only | Yes |
+| `txt_Currency_rate` | TextBox | `TblLC.Currency_rate` | Present read-only | Yes |
+| `TXTValue` | TextBox | `TblLC.Value` | Present read-only | Yes |
+| `txtOPenValue` | TextBox | `TblLC.OpenValue` | Present read-only | Yes |
+| `txtOPenValue2` | TextBox | LG/open value helper, source not confirmed | Present placeholder | Needs source validation |
+| `txtBondAmt` | TextBox | bond amount, source not confirmed | Present placeholder | Needs source validation |
+| `txtPercentV` | TextBox | percentage value, source not confirmed | Present placeholder | Needs source validation |
+| `txtAcceptianPeriod` | TextBox | acceptance period, source not confirmed | Present placeholder | Needs source validation |
+| `TxtNoOfParcil` | TextBox | parcels count, source not confirmed | Present placeholder | Needs source validation |
+| `txtGuaranteeNo` | TextBox | guarantee number, source not confirmed | Present placeholder | Needs source validation |
+| `TXtPrimaryInvoiceNo` | TextBox | primary invoice number, source not confirmed | Present placeholder | Needs source validation |
+| `txtRemarks` | TextBox | `TblLC.Remarks` | Present read-only | Yes |
+| `TxtOpenBalance` | TextBox | `TblLC.OpenBalance` | Present read-only | Yes |
+| `txtopening_balance_voucher_id` | TextBox | `TblLC.opening_balance_voucher_id` | Present read-only | No direct user save; generated later |
+| `TxtNoteSerial` | TextBox | `TblLC.NoteSerial` | Present read-only | Generated later |
+| `TxtNoteSerial2` | TextBox | `TblLC.NoteSerial2` | Present read-only | Generated later |
+| `txtNoteSerialOpen` | TextBox | `TblLC.NoteSerialOpen` | Present read-only | Generated later |
+| `TxtNoteID`, `TxtNoteID2`, `txtNoteIDOpen` | TextBox | note IDs | Not in web yet | Generated later |
+| `txtNoteIDRowId`, `txtNoteID2RowId`, `txtNoteIDOpenRowId` | TextBox | note row IDs | Not in web yet | Generated later |
+| `txtMarginTotal`, `txtMarginTotal2`, `txtMarginTotal3`, `txtMarginTotal4` | TextBox | grid totals | Grid shell | Calculated later |
+| `txtTotalBondHistory` | TextBox | bond history total | Grid shell | Calculated later |
+| `txtLGExpPeriod` | TextBox | LG expense period | Present placeholder | Needs source validation |
+| `txtLGExpPeriodEnd` | TextBox | LG expense period end | Not in web yet | Needs source validation |
+| `txtLGExpPeriodLast` | TextBox | LG expense period last | Present placeholder | Needs source validation |
+| `txtCostDay` | TextBox | daily LG cost | Present placeholder | Needs source validation |
+| `txtCostLGYear` | TextBox | yearly LG cost | Present placeholder | Needs source validation |
+| `txtCostLGYearLast` | TextBox | last yearly LG cost | Not in web yet | Needs source validation |
+| `TxtItemQty` | TextBox | item quantity / repeated in VB6 | Present placeholder | Needs source validation |
+| `TxtItemPrice` | TextBox | item price / repeated in VB6 | Present placeholder | Needs source validation |
+| `txtType`, `txtid`, `TxtModFlg`, `Text1` | TextBox | internal mode/helper fields | Not in web yet | Internal only |
+| `DCLC` | DataCombo | `TblLC.LCTyperId` / `LCTypes` | Present read-only by id | Yes |
+| `DCBank` | DataCombo | `TblLC.BankId` / `BanksData` | Present read-only | Yes |
+| `DcBranch` | DataCombo | `TblLC.BranchID` / `TblBranchesData` | Present read-only by id | Yes |
+| `DBCboClientName` | DataCombo | `TblLC.VendorId` / `TblCustemers` | Present read-only | Yes |
+| `DCCountry` | DataCombo | `TblLC.CountryId` / `TblCountriesData` | Present read-only by id | Yes |
+| `DCCUrrency` | DataCombo | `TblLC.CurrencyId` / `currency` | Present read-only | Yes |
+| `DcboBankName` | DataCombo | `TblLC.BankID2` | Present read-only by id | Yes |
+| `DcboBox` | DataCombo | `TblLC.BoxID` | Present read-only by id | Yes |
+| `CboPaymentType` | ComboBox | `TblLC.PaymentTypeID` | Present read-only by id | Yes |
+| `DboParentAccount` | DataCombo | parent LC account | Present placeholder | Yes |
+| `cmbAccountLGParent` | DataCombo | `TblLC.AccountLGParent` | Present read-only | Yes |
+| `cmbAccountMarginParent` | DataCombo | `TblLC.AccountMarginParent` | Present read-only | Yes |
+| `cmbAccountAcceptanceParent` | DataCombo | `TblLC.AccountAcceptanceParent` | Present read-only | Yes |
+| `cmbAccountExpensParent` | DataCombo | `TblLC.AccountExpensParent` | Present read-only | Yes |
+| `cmbAccountExpProject` | DataCombo | `TblLC.AccountExpProject` | Present read-only | Yes |
+| `cmbAccount` | DataCombo | account helper | Present placeholder | Needs source validation |
+| `DCPreFix` | DataCombo | prefix | Present placeholder | Needs source validation |
+| `dcopr` | DataCombo | operator/operation helper | Present placeholder | Needs source validation |
+| `dcproject` | DataCombo | `TblLC.project_id` | Present read-only | Yes |
+| `Dcterm` | DataCombo | term lookup | Present placeholder | Needs source validation |
+| `dcitems` | DataCombo | item lookup | Present placeholder | Needs source validation |
+| `DataCombo1`, `DataCombo2`, `DCboUserName` | DataCombo | misc/user filters/helpers | Not in web yet | Needs source validation |
+| `dbFromDate` | DTPicker | `TblLC.FromDate` | Present read-only | Yes |
+| `dbTodate` | DTPicker | `TblLC.Todate` | Present read-only | Yes |
+| `DpCloseDate` | DTPicker | `TblLC.CloseDate` | Present read-only | Yes |
+| `DPLastParcilDate` | DTPicker | `TblLC.LastParcilDate` | Present read-only | Yes |
+| `DtpChequeDueDate` | DTPicker | `TblLC.ChequeDueDate` | Present read-only | Yes |
+| `Dtp` | DTPicker | opening balance date | Not in web yet | Needs source validation |
+| `txtGuaranteeDate` | DTPicker | guarantee date | Present placeholder | Needs source validation |
+| `txtLGExpiryDate` | DTPicker | LG expiry date | Present placeholder | Needs source validation |
+| `ChkLocked` | CheckBox | `TblLC.Locked` | Present read-only as status | Yes |
+| `ChKauto`, `Check1` | CheckBox | internal flags | Not in web yet | Needs source validation |
+| `OptType(0/1/2)` | OptionButton | `TblLC.OpenBalanceType` | Present read-only | Yes |
+| `Option1`, `Option2` | OptionButton | opening/account behavior | Not in web yet | Needs source validation |
+| `optTypeLCLG(0/1)` | OptionButton | LC/LG type behavior | Present placeholder | Yes |
+| `Fg` | VSFlexGrid | one of LC detail grids; source needs column trace | Grid shell | Yes, after mapping |
+| `Grid` | VSFlexGrid | item/details grid | Not in web yet | Yes, after mapping |
+| `GrdMargin` | VSFlexGrid | `TBLLCMargin` | Grid shell | Yes |
+| `GrdBondHistory` | VSFlexGrid | `TBLLCHistory` | Grid shell | Yes |
+| `GrdMargin2` | VSFlexGrid | `TBLLCMargin` payment/revised amount | Grid shell | Yes |
+| `GrdMargin3` | VSFlexGrid | `tblLCOpenB` | Grid shell | Yes |
+| `GrdMargin4` | VSFlexGrid | `TBLLCMargin2` | Grid shell | Yes |
+| `cmdAddLine` | CommandButton | add grid rows | Disabled action / grid shell | Yes |
+| `CmdCreateV`, `CmdCreateV2` | CommandButton | voucher creation | Disabled action | Yes, after accounting migration |
+| `Command2`, `Command3`, `Command4`, `Command5`, `Command6`, `Command7`, `Command9`, `Command1` | CommandButton | voucher/opening/print/grid helper actions | Disabled or not in web yet | Needs per-event migration |
+| `cmdCloseLC` | CommandButton | close LC | Disabled action | Yes, after close flow migration |
+| `cmdPrintEntryClose` | CommandButton | print close voucher | Disabled action | Yes |
+| `btnQuery` | ISButton | search | Present read-only | No write |
+| `BtnUpdate` | ISButton | update/edit | Disabled action | Yes |
+| `BtnPrint` | ISButton | print/report | Disabled action | Yes |
+| `Cmd(Index)` | ISButton array | new/edit/save/delete/print/search/navigation | Search active; dangerous actions disabled | Yes |
+| `XPBtnMove` | ISButton | record navigation | Not in web yet | Optional later |
+| `ISButton1` | ISButton | close/exit helper | Not in web yet | Optional later |
 
 ## Field Mapping
 
@@ -60,6 +163,8 @@ Current status:
 | `TxtNoteSerial2` | رقم قيد الهامش | `TblLC.NoteSerial2` |
 | `txtNoteSerialOpen` | رقم قيد الافتتاح | `TblLC.NoteSerialOpen` |
 | `txtRemarks` | ملاحظات | `TblLC.Remarks` |
+| `opening_balance_voucher_id` | Opening voucher id | `TblLC.opening_balance_voucher_id` |
+| `AccountExpProject` | حساب مصروف المشروع | `TblLC.AccountExpProject` |
 
 ## Grid Mapping
 
@@ -70,6 +175,7 @@ Current status:
 | `GrdMargin2` | Margin payment / revised bond amount | Placeholder grid only |
 | `GrdMargin3` | Opening balance rows / `tblLCOpenB` | Placeholder grid only |
 | `GrdMargin4` | Refinance / acceptance advice / `TBLLCMargin2` | Placeholder grid only |
+| Notes preview | linked vouchers/movements | Read-only preview from `Notes` by `TblLCID` when schema allows |
 
 ## Button Mapping
 

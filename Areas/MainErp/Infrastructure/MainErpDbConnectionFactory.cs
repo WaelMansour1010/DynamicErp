@@ -33,7 +33,11 @@ namespace MyERP.Areas.MainErp.Infrastructure
                 throw new ConfigurationErrorsException("Missing MainErp connection string: " + _connectionStringName);
             }
 
-            var connection = new SqlConnection(setting.ConnectionString);
+            var connectionString = _connectionStringName == "MainErp_ConnectionString"
+                ? MainErpDebugDatabaseOverride.Apply(setting.ConnectionString)
+                : setting.ConnectionString;
+
+            var connection = new SqlConnection(connectionString);
             connection.Open();
             return connection;
         }

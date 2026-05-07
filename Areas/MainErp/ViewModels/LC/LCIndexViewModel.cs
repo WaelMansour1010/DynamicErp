@@ -40,10 +40,16 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
 
     public class LCDetailsViewModel : LCListItemViewModel
     {
+        public LCDetailsViewModel()
+        {
+            LinkedNotes = new System.Collections.Generic.List<LCLinkedNoteViewModel>();
+        }
+
         public string Remarks { get; set; }
         public string MarginAccountCode { get; set; }
         public string AcceptAccountCode { get; set; }
         public string ExpenseAccountCode { get; set; }
+        public string AccountExpProject { get; set; }
         public string AccountLGParent { get; set; }
         public string AccountMarginParent { get; set; }
         public string AccountAcceptanceParent { get; set; }
@@ -62,6 +68,7 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
         public int? PaymentTypeId { get; set; }
         public string ChequeNumber { get; set; }
         public System.DateTime? ChequeDueDate { get; set; }
+        public double? OpeningBalanceVoucherId { get; set; }
         public System.DateTime? CloseDate { get; set; }
         public System.DateTime? LastParcilDate { get; set; }
         public bool? Locked { get; set; }
@@ -72,5 +79,17 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
         public double? OpenBalance { get; set; }
         public int? OpenBalanceType { get; set; }
         public string Warning { get; set; }
+        public string NotesWarning { get; set; }
+        public System.Collections.Generic.IList<LCLinkedNoteViewModel> LinkedNotes { get; private set; }
+    }
+
+    public class LCLinkedNoteViewModel
+    {
+        public int NoteID { get; set; }
+        public System.DateTime? NoteDate { get; set; }
+        public string NoteType { get; set; }
+        public string NoteSerial { get; set; }
+        public decimal? NoteValue { get; set; }
+        public string Remark { get; set; }
     }
 }

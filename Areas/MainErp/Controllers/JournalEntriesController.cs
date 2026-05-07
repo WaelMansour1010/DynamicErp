@@ -22,6 +22,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult Index(string searchText, int? branchId, DateTime? fromDate, DateTime? toDate, int page = 1)
         {
+            ViewBag.ActiveScreen = "journal-entries";
             const int pageSize = 25;
             var data = _repository.Search(searchText, branchId, fromDate, toDate, page, pageSize);
             var model = new JournalEntriesIndexViewModel

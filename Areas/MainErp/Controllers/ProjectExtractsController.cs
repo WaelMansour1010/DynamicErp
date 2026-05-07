@@ -21,6 +21,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult Index(string searchText, int? projectId, int? branchId, int page = 1)
         {
+            ViewBag.ActiveScreen = "project-extracts";
             const int pageSize = 20;
             var data = _repository.Search(searchText, projectId, branchId, page, pageSize);
             var model = new ProjectExtractsIndexViewModel
@@ -47,6 +48,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult Details(int id)
         {
+            ViewBag.ActiveScreen = "project-extracts";
             return View(_repository.GetDetails(id));
         }
     }

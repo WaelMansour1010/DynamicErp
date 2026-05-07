@@ -27,16 +27,16 @@
     }
 
     <div class="main-erp-vb6-toolbar">
-        <button type="button" disabled title="Not migrated yet">جديد</button>
-        <button type="button" disabled title="Not migrated yet">تعديل</button>
-        <button type="button" disabled title="Not migrated yet">حفظ</button>
-        <button type="button" disabled title="Not migrated yet">حذف</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">جديد</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">تعديل</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">حفظ</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">حذف</button>
         <button type="submit" form="lcSearchForm">بحث</button>
-        <button type="button" disabled title="Not migrated yet">طباعة / تقرير</button>
-        <button type="button" disabled title="Not migrated yet">إنشاء القيد</button>
-        <button type="button" disabled title="Not migrated yet">حذف القيد</button>
-        <button type="button" disabled title="Not migrated yet">إقفال الاعتماد</button>
-        <button type="button" disabled title="Not migrated yet">طباعة القيد</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">طباعة / تقرير</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">إنشاء القيد</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">حذف القيد</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">إقفال الاعتماد</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">طباعة القيد</button>
     </div>
 
     <div class="main-erp-lc-workbench">
@@ -91,11 +91,15 @@
             }
             else
             {
-                <section class="main-erp-lc-strip">
-                    <div><span>TblLCID</span><strong>@d.TblLCID</strong></div>
-                    <div><span>LCNO</span><strong>@d.LCNO</strong></div>
-                    <div><span>القيمة</span><strong>@String.Format("{0:n2}", d.Value)</strong></div>
+                <section class="main-erp-lc-strip main-erp-lc-status-panel">
+                    <div><span>LC رقم</span><strong>@d.LCNO</strong></div>
+                    <div><span>البنك</span><strong>@d.BankName</strong></div>
+                    <div><span>العملة</span><strong>@d.CurrencyName</strong></div>
                     <div><span>الحالة</span><strong>@(d.Locked == true ? "مغلق / Locked" : "مفتوح")</strong></div>
+                    <div><span>القيمة</span><strong>@String.Format("{0:n2}", d.Value)</strong></div>
+                    <div><span>قيمة الفتح</span><strong>@String.Format("{0:n2}", d.OpenValue)</strong></div>
+                    <div><span>له قيد افتتاح؟</span><strong>@(!string.IsNullOrWhiteSpace(d.NoteSerialOpen) || d.OpeningBalanceVoucherId.HasValue ? "نعم" : "لا")</strong></div>
+                    <div><span>هل مغلق؟</span><strong>@(d.Locked == true || d.CloseDate.HasValue ? "نعم" : "لا")</strong></div>
                 </section>
 
                 <section class="main-erp-tabs main-erp-lc-tabs">
@@ -104,14 +108,22 @@
                         <div class="main-erp-form-grid main-erp-form-grid-dense">
                             <label><span>رقم الاعتماد - TXTLCNO</span><input value="@d.LCNO" readonly /></label>
                             <label><span>اسم الاعتماد - txtName</span><input value="@d.Name" readonly /></label>
+                            <label><span>الاسم الإنجليزي - txtNameE</span><input value="Not mapped yet" readonly /></label>
                             <label><span>نوع الاعتماد - DCLC / LCTyperId</span><input value="@d.LcTypeId" readonly /></label>
                             <label><span>اعتماد / ضمان - optTypeLCLG</span><input value="@(d.AccountAcceptanceParent == null ? "غير محدد" : "حسب بيانات الحسابات")" readonly /></label>
+                            <label><span>البادئة - DCPreFix</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>المندوب / العملية - dcopr</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>الشروط - Dcterm</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>الصنف - dcitems</span><input value="Not mapped yet" readonly /></label>
                             <label><span>الفرع - DcBranch</span><input value="@d.BranchID" readonly /></label>
                             <label><span>المورد - DBCboClientName</span><input value="@d.VendorName" readonly /></label>
                             <label><span>كود المورد</span><input value="@d.VendorId" readonly /></label>
                             <label><span>الدولة - DCCountry</span><input value="@d.CountryId" readonly /></label>
                             <label><span>المشروع - dcproject</span><input value="@d.ProjectName" readonly /></label>
                             <label><span>كود المشروع</span><input value="@d.ProjectId" readonly /></label>
+                            <label><span>عدد الطرود - TxtNoOfParcil</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>رقم الضمان - txtGuaranteeNo</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>رقم الفاتورة الأولية - TXtPrimaryInvoiceNo</span><input value="Not mapped yet" readonly /></label>
                             <label class="main-erp-wide-field"><span>ملاحظات - txtRemarks</span><textarea readonly>@d.Remarks</textarea></label>
                         </div>
                     </section>
@@ -128,6 +140,12 @@
                             <label><span>سعر الصرف - txt_Currency_rate</span><input value="@String.Format("{0:n4}", d.CurrencyRate)" readonly /></label>
                             <label><span>قيمة الاعتماد - TXTValue</span><input value="@String.Format("{0:n2}", d.Value)" readonly /></label>
                             <label><span>قيمة الفتح - txtOPenValue</span><input value="@String.Format("{0:n2}", d.OpenValue)" readonly /></label>
+                            <label><span>قيمة فتح إضافية - txtOPenValue2</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>قيمة الضمان - txtBondAmt</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>النسبة - txtPercentV</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>مدة القبول - txtAcceptianPeriod</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>كمية الصنف - TxtItemQty</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>سعر الصنف - TxtItemPrice</span><input value="Not mapped yet" readonly /></label>
                             <label><span>نوع السداد - CboPaymentType</span><input value="@d.PaymentTypeId" readonly /></label>
                             <label><span>رقم الشيك - TxtChequeNumber</span><input value="@d.ChequeNumber" readonly /></label>
                             <label><span>تاريخ الشيك - DtpChequeDueDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)" readonly /></label>
@@ -145,6 +163,9 @@
                             <label><span>الحساب الرئيسي للقبول - cmbAccountAcceptanceParent</span><input value="@d.AccountAcceptanceParent" readonly /></label>
                             <label><span>حساب المصروفات - AccountExpensCode</span><input value="@d.ExpenseAccountCode" readonly /></label>
                             <label><span>الحساب الرئيسي للمصروفات - cmbAccountExpensParent</span><input value="@d.AccountExpensParent" readonly /></label>
+                            <label><span>حساب مصروف المشروع - cmbAccountExpProject</span><input value="@d.AccountExpProject" readonly /></label>
+                            <label><span>الحساب المختار - cmbAccount</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>حساب الأصل/الأب - DboParentAccount</span><input value="Not mapped yet" readonly /></label>
                         </div>
                     </section>
 
@@ -155,8 +176,15 @@
                             <label><span>إلى تاريخ - dbTodate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.ToDate)" readonly /></label>
                             <label><span>تاريخ الإغلاق - DpCloseDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.CloseDate)" readonly /></label>
                             <label><span>آخر تاريخ شحن - DPLastParcilDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.LastParcilDate)" readonly /></label>
+                            <label><span>تاريخ الضمان - txtGuaranteeDate</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>تاريخ انتهاء الضمان - txtLGExpiryDate</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>مدة مصروف LG - txtLGExpPeriod</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>تكلفة اليوم - txtCostDay</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>تكلفة السنة - txtCostLGYear</span><input value="Not mapped yet" readonly /></label>
+                            <label><span>آخر مدة مصروف LG - txtLGExpPeriodLast</span><input value="Not mapped yet" readonly /></label>
                             <label><span>الرصيد الافتتاحي - TxtOpenBalance</span><input value="@String.Format("{0:n2}", d.OpenBalance)" readonly /></label>
                             <label><span>نوع الرصيد - OptType</span><input value="@openBalanceType" readonly /></label>
+                            <label><span>Opening voucher id - txtopening_balance_voucher_id</span><input value="@String.Format("{0:n0}", d.OpeningBalanceVoucherId)" readonly /></label>
                             <label><span>رقم قيد LC - TxtNoteSerial</span><input value="@d.NoteSerial" readonly /></label>
                             <label><span>رقم قيد الهامش - TxtNoteSerial2</span><input value="@d.NoteSerial2" readonly /></label>
                             <label><span>رقم قيد الافتتاح - txtNoteSerialOpen</span><input value="@d.NoteSerialOpen" readonly /></label>
@@ -166,6 +194,14 @@
                     <section>
                         <h4>الجداول المرتبطة كما في FrmLC</h4>
                         <div class="main-erp-vb6-grid-shell">
+                            <article>
+                                <header>مصاريف الاعتماد - txtOPenValue / FraNote</header>
+                                <table class="main-erp-table"><thead><tr><th>نوع السداد</th><th>بنك السداد</th><th>الصندوق</th><th>رقم الشيك</th><th>تاريخ الشيك</th><th>القيمة</th></tr></thead><tbody><tr><td>@d.PaymentTypeId</td><td>@d.BankId2</td><td>@d.BoxId</td><td>@d.ChequeNumber</td><td>@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)</td><td>@String.Format("{0:n2}", d.OpenValue)</td></tr></tbody></table>
+                            </article>
+                            <article>
+                                <header>المستندات / الشحنات / الرسائل</header>
+                                <table class="main-erp-table"><thead><tr><th>رقم الفاتورة الأولية</th><th>رقم الضمان</th><th>عدد الطرود</th><th>آخر شحن</th></tr></thead><tbody><tr><td>Not mapped yet</td><td>Not mapped yet</td><td>Not mapped yet</td><td>@String.Format("{0:yyyy-MM-dd}", d.LastParcilDate)</td></tr></tbody></table>
+                            </article>
                             <article>
                                 <header>LC history - GrdBondHistory / TBLLCHistory</header>
                                 <table class="main-erp-table"><thead><tr><th>التاريخ</th><th>البيان</th><th>القيمة</th><th>القيد</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet - عرض آمن فقط بدون تحميل تفاصيل الجدول في هذه المرحلة.</td></tr></tbody></table>
@@ -186,6 +222,36 @@
                                 <header>Refinance / acceptance advice - GrdMargin4 / TBLLCMargin2</header>
                                 <table class="main-erp-table"><thead><tr><th>Margin No</th><th>Order Date</th><th>Guarantee Date</th><th>Amount</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet.</td></tr></tbody></table>
                             </article>
+                            <article>
+                                <header>الحركات أو القيود المرتبطة - Notes preview</header>
+                                @if (!string.IsNullOrWhiteSpace(d.NotesWarning))
+                                {
+                                    <div class="main-erp-warning">@d.NotesWarning</div>
+                                }
+                                <table class="main-erp-table">
+                                    <thead><tr><th>NoteID</th><th>التاريخ</th><th>النوع</th><th>المسلسل</th><th>القيمة</th><th>البيان</th></tr></thead>
+                                    <tbody>
+                                    @if (d.LinkedNotes.Count == 0)
+                                    {
+                                        <tr><td colspan="6">لا توجد قيود مرتبطة مقروءة من Notes لهذا الاعتماد، أو لم يتم ترحيل ربطها بعد.</td></tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var note in d.LinkedNotes)
+                                        {
+                                            <tr>
+                                                <td>@note.NoteID</td>
+                                                <td>@String.Format("{0:yyyy-MM-dd}", note.NoteDate)</td>
+                                                <td>@note.NoteType</td>
+                                                <td>@note.NoteSerial</td>
+                                                <td>@String.Format("{0:n2}", note.NoteValue)</td>
+                                                <td>@note.Remark</td>
+                                            </tr>
+                                        }
+                                    }
+                                    </tbody>
+                                </table>
+                            </article>
                         </div>
                     </section>
                 </section>
@@ -193,3 +259,14 @@
         </div>
     </div>
 </section>
+
+<script>
+    (function () {
+        var buttons = document.querySelectorAll('.main-erp-lc-screen .is-disabled-action');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener('click', function () {
+                alert('هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode');
+            });
+        }
+    })();
+</script>

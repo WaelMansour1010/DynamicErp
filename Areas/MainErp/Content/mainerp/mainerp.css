@@ -66,6 +66,26 @@
     color: #102a43;
 }
 
+.main-erp-context-line {
+    color: #657386;
+    display: block;
+    margin-top: 6px;
+}
+
+.main-erp-nav-form {
+    margin: 0;
+}
+
+.main-erp-nav-form button {
+    background: #fff;
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    color: #243142;
+    cursor: pointer;
+    font: inherit;
+    padding: 8px 12px;
+}
+
 .main-erp-panel {
     background: #ffffff;
     border: 1px solid #dfe5eb;
@@ -230,6 +250,558 @@
 
 .main-erp-vb6-toolbar button:disabled {
     color: #8a97a6;
+}
+
+.main-erp-vb6-toolbar .is-disabled-action {
+    background: #f3f5f7;
+    color: #8a97a6;
+    cursor: not-allowed;
+}
+
+/* MainErp shell adapted from Areas/Pos/Content/pos-transaction.css.
+   Class names intentionally keep the POS shell contract so the proven sidebar/dashboard
+   behavior can be reused without bringing POS routes, session, or business logic. */
+.pos-main-shell.main-erp-app-shell {
+    background: #eef2f7;
+    color: #162033;
+    display: grid;
+    grid-template-columns: 292px minmax(0, 1fr);
+    min-height: 100vh;
+    padding: 0;
+}
+
+.pos-main-sidebar.main-erp-sidebar {
+    background: #111827;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: sticky;
+    top: 0;
+}
+
+.pos-sidebar-brand.main-erp-sidebar-brand {
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    min-height: 74px;
+    padding: 14px 16px;
+}
+
+.pos-main-logo.main-erp-main-logo {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    min-width: 0;
+}
+
+.main-erp-brand-mark {
+    align-items: center;
+    background: #2563eb;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 800;
+    height: 40px;
+    justify-content: center;
+    width: 48px;
+}
+
+.main-erp-brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.main-erp-brand-text strong {
+    color: #fff;
+    font-size: 15px;
+    white-space: nowrap;
+}
+
+.main-erp-brand-text small {
+    color: #93a4b8;
+    font-size: 12px;
+}
+
+.pos-sidebar-collapse {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    color: #e5e7eb;
+    cursor: pointer;
+    display: inline-flex;
+    height: 36px;
+    justify-content: center;
+    width: 36px;
+}
+
+.pos-sidebar-user.main-erp-sidebar-user {
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    gap: 10px;
+    padding: 14px 16px;
+}
+
+.pos-sidebar-user .user-avatar {
+    align-items: center;
+    background: #1f2937;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    color: #bfdbfe;
+    display: inline-flex;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+}
+
+.pos-sidebar-user strong,
+.pos-sidebar-user small {
+    display: block;
+}
+
+.pos-sidebar-user strong {
+    color: #fff;
+    font-size: 13px;
+}
+
+.pos-sidebar-user small {
+    color: #9ca3af;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.pos-main-nav.main-erp-main-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.pos-nav-link,
+.pos-nav-section-toggle {
+    align-items: center;
+    border: 0;
+    border-radius: 8px;
+    color: #cbd5e1;
+    display: flex;
+    font-family: Tahoma, Arial, sans-serif;
+    font-size: 13px;
+    gap: 10px;
+    min-height: 40px;
+    padding: 9px 10px;
+    text-align: right;
+    text-decoration: none;
+    width: 100%;
+}
+
+.pos-nav-link:hover,
+.pos-nav-section-toggle:hover,
+.pos-nav-link.active {
+    background: rgba(37, 99, 235, 0.18);
+    color: #fff;
+}
+
+.pos-nav-link i,
+.pos-nav-section-toggle i:first-child {
+    color: #93c5fd;
+    flex: 0 0 18px;
+    text-align: center;
+}
+
+.pos-nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pos-nav-section-toggle {
+    background: transparent;
+    cursor: pointer;
+    justify-content: space-between;
+}
+
+.pos-nav-section-toggle span {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pos-nav-section-toggle b {
+    font-size: 13px;
+}
+
+.nav-chevron {
+    color: #64748b;
+    transition: transform 0.16s ease;
+}
+
+.pos-nav-submenu {
+    display: none;
+    flex-direction: column;
+    gap: 3px;
+    margin: 0 18px 0 0;
+    padding: 2px 8px 4px 0;
+}
+
+.pos-nav-section.is-open .pos-nav-submenu {
+    display: flex;
+}
+
+.pos-nav-section.is-open .nav-chevron {
+    transform: rotate(180deg);
+}
+
+.main-erp-sidebar.is-collapsed {
+    width: 84px;
+}
+
+.main-erp-sidebar.is-collapsed .main-erp-brand-text,
+.main-erp-sidebar.is-collapsed .pos-sidebar-user div,
+.main-erp-sidebar.is-collapsed .pos-nav-link span,
+.main-erp-sidebar.is-collapsed .pos-nav-section-toggle b,
+.main-erp-sidebar.is-collapsed .nav-chevron {
+    display: none;
+}
+
+body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
+    grid-template-columns: 84px minmax(0, 1fr);
+}
+
+.pos-main-content.main-erp-main-content {
+    min-width: 0;
+    padding: 18px;
+}
+
+.pos-main-topbar.main-erp-topbar {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 14px 18px;
+}
+
+.pos-main-topbar h1 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.pos-main-topbar p {
+    color: #64748b;
+    font-size: 12px;
+    margin: 6px 0 0;
+}
+
+.main-erp-topbar-actions {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
+.main-erp-topbar-link,
+.pos-main-logout button {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #1f2937;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    gap: 7px;
+    min-height: 36px;
+    padding: 8px 12px;
+    text-decoration: none;
+}
+
+.pos-main-logout button {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    color: #9f1239;
+}
+
+.main-erp-page-host {
+    min-width: 0;
+}
+
+.pos-panel {
+    background: #fff;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.05);
+    padding: 16px;
+}
+
+.panel-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.panel-heading h2 {
+    font-size: 17px;
+    margin: 0;
+}
+
+.panel-heading span {
+    color: #64748b;
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.link-action {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    color: #1d4ed8;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    min-height: 36px;
+    padding: 8px 12px;
+}
+
+.pos-admin-dashboard.main-erp-dashboard-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.executive-hero-panel.main-erp-executive-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.dashboard-period-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 14px;
+}
+
+.dashboard-period-toggle label {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 6px;
+    min-height: 34px;
+    padding: 7px 12px;
+}
+
+.pos-grid.four-cols {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.reports-filter-grid label {
+    color: #475569;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    font-weight: 700;
+    gap: 6px;
+}
+
+.reports-filter-grid input,
+.reports-filter-grid select {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #111827;
+    font: inherit;
+    min-height: 38px;
+    padding: 7px 10px;
+}
+
+.pos-validation.main-erp-dashboard-message,
+.main-erp-dashboard-message {
+    background: #fff8e6;
+    border: 1px solid #f4d47a;
+    border-radius: 8px;
+    color: #6b4e00;
+    padding: 11px 14px;
+}
+
+.admin-kpi-grid.main-erp-kpi-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.admin-kpi-card.main-erp-kpi-card {
+    background: #fff;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 112px;
+    padding: 14px;
+    text-decoration: none;
+}
+
+.admin-kpi-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 16px 30px rgba(37, 99, 235, 0.12);
+}
+
+.admin-kpi-card .kpi-label {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-kpi-card strong {
+    font-size: 17px;
+}
+
+.admin-kpi-card small {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.insight-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.insight-card {
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+}
+
+.insight-card span {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.admin-dashboard-grid.main-erp-dashboard-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-chart-wrap {
+    height: 260px;
+    min-height: 260px;
+    position: relative;
+}
+
+.report-result {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.7;
+    margin-top: 12px;
+    padding: 10px 12px;
+}
+
+.pos-main-loading-overlay {
+    align-items: center;
+    background: rgba(15, 23, 42, 0.34);
+    display: none;
+    inset: 0;
+    justify-content: center;
+    position: fixed;
+    z-index: 3000;
+}
+
+.pos-main-loading-overlay.is-visible {
+    display: flex;
+}
+
+.pos-loading-box {
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    display: flex;
+    gap: 12px;
+    padding: 16px 18px;
+}
+
+.pos-loading-spinner {
+    animation: mainErpSpin 0.8s linear infinite;
+    border: 3px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    height: 24px;
+    width: 24px;
+}
+
+@keyframes mainErpSpin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 1180px) {
+    .admin-kpi-grid.main-erp-kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .pos-grid.four-cols {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 860px) {
+    .pos-main-shell.main-erp-app-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .pos-main-sidebar.main-erp-sidebar {
+        height: auto;
+        position: relative;
+    }
+
+    .pos-main-content.main-erp-main-content {
+        padding: 12px;
+    }
+
+    .pos-main-topbar.main-erp-topbar,
+    .panel-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-kpi-grid.main-erp-kpi-grid,
+    .admin-dashboard-grid.main-erp-dashboard-grid,
+    .insight-grid,
+    .pos-grid.four-cols {
+        grid-template-columns: 1fr;
+    }
 }
 
 .main-erp-tabs {
@@ -468,6 +1040,10 @@
     margin-bottom: 12px;
 }
 
+.main-erp-lc-status-panel {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
 .main-erp-lc-strip div {
     background: #f8fafc;
     border: 1px solid #d8e0e8;
@@ -509,6 +1085,89 @@
     color: #25364a;
     font-weight: 700;
     padding: 9px 10px;
+}
+
+.main-erp-login-page {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.main-erp-login-card {
+    background: #ffffff;
+    border: 1px solid #d8e0e8;
+    border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(25, 38, 52, .12);
+    max-width: 460px;
+    padding: 24px;
+    width: 100%;
+}
+
+.main-erp-login-card h1 {
+    margin: 0 0 8px;
+}
+
+.main-erp-login-card p,
+.main-erp-login-card footer {
+    color: #657386;
+}
+
+.main-erp-login-form {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.main-erp-login-form label {
+    color: #344054;
+    display: grid;
+    font-weight: 700;
+    gap: 6px;
+}
+
+.main-erp-login-form input,
+.main-erp-login-form button,
+.main-erp-login-form select,
+.main-erp-secondary-button {
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    font: inherit;
+    min-height: 38px;
+    padding: 8px 10px;
+}
+
+.main-erp-login-form button,
+.main-erp-secondary-button {
+    background: #1f6feb;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.main-erp-secondary-button {
+    background: #eef3f8;
+    color: #243142;
+    margin-top: 10px;
+}
+
+.main-erp-login-db {
+    background: #f8fafc;
+    border: 1px dashed #b8c6d6;
+    border-radius: 6px;
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+}
+
+.main-erp-devstart .main-erp-header p {
+    color: #657386;
+    margin: 8px 0 0;
+}
+
+.main-erp-devstart-panel {
+    margin-top: 16px;
 }
 
 @media (max-width: 768px) {

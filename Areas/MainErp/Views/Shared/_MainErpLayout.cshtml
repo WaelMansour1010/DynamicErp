@@ -1,8 +1,10 @@
 @{
     Layout = null;
     var pageTitle = string.IsNullOrWhiteSpace(Convert.ToString(ViewBag.Title))
-        ? "Main ERP Migration"
+        ? "النظام الرئيسي"
         : Convert.ToString(ViewBag.Title);
+    var mainErpContext = Session["MainErp.UserContext"] as MyERP.Areas.MainErp.Models.Security.MainErpUserContext;
+    var isAdmin = mainErpContext != null && mainErpContext.IsAdmin;
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -10,31 +12,105 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@pageTitle</title>
-    <link href="~/Areas/MainErp/Content/mainerp/mainerp.css" rel="stylesheet" />
+    <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/MainErp/Content/mainerp/mainerp.css?v=20260507-shell")" rel="stylesheet" />
+    <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
 </head>
 <body class="main-erp-body">
-    <div class="main-erp-shell" dir="rtl">
-        <header class="main-erp-header">
-            <div>
-                <span class="main-erp-kicker">Main ERP Migration</span>
-                <h2>النظام الرئيسي</h2>
-            </div>
-            <nav class="main-erp-nav" aria-label="Main ERP">
-                <a href="@Url.Action("Index", "Home", new { area = "MainErp" })">الرئيسية</a>
-                <a href="@Url.Action("Index", "Dashboard", new { area = "MainErp" })">الداشبورد</a>
-                <a href="@Url.Action("Index", "Purchases", new { area = "MainErp" })">المشتريات</a>
-                <a href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })">التحويلات</a>
-                <a href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })">القيود اليومية</a>
-                <a href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })">التقارير المحاسبية</a>
-                <a href="@Url.Action("Index", "SalesReports", new { area = "MainErp" })">تقارير المبيعات</a>
-                <a href="@Url.Action("Index", "LC", new { area = "MainErp" })">الاعتمادات</a>
-                <a href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">المستخلصات</a>
-                <a href="@Url.Action("PreviewTest", "Accounting", new { area = "MainErp" })">معاينة القيود</a>
-            </nav>
-        </header>
-        <main>
-            @RenderBody()
+    <div class="pos-main-shell main-erp-app-shell" dir="rtl"
+         data-is-admin="@(isAdmin ? "true" : "false")"
+         data-app-name="MainErp">
+        @Html.Partial("_MainErpSidebar")
+
+        <main class="pos-main-content main-erp-main-content">
+            <header class="pos-main-topbar main-erp-topbar">
+                <div>
+                    <h1>@pageTitle</h1>
+                    <p>
+                        المستخدم: @(mainErpContext != null ? mainErpContext.UserName : "")
+                        @if (mainErpContext != null && mainErpContext.BranchId.HasValue)
+                        {
+                            <text> | الفرع: @(string.IsNullOrWhiteSpace(mainErpContext.BranchName) ? mainErpContext.BranchId.ToString() : mainErpContext.BranchName)</text>
+                        }
+                        @if (mainErpContext != null && !string.IsNullOrWhiteSpace(mainErpContext.DatabaseName))
+                        {
+                            <text> | قاعدة البيانات: @mainErpContext.DatabaseName</text>
+                        }
+                    </p>
+                </div>
+                <div class="main-erp-topbar-actions">
+                    <a class="main-erp-topbar-link" href="@Url.Action("Index", "Dashboard", new { area = "MainErp" })">
+                        <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                        لوحة التحكم
+                    </a>
+                    @if (mainErpContext != null)
+                    {
+                        using (Html.BeginForm("Logout", "Login", new { area = "MainErp" }, FormMethod.Post, new { @class = "pos-main-logout main-erp-logout" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit">خروج</button>
+                        }
+                    }
+                </div>
+            </header>
+
+            <section class="main-erp-page-host">
+                @RenderBody()
+            </section>
         </main>
+
+        <div class="pos-main-loading-overlay" id="mainErpLoadingOverlay" aria-live="polite" aria-hidden="true">
+            <div class="pos-loading-box">
+                <span class="pos-loading-spinner" aria-hidden="true"></span>
+                <span id="mainErpLoadingText">جاري تحميل الشاشة...</span>
+            </div>
+        </div>
     </div>
+
+    <script>
+        (function () {
+            var sidebar = document.getElementById("mainErpSidebar");
+            var collapseBtn = document.getElementById("mainErpSidebarCollapseBtn");
+            var overlay = document.getElementById("mainErpLoadingOverlay");
+            var navLinks = document.querySelectorAll(".main-erp-nav-link[href]");
+
+            function showLoading() {
+                if (!overlay) { return; }
+                overlay.setAttribute("aria-hidden", "false");
+                overlay.classList.add("is-visible");
+            }
+
+            document.querySelectorAll("[data-menu-toggle]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    var section = button.closest(".pos-nav-section");
+                    if (section) {
+                        section.classList.toggle("is-open");
+                    }
+                });
+            });
+
+            if (collapseBtn && sidebar) {
+                collapseBtn.addEventListener("click", function () {
+                    sidebar.classList.toggle("is-collapsed");
+                    document.body.classList.toggle("main-erp-sidebar-collapsed");
+                });
+            }
+
+            navLinks.forEach(function (link) {
+                link.addEventListener("click", function () {
+                    if (!link.classList.contains("is-disabled")) {
+                        showLoading();
+                    }
+                });
+            });
+
+            window.addEventListener("pageshow", function () {
+                if (!overlay) { return; }
+                overlay.classList.remove("is-visible");
+                overlay.setAttribute("aria-hidden", "true");
+            });
+        })();
+    </script>
+    @RenderSection("scripts", required: false)
 </body>
 </html>

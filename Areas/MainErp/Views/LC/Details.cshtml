@@ -22,18 +22,22 @@
         <div class="main-erp-warning">@Model.Warning</div>
     }
 
-    <div class="main-erp-vb6-toolbar">
+        <div class="main-erp-vb6-toolbar">
         <a href="@Url.Action("Index", "LC", new { area = "MainErp", selectedId = Model.TblLCID })">رجوع لشاشة الاعتماد</a>
-        <button type="button" disabled title="Not migrated yet">حفظ</button>
-        <button type="button" disabled title="Not migrated yet">إنشاء القيد</button>
-        <button type="button" disabled title="Not migrated yet">طباعة</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">حفظ</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">إنشاء القيد</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">طباعة</button>
     </div>
 
-    <section class="main-erp-lc-strip">
-        <div><span>TblLCID</span><strong>@Model.TblLCID</strong></div>
-        <div><span>LCNO</span><strong>@Model.LCNO</strong></div>
+    <section class="main-erp-lc-strip main-erp-lc-status-panel">
+        <div><span>LC رقم</span><strong>@Model.LCNO</strong></div>
         <div><span>البنك</span><strong>@Model.BankName</strong></div>
+        <div><span>العملة</span><strong>@Model.CurrencyName</strong></div>
+        <div><span>الحالة</span><strong>@(Model.Locked == true ? "مغلق / Locked" : "مفتوح")</strong></div>
         <div><span>القيمة</span><strong>@String.Format("{0:n2}", Model.Value)</strong></div>
+        <div><span>قيمة الفتح</span><strong>@String.Format("{0:n2}", Model.OpenValue)</strong></div>
+        <div><span>له قيد افتتاح؟</span><strong>@(!string.IsNullOrWhiteSpace(Model.NoteSerialOpen) || Model.OpeningBalanceVoucherId.HasValue ? "نعم" : "لا")</strong></div>
+        <div><span>هل مغلق؟</span><strong>@(Model.Locked == true || Model.CloseDate.HasValue ? "نعم" : "لا")</strong></div>
     </section>
 
     <section class="main-erp-tabs main-erp-lc-tabs">
@@ -82,6 +86,7 @@
                 <dt>آخر تاريخ شحن</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.LastParcilDate)</dd>
                 <dt>رصيد افتتاحي</dt><dd>@String.Format("{0:n2}", Model.OpenBalance)</dd>
                 <dt>نوع الرصيد</dt><dd>@openBalanceType</dd>
+                <dt>Opening voucher id</dt><dd>@String.Format("{0:n0}", Model.OpeningBalanceVoucherId)</dd>
                 <dt>قيد LC</dt><dd>@Model.NoteSerial</dd>
                 <dt>قيد الهامش</dt><dd>@Model.NoteSerial2</dd>
                 <dt>قيد الافتتاح</dt><dd>@Model.NoteSerialOpen</dd>
@@ -95,8 +100,51 @@
             </div>
         </section>
         <section>
+            <h4>الحركات أو القيود المرتبطة - Notes preview</h4>
+            @if (!string.IsNullOrWhiteSpace(Model.NotesWarning))
+            {
+                <div class="main-erp-warning">@Model.NotesWarning</div>
+            }
+            <div class="main-erp-table-wrap">
+                <table class="main-erp-table">
+                    <thead><tr><th>NoteID</th><th>التاريخ</th><th>النوع</th><th>المسلسل</th><th>القيمة</th><th>البيان</th></tr></thead>
+                    <tbody>
+                    @if (Model.LinkedNotes.Count == 0)
+                    {
+                        <tr><td colspan="6">لا توجد قيود مرتبطة مقروءة من Notes لهذا الاعتماد، أو لم يتم ترحيل ربطها بعد.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var note in Model.LinkedNotes)
+                        {
+                            <tr>
+                                <td>@note.NoteID</td>
+                                <td>@String.Format("{0:yyyy-MM-dd}", note.NoteDate)</td>
+                                <td>@note.NoteType</td>
+                                <td>@note.NoteSerial</td>
+                                <td>@String.Format("{0:n2}", note.NoteValue)</td>
+                                <td>@note.Remark</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section>
             <h4>ملاحظات</h4>
             <p class="main-erp-remarks">@Model.Remarks</p>
         </section>
     </section>
 </section>
+
+<script>
+    (function () {
+        var buttons = document.querySelectorAll('.main-erp-lc-screen .is-disabled-action');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener('click', function () {
+                alert('هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode');
+            });
+        }
+    })();
+</script>

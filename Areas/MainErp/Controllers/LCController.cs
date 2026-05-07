@@ -21,6 +21,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult Index(string searchText, int? bankId, int? vendorId, int? branchId, int? selectedId, int page = 1)
         {
+            ViewBag.ActiveScreen = "lc";
             const int pageSize = 20;
             var data = _repository.Search(searchText, bankId, vendorId, branchId, page, pageSize);
             var model = new LCIndexViewModel
@@ -60,6 +61,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult Details(int id)
         {
+            ViewBag.ActiveScreen = "lc";
             return View(_repository.GetDetails(id));
         }
     }

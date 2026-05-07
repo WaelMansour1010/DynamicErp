@@ -9,6 +9,7 @@ namespace MyERP.Areas.MainErp.Controllers
     {
         public ActionResult PreviewTest()
         {
+            ViewBag.ActiveScreen = "voucher-preview";
             var factory = new MainErpDbConnectionFactory();
             var manualIds = new ManualIdGenerator(factory);
             var voucherService = new VoucherPostingService(manualIds, new VoucherRepository());

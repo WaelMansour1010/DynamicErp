@@ -1,44 +1,246 @@
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Dashboard";
+    ViewBag.Title = "لوحة تشغيل النظام الرئيسي";
+    ViewBag.ActiveScreen = "dashboard";
 }
-<section class="main-erp-panel main-erp-dashboard">
-    <div class="main-erp-title-row">
-        <div>
-            <h3>الشاشة الرئيسية</h3>
-            <p>Reused from Kishny generic module. لوحة تشغيل عامة مستوحاة من Dashboard Kishny مع استبعاد كروت POS/KYC/commission/cashier closing.</p>
+
+<section id="mainErpDashboardPanel" class="pos-admin-dashboard main-erp-dashboard-panel">
+    <div class="pos-panel executive-hero-panel main-erp-executive-hero">
+        <div class="panel-heading">
+            <div>
+                <h2>لوحة التحكم التنفيذية</h2>
+                <span>إطار تشغيل حديث مأخوذ من تجربة الويب القائمة، بعد إزالة أي عناصر متخصصة لا تخص النظام الرئيسي.</span>
+            </div>
+            <button type="button" class="link-action" id="mainErpRefreshDashboardBtn">تحديث المؤشرات</button>
         </div>
-        <span class="main-erp-badge">Reused from Kishny generic module</span>
+
+        <div class="dashboard-period-toggle" id="mainErpPeriodToggle" role="radiogroup" aria-label="فترة لوحة التحكم">
+            <label><input type="radio" name="mainErpPeriodType" value="daily" checked /> يومي</label>
+            <label><input type="radio" name="mainErpPeriodType" value="weekly" /> أسبوعي</label>
+            <label><input type="radio" name="mainErpPeriodType" value="monthly" /> شهري</label>
+            <label><input type="radio" name="mainErpPeriodType" value="yearly" /> سنوي</label>
+            <label><input type="radio" name="mainErpPeriodType" value="custom" /> مخصص</label>
+        </div>
+
+        <div class="pos-grid four-cols reports-filter-grid dashboard-filter-grid">
+            <label class="dashboard-date-filter">من تاريخ<input type="date" id="mainErpFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" disabled /></label>
+            <label class="dashboard-date-filter">إلى تاريخ<input type="date" id="mainErpToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" disabled /></label>
+            <label>
+                الفرع
+                <select id="mainErpBranchId">
+                    <option value="">كل الفروع</option>
+                    <option value="1">الفرع الرئيسي</option>
+                </select>
+            </label>
+            <label>
+                نطاق التحليل
+                <select id="mainErpDashboardScope">
+                    <option value="">كل النظام</option>
+                    <option value="accounting">الحسابات</option>
+                    <option value="sales">المبيعات</option>
+                    <option value="purchases">المشتريات</option>
+                    <option value="inventory">المخزون</option>
+                    <option value="projects">المشاريع</option>
+                    <option value="lc">الاعتمادات</option>
+                </select>
+            </label>
+        </div>
     </div>
 
-    <div class="main-erp-form-grid">
-        <label><span>من تاريخ</span><input type="date" /></label>
-        <label><span>إلى تاريخ</span><input type="date" /></label>
-        <label><span>الفرع</span><input type="text" placeholder="كل الفروع" /></label>
-        <label><span>الفترة</span><select><option>يومي</option><option>شهري</option><option>سنوي</option></select></label>
+    <div id="mainErpDashboardMessage" class="pos-validation main-erp-dashboard-message">
+        هذه لوحة تشغيل MainErp العامة. تم إعادة استخدام إطار التشغيل والـ sidebar والـ dashboard، والبيانات التفصيلية ستربط تدريجيًا بمستودعات MainErp فقط.
     </div>
 
-    <div class="main-erp-kpi-grid">
-        <a href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })"><span>المبيعات</span><strong>ملخص المبيعات</strong><small>Generic sales only</small></a>
-        <a href="@Url.Action("JournalEntries", "AccountingReports", new { area = "MainErp" })"><span>المحاسبة</span><strong>حركة القيود</strong><small>Notes + vouchers</small></a>
-        <a href="@Url.Action("Index", "Purchases", new { area = "MainErp" })"><span>المشتريات</span><strong>فواتير مشتريات</strong><small>Reused UI, save disabled</small></a>
-        <a href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })"><span>المخازن</span><strong>التحويلات</strong><small>Reused UI, save disabled</small></a>
-        <a href="@Url.Action("Index", "LC", new { area = "MainErp" })"><span>LC</span><strong>الاعتمادات</strong><small>Real VB6 workflow</small></a>
-        <a href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })"><span>Projects</span><strong>المستخلصات</strong><small>Real VB6 workflow</small></a>
+    <div class="admin-kpi-grid main-erp-kpi-grid">
+        <a class="admin-kpi-card main-erp-kpi-card" href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })">
+            <span class="kpi-label">المبيعات</span>
+            <strong>ملخص المبيعات</strong>
+            <small>تقارير عامة للنظام الرئيسي فقط</small>
+        </a>
+        <a class="admin-kpi-card main-erp-kpi-card" href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })">
+            <span class="kpi-label">الحسابات</span>
+            <strong>التقارير المحاسبية</strong>
+            <small>قيود وحركة حسابات قراءة فقط</small>
+        </a>
+        <a class="admin-kpi-card main-erp-kpi-card" href="@Url.Action("Index", "Purchases", new { area = "MainErp" })">
+            <span class="kpi-label">المشتريات</span>
+            <strong>فواتير المشتريات</strong>
+            <small>واجهة عامة تحت الترحيل</small>
+        </a>
+        <a class="admin-kpi-card main-erp-kpi-card" href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })">
+            <span class="kpi-label">المخزون</span>
+            <strong>التحويلات المخزنية</strong>
+            <small>واجهة عامة تحت الترحيل</small>
+        </a>
+        <a class="admin-kpi-card main-erp-kpi-card" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">
+            <span class="kpi-label">المشاريع</span>
+            <strong>مستخلصات المشاريع</strong>
+            <small>Safe shell مبني على المصدر القديم</small>
+        </a>
+        <a class="admin-kpi-card main-erp-kpi-card" href="@Url.Action("Index", "LC", new { area = "MainErp" })">
+            <span class="kpi-label">الاعتمادات</span>
+            <strong>الاعتمادات المستندية</strong>
+            <small>Safe shell مطابق لـ FrmLC قدر الإمكان</small>
+        </a>
     </div>
 
-    <div class="main-erp-dashboard-grid">
-        <section>
-            <h4>مقارنة الفروع</h4>
-            <div class="main-erp-chart-placeholder">سيتم توصيلها بنفس فكرة branch performance العامة من Kishny بعد نقل queries إلى MainErp_ConnectionString.</div>
+    <section class="pos-panel executive-insights-panel main-erp-insights-panel">
+        <div class="panel-heading">
+            <h2>مركز الرؤى التشغيلية</h2>
+            <span>نطاق عام للنظام الرئيسي، بدون أي مؤشرات تشغيل متخصصة خارجه.</span>
+        </div>
+        <div class="insight-grid">
+            <div class="insight-card">
+                <strong>الحسابات</strong>
+                <span>متابعة القيود اليومية وحركة الحسابات من قاعدة MainErp.</span>
+            </div>
+            <div class="insight-card">
+                <strong>المبيعات والمشتريات</strong>
+                <span>تقارير عامة فقط، مع استبعاد أي منطق متخصص لا يخص النظام الرئيسي.</span>
+            </div>
+            <div class="insight-card">
+                <strong>المشاريع والاعتمادات</strong>
+                <span>شاشات ترحيل حقيقية آمنة، والعمليات المالية ما زالت مغلقة.</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="admin-dashboard-grid main-erp-dashboard-grid">
+        <section class="pos-panel">
+            <div class="panel-heading"><h2>توزيع وحدات النظام</h2></div>
+            <div class="dashboard-chart-wrap"><canvas id="mainErpModulesChart"></canvas></div>
+            <div class="report-result compact-result">حسابات، مبيعات، مشتريات، مخزون، مشاريع، واعتمادات.</div>
         </section>
-        <section>
-            <h4>اتجاه المبيعات والمشتريات</h4>
-            <div class="main-erp-chart-placeholder">لا توجد بيانات POS/card هنا. سيتم ربطها بتقارير MainErp العامة.</div>
+        <section class="pos-panel">
+            <div class="panel-heading"><h2>مقارنة الفروع</h2><span>إطار عام بديل لمؤشرات الفروع في Kishny</span></div>
+            <div class="dashboard-chart-wrap"><canvas id="mainErpBranchesChart"></canvas></div>
+            <div class="report-result">يربط لاحقًا بمستودعات التقارير العامة في MainErp.</div>
         </section>
-        <section>
-            <h4>ملخص المحاسبة</h4>
-            <div class="main-erp-chart-placeholder">قيود اليوم، حركة الحسابات، وأرصدة التقارير العامة فقط.</div>
+        <section class="pos-panel">
+            <div class="panel-heading"><h2>اتجاه المبيعات والمشتريات</h2></div>
+            <div class="dashboard-chart-wrap"><canvas id="mainErpTrendChart"></canvas></div>
+            <div class="report-result">لا توجد أي قراءات خارج مستودعات MainErp في هذا المخطط.</div>
+        </section>
+        <section class="pos-panel">
+            <div class="panel-heading"><h2>حركة الحسابات</h2></div>
+            <div class="dashboard-chart-wrap"><canvas id="mainErpAccountingChart"></canvas></div>
+            <div class="report-result">يعرض إطار chart جاهز لربط Notes و DOUBLE_ENTREY_VOUCHERS قراءة فقط.</div>
+        </section>
+        <section class="pos-panel">
+            <div class="panel-heading"><h2>المشاريع والاعتمادات</h2></div>
+            <div class="dashboard-chart-wrap"><canvas id="mainErpProjectsLcChart"></canvas></div>
+            <div class="report-result">متابعة المستخلصات والاعتمادات كمسارات ترحيل آمنة.</div>
+        </section>
+        <section class="pos-panel">
+            <div class="panel-heading"><h2>جاهزية الترحيل</h2></div>
+            <div class="dashboard-chart-wrap"><canvas id="mainErpReadinessChart"></canvas></div>
+            <div class="report-result">يميز الصفحات الحقيقية عن الصفحات تحت الترحيل.</div>
         </section>
     </div>
 </section>
+
+@section scripts {
+    <script>
+        (function () {
+            function toDateInput(value) {
+                var year = value.getFullYear();
+                var month = String(value.getMonth() + 1);
+                var day = String(value.getDate());
+                return year + "-" + (month.length === 1 ? "0" + month : month) + "-" + (day.length === 1 ? "0" + day : day);
+            }
+
+            function addDays(value, days) {
+                var result = new Date(value.getTime());
+                result.setDate(result.getDate() + days);
+                return result;
+            }
+
+            function selectedPeriodType() {
+                var selected = document.querySelector("input[name='mainErpPeriodType']:checked");
+                return selected ? selected.value : "daily";
+            }
+
+            function applyPeriodDates() {
+                var type = selectedPeriodType();
+                var today = new Date();
+                var from = today;
+                var to = today;
+                if (type === "weekly") {
+                    from = addDays(today, -6);
+                } else if (type === "monthly") {
+                    from = new Date(today.getFullYear(), today.getMonth(), 1);
+                    to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                } else if (type === "yearly") {
+                    from = new Date(today.getFullYear(), 0, 1);
+                    to = new Date(today.getFullYear(), 11, 31);
+                }
+
+                var fromInput = document.getElementById("mainErpFromDate");
+                var toInput = document.getElementById("mainErpToDate");
+                var custom = type === "custom";
+                if (fromInput) { fromInput.disabled = !custom; }
+                if (toInput) { toInput.disabled = !custom; }
+                if (!custom) {
+                    if (fromInput) { fromInput.value = toDateInput(from); }
+                    if (toInput) { toInput.value = toDateInput(to); }
+                }
+            }
+
+            function makeChart(id, config) {
+                var canvas = document.getElementById(id);
+                if (!canvas || typeof Chart === "undefined") { return; }
+                return new Chart(canvas.getContext("2d"), config);
+            }
+
+            var palette = ["#2563eb", "#059669", "#d97706", "#7c3aed", "#0f766e", "#b91c1c"];
+            makeChart("mainErpModulesChart", {
+                type: "doughnut",
+                data: {
+                    labels: ["الحسابات", "المبيعات", "المشتريات", "المخزون", "المشاريع", "الاعتمادات"],
+                    datasets: [{ data: [22, 18, 14, 12, 17, 17], backgroundColor: palette }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, legend: { position: "bottom" } }
+            });
+            makeChart("mainErpBranchesChart", {
+                type: "bar",
+                data: { labels: ["الرئيسي", "فرع 2", "فرع 3", "فرع 4"], datasets: [{ label: "مؤشر عام", data: [82, 74, 69, 61], backgroundColor: "#2563eb" }] },
+                options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
+            });
+            makeChart("mainErpTrendChart", {
+                type: "line",
+                data: { labels: ["س 1", "س 2", "س 3", "س 4", "س 5"], datasets: [{ label: "مبيعات", data: [25, 28, 31, 29, 36], borderColor: "#059669", fill: false }, { label: "مشتريات", data: [18, 21, 20, 24, 27], borderColor: "#d97706", fill: false }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            makeChart("mainErpAccountingChart", {
+                type: "bar",
+                data: { labels: ["مدين", "دائن", "صافي"], datasets: [{ label: "حركة", data: [45, 43, 2], backgroundColor: ["#2563eb", "#059669", "#7c3aed"] }] },
+                options: { responsive: true, maintainAspectRatio: false, legend: { display: false } }
+            });
+            makeChart("mainErpProjectsLcChart", {
+                type: "horizontalBar",
+                data: { labels: ["المستخلصات", "الاعتمادات"], datasets: [{ label: "جاهزية", data: [58, 72], backgroundColor: ["#0f766e", "#7c3aed"] }] },
+                options: { responsive: true, maintainAspectRatio: false, legend: { display: false }, scales: { xAxes: [{ ticks: { beginAtZero: true, max: 100 } }] } }
+            });
+            makeChart("mainErpReadinessChart", {
+                type: "pie",
+                data: { labels: ["حقيقي/قراءة", "تحت الترحيل", "مغلق ماليًا"], datasets: [{ data: [45, 35, 20], backgroundColor: ["#059669", "#d97706", "#b91c1c"] }] },
+                options: { responsive: true, maintainAspectRatio: false, legend: { position: "bottom" } }
+            });
+
+            document.querySelectorAll("input[name='mainErpPeriodType']").forEach(function (input) {
+                input.addEventListener("change", applyPeriodDates);
+            });
+            applyPeriodDates();
+
+            var refreshButton = document.getElementById("mainErpRefreshDashboardBtn");
+            if (refreshButton) {
+                refreshButton.addEventListener("click", function () {
+                    var message = document.getElementById("mainErpDashboardMessage");
+                    if (message) {
+                        message.textContent = "تم تحديث إطار المؤشرات. الربط التفصيلي سيظل MainErp-only بدون أي استدعاءات خارجية.";
+                    }
+                });
+            }
+        })();
+    </script>
+}

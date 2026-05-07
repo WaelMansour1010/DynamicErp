@@ -1,0 +1,71 @@
+@{
+    Layout = null;
+    ViewBag.Title = "Debug Run Mode";
+    var selected = Convert.ToString(ViewBag.MainErpSelectedDatabase);
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/MainErp/Content/mainerp/mainerp.css")" rel="stylesheet" />
+</head>
+<body class="main-erp-body">
+    <div class="main-erp-shell main-erp-devstart" dir="rtl">
+        <header class="main-erp-header">
+            <div>
+                <span class="main-erp-kicker">Debug / Local only</span>
+                <h2>اختيار وضع التشغيل</h2>
+                <p>هذه الصفحة لا تظهر إلا في DEBUG وعلى طلب local.</p>
+            </div>
+        </header>
+
+        <section class="main-erp-module-grid">
+            <a class="main-erp-module" href="@Url.Content("~/Pos")">
+                <strong>تشغيل كيشني POS</strong>
+                <span>/Pos</span>
+                <small>@ViewBag.KishnyCashConnection</small>
+            </a>
+            <a class="main-erp-module" href="@Url.Content("~/Home/Index")">
+                <strong>تشغيل النظام الأصلي MyErp</strong>
+                <span>/Home/Index</span>
+                <small>@ViewBag.MyErpConnection</small>
+            </a>
+            <a class="main-erp-module" href="@Url.Content("~/MainErp")">
+                <strong>تشغيل النظام الرئيسي الجديد</strong>
+                <span>/MainErp</span>
+                <small>@ViewBag.MainErpConnection</small>
+            </a>
+        </section>
+
+        <section class="main-erp-panel main-erp-devstart-panel">
+            <div class="main-erp-title-row">
+                <div>
+                    <h3>قاعدة MainErp للاختبار المحلي</h3>
+                    <p>الاختيار هنا Session-only ولا يكتب في Web.config.</p>
+                </div>
+                <span class="main-erp-badge">@ViewBag.MainErpDisplayDatabase</span>
+            </div>
+
+            @using (Html.BeginForm("SelectMainErpDatabase", "DevStart", FormMethod.Post, new { @class = "main-erp-filter" }))
+            {
+                @Html.AntiForgeryToken()
+                <select name="databaseName">
+                    <option value="Eng" @(selected == "Eng" ? "selected" : "")>Eng</option>
+                    <option value="MyErp" @(selected == "MyErp" ? "selected" : "")>MyErp</option>
+                    <option value="Cash" @(selected == "Cash" ? "selected" : "")>Cash</option>
+                </select>
+                <input name="customDatabaseName" placeholder="Custom DB optional" />
+                <button type="submit">تطبيق على MainErp فقط</button>
+            }
+
+            @using (Html.BeginForm("ClearMainErpDatabase", "DevStart", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <button type="submit" class="main-erp-secondary-button">إلغاء override والعودة إلى Web.config</button>
+            }
+        </section>
+    </div>
+</body>
+</html>

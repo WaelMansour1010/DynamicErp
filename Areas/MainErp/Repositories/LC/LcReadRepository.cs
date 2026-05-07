@@ -99,7 +99,8 @@ SELECT TOP 1
     l.AccountExpensCode, l.OpenBalance, l.OpenBalanceType,
     l.OpenValue, l.Currency_rate, l.LCTyperId, l.BankId, l.BankID2, l.BoxID,
     l.CurrencyId, l.VendorId, l.CountryId, l.project_id, l.projectName,
-    l.PaymentTypeID, l.ChequeNumber, l.ChequeDueDate, l.CloseDate, l.LastParcilDate,
+    l.PaymentTypeID, l.ChequeNumber, l.ChequeDueDate, l.opening_balance_voucher_id,
+    l.CloseDate, l.LastParcilDate, l.AccountExpProject,
     l.Locked, l.userid, l.AccountLGParent, l.AccountMarginParent,
     l.AccountAcceptanceParent, l.AccountExpensParent, l.NoteSerial, l.NoteSerial2,
     l.NoteSerialOpen,
@@ -111,6 +112,7 @@ LEFT JOIN TblCustemers cust ON l.VendorId = cust.CusID
 WHERE l.TblLCID = @Id;", connection))
                 {
                     command.Parameters.AddWithValue("@Id", id);
+                    LCDetailsViewModel model;
                     using (var reader = command.ExecuteReader())
                     {
                         if (!reader.Read())
@@ -118,7 +120,7 @@ WHERE l.TblLCID = @Id;", connection))
                             return new LCDetailsViewModel { TblLCID = id, Warning = "LC record was not found." };
                         }
 
-                        return new LCDetailsViewModel
+                        model = new LCDetailsViewModel
                         {
                             TblLCID = Convert.ToInt32(reader["TblLCID"]),
                             LCNO = Convert.ToString(reader["LCNO"]),
@@ -132,6 +134,7 @@ WHERE l.TblLCID = @Id;", connection))
                             MarginAccountCode = Convert.ToString(reader["Account_CodeMargin"]),
                             AcceptAccountCode = Convert.ToString(reader["AcceptAccount_Code"]),
                             ExpenseAccountCode = Convert.ToString(reader["AccountExpensCode"]),
+                            AccountExpProject = Convert.ToString(reader["AccountExpProject"]),
                             AccountLGParent = Convert.ToString(reader["AccountLGParent"]),
                             AccountMarginParent = Convert.ToString(reader["AccountMarginParent"]),
                             AccountAcceptanceParent = Convert.ToString(reader["AccountAcceptanceParent"]),
@@ -150,6 +153,7 @@ WHERE l.TblLCID = @Id;", connection))
                             PaymentTypeId = reader["PaymentTypeID"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["PaymentTypeID"]),
                             ChequeNumber = Convert.ToString(reader["ChequeNumber"]),
                             ChequeDueDate = reader["ChequeDueDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ChequeDueDate"]),
+                            OpeningBalanceVoucherId = reader["opening_balance_voucher_id"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["opening_balance_voucher_id"]),
                             CloseDate = reader["CloseDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["CloseDate"]),
                             LastParcilDate = reader["LastParcilDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["LastParcilDate"]),
                             Locked = reader["Locked"] == DBNull.Value ? (bool?)null : Convert.ToBoolean(reader["Locked"]),
@@ -164,11 +168,54 @@ WHERE l.TblLCID = @Id;", connection))
                             VendorName = Convert.ToString(reader["VendorName"])
                         };
                     }
+
+                    LoadLinkedNotes(connection, model);
+                    return model;
                 }
             }
             catch (SqlException ex)
             {
                 return new LCDetailsViewModel { TblLCID = id, Warning = "LC details are not available in the configured database yet: " + ex.Message };
+            }
+        }
+
+        private static void LoadLinkedNotes(SqlConnection connection, LCDetailsViewModel model)
+        {
+            try
+            {
+                using (var command = new SqlCommand(@"
+SELECT TOP 20
+    NoteID,
+    NoteDate,
+    NoteType,
+    NoteSerial,
+    Note_Value,
+    Remark
+FROM Notes
+WHERE TblLCID = @Id
+ORDER BY NoteDate DESC, NoteID DESC;", connection))
+                {
+                    command.Parameters.AddWithValue("@Id", model.TblLCID);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            model.LinkedNotes.Add(new LCLinkedNoteViewModel
+                            {
+                                NoteID = Convert.ToInt32(reader["NoteID"]),
+                                NoteDate = reader["NoteDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["NoteDate"]),
+                                NoteType = Convert.ToString(reader["NoteType"]),
+                                NoteSerial = Convert.ToString(reader["NoteSerial"]),
+                                NoteValue = reader["Note_Value"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["Note_Value"]),
+                                Remark = Convert.ToString(reader["Remark"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                model.NotesWarning = "Linked LC notes preview is not available in this database: " + ex.Message;
             }
         }
 

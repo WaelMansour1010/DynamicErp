@@ -320,5 +320,203 @@ Safety:
 
 - No database schema changes.
 - No `AllScripts.sql` changes.
+
+## 2026-05-07 MainErp Kishny UI Shell Reuse Correction
+
+Created:
+
+- `Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml`
+- `AI_Docs\MainErp\30_MainErp_KishnyUILayoutReuse.md`
+
+Modified:
+
+- `Areas\MainErp\Views\Shared\_MainErpLayout.cshtml`
+- `Areas\MainErp\Views\Dashboard\Index.cshtml`
+- `Areas\MainErp\Controllers\HomeController.cs`
+- `Areas\MainErp\Views\Home\Index.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `Areas\MainErp\Controllers\AccountingController.cs`
+- `Areas\MainErp\Controllers\AccountingReportsController.cs`
+- `Areas\MainErp\Controllers\DashboardController.cs`
+- `Areas\MainErp\Controllers\JournalEntriesController.cs`
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Controllers\ProjectExtractsController.cs`
+- `Areas\MainErp\Controllers\PurchasesController.cs`
+- `Areas\MainErp\Controllers\SalesReportsController.cs`
+- `Areas\MainErp\Controllers\StockTransfersController.cs`
+- `MyERP.csproj`
+
+Implemented:
+
+- Replaced the simplified MainErp header/link landing experience with a real shell adapted from the Kishny dashboard layout.
+- Added MainErp-specific sidebar with Kishny-style accordion navigation and MainErp-only routes.
+- Replaced the old temporary dashboard cards with a Kishny-style executive dashboard structure: period filters, branch/scope filters, KPI cards, insight panel, and chart containers.
+- `/MainErp` now redirects to `/MainErp/Dashboard`.
+- Controllers set `ViewBag.ActiveScreen` so the MainErp sidebar can highlight the active module.
+
+Excluded from MainErp:
+
+- POS sales invoice flow,
+- card/token logic,
+- KYC,
+- commissions,
+- cashier close,
+- POS session restore,
+- Kishny branding,
+- POS dashboard data endpoints.
+
+Safety:
+
+- No `Areas\Pos` files modified.
+- No `AllScripts.sql` changes.
+- No database changes.
+- MainErp still uses MainErp login/session/connection boundaries.
 - No `Areas\Pos` files modified.
 - No Cayshny legacy files modified.
+
+## 2026-05-07 LC Workbench Phase 2 - Read-only Enhancement
+
+Scope:
+
+- Improve LC Workbench only.
+- Keep the screen read-only.
+- Add missing VB6 controls as read-only fields or clearly marked placeholders.
+- Add read-only previews where safe.
+
+Modified:
+
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\LC\Details.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `AI_Docs\MainErp\29_LC_SafeShell_Mapping.md`
+
+Added:
+
+- Full `FrmLC.frm` control inventory in `29_LC_SafeShell_Mapping.md`.
+- Status panel at the top of the LC workbench:
+  - LC number,
+  - bank,
+  - currency,
+  - status,
+  - value/open value,
+  - opening voucher indicator,
+  - closed indicator.
+- More read-only fields from `TblLC`:
+  - `opening_balance_voucher_id`,
+  - `AccountExpProject`.
+- More VB6 fields as explicit `Not mapped yet` placeholders:
+  - `txtNameE`,
+  - `DCPreFix`,
+  - `dcopr`,
+  - `Dcterm`,
+  - `dcitems`,
+  - `TxtNoOfParcil`,
+  - `txtGuaranteeNo`,
+  - `TXtPrimaryInvoiceNo`,
+  - `txtOPenValue2`,
+  - `txtBondAmt`,
+  - `txtPercentV`,
+  - `txtAcceptianPeriod`,
+  - `TxtItemQty`,
+  - `TxtItemPrice`,
+  - LG period/cost fields.
+- Preview panels for:
+  - LC expenses,
+  - documents/shipments/messages placeholders,
+  - linked `Notes` rows by `TblLCID` when the schema supports it.
+- Dangerous action buttons now show:
+  - `هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode`.
+
+Still read-only:
+
+- No `SaveData`.
+- No delete.
+- No post.
+- No `Notes` insert/update/delete.
+- No `DOUBLE_ENTREY_VOUCHERS` or `DOUBLE_ENTREY_VOUCHERS1` insert/update/delete.
+- No account creation.
+- No grid edit/save behavior.
+
+Fields still without confirmed source:
+
+- `txtNameE`
+- `TXTBank2`
+- `txtOPenValue2`
+- `txtBondAmt`
+- `txtPercentV`
+- `txtAcceptianPeriod`
+- `TxtNoOfParcil`
+- `txtGuaranteeNo`
+- `TXtPrimaryInvoiceNo`
+- `txtGuaranteeDate`
+- `txtLGExpiryDate`
+- LG cost/period helper fields
+- `DCPreFix`, `dcopr`, `Dcterm`, `dcitems`, `DataCombo1`, `DataCombo2`
+
+Safety:
+
+- No database changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` files modified.
+- No POS/Kishny logic introduced.
+
+## 2026-05-07 MainErp Login And Debug Run Mode
+
+Created:
+
+- `Areas\MainErp\Controllers\LoginController.cs`
+- `Areas\MainErp\Models\Security\MainErpUserContext.cs`
+- `Areas\MainErp\Security\MainErpSessionKeys.cs`
+- `Areas\MainErp\Services\Security\MainErpLoginService.cs`
+- `Areas\MainErp\ViewModels\Security\MainErpLoginViewModel.cs`
+- `Areas\MainErp\Views\Login\Index.cshtml`
+- `Areas\MainErp\Infrastructure\MainErpDebugDatabaseOverride.cs`
+- `Controllers\DevStartController.cs`
+- `Views\DevStart\Index.cshtml`
+- `AI_Docs\MainErp\27_MainErp_LoginAndRunMode.md`
+
+Modified:
+
+- `Areas\MainErp\Controllers\MainErpControllerBase.cs`
+- `Areas\MainErp\Infrastructure\MainErpDbConnectionFactory.cs`
+- `Areas\MainErp\Views\Shared\_MainErpLayout.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `App_Start\RouteConfig.cs`
+- `MyERP.csproj`
+- `AI_Docs\MainErp\25_ConnectionAndRunModes.md`
+
+Implemented:
+
+- MainErp-specific login route: `/MainErp/Login`.
+- MainErp-specific session context instead of POS context.
+- MainErp base controller now requires `MainErp.UserContext` and redirects missing sessions to `/MainErp/Login`.
+- MainErp login reads active users from `TblUsers` using `MainErp_ConnectionString`.
+- Loaded defaults:
+  - user id,
+  - username,
+  - employee id/name,
+  - branch id/name,
+  - store id/name,
+  - box id/name,
+  - optional `PaymentNetid`/`PaymentNetID`,
+  - user type/admin flag.
+- Development master password support through:
+  - `EnableDevMasterPassword`,
+  - `DevMasterPassword`.
+- DEBUG/local startup selector:
+  - `/`,
+  - `/DevStart`,
+  - `/RunMode`.
+- Outside DEBUG/local, `/` redirects to the previous POS root behavior.
+- DEBUG/local MainErp database override stored only in Session and applied only to `MainErp_ConnectionString`.
+
+Safety:
+
+- POS login was not modified.
+- POS context and `POSCTX` are not used by MainErp.
+- MainErp does not use `KishnyCashConnection`.
+- Original web still uses `MyERP_ConnectionString`.
+- No database schema changes.
+- No `AllScripts.sql` changes.
