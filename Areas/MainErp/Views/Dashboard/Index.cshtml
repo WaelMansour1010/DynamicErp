@@ -1,35 +1,44 @@
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Main ERP Dashboard";
+    ViewBag.Title = "Dashboard";
 }
-<section class="main-erp-panel">
+<section class="main-erp-panel main-erp-dashboard">
     <div class="main-erp-title-row">
         <div>
-            <h3>داشبورد النظام الرئيسي</h3>
-            <p>لوحة تنفيذ آمنة للوظائف العامة القابلة للترحيل. تعرض فقط وحدات النظام الرئيسي المعتمدة لهذه المرحلة.</p>
+            <h3>الشاشة الرئيسية</h3>
+            <p>Reused from Kishny generic module. لوحة تشغيل عامة مستوحاة من Dashboard Kishny مع استبعاد كروت POS/KYC/commission/cashier closing.</p>
         </div>
-        <span class="main-erp-badge">Read-only shell</span>
+        <span class="main-erp-badge">Reused from Kishny generic module</span>
     </div>
-    <div class="main-erp-module-grid">
-        <a class="main-erp-module" href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })">
-            <span>Accounting</span>
-            <strong>القيود اليومية</strong>
-            <small>بحث وقراءة فقط</small>
-        </a>
-        <a class="main-erp-module" href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })">
-            <span>Reports</span>
-            <strong>التقارير المحاسبية</strong>
-            <small>تصميم وتنفيذ لاحق</small>
-        </a>
-        <a class="main-erp-module" href="@Url.Action("Index", "SalesReports", new { area = "MainErp" })">
-            <span>Sales</span>
-            <strong>تقارير المبيعات</strong>
-            <small>تحت المراجعة</small>
-        </a>
-        <a class="main-erp-module" href="@Url.Action("Index", "LC", new { area = "MainErp" })">
-            <span>Trade Finance</span>
-            <strong>الاعتمادات المستندية</strong>
-            <small>قراءة فقط</small>
-        </a>
+
+    <div class="main-erp-form-grid">
+        <label><span>من تاريخ</span><input type="date" /></label>
+        <label><span>إلى تاريخ</span><input type="date" /></label>
+        <label><span>الفرع</span><input type="text" placeholder="كل الفروع" /></label>
+        <label><span>الفترة</span><select><option>يومي</option><option>شهري</option><option>سنوي</option></select></label>
+    </div>
+
+    <div class="main-erp-kpi-grid">
+        <a href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })"><span>المبيعات</span><strong>ملخص المبيعات</strong><small>Generic sales only</small></a>
+        <a href="@Url.Action("JournalEntries", "AccountingReports", new { area = "MainErp" })"><span>المحاسبة</span><strong>حركة القيود</strong><small>Notes + vouchers</small></a>
+        <a href="@Url.Action("Index", "Purchases", new { area = "MainErp" })"><span>المشتريات</span><strong>فواتير مشتريات</strong><small>Reused UI, save disabled</small></a>
+        <a href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })"><span>المخازن</span><strong>التحويلات</strong><small>Reused UI, save disabled</small></a>
+        <a href="@Url.Action("Index", "LC", new { area = "MainErp" })"><span>LC</span><strong>الاعتمادات</strong><small>Real VB6 workflow</small></a>
+        <a href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })"><span>Projects</span><strong>المستخلصات</strong><small>Real VB6 workflow</small></a>
+    </div>
+
+    <div class="main-erp-dashboard-grid">
+        <section>
+            <h4>مقارنة الفروع</h4>
+            <div class="main-erp-chart-placeholder">سيتم توصيلها بنفس فكرة branch performance العامة من Kishny بعد نقل queries إلى MainErp_ConnectionString.</div>
+        </section>
+        <section>
+            <h4>اتجاه المبيعات والمشتريات</h4>
+            <div class="main-erp-chart-placeholder">لا توجد بيانات POS/card هنا. سيتم ربطها بتقارير MainErp العامة.</div>
+        </section>
+        <section>
+            <h4>ملخص المحاسبة</h4>
+            <div class="main-erp-chart-placeholder">قيود اليوم، حركة الحسابات، وأرصدة التقارير العامة فقط.</div>
+        </section>
     </div>
 </section>

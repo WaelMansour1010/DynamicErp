@@ -1,18 +1,35 @@
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Sales Reports";
+    ViewBag.Title = "تقارير المبيعات";
 }
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
             <h3>تقارير المبيعات العامة</h3>
-            <p>هذه صفحة MainErp فقط لتجميع تقارير المبيعات العامة المرشحة. التقارير التشغيلية المتخصصة مستبعدة من هذه الوحدة.</p>
+            <p>Reused from Kishny generic module. تم اعتماد نمط تقارير المبيعات العام فقط واستبعاد تقارير الكروت، KYC، العمولات، وإقفال الكاشير.</p>
         </div>
-        <span class="main-erp-badge">Shell only</span>
+        <span class="main-erp-badge">Reused from Kishny generic module</span>
     </div>
-    <div class="main-erp-sections">
-        <div><strong>ملخص المبيعات خلال فترة</strong><br /><a href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })">فتح التقرير</a></div>
-        <div><strong>تقرير المبيعات الشامل</strong><br /><span>سيتم ربطه بجداول ERP العامة فقط.</span></div>
-        <div><strong>تحليل المبيعات حسب الفرع</strong><br /><span>مسموح إذا كان غير مرتبط بالكاشير أو POS session.</span></div>
+
+    <div class="main-erp-report-tiles">
+        <a href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })">
+            <span></span><strong>ملخص المبيعات خلال فترة</strong><small>Working read-only report</small>
+        </a>
+        <a class="is-disabled">
+            <span></span><strong>تقرير المبيعات الشامل</strong><small>Pending generic sales type mapping</small>
+        </a>
+        <a class="is-disabled">
+            <span></span><strong>مبيعات الفروع</strong><small>Generic branch summary only</small>
+        </a>
+        <a class="is-disabled">
+            <span></span><strong>مبيعات المستخدمين</strong><small>No cashier closing logic</small>
+        </a>
+    </div>
+
+    <div class="main-erp-form-grid">
+        <label><span>من تاريخ</span><input type="date" /></label>
+        <label><span>إلى تاريخ</span><input type="date" /></label>
+        <label><span>الفرع</span><input type="text" /></label>
+        <label><span>العميل</span><input type="text" /></label>
     </div>
 </section>

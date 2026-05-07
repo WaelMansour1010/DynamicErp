@@ -18,6 +18,8 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
         public int PageSize { get; set; }
         public int TotalCount { get; set; }
         public string Warning { get; set; }
+        public int? SelectedId { get; set; }
+        public LCDetailsViewModel SelectedDetails { get; set; }
         public System.Collections.Generic.IList<LCListItemViewModel> Items { get; private set; }
     }
 
@@ -42,6 +44,31 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
         public string MarginAccountCode { get; set; }
         public string AcceptAccountCode { get; set; }
         public string ExpenseAccountCode { get; set; }
+        public string AccountLGParent { get; set; }
+        public string AccountMarginParent { get; set; }
+        public string AccountAcceptanceParent { get; set; }
+        public string AccountExpensParent { get; set; }
+        public decimal? OpenValue { get; set; }
+        public double? CurrencyRate { get; set; }
+        public int? LcTypeId { get; set; }
+        public int? BankId { get; set; }
+        public int? BankId2 { get; set; }
+        public int? BoxId { get; set; }
+        public int? CurrencyId { get; set; }
+        public int? VendorId { get; set; }
+        public int? CountryId { get; set; }
+        public int? ProjectId { get; set; }
+        public string ProjectName { get; set; }
+        public int? PaymentTypeId { get; set; }
+        public string ChequeNumber { get; set; }
+        public System.DateTime? ChequeDueDate { get; set; }
+        public System.DateTime? CloseDate { get; set; }
+        public System.DateTime? LastParcilDate { get; set; }
+        public bool? Locked { get; set; }
+        public int? UserId { get; set; }
+        public string NoteSerial { get; set; }
+        public string NoteSerial2 { get; set; }
+        public string NoteSerialOpen { get; set; }
         public double? OpenBalance { get; set; }
         public int? OpenBalanceType { get; set; }
         public string Warning { get; set; }

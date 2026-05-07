@@ -1,57 +1,123 @@
 @model MyERP.Areas.MainErp.ViewModels.ProjectExtracts.ProjectExtractsIndexViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = Model.Title;
+    ViewBag.Title = "مستخلصات المشاريع";
 }
-<section class="main-erp-panel">
+<section class="main-erp-panel main-erp-operational-page">
     <div class="main-erp-title-row">
         <div>
             <h3>مستخلصات المشاريع</h3>
-            <p>قائمة قراءة من project_billl تمهيدا لترحيل شاشة projectsbill.frm الفعلية. لا يوجد حفظ أو ترحيل قيود في هذه المرحلة.</p>
+            <p>Real migrated from VB6: projectsbill.frm. هذه شاشة workflow حقيقية للترحيل، والقائمة أدناه مجرد Temporary technical test page داخل الشاشة.</p>
         </div>
-        <span class="main-erp-badge">Projects</span>
+        <span class="main-erp-badge">Real migrated from VB6</span>
     </div>
+
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
     {
         <div class="main-erp-warning">@Model.Warning</div>
     }
-    @using (Html.BeginForm("Index", "ProjectExtracts", FormMethod.Get, new { area = "MainErp", @class = "main-erp-filter" }))
-    {
-        <input name="searchText" value="@Model.SearchText" placeholder="رقم المستخلص / يدوي / مشروع" />
-        <input name="projectId" value="@Model.ProjectId" placeholder="كود المشروع" />
-        <input name="branchId" value="@Model.BranchId" placeholder="كود الفرع" />
-        <button type="submit">بحث</button>
-    }
-    <table class="main-erp-table">
-        <thead>
-            <tr>
-                <th>الكود</th>
-                <th>التاريخ</th>
-                <th>رقم القيد</th>
-                <th>رقم يدوي</th>
-                <th>المشروع</th>
-                <th>العميل</th>
-                <th>الإجمالي</th>
-                <th>VAT</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in Model.Items)
-        {
-            <tr>
-                <td>@item.Id</td>
-                <td>@String.Format("{0:yyyy-MM-dd}", item.BillDate)</td>
-                <td>@item.NoteSerial</td>
-                <td>@item.ManualNo</td>
-                <td>@item.ProjectName</td>
-                <td>@item.CustomerName</td>
-                <td>@String.Format("{0:n2}", item.Total)</td>
-                <td>@String.Format("{0:n2}", item.VatValue)</td>
-                <td><a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = item.Id })">فتح</a></td>
-            </tr>
-        }
-        </tbody>
-    </table>
-    <div class="main-erp-muted">عدد السجلات: @Model.Items.Count / @Model.TotalCount. قراءة فقط حاليا؛ شاشة الإدخال الفعلية ستتبع projectsbill.frm.</div>
+
+    <div class="main-erp-vb6-toolbar">
+        <button type="button" disabled>جديد</button>
+        <button type="button" disabled>تعديل</button>
+        <button type="button" disabled>حفظ</button>
+        <button type="button" disabled>حذف لاحقا عند الأمان</button>
+        <button type="submit" form="projectExtractSearchForm">بحث</button>
+        <button type="button" disabled>الإرسال للاعتماد</button>
+        <button type="button" disabled>طباعة / تقرير</button>
+    </div>
+
+    <section class="main-erp-tabs">
+        <section>
+            <h4>بيانات المستخلص</h4>
+            <div class="main-erp-form-grid">
+                <label><span>رقم المستخلص</span><input type="text" placeholder="txtid" disabled /></label>
+                <label><span>رقم القيد</span><input type="text" placeholder="TxtNoteSerial" disabled /></label>
+                <label><span>رقم الفاتورة</span><input type="text" placeholder="TxtNoteSerial1" disabled /></label>
+                <label><span>رقم يدوي</span><input type="text" placeholder="txtManualNo" disabled /></label>
+                <label><span>التاريخ</span><input type="date" disabled /></label>
+                <label><span>الفرع</span><input type="text" placeholder="Dcbranch" disabled /></label>
+                <label><span>المشروع</span><input type="text" placeholder="DataCombo2 / txtprojectname" disabled /></label>
+                <label><span>الطرف</span><select disabled><option>عميل نهائي</option><option>مقاول باطن</option></select></label>
+                <label><span>مقاول الباطن</span><input type="text" placeholder="DcbosubContractor" disabled /></label>
+                <label class="main-erp-wide-field"><span>ملاحظات</span><textarea disabled></textarea></label>
+            </div>
+        </section>
+
+        <section>
+            <h4>بنود المشروع Fg_Journal</h4>
+            <div class="main-erp-table-wrap">
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>البند</th><th>الكود</th><th>الوحدة</th><th>السعر</th><th>الكمية</th><th>سابق</th><th>حالي</th><th>تراكمي</th><th>NetExe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="9">سيتم تحميل project_bill_details بنفس أعمدة Fg_Journal في الخطوة التالية.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <h4>الخصومات والاستقطاعات والضريبة</h4>
+            <div class="main-erp-form-grid">
+                <label><span>total</span><input type="text" disabled /></label>
+                <label><span>Results</span><input type="text" disabled /></label>
+                <label><span>TxtNetValue</span><input type="text" disabled /></label>
+                <label><span>VAT %</span><input type="text" disabled /></label>
+                <label><span>VAT Value</span><input type="text" disabled /></label>
+                <label><span>TxtTotalValue</span><input type="text" disabled /></label>
+                <label><span>AdvancedPayment</span><input type="text" disabled /></label>
+                <label><span>PreVAT</span><input type="text" disabled /></label>
+                <label><span>PerformanceBond</span><input type="text" disabled /></label>
+                <label><span>DiscountGMater</span><input type="text" disabled /></label>
+            </div>
+        </section>
+
+        <section>
+            <h4>الدفعات المقدمة VSFlexGrid4</h4>
+            <div class="main-erp-related-grid-list">
+                <div>Notes prepayment candidates loaded by ALLButton1_Click</div>
+                <div>TblPayPrePayed links</div>
+                <div>TblProjePayPrePayed links</div>
+                <div>Command10 الغاء السداد remains disabled</div>
+            </div>
+        </section>
+
+        <section>
+            <h4>Temporary technical test page - قراءة project_billl</h4>
+            @using (Html.BeginForm("Index", "ProjectExtracts", FormMethod.Get, new { area = "MainErp", id = "projectExtractSearchForm", @class = "main-erp-filter" }))
+            {
+                <input name="searchText" value="@Model.SearchText" placeholder="رقم المستخلص / يدوي / مشروع" />
+                <input name="projectId" value="@Model.ProjectId" placeholder="كود المشروع" />
+                <input name="branchId" value="@Model.BranchId" placeholder="كود الفرع" />
+                <button type="submit">بحث</button>
+            }
+            <table class="main-erp-table">
+                <thead>
+                    <tr>
+                        <th>الكود</th><th>التاريخ</th><th>رقم القيد</th><th>رقم يدوي</th><th>المشروع</th><th>العميل</th><th>الإجمالي</th><th>VAT</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>@String.Format("{0:yyyy-MM-dd}", item.BillDate)</td>
+                        <td>@item.NoteSerial</td>
+                        <td>@item.ManualNo</td>
+                        <td>@item.ProjectName</td>
+                        <td>@item.CustomerName</td>
+                        <td>@String.Format("{0:n2}", item.Total)</td>
+                        <td>@String.Format("{0:n2}", item.VatValue)</td>
+                        <td><a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = item.Id })">فتح</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </section>
+    </section>
 </section>

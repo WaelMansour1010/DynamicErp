@@ -1,56 +1,195 @@
 @model MyERP.Areas.MainErp.ViewModels.LC.LCIndexViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = Model.Title;
+    ViewBag.Title = "الاعتمادات المستندية";
+    var d = Model.SelectedDetails;
+    var openBalanceType = d == null || !d.OpenBalanceType.HasValue
+        ? "غير محدد"
+        : d.OpenBalanceType.Value == 0 ? "مدين" : d.OpenBalanceType.Value == 1 ? "دائن" : "غير محدد";
 }
-<section class="main-erp-panel">
+
+<section class="main-erp-panel main-erp-operational-page main-erp-lc-screen">
     <div class="main-erp-title-row">
         <div>
+            <span class="main-erp-kicker">Real migrated from VB6 / Safe Shell</span>
             <h3>الاعتمادات المستندية</h3>
-            <p>قائمة قراءة من TblLC تمهيدا لترحيل شاشة FrmLC.frm الحقيقية. الحفظ والترحيل غير مفعلين.</p>
+            <p>
+                شاشة تشغيل مبنية على <strong>FrmLC.frm</strong>. هذه المرحلة قراءة وبحث وعرض فقط؛
+                الحفظ والترحيل وإنشاء القيود والحذف غير مفعلة عمدًا.
+            </p>
         </div>
-        <span class="main-erp-badge">LC</span>
+        <span class="main-erp-badge">Read only</span>
     </div>
+
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
     {
         <div class="main-erp-warning">@Model.Warning</div>
     }
-    @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", @class = "main-erp-filter" }))
-    {
-        <input name="searchText" value="@Model.SearchText" placeholder="رقم الاعتماد / الاسم" />
-        <input name="bankId" value="@Model.BankId" placeholder="كود البنك" />
-        <input name="vendorId" value="@Model.VendorId" placeholder="كود المورد" />
-        <input name="branchId" value="@Model.BranchId" placeholder="كود الفرع" />
-        <button type="submit">بحث</button>
-    }
-    <table class="main-erp-table">
-        <thead>
-            <tr>
-                <th>الكود</th>
-                <th>رقم الاعتماد</th>
-                <th>الاسم</th>
-                <th>البنك</th>
-                <th>المورد</th>
-                <th>القيمة</th>
-                <th>الفرع</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in Model.Items)
-        {
-            <tr>
-                <td>@item.TblLCID</td>
-                <td>@item.LCNO</td>
-                <td>@item.Name</td>
-                <td>@item.BankName</td>
-                <td>@item.VendorName</td>
-                <td>@String.Format("{0:n2}", item.Value)</td>
-                <td>@item.BranchID</td>
-                <td><a href="@Url.Action("Details", "LC", new { area = "MainErp", id = item.TblLCID })">فتح</a></td>
-            </tr>
-        }
-        </tbody>
-    </table>
-    <div class="main-erp-muted">عدد السجلات: @Model.Items.Count / @Model.TotalCount. قراءة فقط حاليا؛ الحفظ وإنشاء القيود سيتم ترحيلهما من VB6 بعد اكتمال خريطة الشاشة.</div>
+
+    <div class="main-erp-vb6-toolbar">
+        <button type="button" disabled title="Not migrated yet">جديد</button>
+        <button type="button" disabled title="Not migrated yet">تعديل</button>
+        <button type="button" disabled title="Not migrated yet">حفظ</button>
+        <button type="button" disabled title="Not migrated yet">حذف</button>
+        <button type="submit" form="lcSearchForm">بحث</button>
+        <button type="button" disabled title="Not migrated yet">طباعة / تقرير</button>
+        <button type="button" disabled title="Not migrated yet">إنشاء القيد</button>
+        <button type="button" disabled title="Not migrated yet">حذف القيد</button>
+        <button type="button" disabled title="Not migrated yet">إقفال الاعتماد</button>
+        <button type="button" disabled title="Not migrated yet">طباعة القيد</button>
+    </div>
+
+    <div class="main-erp-lc-workbench">
+        <aside class="main-erp-lc-search">
+            <h4>بحث الاعتمادات</h4>
+            @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", id = "lcSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
+            {
+                <label>
+                    <span>رقم الاعتماد / الاسم</span>
+                    <input name="searchText" value="@Model.SearchText" placeholder="LCNO / Name" />
+                </label>
+                <label>
+                    <span>كود البنك</span>
+                    <input name="bankId" value="@Model.BankId" placeholder="BankId" />
+                </label>
+                <label>
+                    <span>كود المورد</span>
+                    <input name="vendorId" value="@Model.VendorId" placeholder="VendorId" />
+                </label>
+                <label>
+                    <span>كود الفرع</span>
+                    <input name="branchId" value="@Model.BranchId" placeholder="BranchID" />
+                </label>
+                <button type="submit">بحث</button>
+            }
+
+            <div class="main-erp-lc-results">
+                @if (Model.Items.Count == 0)
+                {
+                    <div class="main-erp-empty">لا توجد اعتمادات للعرض.</div>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        var isSelected = Model.SelectedId == item.TblLCID;
+                        <a class="main-erp-lc-result @(isSelected ? "is-selected" : "")"
+                           href="@Url.Action("Index", "LC", new { area = "MainErp", searchText = Model.SearchText, bankId = Model.BankId, vendorId = Model.VendorId, branchId = Model.BranchId, selectedId = item.TblLCID })">
+                            <strong>@item.LCNO</strong>
+                            <span>@item.Name</span>
+                            <small>@item.BankName - @String.Format("{0:n2}", item.Value)</small>
+                        </a>
+                    }
+                }
+            </div>
+        </aside>
+
+        <div class="main-erp-lc-form">
+            @if (d == null)
+            {
+                <div class="main-erp-empty">اختر اعتمادًا من نتيجة البحث لعرض شاشة FrmLC الآمنة.</div>
+            }
+            else
+            {
+                <section class="main-erp-lc-strip">
+                    <div><span>TblLCID</span><strong>@d.TblLCID</strong></div>
+                    <div><span>LCNO</span><strong>@d.LCNO</strong></div>
+                    <div><span>القيمة</span><strong>@String.Format("{0:n2}", d.Value)</strong></div>
+                    <div><span>الحالة</span><strong>@(d.Locked == true ? "مغلق / Locked" : "مفتوح")</strong></div>
+                </section>
+
+                <section class="main-erp-tabs main-erp-lc-tabs">
+                    <section>
+                        <h4>بيانات الاعتماد</h4>
+                        <div class="main-erp-form-grid main-erp-form-grid-dense">
+                            <label><span>رقم الاعتماد - TXTLCNO</span><input value="@d.LCNO" readonly /></label>
+                            <label><span>اسم الاعتماد - txtName</span><input value="@d.Name" readonly /></label>
+                            <label><span>نوع الاعتماد - DCLC / LCTyperId</span><input value="@d.LcTypeId" readonly /></label>
+                            <label><span>اعتماد / ضمان - optTypeLCLG</span><input value="@(d.AccountAcceptanceParent == null ? "غير محدد" : "حسب بيانات الحسابات")" readonly /></label>
+                            <label><span>الفرع - DcBranch</span><input value="@d.BranchID" readonly /></label>
+                            <label><span>المورد - DBCboClientName</span><input value="@d.VendorName" readonly /></label>
+                            <label><span>كود المورد</span><input value="@d.VendorId" readonly /></label>
+                            <label><span>الدولة - DCCountry</span><input value="@d.CountryId" readonly /></label>
+                            <label><span>المشروع - dcproject</span><input value="@d.ProjectName" readonly /></label>
+                            <label><span>كود المشروع</span><input value="@d.ProjectId" readonly /></label>
+                            <label class="main-erp-wide-field"><span>ملاحظات - txtRemarks</span><textarea readonly>@d.Remarks</textarea></label>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4>البنك والعملة والقيم</h4>
+                        <div class="main-erp-form-grid main-erp-form-grid-dense">
+                            <label><span>البنك - DCBank</span><input value="@d.BankName" readonly /></label>
+                            <label><span>كود البنك - BankId</span><input value="@d.BankId" readonly /></label>
+                            <label><span>بنك السداد - DcboBankName / BankID2</span><input value="@d.BankId2" readonly /></label>
+                            <label><span>الصندوق - DcboBox / BoxID</span><input value="@d.BoxId" readonly /></label>
+                            <label><span>العملة - DCCUrrency</span><input value="@d.CurrencyName" readonly /></label>
+                            <label><span>كود العملة</span><input value="@d.CurrencyId" readonly /></label>
+                            <label><span>سعر الصرف - txt_Currency_rate</span><input value="@String.Format("{0:n4}", d.CurrencyRate)" readonly /></label>
+                            <label><span>قيمة الاعتماد - TXTValue</span><input value="@String.Format("{0:n2}", d.Value)" readonly /></label>
+                            <label><span>قيمة الفتح - txtOPenValue</span><input value="@String.Format("{0:n2}", d.OpenValue)" readonly /></label>
+                            <label><span>نوع السداد - CboPaymentType</span><input value="@d.PaymentTypeId" readonly /></label>
+                            <label><span>رقم الشيك - TxtChequeNumber</span><input value="@d.ChequeNumber" readonly /></label>
+                            <label><span>تاريخ الشيك - DtpChequeDueDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)" readonly /></label>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4>الحسابات المرتبطة</h4>
+                        <div class="main-erp-form-grid main-erp-form-grid-dense">
+                            <label><span>حساب الاعتماد - LCAccount_Code</span><input value="@d.AccountCode" readonly /></label>
+                            <label><span>الحساب الرئيسي للاعتماد - cmbAccountLGParent</span><input value="@d.AccountLGParent" readonly /></label>
+                            <label><span>حساب الهامش - Account_CodeMargin</span><input value="@d.MarginAccountCode" readonly /></label>
+                            <label><span>الحساب الرئيسي للهامش - cmbAccountMarginParent</span><input value="@d.AccountMarginParent" readonly /></label>
+                            <label><span>حساب القبول - AcceptAccount_Code</span><input value="@d.AcceptAccountCode" readonly /></label>
+                            <label><span>الحساب الرئيسي للقبول - cmbAccountAcceptanceParent</span><input value="@d.AccountAcceptanceParent" readonly /></label>
+                            <label><span>حساب المصروفات - AccountExpensCode</span><input value="@d.ExpenseAccountCode" readonly /></label>
+                            <label><span>الحساب الرئيسي للمصروفات - cmbAccountExpensParent</span><input value="@d.AccountExpensParent" readonly /></label>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4>التواريخ والرصيد الافتتاحي</h4>
+                        <div class="main-erp-form-grid main-erp-form-grid-dense">
+                            <label><span>من تاريخ - dbFromDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.FromDate)" readonly /></label>
+                            <label><span>إلى تاريخ - dbTodate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.ToDate)" readonly /></label>
+                            <label><span>تاريخ الإغلاق - DpCloseDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.CloseDate)" readonly /></label>
+                            <label><span>آخر تاريخ شحن - DPLastParcilDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.LastParcilDate)" readonly /></label>
+                            <label><span>الرصيد الافتتاحي - TxtOpenBalance</span><input value="@String.Format("{0:n2}", d.OpenBalance)" readonly /></label>
+                            <label><span>نوع الرصيد - OptType</span><input value="@openBalanceType" readonly /></label>
+                            <label><span>رقم قيد LC - TxtNoteSerial</span><input value="@d.NoteSerial" readonly /></label>
+                            <label><span>رقم قيد الهامش - TxtNoteSerial2</span><input value="@d.NoteSerial2" readonly /></label>
+                            <label><span>رقم قيد الافتتاح - txtNoteSerialOpen</span><input value="@d.NoteSerialOpen" readonly /></label>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h4>الجداول المرتبطة كما في FrmLC</h4>
+                        <div class="main-erp-vb6-grid-shell">
+                            <article>
+                                <header>LC history - GrdBondHistory / TBLLCHistory</header>
+                                <table class="main-erp-table"><thead><tr><th>التاريخ</th><th>البيان</th><th>القيمة</th><th>القيد</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet - عرض آمن فقط بدون تحميل تفاصيل الجدول في هذه المرحلة.</td></tr></tbody></table>
+                            </article>
+                            <article>
+                                <header>Margins - GrdMargin / TBLLCMargin</header>
+                                <table class="main-erp-table"><thead><tr><th>التاريخ</th><th>الحساب</th><th>القيمة</th><th>المتبقي</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet - لا توجد كتابة أو إنشاء قيود.</td></tr></tbody></table>
+                            </article>
+                            <article>
+                                <header>Margin payments / revised bond amount - GrdMargin2</header>
+                                <table class="main-erp-table"><thead><tr><th>رقم المستند</th><th>حساب البنك</th><th>مدفوع</th><th>قيد</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet.</td></tr></tbody></table>
+                            </article>
+                            <article>
+                                <header>Open balance rows - GrdMargin3 / tblLCOpenB</header>
+                                <table class="main-erp-table"><thead><tr><th>التاريخ</th><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet.</td></tr></tbody></table>
+                            </article>
+                            <article>
+                                <header>Refinance / acceptance advice - GrdMargin4 / TBLLCMargin2</header>
+                                <table class="main-erp-table"><thead><tr><th>Margin No</th><th>Order Date</th><th>Guarantee Date</th><th>Amount</th></tr></thead><tbody><tr><td colspan="4">Not migrated yet.</td></tr></tbody></table>
+                            </article>
+                        </div>
+                    </section>
+                </section>
+            }
+        </div>
+    </div>
 </section>

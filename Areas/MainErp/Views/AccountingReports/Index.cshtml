@@ -1,19 +1,38 @@
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Accounting Reports";
+    ViewBag.Title = "التقارير المحاسبية";
 }
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
             <h3>التقارير المحاسبية</h3>
-            <p>تم إنشاء الغلاف المستقل للتقارير المحاسبية العامة. تشغيل التقارير مؤجل لحين مراجعة SQL وربطه بصلاحيات MainErp.</p>
+            <p>Reused from Kishny generic module. تم نقل فكرة report tiles والفلاتر والتصدير من Kishny مع تشغيل التقارير الآمنة الموجودة في MainErp.</p>
         </div>
-        <span class="main-erp-badge">Under migration</span>
+        <span class="main-erp-badge">Reused from Kishny generic module</span>
     </div>
-    <div class="main-erp-sections">
-        <div><strong>القيود اليومية خلال فترة</strong><br /><a href="@Url.Action("JournalEntries", "AccountingReports", new { area = "MainErp" })">فتح التقرير</a></div>
-        <div><strong>حركة حساب خلال فترة</strong><br /><a href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })">فتح التقرير</a></div>
-        <div><strong>كشف حساب</strong><br /><span>سيستخدم ACCOUNTS وDOUBLE_ENTREY_VOUCHERS بعد مراجعة أوسع.</span></div>
-        <div><strong>أستاذ عام مساعد</strong><br /><span>تحت التحليل قبل التشغيل.</span></div>
+
+    <div class="main-erp-report-tiles">
+        <a href="@Url.Action("JournalEntries", "AccountingReports", new { area = "MainErp" })">
+            <span></span><strong>القيود اليومية خلال فترة</strong><small>Working read-only report</small>
+        </a>
+        <a href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })">
+            <span></span><strong>حركة حساب خلال فترة</strong><small>Working read-only report</small>
+        </a>
+        <a class="is-disabled">
+            <span></span><strong>ميزان مراجعة</strong><small>Reused target, pending SQL validation</small>
+        </a>
+        <a class="is-disabled">
+            <span></span><strong>كشف حساب</strong><small>Will reuse generic Kishny pattern</small>
+        </a>
+        <a class="is-disabled">
+            <span></span><strong>أستاذ عام مساعد</strong><small>Pending exact legacy report mapping</small>
+        </a>
+    </div>
+
+    <div class="main-erp-form-grid">
+        <label><span>من تاريخ</span><input type="date" /></label>
+        <label><span>إلى تاريخ</span><input type="date" /></label>
+        <label><span>الفرع</span><input type="text" placeholder="كل الفروع" /></label>
+        <label><span>الحسابات</span><input type="text" placeholder="اختيار الحسابات - pending account tree" /></label>
     </div>
 </section>

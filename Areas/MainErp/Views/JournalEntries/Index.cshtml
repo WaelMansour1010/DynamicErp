@@ -1,15 +1,15 @@
 @model MyERP.Areas.MainErp.ViewModels.JournalEntries.JournalEntriesIndexViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Journal Entries";
+    ViewBag.Title = "القيود اليومية";
 }
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
             <h3>القيود اليومية</h3>
-            <p>بحث قراءة فقط من القيود العامة. لا يوجد إنشاء أو تعديل أو حذف أو ترحيل في هذه المرحلة.</p>
+            <p>Reused from Kishny generic module. بحث قراءة فقط من القيود العامة مع MainErp_ConnectionString؛ إنشاء وتعديل القيود ما زال معطلا لحين فصل منطق الحفظ عن POS.</p>
         </div>
-        <span class="main-erp-badge">Read-only</span>
+        <span class="main-erp-badge">Reused from Kishny generic module</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
@@ -17,7 +17,15 @@
         <div class="main-erp-warning">@Model.Warning</div>
     }
 
-    @using (Html.BeginForm("Index", "JournalEntries", new { area = "MainErp" }, FormMethod.Get, new { @class = "main-erp-filter" }))
+    <div class="main-erp-vb6-toolbar">
+        <button type="button" disabled>جديد</button>
+        <button type="button" disabled>حفظ</button>
+        <button type="submit" form="journalSearchForm">بحث</button>
+        <button type="button" disabled>طباعة</button>
+        <button type="button" disabled>تصدير Excel</button>
+    </div>
+
+    @using (Html.BeginForm("Index", "JournalEntries", new { area = "MainErp" }, FormMethod.Get, new { id = "journalSearchForm", @class = "main-erp-filter" }))
     {
         <input type="text" name="searchText" value="@Model.SearchText" placeholder="بحث بالحساب أو البيان أو رقم القيد" />
         <input type="number" name="branchId" value="@Model.BranchId" placeholder="الفرع" />

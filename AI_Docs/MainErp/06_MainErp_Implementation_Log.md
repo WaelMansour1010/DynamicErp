@@ -224,9 +224,101 @@ Immediate next implementation targets:
 3. Project Extracts: load advance-payment allocations from `TblPayPrePayed` and `TblProjePayPrePayed`.
 4. Kishny reuse: select one safe working module, preferably accounting report/journal search behavior, and adapt the actual UI/query behavior into MainErp without POS dependencies.
 
+## 2026-05-07 Critical Fix - Replace Generic Placeholder Pages
+
+Created:
+
+- `26_CourseCorrection_RealMigration.md`
+
+Implemented immediate screen corrections:
+
+- LC `/MainErp/LC` is no longer a primitive list-only page.
+  - It is now labeled `Real migrated from VB6`.
+  - It exposes the real `FrmLC.frm` workflow shell: basic LC data, accounts, dates/opening balance, related grids, original toolbar actions.
+  - The old TblLC list is retained only as `Temporary technical test page` inside the screen.
+- Project Extracts `/MainErp/ProjectExtracts` is no longer a primitive list-only page.
+  - It is now labeled `Real migrated from VB6`.
+  - It exposes the real `projectsbill.frm` workflow shell: header, `Fg_Journal`, deductions/VAT, advance-payment grid, approval/print toolbar actions.
+  - The old `project_billl` list is retained only as `Temporary technical test page` inside the screen.
+- Purchases `/MainErp/Purchases` is now labeled `Reused from Kishny generic module`.
+  - It adapts the real Kishny/POS purchase invoice UI structure: filters, header fields, item grid, totals, toolbar.
+  - Save/import remain disabled until `PosUserContext` and POS repository dependencies are replaced by MainErp services.
+- Stock Transfers `/MainErp/StockTransfers` is now labeled `Reused from Kishny generic module`.
+  - It adapts the real Kishny/POS stock transfer UI structure: search filters, transfer header, item/serial grid, toolbar.
+  - Save/import remain disabled until MainErp repositories are implemented.
+- Dashboard `/MainErp/Dashboard` is now labeled `Reused from Kishny generic module`.
+  - It shows generic ERP KPI/report navigation and placeholders for generic branch/accounting/sales charts.
+  - POS-only widgets are excluded.
+- Accounting Reports `/MainErp/AccountingReports` is now labeled `Reused from Kishny generic module`.
+  - It uses the Kishny report-tile/filter concept while linking to MainErp read-only reports.
+- Sales Reports `/MainErp/SalesReports` is now labeled `Reused from Kishny generic module`.
+  - It exposes generic sales reports and excludes POS/Kishny-specific reporting.
+
+Still intentionally disabled:
+
+- LC save/post/delete.
+- Project Extract save/post/delete/approval.
+- Purchase save/import.
+- Stock transfer save/import.
+- POS/Kishny-specific dashboards and reports.
+
+Safety:
+
+- No `Areas\Pos` file was edited for this correction.
+- No POS SQL was edited.
+- No `AllScripts.sql` change was made.
+
 Safety:
 
 - No `Areas\Pos` files were modified by this correction.
 - No POS SQL was modified.
 - No Kishny/Cayshny legacy files were modified.
 - `AllScripts.sql` was not modified.
+
+## 2026-05-07 LC Safe Shell Correction
+
+Created:
+
+- `29_LC_SafeShell_Mapping.md`
+
+Modified:
+
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\LC\Details.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+
+Implemented:
+
+- Replaced the primitive LC list page with a real `FrmLC.frm`-style safe shell.
+- `/MainErp/LC` now shows:
+  - original-style toolbar,
+  - LC search panel,
+  - selected LC read-only workbench,
+  - basic LC data,
+  - bank/currency/payment data,
+  - linked account fields,
+  - dates/opening balance/note serial fields,
+  - placeholder shells for the real VB6 grids.
+- `/MainErp/LC/Details/{id}` now uses the same Arabic-first LC terminology and safe read-only field grouping.
+- Data reads remain limited to `TblLC` and safe lookup joins.
+
+Disabled / not migrated yet:
+
+- New/edit/save/delete.
+- LC posting.
+- Close voucher.
+- Voucher creation/deletion/printing.
+- Notes/Notes1 creation.
+- `DOUBLE_ENTREY_VOUCHERS` or `DOUBLE_ENTREY_VOUCHERS1` writes.
+- Account auto-creation.
+- LC grid detail persistence or edit events.
+
+Safety:
+
+- No database schema changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` files modified.
+- No Cayshny legacy files modified.
