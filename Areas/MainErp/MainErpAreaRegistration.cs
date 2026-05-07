@@ -33,6 +33,20 @@ namespace MyERP.Areas.MainErp
             );
 
             context.MapRoute(
+                "MainErp_journal_details_by_note",
+                "MainErp/JournalEntries/DetailsByNote/{noteId}",
+                new { controller = "JournalEntries", action = "DetailsByNote", noteId = UrlParameter.Optional },
+                new[] { "MyERP.Areas.MainErp.Controllers" }
+            );
+
+            context.MapRoute(
+                "MainErp_journal_details_by_voucher",
+                "MainErp/JournalEntries/DetailsByVoucher/{voucherId}",
+                new { controller = "JournalEntries", action = "DetailsByVoucher", voucherId = UrlParameter.Optional },
+                new[] { "MyERP.Areas.MainErp.Controllers" }
+            );
+
+            context.MapRoute(
                 "MainErp_default",
                 "MainErp/{controller}/{action}/{id}",
                 new { controller = "Home", action = "Index", id = UrlParameter.Optional },

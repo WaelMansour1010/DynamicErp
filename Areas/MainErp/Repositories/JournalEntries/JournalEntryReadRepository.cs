@@ -106,5 +106,216 @@ ORDER BY RowNo;", connection))
 
             return result;
         }
+
+        public JournalEntryDetailsViewModel GetDetailsByNote(int noteId)
+        {
+            var model = new JournalEntryDetailsViewModel { NoteId = noteId };
+
+            try
+            {
+                using (var connection = _connectionFactory.CreateOpenConnection())
+                {
+                    LoadNoteHeader(connection, model, "Notes", noteId);
+                    LoadNoteHeader(connection, model, "Notes1", noteId);
+                    LoadJournalLines(connection, model, "DOUBLE_ENTREY_VOUCHERS", "Notes_ID = @NoteId", noteId, null);
+                    LoadJournalLines(connection, model, "DOUBLE_ENTREY_VOUCHERS1", "Notes_ID = @NoteId", noteId, null);
+                    FinalizeTotals(model);
+                }
+            }
+            catch (SqlException ex)
+            {
+                model.Warning = "Journal details are not available in the configured database yet: " + ex.Message;
+            }
+
+            return model;
+        }
+
+        public JournalEntryDetailsViewModel GetDetailsByVoucher(int voucherId)
+        {
+            var model = new JournalEntryDetailsViewModel { VoucherId = voucherId };
+
+            try
+            {
+                using (var connection = _connectionFactory.CreateOpenConnection())
+                {
+                    LoadJournalLines(connection, model, "DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID = @VoucherId", null, voucherId);
+                    LoadJournalLines(connection, model, "DOUBLE_ENTREY_VOUCHERS1", "Double_Entry_Vouchers_ID = @VoucherId", null, voucherId);
+                    if (model.Lines.Count > 0 && model.Lines[0].NoteId.HasValue)
+                    {
+                        model.NoteId = model.Lines[0].NoteId;
+                        LoadNoteHeader(connection, model, "Notes", model.Lines[0].NoteId.Value);
+                        LoadNoteHeader(connection, model, "Notes1", model.Lines[0].NoteId.Value);
+                    }
+                    FinalizeTotals(model);
+                }
+            }
+            catch (SqlException ex)
+            {
+                model.Warning = "Journal details are not available in the configured database yet: " + ex.Message;
+            }
+
+            return model;
+        }
+
+        private static void LoadNoteHeader(SqlConnection connection, JournalEntryDetailsViewModel model, string tableName, int noteId)
+        {
+            if (!TableExists(connection, tableName))
+            {
+                return;
+            }
+
+            using (var command = new SqlCommand(@"
+SELECT TOP 1 NoteID, NoteDate, NoteType, NoteSerial, Note_Value, Remark, TblLCID
+FROM " + Bracket(tableName) + @"
+WHERE NoteID = @NoteId;", connection))
+            {
+                command.Parameters.AddWithValue("@NoteId", noteId);
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(model.SourceTable))
+                    {
+                        model.SourceTable = tableName;
+                        model.NoteId = ReadInt(reader, "NoteID");
+                        model.NoteDate = ReadDate(reader, "NoteDate");
+                        model.NoteType = ReadString(reader, "NoteType");
+                        model.NoteSerial = ReadString(reader, "NoteSerial");
+                        model.NoteValue = ReadDecimal(reader, "Note_Value");
+                        model.Remark = ReadString(reader, "Remark");
+                        model.TblLCID = ReadInt(reader, "TblLCID");
+                    }
+                }
+            }
+        }
+
+        private static void LoadJournalLines(SqlConnection connection, JournalEntryDetailsViewModel model, string tableName, string predicate, int? noteId, int? voucherId)
+        {
+            if (!TableExists(connection, tableName))
+            {
+                model.Warnings.Add(tableName + " was not found.");
+                return;
+            }
+
+            using (var command = new SqlCommand(@"
+SELECT
+    v.Double_Entry_Vouchers_ID,
+    v.DEV_ID_Line_No,
+    v.Notes_ID,
+    v.RecordDate,
+    v.Account_Code,
+    a.Account_Name,
+    a.Account_Serial,
+    v.Value,
+    v.Credit_Or_Debit,
+    v.Double_Entry_Vouchers_Description,
+    v.branch_id,
+    v.project_id,
+    " + (tableName == "DOUBLE_ENTREY_VOUCHERS1" ? "v.opening_balance_voucher_id" : "CAST(NULL AS float) AS opening_balance_voucher_id") + @"
+FROM " + Bracket(tableName) + @" v
+LEFT JOIN ACCOUNTS a ON v.Account_Code = a.Account_Code
+WHERE " + predicate + @"
+ORDER BY v.Double_Entry_Vouchers_ID, v.DEV_ID_Line_No;", connection))
+            {
+                command.Parameters.AddWithValue("@NoteId", (object)noteId ?? DBNull.Value);
+                command.Parameters.AddWithValue("@VoucherId", (object)voucherId ?? DBNull.Value);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var value = ReadDecimal(reader, "Value").GetValueOrDefault();
+                        var direction = ReadString(reader, "Credit_Or_Debit");
+                        var isCredit = direction == "1" || string.Equals(direction, "Credit", StringComparison.OrdinalIgnoreCase);
+
+                        model.Lines.Add(new JournalEntryDetailLineViewModel
+                        {
+                            SourceTable = tableName,
+                            VoucherId = ReadInt(reader, "Double_Entry_Vouchers_ID").GetValueOrDefault(),
+                            LineNo = ReadInt(reader, "DEV_ID_Line_No"),
+                            NoteId = ReadInt(reader, "Notes_ID"),
+                            RecordDate = ReadDate(reader, "RecordDate"),
+                            AccountCode = ReadString(reader, "Account_Code"),
+                            AccountName = ReadString(reader, "Account_Name"),
+                            AccountSerial = ReadString(reader, "Account_Serial"),
+                            Debit = isCredit ? 0m : value,
+                            Credit = isCredit ? value : 0m,
+                            Description = ReadString(reader, "Double_Entry_Vouchers_Description"),
+                            BranchId = ReadInt(reader, "branch_id"),
+                            ProjectId = ReadInt(reader, "project_id"),
+                            OpeningBalanceVoucherId = ReadDouble(reader, "opening_balance_voucher_id")
+                        });
+                    }
+                }
+            }
+        }
+
+        private static void FinalizeTotals(JournalEntryDetailsViewModel model)
+        {
+            foreach (var line in model.Lines)
+            {
+                model.TotalDebit += line.Debit;
+                model.TotalCredit += line.Credit;
+                if (!model.VoucherId.HasValue)
+                {
+                    model.VoucherId = line.VoucherId;
+                }
+            }
+        }
+
+        private static bool TableExists(SqlConnection connection, string tableName)
+        {
+            using (var command = new SqlCommand("SELECT COUNT(1) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName;", connection))
+            {
+                command.Parameters.AddWithValue("@TableName", tableName);
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
+            }
+        }
+
+        private static string Bracket(string name)
+        {
+            return "[" + name.Replace("]", "]]") + "]";
+        }
+
+        private static bool HasColumn(System.Data.IDataRecord reader, string columnName)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string ReadString(System.Data.IDataRecord reader, string columnName)
+        {
+            return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? null : Convert.ToString(reader[columnName]);
+        }
+
+        private static int? ReadInt(System.Data.IDataRecord reader, string columnName)
+        {
+            return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? (int?)null : Convert.ToInt32(reader[columnName]);
+        }
+
+        private static decimal? ReadDecimal(System.Data.IDataRecord reader, string columnName)
+        {
+            return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader[columnName]);
+        }
+
+        private static double? ReadDouble(System.Data.IDataRecord reader, string columnName)
+        {
+            return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? (double?)null : Convert.ToDouble(reader[columnName]);
+        }
+
+        private static DateTime? ReadDate(System.Data.IDataRecord reader, string columnName)
+        {
+            return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader[columnName]);
+        }
     }
 }

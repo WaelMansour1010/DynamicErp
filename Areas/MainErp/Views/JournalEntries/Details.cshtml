@@ -1,0 +1,116 @@
+@model MyERP.Areas.MainErp.ViewModels.JournalEntries.JournalEntryDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "تفاصيل القيد";
+    ViewBag.ActiveScreen = "journal-entries";
+}
+
+<section class="main-erp-panel main-erp-journal-details">
+    <div class="main-erp-title-row">
+        <div>
+            <span class="main-erp-kicker">Read only journal details</span>
+            <h3>تفاصيل القيد</h3>
+            <p>فتح آمن من شاشة الاعتمادات أو القيود. لا يوجد تعديل أو ترحيل من هذه الشاشة.</p>
+        </div>
+        <span class="main-erp-badge">Read only</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+    @foreach (var warning in Model.Warnings)
+    {
+        <div class="main-erp-warning">@warning</div>
+    }
+
+    <div class="main-erp-vb6-toolbar">
+        <a href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })">رجوع للقيود</a>
+        @if (Model.TblLCID.HasValue)
+        {
+            <a href="@Url.Action("Open", "LC", new { area = "MainErp", id = Model.TblLCID.Value })">فتح الاعتماد</a>
+        }
+        <button type="button" class="is-disabled-action">تعديل</button>
+        <button type="button" class="is-disabled-action">طباعة</button>
+    </div>
+
+    <section class="main-erp-lc-strip">
+        <div><span>المصدر</span><strong>@Model.SourceTable</strong></div>
+        <div><span>NoteID</span><strong>@Model.NoteId</strong></div>
+        <div><span>Voucher</span><strong>@Model.VoucherId</strong></div>
+        <div><span>المسلسل</span><strong>@Model.NoteSerial</strong></div>
+        <div><span>النوع</span><strong>@Model.NoteType</strong></div>
+        <div><span>التاريخ</span><strong>@String.Format("{0:yyyy-MM-dd}", Model.NoteDate)</strong></div>
+        <div><span>LC</span><strong>@Model.TblLCID</strong></div>
+        <div><span>الفرق</span><strong>@Model.Difference.ToString("N2")</strong></div>
+    </section>
+
+    <dl class="main-erp-details">
+        <dt>البيان</dt>
+        <dd>@Model.Remark</dd>
+        <dt>قيمة المستند</dt>
+        <dd>@String.Format("{0:n2}", Model.NoteValue)</dd>
+    </dl>
+
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>المصدر</th>
+                <th>Voucher</th>
+                <th>Line</th>
+                <th>Note</th>
+                <th>التاريخ</th>
+                <th>الحساب</th>
+                <th>مدين</th>
+                <th>دائن</th>
+                <th>الفرع</th>
+                <th>المشروع</th>
+                <th>البيان</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Lines.Count == 0)
+            {
+                <tr><td colspan="11">لا توجد سطور قيد للعرض.</td></tr>
+            }
+            else
+            {
+                foreach (var line in Model.Lines)
+                {
+                    <tr>
+                        <td>@line.SourceTable</td>
+                        <td>@line.VoucherId</td>
+                        <td>@line.LineNo</td>
+                        <td>@line.NoteId</td>
+                        <td>@String.Format("{0:yyyy-MM-dd}", line.RecordDate)</td>
+                        <td><strong>@line.AccountCode</strong><br /><small>@line.AccountName</small><br /><small>@line.AccountSerial</small></td>
+                        <td>@line.Debit.ToString("N2")</td>
+                        <td>@line.Credit.ToString("N2")</td>
+                        <td>@line.BranchId</td>
+                        <td>@line.ProjectId</td>
+                        <td>@line.Description</td>
+                    </tr>
+                }
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="6">الإجمالي</th>
+                <th>@Model.TotalDebit.ToString("N2")</th>
+                <th>@Model.TotalCredit.ToString("N2")</th>
+                <th colspan="3">الفرق: @Model.Difference.ToString("N2")</th>
+            </tr>
+        </tfoot>
+    </table>
+</section>
+
+<script>
+    (function () {
+        var buttons = document.querySelectorAll(".main-erp-journal-details .is-disabled-action");
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener("click", function () {
+                alert("هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode");
+            });
+        }
+    })();
+</script>

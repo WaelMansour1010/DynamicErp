@@ -44,5 +44,17 @@ namespace MyERP.Areas.MainErp.Controllers
 
             return View(model);
         }
+
+        public ActionResult DetailsByNote(int noteId)
+        {
+            ViewBag.ActiveScreen = "journal-entries";
+            return View("Details", _repository.GetDetailsByNote(noteId));
+        }
+
+        public ActionResult DetailsByVoucher(int voucherId)
+        {
+            ViewBag.ActiveScreen = "journal-entries";
+            return View("Details", _repository.GetDetailsByVoucher(voucherId));
+        }
     }
 }

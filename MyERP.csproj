@@ -458,6 +458,7 @@
     <Compile Include="Areas\MainErp\Services\Security\MainErpLoginService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\MainErpDashboardViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\PagedReadResult.cs" />
@@ -4066,6 +4067,7 @@
     <Content Include="Areas\MainErp\Views\AccountingReports\JournalEntries.cshtml" />
     <Content Include="Areas\MainErp\Views\Dashboard\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\JournalEntries\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Login\Index.cshtml" />

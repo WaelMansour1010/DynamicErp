@@ -258,6 +258,201 @@
     cursor: not-allowed;
 }
 
+.main-erp-operational-page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.main-erp-lc-workbench {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.main-erp-lc-search {
+    background: #f8fafc;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.main-erp-lc-search h4,
+.main-erp-lc-tabs h4 {
+    margin: 0 0 12px;
+}
+
+.main-erp-filter-stacked {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.main-erp-filter-stacked label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.main-erp-filter-stacked span {
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.main-erp-lc-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+    max-height: 620px;
+    overflow: auto;
+}
+
+.main-erp-lc-result {
+    background: #fff;
+    border: 1px solid #dbe4f0;
+    border-radius: 8px;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px;
+    text-decoration: none;
+}
+
+.main-erp-lc-result:hover,
+.main-erp-lc-result.is-selected {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+.main-erp-lc-result span,
+.main-erp-lc-result small {
+    color: #64748b;
+}
+
+.main-erp-lc-form {
+    min-width: 0;
+}
+
+.main-erp-lc-strip {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 14px;
+}
+
+.main-erp-lc-strip div {
+    background: #fff;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    min-height: 64px;
+    padding: 10px 12px;
+}
+
+.main-erp-lc-strip span {
+    color: #64748b;
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.main-erp-lc-strip strong {
+    color: #0f172a;
+    font-size: 15px;
+}
+
+.main-erp-lc-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.main-erp-lc-tabs > section,
+.main-erp-vb6-grid-shell article {
+    background: #fff;
+    border: 1px solid #d9e2ef;
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.main-erp-form-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.main-erp-form-grid-dense label {
+    color: #475569;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    font-weight: 700;
+    gap: 6px;
+}
+
+.main-erp-form-grid input,
+.main-erp-form-grid textarea,
+.main-erp-form-grid select {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    color: #0f172a;
+    font: inherit;
+    min-height: 36px;
+    padding: 7px 9px;
+}
+
+.main-erp-form-grid textarea {
+    min-height: 78px;
+    resize: vertical;
+}
+
+.main-erp-wide-field {
+    grid-column: 1 / -1;
+}
+
+.main-erp-empty {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+    padding: 16px;
+}
+
+.main-erp-vb6-grid-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.main-erp-vb6-grid-shell header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.main-erp-vb6-grid-shell header small {
+    color: #64748b;
+}
+
+.main-erp-safety-list {
+    color: #334155;
+    line-height: 1.9;
+    margin: 0;
+}
+
+.main-erp-tech-note {
+    color: #94a3b8;
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    margin-top: 4px;
+}
+
 /* MainErp shell adapted from Areas/Pos/Content/pos-transaction.css.
    Class names intentionally keep the POS shell contract so the proven sidebar/dashboard
    behavior can be reused without bringing POS routes, session, or business logic. */

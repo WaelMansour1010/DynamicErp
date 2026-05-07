@@ -9,7 +9,6 @@ using System.Net;
 using Microsoft.Win32;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DynamicERPSyncServerSetup
@@ -277,7 +276,7 @@ namespace DynamicERPSyncServerSetup
             install.Top = 355;
             install.Width = 180;
             install.Height = 36;
-            install.Click += async (s, e) => await InstallAsync();
+            install.Click += (s, e) => Install();
             Controls.Add(install);
 
             var prepareIis = new Button { Text = "Prepare IIS / SSL", Left = 380, Top = 355, Width = 180, Height = 36 };
@@ -290,7 +289,7 @@ namespace DynamicERPSyncServerSetup
             Controls.Add(log);
         }
 
-        private async Task InstallAsync()
+        private void Install()
         {
             install.Enabled = false;
             var lines = new List<string>();
@@ -318,7 +317,7 @@ namespace DynamicERPSyncServerSetup
 
                 if (verifyUrl.Checked)
                 {
-                    await VerifyAsync(lines);
+                    Verify(lines);
                 }
                 else
                 {
@@ -384,50 +383,47 @@ namespace DynamicERPSyncServerSetup
             }
         }
 
-        private async Task VerifyAsync(ICollection<string> lines)
+        private void Verify(ICollection<string> lines)
         {
             var url = baseUrl.Text.Trim().TrimEnd('/');
             if (String.IsNullOrWhiteSpace(url)) { Add(lines, "Verification skipped: Base URL is empty."); return; }
             foreach (var route in new[] { "/sync", "/sync/queue", "/sync/diagnostics", "/sync/logs", "/sync/pilot" })
             {
-                Add(lines, "VERIFY " + route + ": " + await Status(url + route, false));
+                Add(lines, "VERIFY " + route + ": " + Status(url + route, false));
             }
 
-            Add(lines, "VERIFY /sync/apply/requestapply: " + await Status(url + "/sync/apply/requestapply", true));
+            Add(lines, "VERIFY /sync/apply/requestapply: " + Status(url + "/sync/apply/requestapply", true));
         }
 
-        private static Task<string> Status(string url, bool post)
+        private static string Status(string url, bool post)
         {
-            return Task.Factory.StartNew(() =>
+            try
             {
-                try
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                request.Timeout = 15000;
+                request.Method = post ? "POST" : "GET";
+                if (post)
                 {
-                    var request = (HttpWebRequest)WebRequest.Create(url);
-                    request.Timeout = 15000;
-                    request.Method = post ? "POST" : "GET";
-                    if (post)
-                    {
-                        var body = Encoding.UTF8.GetBytes("SyncKey=test&MaxInvoicesPerRun=1");
-                        request.ContentType = "application/x-www-form-urlencoded";
-                        request.ContentLength = body.Length;
-                        using (var stream = request.GetRequestStream()) stream.Write(body, 0, body.Length);
-                    }
+                    var body = Encoding.UTF8.GetBytes("SyncKey=test&MaxInvoicesPerRun=1");
+                    request.ContentType = "application/x-www-form-urlencoded";
+                    request.ContentLength = body.Length;
+                    using (var stream = request.GetRequestStream()) stream.Write(body, 0, body.Length);
+                }
 
-                    using (var response = (HttpWebResponse)request.GetResponse())
-                    {
-                        return ((int)response.StatusCode) + " " + response.StatusCode;
-                    }
-                }
-                catch (WebException ex)
+                using (var response = (HttpWebResponse)request.GetResponse())
                 {
-                    var response = ex.Response as HttpWebResponse;
-                    return response == null ? "FAILED: " + ex.Message : ((int)response.StatusCode) + " " + response.StatusCode;
+                    return ((int)response.StatusCode) + " " + response.StatusCode;
                 }
-                catch (Exception ex)
-                {
-                    return "FAILED: " + ex.Message;
-                }
-            });
+            }
+            catch (WebException ex)
+            {
+                var response = ex.Response as HttpWebResponse;
+                return response == null ? "FAILED: " + ex.Message : ((int)response.StatusCode) + " " + response.StatusCode;
+            }
+            catch (Exception ex)
+            {
+                return "FAILED: " + ex.Message;
+            }
         }
 
         private static void ExecuteSqlFile(string connectionString, string path)

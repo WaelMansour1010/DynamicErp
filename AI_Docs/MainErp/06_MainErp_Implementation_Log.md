@@ -371,6 +371,70 @@ Safety:
 - No `AllScripts.sql` changes.
 - No database changes.
 - MainErp still uses MainErp login/session/connection boundaries.
+
+## 2026-05-07 LC Real Accounting Trace Screen
+
+Created:
+
+- `Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs`
+- `Areas\MainErp\Views\JournalEntries\Details.cshtml`
+- `AI_Docs\MainErp\31_LC_GridVoucherMapping.md`
+- `AI_Docs\MainErp\32_LC_RealScreenImplementation.md`
+
+Modified:
+
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs`
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Controllers\JournalEntriesController.cs`
+- `Areas\MainErp\MainErpAreaRegistration.cs`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `MyERP.csproj`
+
+Implemented:
+
+- Real LC workspace replacing the primitive list/details behavior.
+- LC routes:
+  - `/MainErp/LC/Open/{id}`,
+  - `/MainErp/LC/New`,
+  - `/MainErp/LC/Edit/{id}`.
+- Safe read-only sections matching the VB6 workflow:
+  - LC header,
+  - bank/currency/value,
+  - accounts,
+  - dates/opening balance,
+  - main note ids/serials,
+  - related grids,
+  - Notes/Notes1,
+  - voucher trace.
+- Account link preview from `ACCOUNTS`, including missing account and parent-last-account warnings.
+- Dynamic read-only grid loading for:
+  - `TBLLCHistory`,
+  - `TBLLCMargin`,
+  - `TBLLCMargin2`,
+  - `tblLCOpenB`.
+- Voucher trace from:
+  - `Notes`,
+  - `Notes1`,
+  - `DOUBLE_ENTREY_VOUCHERS`,
+  - `DOUBLE_ENTREY_VOUCHERS1`.
+- Read-only journal detail routes:
+  - `/MainErp/JournalEntries/DetailsByNote/{noteId}`,
+  - `/MainErp/JournalEntries/DetailsByVoucher/{voucherId}`.
+
+Validation:
+
+- Build succeeded.
+- Read-only SQL validation against `Wael\Sql2019 / Eng` for `TblLCID = 195` confirmed LC header, notes, normal voucher rows, `TBLLCMargin`, and `TBLLCMargin2`.
+
+Safety:
+
+- No save/post/delete/account creation implemented.
+- No `AllScripts.sql` change.
+- No database schema change.
+- No `Areas\Pos` files modified.
 - No `Areas\Pos` files modified.
 - No Cayshny legacy files modified.
 

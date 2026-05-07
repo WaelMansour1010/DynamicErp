@@ -59,6 +59,31 @@ namespace MyERP.Areas.MainErp.Controllers
             return View(model);
         }
 
+        public ActionResult Open(int id)
+        {
+            return RedirectToAction("Index", new { selectedId = id });
+        }
+
+        public ActionResult New()
+        {
+            ViewBag.ActiveScreen = "lc";
+            var model = new LCIndexViewModel
+            {
+                Title = "Letters of Credit",
+                ArabicTitle = "الاعتمادات المستندية",
+                AnalysisStatus = "New LC route is visible only as a safe workflow shell. Save/post/account creation is disabled."
+            };
+            model.Warning = "شاشة إنشاء اعتماد جديد لم يتم تفعيل الحفظ بها بعد. غير مفعّل حتى اعتماد منطق الترحيل المحاسبي.";
+            return View("Index", model);
+        }
+
+        public ActionResult Edit(int id)
+        {
+            ViewBag.ActiveScreen = "lc";
+            TempData["MainErpLcReadOnlyMessage"] = "التعديل الحقيقي غير مفعّل حتى اعتماد منطق الترحيل المحاسبي. تم فتح الاعتماد للقراءة والتتبع فقط.";
+            return RedirectToAction("Index", new { selectedId = id });
+        }
+
         public ActionResult Details(int id)
         {
             ViewBag.ActiveScreen = "lc";
