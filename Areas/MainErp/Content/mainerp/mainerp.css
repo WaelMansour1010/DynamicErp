@@ -1413,3 +1413,453 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
         grid-template-columns: 1fr;
     }
 }
+
+.main-erp-premium-workspace {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 330px minmax(0, 1fr);
+}
+
+.main-erp-premium-search,
+.main-erp-premium-stage,
+.main-erp-premium-card,
+.main-erp-voucher-card,
+.main-erp-account-card {
+    background: #fff;
+    border: 1px solid #d7e0ea;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(34, 45, 58, .06);
+}
+
+.main-erp-premium-search {
+    align-self: start;
+    overflow: hidden;
+    position: sticky;
+    top: 78px;
+}
+
+.main-erp-search-head {
+    background: linear-gradient(135deg, #20384f 0%, #2f5d72 100%);
+    color: #fff;
+    padding: 16px;
+}
+
+.main-erp-search-head span,
+.main-erp-kicker {
+    color: #7aa6c7;
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+    margin-bottom: 5px;
+}
+
+.main-erp-search-head h3,
+.main-erp-cockpit-header h2 {
+    margin: 0;
+}
+
+.main-erp-result-rail {
+    border-top: 1px solid #d7e0ea;
+    max-height: 62vh;
+    overflow: auto;
+}
+
+.main-erp-result-card {
+    border-bottom: 1px solid #e3eaf1;
+    color: #243142;
+    display: grid;
+    gap: 5px;
+    padding: 12px 14px;
+    text-decoration: none;
+}
+
+.main-erp-result-card:hover,
+.main-erp-result-card.is-selected {
+    background: #eef7f4;
+    box-shadow: inset 4px 0 0 #2a8c72;
+}
+
+.main-erp-rtl .main-erp-result-card:hover,
+.main-erp-rtl .main-erp-result-card.is-selected {
+    box-shadow: inset -4px 0 0 #2a8c72;
+}
+
+.main-erp-result-code,
+.main-erp-result-card small {
+    color: #657386;
+    font-size: 12px;
+}
+
+.main-erp-result-card b {
+    color: #174b3f;
+}
+
+.main-erp-premium-stage {
+    min-width: 0;
+    padding: 16px;
+}
+
+.main-erp-cockpit-header {
+    align-items: center;
+    border-bottom: 1px solid #e3eaf1;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin: -16px -16px 14px;
+    padding: 18px;
+}
+
+.main-erp-cockpit-header p {
+    color: #657386;
+    margin: 6px 0 0;
+}
+
+.main-erp-header-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.main-erp-header-actions a,
+.main-erp-header-actions button,
+.main-erp-premium-empty button {
+    background: #20384f;
+    border: 1px solid #20384f;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    min-height: 36px;
+    padding: 8px 12px;
+    text-decoration: none;
+}
+
+.main-erp-header-actions button.is-disabled-action {
+    background: #f3f6f9;
+    border-color: #cfd8e3;
+    color: #657386;
+}
+
+.main-erp-status-pill {
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 7px 11px;
+}
+
+.main-erp-status-pill.is-active,
+.main-erp-summary-grid .is-ok,
+.main-erp-voucher-card .is-ok,
+.main-erp-insight-grid .is-ok {
+    background: #e8f7ef;
+    color: #176a4c;
+}
+
+.main-erp-status-pill.is-closed,
+.main-erp-summary-grid .is-warning,
+.main-erp-voucher-card .is-warning,
+.main-erp-account-card.is-warning {
+    background: #fff5e6;
+    color: #8a4d00;
+}
+
+.main-erp-summary-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(6, minmax(130px, 1fr));
+    margin-bottom: 14px;
+}
+
+.main-erp-sticky-summary {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+.main-erp-summary-grid article,
+.main-erp-accounting-kpis article,
+.main-erp-finance-stack article,
+.main-erp-execution-grid article,
+.main-erp-progress-band > div {
+    background: #f8fafc;
+    border: 1px solid #d7e0ea;
+    border-radius: 8px;
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+}
+
+.main-erp-summary-grid span,
+.main-erp-accounting-kpis span,
+.main-erp-finance-stack span,
+.main-erp-execution-grid span,
+.main-erp-progress-band span {
+    color: #657386;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.main-erp-summary-grid strong,
+.main-erp-accounting-kpis strong,
+.main-erp-finance-stack strong,
+.main-erp-execution-grid strong,
+.main-erp-big-number {
+    color: #243142;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.main-erp-tab-shell {
+    border-top: 1px solid #e3eaf1;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 220px minmax(0, 1fr);
+    padding-top: 14px;
+}
+
+.main-erp-tab-rail {
+    align-self: start;
+    background: #f8fafc;
+    border: 1px solid #d7e0ea;
+    border-radius: 8px;
+    display: grid;
+    overflow: hidden;
+    position: sticky;
+    top: 168px;
+}
+
+.main-erp-tab-rail button {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #e3eaf1;
+    color: #344054;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    padding: 12px;
+    text-align: start;
+}
+
+.main-erp-tab-rail button.is-active {
+    background: #20384f;
+    color: #fff;
+}
+
+.main-erp-tab-pane {
+    min-width: 0;
+}
+
+.main-erp-section-grid,
+.main-erp-accounting-kpis,
+.main-erp-finance-stack,
+.main-erp-execution-grid,
+.main-erp-insight-grid,
+.main-erp-progress-band {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.main-erp-premium-card {
+    padding: 14px;
+}
+
+.main-erp-premium-card h4,
+.main-erp-account-card h4 {
+    margin: 0 0 12px;
+}
+
+.main-erp-rich-details {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(120px, .45fr) 1fr;
+    margin: 0;
+}
+
+.main-erp-rich-details dt {
+    color: #657386;
+    font-weight: 800;
+}
+
+.main-erp-rich-details dd {
+    color: #243142;
+    font-weight: 800;
+    margin: 0;
+}
+
+.main-erp-notes-box {
+    background: #f8fafc;
+    border: 1px dashed #b8c6d6;
+    border-radius: 6px;
+    color: #344054;
+    margin: 0;
+    min-height: 52px;
+    padding: 12px;
+}
+
+.main-erp-account-map {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.main-erp-account-card {
+    border-top: 4px solid #2a8c72;
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+}
+
+.main-erp-account-card.is-warning {
+    border-top-color: #d98a00;
+}
+
+.main-erp-account-card span,
+.main-erp-account-card small,
+.main-erp-account-card p {
+    color: #657386;
+}
+
+.main-erp-account-card strong {
+    color: #243142;
+    font-size: 16px;
+}
+
+.main-erp-voucher-timeline {
+    display: grid;
+    gap: 12px;
+}
+
+.main-erp-voucher-card {
+    overflow: hidden;
+}
+
+.main-erp-voucher-card summary {
+    align-items: center;
+    cursor: pointer;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 120px minmax(0, 1fr) auto auto;
+    padding: 12px 14px;
+}
+
+.main-erp-voucher-card summary b {
+    border-radius: 999px;
+    font-size: 12px;
+    padding: 5px 9px;
+}
+
+.main-erp-voucher-card summary a {
+    color: #1f6feb;
+    font-weight: 900;
+}
+
+.main-erp-voucher-body {
+    border-top: 1px solid #e3eaf1;
+    padding: 12px;
+}
+
+.main-erp-voucher-totals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.main-erp-voucher-totals span {
+    background: #eef3f8;
+    border-radius: 999px;
+    color: #344054;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 10px;
+}
+
+.main-erp-premium-grids {
+    padding: 0;
+}
+
+.main-erp-progress {
+    background: #e3eaf1;
+    border-radius: 999px;
+    height: 9px;
+    overflow: hidden;
+}
+
+.main-erp-progress i {
+    background: linear-gradient(90deg, #2a8c72, #1f6feb);
+    display: block;
+    height: 100%;
+}
+
+.main-erp-progress.is-muted i {
+    background: #9aa8b7;
+}
+
+.main-erp-insight-grid article {
+    background: #f8fafc;
+    border: 1px solid #d7e0ea;
+    border-radius: 8px;
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+}
+
+.main-erp-premium-empty {
+    align-items: start;
+    background: #f8fafc;
+    border: 1px dashed #b8c6d6;
+    border-radius: 8px;
+    display: grid;
+    gap: 10px;
+    justify-items: start;
+    min-height: 260px;
+    padding: 28px;
+}
+
+@media (max-width: 1100px) {
+    .main-erp-premium-workspace,
+    .main-erp-tab-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .main-erp-premium-search,
+    .main-erp-tab-rail,
+    .main-erp-sticky-summary {
+        position: static;
+    }
+
+    .main-erp-tab-rail {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .main-erp-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .main-erp-cockpit-header {
+        align-items: flex-start;
+        display: grid;
+    }
+}
+
+@media (max-width: 640px) {
+    .main-erp-summary-grid,
+    .main-erp-section-grid,
+    .main-erp-accounting-kpis,
+    .main-erp-finance-stack,
+    .main-erp-execution-grid,
+    .main-erp-progress-band,
+    .main-erp-account-map {
+        grid-template-columns: 1fr;
+    }
+
+    .main-erp-voucher-card summary {
+        grid-template-columns: 1fr;
+    }
+}
