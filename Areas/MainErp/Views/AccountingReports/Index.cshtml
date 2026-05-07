@@ -1,38 +1,32 @@
 @{
+    Func<string, string> T = MyERP.Areas.MainErp.Infrastructure.Localization.MainErpLocalizationService.T;
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "التقارير المحاسبية";
+    ViewBag.Title = T("AccountingReports");
 }
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
-            <h3>التقارير المحاسبية</h3>
-            <p>Reused from Kishny generic module. تم نقل فكرة report tiles والفلاتر والتصدير من Kishny مع تشغيل التقارير الآمنة الموجودة في MainErp.</p>
+            <h3>@T("AccountingReports")</h3>
+            <p>@T("ActualPostingDisabled")</p>
         </div>
-        <span class="main-erp-badge">Reused from Kishny generic module</span>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
     </div>
 
     <div class="main-erp-report-tiles">
         <a href="@Url.Action("JournalEntries", "AccountingReports", new { area = "MainErp" })">
-            <span></span><strong>القيود اليومية خلال فترة</strong><small>Working read-only report</small>
+            <span></span><strong>@T("JournalEntries")</strong><small>@T("ReadOnly")</small>
         </a>
         <a href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })">
-            <span></span><strong>حركة حساب خلال فترة</strong><small>Working read-only report</small>
+            <span></span><strong>@T("AccountMovement")</strong><small>@T("ReadOnly")</small>
         </a>
-        <a class="is-disabled">
-            <span></span><strong>ميزان مراجعة</strong><small>Reused target, pending SQL validation</small>
-        </a>
-        <a class="is-disabled">
-            <span></span><strong>كشف حساب</strong><small>Will reuse generic Kishny pattern</small>
-        </a>
-        <a class="is-disabled">
-            <span></span><strong>أستاذ عام مساعد</strong><small>Pending exact legacy report mapping</small>
-        </a>
+        <a class="is-disabled"><span></span><strong>Trial Balance</strong><small>@T("ActualPostingDisabled")</small></a>
+        <a class="is-disabled"><span></span><strong>Account Statement</strong><small>@T("ActualPostingDisabled")</small></a>
     </div>
 
     <div class="main-erp-form-grid">
-        <label><span>من تاريخ</span><input type="date" /></label>
-        <label><span>إلى تاريخ</span><input type="date" /></label>
-        <label><span>الفرع</span><input type="text" placeholder="كل الفروع" /></label>
-        <label><span>الحسابات</span><input type="text" placeholder="اختيار الحسابات - pending account tree" /></label>
+        <label><span>@T("FromDate")</span><input type="date" /></label>
+        <label><span>@T("ToDate")</span><input type="date" /></label>
+        <label><span>@T("Branch")</span><input type="text" placeholder="@T("AllBranches")" /></label>
+        <label><span>@T("Account")</span><input type="text" /></label>
     </div>
 </section>

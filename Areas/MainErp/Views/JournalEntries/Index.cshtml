@@ -1,15 +1,18 @@
 @model MyERP.Areas.MainErp.ViewModels.JournalEntries.JournalEntriesIndexViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "القيود اليومية";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("JournalEntries");
 }
+
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
-            <h3>القيود اليومية</h3>
-            <p>Reused from Kishny generic module. بحث قراءة فقط من القيود العامة مع MainErp_ConnectionString؛ إنشاء وتعديل القيود ما زال معطلا لحين فصل منطق الحفظ عن POS.</p>
+            <h3>@T("JournalEntries")</h3>
+            <p>@T("JournalEntriesIntro")</p>
         </div>
-        <span class="main-erp-badge">Reused from Kishny generic module</span>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
@@ -18,32 +21,31 @@
     }
 
     <div class="main-erp-vb6-toolbar">
-        <button type="button" disabled>جديد</button>
-        <button type="button" disabled>حفظ</button>
-        <button type="submit" form="journalSearchForm">بحث</button>
-        <button type="button" disabled>طباعة</button>
-        <button type="button" disabled>تصدير Excel</button>
+        <button type="button" disabled>@T("New")</button>
+        <button type="button" disabled>@T("Save")</button>
+        <button type="submit" form="journalSearchForm">@T("Search")</button>
+        <button type="button" disabled>@T("Reports")</button>
     </div>
 
     @using (Html.BeginForm("Index", "JournalEntries", new { area = "MainErp" }, FormMethod.Get, new { id = "journalSearchForm", @class = "main-erp-filter" }))
     {
-        <input type="text" name="searchText" value="@Model.SearchText" placeholder="بحث بالحساب أو البيان أو رقم القيد" />
-        <input type="number" name="branchId" value="@Model.BranchId" placeholder="الفرع" />
-        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
-        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
-        <button type="submit">بحث</button>
+        <input type="text" name="searchText" value="@Model.SearchText" placeholder="@T("SearchPlaceholder")" />
+        <input type="number" name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" />
+        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("FromDate")" />
+        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("ToDate")" />
+        <button type="submit">@T("Search")</button>
     }
 
     <table class="main-erp-table">
         <thead>
             <tr>
-                <th>رقم القيد</th>
-                <th>التاريخ</th>
-                <th>الحساب</th>
-                <th>مدين</th>
-                <th>دائن</th>
-                <th>الفرع</th>
-                <th>البيان</th>
+                <th>@T("Voucher")</th>
+                <th>@T("Date")</th>
+                <th>@T("Account")</th>
+                <th>@T("Debit")</th>
+                <th>@T("Credit")</th>
+                <th>@T("Branch")</th>
+                <th>@T("Description")</th>
             </tr>
         </thead>
         <tbody>
@@ -52,7 +54,7 @@
                 <tr>
                     <td>@item.VoucherId<br /><small>@item.NoteSerial</small></td>
                     <td>@(item.RecordDate.HasValue ? item.RecordDate.Value.ToString("dd/MM/yyyy") : "")</td>
-                    <td><strong>@item.AccountCode</strong><br /><small>@item.AccountName</small></td>
+                    <td>@(string.IsNullOrWhiteSpace(item.AccountDisplay) ? T("AccountNotFound") : item.AccountDisplay)</td>
                     <td>@item.Debit.ToString("N2")</td>
                     <td>@item.Credit.ToString("N2")</td>
                     <td>@item.BranchId</td>
@@ -62,10 +64,10 @@
             @if (Model.Items.Count == 0)
             {
                 <tr>
-                    <td colspan="7">لا توجد نتائج للعرض.</td>
+                    <td colspan="7">@T("NoRows")</td>
                 </tr>
             }
         </tbody>
     </table>
-    <p class="main-erp-muted">عدد النتائج: @Model.TotalCount</p>
+    <p class="main-erp-muted">@T("Totals"): @Model.TotalCount</p>
 </section>

@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using MyERP.Areas.MainErp.Interfaces;
+using MyERP.Areas.MainErp.Infrastructure.Localization;
 using MyERP.Areas.MainErp.ViewModels;
 using MyERP.Areas.MainErp.ViewModels.LC;
 
@@ -200,20 +201,20 @@ WHERE l.TblLCID = @Id;", connection))
 
         private static void LoadAccountLinks(SqlConnection connection, LCDetailsViewModel model)
         {
-            AddAccountLink(connection, model, "حساب الاعتماد", model.AccountCode, model.AccountLGParent);
-            AddAccountLink(connection, model, "حساب الهامش", model.MarginAccountCode, model.AccountMarginParent);
-            AddAccountLink(connection, model, "حساب القبول", model.AcceptAccountCode, model.AccountAcceptanceParent);
-            AddAccountLink(connection, model, "حساب المصروفات", model.ExpenseAccountCode, model.AccountExpensParent);
-            AddAccountLink(connection, model, "حساب مصروف المشروع", model.AccountExpProject, null);
+            AddAccountLink(connection, model, "LcAccount", model.AccountCode, model.AccountLGParent);
+            AddAccountLink(connection, model, "MarginAccount", model.MarginAccountCode, model.AccountMarginParent);
+            AddAccountLink(connection, model, "AcceptanceAccount", model.AcceptAccountCode, model.AccountAcceptanceParent);
+            AddAccountLink(connection, model, "ExpenseAccount", model.ExpenseAccountCode, model.AccountExpensParent);
+            AddAccountLink(connection, model, "ProjectExpenseAccount", model.AccountExpProject, null);
         }
 
-        private static void AddAccountLink(SqlConnection connection, LCDetailsViewModel model, string role, string accountCode, string parentCode)
+        private static void AddAccountLink(SqlConnection connection, LCDetailsViewModel model, string roleKey, string accountCode, string parentCode)
         {
             var account = GetAccount(connection, accountCode);
             var parent = GetAccount(connection, parentCode);
             var link = new LCAccountLinkViewModel
             {
-                Role = role,
+                Role = MainErpLocalizationService.T(roleKey),
                 AccountCode = accountCode,
                 AccountSerial = account == null ? null : account.AccountSerial,
                 AccountName = account == null ? null : account.AccountName,
@@ -227,11 +228,11 @@ WHERE l.TblLCID = @Id;", connection))
 
             if (string.IsNullOrWhiteSpace(accountCode))
             {
-                link.Warning = "لم يتم حفظ حساب مرتبط لهذا الدور.";
+                link.Warning = MainErpLocalizationService.T("AccountNotFound");
             }
             else if (account == null)
             {
-                link.Warning = "كود الحساب غير موجود في ACCOUNTS.";
+                link.Warning = MainErpLocalizationService.T("AccountNotFound");
             }
             else if (!string.IsNullOrWhiteSpace(link.ParentAccountCode) && parent == null)
             {
@@ -252,9 +253,10 @@ WHERE l.TblLCID = @Id;", connection))
                 return "الحساب غير موجود";
             }
 
-            if (!string.IsNullOrWhiteSpace(account.AccountSerial) && !string.IsNullOrWhiteSpace(account.AccountName))
+            var accountName = MainErpEntityLocalization.Localize(account.AccountName, account.AccountNameEnglish);
+            if (!string.IsNullOrWhiteSpace(account.AccountSerial) && !string.IsNullOrWhiteSpace(accountName))
             {
-                return account.AccountSerial + " - " + account.AccountName;
+                return account.AccountSerial + " - " + accountName;
             }
 
             if (!string.IsNullOrWhiteSpace(account.AccountSerial))
@@ -262,12 +264,12 @@ WHERE l.TblLCID = @Id;", connection))
                 return account.AccountSerial;
             }
 
-            if (!string.IsNullOrWhiteSpace(account.AccountName))
+            if (!string.IsNullOrWhiteSpace(accountName))
             {
-                return account.AccountName;
+                return accountName;
             }
 
-            return "الحساب غير موجود";
+            return MainErpLocalizationService.T("AccountNotFound");
         }
 
         private static AccountInfo GetAccount(SqlConnection connection, string accountCode)
@@ -278,7 +280,7 @@ WHERE l.TblLCID = @Id;", connection))
             }
 
             using (var command = new SqlCommand(@"
-SELECT TOP 1 Account_Code, Account_Name, Parent_Account_Code, last_account, Account_Serial
+SELECT TOP 1 Account_Code, Account_Name, Account_NameEng, Parent_Account_Code, last_account, Account_Serial
 FROM ACCOUNTS
 WHERE Account_Code = @AccountCode;", connection))
             {
@@ -294,6 +296,7 @@ WHERE Account_Code = @AccountCode;", connection))
                     {
                         AccountCode = ReadString(reader, "Account_Code"),
                         AccountName = ReadString(reader, "Account_Name"),
+                        AccountNameEnglish = ReadString(reader, "Account_NameEng"),
                         ParentCode = ReadString(reader, "Parent_Account_Code"),
                         LastAccount = ReadBool(reader, "last_account"),
                         AccountSerial = ReadString(reader, "Account_Serial")
@@ -466,6 +469,8 @@ SELECT TOP 300
     v.RecordDate,
     v.Account_Code,
     a.Account_Name,
+    a.Account_NameEng,
+    a.Account_Serial,
     v.Value,
     v.Credit_Or_Debit,
     v.Double_Entry_Vouchers_Description,
@@ -509,6 +514,8 @@ SELECT TOP 300
     v.RecordDate,
     v.Account_Code,
     a.Account_Name,
+    a.Account_NameEng,
+    a.Account_Serial,
     v.Value,
     v.Credit_Or_Debit,
     v.Double_Entry_Vouchers_Description,
@@ -530,6 +537,8 @@ SELECT TOP 300
     v.RecordDate,
     v.Account_Code,
     a.Account_Name,
+    a.Account_NameEng,
+    a.Account_Serial,
     v.Value,
     v.Credit_Or_Debit,
     v.Double_Entry_Vouchers_Description,
@@ -571,6 +580,11 @@ ORDER BY v.RecordDate DESC, v.Double_Entry_Vouchers_ID DESC, v.DEV_ID_Line_No;";
                 RecordDate = ReadDate(reader, "RecordDate"),
                 AccountCode = ReadString(reader, "Account_Code"),
                 AccountName = ReadString(reader, "Account_Name"),
+                AccountSerial = ReadString(reader, "Account_Serial"),
+                AccountDisplay = MainErpEntityLocalization.AccountDisplay(
+                    ReadString(reader, "Account_Serial"),
+                    ReadString(reader, "Account_Name"),
+                    ReadString(reader, "Account_NameEng")),
                 Debit = isCredit ? 0m : value,
                 Credit = isCredit ? value : 0m,
                 Description = ReadString(reader, "Double_Entry_Vouchers_Description"),
@@ -710,6 +724,7 @@ ORDER BY v.RecordDate DESC, v.Double_Entry_Vouchers_ID DESC, v.DEV_ID_Line_No;";
         {
             public string AccountCode { get; set; }
             public string AccountName { get; set; }
+            public string AccountNameEnglish { get; set; }
             public string ParentCode { get; set; }
             public bool? LastAccount { get; set; }
             public string AccountSerial { get; set; }

@@ -1,35 +1,30 @@
 @{
+    Func<string, string> T = MyERP.Areas.MainErp.Infrastructure.Localization.MainErpLocalizationService.T;
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "تقارير المبيعات";
+    ViewBag.Title = T("SalesReports");
 }
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
-            <h3>تقارير المبيعات العامة</h3>
-            <p>Reused from Kishny generic module. تم اعتماد نمط تقارير المبيعات العام فقط واستبعاد تقارير الكروت، KYC، العمولات، وإقفال الكاشير.</p>
+            <h3>@T("SalesReports")</h3>
+            <p>@T("ActualPostingDisabled")</p>
         </div>
-        <span class="main-erp-badge">Reused from Kishny generic module</span>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
     </div>
 
     <div class="main-erp-report-tiles">
         <a href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })">
-            <span></span><strong>ملخص المبيعات خلال فترة</strong><small>Working read-only report</small>
+            <span></span><strong>@T("SalesSummary")</strong><small>@T("ReadOnly")</small>
         </a>
-        <a class="is-disabled">
-            <span></span><strong>تقرير المبيعات الشامل</strong><small>Pending generic sales type mapping</small>
-        </a>
-        <a class="is-disabled">
-            <span></span><strong>مبيعات الفروع</strong><small>Generic branch summary only</small>
-        </a>
-        <a class="is-disabled">
-            <span></span><strong>مبيعات المستخدمين</strong><small>No cashier closing logic</small>
-        </a>
+        <a class="is-disabled"><span></span><strong>Full Sales Report</strong><small>@T("ActualPostingDisabled")</small></a>
+        <a class="is-disabled"><span></span><strong>Branch Sales</strong><small>@T("ActualPostingDisabled")</small></a>
+        <a class="is-disabled"><span></span><strong>User Sales</strong><small>@T("ActualPostingDisabled")</small></a>
     </div>
 
     <div class="main-erp-form-grid">
-        <label><span>من تاريخ</span><input type="date" /></label>
-        <label><span>إلى تاريخ</span><input type="date" /></label>
-        <label><span>الفرع</span><input type="text" /></label>
-        <label><span>العميل</span><input type="text" /></label>
+        <label><span>@T("FromDate")</span><input type="date" /></label>
+        <label><span>@T("ToDate")</span><input type="date" /></label>
+        <label><span>@T("Branch")</span><input type="text" /></label>
+        <label><span>Customer</span><input type="text" /></label>
     </div>
 </section>

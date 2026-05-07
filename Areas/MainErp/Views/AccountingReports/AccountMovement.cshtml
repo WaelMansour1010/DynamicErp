@@ -1,15 +1,18 @@
 @model MyERP.Areas.MainErp.ViewModels.Reports.AccountMovementReportViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Account Movement";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("AccountMovement");
 }
+
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
-            <h3>حركة حساب خلال فترة</h3>
-            <p>تقرير قراءة فقط. الرصيد المتحرك يمثل صافي حركة الفترة حتى اعتماد قواعد الرصيد الافتتاحي.</p>
+            <h3>@T("AccountMovement")</h3>
+            <p>@T("AccountMovementIntro")</p>
         </div>
-        <span class="main-erp-badge">Read-only</span>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
@@ -19,27 +22,27 @@
 
     @using (Html.BeginForm("AccountMovement", "AccountingReports", new { area = "MainErp" }, FormMethod.Get, new { @class = "main-erp-filter" }))
     {
-        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="من تاريخ" />
-        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="إلى تاريخ" />
-        <input type="text" name="accountCode" value="@Model.AccountCode" placeholder="الحساب" required="required" />
-        <input type="number" name="branchId" value="@Model.BranchId" placeholder="الفرع" />
-        <button type="submit">عرض التقرير</button>
+        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("FromDate")" />
+        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("ToDate")" />
+        <input type="text" name="accountCode" value="@Model.AccountCode" placeholder="@T("Account")" required="required" />
+        <input type="number" name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" />
+        <button type="submit">@T("ReportRun")</button>
     }
 
-    @if (!string.IsNullOrWhiteSpace(Model.AccountName))
+    @if (!string.IsNullOrWhiteSpace(Model.AccountDisplay))
     {
-        <p class="main-erp-muted">الحساب: <strong>@Model.AccountCode</strong> - @Model.AccountName</p>
+        <p class="main-erp-muted">@T("Account"): <strong>@Model.AccountDisplay</strong></p>
     }
 
     <table class="main-erp-table">
         <thead>
             <tr>
-                <th>التاريخ</th>
-                <th>رقم القيد</th>
-                <th>البيان</th>
-                <th>مدين</th>
-                <th>دائن</th>
-                <th>صافي حركة الفترة</th>
+                <th>@T("Date")</th>
+                <th>@T("NoteSerial")</th>
+                <th>@T("Description")</th>
+                <th>@T("Debit")</th>
+                <th>@T("Credit")</th>
+                <th>@T("PeriodMovement")</th>
             </tr>
         </thead>
         <tbody>
@@ -56,12 +59,12 @@
             }
             @if (Model.Rows.Count == 0)
             {
-                <tr><td colspan="6">لا توجد بيانات للعرض.</td></tr>
+                <tr><td colspan="6">@T("NoRows")</td></tr>
             }
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="3">الإجمالي</th>
+                <th colspan="3">@T("Totals")</th>
                 <th>@Model.TotalDebit.ToString("N2")</th>
                 <th>@Model.TotalCredit.ToString("N2")</th>
                 <th>@Model.PeriodMovement.ToString("N2")</th>

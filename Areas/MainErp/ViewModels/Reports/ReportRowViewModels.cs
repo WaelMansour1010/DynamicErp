@@ -28,6 +28,8 @@ namespace MyERP.Areas.MainErp.ViewModels.Reports
         public int? NoteType { get; set; }
         public string AccountCode { get; set; }
         public string AccountName { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountDisplay { get; set; }
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
         public string Description { get; set; }
@@ -48,6 +50,8 @@ namespace MyERP.Areas.MainErp.ViewModels.Reports
         public int? BranchId { get; set; }
         public string Warning { get; set; }
         public string AccountName { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountDisplay { get; set; }
         public decimal TotalDebit { get; set; }
         public decimal TotalCredit { get; set; }
         public decimal PeriodMovement { get { return TotalDebit - TotalCredit; } }

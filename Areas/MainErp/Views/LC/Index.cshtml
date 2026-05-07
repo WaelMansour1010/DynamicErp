@@ -1,240 +1,275 @@
 @model MyERP.Areas.MainErp.ViewModels.LC.LCIndexViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "الاعتمادات المستندية";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("LettersOfCredit");
     ViewBag.ActiveScreen = "lc";
+
     var d = Model.SelectedDetails;
-    var openBalanceType = d == null || !d.OpenBalanceType.HasValue
-        ? "غير محدد"
-        : d.OpenBalanceType.Value == 0 ? "مدين" : d.OpenBalanceType.Value == 1 ? "دائن" : "غير محدد";
     var readOnlyMessage = Convert.ToString(TempData["MainErpLcReadOnlyMessage"]);
+    var totalDebit = 0m;
+    var totalCredit = 0m;
+    var affectedAccounts = new System.Collections.Generic.HashSet<string>();
+    var missingAccounts = 0;
+    var marginRows = 0;
+    var openingBalanceType = T("NoRows");
+
+    if (d != null)
+    {
+        foreach (var line in d.VoucherLines)
+        {
+            totalDebit += line.Debit;
+            totalCredit += line.Credit;
+            if (!string.IsNullOrWhiteSpace(line.AccountDisplay))
+            {
+                affectedAccounts.Add(line.AccountDisplay);
+            }
+        }
+
+        foreach (var account in d.AccountLinks)
+        {
+            if (string.IsNullOrWhiteSpace(account.AccountDisplay) || !string.IsNullOrWhiteSpace(account.Warning))
+            {
+                missingAccounts++;
+            }
+        }
+
+        foreach (var grid in d.GridSections)
+        {
+            marginRows += grid.Rows.Count;
+        }
+
+        openingBalanceType = !d.OpenBalanceType.HasValue
+            ? T("NoRows")
+            : d.OpenBalanceType.Value == 0 ? T("Debit") : d.OpenBalanceType.Value == 1 ? T("Credit") : T("NoRows");
+    }
 }
 
-<section class="main-erp-panel main-erp-operational-page main-erp-lc-screen">
-    <div class="main-erp-title-row">
-        <div>
-            <span class="main-erp-kicker">Real migrated from VB6 / Safe Shell</span>
-            <h3>الاعتمادات المستندية</h3>
-            <p>
-                شاشة تشغيل مبنية على <strong>FrmLC.frm</strong>. هذه المرحلة قراءة وتتبع فقط:
-                الحسابات والجداول والقيود تظهر للفتح والمعاينة، لكن الحفظ والترحيل وإنشاء الحسابات والقيود الفعلية مغلقة.
-            </p>
+<section class="main-erp-premium-workspace main-erp-lc-screen">
+    <aside class="main-erp-premium-search">
+        <div class="main-erp-search-head">
+            <span>@T("RealMigratedFromVb6")</span>
+            <h3>@T("LettersOfCredit")</h3>
         </div>
-        <span class="main-erp-badge">Read only accounting trace</span>
-    </div>
 
-    @if (!string.IsNullOrWhiteSpace(readOnlyMessage))
-    {
-        <div class="main-erp-warning">@readOnlyMessage</div>
-    }
-    @if (!string.IsNullOrWhiteSpace(Model.Warning))
-    {
-        <div class="main-erp-warning">@Model.Warning</div>
-    }
-    @if (d != null)
-    {
-        foreach (var warning in d.Warnings)
+        @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", id = "lcSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
         {
-            <div class="main-erp-warning">@warning</div>
+            <label><span>@T("LcNumber")</span><input name="searchText" value="@Model.SearchText" placeholder="LCNO / Name" /></label>
+            <label><span>@T("Bank")</span><input name="bankId" value="@Model.BankId" placeholder="@T("Bank")" /></label>
+            <label><span>@T("Supplier")</span><input name="vendorId" value="@Model.VendorId" placeholder="@T("Supplier")" /></label>
+            <label><span>@T("Branch")</span><input name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" /></label>
+            <button type="submit">@T("Search")</button>
         }
-    }
 
-    <div class="main-erp-vb6-toolbar">
-        <a href="@Url.Action("New", "LC", new { area = "MainErp" })">جديد</a>
-        @if (d != null)
-        {
-            <a href="@Url.Action("Open", "LC", new { area = "MainErp", id = d.TblLCID })">فتح</a>
-            <a href="@Url.Action("Edit", "LC", new { area = "MainErp", id = d.TblLCID })">تعديل آمن</a>
-        }
-        <button type="submit" form="lcSearchForm">بحث</button>
-        <button type="button" class="is-disabled-action">حفظ فعلي</button>
-        <button type="button" class="is-disabled-action">ترحيل</button>
-        <button type="button" class="is-disabled-action">حذف</button>
-        <button type="button" class="is-disabled-action">إنشاء قيود فعلية</button>
-        <button type="button" class="is-disabled-action">إعادة بناء القيود</button>
-        <button type="button" class="is-disabled-action">طباعة / تقرير</button>
-        <a href="@Url.Action("Index", "Dashboard", new { area = "MainErp" })">رجوع</a>
-    </div>
-    <div class="main-erp-muted">الأزرار الخطيرة غير مفعلة حتى اعتماد منطق الترحيل المحاسبي.</div>
-
-    <div class="main-erp-lc-workbench">
-        <aside class="main-erp-lc-search">
-            <h4>بحث الاعتمادات</h4>
-            @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", id = "lcSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
+        <div class="main-erp-result-rail">
+            @if (Model.Items.Count == 0)
             {
-                <label>
-                    <span>رقم الاعتماد / الاسم</span>
-                    <input name="searchText" value="@Model.SearchText" placeholder="LCNO / Name" />
-                </label>
-                <label>
-                    <span>كود البنك</span>
-                    <input name="bankId" value="@Model.BankId" placeholder="BankId" />
-                </label>
-                <label>
-                    <span>كود المورد</span>
-                    <input name="vendorId" value="@Model.VendorId" placeholder="VendorId" />
-                </label>
-                <label>
-                    <span>كود الفرع</span>
-                    <input name="branchId" value="@Model.BranchId" placeholder="BranchID" />
-                </label>
-                <button type="submit">بحث</button>
-            }
-
-            <div class="main-erp-lc-results">
-                @if (Model.Items.Count == 0)
-                {
-                    <div class="main-erp-empty">لا توجد اعتمادات للعرض.</div>
-                }
-                else
-                {
-                    foreach (var item in Model.Items)
-                    {
-                        var isSelected = Model.SelectedId == item.TblLCID;
-                        <a class="main-erp-lc-result @(isSelected ? "is-selected" : "")"
-                           href="@Url.Action("Open", "LC", new { area = "MainErp", id = item.TblLCID })">
-                            <strong>@item.LCNO</strong>
-                            <span>@item.Name</span>
-                            <small>@item.BankName - @String.Format("{0:n2}", item.Value)</small>
-                        </a>
-                    }
-                }
-            </div>
-        </aside>
-
-        <div class="main-erp-lc-form">
-            @if (d == null)
-            {
-                <div class="main-erp-empty">اختر اعتمادًا من نتيجة البحث، أو افتح مسار مثل <strong>/MainErp/LC/Open/195</strong>.</div>
+                <div class="main-erp-empty">@T("NoRows")</div>
             }
             else
             {
-                <section class="main-erp-lc-strip main-erp-lc-status-panel">
-                    <div><span>LC رقم</span><strong>@d.LCNO</strong></div>
-                    <div><span>البنك</span><strong>@d.BankName</strong></div>
-                    <div><span>المورد</span><strong>@d.VendorName</strong></div>
-                    <div><span>العملة</span><strong>@d.CurrencyName</strong></div>
-                    <div><span>القيمة</span><strong>@String.Format("{0:n2}", d.Value)</strong></div>
-                    <div><span>الرصيد/قيمة الفتح</span><strong>@String.Format("{0:n2}", d.OpenValue)</strong></div>
-                    <div><span>له قيد افتتاح؟</span><strong>@(!string.IsNullOrWhiteSpace(d.NoteSerialOpen) || d.OpeningBalanceVoucherId.HasValue ? "نعم" : "لا")</strong></div>
-                    <div><span>مغلق؟</span><strong>@(d.Locked == true || d.CloseDate.HasValue ? "نعم" : "لا")</strong></div>
+                foreach (var item in Model.Items)
+                {
+                    var isSelected = Model.SelectedId == item.TblLCID;
+                    <a class="main-erp-result-card @(isSelected ? "is-selected" : "")" href="@Url.Action("Open", "LC", new { area = "MainErp", id = item.TblLCID })">
+                        <span class="main-erp-result-code">@item.LCNO</span>
+                        <strong>@item.Name</strong>
+                        <small>@item.BankName</small>
+                        <b>@String.Format("{0:n2}", item.Value)</b>
+                    </a>
+                }
+            }
+        </div>
+    </aside>
+
+    <main class="main-erp-premium-stage">
+        @if (!string.IsNullOrWhiteSpace(readOnlyMessage))
+        {
+            <div class="main-erp-warning">@readOnlyMessage</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Warning))
+        {
+            <div class="main-erp-warning">@Model.Warning</div>
+        }
+        @if (d != null)
+        {
+            foreach (var warning in d.Warnings)
+            {
+                <div class="main-erp-warning">@warning</div>
+            }
+        }
+
+        @if (d == null)
+        {
+            <section class="main-erp-premium-empty">
+                <h2>@T("LettersOfCredit")</h2>
+                <p>@T("LcReadOnlyIntro")</p>
+                <button type="submit" form="lcSearchForm">@T("Search")</button>
+            </section>
+        }
+        else
+        {
+            <header class="main-erp-cockpit-header">
+                <div>
+                    <span class="main-erp-kicker">@T("LcScreen")</span>
+                    <h2>@d.LCNO</h2>
+                    <p>@d.VendorName · @d.BankName · @d.CurrencyName</p>
+                </div>
+                <div class="main-erp-header-actions">
+                    <span class="main-erp-status-pill @(d.Locked == true || d.CloseDate.HasValue ? "is-closed" : "is-active")">
+                        @(d.Locked == true || d.CloseDate.HasValue ? T("Closed") : T("Active"))
+                    </span>
+                    <a href="@Url.Action("New", "LC", new { area = "MainErp" })">@T("New")</a>
+                    <a href="@Url.Action("Open", "LC", new { area = "MainErp", id = d.TblLCID })">@T("Open")</a>
+                    <button type="button" class="is-disabled-action">@T("Save")</button>
+                    <button type="button" class="is-disabled-action">@T("Delete")</button>
+                </div>
+            </header>
+
+            <section class="main-erp-summary-grid main-erp-sticky-summary">
+                <article><span>@T("Value")</span><strong>@String.Format("{0:n2}", d.Value)</strong><small>@d.CurrencyName</small></article>
+                <article><span>@T("MarginPayments")</span><strong>@marginRows</strong><small>@T("GeneratedAccountingRows")</small></article>
+                <article><span>@T("OpeningBalance")</span><strong>@String.Format("{0:n2}", d.OpenBalance)</strong><small>@openingBalanceType</small></article>
+                <article class="@(missingAccounts > 0 ? "is-warning" : "is-ok")"><span>@T("AccountHealth")</span><strong>@missingAccounts</strong><small>@T("MissingAccounts")</small></article>
+                <article><span>@T("AccountingImpact")</span><strong>@d.VoucherLines.Count</strong><small>@T("GeneratedAccountingRows")</small></article>
+                <article class="@((totalDebit - totalCredit) == 0 ? "is-ok" : "is-warning")"><span>@T("Difference")</span><strong>@String.Format("{0:n2}", totalDebit - totalCredit)</strong><small>@((totalDebit - totalCredit) == 0 ? T("Balanced") : T("Unbalanced"))</small></article>
+            </section>
+
+            <div class="main-erp-tab-shell" data-main-erp-tabs>
+                <nav class="main-erp-tab-rail">
+                    <button type="button" class="is-active" data-tab-target="lc-basic">@T("LcHeader")</button>
+                    <button type="button" data-tab-target="lc-accounts">@T("LcAccounts")</button>
+                    <button type="button" data-tab-target="lc-accounting">@T("AccountingTimeline")</button>
+                    <button type="button" data-tab-target="lc-margin">@T("MarginPayments")</button>
+                    <button type="button" data-tab-target="lc-opening">@T("OpeningBalance")</button>
+                    <button type="button" data-tab-target="lc-history">@T("OperationHistory")</button>
+                    <button type="button" data-tab-target="lc-reports">@T("ReportsAndAttachments")</button>
+                </nav>
+
+                <section id="lc-basic" class="main-erp-tab-pane is-active">
+                    <div class="main-erp-section-grid">
+                        <article class="main-erp-premium-card">
+                            <h4>@T("LcHeader")</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>@T("LcNumber")</dt><dd>@d.LCNO</dd>
+                                <dt>@T("Supplier")</dt><dd>@d.VendorName</dd>
+                                <dt>@T("Projects")</dt><dd>@d.ProjectName</dd>
+                                <dt>@T("Branch")</dt><dd>@d.BranchID</dd>
+                                <dt>@T("FromDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.FromDate)</dd>
+                                <dt>@T("ToDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ToDate)</dd>
+                            </dl>
+                        </article>
+                        <article class="main-erp-premium-card">
+                            <h4>@T("LcBankCurrencyValues")</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>@T("Bank")</dt><dd>@d.BankName</dd>
+                                <dt>@T("Currency")</dt><dd>@d.CurrencyName</dd>
+                                <dt>@T("Value")</dt><dd>@String.Format("{0:n2}", d.Value)</dd>
+                                <dt>@T("Open")</dt><dd>@String.Format("{0:n2}", d.OpenValue)</dd>
+                                <dt>@T("Date")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)</dd>
+                            </dl>
+                        </article>
+                    </div>
+                    <article class="main-erp-premium-card">
+                        <h4>@T("Description")</h4>
+                        <p class="main-erp-notes-box">@d.Remarks</p>
+                    </article>
                 </section>
 
-                <section class="main-erp-tabs main-erp-lc-tabs">
-                    <section>
-                        <h4>1. بيانات الاعتماد</h4>
-                        <div class="main-erp-form-grid main-erp-form-grid-dense">
-                            <label><span>TXTTblLCID</span><input value="@d.TblLCID" readonly /></label>
-                            <label><span>TXTLCNO / رقم الاعتماد</span><input value="@d.LCNO" readonly /></label>
-                            <label><span>txtName / اسم الاعتماد</span><input value="@d.Name" readonly /></label>
-                            <label><span>DCLC / نوع الاعتماد</span><input value="@d.LcTypeId" readonly /></label>
-                            <label><span>DBCboClientName / المورد</span><input value="@d.VendorName" readonly /></label>
-                            <label><span>DCCountry / الدولة</span><input value="@d.CountryId" readonly /></label>
-                            <label><span>DcBranch / الفرع</span><input value="@d.BranchID" readonly /></label>
-                            <label><span>dcproject / المشروع</span><input value="@d.ProjectName" readonly /></label>
-                            <label><span>project_id</span><input value="@d.ProjectId" readonly /></label>
-                            <label class="main-erp-wide-field"><span>txtRemarks / ملاحظات</span><textarea readonly>@d.Remarks</textarea></label>
-                        </div>
-                    </section>
+                <section id="lc-accounts" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-account-map">
+                        @foreach (var account in d.AccountLinks)
+                        {
+                            <article class="main-erp-account-card @(string.IsNullOrWhiteSpace(account.Warning) ? "is-ok" : "is-warning")">
+                                <span>@account.Role</span>
+                                <strong>@(string.IsNullOrWhiteSpace(account.AccountDisplay) ? T("AccountNotFound") : account.AccountDisplay)</strong>
+                                <small>@T("ParentAccount"): @(string.IsNullOrWhiteSpace(account.ParentAccountDisplay) ? T("AccountNotFound") : account.ParentAccountDisplay)</small>
+                                <p>@(string.IsNullOrWhiteSpace(account.Warning) ? T("MiniAccountPreview") : account.Warning)</p>
+                            </article>
+                        }
+                    </div>
+                </section>
 
-                    <section>
-                        <h4>2. البنك والعملة والقيم</h4>
-                        <div class="main-erp-form-grid main-erp-form-grid-dense">
-                            <label><span>DCBank / البنك</span><input value="@d.BankName" readonly /></label>
-                            <label><span>BankId</span><input value="@d.BankId" readonly /></label>
-                            <label><span>DcboBankName / بنك السداد</span><input value="@d.BankId2" readonly /></label>
-                            <label><span>DcboBox / الصندوق</span><input value="@d.BoxId" readonly /></label>
-                            <label><span>DCCUrrency / العملة</span><input value="@d.CurrencyName" readonly /></label>
-                            <label><span>CurrencyId</span><input value="@d.CurrencyId" readonly /></label>
-                            <label><span>txt_Currency_rate / سعر الصرف</span><input value="@String.Format("{0:n4}", d.CurrencyRate)" readonly /></label>
-                            <label><span>TXTValue / قيمة الاعتماد</span><input value="@String.Format("{0:n2}", d.Value)" readonly /></label>
-                            <label><span>txtOPenValue / قيمة الفتح أو المصروف</span><input value="@String.Format("{0:n2}", d.OpenValue)" readonly /></label>
-                            <label><span>CboPaymentType</span><input value="@d.PaymentTypeId" readonly /></label>
-                            <label><span>TxtChequeNumber</span><input value="@d.ChequeNumber" readonly /></label>
-                            <label><span>DtpChequeDueDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)" readonly /></label>
-                        </div>
-                    </section>
-
-                    <section>
-                        <h4>3. الحسابات المرتبطة ومعاينة المخاطر</h4>
-                        <table class="main-erp-table">
-                            <thead>
-                                <tr>
-                                    <th>الدور</th>
-                                    <th>الحساب</th>
-                                    <th>الحساب الرئيسي</th>
-                                    <th>تحذير</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var account in d.AccountLinks)
-                                {
-                                    <tr>
-                                        <td>@account.Role</td>
-                                        <td>
-                                            <strong>@account.AccountDisplay</strong>
-                                            @if (!string.IsNullOrWhiteSpace(account.AccountCode))
-                                            {
-                                                <small class="main-erp-tech-note" title="Account_Code internal posting key">Internal key available</small>
-                                            }
-                                        </td>
-                                        <td>
-                                            <strong>@account.ParentAccountDisplay</strong>
-                                            @if (!string.IsNullOrWhiteSpace(account.ParentAccountCode))
-                                            {
-                                                <small class="main-erp-tech-note" title="Parent Account_Code internal posting key">Internal key available</small>
-                                            }
-                                        </td>
-                                        <td>@account.Warning</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                        <div class="main-erp-warning">لا يتم إنشاء أي حسابات تلقائيًا الآن. هذه معاينة روابط ومخاطر فقط.</div>
-                    </section>
-
-                    <section>
-                        <h4>4. التواريخ والرصيد الافتتاحي</h4>
-                        <div class="main-erp-form-grid main-erp-form-grid-dense">
-                            <label><span>dbFromDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.FromDate)" readonly /></label>
-                            <label><span>dbTodate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.ToDate)" readonly /></label>
-                            <label><span>DpCloseDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.CloseDate)" readonly /></label>
-                            <label><span>DPLastParcilDate</span><input value="@String.Format("{0:yyyy-MM-dd}", d.LastParcilDate)" readonly /></label>
-                            <label><span>TxtOpenBalance</span><input value="@String.Format("{0:n2}", d.OpenBalance)" readonly /></label>
-                            <label><span>OpenBalanceType</span><input value="@openBalanceType" readonly /></label>
-                            <label><span>opening_balance_voucher_id</span><input value="@String.Format("{0:n0}", d.OpeningBalanceVoucherId)" readonly /></label>
-                            <label><span>NoteIDOpen</span><input value="@d.NoteIDOpen" readonly /></label>
-                            <label><span>NoteSerialOpen</span><input value="@d.NoteSerialOpen" readonly /></label>
-                        </div>
-                    </section>
-
-                    <section>
-                        <h4>5. أرقام القيود الرئيسية</h4>
-                        <div class="main-erp-form-grid main-erp-form-grid-dense">
-                            <label><span>NoteID / قيد الاعتماد الرئيسي</span><input value="@d.NoteID" readonly /></label>
-                            <label><span>NoteSerial</span><input value="@d.NoteSerial" readonly /></label>
-                            <label><span>NoteID2 / قيد الإغلاق أو الهامش</span><input value="@d.NoteID2" readonly /></label>
-                            <label><span>NoteSerial2</span><input value="@d.NoteSerial2" readonly /></label>
-                            <label><span>NoteIDOpen / قيد قيمة الفتح</span><input value="@d.NoteIDOpen" readonly /></label>
-                            <label><span>NoteSerialOpen</span><input value="@d.NoteSerialOpen" readonly /></label>
-                        </div>
-                    </section>
-
-                    <section>
-                        <h4>6. هامش الاعتماد / دفعات الهامش / تاريخ الاعتماد / الرصيد الافتتاحي</h4>
-                        <div class="main-erp-vb6-grid-shell">
-                            @foreach (var grid in d.GridSections)
+                <section id="lc-accounting" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-accounting-kpis">
+                        <article><span>@T("Debit")</span><strong>@totalDebit.ToString("N2")</strong></article>
+                        <article><span>@T("Credit")</span><strong>@totalCredit.ToString("N2")</strong></article>
+                        <article><span>@T("AffectedAccounts")</span><strong>@affectedAccounts.Count</strong></article>
+                        <article><span>@T("VoucherLines")</span><strong>@d.VoucherLines.Count</strong></article>
+                    </div>
+                    <div class="main-erp-voucher-timeline">
+                        @if (d.LinkedNotes.Count == 0)
+                        {
+                            <div class="main-erp-empty">@T("NoRows")</div>
+                        }
+                        else
+                        {
+                            foreach (var note in d.LinkedNotes)
                             {
-                                <article>
-                                    <header>
-                                        <strong>@grid.Title</strong>
-                                        <small>@grid.Vb6GridName - @grid.SourceTable</small>
-                                    </header>
-                                    <p class="main-erp-muted">@grid.Behavior</p>
-                                    @if (!string.IsNullOrWhiteSpace(grid.Warning))
+                                var noteDebit = 0m;
+                                var noteCredit = 0m;
+                                foreach (var line in d.VoucherLines)
+                                {
+                                    if (line.NoteId == note.NoteID)
                                     {
-                                        <div class="main-erp-warning">@grid.Warning</div>
+                                        noteDebit += line.Debit;
+                                        noteCredit += line.Credit;
                                     }
+                                }
+                                <details class="main-erp-voucher-card">
+                                    <summary>
+                                        <span>@note.SourceTable</span>
+                                        <strong>@note.NoteSerial</strong>
+                                        <b class="@((noteDebit - noteCredit) == 0 ? "is-ok" : "is-warning")">@((noteDebit - noteCredit) == 0 ? T("Balanced") : T("Unbalanced"))</b>
+                                        <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = note.NoteID })">@T("OpenVoucher")</a>
+                                    </summary>
+                                    <div class="main-erp-voucher-body">
+                                        <div class="main-erp-voucher-totals">
+                                            <span>@T("Date"): @String.Format("{0:yyyy-MM-dd}", note.NoteDate)</span>
+                                            <span>@T("Debit"): @noteDebit.ToString("N2")</span>
+                                            <span>@T("Credit"): @noteCredit.ToString("N2")</span>
+                                            <span>@T("Difference"): @((noteDebit - noteCredit).ToString("N2"))</span>
+                                        </div>
+                                        <table class="main-erp-table">
+                                            <thead><tr><th>@T("Account")</th><th>@T("Debit")</th><th>@T("Credit")</th><th>@T("Description")</th></tr></thead>
+                                            <tbody>
+                                                @foreach (var line in d.VoucherLines)
+                                                {
+                                                    if (line.NoteId == note.NoteID)
+                                                    {
+                                                        <tr>
+                                                            <td>@(string.IsNullOrWhiteSpace(line.AccountDisplay) ? T("AccountNotFound") : line.AccountDisplay)</td>
+                                                            <td>@line.Debit.ToString("N2")</td>
+                                                            <td>@line.Credit.ToString("N2")</td>
+                                                            <td>@line.Description</td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                            }
+                        }
+                    </div>
+                </section>
+
+                <section id="lc-margin" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-vb6-grid-shell main-erp-premium-grids">
+                        @foreach (var grid in d.GridSections)
+                        {
+                            <article>
+                                <header>
+                                    <strong>@grid.Title</strong>
+                                    <small>@grid.SourceTable</small>
+                                </header>
+                                <p class="main-erp-muted">@grid.Behavior</p>
+                                @if (!string.IsNullOrWhiteSpace(grid.Warning))
+                                {
+                                    <div class="main-erp-warning">@grid.Warning</div>
+                                }
+                                <div class="main-erp-table-wrap">
                                     <table class="main-erp-table">
                                         <thead>
                                             <tr>
@@ -242,13 +277,13 @@
                                                 {
                                                     <th>@column</th>
                                                 }
-                                                <th>القيد</th>
+                                                <th>@T("Voucher")</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @if (grid.Rows.Count == 0)
                                             {
-                                                <tr><td colspan="@(grid.Columns.Count + 1)">لا توجد صفوف مرتبطة أو لم يتم العثور على الجدول.</td></tr>
+                                                <tr><td colspan="@(grid.Columns.Count + 1)">@T("NoRows")</td></tr>
                                             }
                                             else
                                             {
@@ -262,19 +297,11 @@
                                                         <td>
                                                             @if (row.NoteId.HasValue)
                                                             {
-                                                                <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = row.NoteId.Value })">فتح القيد @row.NoteId</a>
+                                                                <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = row.NoteId.Value })">@T("OpenVoucher")</a>
                                                             }
-                                                            @if (row.NoteId2.HasValue)
+                                                            else
                                                             {
-                                                                <br /><a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = row.NoteId2.Value })">قيد 2 @row.NoteId2</a>
-                                                            }
-                                                            @if (row.NoteId3.HasValue)
-                                                            {
-                                                                <br /><a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = row.NoteId3.Value })">قيد 3 @row.NoteId3</a>
-                                                            }
-                                                            @if (!row.NoteId.HasValue && !row.NoteId2.HasValue && !row.NoteId3.HasValue)
-                                                            {
-                                                                <span>لا يوجد NoteID ظاهر</span>
+                                                                <span>@T("NoVisibleNoteId")</span>
                                                             }
                                                         </td>
                                                     </tr>
@@ -282,138 +309,78 @@
                                             }
                                         </tbody>
                                     </table>
-                                </article>
-                            }
-                        </div>
-                    </section>
-
-                    <section>
-                        <h4>7. القيود والمستندات المرتبطة</h4>
-                        @if (!string.IsNullOrWhiteSpace(d.NotesWarning))
-                        {
-                            <div class="main-erp-warning">@d.NotesWarning</div>
+                                </div>
+                            </article>
                         }
-                        <table class="main-erp-table">
-                            <thead>
-                                <tr>
-                                    <th>المصدر</th>
-                                    <th>NoteID</th>
-                                    <th>التاريخ</th>
-                                    <th>النوع</th>
-                                    <th>المسلسل</th>
-                                    <th>Voucher</th>
-                                    <th>القيمة</th>
-                                    <th>البيان</th>
-                                    <th>فتح</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (d.LinkedNotes.Count == 0)
-                                {
-                                    <tr><td colspan="9">لا توجد Notes/Notes1 مرتبطة مقروءة لهذا الاعتماد.</td></tr>
-                                }
-                                else
-                                {
-                                    foreach (var note in d.LinkedNotes)
-                                    {
-                                        <tr>
-                                            <td>@note.SourceTable</td>
-                                            <td>@note.NoteID</td>
-                                            <td>@String.Format("{0:yyyy-MM-dd}", note.NoteDate)</td>
-                                            <td>@note.NoteType</td>
-                                            <td>@note.NoteSerial</td>
-                                            <td>@note.DoubleEntryVoucherId</td>
-                                            <td>@String.Format("{0:n2}", note.NoteValue)</td>
-                                            <td>@note.Remark</td>
-                                            <td>
-                                                <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = note.NoteID })">فتح القيد</a>
-                                                @if (note.DoubleEntryVoucherId.HasValue)
-                                                {
-                                                    <br /><a href="@Url.Action("DetailsByVoucher", "JournalEntries", new { area = "MainErp", voucherId = note.DoubleEntryVoucherId.Value })">تفاصيل القيد</a>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <section>
-                        <h4>8. Trace القيود الفعلية من DOUBLE_ENTREY_VOUCHERS / DOUBLE_ENTREY_VOUCHERS1</h4>
-                        <table class="main-erp-table">
-                            <thead>
-                                <tr>
-                                    <th>المصدر</th>
-                                    <th>Voucher</th>
-                                    <th>Line</th>
-                                    <th>Note</th>
-                                    <th>التاريخ</th>
-                                    <th>الحساب</th>
-                                    <th>مدين</th>
-                                    <th>دائن</th>
-                                    <th>البيان</th>
-                                    <th>فتح</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (d.VoucherLines.Count == 0)
-                                {
-                                    <tr><td colspan="10">لا توجد قيود فعلية مرتبطة مقروءة، أو لم يتم العثور على الربط في قاعدة البيانات الحالية.</td></tr>
-                                }
-                                else
-                                {
-                                    foreach (var line in d.VoucherLines)
-                                    {
-                                        <tr>
-                                            <td>@line.SourceTable</td>
-                                            <td>@line.VoucherId</td>
-                                            <td>@line.LineNo</td>
-                                            <td>@line.NoteId<br /><small>@line.NoteSerial</small></td>
-                                            <td>@String.Format("{0:yyyy-MM-dd}", line.RecordDate)</td>
-                                            <td><strong>@line.AccountCode</strong><br /><small>@line.AccountName</small></td>
-                                            <td>@line.Debit.ToString("N2")</td>
-                                            <td>@line.Credit.ToString("N2")</td>
-                                            <td>@line.Description</td>
-                                            <td>
-                                                @if (line.NoteId.HasValue)
-                                                {
-                                                    <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = line.NoteId.Value })">فتح</a>
-                                                }
-                                                <br />
-                                                <a href="@Url.Action("DetailsByVoucher", "JournalEntries", new { area = "MainErp", voucherId = line.VoucherId })">تفاصيل</a>
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <section>
-                        <h4>9. معاينة محاسبية آمنة</h4>
-                        <div class="main-erp-warning">
-                            هذه اللوحة تعرض القيود الموجودة فعليًا فقط وتوضح مسارات الترحيل المتوقعة. لا يتم إنشاء Notes أو Vouchers أو Accounts من هذه الشاشة.
-                        </div>
-                        <ul class="main-erp-safety-list">
-                            <li>فتح الاعتماد / الهامش: debit/credit حسب createVoucher و CREATE_VOUCHER_GE.</li>
-                            <li>قيمة الفتح أو المصروفات: NoteType 22010 عند اكتمال الحسابات.</li>
-                            <li>إغلاق الاعتماد: مؤجل حتى مراجعة cmdCloseLC و close voucher.</li>
-                            <li>جداول الهامش والتاريخ والرصيد الافتتاحي: مؤجلة كحفظ، لكنها ظاهرة للقراءة والتتبع.</li>
-                        </ul>
-                    </section>
+                    </div>
                 </section>
-            }
-        </div>
-    </div>
+
+                <section id="lc-opening" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-section-grid">
+                        <article class="main-erp-premium-card">
+                            <h4>@T("OpeningBalance")</h4>
+                            <div class="main-erp-big-number">@String.Format("{0:n2}", d.OpenBalance)</div>
+                            <p>@openingBalanceType</p>
+                        </article>
+                        <article class="main-erp-premium-card">
+                            <h4>@T("OpenVoucher")</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>NoteID</dt><dd>@d.NoteIDOpen</dd>
+                                <dt>@T("NoteSerial")</dt><dd>@d.NoteSerialOpen</dd>
+                                <dt>@T("Voucher")</dt><dd>@String.Format("{0:n0}", d.OpeningBalanceVoucherId)</dd>
+                            </dl>
+                        </article>
+                    </div>
+                </section>
+
+                <section id="lc-history" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-activity-feed">
+                        <article><span>@T("LcHeader")</span><strong>@T("Active")</strong><small>@String.Format("{0:yyyy-MM-dd}", d.FromDate)</small></article>
+                        <article><span>@T("AccountingImpact")</span><strong>@d.LinkedNotes.Count @T("Note")</strong><small>@d.VoucherLines.Count @T("GeneratedAccountingRows")</small></article>
+                        <article><span>@T("MarginPayments")</span><strong>@marginRows @T("Details")</strong><small>@T("WorkflowReadOnly")</small></article>
+                    </div>
+                </section>
+
+                <section id="lc-reports" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-report-tiles">
+                        <a class="is-disabled"><span>@T("Reports")</span><strong>@T("LettersOfCredit")</strong><small>@T("DisabledReadOnlyMessage")</small></a>
+                        <a class="is-disabled"><span>@T("ReportsAndAttachments")</span><strong>@T("PreviewVoucher")</strong><small>@T("WorkflowReadOnly")</small></a>
+                    </div>
+                </section>
+            </div>
+        }
+    </main>
 </section>
 
 <script>
     (function () {
-        var buttons = document.querySelectorAll(".main-erp-lc-screen .is-disabled-action");
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].addEventListener("click", function () {
-                alert("هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode");
+        var root = document.querySelector("[data-main-erp-tabs]");
+        if (root) {
+            var buttons = root.querySelectorAll("[data-tab-target]");
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].addEventListener("click", function () {
+                    for (var b = 0; b < buttons.length; b++) {
+                        buttons[b].classList.remove("is-active");
+                    }
+                    var panes = root.querySelectorAll(".main-erp-tab-pane");
+                    for (var p = 0; p < panes.length; p++) {
+                        panes[p].hidden = true;
+                        panes[p].classList.remove("is-active");
+                    }
+                    this.classList.add("is-active");
+                    var target = document.getElementById(this.getAttribute("data-tab-target"));
+                    if (target) {
+                        target.hidden = false;
+                        target.classList.add("is-active");
+                    }
+                });
+            }
+        }
+
+        var disabledButtons = document.querySelectorAll(".main-erp-lc-screen .is-disabled-action");
+        for (var i = 0; i < disabledButtons.length; i++) {
+            disabledButtons[i].addEventListener("click", function () {
+                alert("@T("DisabledReadOnlyMessage")");
             });
         }
     })();

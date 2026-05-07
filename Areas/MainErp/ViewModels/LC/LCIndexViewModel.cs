@@ -163,6 +163,8 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
         public System.DateTime? RecordDate { get; set; }
         public string AccountCode { get; set; }
         public string AccountName { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountDisplay { get; set; }
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
         public string Description { get; set; }

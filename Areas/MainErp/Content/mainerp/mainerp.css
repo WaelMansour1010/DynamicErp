@@ -453,6 +453,35 @@
     margin-top: 4px;
 }
 
+.main-erp-ltr {
+    direction: ltr;
+    font-family: Arial, Tahoma, sans-serif;
+}
+
+.main-erp-ltr .main-erp-table th,
+.main-erp-ltr .main-erp-table td,
+.main-erp-ltr .reports-filter-grid label,
+.main-erp-ltr .main-erp-form-grid-dense label,
+.main-erp-ltr .main-erp-filter-stacked label,
+.main-erp-ltr .pos-nav-link,
+.main-erp-ltr .pos-nav-section-toggle {
+    text-align: left;
+}
+
+.main-erp-ltr .pos-main-shell.main-erp-app-shell {
+    direction: ltr;
+}
+
+.main-erp-ltr .pos-main-sidebar.main-erp-sidebar {
+    border-left: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.main-erp-ltr .pos-nav-submenu {
+    margin: 0 0 0 18px;
+    padding: 2px 0 4px 8px;
+}
+
 /* MainErp shell adapted from Areas/Pos/Content/pos-transaction.css.
    Class names intentionally keep the POS shell contract so the proven sidebar/dashboard
    behavior can be reused without bringing POS routes, session, or business logic. */

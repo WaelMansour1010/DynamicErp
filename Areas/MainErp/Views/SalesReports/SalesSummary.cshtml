@@ -1,15 +1,18 @@
 @model MyERP.Areas.MainErp.ViewModels.Reports.SalesSummaryReportViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Sales Summary";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("SalesSummary");
 }
+
 <section class="main-erp-panel">
     <div class="main-erp-title-row">
         <div>
-            <h3>ملخص المبيعات خلال فترة</h3>
-            <p>تقرير قراءة فقط من فواتير المبيعات العامة المرشحة.</p>
+            <h3>@T("SalesSummary")</h3>
+            <p>@T("SalesSummaryIntro")</p>
         </div>
-        <span class="main-erp-badge">Read-only</span>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
@@ -19,24 +22,24 @@
 
     @using (Html.BeginForm("SalesSummary", "SalesReports", new { area = "MainErp" }, FormMethod.Get, new { @class = "main-erp-filter" }))
     {
-        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="من تاريخ" />
-        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="إلى تاريخ" />
-        <input type="number" name="branchId" value="@Model.BranchId" placeholder="الفرع" />
-        <input type="number" name="userId" value="@Model.UserId" placeholder="المستخدم" />
-        <input type="number" name="customerId" value="@Model.CustomerId" placeholder="العميل" />
-        <button type="submit">عرض التقرير</button>
+        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("FromDate")" />
+        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("ToDate")" />
+        <input type="number" name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" />
+        <input type="number" name="userId" value="@Model.UserId" placeholder="@T("User")" />
+        <input type="number" name="customerId" value="@Model.CustomerId" placeholder="@T("Customer")" />
+        <button type="submit">@T("ReportRun")</button>
     }
 
     <table class="main-erp-table">
         <thead>
             <tr>
-                <th>التاريخ</th>
-                <th>الفرع</th>
-                <th>المستخدم</th>
-                <th>عدد الفواتير</th>
-                <th>قبل الضريبة</th>
-                <th>الضريبة</th>
-                <th>الإجمالي</th>
+                <th>@T("Date")</th>
+                <th>@T("Branch")</th>
+                <th>@T("User")</th>
+                <th>@T("InvoiceCount")</th>
+                <th>@T("TotalBeforeVat")</th>
+                <th>@T("Vat")</th>
+                <th>@T("Total")</th>
             </tr>
         </thead>
         <tbody>
@@ -54,12 +57,12 @@
             }
             @if (Model.Rows.Count == 0)
             {
-                <tr><td colspan="7">لا توجد بيانات للعرض.</td></tr>
+                <tr><td colspan="7">@T("NoRows")</td></tr>
             }
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="3">الإجمالي</th>
+                <th colspan="3">@T("Totals")</th>
                 <th>@Model.InvoiceCount</th>
                 <th>@Model.TotalBeforeVat.ToString("N2")</th>
                 <th>@Model.TotalVat.ToString("N2")</th>

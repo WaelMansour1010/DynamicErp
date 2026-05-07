@@ -1,5 +1,6 @@
 using System;
 using System.Data.SqlClient;
+using MyERP.Areas.MainErp.Infrastructure.Localization;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.ViewModels;
 using MyERP.Areas.MainErp.ViewModels.JournalEntries;
@@ -35,6 +36,8 @@ WITH JournalRows AS (
         v.RecordDate,
         v.Account_Code,
         a.Account_Name,
+        a.Account_NameEng,
+        a.Account_Serial,
         v.Value,
         v.Credit_Or_Debit,
         v.Double_Entry_Vouchers_Description,
@@ -89,6 +92,11 @@ ORDER BY RowNo;", connection))
                                 RecordDate = reader["RecordDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["RecordDate"]),
                                 AccountCode = Convert.ToString(reader["Account_Code"]),
                                 AccountName = Convert.ToString(reader["Account_Name"]),
+                                AccountSerial = Convert.ToString(reader["Account_Serial"]),
+                                AccountDisplay = MainErpEntityLocalization.AccountDisplay(
+                                    Convert.ToString(reader["Account_Serial"]),
+                                    Convert.ToString(reader["Account_Name"]),
+                                    Convert.ToString(reader["Account_NameEng"])),
                                 Debit = isCredit ? 0m : value,
                                 Credit = isCredit ? value : 0m,
                                 Description = Convert.ToString(reader["Double_Entry_Vouchers_Description"]),
@@ -101,7 +109,7 @@ ORDER BY RowNo;", connection))
             }
             catch (SqlException ex)
             {
-                result.Warning = "Journal-entry read model is not available in the configured database yet: " + ex.Message;
+                result.Warning = MainErpLocalizationService.T("JournalEntries") + ": " + ex.Message;
             }
 
             return result;
@@ -124,7 +132,7 @@ ORDER BY RowNo;", connection))
             }
             catch (SqlException ex)
             {
-                model.Warning = "Journal details are not available in the configured database yet: " + ex.Message;
+                model.Warning = MainErpLocalizationService.T("JournalEntryDetails") + ": " + ex.Message;
             }
 
             return model;
@@ -151,7 +159,7 @@ ORDER BY RowNo;", connection))
             }
             catch (SqlException ex)
             {
-                model.Warning = "Journal details are not available in the configured database yet: " + ex.Message;
+                model.Warning = MainErpLocalizationService.T("JournalEntryDetails") + ": " + ex.Message;
             }
 
             return model;
@@ -196,7 +204,7 @@ WHERE NoteID = @NoteId;", connection))
         {
             if (!TableExists(connection, tableName))
             {
-                model.Warnings.Add(tableName + " was not found.");
+                model.Warnings.Add(tableName + " " + MainErpLocalizationService.T("TableNotFound"));
                 return;
             }
 
@@ -208,6 +216,7 @@ SELECT
     v.RecordDate,
     v.Account_Code,
     a.Account_Name,
+    a.Account_NameEng,
     a.Account_Serial,
     v.Value,
     v.Credit_Or_Debit,
@@ -241,6 +250,10 @@ ORDER BY v.Double_Entry_Vouchers_ID, v.DEV_ID_Line_No;", connection))
                             AccountCode = ReadString(reader, "Account_Code"),
                             AccountName = ReadString(reader, "Account_Name"),
                             AccountSerial = ReadString(reader, "Account_Serial"),
+                            AccountDisplay = MainErpEntityLocalization.AccountDisplay(
+                                ReadString(reader, "Account_Serial"),
+                                ReadString(reader, "Account_Name"),
+                                ReadString(reader, "Account_NameEng")),
                             Debit = isCredit ? 0m : value,
                             Credit = isCredit ? value : 0m,
                             Description = ReadString(reader, "Double_Entry_Vouchers_Description"),

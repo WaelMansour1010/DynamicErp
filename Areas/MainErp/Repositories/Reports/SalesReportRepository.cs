@@ -1,5 +1,6 @@
 using System;
 using System.Data.SqlClient;
+using MyERP.Areas.MainErp.Infrastructure.Localization;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.ViewModels.Reports;
 
@@ -23,7 +24,7 @@ namespace MyERP.Areas.MainErp.Repositories.Reports
                 BranchId = branchId,
                 UserId = userId,
                 CustomerId = customerId,
-                Warning = "تم استخدام فلتر محافظ على أنواع الفواتير العامة Transaction_Type IN (22, 29). يحتاج التصنيف النهائي لأنواع فواتير المبيعات إلى اعتماد من تحليل ERP الرئيسي."
+                Warning = MainErpLocalizationService.T("SalesSummaryIntro") + " Transaction_Type IN (22, 29)."
             };
 
             try
@@ -84,7 +85,7 @@ ORDER BY CAST(t.Transaction_Date AS date), b.branch_name, u.UserName;", connecti
             }
             catch (SqlException ex)
             {
-                model.Warning = "تعذر تشغيل ملخص المبيعات على قاعدة البيانات الحالية: " + ex.Message;
+                model.Warning = MainErpLocalizationService.T("SalesSummary") + ": " + ex.Message;
             }
 
             return model;

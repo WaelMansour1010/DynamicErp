@@ -1,4 +1,5 @@
 using System.Web.Mvc;
+using MyERP.Areas.MainErp.Infrastructure.Localization;
 using MyERP.Areas.MainErp.Models.Security;
 using MyERP.Areas.MainErp.Security;
 
@@ -15,6 +16,8 @@ namespace MyERP.Areas.MainErp.Controllers
 
         protected override void OnActionExecuting(ActionExecutingContext filterContext)
         {
+            MainErpCultureManager.ApplyCurrentCulture();
+
             if (MainErpUserContext == null)
             {
                 var returnUrl = filterContext.HttpContext.Request.RawUrl;

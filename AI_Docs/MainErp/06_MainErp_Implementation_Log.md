@@ -435,6 +435,50 @@ Safety:
 - No `AllScripts.sql` change.
 - No database schema change.
 - No `Areas\Pos` files modified.
+
+## 2026-05-07 MainErp Bilingual Architecture
+
+Created:
+
+- `Areas\MainErp\Resources\MainErp.resx`
+- `Areas\MainErp\Resources\MainErp.en.resx`
+- `Areas\MainErp\Resources\MainErp.ar.resx`
+- `Areas\MainErp\Infrastructure\Localization\MainErpCultureManager.cs`
+- `Areas\MainErp\Infrastructure\Localization\MainErpLocalizationService.cs`
+- `Areas\MainErp\Infrastructure\Localization\MainErpEntityLocalization.cs`
+- `Areas\MainErp\Controllers\LocalizationController.cs`
+- `AI_Docs\MainErp\33_BilingualArchitecture.md`
+
+Modified:
+
+- `Areas\MainErp\Controllers\MainErpControllerBase.cs`
+- `Areas\MainErp\Views\Shared\_MainErpLayout.cshtml`
+- `Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml`
+- `Areas\MainErp\Views\Dashboard\Index.cshtml`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\AccountingReports\Index.cshtml`
+- `Areas\MainErp\Views\SalesReports\Index.cshtml`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `MyERP.csproj`
+
+Implemented:
+
+- Resource-based UI localization for MainErp foundation.
+- Central culture manager with Session/Cookie language preference.
+- Topbar language switch without changing routes.
+- Dynamic `dir=rtl/ltr` and CSS direction class.
+- Entity localization helper with Arabic/English fallback.
+- Account display standard using:
+  - `Account_Serial + localized account name`.
+- LC linked accounts now use `Account_NameEng` in English mode and `Account_Name` in Arabic mode.
+
+Safety:
+
+- No duplicated Arabic/English views or controllers.
+- No database changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` files modified.
 - No `Areas\Pos` files modified.
 - No Cayshny legacy files modified.
 
@@ -584,3 +628,60 @@ Safety:
 - Original web still uses `MyERP_ConnectionString`.
 - No database schema changes.
 - No `AllScripts.sql` changes.
+
+## 2026-05-07 MainErp Bilingual Architecture
+
+Created:
+
+- `Areas\MainErp\Resources\MainErp.resx`
+- `Areas\MainErp\Resources\MainErp.en.resx`
+- `Areas\MainErp\Resources\MainErp.ar.resx`
+- `Areas\MainErp\Infrastructure\Localization\MainErpCultureManager.cs`
+- `Areas\MainErp\Infrastructure\Localization\MainErpLocalizationService.cs`
+- `Areas\MainErp\Infrastructure\Localization\MainErpEntityLocalization.cs`
+- `Areas\MainErp\Controllers\LocalizationController.cs`
+- `AI_Docs\MainErp\33_BilingualArchitecture.md`
+
+Modified:
+
+- `Areas\MainErp\Controllers\MainErpControllerBase.cs`
+- `Areas\MainErp\Views\Shared\_MainErpLayout.cshtml`
+- `Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml`
+- `Areas\MainErp\Views\Dashboard\Index.cshtml`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\LC\Details.cshtml`
+- `Areas\MainErp\Views\JournalEntries\Index.cshtml`
+- `Areas\MainErp\Views\JournalEntries\Details.cshtml`
+- `Areas\MainErp\Views\AccountingReports\Index.cshtml`
+- `Areas\MainErp\Views\AccountingReports\JournalEntries.cshtml`
+- `Areas\MainErp\Views\AccountingReports\AccountMovement.cshtml`
+- `Areas\MainErp\Views\SalesReports\Index.cshtml`
+- `Areas\MainErp\Views\SalesReports\SalesSummary.cshtml`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs`
+- `Areas\MainErp\Repositories\Reports\AccountingReportRepository.cs`
+- `Areas\MainErp\Repositories\Reports\SalesReportRepository.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs`
+- `Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs`
+- `Areas\MainErp\ViewModels\Reports\ReportRowViewModels.cs`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `MyERP.csproj`
+
+Implemented:
+
+- Same MainErp routes now support Arabic and English through resources; no duplicated views/controllers.
+- MainErp culture preference is stored in Session and cookie.
+- Layout switches `lang`, `dir`, and RTL/LTR CSS class dynamically.
+- Sidebar, dashboard, LC, journal entries, accounting reports, and sales reports now use resource keys for visible labels.
+- Database entity localization helper supports Arabic-first and English-first fallback.
+- Account display standard is now centralized: `Account_Serial + " - " + localized account name`.
+- LC linked accounts and voucher trace rows, journal rows, and accounting report rows no longer use raw `Account_Code` as primary display.
+
+Safety:
+
+- Build succeeded.
+- No `Areas\Pos` files modified.
+- No `AllScripts.sql` changes.
+- No database schema changes.
+- MainErp still uses MainErp-specific connection/context boundaries.

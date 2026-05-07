@@ -1,20 +1,19 @@
 @model MyERP.Areas.MainErp.ViewModels.LC.LCDetailsViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "تفاصيل الاعتماد المستندي";
-    var openBalanceType = !Model.OpenBalanceType.HasValue
-        ? "غير محدد"
-        : Model.OpenBalanceType.Value == 0 ? "مدين" : Model.OpenBalanceType.Value == 1 ? "دائن" : "غير محدد";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("LettersOfCredit");
 }
 
 <section class="main-erp-panel main-erp-operational-page main-erp-lc-screen">
     <div class="main-erp-title-row">
         <div>
-            <span class="main-erp-kicker">FrmLC.frm / Read only details</span>
-            <h3>تفاصيل الاعتماد المستندي</h3>
-            <p>عرض آمن من TblLC بنفس تقسيم شاشة FrmLC. لا توجد أي عملية حفظ أو ترحيل أو حذف في هذه الصفحة.</p>
+            <span class="main-erp-kicker">@T("ReadOnly")</span>
+            <h3>@T("LettersOfCredit")</h3>
+            <p>@T("LcReadOnlyIntro")</p>
         </div>
-        <span class="main-erp-badge">Read only</span>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
@@ -22,118 +21,72 @@
         <div class="main-erp-warning">@Model.Warning</div>
     }
 
-        <div class="main-erp-vb6-toolbar">
-        <a href="@Url.Action("Index", "LC", new { area = "MainErp", selectedId = Model.TblLCID })">رجوع لشاشة الاعتماد</a>
-        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">حفظ</button>
-        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">إنشاء القيد</button>
-        <button type="button" class="is-disabled-action" aria-disabled="true" title="Not migrated yet">طباعة</button>
+    <div class="main-erp-vb6-toolbar">
+        <a href="@Url.Action("Index", "LC", new { area = "MainErp", selectedId = Model.TblLCID })">@T("Back")</a>
+        <button type="button" class="is-disabled-action" aria-disabled="true">@T("Save")</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true">@T("PreviewVoucher")</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true">@T("Reports")</button>
     </div>
 
     <section class="main-erp-lc-strip main-erp-lc-status-panel">
-        <div><span>LC رقم</span><strong>@Model.LCNO</strong></div>
-        <div><span>البنك</span><strong>@Model.BankName</strong></div>
-        <div><span>العملة</span><strong>@Model.CurrencyName</strong></div>
-        <div><span>الحالة</span><strong>@(Model.Locked == true ? "مغلق / Locked" : "مفتوح")</strong></div>
-        <div><span>القيمة</span><strong>@String.Format("{0:n2}", Model.Value)</strong></div>
-        <div><span>قيمة الفتح</span><strong>@String.Format("{0:n2}", Model.OpenValue)</strong></div>
-        <div><span>له قيد افتتاح؟</span><strong>@(!string.IsNullOrWhiteSpace(Model.NoteSerialOpen) || Model.OpeningBalanceVoucherId.HasValue ? "نعم" : "لا")</strong></div>
-        <div><span>هل مغلق؟</span><strong>@(Model.Locked == true || Model.CloseDate.HasValue ? "نعم" : "لا")</strong></div>
+        <div><span>@T("LcNumber")</span><strong>@Model.LCNO</strong></div>
+        <div><span>@T("Bank")</span><strong>@Model.BankName</strong></div>
+        <div><span>@T("Currency")</span><strong>@Model.CurrencyName</strong></div>
+        <div><span>@T("Value")</span><strong>@String.Format("{0:n2}", Model.Value)</strong></div>
+        <div><span>@T("Open")</span><strong>@String.Format("{0:n2}", Model.OpenValue)</strong></div>
+        <div><span>@T("Close")</span><strong>@(Model.Locked == true || Model.CloseDate.HasValue ? T("Close") : T("Open"))</strong></div>
     </section>
 
     <section class="main-erp-tabs main-erp-lc-tabs">
         <section>
-            <h4>بيانات الاعتماد</h4>
+            <h4>@T("LcHeader")</h4>
             <dl class="main-erp-details">
-                <dt>رقم الاعتماد</dt><dd>@Model.LCNO</dd>
-                <dt>اسم الاعتماد</dt><dd>@Model.Name</dd>
-                <dt>نوع الاعتماد</dt><dd>@Model.LcTypeId</dd>
-                <dt>المورد</dt><dd>@Model.VendorName</dd>
-                <dt>المشروع</dt><dd>@Model.ProjectName</dd>
-                <dt>الفرع</dt><dd>@Model.BranchID</dd>
+                <dt>@T("LcNumber")</dt><dd>@Model.LCNO</dd>
+                <dt>@T("Supplier")</dt><dd>@Model.VendorName</dd>
+                <dt>@T("Projects")</dt><dd>@Model.ProjectName</dd>
+                <dt>@T("Branch")</dt><dd>@Model.BranchID</dd>
+                <dt>@T("Description")</dt><dd>@Model.Remarks</dd>
             </dl>
         </section>
+
         <section>
-            <h4>البنك والعملة</h4>
+            <h4>@T("LcBankCurrencyValues")</h4>
             <dl class="main-erp-details">
-                <dt>البنك</dt><dd>@Model.BankName</dd>
-                <dt>بنك السداد</dt><dd>@Model.BankId2</dd>
-                <dt>الصندوق</dt><dd>@Model.BoxId</dd>
-                <dt>العملة</dt><dd>@Model.CurrencyName</dd>
-                <dt>سعر الصرف</dt><dd>@String.Format("{0:n4}", Model.CurrencyRate)</dd>
-                <dt>قيمة الاعتماد</dt><dd>@String.Format("{0:n2}", Model.Value)</dd>
-                <dt>قيمة الفتح</dt><dd>@String.Format("{0:n2}", Model.OpenValue)</dd>
+                <dt>@T("Bank")</dt><dd>@Model.BankName</dd>
+                <dt>@T("Currency")</dt><dd>@Model.CurrencyName</dd>
+                <dt>@T("Value")</dt><dd>@String.Format("{0:n2}", Model.Value)</dd>
+                <dt>@T("FromDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.FromDate)</dd>
+                <dt>@T("ToDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.ToDate)</dd>
             </dl>
         </section>
+
         <section>
-            <h4>الحسابات</h4>
-            <dl class="main-erp-details">
-                <dt>حساب الاعتماد</dt><dd>@Model.AccountCode</dd>
-                <dt>رئيسي الاعتماد</dt><dd>@Model.AccountLGParent</dd>
-                <dt>حساب الهامش</dt><dd>@Model.MarginAccountCode</dd>
-                <dt>رئيسي الهامش</dt><dd>@Model.AccountMarginParent</dd>
-                <dt>حساب القبول</dt><dd>@Model.AcceptAccountCode</dd>
-                <dt>رئيسي القبول</dt><dd>@Model.AccountAcceptanceParent</dd>
-                <dt>حساب المصروفات</dt><dd>@Model.ExpenseAccountCode</dd>
-                <dt>رئيسي المصروفات</dt><dd>@Model.AccountExpensParent</dd>
-            </dl>
-        </section>
-        <section>
-            <h4>التواريخ والقيود</h4>
-            <dl class="main-erp-details">
-                <dt>من تاريخ</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.FromDate)</dd>
-                <dt>إلى تاريخ</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.ToDate)</dd>
-                <dt>تاريخ الإغلاق</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.CloseDate)</dd>
-                <dt>آخر تاريخ شحن</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.LastParcilDate)</dd>
-                <dt>رصيد افتتاحي</dt><dd>@String.Format("{0:n2}", Model.OpenBalance)</dd>
-                <dt>نوع الرصيد</dt><dd>@openBalanceType</dd>
-                <dt>Opening voucher id</dt><dd>@String.Format("{0:n0}", Model.OpeningBalanceVoucherId)</dd>
-                <dt>قيد LC</dt><dd>@Model.NoteSerial</dd>
-                <dt>قيد الهامش</dt><dd>@Model.NoteSerial2</dd>
-                <dt>قيد الافتتاح</dt><dd>@Model.NoteSerialOpen</dd>
-            </dl>
-        </section>
-        <section>
-            <h4>الجداول المرتبطة</h4>
-            <div class="main-erp-vb6-grid-placeholder">
-                GrdBondHistory / GrdMargin / GrdMargin2 / GrdMargin3 / GrdMargin4 لم يتم تفعيلها بعد في هذه المرحلة الآمنة.
-                لا توجد قراءة تفصيلية من جداول الهامش ولا أي إنشاء قيود.
-            </div>
-        </section>
-        <section>
-            <h4>الحركات أو القيود المرتبطة - Notes preview</h4>
-            @if (!string.IsNullOrWhiteSpace(Model.NotesWarning))
-            {
-                <div class="main-erp-warning">@Model.NotesWarning</div>
-            }
-            <div class="main-erp-table-wrap">
-                <table class="main-erp-table">
-                    <thead><tr><th>NoteID</th><th>التاريخ</th><th>النوع</th><th>المسلسل</th><th>القيمة</th><th>البيان</th></tr></thead>
-                    <tbody>
-                    @if (Model.LinkedNotes.Count == 0)
+            <h4>@T("LcAccounts")</h4>
+            <table class="main-erp-table">
+                <thead>
+                    <tr>
+                        <th>@T("Details")</th>
+                        <th>@T("Account")</th>
+                        <th>@T("ParentAccount")</th>
+                        <th>@T("Validation")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var account in Model.AccountLinks)
                     {
-                        <tr><td colspan="6">لا توجد قيود مرتبطة مقروءة من Notes لهذا الاعتماد، أو لم يتم ترحيل ربطها بعد.</td></tr>
+                        <tr>
+                            <td>@account.Role</td>
+                            <td>@(string.IsNullOrWhiteSpace(account.AccountDisplay) ? T("AccountNotFound") : account.AccountDisplay)</td>
+                            <td>@(string.IsNullOrWhiteSpace(account.ParentAccountDisplay) ? T("AccountNotFound") : account.ParentAccountDisplay)</td>
+                            <td>@account.Warning</td>
+                        </tr>
                     }
-                    else
+                    @if (Model.AccountLinks.Count == 0)
                     {
-                        foreach (var note in Model.LinkedNotes)
-                        {
-                            <tr>
-                                <td>@note.NoteID</td>
-                                <td>@String.Format("{0:yyyy-MM-dd}", note.NoteDate)</td>
-                                <td>@note.NoteType</td>
-                                <td>@note.NoteSerial</td>
-                                <td>@String.Format("{0:n2}", note.NoteValue)</td>
-                                <td>@note.Remark</td>
-                            </tr>
-                        }
+                        <tr><td colspan="4">@T("NoRows")</td></tr>
                     }
-                    </tbody>
-                </table>
-            </div>
-        </section>
-        <section>
-            <h4>ملاحظات</h4>
-            <p class="main-erp-remarks">@Model.Remarks</p>
+                </tbody>
+            </table>
         </section>
     </section>
 </section>
@@ -143,7 +96,7 @@
         var buttons = document.querySelectorAll('.main-erp-lc-screen .is-disabled-action');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].addEventListener('click', function () {
-                alert('هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode');
+                alert('@T("DisabledReadOnlyMessage")');
             });
         }
     })();

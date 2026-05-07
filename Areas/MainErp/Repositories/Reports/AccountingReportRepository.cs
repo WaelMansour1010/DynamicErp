@@ -1,5 +1,6 @@
 using System;
 using System.Data.SqlClient;
+using MyERP.Areas.MainErp.Infrastructure.Localization;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.ViewModels.Reports;
 
@@ -35,6 +36,8 @@ SELECT
     n.NoteType,
     v.Account_Code,
     a.Account_Name,
+    a.Account_NameEng,
+    a.Account_Serial,
     CASE WHEN ISNULL(v.Credit_Or_Debit, 0) = 0 THEN ISNULL(v.Value, 0) ELSE 0 END AS Debit,
     CASE WHEN ISNULL(v.Credit_Or_Debit, 0) = 1 THEN ISNULL(v.Value, 0) ELSE 0 END AS Credit,
     COALESCE(v.Double_Entry_Vouchers_Description, v.des, n.Remark) AS Description,
@@ -64,6 +67,11 @@ ORDER BY COALESCE(n.NoteDate, v.RecordDate), n.NoteSerial, v.Double_Entry_Vouche
                                 NoteType = reader["NoteType"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["NoteType"]),
                                 AccountCode = Convert.ToString(reader["Account_Code"]),
                                 AccountName = Convert.ToString(reader["Account_Name"]),
+                                AccountSerial = Convert.ToString(reader["Account_Serial"]),
+                                AccountDisplay = MainErpEntityLocalization.AccountDisplay(
+                                    Convert.ToString(reader["Account_Serial"]),
+                                    Convert.ToString(reader["Account_Name"]),
+                                    Convert.ToString(reader["Account_NameEng"])),
                                 Debit = reader["Debit"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["Debit"]),
                                 Credit = reader["Credit"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["Credit"]),
                                 Description = Convert.ToString(reader["Description"]),
@@ -80,7 +88,7 @@ ORDER BY COALESCE(n.NoteDate, v.RecordDate), n.NoteSerial, v.Double_Entry_Vouche
             }
             catch (SqlException ex)
             {
-                model.Warning = "تعذر تشغيل تقرير القيود اليومية على قاعدة البيانات الحالية: " + ex.Message;
+                model.Warning = MainErpLocalizationService.T("JournalEntries") + ": " + ex.Message;
             }
 
             return model;
@@ -98,7 +106,7 @@ ORDER BY COALESCE(n.NoteDate, v.RecordDate), n.NoteSerial, v.Double_Entry_Vouche
 
             if (string.IsNullOrWhiteSpace(accountCode))
             {
-                model.Warning = "الحساب مطلوب لتشغيل تقرير حركة الحساب.";
+                model.Warning = MainErpLocalizationService.T("AccountRequiredForReport");
                 return model;
             }
 
@@ -111,6 +119,8 @@ SELECT
     CONVERT(nvarchar(50), n.NoteSerial) AS NoteSerial,
     COALESCE(v.Double_Entry_Vouchers_Description, v.des, n.Remark) AS Description,
     a.Account_Name,
+    a.Account_NameEng,
+    a.Account_Serial,
     CASE WHEN ISNULL(v.Credit_Or_Debit, 0) = 0 THEN ISNULL(v.Value, 0) ELSE 0 END AS Debit,
     CASE WHEN ISNULL(v.Credit_Or_Debit, 0) = 1 THEN ISNULL(v.Value, 0) ELSE 0 END AS Credit
 FROM DOUBLE_ENTREY_VOUCHERS v
@@ -135,7 +145,15 @@ ORDER BY COALESCE(n.NoteDate, v.RecordDate), n.NoteSerial, v.Double_Entry_Vouche
                             var debit = reader["Debit"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["Debit"]);
                             var credit = reader["Credit"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["Credit"]);
                             running += debit - credit;
-                            model.AccountName = string.IsNullOrWhiteSpace(model.AccountName) ? Convert.ToString(reader["Account_Name"]) : model.AccountName;
+                            if (string.IsNullOrWhiteSpace(model.AccountDisplay))
+                            {
+                                model.AccountName = Convert.ToString(reader["Account_Name"]);
+                                model.AccountSerial = Convert.ToString(reader["Account_Serial"]);
+                                model.AccountDisplay = MainErpEntityLocalization.AccountDisplay(
+                                    Convert.ToString(reader["Account_Serial"]),
+                                    Convert.ToString(reader["Account_Name"]),
+                                    Convert.ToString(reader["Account_NameEng"]));
+                            }
                             model.TotalDebit += debit;
                             model.TotalCredit += credit;
                             model.Rows.Add(new AccountMovementReportRowViewModel
@@ -153,12 +171,12 @@ ORDER BY COALESCE(n.NoteDate, v.RecordDate), n.NoteSerial, v.Double_Entry_Vouche
 
                 if (string.IsNullOrWhiteSpace(model.Warning))
                 {
-                    model.Warning = "الرصيد الافتتاحي غير محتسب في هذه المرحلة؛ الرصيد المتحرك المعروض هو صافي حركة الفترة فقط.";
+                    model.Warning = MainErpLocalizationService.T("AccountMovementIntro");
                 }
             }
             catch (SqlException ex)
             {
-                model.Warning = "تعذر تشغيل تقرير حركة الحساب على قاعدة البيانات الحالية: " + ex.Message;
+                model.Warning = MainErpLocalizationService.T("AccountMovement") + ": " + ex.Message;
             }
 
             return model;
