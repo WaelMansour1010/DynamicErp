@@ -94,6 +94,58 @@ namespace MyERP.Areas.MainErp.ViewModels.LC
         public System.Collections.Generic.IList<string> Warnings { get; private set; }
     }
 
+    public class LCEditViewModel
+    {
+        public int? TblLCID { get; set; }
+        public string LCNO { get; set; }
+        public int? LCTyperId { get; set; }
+        public int? BankId { get; set; }
+        public int? BankID2 { get; set; }
+        public int? BoxID { get; set; }
+        public decimal? Value { get; set; }
+        public decimal? OpenValue { get; set; }
+        public int? CurrencyId { get; set; }
+        public decimal? CurrencyRate { get; set; }
+        public decimal? PercentV { get; set; }
+        public int? VendorId { get; set; }
+        public int? CountryId { get; set; }
+        public System.DateTime? FromDate { get; set; }
+        public System.DateTime? ToDate { get; set; }
+        public System.DateTime? CloseDate { get; set; }
+        public System.DateTime? LastParcilDate { get; set; }
+        public int? BranchID { get; set; }
+        public string Remarks { get; set; }
+        public int? ProjectId { get; set; }
+        public string ProjectName { get; set; }
+        public int? PaymentTypeID { get; set; }
+        public string ChequeNumber { get; set; }
+        public System.DateTime? ChequeDueDate { get; set; }
+        public bool Locked { get; set; }
+        public string AccountLGParent { get; set; }
+        public string AccountMarginParent { get; set; }
+        public string AccountAcceptanceParent { get; set; }
+        public string AccountExpensParent { get; set; }
+        public string LCAccountCode { get; set; }
+        public string MarginAccountCode { get; set; }
+        public string AcceptanceAccountCode { get; set; }
+        public string ExpenseAccountCode { get; set; }
+        public string ProjectExpenseAccountCode { get; set; }
+        public bool AutoCreateMissingAccounts { get; set; }
+        public bool HasPostedVoucher { get; set; }
+        public string Warning { get; set; }
+    }
+
+    public class LCPostingResultViewModel
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public int TblLCID { get; set; }
+        public int? NoteId { get; set; }
+        public long? VoucherId { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
+    }
+
     public class LCLinkedNoteViewModel
     {
         public int NoteID { get; set; }
