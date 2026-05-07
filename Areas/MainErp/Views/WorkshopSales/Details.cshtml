@@ -1,0 +1,395 @@
+@model MyERP.Areas.MainErp.ViewModels.SalesInvoices.SalesInvoiceDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.ArabicTitle;
+    var isPump = Model.Kind == MyERP.Areas.MainErp.ViewModels.SalesInvoices.MainErpSalesInvoiceKind.Pump;
+    var controllerName = isPump ? "PumpSales" : "WorkshopSales";
+    var voucherBalanced = Math.Abs(Model.VoucherBalanceDifference) < 0.01m;
+    Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<decimal, string> moneyValue = v => String.Format("{0:n2}", v);
+}
+
+<section class="main-erp-panel invoice-workspace" dir="rtl">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@Model.ArabicTitle</h3>
+            <p>Workspace تشغيلي من `Transactions` و `Transaction_Details` مع Trace للمدفوعات والقيود وتأثير المخزون. كل العمليات الخطرة معطلة.</p>
+        </div>
+        <div class="main-erp-actions">
+            <a class="main-erp-button" href="@Url.Action("Index", controllerName, new { area = "MainErp" })">رجوع</a>
+            <button type="button" class="main-erp-button" disabled title="Read Only Mode">حفظ</button>
+            <button type="button" class="main-erp-button" disabled title="Read Only Mode">ترحيل</button>
+            <button type="button" class="main-erp-button" disabled title="Read Only Mode">حذف</button>
+            <button type="button" class="main-erp-button" disabled title="Preview only - no write">معاينة تأثير الحفظ</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    <div class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-eyebrow">FrmSaleBill6 / Transaction_Type @Model.TransactionType / TypeInvoice @Model.TypeInvoice</span>
+            <h2>@(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</h2>
+            <p>@Model.NoteSerial1 - @String.Format("{0:yyyy-MM-dd}", Model.TransactionDate)</p>
+        </div>
+        <div class="main-erp-status-stack">
+            <span class="main-erp-badge">Read-only</span>
+            <span class="main-erp-badge @(voucherBalanced ? "is-success" : "is-danger")">@(voucherBalanced ? "القيد متوازن" : "يوجد فرق قيود")</span>
+        </div>
+    </div>
+
+    <div class="main-erp-kpi-grid">
+        <div class="main-erp-kpi-card"><span>رقم الفاتورة</span><strong>@Model.TransactionId</strong><small>@Model.TransactionSerial / @Model.NoteSerial1</small></div>
+        <div class="main-erp-kpi-card"><span>العميل</span><strong>@(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</strong><small>@Model.BranchName</small></div>
+        <div class="main-erp-kpi-card"><span>إجمالي الفاتورة</span><strong>@money(Model.Total)</strong><small>الصافي @money(Model.NetValue)</small></div>
+        <div class="main-erp-kpi-card"><span>الضريبة</span><strong>@money(Model.Vat)</strong><small>من البنود @moneyValue(Model.LinesVat)</small></div>
+        <div class="main-erp-kpi-card"><span>المدفوع</span><strong>@money(Model.PayedValue)</strong><small>المتبقي @money(Model.RemainValue)</small></div>
+        <div class="main-erp-kpi-card"><span>عدد البنود</span><strong>@Model.Lines.Count</strong><small>كمية @moneyValue(Model.InventoryQuantityTotal)</small></div>
+        <div class="main-erp-kpi-card"><span>أثر المخزون</span><strong>@moneyValue(Model.LinesCost)</strong><small>StoreID @Model.StoreId</small></div>
+        <div class="main-erp-kpi-card"><span>حسابات متأثرة</span><strong>@Model.AffectedAccountCount</strong><small>@Model.VoucherLines.Count سطر قيد</small></div>
+        <div class="main-erp-kpi-card"><span>مستندات مخزنية</span><strong>@Model.RelatedInventoryTransactions.Count</strong><small>صرف @Model.RelatedInventoryIssueCount / استلام @Model.RelatedInventoryReceiptCount</small></div>
+        <div class="main-erp-kpi-card"><span>تفصيل المدفوعات</span><strong>@moneyValue(Model.PaymentRowsTotal)</strong><small>مضخات @moneyValue(Model.PumpLinePaymentTotal)</small></div>
+        @if (isPump)
+        {
+            <div class="main-erp-kpi-card"><span>توزيع الآجل</span><strong>@moneyValue(Model.PumpDeferredDistributionTotal)</strong><small>@Model.PumpDeferredCustomerCount عميل / كمية @moneyValue(Model.PumpDeferredDistributionQuantityTotal)</small></div>
+        }
+    </div>
+
+    <div class="main-erp-tabs premium-tabs">
+        <section>
+            <h4>ملخص الفاتورة</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>مرحلة VB6: <strong>قراءة من FrmSaleBill6</strong></span>
+                <span>SaveData: <strong>معطل</strong></span>
+                <span>CreateIssueVoucher2: <strong>Trace فقط</strong></span>
+                <span>CreateRecieveVoucher: <strong>Trace فقط</strong></span>
+                <span>CREATE_VOUCHER_GE/createVoucher2: <strong>عرض قيود فقط</strong></span>
+            </div>
+            <div class="main-erp-two-column">
+                <dl class="main-erp-details">
+                    <dt>السيريال</dt><dd>@Model.TransactionSerial</dd>
+                    <dt>رقم الفاتورة</dt><dd>@Model.NoteSerial1</dd>
+                    <dt>Manual No</dt><dd>@Model.ManualNo</dd>
+                    <dt>الفرع</dt><dd>@Model.BranchName</dd>
+                    <dt>المخزن</dt><dd>@Model.StoreId</dd>
+                    <dt>الخزينة</dt><dd>@Model.BoxId</dd>
+                    <dt>Prefix / FullCode</dt><dd>@Model.Prefix @Model.FullCode</dd>
+                    <dt>CBoBasedON</dt><dd>@Model.CboBasedOn</dd>
+                    <dt>POSBillType</dt><dd>@Model.PosBillType</dd>
+                </dl>
+                <dl class="main-erp-details">
+                    <dt>طريقة الدفع</dt><dd>@Model.PaymentTypeLabel</dd>
+                    <dt>العملة</dt><dd>@Model.CurrencyId / @money(Model.CurrencyRate)</dd>
+                    <dt>أمر مرتبط</dt><dd>@Model.OrderNo</dd>
+                    <dt>NoteID</dt><dd>@Model.NoteId</dd>
+                    <dt>Posted / Approved / Closed</dt><dd>@Model.Posted / @Model.Approved / @Model.Closed</dd>
+                    <dt>Transaction_NetValue</dt><dd>@money(Model.TransactionNetValue)</dd>
+                    <dt>SumValueLine / SumVATLine</dt><dd>@money(Model.SumValueLine) / @money(Model.SumVatLine)</dd>
+                    <dt>DateRec</dt><dd>@String.Format("{0:yyyy-MM-dd HH:mm}", Model.DateRec)</dd>
+                    <dt>ملاحظات</dt><dd>@Model.Remarks</dd>
+                </dl>
+            </div>
+        </section>
+
+        <section>
+            <h4>بنود الفاتورة</h4>
+            @if (Model.Lines.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد بنود مسجلة لهذه الفاتورة</div>
+            }
+            else
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>الكود</th>
+                                <th>الصنف</th>
+                                <th>الوحدة</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>الخصم</th>
+                                <th>VAT</th>
+                                <th>الإجمالي</th>
+                                <th>المخزن</th>
+                        <th>التكلفة</th>
+                        <th>الحساب</th>
+                        @if (isPump)
+                        {
+                            <th>حساب العمولة</th>
+                            <th>مؤشرات المضخة</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                            @foreach (var line in Model.Lines)
+                            {
+                                <tr>
+                                    <td>@line.ItemCode</td>
+                                    <td class="main-erp-strong">@line.ItemName</td>
+                                    <td>@line.UnitName</td>
+                                    <td>@money(line.ShowQty ?? line.Quantity)</td>
+                                    <td>@money(line.ShowPrice ?? line.Price)</td>
+                                    <td>@money((line.DiscountValue ?? 0m) + (line.TotalDiscountPerLine ?? 0m))</td>
+                                    <td>@money(line.Vat)</td>
+                                    <td class="main-erp-strong">@moneyValue(line.LineTotal)</td>
+                                    <td>@Model.StoreId</td>
+                                    <td>@money(line.CostPrice)</td>
+                                    <td>@line.AccountDisplay</td>
+                                    @if (isPump)
+                                    {
+                                        <td>@line.CommissionAccountDisplay</td>
+                                        <td>PumpId @line.PumpId / IsOther @line.IsOther / Color @line.ColorId</td>
+                                    }
+                                </tr>
+                                if (isPump)
+                                {
+                                    <tr class="main-erp-subrow">
+                                        <td colspan="13">
+                                            <strong>بيانات المضخة:</strong>
+                                            @line.PumpName |
+                                            السابق: @money(line.PrevQty) |
+                                            الحالي: @money(line.CurrentQty) |
+                                            نقدي: @money(line.Cash) / مدى: @money(line.Mada) / فيزا: @money(line.Visa) / آجل: @money(line.Deferred)
+                                            @if (!String.IsNullOrWhiteSpace(line.PumpDetails))
+                                            {
+                                                <span> | DetailsPump: @line.PumpDetails</span>
+                                            }
+                                            <a class="main-erp-button" href="@Url.Action("DeferredDistribution", "PumpSales", new { area = "MainErp", transactionId = Model.TransactionId, lineId = line.Id })">تعديل توزيع الآجل</a>
+                                        </td>
+                                    </tr>
+                                    if (line.DeferredAllocations.Count > 0)
+                                    {
+                                        <tr class="main-erp-subrow">
+                                            <td colspan="13">
+                                                <strong>توزيع الآجل على العملاء:</strong>
+                                                <div class="main-erp-table-wrap">
+                                                    <table class="main-erp-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>CustomerID</th>
+                                                                <th>العميل</th>
+                                                                <th>الكمية</th>
+                                                                <th>السعر</th>
+                                                                <th>القيمة</th>
+                                                                <th>RecNo</th>
+                                                                <th>حساب العميل</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var allocation in line.DeferredAllocations)
+                                                            {
+                                                                <tr>
+                                                                    <td>@allocation.CustomerId</td>
+                                                                    <td>@allocation.CustomerName</td>
+                                                                    <td>@money(allocation.Quantity)</td>
+                                                                    <td>@money(allocation.UnitPrice)</td>
+                                                                    <td class="main-erp-strong">@money(allocation.Amount)</td>
+                                                                    <td>@allocation.ReferenceNo</td>
+                                                                    <td>@allocation.CustomerAccountDisplay</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td colspan="2">إجمالي توزيع السطر</td>
+                                                                <td>@moneyValue(line.DeferredAllocations.Sum(x => x.Quantity ?? 0m))</td>
+                                                                <td></td>
+                                                                <td>@moneyValue(line.DeferredAllocations.Sum(x => x.Amount ?? 0m))</td>
+                                                                <td colspan="2">Deferred: @money(line.Deferred) / DeferredQty: @money(line.DeferredQty)</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3">الإجماليات</td>
+                                <td>@moneyValue(Model.InventoryQuantityTotal)</td>
+                                <td></td>
+                                <td></td>
+                                <td>@moneyValue(Model.LinesVat)</td>
+                                <td>@moneyValue(Model.LinesTotal)</td>
+                                <td></td>
+                            <td>@moneyValue(Model.LinesCost)</td>
+                            <td></td>
+                            @if (isPump)
+                            {
+                                <td></td>
+                                <td></td>
+                            }
+                        </tr>
+                    </tfoot>
+                </table>
+                </div>
+            }
+        </section>
+
+        <section>
+            <h4>المدفوعات</h4>
+            @if (Model.Payments.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد طرق دفع تفصيلية لهذه الفاتورة</div>
+            }
+            else
+            {
+                <div class="main-erp-kpi-grid">
+                    <div class="main-erp-kpi-card"><span>إجمالي TblSalesPayment</span><strong>@moneyValue(Model.PaymentRowsTotal)</strong></div>
+                    <div class="main-erp-kpi-card"><span>PayedValue</span><strong>@money(Model.PayedValue)</strong></div>
+                    <div class="main-erp-kpi-card"><span>RemainValue</span><strong>@money(Model.RemainValue)</strong></div>
+                    <div class="main-erp-kpi-card"><span>فرق القراءة</span><strong>@moneyValue(Model.PaymentRowsTotal - (Model.PayedValue ?? 0m))</strong></div>
+                </div>
+                <table class="main-erp-table">
+                    <thead><tr><th>ID</th><th>PaymentID</th><th>القيمة</th><th>CardNo</th><th>MaxValue</th></tr></thead>
+                    <tbody>
+                        @foreach (var payment in Model.Payments)
+                        {
+                            <tr><td>@payment.Id</td><td>@payment.PaymentId</td><td>@money(payment.Value)</td><td>@payment.CardNo</td><td>@money(payment.MaxValue)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section>
+            <h4>أثر المخزون</h4>
+            <div class="main-erp-kpi-grid">
+                <div class="main-erp-kpi-card"><span>عدد البنود</span><strong>@Model.Lines.Count</strong></div>
+                <div class="main-erp-kpi-card"><span>إجمالي الكمية</span><strong>@moneyValue(Model.InventoryQuantityTotal)</strong></div>
+                <div class="main-erp-kpi-card"><span>تكلفة البنود</span><strong>@moneyValue(Model.LinesCost)</strong></div>
+                <div class="main-erp-kpi-card"><span>المخزن</span><strong>@Model.StoreId</strong><small>الأثر النهائي يحتاج مراجعة VB6</small></div>
+                <div class="main-erp-kpi-card"><span>فواتير الصرف</span><strong>@Model.RelatedInventoryIssueCount</strong><small>Transaction_Type = 19</small></div>
+                <div class="main-erp-kpi-card"><span>فواتير الاستلام</span><strong>@Model.RelatedInventoryReceiptCount</strong><small>Transaction_Type = 20</small></div>
+            </div>
+            <div class="main-erp-warning">المعروض هنا قراءة فقط. VB6 ينشئ مستندات صرف/استلام مرتبطة من CreateIssueVoucher2 و CreateRecieveVoucher عبر Transactions.nots و Transactions.nots2، ولا يتم هنا تنفيذ أي إنشاء أو تعديل.</div>
+            @if (Model.RelatedInventoryTransactions.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد مستندات صرف أو استلام مرتبطة بهذه الفاتورة عبر nots/nots2.</div>
+            }
+            else
+            {
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction</th>
+                            <th>النوع</th>
+                            <th>التاريخ</th>
+                            <th>Serial</th>
+                            <th>NoteSerial</th>
+                            <th>المخزن</th>
+                            <th>الإجمالي</th>
+                            <th>الصافي</th>
+                            <th>سبب الربط</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var related in Model.RelatedInventoryTransactions)
+                        {
+                            <tr>
+                                <td>@related.TransactionId</td>
+                                <td>@related.TransactionType</td>
+                                <td>@String.Format("{0:yyyy-MM-dd}", related.TransactionDate)</td>
+                                <td>@related.TransactionSerial</td>
+                                <td>@related.NoteSerial / @related.NoteSerial1</td>
+                                <td>@related.StoreName</td>
+                                <td>@money(related.Total)</td>
+                                <td>@money(related.NetValue)</td>
+                                <td>@related.LinkReason</td>
+                                <td>@if (related.NoteId.HasValue) { <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = related.NoteId.Value })">فتح القيد</a> }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section>
+            <h4>القيود المحاسبية</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>سطور القيود: <strong>@Model.VoucherLines.Count</strong></span>
+                <span>حسابات متأثرة: <strong>@Model.AffectedAccountCount</strong></span>
+                <span>مدين: <strong>@moneyValue(Model.VoucherDebitTotal)</strong></span>
+                <span>دائن: <strong>@moneyValue(Model.VoucherCreditTotal)</strong></span>
+                <span class="@(voucherBalanced ? "main-erp-ok" : "main-erp-danger")">الفرق: @moneyValue(Model.VoucherBalanceDifference)</span>
+                @if (Model.NoteId.HasValue)
+                {
+                    <a class="main-erp-button" href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = Model.NoteId.Value })">فتح القيد</a>
+                }
+            </div>
+            @if (Model.VoucherLines.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد قيود محاسبية مرتبطة بهذه الفاتورة</div>
+            }
+            else
+            {
+                <table class="main-erp-table">
+                    <thead><tr><th>Voucher</th><th>التاريخ</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>الوصف</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var voucher in Model.VoucherLines)
+                        {
+                            <tr>
+                                <td>@voucher.VoucherId / @voucher.LineNo</td>
+                                <td>@String.Format("{0:yyyy-MM-dd}", voucher.RecordDate)</td>
+                                <td>@voucher.AccountDisplay</td>
+                                <td>@moneyValue(voucher.Debit)</td>
+                                <td>@moneyValue(voucher.Credit)</td>
+                                <td>@voucher.Description</td>
+                                <td>@if (voucher.NoteId.HasValue) { <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = voucher.NoteId.Value })">فتح القيد</a> }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section>
+            <h4>معاينة تأثير الحفظ</h4>
+            <div class="main-erp-warning">هذه معاينة قراءة فقط. لا يتم إنشاء Transactions أو Transaction_Details أو Notes أو DOUBLE_ENTREY_VOUCHERS.</div>
+            <div class="main-erp-two-column">
+                <div>
+                    <h5>رأس الفاتورة</h5>
+                    <ul>@foreach (var item in Model.SavePreview.HeaderEffects) { <li>@item</li> }</ul>
+                    <h5>البنود والمخزون</h5>
+                    <ul>@foreach (var item in Model.SavePreview.DetailEffects.Concat(Model.SavePreview.InventoryEffects)) { <li>@item</li> }</ul>
+                </div>
+                <div>
+                    <h5>القيد المحاسبي المتوقع</h5>
+                    <ul>@foreach (var item in Model.SavePreview.AccountingEffects) { <li>@item</li> }</ul>
+                    <h5>تحذيرات</h5>
+                    @if (Model.SavePreview.Warnings.Count == 0)
+                    {
+                        <p class="main-erp-ok">لا توجد تحذيرات قراءة أساسية.</p>
+                    }
+                    else
+                    {
+                        <ul>@foreach (var item in Model.SavePreview.Warnings) { <li>@item</li> }</ul>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h4>الطباعة والمرفقات</h4>
+            <div class="main-erp-warning">الطباعة وتقارير FrmSaleBill6 قراءة خريطة فقط الآن. هذه الشاشة لا تستدعي Crystal Reports ولا تنفذ أي تحديث.</div>
+            <div class="main-erp-table-wrap">
+                <table class="main-erp-table">
+                    <thead><tr><th>المسار في VB6</th><th>الاستخدام</th><th>حالة الويب</th></tr></thead>
+                    <tbody>
+                        <tr><td>PrintReport / cmdPrint*</td><td>طباعة فاتورة المبيعات حسب وضع الشاشة</td><td>غير منفذ - Read-only placeholder</td></tr>
+                        <tr><td>PrintCash</td><td>طباعة كاش/إيصال عند مسارات دفع معينة</td><td>غير منفذ</td></tr>
+                        <tr><td>DailyPumpR.Rpt</td><td>تقرير المضخات مع TypeInvoice = 2 و tblPumpType</td><td>موثق فقط، لا يتم تشغيل Crystal</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>

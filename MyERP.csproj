@@ -413,6 +413,7 @@
     <Compile Include="Areas\MainErp\Controllers\AccountingController.cs" />
     <Compile Include="Areas\MainErp\Controllers\AccountingReportsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DashboardController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\DiscountNotificationsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\HomeController.cs" />
     <Compile Include="Areas\MainErp\Controllers\LocalizationController.cs" />
     <Compile Include="Areas\MainErp\Controllers\JournalEntriesController.cs" />
@@ -420,9 +421,11 @@
     <Compile Include="Areas\MainErp\Controllers\LoginController.cs" />
     <Compile Include="Areas\MainErp\Controllers\MainErpControllerBase.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectExtractsController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\PumpSalesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PurchasesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\SalesReportsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\StockTransfersController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\WorkshopSalesController.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpDbConnectionFactory.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\Localization\MainErpCultureManager.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\Localization\MainErpEntityLocalization.cs" />
@@ -448,6 +451,7 @@
     <Compile Include="Areas\MainErp\Models\Security\MainErpUserContext.cs" />
     <Compile Include="Areas\MainErp\Repositories\Accounting\VoucherRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\LC\LcReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\ProjectExtracts\ProjectExtractReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Reports\AccountingReportRepository.cs" />
@@ -467,6 +471,7 @@
     <Compile Include="Areas\MainErp\ViewModels\MainErpDashboardViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\PagedReadResult.cs" />
     <Compile Include="Areas\MainErp\ViewModels\ProjectExtracts\ProjectExtractsIndexViewModel.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Reports\ReportRowViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Security\MainErpLoginViewModel.cs" />
     <Compile Include="Areas\Sync\SyncAreaRegistration.cs" />
@@ -495,10 +500,13 @@
     <Compile Include="Areas\Sync\ViewModels\SyncViewModels.cs" />
     <Compile Include="Areas\Sync\ViewModels\BranchApiModels.cs" />
     <Compile Include="Areas\Sync\Worker\SyncAdminOperationWorker.cs" />
+    <Compile Include="Common\DiscountNotifications\DiscountNotificationModels.cs" />
+    <Compile Include="Common\DiscountNotifications\DiscountNotificationReadRepository.cs" />
     <Compile Include="Areas\Pos\PosAreaRegistration.cs" />
     <Compile Include="Areas\Pos\Controllers\KycAttachmentController.cs" />
     <Compile Include="Areas\Pos\Controllers\KycBankFollowUpController.cs" />
     <Compile Include="Areas\Pos\Controllers\AccountingReportsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\DiscountNotificationsController.cs" />
     <Compile Include="Areas\Pos\Controllers\FinancialIntelligenceController.cs" />
     <Compile Include="Areas\Pos\Controllers\SalesRepresentativesPerformanceController.cs" />
     <Compile Include="Areas\Pos\Controllers\SalesTargetsController.cs" />
@@ -598,6 +606,7 @@
     <Compile Include="Controllers\DeliveryInvoicesController.cs" />
     <Compile Include="Controllers\DevStartController.cs" />
     <Compile Include="Controllers\DepartmentsController.cs" />
+    <Compile Include="Infrastructure\DebugConnectionStringOverride.cs" />
     <Compile Include="Controllers\DriversController.cs" />
     <Compile Include="Controllers\DriversWithInvoicesController.cs" />
     <Compile Include="Controllers\EducationManagement\CoursesController.cs" />
@@ -4066,6 +4075,7 @@
     <Content Include="Areas\MainErp\Sql\00_MainErp_Module_Setup.sql" />
     <Content Include="Areas\MainErp\Sql\01_LC_ReadModel.sql" />
     <Content Include="Areas\MainErp\Sql\02_ProjectExtracts_ReadModel.sql" />
+    <Content Include="Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql" />
     <Content Include="Areas\MainErp\Views\Web.config" />
     <Content Include="Areas\MainErp\Views\Home\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Accounting\PreviewTest.cshtml" />
@@ -4073,6 +4083,7 @@
     <Content Include="Areas\MainErp\Views\AccountingReports\AccountMovement.cshtml" />
     <Content Include="Areas\MainErp\Views\AccountingReports\JournalEntries.cshtml" />
     <Content Include="Areas\MainErp\Views\Dashboard\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\DiscountNotifications\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Details.cshtml" />
@@ -4086,6 +4097,9 @@
     <Content Include="Areas\MainErp\Views\Shared\_MainErpLayout.cshtml" />
     <Content Include="Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml" />
     <Content Include="Areas\MainErp\Views\StockTransfers\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\WorkshopSales\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\WorkshopSales\Details.cshtml" />
+    <Content Include="Areas\MainErp\Views\PumpSales\DeferredDistribution.cshtml" />
     <Content Include="Views\DevStart\Index.cshtml" />
     <Content Include="Areas\Sync\Content\sync-ops.css" />
     <Content Include="Areas\Sync\Scripts\sync-dashboard.js" />
@@ -4147,6 +4161,7 @@
     <Content Include="Areas\Pos\Views\PosDashboard\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemErrorLog\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\DiscountNotifications\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PurchaseInvoice\Index.cshtml" />
     <Content Include="Areas\Pos\Views\StockTransfer\Index.cshtml" />
     <Content Include="Areas\Pos\Views\ExcelImport\Index.cshtml" />

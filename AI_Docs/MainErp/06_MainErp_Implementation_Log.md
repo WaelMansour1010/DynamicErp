@@ -685,3 +685,409 @@ Safety:
 - No `AllScripts.sql` changes.
 - No database schema changes.
 - MainErp still uses MainErp-specific connection/context boundaries.
+
+## 2026-05-07 LC and Project Extracts Premium UX Upgrade
+
+Created:
+
+- `AI_Docs\MainErp\34_LC_PremiumUXPlan.md`
+- `AI_Docs\MainErp\35_ProjectExtracts_PremiumUXPlan.md`
+
+Modified:
+
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\ProjectExtracts\Index.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `Areas\MainErp\Resources\MainErp.resx`
+- `Areas\MainErp\Resources\MainErp.ar.resx`
+
+Implemented:
+
+- LC is now a premium accounting cockpit instead of a raw data dump.
+- LC includes search rail, cockpit header, sticky KPI band, account health cards, accounting timeline, voucher expanders, margin/opening balance tabs, and report placeholders.
+- Project Extracts is now a project financial control center with executive KPIs, progress bars, execution/deduction/cash-flow tabs, and read-only voucher entry points.
+- Dangerous operations remain disabled with the existing read-only message.
+- New UX components are reusable for future accounting-heavy MainErp screens.
+
+Safety:
+
+- Build succeeded.
+- No database changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes.
+- No save/post/delete logic enabled.
+
+## 2026-05-07 Discount Notifications Safe Read-Only Migration
+
+Created:
+
+- `Common\DiscountNotifications\DiscountNotificationModels.cs`
+- `Common\DiscountNotifications\DiscountNotificationReadRepository.cs`
+- `Areas\MainErp\Controllers\DiscountNotificationsController.cs`
+- `Areas\MainErp\Views\DiscountNotifications\Index.cshtml`
+- `Areas\Pos\Controllers\DiscountNotificationsController.cs`
+- `Areas\Pos\Views\DiscountNotifications\Index.cshtml`
+- `AI_Docs\MainErp\36_DiscountNotifications_Migration.md`
+
+Modified:
+
+- `MyERP.csproj`
+- `Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml`
+- `Areas\MainErp\Resources\MainErp.resx`
+- `Areas\MainErp\Resources\MainErp.ar.resx`
+- `Areas\Pos\Views\PosDashboard\_Sidebar.cshtml`
+
+Implemented:
+
+- Migrated the legacy VB6 `FrmDiscounts.frm` screen as a safe read-only notification cockpit for both MainErp and Kishny/POS.
+- MainErp route: `/MainErp/DiscountNotifications`.
+- POS route: `/Pos/DiscountNotifications`.
+- Reads `Notes` discount/debit-credit note types `9, 10, 8034, 9082, 9083, 9089, 9090, 9099`.
+- Shows linked customer, branch, VAT/total fields, e-invoice metadata, and `DOUBLE_ENTREY_VOUCHERS` read-only lines.
+- Uses the accounting display rule `Account_Serial - Account_Name`; raw `Account_Code` remains internal.
+- Shared code is limited to a neutral read repository and view models; each module supplies its own connection factory.
+
+Safety:
+
+- MainErp uses `MainErp_ConnectionString`.
+- POS/Kishny uses `KishnyCashConnection`.
+- No save/post/delete/import behavior enabled.
+- No `Notes` or voucher writes.
+- No database changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos\Sql` changes.
+- Build succeeded.
+
+Pending:
+
+- Map and approve `SaveData`, `WriteDev`, `Del_Trans`, FIFO bill payment allocation, VAT account selection, QR/e-invoice lifecycle, reports, and attachments before any write phase.
+
+## 2026-05-07 Project Extract Details Real Lines Fix
+
+Created:
+
+- `AI_Docs\MainErp\36_ProjectExtract_DetailLines_Implementation.md`
+
+Modified:
+
+- `Areas\MainErp\ViewModels\ProjectExtracts\ProjectExtractsIndexViewModel.cs`
+- `Areas\MainErp\Repositories\ProjectExtracts\ProjectExtractReadRepository.cs`
+- `Areas\MainErp\Views\ProjectExtracts\Details.cshtml`
+
+Implemented:
+
+- `/MainErp/ProjectExtracts/Details/{id}` now loads real `project_bill_details` rows where `bill_id = project_billl.id`.
+- Added a real `بنود المستخلص` grid with quantity, previous/current/cumulative values, percentages, VAT, deductions, final value, and linked account display.
+- Replaced placeholder messages for detail lines and advance payments with real data loading and real empty states.
+- Added read-only advance payment sections for `TblPayPrePayed` and `TblProjePayPrePayed`.
+- Added real voucher section from `DOUBLE_ENTREY_VOUCHERS` linked by `Notes_ID`, `project_bill_no`, or `bill_id`.
+- Added journal entry links to `/MainErp/JournalEntries/DetailsByNote/{noteId}`.
+- Applied account display rule: `Account_Serial - Account_Name`; raw account codes remain internal.
+
+Validation:
+
+- Tested against Eng sample `project_billl.note_id = 222097`, `project_billl.id = 3499`.
+- Detail rows found: `1`.
+- Linked voucher rows found: `4`.
+- Linked advance payment rows found: `0`, and the page shows a real empty state.
+- Build succeeded.
+
+Safety:
+
+- No save/edit/post/delete logic enabled.
+- No database writes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes in this fix.
+
+## 2026-05-07 Main ERP FrmSaleBill6 Read-Only First Wave
+
+Created:
+
+- `AI_Docs\MainErp\37_FrmSaleBill6_MainERP_SourceMap.md`
+- `AI_Docs\MainErp\38_SalesInvoice_SplitDesign.md`
+- `AI_Docs\MainErp\39_SalesInvoice_LiveSchemaMapping.md`
+- `AI_Docs\MainErp\40_SalesInvoice_AccountingInventoryFlow.md`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Controllers\WorkshopSalesController.cs`
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Views\WorkshopSales\Index.cshtml`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+
+Modified:
+
+- `MyERP.csproj`
+- `Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml`
+- `Areas\MainErp\Resources\MainErp.resx`
+- `Areas\MainErp\Resources\MainErp.ar.resx`
+- `AI_Docs\MainErp\04_MainErp_Menu_Route_PermissionPlan.md`
+
+Implemented:
+
+- Confirmed the active Main ERP source from `F:\Source Code\SatriahMain\Account.vbp`: `Form=Frm\FrmSaleBill6.frm`.
+- Explicitly excluded Kishny/Cayshny `FrmSaleBill6` copies as migration sources.
+- Split the VB6 `C1Tab1` behavior into two MainErp routes:
+  - `/MainErp/WorkshopSales`
+  - `/MainErp/PumpSales`
+- Added read-only list/search by date, invoice/customer text, and branch.
+- Added read-only invoice details from `Transactions` and `Transaction_Details`.
+- Added payment display from `TblSalesPayment` when present.
+- Added voucher display from `DOUBLE_ENTREY_VOUCHERS` when linked by transaction/note fields.
+- Added accounting balance indicators and inventory impact summary.
+- Added MainErp sidebar entries and permissions plan for workshop and pump sales.
+
+Validation:
+
+- Eng schema was inspected for `Transactions`, `Transaction_Details`, `TblItems`, `TblUnites`, `tblPumpType`, `TblSalesPayment`, `Notes`, and `DOUBLE_ENTREY_VOUCHERS`.
+- Current Eng sample data for `Transaction_Type IN (21,42,38,9)` returned one workshop-like row: `TypeInvoice=0`, `Transaction_Type=38`, `Max(Transaction_ID)=3832`.
+- No pump sample row with `TypeInvoice=2` was found during this validation pass; the PumpSales route uses a real empty state until matching data is available.
+
+Safety:
+
+- Read-only only.
+- No save/edit/post/delete behavior enabled.
+- No accounting voucher creation.
+- No inventory posting.
+- No `AllScripts.sql` changes.
+- No database schema changes.
+- No `Areas\Pos` changes for this sales migration.
+
+## 2026-05-07 Sales Invoice And Project Extract Premium Read-Only Preview
+
+Created:
+
+- `AI_Docs\MainErp\41_SalesInvoice_PremiumReadOnlyAndPreview.md`
+- `AI_Docs\MainErp\42_ProjectExtracts_PremiumWorkspace.md`
+
+Modified:
+
+- `Areas\MainErp\ViewModels\PagedReadResult.cs`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Controllers\WorkshopSalesController.cs`
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Views\WorkshopSales\Index.cshtml`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `Areas\MainErp\Views\ProjectExtracts\Details.cshtml`
+- `AI_Docs\MainErp\40_SalesInvoice_AccountingInventoryFlow.md`
+
+Implemented:
+
+- Reworked workshop/pump invoice list and detail screens into premium operational workspaces.
+- Added KPI cockpit, detail tabs, payment tab, inventory impact tab, accounting trace tab, print placeholder, and save-preview tab.
+- Added read-only save preview based on existing invoice data; no write method is called.
+- Added PumpSales diagnostics panel showing database, filters, row count, type breakdown, and close candidates with `PumpId`/`DetailsPump`.
+- Re-inspected active `FrmSaleBill6.frm` and documented that pump report SQL confirms `Transaction_Type=21` and `TypeInvoice=2`.
+- Enhanced Project Extract details with a read-only save-preview summary.
+
+Validation:
+
+- Build succeeded.
+- No `INSERT`, `UPDATE`, `DELETE`, `ExecuteNonQuery`, or `SaveChanges` added to the new MainErp sales/project extract read paths.
+
+Safety:
+
+- No real save/post/delete behavior.
+- No accounting voucher creation.
+- No inventory posting.
+- No database schema changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes for this phase.
+
+## 2026-05-07 Sales Invoice Stored Procedures Performance Foundation
+
+Created:
+
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+- `AI_Docs\MainErp\46_SalesInvoice_StoredProcedures_PerformanceAndDraftSave.md`
+
+Modified:
+
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `MyERP.csproj`
+
+Implemented:
+
+- Added `dbo.MainErp_SalesInvoice_Search` for paged workshop/pump invoice listing.
+- Added `dbo.MainErp_SalesInvoice_GetDetails` for multi-result invoice details in one database round trip.
+- Added `dbo.MainErp_SalesInvoice_SaveDraft` as a draft-save gate with dry-run enabled by default.
+- Repository now prefers stored procedures and falls back to inline SQL if the procedures are missing in older test databases.
+- Added the SQL script to the web project content list.
+
+Validation:
+
+- Applied the script to `Nagahat`.
+- `MainErp_SalesInvoice_Search @TypeInvoice=2` returned `279` pump invoices.
+- `MainErp_SalesInvoice_GetDetails @TypeInvoice=2, @TransactionId=95484` returned header, 24 detail rows, 4 payment rows, 0 voucher rows, and 1 related inventory row.
+- `MainErp_SalesInvoice_SaveDraft` dry-run returned the payload and did not write.
+
+Safety:
+
+- No `AllScripts.sql` change.
+- No POS/Kishny change.
+- No active UI save/post/delete button enabled.
+- No accounting voucher creation.
+- No inventory posting.
+- Draft save stored procedure is disabled by default through `@DryRun=1` and `@EnableDraftWrite=0`.
+
+## 2026-05-07 Pump Deferred Customer Distribution
+
+Created:
+
+- `AI_Docs\MainErp\47_PumpDeferredCustomerDistribution.md`
+
+Modified:
+
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+- `AI_Docs\MainErp\46_SalesInvoice_StoredProcedures_PerformanceAndDraftSave.md`
+
+Implemented:
+
+- Analyzed `FrmItemShowDet.frm` and confirmed `DetailsPump` format for deferred customer distribution.
+- Added parser for `CustomerId#UnitId#Amount#CustomerName#Qty#UnitPrice#RecNo#@`.
+- Pump invoice details now show the deferred customer distribution table under each pump line.
+- Added total deferred distribution amount, quantity, and distinct customer count.
+- Enriched parsed customer rows with customer account display from `TblCustemers` + `ACCOUNTS`.
+- Added `dbo.MainErp_SalesInvoice_SavePumpDeferredDistribution` as a dry-run/default-disabled save gate for `DetailsPump`, `Deferred`, and `DeferredQty`.
+- Applied updated SQL script to `Nagahat`.
+- Dry-run validation succeeded for sample `Transaction_ID=95484`, line `ID=845857`.
+
+Safety:
+
+- UI remains read-only.
+- No real distribution save was executed.
+- No Notes/vouchers/inventory posting.
+- No `AllScripts.sql` change.
+- No POS/Kishny change.
+
+## 2026-05-07 Pump Sales Nagahat Validation
+
+Created:
+
+- `AI_Docs\MainErp\45_PumpSales_NagahatValidation.md`
+
+Modified:
+
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Index.cshtml`
+- `Views\DevStart\Index.cshtml`
+
+Implemented:
+
+- Confirmed that `Nagahat` is the useful local database for pump invoice testing.
+- Found `279` pump invoices in `Nagahat` using `Transaction_Type=21` and `TypeInvoice=2`.
+- Confirmed sample invoice `Transaction_ID=95484` with `24` pump detail rows.
+- Added `Nagahat` to the debug-only MainErp database selector.
+- Fixed PumpSales diagnostics SQL alias from `RowCount` to `RowsFound`.
+- Added open links for diagnostic pump candidate rows.
+- Updated pump empty state to direct local testing toward `Nagahat` instead of hardcoding `Eng`.
+
+Safety:
+
+- Read-only validation and display only.
+- No save/post/delete.
+- No database schema changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes for this phase.
+
+## 2026-05-07 Pump Deferred Customer Distribution Edit Screen
+
+Created:
+
+- `AI_Docs\MainErp\48_PumpDeferredDistribution_EditScreen.md`
+- `Areas\MainErp\Views\PumpSales\DeferredDistribution.cshtml`
+
+Modified:
+
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `AI_Docs\MainErp\47_PumpDeferredCustomerDistribution.md`
+- `MyERP.csproj`
+
+Implemented:
+
+- Added the MainErp pump deferred distribution editor based on `FrmitemShowDet.frm`.
+- Preserved the legacy `DetailsPump` serialization format: `CustomerId#UnitId#Amount#CustomerName#Qty#UnitPrice#RecNo#@`.
+- Added a link from pump invoice detail lines to the distribution editor.
+- Added repository save through `dbo.MainErp_SalesInvoice_SavePumpDeferredDistribution`.
+- Save is intentionally limited to `Transaction_Details.DetailsPump`, `Deferred`, and `DeferredQty`.
+
+Safety:
+
+- No full invoice save.
+- No posting.
+- No `Notes` writes.
+- No `DOUBLE_ENTREY_VOUCHERS` writes.
+- No inventory issue/receive generation.
+- The stored procedure refuses closed, posted, or approved invoices.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes for this phase.
+
+## 2026-05-07 FrmSaleBill6 Operational Workbench Phase 2
+
+Created:
+
+- `AI_Docs\MainErp\44_FrmSaleBill6_OperationalWorkbenchPhase2.md`
+
+Modified:
+
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `AI_Docs\MainErp\37_FrmSaleBill6_MainERP_SourceMap.md`
+
+Implemented:
+
+- Added a VB6 routine-stage panel in the invoice details screen.
+- Added payment comparison between `TblSalesPayment` totals and header `PayedValue`.
+- Added pump line fields: `Account_CodeComm`, `IsOther`, `ColorID`, and `DetailsPump` where present.
+- Added commission account display using `Account_Serial - Account_Name`.
+- Added print/report mapping for `PrintReport`, `PrintCash`, `cmdPrint*`, and `DailyPumpR.Rpt` as read-only documentation inside the screen.
+- Extended save preview text with payment row totals.
+
+Safety:
+
+- Read-only only.
+- No save/post/delete.
+- No payment creation.
+- No inventory voucher creation.
+- No Crystal report execution.
+- No database schema changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes for this phase.
+
+## 2026-05-07 FrmSaleBill6 Read-Only Trace Expansion
+
+Created:
+
+- `AI_Docs\MainErp\43_FrmSaleBill6_ReadOnlyTraceExpansion.md`
+
+Modified:
+
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `AI_Docs\MainErp\40_SalesInvoice_AccountingInventoryFlow.md`
+
+Implemented:
+
+- Added operational header trace fields from `Transactions`: `Posted`, `Approved`, `Prefix`, `Fullcode`, `CBoBasedON`, `POSBillType`, `Transaction_NetValue`, `SumValueLine`, `SumVATLine`, and `DateRec`.
+- Added read-only related inventory transaction trace for generated issue/receive vouchers.
+- Related inventory lookup follows VB6 linkage through `Transactions.nots = source Transaction_ID` and `Transactions.nots2 = source NoteSerial1`.
+- Displayed `Transaction_Type=19` as an issue voucher trace and `Transaction_Type=20` as a receive voucher trace.
+- Added journal links for related inventory transactions when `NoteId` is available.
+- Updated save preview warnings and inventory effects to include linked inventory document counts.
+
+Safety:
+
+- Read-only only.
+- No `INSERT`, `UPDATE`, or `DELETE`.
+- No call to `CreateIssueVoucher2` or `CreateRecieveVoucher`.
+- No database schema changes.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes for this phase.

@@ -9,6 +9,8 @@
 - `/MainErp/JournalEntries`
 - `/MainErp/AccountingReports`
 - `/MainErp/SalesReports`
+- `/MainErp/WorkshopSales`
+- `/MainErp/PumpSales`
 - `/MainErp/LC`
 - `/MainErp/ProjectExtracts`
 - `/MainErp/Accounting/PreviewTest`
@@ -38,6 +40,13 @@ Under-migration entries must hide write/post actions until each module is migrat
 
 Do not include POS invoices, cards, KYC, commissions, Kishny reports, Kishny branding, cashier closing, or POS deployment assumptions.
 
+Sales migration entries added from the active Main ERP `FrmSaleBill6.frm` source:
+
+- فاتورة مبيعات الورشة
+- فاتورة مبيعات المضخات
+
+These are Main ERP invoice routes only. They do not reuse Kishny POS invoice logic.
+
 ## Proposed MainErp Permissions
 
 - `MainErp.Dashboard.View`
@@ -49,6 +58,10 @@ Do not include POS invoices, cards, KYC, commissions, Kishny reports, Kishny bra
 - `MainErp.JournalEntries.Create`
 - `MainErp.AccountingReports.View`
 - `MainErp.SalesReports.View`
+- `MainErp.WorkshopSales.View`
+- `MainErp.WorkshopSales.Create` later; disabled until save/post/inventory flow is mapped and approved.
+- `MainErp.PumpSales.View`
+- `MainErp.PumpSales.Create` later; disabled until pump-specific save/post/inventory flow is mapped and approved.
 - `MainErp.LC.View`
 - `MainErp.ProjectExtracts.View`
 

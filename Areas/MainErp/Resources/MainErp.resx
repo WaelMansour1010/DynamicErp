@@ -107,6 +107,8 @@
   <data name="Sales" xml:space="preserve"><value>Sales</value></data>
   <data name="SalesReports" xml:space="preserve"><value>Sales Reports</value></data>
   <data name="SalesSummary" xml:space="preserve"><value>Sales Summary</value></data>
+  <data name="WorkshopSalesInvoice" xml:space="preserve"><value>Workshop Sales Invoice</value></data>
+  <data name="PumpSalesInvoice" xml:space="preserve"><value>Pump Sales Invoice</value></data>
   <data name="SalesSummaryIntro" xml:space="preserve"><value>Read-only report from conservative generic sales invoice filters.</value></data>
   <data name="Save" xml:space="preserve"><value>Save</value></data>
   <data name="Search" xml:space="preserve"><value>Search</value></data>
@@ -131,6 +133,7 @@
   <data name="Total" xml:space="preserve"><value>Total</value></data>
   <data name="Totals" xml:space="preserve"><value>Totals</value></data>
   <data name="Description" xml:space="preserve"><value>Description</value></data>
+  <data name="DiscountNotifications" xml:space="preserve"><value>Debit/Credit Notes</value></data>
   <data name="PeriodMovement" xml:space="preserve"><value>Period Movement</value></data>
   <data name="LcGridPostingDeferred" xml:space="preserve"><value>Margin, history and opening-balance grids are read-only for trace now. Their save/posting behavior is deferred.</value></data>
 </root>

@@ -12,5 +12,6 @@ namespace MyERP.Areas.MainErp.ViewModels
         public IList<T> Items { get; private set; }
         public int TotalCount { get; set; }
         public string Warning { get; set; }
+        public object Diagnostics { get; set; }
     }
 }

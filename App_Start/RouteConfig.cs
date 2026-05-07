@@ -13,23 +13,29 @@ namespace MyERP
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
             routes.MapMvcAttributeRoutes();
-            routes.MapRoute(
+            var runModeRoute = routes.MapRoute(
                 name: "RunMode",
                 url: "RunMode",
-                defaults: new { controller = "DevStart", action = "Index" }
+                defaults: new { controller = "DevStart", action = "Index" },
+                namespaces: new[] { "MyERP.Controllers" }
             );
+            runModeRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            routes.MapRoute(
+            var rootRoute = routes.MapRoute(
                 name: "PosRoot",
                 url: "",
-                defaults: new { controller = "DevStart", action = "Root" }
+                defaults: new { controller = "DevStart", action = "Root" },
+                namespaces: new[] { "MyERP.Controllers" }
             );
+            rootRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            routes.MapRoute(
+            var defaultRoute = routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "MyERP.Controllers", "MyERP.Controllers.*" }
             );
+            defaultRoute.DataTokens["UseNamespaceFallback"] = false;
             
         }
     }

@@ -20,7 +20,7 @@
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
     var operationsOpen = sectionActive(new[] { "sales", "closing", "payments", "purchase-invoice", "stock-transfer", "excel-import" });
-    var accountingOpen = hasReportMenuAccess || sectionActive(new[] { "journal-entries", "accounting-reports", "reports", "sales-performance", "sales-targets" });
+    var accountingOpen = hasReportMenuAccess || sectionActive(new[] { "journal-entries", "discount-notifications", "accounting-reports", "reports", "sales-performance", "sales-targets" });
     var financialIntelligenceOpen = (isAdmin || (posContext != null && posContext.CanViewAccountingReports)) || sectionActive(new[] { "financial-intelligence" });
     var kycOpen = sectionActive(new[] { "kyc", "kyc-bank-follow-up" });
     var systemOpen = sectionActive(new[] { "system-health", "system-error-log", "permissions" });
@@ -200,6 +200,12 @@
                        data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")"
                        title="إدخال واستعراض القيود">
                         <i class="fas fa-book" aria-hidden="true"></i><span>إدخال واستعراض القيود</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("discount-notifications") ? "active" : "")"
+                       href="@Url.Content("~/Pos/DiscountNotifications/Index")"
+                       data-screen-url="@Url.Content("~/Pos/DiscountNotifications/Index")"
+                       title="الإشعارات">
+                        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>الإشعارات</span>
                     </a>
                 }
                 @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))

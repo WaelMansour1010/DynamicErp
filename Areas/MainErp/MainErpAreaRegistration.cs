@@ -11,47 +11,53 @@ namespace MyERP.Areas.MainErp
 
         public override void RegisterArea(AreaRegistrationContext context)
         {
-            context.MapRoute(
+            var rootRoute = context.MapRoute(
                 "MainErp_root",
                 "MainErp",
                 new { controller = "Home", action = "Index" },
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
+            rootRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            context.MapRoute(
+            var lcRoute = context.MapRoute(
                 "MainErp_lc",
                 "MainErp/LC",
                 new { controller = "LC", action = "Index" },
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
+            lcRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            context.MapRoute(
+            var projectExtractRoute = context.MapRoute(
                 "MainErp_project_extracts",
                 "MainErp/ProjectExtracts",
                 new { controller = "ProjectExtracts", action = "Index" },
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
+            projectExtractRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            context.MapRoute(
+            var journalNoteRoute = context.MapRoute(
                 "MainErp_journal_details_by_note",
                 "MainErp/JournalEntries/DetailsByNote/{noteId}",
                 new { controller = "JournalEntries", action = "DetailsByNote", noteId = UrlParameter.Optional },
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
+            journalNoteRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            context.MapRoute(
+            var journalVoucherRoute = context.MapRoute(
                 "MainErp_journal_details_by_voucher",
                 "MainErp/JournalEntries/DetailsByVoucher/{voucherId}",
                 new { controller = "JournalEntries", action = "DetailsByVoucher", voucherId = UrlParameter.Optional },
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
+            journalVoucherRoute.DataTokens["UseNamespaceFallback"] = false;
 
-            context.MapRoute(
+            var defaultRoute = context.MapRoute(
                 "MainErp_default",
                 "MainErp/{controller}/{action}/{id}",
                 new { controller = "Home", action = "Index", id = UrlParameter.Optional },
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
+            defaultRoute.DataTokens["UseNamespaceFallback"] = false;
         }
     }
 }

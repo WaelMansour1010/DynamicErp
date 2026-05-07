@@ -1,4 +1,5 @@
 using MyERP.Areas.MainErp.Infrastructure;
+using MyERP.Infrastructure;
 using System;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -44,7 +45,20 @@ namespace MyERP.Controllers
             }
 
             MainErpDebugDatabaseOverride.SetSelectedDatabaseName(string.IsNullOrWhiteSpace(customDatabaseName) ? databaseName : customDatabaseName);
-            return RedirectToAction("Index");
+            return Redirect("~/MainErp");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SelectOriginalWebDatabase(string databaseName, string customDatabaseName)
+        {
+            if (!IsEnabled())
+            {
+                return HttpNotFound();
+            }
+
+            DebugConnectionStringOverride.ApplyOriginalWebDatabase(string.IsNullOrWhiteSpace(customDatabaseName) ? databaseName : customDatabaseName);
+            return Redirect("~/Home/Index");
         }
 
         [HttpPost]
@@ -67,6 +81,7 @@ namespace MyERP.Controllers
             ViewBag.MainErpConnection = DescribeConnection("MainErp_ConnectionString");
             ViewBag.MainErpSelectedDatabase = MainErpDebugDatabaseOverride.GetSelectedDatabaseName();
             ViewBag.MainErpDisplayDatabase = MainErpDebugDatabaseOverride.GetDisplayDatabaseName();
+            ViewBag.OriginalWebDebugDatabase = DebugConnectionStringOverride.GetOriginalWebDatabase();
         }
 
         private static string DescribeConnection(string name)

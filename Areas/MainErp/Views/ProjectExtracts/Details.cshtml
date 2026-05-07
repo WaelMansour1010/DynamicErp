@@ -1,77 +1,329 @@
 @model MyERP.Areas.MainErp.ViewModels.ProjectExtracts.ProjectExtractDetailsViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "مستخلصات المشاريع";
+    ViewBag.Title = "مستخلص مشروع";
+    var voucherBalanced = Math.Abs(Model.VoucherBalanceDifference) < 0.01m;
+    Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<double?, string> moneyDouble = v => String.Format("{0:n2}", v ?? 0d);
+    Func<decimal?, string> percent = v => String.Format("{0:n1}%", v ?? 0m);
 }
-<section class="main-erp-panel">
+
+<section class="main-erp-panel project-extract-workspace" dir="rtl">
     <div class="main-erp-title-row">
         <div>
-            <h3>شاشة مستخلص مشروع - قراءة فعلية من project_billl</h3>
-            <p>مرتبة على نفس منطق projectsbill.frm: بيانات المستخلص، بنود المشروع، الخصومات والاستقطاعات، الدفعات المقدمة، الاعتماد، والأثر المحاسبي.</p>
+            <h3>مركز التحكم المالي للمستخلص</h3>
+            <p>قراءة فعلية من `project_billl` و `project_bill_details` مع الدفعات المقدمة والقيود المحاسبية المرتبطة. لا توجد أي عمليات حفظ أو ترحيل في هذه المرحلة.</p>
         </div>
-        <span class="main-erp-badge">Modernized VB6 / Read only</span>
+        <div class="main-erp-actions">
+            <a class="main-erp-button" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">رجوع للقائمة</a>
+            <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الترحيل">حفظ فعلي</button>
+            <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الترحيل">ترحيل</button>
+            <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الحذف">حذف</button>
+        </div>
     </div>
+
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
     {
         <div class="main-erp-warning">@Model.Warning</div>
     }
-    <div class="main-erp-vb6-toolbar">
-        <button type="button" disabled>جديد</button>
-        <button type="button" disabled>تعديل</button>
-        <button type="button" disabled>حفظ</button>
-        <button type="button" disabled>حذف</button>
-        <a href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">بحث / رجوع</a>
-        <button type="button" disabled>الإرسال للاعتماد</button>
-        <button type="button" disabled>طباعة</button>
+
+    <div class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-eyebrow">Project Extract</span>
+            <h2>@(String.IsNullOrWhiteSpace(Model.ProjectName) ? "مستخلص غير محدد" : Model.ProjectName)</h2>
+            <p>@Model.ProjectFullCode</p>
+        </div>
+        <div class="main-erp-status-stack">
+            <span class="main-erp-badge">Read-only</span>
+            <span class="main-erp-badge @(voucherBalanced ? "is-success" : "is-danger")">@(voucherBalanced ? "القيد متوازن" : "يوجد فرق قيود")</span>
+        </div>
     </div>
 
-    <div class="main-erp-tabs">
+    <div class="main-erp-kpi-grid">
+        <div class="main-erp-kpi-card">
+            <span>رقم المستخلص</span>
+            <strong>@Model.Id</strong>
+            <small>@Model.NoteSerial</small>
+        </div>
+        <div class="main-erp-kpi-card">
+            <span>تاريخ المستخلص</span>
+            <strong>@String.Format("{0:yyyy-MM-dd}", Model.BillDate)</strong>
+            <small>@Model.ManualNo</small>
+        </div>
+        <div class="main-erp-kpi-card">
+            <span>قيمة المستخلص</span>
+            <strong>@String.Format("{0:n2}", Model.Total ?? 0m)</strong>
+            <small>الصافي @moneyDouble(Model.NetValue)</small>
+        </div>
+        <div class="main-erp-kpi-card">
+            <span>الضريبة</span>
+            <strong>@moneyDouble(Model.VatValue)</strong>
+            <small>قبل الضريبة @moneyDouble(Model.PreVat)</small>
+        </div>
+        <div class="main-erp-kpi-card">
+            <span>بنود التنفيذ</span>
+            <strong>@Model.DetailLineCount</strong>
+            <small>إجمالي الحالي @money(Model.DetailCurrentValueTotal)</small>
+        </div>
+        <div class="main-erp-kpi-card">
+            <span>الدفعات المقدمة</span>
+            <strong>@Model.AdvancePayments.Count</strong>
+            <small>مسدد @money(Model.AdvancePaidTotal)</small>
+        </div>
+    </div>
+
+    <div class="main-erp-tabs premium-tabs">
         <section>
-            <h4>بيانات المستخلص</h4>
-            <dl class="main-erp-details">
-                <dt>ID</dt><dd>@Model.Id</dd>
-                <dt>التاريخ</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.BillDate)</dd>
-                <dt>NoteSerial</dt><dd>@Model.NoteSerial</dd>
-                <dt>رقم يدوي</dt><dd>@Model.ManualNo</dd>
-                <dt>المشروع</dt><dd>@Model.ProjectName</dd>
-                <dt>كود المشروع</dt><dd>@Model.ProjectFullCode</dd>
-                <dt>العميل / الطرف</dt><dd>@Model.CustomerName</dd>
-                <dt>الفرع</dt><dd>@Model.BranchNo</dd>
-                <dt>NoteID</dt><dd>@Model.NoteId</dd>
-            </dl>
+            <h4>ملخص المستخلص</h4>
+            <div class="main-erp-two-column">
+                <dl class="main-erp-details">
+                    <dt>العميل / الطرف</dt><dd>@Model.CustomerName</dd>
+                    <dt>الفرع</dt><dd>@Model.BranchNo</dd>
+                    <dt>NoteID</dt><dd>@Model.NoteId</dd>
+                    <dt>الإجمالي</dt><dd>@String.Format("{0:n2}", Model.Total ?? 0m)</dd>
+                    <dt>النتيجة</dt><dd>@moneyDouble(Model.Results)</dd>
+                    <dt>الصافي</dt><dd>@moneyDouble(Model.NetValue)</dd>
+                    <dt>استقطاع ضمان الأعمال</dt><dd>@moneyDouble(Model.PerformanceBond)</dd>
+                    <dt>دفعة مقدمة</dt><dd>@moneyDouble(Model.AdvancedPayment)</dd>
+                </dl>
+                <dl class="main-erp-details">
+                    <dt>حساب الإيراد</dt><dd>@Model.RevenueAccount</dd>
+                    <dt>حساب تحت التنفيذ</dt><dd>@Model.AccountUnderImplementation</dd>
+                    <dt>حساب العميل النهائي</dt><dd>@Model.EndUserAccount</dd>
+                    <dt>حساب مقاول الباطن</dt><dd>@Model.SubUserAccount</dd>
+                    <dt>حساب الضريبة</dt><dd>@Model.VatAccountCode</dd>
+                </dl>
+            </div>
         </section>
+
         <section>
-            <h4>الإجماليات والضريبة</h4>
-            <dl class="main-erp-details">
-                <dt>total</dt><dd>@String.Format("{0:n2}", Model.Total)</dd>
-                <dt>Results</dt><dd>@String.Format("{0:n2}", Model.Results)</dd>
-                <dt>NetValue</dt><dd>@String.Format("{0:n2}", Model.NetValue)</dd>
-                <dt>FATValue</dt><dd>@String.Format("{0:n2}", Model.VatValue)</dd>
-                <dt>AdvancedPayment</dt><dd>@String.Format("{0:n2}", Model.AdvancedPayment)</dd>
-                <dt>PreVAT</dt><dd>@String.Format("{0:n2}", Model.PreVat)</dd>
-                <dt>PerformanceBond</dt><dd>@String.Format("{0:n2}", Model.PerformanceBond)</dd>
-            </dl>
+            <h4>بنود المستخلص</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>عدد البنود: <strong>@Model.DetailLineCount</strong></span>
+                <span>إجمالي الحالي: <strong>@money(Model.DetailCurrentValueTotal)</strong></span>
+                <span>إجمالي الضريبة: <strong>@money(Model.DetailVatTotal)</strong></span>
+                <span>الإجمالي النهائي: <strong>@money(Model.DetailFinalTotal)</strong></span>
+            </div>
+
+            @if (Model.DetailLines.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد بنود مسجلة لهذا المستخلص</div>
+            }
+            else
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table project-lines-table">
+                        <thead>
+                            <tr>
+                                <th>البند</th>
+                                <th>كود البند</th>
+                                <th>الوحدة</th>
+                                <th>الكمية الأصلية</th>
+                                <th>السعر</th>
+                                <th>التكلفة</th>
+                                <th>السابق كمية</th>
+                                <th>السابق قيمة</th>
+                                <th>الحالي كمية</th>
+                                <th>الحالي قيمة</th>
+                                <th>الإجمالي كمية</th>
+                                <th>الإجمالي قيمة</th>
+                                <th>نسبة الإنجاز</th>
+                                <th>الخصم</th>
+                                <th>الصافي قبل الضريبة</th>
+                                <th>الضريبة</th>
+                                <th>الصافي شامل الضريبة</th>
+                                <th>الاستقطاع</th>
+                                <th>النهائي</th>
+                                <th>الحساب</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in Model.DetailLines)
+                            {
+                                var progress = Math.Min(100m, Math.Max(0m, line.TotalPercent ?? line.CurrPercent ?? 0m));
+                                <tr>
+                                    <td class="main-erp-strong">@line.Item</td>
+                                    <td>@line.FullCode</td>
+                                    <td>@line.Unit</td>
+                                    <td>@money(line.Quantity)</td>
+                                    <td>@money(line.Price)</td>
+                                    <td>@money(line.Cost)</td>
+                                    <td>@money(line.PreQuantity)</td>
+                                    <td>@money(line.PreValue)</td>
+                                    <td>@money(line.CurrQuantity)</td>
+                                    <td>@money(line.CurrValue)</td>
+                                    <td>@money(line.TotalQuantity)</td>
+                                    <td>@money(line.TotalValue)</td>
+                                    <td>
+                                        <span class="main-erp-percent-badge">@percent(line.TotalPercent ?? line.CurrPercent)</span>
+                                        <span class="main-erp-mini-progress"><span style="width:@progress%"></span></span>
+                                    </td>
+                                    <td>@money(line.LineDiscount)</td>
+                                    <td>@money(line.NetBeforeVat)</td>
+                                    <td>@money(line.LineVat)</td>
+                                    <td>@money(line.NetWithVat)</td>
+                                    <td>@money(line.PerformanceLineDiscount)</td>
+                                    <td class="main-erp-strong">@money(line.LineFinal)</td>
+                                    <td>@(String.IsNullOrWhiteSpace(line.AccountDisplay) ? "لا يوجد حساب مرتبط" : line.AccountDisplay)</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="9">الإجماليات</td>
+                                <td>@money(Model.DetailCurrentValueTotal)</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td>@money(Model.DetailDiscountTotal)</td>
+                                <td></td>
+                                <td>@money(Model.DetailVatTotal)</td>
+                                <td></td>
+                                <td></td>
+                                <td>@money(Model.DetailFinalTotal)</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
         </section>
+
         <section>
-            <h4>الحسابات</h4>
-            <dl class="main-erp-details">
-                <dt>حساب الإيراد</dt><dd>@Model.RevenueAccount</dd>
-                <dt>حساب العميل النهائي</dt><dd>@Model.EndUserAccount</dd>
-                <dt>حساب مقاول الباطن</dt><dd>@Model.SubUserAccount</dd>
-                <dt>حساب VAT</dt><dd>@Model.VatAccountCode</dd>
-            </dl>
+            <h4>الخصومات والضريبة</h4>
+            <div class="main-erp-kpi-grid">
+                <div class="main-erp-kpi-card"><span>خصومات البنود</span><strong>@money(Model.DetailDiscountTotal)</strong></div>
+                <div class="main-erp-kpi-card"><span>ضريبة البنود</span><strong>@money(Model.DetailVatTotal)</strong></div>
+                <div class="main-erp-kpi-card"><span>استقطاع البنود</span><strong>@money(Model.DetailLines.Sum(x => x.PerformanceLineDiscount ?? 0m))</strong></div>
+                <div class="main-erp-kpi-card"><span>صافي البنود النهائي</span><strong>@money(Model.DetailFinalTotal)</strong></div>
+            </div>
         </section>
+
         <section>
-            <h4>بنود المشروع Fg_Journal</h4>
-            <div class="main-erp-vb6-grid-placeholder">شبكة البنود الحقيقية لم يتم تحميلها هنا بعد. يجب أن تشمل item/cost/exe/Quantity/Price/Pre_Quantity/Curr_Quantity/tot_quantity وحقول الاعتماد وNetExe كما في projectsbill.frm.</div>
+            <h4>الدفعات المقدمة</h4>
+            @if (Model.AdvancePayments.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد دفعات مقدمة مرتبطة بهذا المستخلص</div>
+            }
+            else
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>المصدر</th>
+                                <th>NoteID / Transaction</th>
+                                <th>السيريال</th>
+                                <th>التاريخ</th>
+                                <th>قيمة السند</th>
+                                <th>المسدد</th>
+                                <th>المتبقي</th>
+                                <th>الصافي</th>
+                                <th>الضريبة</th>
+                                <th>TypeTrans</th>
+                                <th>NCashingType</th>
+                                <th>الفرع</th>
+                                <th>الحساب</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var payment in Model.AdvancePayments)
+                            {
+                                <tr>
+                                    <td>@payment.SourceTable</td>
+                                    <td>@payment.NoteId / @payment.TransactionId</td>
+                                    <td>@payment.NoteSerial</td>
+                                    <td>@String.Format("{0:yyyy-MM-dd}", payment.NoteDate)</td>
+                                    <td>@money(payment.NoteValue)</td>
+                                    <td>@money(payment.PayedValue)</td>
+                                    <td>@money(payment.RemainingValue)</td>
+                                    <td>@money(payment.NetValue)</td>
+                                    <td>@money(payment.Vat)</td>
+                                    <td>@payment.TypeTrans</td>
+                                    <td>@payment.NCashingType</td>
+                                    <td>@payment.BranchName</td>
+                                    <td>@payment.AccountDisplay</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </section>
+
         <section>
-            <h4>الدفعات المقدمة VSFlexGrid4</h4>
-            <div class="main-erp-vb6-grid-placeholder">سيتم ترحيل ربط TblPayPrePayed وTblProjePayPrePayed بعد مطابقة ALLButton1_Click وsaveBillBuy. لا يوجد سداد أو إلغاء سداد حاليا.</div>
+            <h4>القيود المحاسبية</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>عدد السطور: <strong>@Model.VoucherLines.Count</strong></span>
+                <span>إجمالي مدين: <strong>@money(Model.VoucherDebitTotal)</strong></span>
+                <span>إجمالي دائن: <strong>@money(Model.VoucherCreditTotal)</strong></span>
+                <span class="@(voucherBalanced ? "main-erp-ok" : "main-erp-danger")">الفرق: @money(Model.VoucherBalanceDifference)</span>
+                @if (Model.NoteId.HasValue)
+                {
+                    <a class="main-erp-button" href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = Model.NoteId.Value })">فتح القيد</a>
+                }
+            </div>
+
+            @if (Model.VoucherLines.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد قيود محاسبية مرتبطة بهذا المستخلص</div>
+            }
+            else
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>Voucher</th>
+                                <th>NoteSerial</th>
+                                <th>التاريخ</th>
+                                <th>الحساب</th>
+                                <th>مدين</th>
+                                <th>دائن</th>
+                                <th>الوصف</th>
+                                <th>الفرع</th>
+                                <th>المشروع</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var voucher in Model.VoucherLines)
+                            {
+                                <tr>
+                                    <td>@voucher.VoucherId / @voucher.LineNo</td>
+                                    <td>@voucher.NoteSerial</td>
+                                    <td>@String.Format("{0:yyyy-MM-dd}", voucher.RecordDate)</td>
+                                    <td>@voucher.AccountDisplay</td>
+                                    <td>@money(voucher.Debit)</td>
+                                    <td>@money(voucher.Credit)</td>
+                                    <td>@voucher.Description</td>
+                                    <td>@voucher.BranchName</td>
+                                    <td>@voucher.ProjectName</td>
+                                    <td>
+                                        @if (voucher.NoteId.HasValue)
+                                        {
+                                            <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = voucher.NoteId.Value })">فتح القيد</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </section>
+
         <section>
-            <h4>ملاحظات</h4>
+            <h4>الملاحظات والتقارير</h4>
+            <div class="main-erp-warning">هذه الصفحة الآن تعرض Workspace تشغيلي حقيقي للمستخلص. معاينة الحفظ أدناه قراءة فقط ولا تنفذ أي كتابة.</div>
+            <div class="main-erp-kpi-grid">
+                <div class="main-erp-kpi-card"><span>رأس المستخلص</span><strong>@Model.Id</strong><small>قراءة فقط</small></div>
+                <div class="main-erp-kpi-card"><span>بنود التنفيذ</span><strong>@Model.DetailLineCount</strong><small>@money(Model.DetailCurrentValueTotal)</small></div>
+                <div class="main-erp-kpi-card"><span>الضريبة</span><strong>@money(Model.DetailVatTotal)</strong><small>من البنود</small></div>
+                <div class="main-erp-kpi-card"><span>القيود</span><strong>@Model.VoucherLines.Count</strong><small>@(voucherBalanced ? "متوازنة" : "تحتاج مراجعة")</small></div>
+            </div>
             <p class="main-erp-remarks">@Model.Remarks</p>
+            <div class="main-erp-warning">الطباعة والتقارير محفوظة كمدخلات Read-only حاليًا، ولن يتم تفعيلها قبل مراجعة تقارير `projectsbill.frm` وربطها بدون تأثير مالي.</div>
         </section>
     </div>
 </section>

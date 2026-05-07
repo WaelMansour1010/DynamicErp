@@ -107,6 +107,8 @@
   <data name="Sales" xml:space="preserve"><value>المبيعات</value></data>
   <data name="SalesReports" xml:space="preserve"><value>تقارير المبيعات</value></data>
   <data name="SalesSummary" xml:space="preserve"><value>ملخص المبيعات</value></data>
+  <data name="WorkshopSalesInvoice" xml:space="preserve"><value>فاتورة مبيعات الورشة</value></data>
+  <data name="PumpSalesInvoice" xml:space="preserve"><value>فاتورة مبيعات المضخات</value></data>
   <data name="SalesSummaryIntro" xml:space="preserve"><value>تقرير قراءة فقط من فواتير المبيعات العامة بفلاتر محافظة.</value></data>
   <data name="Save" xml:space="preserve"><value>حفظ</value></data>
   <data name="Search" xml:space="preserve"><value>بحث</value></data>
@@ -131,6 +133,7 @@
   <data name="Total" xml:space="preserve"><value>الإجمالي</value></data>
   <data name="Totals" xml:space="preserve"><value>الإجمالي</value></data>
   <data name="Description" xml:space="preserve"><value>البيان</value></data>
+  <data name="DiscountNotifications" xml:space="preserve"><value>الإشعارات</value></data>
   <data name="PeriodMovement" xml:space="preserve"><value>صافي حركة الفترة</value></data>
   <data name="LcGridPostingDeferred" xml:space="preserve"><value>جداول الهامش والتاريخ والرصيد الافتتاحي ظاهرة للقراءة والتتبع الآن، أما الحفظ والترحيل فمؤجلان.</value></data>
 </root>

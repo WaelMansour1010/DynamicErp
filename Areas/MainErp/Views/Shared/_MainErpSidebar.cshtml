@@ -5,8 +5,8 @@
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
 
-    var accountingOpen = sectionActive(new[] { "journal-entries", "accounts", "accounting-reports", "account-movement", "voucher-preview" });
-    var salesOpen = sectionActive(new[] { "sales-reports", "sales-summary" });
+    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "accounting-reports", "account-movement", "voucher-preview" });
+    var salesOpen = sectionActive(new[] { "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
     var purchasesOpen = sectionActive(new[] { "purchases" });
     var inventoryOpen = sectionActive(new[] { "stock-transfers" });
     var projectsOpen = sectionActive(new[] { "project-extracts" });
@@ -48,6 +48,7 @@
             </button>
             <div class="pos-nav-submenu">
                 <a class="pos-nav-link main-erp-nav-link @(isActive("journal-entries") ? "active" : "")" href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })" title="@T("JournalEntries")"><i class="fas fa-list-alt"></i><span>@T("JournalEntries")</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("discount-notifications") ? "active" : "")" href="@Url.Action("Index", "DiscountNotifications", new { area = "MainErp" })" title="@T("DiscountNotifications")"><i class="fas fa-file-invoice-dollar"></i><span>@T("DiscountNotifications")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("accounting-reports") ? "active" : "")" href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })" title="@T("AccountingReports")"><i class="fas fa-chart-pie"></i><span>@T("AccountingReports")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("account-movement") ? "active" : "")" href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })" title="@T("AccountMovement")"><i class="fas fa-exchange-alt"></i><span>@T("AccountMovement")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("voucher-preview") ? "active" : "")" href="@Url.Action("PreviewTest", "Accounting", new { area = "MainErp" })" title="@T("PreviewVoucher")"><i class="fas fa-eye"></i><span>@T("PreviewVoucher")</span></a>
@@ -57,6 +58,8 @@
         <section class="pos-nav-section @(salesOpen ? "is-open" : "")">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="@T("Sales")"><span><i class="fas fa-chart-line"></i><b>@T("Sales")</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
             <div class="pos-nav-submenu">
+                <a class="pos-nav-link main-erp-nav-link @(isActive("workshop-sales") ? "active" : "")" href="@Url.Action("Index", "WorkshopSales", new { area = "MainErp" })"><i class="fas fa-tools"></i><span>@T("WorkshopSalesInvoice")</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("pump-sales") ? "active" : "")" href="@Url.Action("Index", "PumpSales", new { area = "MainErp" })"><i class="fas fa-gas-pump"></i><span>@T("PumpSalesInvoice")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("sales-reports") ? "active" : "")" href="@Url.Action("Index", "SalesReports", new { area = "MainErp" })"><i class="fas fa-chart-bar"></i><span>@T("SalesReports")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("sales-summary") ? "active" : "")" href="@Url.Action("SalesSummary", "SalesReports", new { area = "MainErp" })"><i class="fas fa-receipt"></i><span>@T("SalesSummary")</span></a>
             </div>
