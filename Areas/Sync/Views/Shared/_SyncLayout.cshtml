@@ -1,0 +1,34 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/Areas/Sync/Content/sync-ops.css" rel="stylesheet" />
+<div class="sync-ops" dir="rtl">
+    <div class="sync-hero">
+        <div>
+            <span class="sync-kicker">Enterprise Operations Platform</span>
+            <h2>مركز التحكم بالمزامنة</h2>
+            <p>مراقبة وتشخيص ومراجعة آمنة. التنفيذ الفعلي من الواجهة محجوب حتى اكتمال الموافقات.</p>
+        </div>
+        <div class="sync-safety-pill">
+            <i class="remixicon-lock-2-line"></i>
+            ApplyMode محجوب
+        </div>
+    </div>
+    <div class="sync-nav">
+        <a href="/sync">لوحة التحكم</a>
+        <a href="/sync/Queue">قائمة الانتظار</a>
+        <a href="/sync/Diagnostics">التشخيص</a>
+        <a href="/sync/Logs">السجلات</a>
+        <a href="/sync/Profiles">الملفات التعريفية</a>
+        <a href="/sync/Pilot">جاهزية التنفيذ</a>
+        <a href="/sync/AdminAudit">سجل العمليات</a>
+        <a href="/sync/AdminOperations">طلبات التنفيذ</a>
+        <a href="/sync/Notifications">التنبيهات</a>
+        <a href="/sync/RoleManagement">الصلاحيات</a>
+    </div>
+    <div class="sync-warning">
+        <i class="remixicon-alert-line"></i>
+        قد يؤدي التنفيذ إلى تعديل قاعدة البيانات المستهدفة. التنفيذ من الواجهة غير متاح، ولا يوجد تنفيذ جماعي أو تشغيل PowerShell من المتصفح.
+    </div>
+    @RenderBody()
+</div>

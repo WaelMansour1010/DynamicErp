@@ -212,6 +212,33 @@
             color: #1d2939;
         }
 
+        .grid-pager {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #d8dee6;
+            border-top: 0;
+            border-radius: 0 0 6px 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            padding: 10px 12px;
+        }
+
+        .grid-page-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .grid-page-info,
+        .grid-page-current {
+            color: #475467;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
         .serial-badge {
             display: none;
             margin-top: 4px;
@@ -297,6 +324,24 @@
             justify-content: flex-end;
             margin-top: 8px;
         }
+
+        .index-filter-row {
+            direction: rtl;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .index-filter-row > [class*="col-"] {
+            float: none;
+        }
+
+        .filter-from { order: 1; }
+        .filter-to { order: 2; }
+        .filter-branch { order: 3; }
+        .filter-number { order: 4; }
+        .filter-supplier { order: 5; }
+        .filter-store { order: 6; }
+        .filter-payment { order: 7; }
 
         .index-table-wrap {
             border: 1px solid #d8dee6;
@@ -384,7 +429,8 @@
          data-stores-url="@Url.Action("Stores", "PurchaseInvoice", new { area = "Pos" })"
          data-import-url="@Url.Action("ImportExcel", "PurchaseInvoice", new { area = "Pos" })"
          data-save-url="@Url.Action("Save", "PurchaseInvoice", new { area = "Pos" })"
-         data-search-url="@Url.Action("Search", "PurchaseInvoice", new { area = "Pos" })">
+         data-search-url="@Url.Action("Search", "PurchaseInvoice", new { area = "Pos" })"
+         data-get-url="@Url.Action("Get", "PurchaseInvoice", new { area = "Pos" })">
         <div class="purchase-shell">
             <nav class="pos-breadcrumb" aria-label="breadcrumb">
                 <a href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })" target="_top">لوحة التحكم</a>
@@ -399,32 +445,32 @@
                     <h1>فواتير مشتريات</h1>
                     <span>ابحث عن فاتورة موجودة أو ابدأ فاتورة شراء جديدة.</span>
                 </div>
-                <div class="row">
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                <div class="row index-filter-row">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-number">
                         <div class="form-group">
                             <label for="purchaseSearchInvoice">رقم الفاتورة</label>
                             <input type="text" id="purchaseSearchInvoice" class="form-control" placeholder="رقم الفاتورة أو رقم المورد" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-from">
                         <div class="form-group">
                             <label for="purchaseSearchFrom">من تاريخ</label>
                             <input type="date" id="purchaseSearchFrom" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-to">
                         <div class="form-group">
                             <label for="purchaseSearchTo">إلى تاريخ</label>
                             <input type="date" id="purchaseSearchTo" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-supplier">
                         <div class="form-group">
                             <label for="purchaseSearchSupplier">المورد</label>
                             <input type="text" id="purchaseSearchSupplier" class="form-control" placeholder="كود أو اسم المورد" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-branch">
                         <div class="form-group">
                             <label for="purchaseSearchBranch">الفرع</label>
                             <select id="purchaseSearchBranch" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
@@ -439,7 +485,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-store">
                         <div class="form-group">
                             <label for="purchaseSearchStore">المخزن</label>
                             <select id="purchaseSearchStore" class="form-control">
@@ -454,7 +500,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 col-xs-12">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-payment">
                         <div class="form-group">
                             <label for="purchaseSearchPayment">طريقة الدفع</label>
                             <select id="purchaseSearchPayment" class="form-control">
@@ -637,6 +683,7 @@
                         <tbody id="purchaseItemsBody"></tbody>
                     </table>
                 </div>
+                <div id="purchaseItemsPager" class="grid-pager"></div>
 
                 <div id="purchaseImportResult" class="import-result"></div>
 

@@ -52,6 +52,11 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("accounting-reports");
         }
 
+        public ActionResult FinancialIntelligence()
+        {
+            return OpenShell("financial-intelligence");
+        }
+
         public ActionResult JournalEntries()
         {
             return OpenShell("journal-entries");
@@ -70,6 +75,11 @@ namespace MyERP.Areas.Pos.Controllers
         public ActionResult StockTransfer()
         {
             return OpenShell("stock-transfer");
+        }
+
+        public ActionResult ExcelImport()
+        {
+            return OpenShell("excel-import");
         }
 
         public ActionResult SystemHealth()
@@ -158,6 +168,11 @@ namespace MyERP.Areas.Pos.Controllers
                 screen = HasSalesDefaults(context) ? "sales" : "home";
             }
 
+            if (IsTellerOnly(context) && !string.Equals(screen, "sales", StringComparison.OrdinalIgnoreCase))
+            {
+                screen = "sales";
+            }
+
             if (screen == "kyc-bank-follow-up" && !CanOpenKycBankFollowUp(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية متابعة KYC والبنك");
@@ -166,6 +181,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "accounting-reports" && !CanOpenAccountingReports(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض تقارير الحسابات");
+            }
+
+            if (screen == "financial-intelligence" && !CanOpenAccountingReports(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض الحسابات الذكية");
             }
 
             if (screen == "journal-entries" && !CanOpenJournalEntries(context))
@@ -208,6 +228,20 @@ namespace MyERP.Areas.Pos.Controllers
             return context != null && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess);
         }
 
+        private static bool IsTellerOnly(PosUserContext context)
+        {
+            if (context == null || IsAdmin(context))
+            {
+                return false;
+            }
+
+            var category = (context.UserCategory ?? string.Empty).Trim();
+            return context.UserType.GetValueOrDefault(-1) == 2
+                || context.CanTeller
+                || string.Equals(category, "تلر", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(category, "Teller", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static bool CanOpenKycBankFollowUp(PosUserContext context)
         {
             return IsAdmin(context) || (context != null && context.IsFullAccessCustomerService);
@@ -231,7 +265,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool CanOpenPurchaseInvoice(PosUserContext context)
         {
-            return IsAdmin(context) || (context != null && context.CanSave);
+            return IsAdmin(context) || (context != null && !IsTellerOnly(context) && context.CanSave);
         }
 
         private static bool HasSalesDefaults(PosUserContext context)
@@ -327,6 +361,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return Url.Content("~/Pos/AccountingReports/Index");
             }
 
+            if (screen == "financial-intelligence")
+            {
+                return Url.Content("~/Pos/FinancialIntelligence/Index");
+            }
+
             if (screen == "journal-entries")
             {
                 return Url.Content("~/Pos/JournalEntries/Index");
@@ -345,6 +384,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "stock-transfer")
             {
                 return Url.Content("~/Pos/StockTransfer/Index");
+            }
+
+            if (screen == "excel-import")
+            {
+                return Url.Content("~/Pos/ExcelImport/Index");
             }
 
             if (screen == "system-health")

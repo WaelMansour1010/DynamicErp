@@ -37,7 +37,8 @@ namespace MyERP
         public override void OnAuthorization(AuthorizationContext filterContext)
         {
             var area = filterContext.RouteData.DataTokens["area"] as string;
-            if (string.Equals(area, "Pos", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(area, "Pos", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(area, "Sync", System.StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }

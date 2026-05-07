@@ -7,6 +7,8 @@
     var rows = [];
     var rowSeed = 1;
     var lookupTimers = {};
+    var gridPage = 1;
+    var gridPageSize = 100;
 
     function byId(id) { return document.getElementById(id); }
 
@@ -96,7 +98,12 @@
 
     function renderRows() {
         var body = byId("purchaseItemsBody");
-        body.innerHTML = rows.map(function (row, index) {
+        var totalPages = Math.max(1, Math.ceil(rows.length / gridPageSize));
+        if (gridPage > totalPages) { gridPage = totalPages; }
+        if (gridPage < 1) { gridPage = 1; }
+        var start = (gridPage - 1) * gridPageSize;
+        var pageRows = rows.slice(start, start + gridPageSize);
+        body.innerHTML = pageRows.map(function (row, index) {
             var unitOptions = (row.units && row.units.length ? row.units : [{
                 UnitId: row.unitId,
                 UnitName: row.unitName || "",
@@ -124,6 +131,26 @@
                 "</tr>";
         }).join("");
         renderTotals();
+        renderGridPager();
+    }
+
+    function renderGridPager() {
+        var pager = byId("purchaseItemsPager");
+        if (!pager) { return; }
+        var totalRows = rows.length;
+        var totalPages = Math.max(1, Math.ceil(totalRows / gridPageSize));
+        if (gridPage > totalPages) { gridPage = totalPages; }
+        var start = totalRows ? ((gridPage - 1) * gridPageSize) + 1 : 0;
+        var end = Math.min(totalRows, gridPage * gridPageSize);
+        pager.innerHTML =
+            "<div class=\"grid-page-info\">عرض " + start + " - " + end + " من " + totalRows + " سطر</div>" +
+            "<div class=\"grid-page-actions\">" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"first\"" + (gridPage <= 1 ? " disabled" : "") + ">الأولى</button>" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"prev\"" + (gridPage <= 1 ? " disabled" : "") + ">السابق</button>" +
+            "<span class=\"grid-page-current\">صفحة " + gridPage + " / " + totalPages + "</span>" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"next\"" + (gridPage >= totalPages ? " disabled" : "") + ">التالي</button>" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"last\"" + (gridPage >= totalPages ? " disabled" : "") + ">الأخيرة</button>" +
+            "</div>";
     }
 
     function renderTotals() {
@@ -241,6 +268,7 @@
     function bindGrid() {
         byId("addPurchaseRowBtn").addEventListener("click", function () {
             rows.push(createRow());
+            gridPage = Math.ceil(rows.length / gridPageSize);
             renderRows();
         });
 
@@ -311,6 +339,21 @@
             }
             renderRows();
         });
+
+        var pager = byId("purchaseItemsPager");
+        if (pager) {
+            pager.addEventListener("click", function (event) {
+                var button = event.target.closest("[data-grid-page]");
+                if (!button || button.disabled) { return; }
+                var action = button.getAttribute("data-grid-page");
+                var totalPages = Math.max(1, Math.ceil(rows.length / gridPageSize));
+                if (action === "first") { gridPage = 1; }
+                if (action === "prev") { gridPage = Math.max(1, gridPage - 1); }
+                if (action === "next") { gridPage = Math.min(totalPages, gridPage + 1); }
+                if (action === "last") { gridPage = totalPages; }
+                renderRows();
+            });
+        }
     }
 
     function bindPaymentFields() {
@@ -573,6 +616,38 @@
                 .catch(function (error) { emptyRow(error.message); });
         }
 
+        function loadInvoice(transactionId) {
+            message("جاري تحميل الفاتورة...", false);
+            fetch(getUrl("data-get-url") + "?transactionId=" + encodeURIComponent(transactionId), { credentials: "same-origin" })
+                .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+                .then(function (result) {
+                    if (!result.ok || !result.data.success || !result.data.invoice) {
+                        throw new Error((result.data && result.data.message) || "تعذر تحميل الفاتورة");
+                    }
+
+                    var invoice = result.data.invoice;
+                    byId("purchaseInvoiceNumber").value = invoice.InvoiceNumber || "";
+                    byId("purchaseInvoiceDate").value = invoice.InvoiceDate || "";
+                    byId("purchaseSupplierId").value = invoice.SupplierId || "";
+                    byId("purchaseSupplierText").value = invoice.SupplierName || "";
+                    byId("purchaseManualNo").value = invoice.ManualNo || "";
+                    byId("purchaseBranchId").value = invoice.BranchId || "";
+                    byId("purchaseStoreId").value = invoice.StoreId || "";
+                    byId("purchasePaymentType").value = invoice.PaymentType === 0 || invoice.PaymentType === 3 ? invoice.PaymentType : 1;
+                    byId("purchaseBoxId").value = invoice.BoxId || "";
+                    byId("purchaseBankId").value = invoice.BankId || "";
+                    byId("purchaseRemarks").value = invoice.Remarks || "";
+                    rows = (invoice.Items || []).map(function (item) { return createRow(item); });
+                    if (!rows.length) { rows.push(createRow()); }
+                    gridPage = 1;
+                    renderRows();
+                    byId("purchasePaymentType").dispatchEvent(new Event("change"));
+                    showEntry();
+                    message("تم تحميل الفاتورة للعرض.", false);
+                })
+                .catch(function (error) { message(error.message, true); });
+        }
+
         byId("purchaseAddNewBtn").addEventListener("click", showEntry);
         byId("purchaseBackToIndexBtn").addEventListener("click", showIndex);
         byId("purchaseSearchBtn").addEventListener("click", search);
@@ -585,7 +660,7 @@
         searchBody.addEventListener("click", function (event) {
             var button = event.target.closest("[data-purchase-view]");
             if (!button) { return; }
-            message("العرض التفصيلي للفواتير السابقة سيستخدم نفس شاشة الإدخال بعد ربط تحميل التفاصيل.", true);
+            loadInvoice(button.getAttribute("data-purchase-view"));
         });
     }
 

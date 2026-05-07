@@ -1,0 +1,63 @@
+@model MyERP.Areas.MainErp.ViewModels.JournalEntries.JournalEntriesIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "Journal Entries";
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>القيود اليومية</h3>
+            <p>بحث قراءة فقط من القيود العامة. لا يوجد إنشاء أو تعديل أو حذف أو ترحيل في هذه المرحلة.</p>
+        </div>
+        <span class="main-erp-badge">Read-only</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    @using (Html.BeginForm("Index", "JournalEntries", new { area = "MainErp" }, FormMethod.Get, new { @class = "main-erp-filter" }))
+    {
+        <input type="text" name="searchText" value="@Model.SearchText" placeholder="بحث بالحساب أو البيان أو رقم القيد" />
+        <input type="number" name="branchId" value="@Model.BranchId" placeholder="الفرع" />
+        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+        <button type="submit">بحث</button>
+    }
+
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>رقم القيد</th>
+                <th>التاريخ</th>
+                <th>الحساب</th>
+                <th>مدين</th>
+                <th>دائن</th>
+                <th>الفرع</th>
+                <th>البيان</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td>@item.VoucherId<br /><small>@item.NoteSerial</small></td>
+                    <td>@(item.RecordDate.HasValue ? item.RecordDate.Value.ToString("dd/MM/yyyy") : "")</td>
+                    <td><strong>@item.AccountCode</strong><br /><small>@item.AccountName</small></td>
+                    <td>@item.Debit.ToString("N2")</td>
+                    <td>@item.Credit.ToString("N2")</td>
+                    <td>@item.BranchId</td>
+                    <td>@item.Description</td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0)
+            {
+                <tr>
+                    <td colspan="7">لا توجد نتائج للعرض.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="main-erp-muted">عدد النتائج: @Model.TotalCount</p>
+</section>

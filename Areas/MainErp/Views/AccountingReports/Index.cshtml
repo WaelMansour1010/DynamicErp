@@ -1,0 +1,19 @@
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "Accounting Reports";
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>التقارير المحاسبية</h3>
+            <p>تم إنشاء الغلاف المستقل للتقارير المحاسبية العامة. تشغيل التقارير مؤجل لحين مراجعة SQL وربطه بصلاحيات MainErp.</p>
+        </div>
+        <span class="main-erp-badge">Under migration</span>
+    </div>
+    <div class="main-erp-sections">
+        <div><strong>القيود اليومية خلال فترة</strong><br /><a href="@Url.Action("JournalEntries", "AccountingReports", new { area = "MainErp" })">فتح التقرير</a></div>
+        <div><strong>حركة حساب خلال فترة</strong><br /><a href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })">فتح التقرير</a></div>
+        <div><strong>كشف حساب</strong><br /><span>سيستخدم ACCOUNTS وDOUBLE_ENTREY_VOUCHERS بعد مراجعة أوسع.</span></div>
+        <div><strong>أستاذ عام مساعد</strong><br /><span>تحت التحليل قبل التشغيل.</span></div>
+    </div>
+</section>

@@ -1,0 +1,286 @@
+.main-erp-body {
+    background: #f4f6f8;
+    color: #1d2733;
+    font-family: Tahoma, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.main-erp-shell {
+    background: #f4f6f8;
+    color: #1d2733;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.main-erp-header {
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #dfe5eb;
+    border-radius: 8px;
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 18px 20px;
+}
+
+.main-erp-header h2,
+.main-erp-panel h3 {
+    margin: 0;
+}
+
+.main-erp-kicker {
+    color: #657386;
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.main-erp-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.main-erp-nav a,
+.main-erp-module {
+    border: 1px solid #cfd8e3;
+    border-radius: 8px;
+    color: #243142;
+    text-decoration: none;
+}
+
+.main-erp-nav a {
+    background: #f8fafc;
+    padding: 8px 12px;
+}
+
+.main-erp-nav a:hover,
+.main-erp-module:hover {
+    background: #edf5ff;
+    border-color: #8eb7e6;
+    color: #102a43;
+}
+
+.main-erp-panel {
+    background: #ffffff;
+    border: 1px solid #dfe5eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.main-erp-title-row {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.main-erp-title-row p {
+    color: #657386;
+    margin: 8px 0 0;
+}
+
+.main-erp-badge {
+    background: #e8f1fb;
+    border: 1px solid #b8d4ee;
+    border-radius: 999px;
+    color: #24527a;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.main-erp-module-grid,
+.main-erp-sections {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.main-erp-module {
+    background: #fbfcfe;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 128px;
+    padding: 16px;
+}
+
+.main-erp-module span,
+.main-erp-module small {
+    color: #657386;
+}
+
+.main-erp-module strong {
+    font-size: 18px;
+}
+
+.main-erp-sections div {
+    background: #f8fafc;
+    border: 1px solid #dfe5eb;
+    border-radius: 8px;
+    color: #46576b;
+    min-height: 72px;
+    padding: 16px;
+}
+
+.main-erp-filter {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-bottom: 14px;
+}
+
+.main-erp-filter input,
+.main-erp-filter button {
+    border: 1px solid #cfd8e3;
+    border-radius: 6px;
+    min-height: 36px;
+    padding: 7px 10px;
+}
+
+.main-erp-filter button {
+    background: #1f6feb;
+    color: #fff;
+    font-weight: 700;
+}
+
+.main-erp-table {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+}
+
+.main-erp-table th,
+.main-erp-table td {
+    border-bottom: 1px solid #e4eaf0;
+    padding: 9px 8px;
+    text-align: right;
+    vertical-align: top;
+}
+
+.main-erp-table th {
+    background: #f8fafc;
+    color: #46576b;
+    font-weight: 700;
+}
+
+.main-erp-warning {
+    background: #fff8e5;
+    border: 1px solid #efd27a;
+    border-radius: 6px;
+    color: #6b5300;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+}
+
+.main-erp-muted {
+    color: #657386;
+    margin-top: 12px;
+}
+
+.main-erp-details {
+    display: grid;
+    gap: 0;
+    grid-template-columns: minmax(160px, 240px) 1fr;
+}
+
+.main-erp-details dt,
+.main-erp-details dd {
+    border-bottom: 1px solid #e4eaf0;
+    margin: 0;
+    padding: 10px 8px;
+}
+
+.main-erp-details dt {
+    color: #657386;
+    font-weight: 700;
+}
+
+.main-erp-vb6-toolbar {
+    background: #eef3f8;
+    border: 1px solid #cfdae6;
+    border-radius: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 8px;
+}
+
+.main-erp-vb6-toolbar button,
+.main-erp-vb6-toolbar a {
+    background: #ffffff;
+    border: 1px solid #b9c6d4;
+    border-radius: 4px;
+    color: #243142;
+    font-size: 13px;
+    min-height: 32px;
+    padding: 6px 12px;
+    text-decoration: none;
+}
+
+.main-erp-vb6-toolbar button:disabled {
+    color: #8a97a6;
+}
+
+.main-erp-tabs {
+    display: grid;
+    gap: 12px;
+}
+
+.main-erp-tabs section {
+    border: 1px solid #d8e0e8;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.main-erp-tabs h4 {
+    background: #f4f7fa;
+    border-bottom: 1px solid #d8e0e8;
+    color: #25364a;
+    font-size: 15px;
+    margin: 0;
+    padding: 10px 12px;
+}
+
+.main-erp-tabs .main-erp-details,
+.main-erp-tabs .main-erp-vb6-grid-placeholder,
+.main-erp-tabs .main-erp-remarks {
+    margin: 0;
+    padding: 12px;
+}
+
+.main-erp-vb6-grid-placeholder {
+    background: #fbfcfd;
+    color: #536274;
+    line-height: 1.8;
+}
+
+.main-erp-remarks {
+    min-height: 52px;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+    .main-erp-shell {
+        padding: 14px;
+    }
+
+    .main-erp-header,
+    .main-erp-title-row {
+        display: block;
+    }
+
+    .main-erp-nav {
+        margin-top: 14px;
+    }
+}

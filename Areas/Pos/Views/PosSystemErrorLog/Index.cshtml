@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
     ViewBag.Title = "سجل أخطاء النظام";
     var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
@@ -13,28 +13,42 @@
     <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
     <style>
         body { background:#f8fafc; color:#0f172a; direction:rtl; font-family:"Tahoma","Arial",sans-serif; margin:0; padding:22px; }
-        .error-log-shell { display:grid; gap:16px; max-width:1500px; margin:0 auto; }
-        .error-log-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 8px 24px rgba(15,23,42,.06); padding:18px; }
+        .error-log-shell { display:grid; gap:16px; max-width:1540px; margin:0 auto; }
+        .error-log-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 8px 24px rgba(15,23,42,.06); padding:18px; }
         .error-log-title { display:flex; align-items:center; justify-content:space-between; gap:12px; }
         .error-log-title h1 { font-size:26px; margin:0; }
         .error-log-title p { color:#64748b; margin:6px 0 0; }
-        .error-filter-grid { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; }
-        .error-filter-grid label { color:#334155; display:grid; gap:6px; font-weight:700; }
-        .error-filter-grid input, .error-filter-grid select { border:1px solid #cbd5e1; border-radius:10px; font:inherit; min-height:42px; padding:8px 10px; }
-        .error-filter-actions { align-items:end; display:flex; gap:8px; justify-content:flex-start; }
-        .error-filter-actions .primary-action { min-width:160px; }
-        .error-search-panel { border-top:1px solid #e2e8f0; display:flex; justify-content:flex-start; margin-top:16px; padding-top:16px; }
-        .error-search-button { background:#2563eb !important; border:0 !important; border-radius:12px !important; color:#fff !important; cursor:pointer !important; font:inherit !important; font-size:18px !important; font-weight:800 !important; min-height:52px !important; min-width:220px !important; padding:12px 26px !important; box-shadow:0 10px 22px rgba(37,99,235,.22) !important; }
-        .error-search-button:hover { background:#1d4ed8 !important; }
-        .error-table-wrap { overflow:auto; max-height:620px; }
-        .error-log-table { border-collapse:collapse; min-width:1180px; width:100%; }
-        .error-log-table th, .error-log-table td { border-bottom:1px solid #e2e8f0; padding:10px; text-align:right; vertical-align:top; }
-        .error-log-table th { background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:1; }
-        .error-log-table tr:nth-child(even) td { background:#fbfdff; }
-        .severity-error { color:#b91c1c; font-weight:700; }
-        .severity-warning { color:#b45309; font-weight:700; }
+        .log-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+        .log-tab { background:#eef2f7; border:1px solid #cbd5e1; border-radius:8px; color:#334155; cursor:pointer; font:inherit; font-weight:800; min-height:42px; padding:8px 14px; }
+        .log-tab.active { background:#1f7a5c; border-color:#1f7a5c; color:#fff; }
+        .tab-panel[hidden] { display:none; }
+        .filter-grid { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; }
+        .filter-grid label { color:#334155; display:grid; gap:6px; font-weight:700; }
+        .filter-grid input, .filter-grid select { border:1px solid #cbd5e1; border-radius:8px; font:inherit; min-height:42px; padding:8px 10px; }
+        .search-panel { border-top:1px solid #e2e8f0; display:flex; justify-content:flex-start; margin-top:16px; padding-top:16px; }
+        .search-button { background:#2563eb; border:0; border-radius:8px; color:#fff; cursor:pointer; font:inherit; font-size:17px; font-weight:800; min-height:50px; min-width:200px; padding:12px 24px; box-shadow:0 10px 22px rgba(37,99,235,.18); }
+        .summary-grid { display:grid; grid-template-columns:repeat(7,minmax(130px,1fr)); gap:10px; }
+        .summary-card { border:1px solid #dbe4ee; border-radius:8px; padding:12px; background:#fbfdff; min-height:78px; }
+        .summary-card span { color:#64748b; display:block; font-size:12px; font-weight:700; }
+        .summary-card strong { color:#0f172a; display:block; font-size:22px; margin-top:8px; word-break:break-word; }
+        .table-wrap { overflow:auto; max-height:620px; }
+        .log-table { border-collapse:collapse; min-width:1180px; width:100%; }
+        .log-table th, .log-table td { border-bottom:1px solid #e2e8f0; padding:10px; text-align:right; vertical-align:top; }
+        .log-table th { background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:1; }
+        .log-table tr:nth-child(even) td { background:#fbfdff; }
+        .severity-error, .status-failed, .status-retriedfailed { color:#b91c1c; font-weight:800; }
+        .severity-warning { color:#b45309; font-weight:800; }
+        .status-success, .status-retriedsuccess { color:#047857; font-weight:800; }
         .muted { color:#64748b; }
-        @@media (max-width: 900px) { .error-filter-grid { grid-template-columns:1fr; } }
+        .expand-button { background:#e0f2fe; border:1px solid #bae6fd; border-radius:8px; color:#075985; cursor:pointer; font:inherit; font-weight:800; padding:6px 10px; }
+        .timeline-cell { background:#f8fafc !important; padding:0 !important; }
+        .timeline { display:grid; gap:8px; padding:12px; }
+        .timeline-item { border-right:4px solid #94a3b8; background:#fff; border-radius:8px; display:grid; gap:4px; padding:10px; }
+        .timeline-item.deadlock { border-right-color:#dc2626; }
+        .timeline-item.success { border-right-color:#059669; }
+        .timeline-meta { color:#64748b; font-size:12px; }
+        @@media (max-width: 1100px) { .filter-grid, .summary-grid { grid-template-columns:repeat(2,minmax(160px,1fr)); } }
+        @@media (max-width: 700px) { body { padding:12px; } .filter-grid, .summary-grid { grid-template-columns:1fr; } .error-log-title { align-items:flex-start; flex-direction:column; } }
     </style>
 </head>
 <body>
@@ -42,83 +56,162 @@
         <section class="error-log-card error-log-title">
             <div>
                 <h1>سجل أخطاء النظام</h1>
-                <p>تتبع أخطاء نقطة البيع بدون عرض بيانات حساسة.</p>
+                <p>تتبع أخطاء نقطة البيع ومحاولات حفظ POS بدون عرض بيانات حساسة.</p>
             </div>
-            <button type="button" class="primary-action" id="loadErrorsBtn">بحث البيانات</button>
+            <div class="log-tabs">
+                <button type="button" class="log-tab active" data-tab="errors">سجل الأخطاء</button>
+                <button type="button" class="log-tab" data-tab="saveAttempts">محاولات حفظ POS</button>
+            </div>
         </section>
 
-        <section class="error-log-card">
-            <div class="error-filter-grid">
-                <label>من تاريخ<input type="date" id="fromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
-                <label>إلى تاريخ<input type="date" id="toDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
-                <label>
-                    الفرع
-                    <select id="branchId">
-                        <option value="">كل الفروع</option>
-                        @if (branches != null)
-                        {
-                            foreach (var branch in branches)
+        <section class="tab-panel" id="errorsPanel">
+            <section class="error-log-card">
+                <div class="filter-grid">
+                    <label>من تاريخ<input type="date" id="fromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>إلى تاريخ<input type="date" id="toDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>
+                        الفرع
+                        <select id="branchId">
+                            <option value="">كل الفروع</option>
+                            @if (branches != null)
                             {
-                                <option value="@branch.BranchId">@branch.BranchName</option>
+                                foreach (var branch in branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
                             }
-                        }
-                    </select>
-                </label>
-                <label>المستخدم<input type="text" id="userKeyword" placeholder="اسم أو رقم المستخدم" /></label>
-                <label>الشاشة / الإجراء<input type="text" id="screenAction" placeholder="مثال: Save أو PosTransaction" /></label>
-                <label>
-                    نوع العملية
-                    <select id="operationType">
-                        <option value="">كل العمليات</option>
-                        <option value="cash-in">كاش إن</option>
-                        <option value="cash-out">كاش أوت</option>
-                        <option value="card">كارت كيشني / KYC</option>
-                        <option value="violations">مخالفات</option>
-                    </select>
-                </label>
-                <label>
-                    الحالة
-                    <select id="severity">
-                        <option value="">كل الحالات</option>
-                        <option value="Error">Error</option>
-                        <option value="Warning">Warning</option>
-                    </select>
-                </label>
-                <label>كلمة بحث<input type="text" id="keyword" placeholder="رسالة أو تفاصيل مختصرة" /></label>
-            </div>
-            <div class="error-search-panel">
-                <button type="button" class="error-search-button" id="loadErrorsBtnInline">بحث البيانات</button>
-            </div>
+                        </select>
+                    </label>
+                    <label>المستخدم<input type="text" id="userKeyword" placeholder="اسم أو رقم المستخدم" /></label>
+                    <label>الشاشة / الإجراء<input type="text" id="screenAction" placeholder="مثال: Save أو PosTransaction" /></label>
+                    <label>
+                        نوع العملية
+                        <select id="operationType">
+                            <option value="">كل العمليات</option>
+                            <option value="cash-in">كاش إن</option>
+                            <option value="cash-out">كاش أوت</option>
+                            <option value="card">كارت كيشني / KYC</option>
+                            <option value="violations">مخالفات</option>
+                        </select>
+                    </label>
+                    <label>
+                        الحالة
+                        <select id="severity">
+                            <option value="">كل الحالات</option>
+                            <option value="Error">Error</option>
+                            <option value="Warning">Warning</option>
+                        </select>
+                    </label>
+                    <label>كلمة بحث<input type="text" id="keyword" placeholder="رسالة أو تفاصيل مختصرة" /></label>
+                </div>
+                <div class="search-panel">
+                    <button type="button" class="search-button" id="loadErrorsBtn">بحث البيانات</button>
+                </div>
+            </section>
+
+            <section class="error-log-card">
+                <div id="errorLogMessage" class="muted">اضغط بحث البيانات لعرض السجل.</div>
+                <div class="table-wrap">
+                    <table class="log-table" id="errorLogTable" hidden>
+                        <thead>
+                            <tr>
+                                <th>الوقت</th><th>المستخدم</th><th>الفرع</th><th>الشاشة</th><th>الإجراء</th>
+                                <th>العملية</th><th>الفاتورة</th><th>الحالة</th><th>الرسالة</th><th>ملخص الطلب</th><th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
         </section>
 
-        <section class="error-log-card">
-            <div id="errorLogMessage" class="muted">اضغط بحث البيانات لعرض السجل.</div>
-            <div class="error-table-wrap">
-                <table class="error-log-table" id="errorLogTable" hidden>
-                    <thead>
-                        <tr>
-                            <th>الوقت</th>
-                            <th>المستخدم</th>
-                            <th>الفرع</th>
-                            <th>الشاشة</th>
-                            <th>الإجراء</th>
-                            <th>العملية</th>
-                            <th>الفاتورة</th>
-                            <th>الحالة</th>
-                            <th>الرسالة</th>
-                            <th>ملخص الطلب</th>
-                            <th>IP</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+        <section class="tab-panel" id="saveAttemptsPanel" hidden>
+            <section class="error-log-card">
+                <div class="filter-grid">
+                    <label>من تاريخ<input type="date" id="attemptFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>إلى تاريخ<input type="date" id="attemptToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>
+                        الفرع
+                        <select id="attemptBranchId">
+                            <option value="">كل الفروع</option>
+                            @if (branches != null)
+                            {
+                                foreach (var branch in branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                    <label>المستخدم<input type="text" id="attemptUserKeyword" placeholder="اسم أو رقم المستخدم" /></label>
+                    <label>
+                        نوع العملية
+                        <select id="attemptTransactionType">
+                            <option value="">كل العمليات</option>
+                            <option value="cash-in">كاش إن</option>
+                            <option value="cash-out">كاش أوت</option>
+                            <option value="card">كارت كيشني / KYC</option>
+                            <option value="violations">مخالفات</option>
+                        </select>
+                    </label>
+                    <label>
+                        نوع الحدث
+                        <select id="attemptEventName">
+                            <option value="">كل الأحداث</option>
+                            <option value="Save.Start">Save.Start</option>
+                            <option value="Save.Retry.Deadlock">Save.Retry.Deadlock</option>
+                            <option value="Save.Retry.Success">Save.Retry.Success</option>
+                            <option value="Save.Success">Save.Success</option>
+                            <option value="Save.Failed">Save.Failed</option>
+                        </select>
+                    </label>
+                    <label>
+                        الحالة النهائية
+                        <select id="attemptStatus">
+                            <option value="">كل الحالات</option>
+                            <option value="Success">Success</option>
+                            <option value="RetriedSuccess">RetriedSuccess</option>
+                            <option value="Failed">Failed</option>
+                            <option value="RetriedFailed">RetriedFailed</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="search-panel">
+                    <button type="button" class="search-button" id="loadAttemptsBtn">بحث محاولات الحفظ</button>
+                </div>
+            </section>
+
+            <section class="summary-grid" id="attemptSummary">
+                <div class="summary-card"><span>إجمالي المحاولات</span><strong data-key="TotalSaveAttempts">0</strong></div>
+                <div class="summary-card"><span>محاولات بها Deadlock</span><strong data-key="DeadlockAffectedAttempts">0</strong></div>
+                <div class="summary-card"><span>Retry ثم نجاح</span><strong data-key="RetriedSucceeded">0</strong></div>
+                <div class="summary-card"><span>Retry ثم فشل</span><strong data-key="RetriedFailed">0</strong></div>
+                <div class="summary-card"><span>متوسط الانتظار</span><strong data-key="AverageDurationMs">0 ms</strong></div>
+                <div class="summary-card"><span>أقصى انتظار</span><strong data-key="MaxDurationMs">0 ms</strong></div>
+                <div class="summary-card"><span>أعلى فرع Deadlocks</span><strong data-key="TopDeadlockBranch">-</strong></div>
+            </section>
+
+            <section class="error-log-card">
+                <div id="attemptLogMessage" class="muted">اضغط بحث محاولات الحفظ لعرض التأثير.</div>
+                <div class="table-wrap">
+                    <table class="log-table" id="attemptLogTable" hidden>
+                        <thead>
+                            <tr>
+                                <th></th><th>SaveAttemptId</th><th>المستخدم</th><th>EmpID</th><th>الفرع</th><th>العملية</th>
+                                <th>البداية</th><th>النهاية</th><th>المدة</th><th>Retry</th><th>الحالة النهائية</th><th>Transaction_ID</th><th>آخر خطأ</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
         </section>
     </main>
 
     <script>
         (function () {
-            var url = '@Url.Action("Search", "PosSystemErrorLog", new { area = "Pos" })';
+            var errorsUrl = '@Url.Action("Search", "PosSystemErrorLog", new { area = "Pos" })';
+            var attemptsUrl = '@Url.Action("SearchSaveAttempts", "PosSystemErrorLog", new { area = "Pos" })';
             function byId(id) { return document.getElementById(id); }
             function value(id) { return (byId(id).value || "").trim(); }
             function escapeHtml(text) {
@@ -136,7 +229,15 @@
                 if (!(value instanceof Date) || isNaN(value.getTime())) { return ""; }
                 return value.toLocaleString("ar-EG");
             }
-            function load() {
+            function statusClass(status) { return "status-" + String(status || "").toLowerCase(); }
+            function switchTab(tab) {
+                byId("errorsPanel").hidden = tab !== "errors";
+                byId("saveAttemptsPanel").hidden = tab !== "saveAttempts";
+                Array.prototype.forEach.call(document.querySelectorAll(".log-tab"), function (button) {
+                    button.classList.toggle("active", button.getAttribute("data-tab") === tab);
+                });
+            }
+            function loadErrors() {
                 var query = "?FromDate=" + encodeURIComponent(value("fromDate")) +
                     "&ToDate=" + encodeURIComponent(value("toDate")) +
                     "&BranchId=" + encodeURIComponent(value("branchId")) +
@@ -152,7 +253,7 @@
                 message.textContent = "جاري تحميل سجل الأخطاء...";
                 table.hidden = true;
                 body.innerHTML = "";
-                fetch(url + query, { credentials: "same-origin" })
+                fetch(errorsUrl + query, { credentials: "same-origin" })
                     .then(function (response) { return response.json().then(function (data) { return { status: response.status, data: data }; }); })
                     .then(function (result) {
                         if (result.status < 200 || result.status >= 300 || !result.data || result.data.success === false) {
@@ -180,12 +281,103 @@
                             body.appendChild(tr);
                         });
                     })
+                    .catch(function (error) { message.textContent = "تعذر قراءة رد السيرفر: " + error.message; });
+            }
+            function updateSummary(summary) {
+                summary = summary || {};
+                function set(key, value) {
+                    var el = document.querySelector("#attemptSummary [data-key='" + key + "']");
+                    if (el) { el.textContent = value; }
+                }
+                set("TotalSaveAttempts", summary.TotalSaveAttempts || 0);
+                set("DeadlockAffectedAttempts", summary.DeadlockAffectedAttempts || 0);
+                set("RetriedSucceeded", summary.RetriedSucceeded || 0);
+                set("RetriedFailed", summary.RetriedFailed || 0);
+                set("AverageDurationMs", Math.round(summary.AverageDurationMs || 0) + " ms");
+                set("MaxDurationMs", (summary.MaxDurationMs || 0) + " ms");
+                set("TopDeadlockBranch", summary.TopDeadlockBranch || "-");
+            }
+            function timelineHtml(items) {
+                return "<div class='timeline'>" + (items || []).map(function (item) {
+                    var eventName = item.EventName || "";
+                    var cls = eventName.indexOf("Deadlock") >= 0 ? " deadlock" : (eventName.indexOf("Success") >= 0 ? " success" : "");
+                    var meta = [
+                        displayDate(item.CreatedAt),
+                        item.RetryAttempt !== null && item.RetryAttempt !== undefined ? "Retry " + item.RetryAttempt : "",
+                        item.DelayMs ? "Delay " + item.DelayMs + "ms" : "",
+                        item.DurationMs !== null && item.DurationMs !== undefined ? "Duration " + item.DurationMs + "ms" : "",
+                        item.SqlErrorNumber ? "SQL " + item.SqlErrorNumber : "",
+                        item.Transaction_ID ? "Transaction_ID " + item.Transaction_ID : "",
+                        item.Status || ""
+                    ].filter(Boolean).join(" | ");
+                    return "<div class='timeline-item" + cls + "'><strong>" + escapeHtml(eventName) + "</strong><div class='timeline-meta'>" + escapeHtml(meta) + "</div><div>" + escapeHtml(item.Message || "") + "</div><div class='muted'>" + escapeHtml(item.RequestSummary || "") + "</div></div>";
+                }).join("") + "</div>";
+            }
+            function loadAttempts() {
+                var query = "?FromDate=" + encodeURIComponent(value("attemptFromDate")) +
+                    "&ToDate=" + encodeURIComponent(value("attemptToDate")) +
+                    "&BranchId=" + encodeURIComponent(value("attemptBranchId")) +
+                    "&UserKeyword=" + encodeURIComponent(value("attemptUserKeyword")) +
+                    "&TransactionType=" + encodeURIComponent(value("attemptTransactionType")) +
+                    "&EventName=" + encodeURIComponent(value("attemptEventName")) +
+                    "&Status=" + encodeURIComponent(value("attemptStatus")) +
+                    "&PageSize=3000";
+                var message = byId("attemptLogMessage");
+                var table = byId("attemptLogTable");
+                var body = table.querySelector("tbody");
+                message.textContent = "جاري تحميل محاولات حفظ POS...";
+                table.hidden = true;
+                body.innerHTML = "";
+                fetch(attemptsUrl + query, { credentials: "same-origin" })
+                    .then(function (response) { return response.json().then(function (data) { return { status: response.status, data: data }; }); })
+                    .then(function (result) {
+                        if (result.status < 200 || result.status >= 300 || !result.data || result.data.success === false) {
+                            message.textContent = (result.data && result.data.message) || "تعذر تحميل محاولات حفظ POS";
+                            updateSummary({});
+                            return;
+                        }
+                        var rows = result.data.data || [];
+                        updateSummary(result.data.summary);
+                        message.textContent = rows.length ? ("عدد محاولات الحفظ: " + rows.length) : "لا توجد محاولات حفظ مطابقة للفلاتر.";
+                        table.hidden = !rows.length;
+                        rows.forEach(function (row, index) {
+                            var tr = document.createElement("tr");
+                            var detailsId = "attemptTimeline" + index;
+                            tr.innerHTML =
+                                "<td><button type='button' class='expand-button' data-target='" + detailsId + "'>التفاصيل</button></td>" +
+                                "<td>" + escapeHtml(row.SaveAttemptId || "") + "</td>" +
+                                "<td>" + escapeHtml((row.UserName || "") + (row.UserID ? " (" + row.UserID + ")" : "")) + "</td>" +
+                                "<td>" + escapeHtml(row.EmpID || "") + "</td>" +
+                                "<td>" + escapeHtml(row.BranchName || row.BranchId || "") + "</td>" +
+                                "<td>" + escapeHtml(row.TransactionType || "") + "</td>" +
+                                "<td>" + escapeHtml(displayDate(row.StartTime)) + "</td>" +
+                                "<td>" + escapeHtml(displayDate(row.EndTime)) + "</td>" +
+                                "<td>" + escapeHtml(row.DurationMs !== null && row.DurationMs !== undefined ? row.DurationMs + " ms" : "") + "</td>" +
+                                "<td>" + escapeHtml(row.RetryCount || 0) + "</td>" +
+                                "<td class='" + statusClass(row.FinalStatus) + "'>" + escapeHtml(row.FinalStatus || "") + "</td>" +
+                                "<td>" + escapeHtml(row.Transaction_ID || "") + "</td>" +
+                                "<td>" + escapeHtml(row.LastErrorMessage || "") + "</td>";
+                            body.appendChild(tr);
+                            var details = document.createElement("tr");
+                            details.id = detailsId;
+                            details.hidden = true;
+                            details.innerHTML = "<td class='timeline-cell' colspan='13'>" + timelineHtml(row.Timeline) + "</td>";
+                            body.appendChild(details);
+                        });
+                    })
                     .catch(function (error) {
                         message.textContent = "تعذر قراءة رد السيرفر: " + error.message;
+                        updateSummary({});
                     });
             }
-            byId("loadErrorsBtn").addEventListener("click", load);
-            byId("loadErrorsBtnInline").addEventListener("click", load);
+            document.addEventListener("click", function (event) {
+                var tab = event.target.getAttribute("data-tab");
+                var target = event.target.getAttribute("data-target");
+                if (tab) { switchTab(tab); }
+                if (target && byId(target)) { byId(target).hidden = !byId(target).hidden; }
+            });
+            byId("loadErrorsBtn").addEventListener("click", loadErrors);
+            byId("loadAttemptsBtn").addEventListener("click", loadAttempts);
         })();
     </script>
 </body>

@@ -3,6 +3,7 @@ using MyERP.Areas.Pos.Models;
 using System;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 
@@ -117,6 +118,47 @@ namespace MyERP.Areas.Pos.Controllers
             });
         }
 
+        [HttpGet]
+        public JsonResult Get(int sourceTransactionId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!CanOpen(context))
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية عرض سندات تحويل المخزون" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var detail = _repository.GetStockTransferDetail(sourceTransactionId, context);
+            if (detail == null)
+            {
+                Response.StatusCode = 404;
+                return Json(new { success = false, message = "لم يتم العثور على السند أو لا تملك صلاحية عرضه" }, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new
+            {
+                success = true,
+                transfer = new
+                {
+                    detail.SourceTransactionId,
+                    detail.DestinationTransactionId,
+                    detail.VoucherNumber,
+                    TransferDate = detail.TransferDate.ToString("yyyy-MM-dd"),
+                    detail.BranchId,
+                    detail.SourceStoreId,
+                    detail.DestinationStoreId,
+                    detail.Remarks,
+                    detail.Items
+                }
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         [HttpPost]
         public JsonResult ImportSerials(PosStockTransferImportRequestDto request)
         {
@@ -144,6 +186,51 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 Response.StatusCode = 500;
                 return Json(new { success = false, message = "حدث خطأ أثناء فحص السيريالات", technicalMessage = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult AvailableSerials(PosStockTransferSerialSearchRequestDto request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
+            }
+
+            if (!CanOpen(context))
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية عرض سيريالات المخزن" });
+            }
+
+            ForceContext(request, context);
+
+            try
+            {
+                var rows = _repository.SearchStockTransferAvailableSerials(request);
+                var totalRows = rows.Count == 0 ? 0 : rows[0].TotalRows;
+                var pageSize = request.PageSize <= 0 ? 50 : request.PageSize;
+                if (pageSize > 500) { pageSize = 500; }
+                return Json(new
+                {
+                    success = true,
+                    rows = rows,
+                    totalRows = totalRows,
+                    page = request.Page <= 0 ? 1 : request.Page,
+                    pageSize = pageSize
+                });
+            }
+            catch (SqlException ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "حدث خطأ أثناء تحميل السيريالات المتاحة", technicalMessage = FixArabicMojibakeForDisplay(ex.Message) });
             }
             catch (Exception ex)
             {
@@ -226,7 +313,7 @@ namespace MyERP.Areas.Pos.Controllers
             catch (SqlException ex)
             {
                 Response.StatusCode = 500;
-                return Json(new { success = false, message = "حدث خطأ من قاعدة البيانات أثناء حفظ سند التحويل", technicalMessage = ex.Message });
+                return Json(new { success = false, message = "حدث خطأ من قاعدة البيانات أثناء حفظ سند التحويل", technicalMessage = FixArabicMojibakeForDisplay(ex.Message) });
             }
             catch (Exception ex)
             {
@@ -275,9 +362,70 @@ namespace MyERP.Areas.Pos.Controllers
                 : request.Serials.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).ToList();
         }
 
+        private static void ForceContext(PosStockTransferSerialSearchRequestDto request, PosUserContext context)
+        {
+            if (request == null)
+            {
+                return;
+            }
+
+            if (!context.IsFullAccess)
+            {
+                request.BranchId = context.BranchId.GetValueOrDefault();
+            }
+
+            if (request.TransferDate == DateTime.MinValue)
+            {
+                request.TransferDate = DateTime.Today;
+            }
+        }
+
+        private static string FixArabicMojibakeForDisplay(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            var fixedValue = value;
+            for (var i = 0; i < 2 && LooksLikeArabicMojibake(fixedValue); i++)
+            {
+                try
+                {
+                    fixedValue = Encoding.UTF8.GetString(Encoding.GetEncoding(1256).GetBytes(fixedValue));
+                }
+                catch
+                {
+                    return value;
+                }
+            }
+
+            return string.IsNullOrWhiteSpace(fixedValue) ? value : fixedValue;
+        }
+
+        private static bool LooksLikeArabicMojibake(string value)
+        {
+            return !string.IsNullOrEmpty(value)
+                && (value.IndexOf('ط') >= 0 || value.IndexOf('ظ') >= 0 || value.IndexOf('€') >= 0);
+        }
+
         private static bool CanOpen(PosUserContext context)
         {
-            return context != null && (context.IsFullAccess || context.CanSave);
+            return context != null && (context.IsFullAccess || (!IsTellerOnly(context) && context.CanSave));
+        }
+
+        private static bool IsTellerOnly(PosUserContext context)
+        {
+            if (context == null || context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0)
+            {
+                return false;
+            }
+
+            var category = (context.UserCategory ?? string.Empty).Trim();
+            return context.UserType.GetValueOrDefault(-1) == 2
+                || context.CanTeller
+                || string.Equals(category, "تلر", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(category, "Teller", StringComparison.OrdinalIgnoreCase);
         }
 
         private PosUserContext GetPosContext()

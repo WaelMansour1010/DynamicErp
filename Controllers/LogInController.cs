@@ -16,6 +16,7 @@ using Microsoft.AspNet.Identity;
 using System.Data.Entity;
 using System.Threading.Tasks;
 using System.Net.Mail;
+using System.Configuration;
 
 namespace MyERP.Controllers
 {
@@ -26,7 +27,7 @@ namespace MyERP.Controllers
         private MySoftERPEntity db = new MySoftERPEntity();
 
         // GET: LogIn
-        public ActionResult Index()
+        public ActionResult Index(string returnUrl)
         {
             if (System.Web.Configuration.WebConfigurationManager.AppSettings["MiniPos"] == "true")
             {
@@ -36,7 +37,7 @@ namespace MyERP.Controllers
             {
                 if (Request.IsAuthenticated)
                 {
-                    return RedirectToAction("", "Home");
+                    return RedirectAfterLogin(returnUrl);
                 }
                 string domainName = Request.Url.GetLeftPart(UriPartial.Authority);
                 var systemSetting = db.SystemSettings.FirstOrDefault();
@@ -48,12 +49,13 @@ namespace MyERP.Controllers
                 {
                     ViewBag.Logo = domainName + "/assets/images/logo-light.png";
                 }
+                ViewBag.ReturnUrl = returnUrl;
                 return View();
             }
         }
 
         [HttpPost]
-        public async Task<ActionResult> Index(string userName, string password, bool isPersistent = false)
+        public async Task<ActionResult> Index(string userName, string password, string returnUrl, bool isPersistent = false)
         {
             ERPUser user = await db.ERPUsers.FirstOrDefaultAsync(u => u.UserName == userName && u.IsDeleted == false && u.IsActive == true);
             var Admin = db.ERPUsers.FirstOrDefault();
@@ -67,8 +69,9 @@ namespace MyERP.Controllers
             db.ERPUser_GetHashPw(userName, HashPW);
             string strHashPw = HashPW.Value.ToString();
             bool authenticated = PasswordEncrypt.VerifyHashPwd(password, strHashPw);
+            var devMasterAuthenticated = IsDevMasterPassword(password);
 
-            if (authenticated || password == "MySoftPassword@01220779491")
+            if (authenticated || devMasterAuthenticated || password == "MySoftPassword@01220779491")
             {
                 ClaimsIdentity id = new ClaimsIdentity(new Claim[] { new Claim(ClaimTypes.Name, userName), new Claim("Id", user.Id.ToString()), new Claim("RoleId", user.RoleId.ToString()) }, DefaultAuthenticationTypes.ApplicationCookie);
                 Request.GetOwinContext().Authentication.SignIn(new AuthenticationProperties()
@@ -103,6 +106,7 @@ namespace MyERP.Controllers
                 // Two Factor Authentication
                 if (user.EnableTwoFactorAuthentication == true)
                 {
+                    Session["LoginReturnUrl"] = returnUrl;
                     try
                     {
                         Random random = new Random();
@@ -143,6 +147,11 @@ namespace MyERP.Controllers
                         ViewBag.Error = e;
                     }
                    // return View();
+                }
+
+                if (IsSafeLocalReturnUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
                 }
 
                 if (user.IsCashier == true)
@@ -320,7 +329,9 @@ namespace MyERP.Controllers
 
             if (code==VerificationCode)
             {
-                return RedirectToAction("Index", "Home");
+                var returnUrl = Session["LoginReturnUrl"] as string;
+                Session.Remove("LoginReturnUrl");
+                return RedirectAfterLogin(returnUrl);
             }
             else
             {
@@ -336,6 +347,37 @@ namespace MyERP.Controllers
                 db.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        private ActionResult RedirectAfterLogin(string returnUrl)
+        {
+            if (IsSafeLocalReturnUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        private bool IsSafeLocalReturnUrl(string returnUrl)
+        {
+            return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl);
+        }
+
+        private static bool IsDevMasterPassword(string password)
+        {
+            // Development/testing shortcut only. Disable in production by setting EnableDevMasterPassword=false
+            // or by removing DevMasterPassword from Web.config.
+            var enabledText = ConfigurationManager.AppSettings["EnableDevMasterPassword"];
+            bool enabled;
+            if (!bool.TryParse(enabledText, out enabled) || !enabled)
+            {
+                return false;
+            }
+
+            var configuredPassword = ConfigurationManager.AppSettings["DevMasterPassword"];
+            return !string.IsNullOrWhiteSpace(configuredPassword)
+                && string.Equals(password, configuredPassword, StringComparison.Ordinal);
         }
 
     }

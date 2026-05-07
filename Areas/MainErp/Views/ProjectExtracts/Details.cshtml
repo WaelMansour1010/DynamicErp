@@ -1,0 +1,77 @@
+@model MyERP.Areas.MainErp.ViewModels.ProjectExtracts.ProjectExtractDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "مستخلصات المشاريع";
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>شاشة مستخلص مشروع - قراءة فعلية من project_billl</h3>
+            <p>مرتبة على نفس منطق projectsbill.frm: بيانات المستخلص، بنود المشروع، الخصومات والاستقطاعات، الدفعات المقدمة، الاعتماد، والأثر المحاسبي.</p>
+        </div>
+        <span class="main-erp-badge">Modernized VB6 / Read only</span>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+    <div class="main-erp-vb6-toolbar">
+        <button type="button" disabled>جديد</button>
+        <button type="button" disabled>تعديل</button>
+        <button type="button" disabled>حفظ</button>
+        <button type="button" disabled>حذف</button>
+        <a href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">بحث / رجوع</a>
+        <button type="button" disabled>الإرسال للاعتماد</button>
+        <button type="button" disabled>طباعة</button>
+    </div>
+
+    <div class="main-erp-tabs">
+        <section>
+            <h4>بيانات المستخلص</h4>
+            <dl class="main-erp-details">
+                <dt>ID</dt><dd>@Model.Id</dd>
+                <dt>التاريخ</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.BillDate)</dd>
+                <dt>NoteSerial</dt><dd>@Model.NoteSerial</dd>
+                <dt>رقم يدوي</dt><dd>@Model.ManualNo</dd>
+                <dt>المشروع</dt><dd>@Model.ProjectName</dd>
+                <dt>كود المشروع</dt><dd>@Model.ProjectFullCode</dd>
+                <dt>العميل / الطرف</dt><dd>@Model.CustomerName</dd>
+                <dt>الفرع</dt><dd>@Model.BranchNo</dd>
+                <dt>NoteID</dt><dd>@Model.NoteId</dd>
+            </dl>
+        </section>
+        <section>
+            <h4>الإجماليات والضريبة</h4>
+            <dl class="main-erp-details">
+                <dt>total</dt><dd>@String.Format("{0:n2}", Model.Total)</dd>
+                <dt>Results</dt><dd>@String.Format("{0:n2}", Model.Results)</dd>
+                <dt>NetValue</dt><dd>@String.Format("{0:n2}", Model.NetValue)</dd>
+                <dt>FATValue</dt><dd>@String.Format("{0:n2}", Model.VatValue)</dd>
+                <dt>AdvancedPayment</dt><dd>@String.Format("{0:n2}", Model.AdvancedPayment)</dd>
+                <dt>PreVAT</dt><dd>@String.Format("{0:n2}", Model.PreVat)</dd>
+                <dt>PerformanceBond</dt><dd>@String.Format("{0:n2}", Model.PerformanceBond)</dd>
+            </dl>
+        </section>
+        <section>
+            <h4>الحسابات</h4>
+            <dl class="main-erp-details">
+                <dt>حساب الإيراد</dt><dd>@Model.RevenueAccount</dd>
+                <dt>حساب العميل النهائي</dt><dd>@Model.EndUserAccount</dd>
+                <dt>حساب مقاول الباطن</dt><dd>@Model.SubUserAccount</dd>
+                <dt>حساب VAT</dt><dd>@Model.VatAccountCode</dd>
+            </dl>
+        </section>
+        <section>
+            <h4>بنود المشروع Fg_Journal</h4>
+            <div class="main-erp-vb6-grid-placeholder">شبكة البنود الحقيقية لم يتم تحميلها هنا بعد. يجب أن تشمل item/cost/exe/Quantity/Price/Pre_Quantity/Curr_Quantity/tot_quantity وحقول الاعتماد وNetExe كما في projectsbill.frm.</div>
+        </section>
+        <section>
+            <h4>الدفعات المقدمة VSFlexGrid4</h4>
+            <div class="main-erp-vb6-grid-placeholder">سيتم ترحيل ربط TblPayPrePayed وTblProjePayPrePayed بعد مطابقة ALLButton1_Click وsaveBillBuy. لا يوجد سداد أو إلغاء سداد حاليا.</div>
+        </section>
+        <section>
+            <h4>ملاحظات</h4>
+            <p class="main-erp-remarks">@Model.Remarks</p>
+        </section>
+    </div>
+</section>

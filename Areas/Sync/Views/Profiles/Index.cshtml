@@ -1,0 +1,27 @@
+@model IEnumerable<MyERP.Areas.Sync.ViewModels.ProfileViewModel>
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "الملفات التعريفية";
+}
+<div class="sync-grid two">
+@foreach (var profile in Model)
+{
+    <div class="sync-card profile-card">
+        <div class="card-title">@profile.ProfileName <span class="readonly-badge">قراءة فقط</span></div>
+        <div class="profile-settings">
+            @foreach (var setting in profile.Settings)
+            {
+                <span class="module-pill @(setting.IsEnabled ? "enabled" : "disabled")">@setting.SettingKey = @setting.SettingValue</span>
+            }
+            @if (!profile.Settings.Any())
+            {
+                <div class="empty-state">لم يتم تعريف إعدادات في Sync_Config لهذا الملف.</div>
+            }
+        </div>
+        @foreach (var warning in profile.Warnings)
+        {
+            <div class="profile-warning">@warning</div>
+        }
+    </div>
+}
+</div>

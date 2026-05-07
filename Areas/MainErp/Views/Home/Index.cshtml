@@ -1,0 +1,24 @@
+@model MyERP.Areas.MainErp.ViewModels.MainErpDashboardViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "Main ERP Migration";
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>بداية ترحيل النظام الرئيسي</h3>
+            <p>هذه مساحة مستقلة للترحيل ولا تعرض إلا وظائف النظام الرئيسي التي تم اعتمادها.</p>
+        </div>
+        <span class="main-erp-badge">Foundation only</span>
+    </div>
+    <div class="main-erp-module-grid">
+        @foreach (var module in Model.Sections)
+        {
+            <a class="main-erp-module" href="@module.Url">
+                <span>@module.Title</span>
+                <strong>@module.ArabicTitle</strong>
+                <small>@module.Status</small>
+            </a>
+        }
+    </div>
+</section>

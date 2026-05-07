@@ -114,6 +114,14 @@
                     <span>البيان</span>
                     <input type="text" id="entryDescription" placeholder="اكتب بيان القيد" />
                 </label>
+                <label class="erp-field">
+                    <span>مصدر القيد الآلي</span>
+                    <input type="text" id="autoSourceDisplay" readonly />
+                </label>
+                <label class="erp-field">
+                    <span>السند الأصلي</span>
+                    <button type="button" class="erp-btn erp-btn-secondary" id="openAutoSourceBtn" style="display:none">فتح السند الأصلي</button>
+                </label>
                 <label class="erp-field" id="adminPasswordWrap" style="display:none">
                     <span>كلمة مرور المدير العام</span>
                     <input type="password" id="adminPassword" autocomplete="off" />
@@ -234,6 +242,18 @@
                                 <th>التاريخ</th>
                                 <th>الفرع</th>
                                 <th>النوع</th>
+                                <th>مصدر القيد الآلي</th>
+                                <th>البيان</th>
+                                <th>مدين</th>
+                                <th>دائن</th>
+                                <th>السند الأصلي</th>
+                                <th>إجراء</th>
+                            </tr>
+                            <tr class="is-hidden-ui">
+                                <th>رقم القيد</th>
+                                <th>التاريخ</th>
+                                <th>الفرع</th>
+                                <th>النوع</th>
                                 <th>البيان</th>
                                 <th>مدين</th>
                                 <th>دائن</th>
@@ -241,7 +261,7 @@
                             </tr>
                         </thead>
                         <tbody id="journalSearchBody">
-                            <tr><td colspan="8" class="empty-cell">اضغط بحث لعرض القيود.</td></tr>
+                            <tr><td colspan="10" class="empty-cell">اضغط بحث لعرض القيود.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -300,7 +320,7 @@
                 byId("searchAccountCodes").value = "";
                 var summary = byId("journalAccountTreeSummary");
                 if (summary) { summary.textContent = "لم يتم اختيار حسابات"; }
-                byId("journalSearchBody").innerHTML = "<tr><td colspan='8' class='empty-cell'>اضغط بحث لعرض القيود.</td></tr>";
+                byId("journalSearchBody").innerHTML = "<tr><td colspan='10' class='empty-cell'>اضغط بحث لعرض القيود.</td></tr>";
             }
 
             function loadAccountOptions(term) {
@@ -367,6 +387,9 @@
                 byId("noteId").value = "";
                 byId("noteSerialDisplay").value = "";
                 byId("entryDescription").value = "";
+                byId("autoSourceDisplay").value = "";
+                byId("openAutoSourceBtn").style.display = "none";
+                byId("openAutoSourceBtn").removeAttribute("data-url");
                 byId("adminPassword").value = "";
                 byId("adminPasswordWrap").style.display = "none";
                 byId("entryKindLabel").textContent = "قيد يدوي جديد";
@@ -419,10 +442,11 @@
                     var body = byId("journalSearchBody");
                     body.innerHTML = "";
                     if (!data.rows || data.rows.length === 0) {
-                        body.innerHTML = "<tr><td colspan='8' class='empty-cell'>لا توجد قيود مطابقة.</td></tr>";
+                        body.innerHTML = "<tr><td colspan='10' class='empty-cell'>لا توجد قيود مطابقة.</td></tr>";
                     } else {
                         data.rows.forEach(function (row) {
-                            body.innerHTML += "<tr><td>" + escapeHtml(row.NoteSerial || row.NoteId) + "</td><td>" + dateText(row.NoteDate) + "</td><td>" + escapeHtml(row.BranchName) + "</td><td>" + escapeHtml(row.EntryKind) + "</td><td>" + escapeHtml(row.Description) + "</td><td>" + fmt(row.DebitTotal) + "</td><td>" + fmt(row.CreditTotal) + "</td><td><button type='button' class='erp-btn erp-btn-secondary open-entry' data-id='" + row.NoteId + "'>اختيار</button></td></tr>";
+                            var sourceButton = row.AutoSourceUrl ? "<button type='button' class='erp-btn erp-btn-secondary open-auto-source' data-url='" + escapeHtml(row.AutoSourceUrl) + "'>فتح</button>" : "";
+                            body.innerHTML += "<tr><td>" + escapeHtml(row.NoteSerial || row.NoteId) + "</td><td>" + dateText(row.NoteDate) + "</td><td>" + escapeHtml(row.BranchName) + "</td><td>" + escapeHtml(row.EntryKind) + "</td><td>" + escapeHtml(row.AutoSourceName || row.NoteTypeName || "") + "</td><td>" + escapeHtml(row.Description) + "</td><td>" + fmt(row.DebitTotal) + "</td><td>" + fmt(row.CreditTotal) + "</td><td>" + sourceButton + "</td><td><button type='button' class='erp-btn erp-btn-secondary open-entry' data-id='" + row.NoteId + "'>اختيار</button></td></tr>";
                         });
                     }
                     msg("", false);
@@ -444,6 +468,13 @@
                         byId("noteDate").value = toInputDate(entry.NoteDate);
                         byId("branchId").value = entry.BranchId || "";
                         byId("entryDescription").value = entry.Description || "";
+                        byId("autoSourceDisplay").value = entry.AutoSourceName || entry.NoteTypeName || "";
+                        byId("openAutoSourceBtn").style.display = entry.AutoSourceUrl ? "" : "none";
+                        if (entry.AutoSourceUrl) {
+                            byId("openAutoSourceBtn").setAttribute("data-url", entry.AutoSourceUrl);
+                        } else {
+                            byId("openAutoSourceBtn").removeAttribute("data-url");
+                        }
                         byId("entryKindLabel").textContent = entry.EntryKind || "";
                         byId("journalStatusBadge").textContent = entry.EntryKind || "تم فتح القيد";
                         byId("adminPasswordWrap").style.display = loadedIsManual ? "none" : "";
@@ -489,8 +520,10 @@
                 if (event.target.id === "newJournalBtn") { clearForm(); }
                 if (event.target.id === "addLineBtn") { addLine({}); }
                 if (event.target.id === "saveJournalBtn") { save(); }
+                if (event.target.id === "openAutoSourceBtn" && event.target.getAttribute("data-url")) { window.open(event.target.getAttribute("data-url"), "_blank"); }
                 if (event.target.classList.contains("remove-line")) { event.target.closest("tr").remove(); updateTotals(); }
                 if (event.target.classList.contains("open-entry")) { openEntry(event.target.getAttribute("data-id")); }
+                if (event.target.classList.contains("open-auto-source")) { window.open(event.target.getAttribute("data-url"), "_blank"); }
             });
             document.addEventListener("keydown", function (event) {
                 if (event.key === "Escape" && byId("journalBrowseModal").classList.contains("is-open")) {

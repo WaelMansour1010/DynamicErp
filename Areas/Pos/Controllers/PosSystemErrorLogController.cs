@@ -65,6 +65,40 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
+        [HttpGet]
+        public JsonResult SearchSaveAttempts(PosSaveAttemptSearchRequest request)
+        {
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.Charset = "utf-8";
+
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                Response.TrySkipIisCustomErrors = true;
+                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!IsAdmin(context))
+            {
+                Response.StatusCode = 403;
+                Response.TrySkipIisCustomErrors = true;
+                return Json(new { success = false, message = "ليست لديك صلاحية استعراض سجل أخطاء النظام" }, JsonRequestBehavior.AllowGet);
+            }
+
+            try
+            {
+                var result = _repository.SearchPosSaveAttempts(request);
+                return Json(new { success = true, data = result.Items, summary = result.Summary, count = result.Count }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                Response.TrySkipIisCustomErrors = true;
+                return Json(new { success = false, message = "تعذر تحميل محاولات حفظ POS", details = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         private static bool IsAdmin(PosUserContext context)
         {
             return context != null && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess);

@@ -179,6 +179,47 @@
         .stock-table .serial-cell { width: 210px; }
         .stock-table .remove-cell { text-align: center; width: 70px; }
 
+        .serial-input-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .serial-input-row .row-serial {
+            flex: 1 1 auto;
+        }
+
+        .serial-input-row .serial-picker-open {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .grid-pager {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #d8dee6;
+            border-top: 0;
+            border-radius: 0 0 6px 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            padding: 10px 12px;
+        }
+
+        .grid-page-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .grid-page-info,
+        .grid-page-current {
+            color: #475467;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
         .serial-badge {
             color: #b54708;
             display: none;
@@ -320,6 +361,40 @@
             margin-top: 8px;
         }
 
+        .index-filter-row {
+            direction: rtl;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .index-filter-row > [class*="col-"] {
+            float: none;
+        }
+
+        .filter-from { order: 1; }
+        .filter-to { order: 2; }
+        .filter-branch { order: 3; }
+        .filter-number { order: 4; }
+        .filter-source-store { order: 5; }
+        .filter-destination-store { order: 6; }
+        .filter-item { order: 7; }
+
+        .transfer-header-row {
+            direction: rtl;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .transfer-header-row > [class*="col-"] {
+            float: none;
+        }
+
+        .transfer-voucher { order: 1; }
+        .transfer-date { order: 2; }
+        .transfer-branch { order: 3; }
+        .transfer-source-store { order: 4; }
+        .transfer-destination-store { order: 5; }
+
         .index-table-wrap {
             border: 1px solid #d8dee6;
             border-radius: 6px;
@@ -349,6 +424,83 @@
             display: none !important;
         }
 
+        .serial-picker-overlay {
+            align-items: center;
+            background: rgba(15, 23, 42, .42);
+            bottom: 0;
+            display: none;
+            justify-content: center;
+            left: 0;
+            padding: 18px;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 1200;
+        }
+
+        .serial-picker-overlay.is-open {
+            display: flex;
+        }
+
+        .serial-picker-dialog {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 24px 64px rgba(15, 23, 42, .22);
+            max-height: 92vh;
+            max-width: 980px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .serial-picker-header,
+        .serial-picker-footer {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            padding: 12px 14px;
+        }
+
+        .serial-picker-header {
+            border-bottom: 1px solid #d8dee6;
+        }
+
+        .serial-picker-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .serial-picker-body {
+            max-height: calc(92vh - 156px);
+            overflow: auto;
+            padding: 14px;
+        }
+
+        .serial-picker-filters {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 12px;
+        }
+
+        .serial-picker-table {
+            margin: 0;
+            min-width: 720px;
+        }
+
+        .serial-picker-footer {
+            background: #f8fafc;
+            border-top: 1px solid #d8dee6;
+        }
+
+        .serial-picker-status {
+            color: #475467;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
         @@media (max-width: 992px) {
             .stock-title,
             .stock-toolbar,
@@ -358,7 +510,8 @@
             }
 
             .import-card,
-            .summary-strip {
+            .summary-strip,
+            .serial-picker-filters {
                 grid-template-columns: 1fr;
             }
         }
@@ -369,9 +522,11 @@
          data-lookup-url="@Url.Action("Lookup", "StockTransfer", new { area = "Pos" })"
          data-stores-url="@Url.Action("Stores", "StockTransfer", new { area = "Pos" })"
          data-import-url="@Url.Action("ImportSerials", "StockTransfer", new { area = "Pos" })"
+         data-available-serials-url="@Url.Action("AvailableSerials", "StockTransfer", new { area = "Pos" })"
          data-import-excel-url="@Url.Action("ImportExcel", "StockTransfer", new { area = "Pos" })"
          data-save-url="@Url.Action("Save", "StockTransfer", new { area = "Pos" })"
-         data-search-url="@Url.Action("Search", "StockTransfer", new { area = "Pos" })">
+         data-search-url="@Url.Action("Search", "StockTransfer", new { area = "Pos" })"
+         data-get-url="@Url.Action("Get", "StockTransfer", new { area = "Pos" })">
         <div class="stock-shell">
             <nav class="pos-breadcrumb" aria-label="breadcrumb">
                 <a href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })" target="_top">لوحة التحكم</a>
@@ -389,26 +544,26 @@
                     </div>
                     <button type="button" class="btn btn-success" id="stockAddNewBtn">إضافة سند تحويل جديد</button>
                 </div>
-                <div class="row">
-                    <div class="col-md-3 col-sm-6">
+                <div class="row index-filter-row">
+                    <div class="col-md-3 col-sm-6 filter-number">
                         <div class="form-group">
                             <label>رقم السند</label>
                             <input type="text" id="stockSearchVoucher" class="form-control" placeholder="رقم سند التحويل" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 filter-from">
                         <div class="form-group">
                             <label>من تاريخ</label>
                             <input type="date" id="stockSearchFrom" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 filter-to">
                         <div class="form-group">
                             <label>إلى تاريخ</label>
                             <input type="date" id="stockSearchTo" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 filter-branch">
                         <div class="form-group">
                             <label>الفرع</label>
                             <select id="stockSearchBranch" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
@@ -423,7 +578,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 filter-source-store">
                         <div class="form-group">
                             <label>المخزن المحول منه</label>
                             <select id="stockSearchSourceStore" class="form-control">
@@ -438,7 +593,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 filter-destination-store">
                         <div class="form-group">
                             <label>المخزن المحول إليه</label>
                             <select id="stockSearchDestinationStore" class="form-control">
@@ -453,7 +608,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 filter-item">
                         <div class="form-group">
                             <label>الصنف / السيريال</label>
                             <input type="text" id="stockSearchItem" class="form-control" placeholder="اسم الصنف أو السيريال" />
@@ -494,20 +649,20 @@
                     <span>POS Stock Transfer</span>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-2 col-sm-6">
+                <div class="row transfer-header-row">
+                    <div class="col-md-2 col-sm-6 transfer-voucher">
                         <div class="form-group">
                             <label>سند التحويل</label>
                             <input type="text" id="transferVoucherNumber" class="form-control" placeholder="يولد تلقائياً" />
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-6">
+                    <div class="col-md-2 col-sm-6 transfer-date">
                         <div class="form-group">
                             <label>التاريخ</label>
                             <input type="date" id="transferDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-6">
+                    <div class="col-md-2 col-sm-6 transfer-branch">
                         <div class="form-group">
                             <label>الفرع</label>
                             <select id="transferBranchId" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
@@ -521,7 +676,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 transfer-source-store">
                         <div class="form-group">
                             <label>المخزن المحول منه</label>
                             <select id="transferSourceStoreId" class="form-control">
@@ -535,7 +690,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-md-3 col-sm-6 transfer-destination-store">
                         <div class="form-group">
                             <label>المخزن المحول إليه</label>
                             <select id="transferDestinationStoreId" class="form-control">
@@ -564,6 +719,7 @@
                         <div class="stock-help">أضف صفاً، اختر الصنف، ثم أدخل الكمية أو السيريال. الأصناف المسلسلة كميتها دائماً 1.</div>
                     </div>
                     <div class="grid-actions">
+                        <button type="button" class="btn btn-primary" id="openSelectedSerialPickerBtn">اختيار سيريالات للصنف المحدد</button>
                         <button type="button" class="btn btn-default" id="addTransferRowBtn">إضافة صنف</button>
                     </div>
                 </div>
@@ -583,6 +739,7 @@
                         <tbody id="transferItemsBody"></tbody>
                     </table>
                 </div>
+                <div id="transferItemsPager" class="grid-pager"></div>
             </section>
 
             <section class="stock-card">
@@ -659,8 +816,72 @@
             </section>
             </div>
         </div>
+
+        <div class="serial-picker-overlay" id="serialPickerOverlay" aria-hidden="true">
+            <div class="serial-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="serialPickerTitle">
+                <div class="serial-picker-header">
+                    <div>
+                        <h3 id="serialPickerTitle">اختيار السيريالات المتاحة</h3>
+                        <div class="stock-help" id="serialPickerItemName"></div>
+                    </div>
+                    <button type="button" class="btn btn-default" id="serialPickerCloseBtn">إغلاق</button>
+                </div>
+                <div class="serial-picker-body">
+                    <div class="serial-picker-filters">
+                        <div>
+                            <label>من سيريال</label>
+                            <input type="text" class="form-control" id="serialPickerFrom" />
+                        </div>
+                        <div>
+                            <label>إلى سيريال</label>
+                            <input type="text" class="form-control" id="serialPickerTo" />
+                        </div>
+                        <div>
+                            <label>بحث داخل السيريال</label>
+                            <input type="text" class="form-control" id="serialPickerTerm" />
+                        </div>
+                        <div>
+                            <label>حجم الصفحة</label>
+                            <select class="form-control" id="serialPickerPageSize">
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid-actions" style="margin-bottom:10px;">
+                        <button type="button" class="btn btn-primary" id="serialPickerSearchBtn">بحث</button>
+                        <button type="button" class="btn btn-default" id="serialPickerSelectPageBtn">اختيار الصفحة</button>
+                        <button type="button" class="btn btn-default" id="serialPickerSelectAllBtn">اختيار كل النتائج</button>
+                    </div>
+                    <div class="items-scroll">
+                        <table class="table table-bordered serial-picker-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:44px;"><input type="checkbox" id="serialPickerCheckAll" /></th>
+                                    <th>السيريال</th>
+                                    <th>الصنف</th>
+                                    <th>المتاح</th>
+                                </tr>
+                            </thead>
+                            <tbody id="serialPickerBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="serial-picker-footer">
+                    <div class="serial-picker-status" id="serialPickerStatus"></div>
+                    <div class="grid-page-actions">
+                        <button type="button" class="btn btn-default btn-sm" id="serialPickerPrevBtn">السابق</button>
+                        <span class="grid-page-current" id="serialPickerPageInfo"></span>
+                        <button type="button" class="btn btn-default btn-sm" id="serialPickerNextBtn">التالي</button>
+                        <button type="button" class="btn btn-success" id="serialPickerInsertBtn">إدراج المحدد</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="@Url.Content("~/Areas/Pos/Scripts/stock-transfer.js")"></script>
+    <script src="@Url.Content("~/Areas/Pos/Scripts/stock-transfer.js")?v=20260506-serial-picker-3"></script>
 </body>
 </html>

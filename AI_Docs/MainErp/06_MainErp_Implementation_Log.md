@@ -1,0 +1,232 @@
+# MainErp Implementation Log
+
+## 2026-05-06
+
+Created phase 1 MainErp foundation:
+
+- New MVC area under `Areas\MainErp`.
+- Area routes for `/MainErp`, `/MainErp/LC`, and `/MainErp/ProjectExtracts`.
+- Authorized skeleton controllers and view models.
+- Isolated MainErp layout, CSS, landing page, LC page, and Project Extracts page.
+- Placeholder SQL scripts under `Areas\MainErp\Sql`.
+- Migration documentation under `AI_Docs\MainErp`.
+
+Kishny/POS isolation:
+
+- No files under `Areas\Pos` were modified.
+- No POS SQL scripts were modified.
+- No Kishny legacy files under `SatriahMain\Cayshny` were modified.
+- No `AllScripts.sql` changes were made.
+
+Next step:
+
+- Review LC and Project Extracts analysis with live schema confirmation before implementing business logic.
+
+## 2026-05-06 Phase 3 Core Accounting Foundation
+
+Created MainErp-local infrastructure only under `Areas\MainErp`:
+
+- explicit DB connection factory and unit-of-work transaction wrapper;
+- manual ID generation abstraction for known legacy manual-id targets;
+- account code preview service;
+- note/voucher numbering preview service;
+- voucher models and posting engine with preview validation;
+- posting preview demo route `/MainErp/Accounting/PreviewTest`;
+- read-only LC list/details;
+- read-only Project Extract list/details;
+- lightweight audit logger hook.
+
+Architecture decisions:
+
+- ADO.NET was used instead of EF for transaction and SQL Server 2012 compatibility.
+- Real manual ID allocation requires an active transaction and application lock.
+- Voucher posting validates balance, debit/credit semantics, account presence, and zero-value rejection before writing.
+- Read-only repositories catch missing legacy schema and show warnings rather than crashing against the current `MyErp` web database.
+
+Unresolved risks and TODOs:
+
+- Full VB6 `new_id`, `Notes_coding`, `Voucher_coding`, `sanad_numbering`, and `get_opening_balance_voucher_id` behavior still require final mapping.
+- Account creation remains disabled; only dry-run child code preview exists.
+- No final LC or Project Extract save/post workflow is implemented.
+- External VB6 writers during migration can still affect manual ID allocation unless deployment locking is coordinated.
+
+Safety:
+
+- No MainErp code was placed under `Areas\Pos`.
+- No POS SQL was modified.
+- `AllScripts.sql` was not modified.
+
+## 2026-05-06 Kishny Reuse Review And Safe First Import
+
+Reviewed POS/Kishny web modules as reference only:
+
+- purchases;
+- stock transfers;
+- journal entries;
+- accounting reports;
+- sales reports;
+- dashboard and financial intelligence pages.
+
+Created reuse planning documents:
+
+- `20_KishnyReusableModulesInventory.md`
+- `21_DashboardReusePlan.md`
+- `22_ReportReusePlan.md`
+
+Implemented MainErp-owned first wave:
+
+- dashboard shell at `/MainErp/Dashboard`;
+- accounting reports shell at `/MainErp/AccountingReports`;
+- sales reports shell at `/MainErp/SalesReports`;
+- purchases and stock-transfer reserved routes with no save/import behavior;
+- journal-entry read-only search at `/MainErp/JournalEntries`.
+
+Architecture decisions:
+
+- No POS controller, repository, view, JavaScript, SQL script, or permission name was copied directly into MainErp.
+- Journal entries use a new MainErp repository against `DOUBLE_ENTREY_VOUCHERS`, `Notes`, and `ACCOUNTS`.
+- Purchase and stock-transfer write/import behavior remains excluded because the current POS implementation is coupled to POS session, branch defaults, serial imports, and POS permissions.
+- Accounting and sales reports are shells until stored procedures are reviewed against `AllScripts.sql` and live schema.
+
+Safety:
+
+- No `Areas\Pos` files were modified for this import.
+- No POS SQL was modified.
+- No Kishny/Cayshny files were modified.
+- `AllScripts.sql` was not modified.
+
+## 2026-05-06 MainErp Connection Boundary
+
+Formalized MainErp database separation:
+
+- `MainErp_ConnectionString` is the preferred MainErp connection.
+- `MyERP_ConnectionString` remains the original large web connection.
+- POS/Kishny connection strings remain unchanged.
+- `MainErpDbConnectionFactory` now logs a warning if `MainErp_ConnectionString` is missing and falls back to `MyERP_ConnectionString`.
+
+Created:
+
+- `25_ConnectionAndRunModes.md`
+
+Validation:
+
+- MainErp repositories and accounting services use `MainErpDbConnectionFactory` / `IMainErpDbConnectionFactory`.
+- `Areas\Pos` has no references to `MainErp_ConnectionString`.
+- `AllScripts.sql` was not modified.
+- MainErp pages do not reference card, token, KYC, commission, cashier closing, or POS session restore behavior.
+
+## 2026-05-06 Working Read-Only Reports And Eng Verification
+
+Implemented the first working read-only report wave:
+
+- `/MainErp/AccountingReports/JournalEntries`
+- `/MainErp/AccountingReports/AccountMovement`
+- `/MainErp/SalesReports/SalesSummary`
+
+Created:
+
+- `Areas\MainErp\Repositories\Reports\AccountingReportRepository.cs`
+- `Areas\MainErp\Repositories\Reports\SalesReportRepository.cs`
+- `Areas\MainErp\ViewModels\Reports\ReportRowViewModels.cs`
+- report views under `Areas\MainErp\Views\AccountingReports` and `Areas\MainErp\Views\SalesReports`
+- `23_WorkingReadOnlyReports.md`
+- `24_Eng_TestResults_LC_ProjectExtracts.md`
+
+Architecture decisions:
+
+- Reports use MainErp-owned repositories and parameterized read-only SQL.
+- No stored procedures were created or changed.
+- MainErp now checks `MainErp_ConnectionString` first and falls back to `MyERP_ConnectionString`; this allows local testing against the representative `Eng` database without changing POS.
+- Journal-entry direction was corrected to `0 = debit` and `1 = credit` after checking `Eng`.
+
+Eng verification:
+
+- LC list/details tested with sample `TblLCID = 197`.
+- Project Extract list/details tested with sample `id = 3449`.
+- Journal entries, account movement, and sales summary report SQL smoke-tested against `Eng`.
+
+Remaining risks:
+
+- Account movement opening balance is not calculated yet.
+- Sales summary uses conservative `Transaction_Type IN (22, 29)` until final sales type mapping is approved.
+- Browser route checks were unauthenticated and returned expected login redirects; authenticated UI testing is still needed.
+
+Safety:
+
+- No `Areas\Pos` files were modified for these reports.
+- No POS SQL was modified.
+- No Kishny/Cayshny files were modified.
+- `AllScripts.sql` was not modified.
+
+## 2026-05-07 Course Correction - Real VB6 Screen Migration
+
+The migration direction was corrected:
+
+- VB6 active forms are now the primary source of truth.
+- Kishny/POS web work remains a reusable secondary reference only.
+- Generic shells and theoretical architecture must not drive LC or Project Extract behavior.
+- MainErp must feel like the original VB6 ERP modernized for web.
+
+Created real screen mapping documents:
+
+- `26_RealScreenMapping_LC.md`
+- `27_RealScreenMapping_ProjectExtracts.md`
+
+Real migrated behavior currently present:
+
+- LC list reads real `TblLC` data.
+- LC details reads real `TblLC` header/account values.
+- Project Extract list reads real `project_billl` data.
+- Project Extract details reads real `project_billl` header/totals/account values.
+- MainErp uses a standalone layout and no longer visually inherits the old web layout.
+
+Corrections made in MainErp UI:
+
+- LC list/details labels were changed from generic English placeholders toward Arabic VB6 terminology.
+- LC details now exposes the real `FrmLC.frm` tab structure:
+  - `البيانات الاساسية`
+  - `مصاريف الفتح`
+  - `الفواتير المالية`
+  - `revised bond amount`
+  - `قروض الاعتمادات`
+  - `Refinance`
+  - `acceptance advice`
+- LC details shows the real workflow buttons as disabled read-only controls: new/edit/save/delete/search/create voucher/print voucher.
+- Project Extract details now exposes the real `projectsbill.frm` sections:
+  - بيانات المستخلص
+  - الإجماليات والضريبة
+  - الحسابات
+  - بنود المشروع `Fg_Journal`
+  - الدفعات المقدمة `VSFlexGrid4`
+  - ملاحظات
+- Project Extract details shows the real workflow buttons as disabled read-only controls: new/edit/save/delete/search/send to approval/print.
+
+Placeholders still present and explicitly marked:
+
+- LC grids are not loaded yet: `GrdMargin`, `GrdBondHistory`, `GrdMargin2`, `GrdMargin3`, `GrdMargin4`.
+- Project Extract lines are not loaded yet from `project_bill_details`.
+- Project advance/prepaid allocations are not loaded yet from `TblPayPrePayed` / `TblProjePayPrePayed`.
+- Approval grid/status is not loaded yet from `ApprovalData`.
+- No save/edit/delete/posting behavior is enabled.
+- No account creation is enabled.
+- No `Notes`, `Notes1`, `DOUBLE_ENTREY_VOUCHERS`, or `DOUBLE_ENTREY_VOUCHERS1` rows are created.
+
+Kishny/POS reuse status:
+
+- POS modules were previously analyzed but not imported deeply enough.
+- Next reuse work must import/adapt actual working MainErp-safe modules, starting with read-only/reporting behavior that is generic and removing POS session/permission/branch forcing.
+- POS-specific cards, KYC, commissions, cashier closing, POS receipt, POS session restore, and POS health widgets remain excluded.
+
+Immediate next implementation targets:
+
+1. LC: load the real read-only LC grids from `TBLLCHistory`, `TBLLCMargin`, `TBLLCMargin2`, and `tblLCOpenB`.
+2. Project Extracts: load `project_bill_details` with `Fg_Journal` column names and previous/current/cumulative quantities.
+3. Project Extracts: load advance-payment allocations from `TblPayPrePayed` and `TblProjePayPrePayed`.
+4. Kishny reuse: select one safe working module, preferably accounting report/journal search behavior, and adapt the actual UI/query behavior into MainErp without POS dependencies.
+
+Safety:
+
+- No `Areas\Pos` files were modified by this correction.
+- No POS SQL was modified.
+- No Kishny/Cayshny legacy files were modified.
+- `AllScripts.sql` was not modified.

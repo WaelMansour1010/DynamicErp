@@ -16,6 +16,10 @@
     var amountCommitTimer = null;
     var todayInvoicesTimer = null;
     var todayInvoicesCache = [];
+    var salesIndexCache = [];
+    var salesBranchCache = null;
+    var salesBranchLoading = false;
+    var posEntryInitialized = false;
     var currentContext = null;
     var serviceLoadSequence = 0;
     var primaryServiceCache = {};
@@ -210,6 +214,7 @@
             CanPrintKycAcknowledgment: readBool(data.CanPrintKycAcknowledgment),
             CanPrintKycCard: readBool(data.CanPrintKycCard),
             CanEditKyc: readBool(data.CanEditKyc),
+            CanTeller: readBool(data.CanTeller),
             CanEditInvoice: readBool(data.CanEditInvoice),
             IsFullAccess: readBool(data.IsFullAccess),
             CanChangeDefaults: readBool(data.CanChangeDefaults)
@@ -238,6 +243,7 @@
             CanPrintKycAcknowledgment: getPageValue("data-can-print-kyc-acknowledgment"),
             CanPrintKycCard: getPageValue("data-can-print-kyc-card"),
             CanEditKyc: getPageValue("data-can-edit-kyc"),
+            CanTeller: getPageValue("data-can-teller"),
             CanEditInvoice: getPageValue("data-can-edit-invoice"),
             IsFullAccess: getPageValue("data-is-full-access"),
             CanChangeDefaults: getPageValue("data-can-change-defaults")
@@ -1331,6 +1337,7 @@
                 if (status >= 200 && status < 300 && data && data.success) {
                     var successMessage = "تم الحفظ التجريبي بنجاح<br />رقم الفاتورة: " + (data.noteSerial1 || "") + "<br />رقم الحركة: " + (data.transactionId || "");
                     lastSavedTransactionId = parseInt(data.transactionId, 10) || null;
+                    if (byId("invoiceNumber")) { byId("invoiceNumber").value = data.noteSerial1 || ""; }
                     enablePrintIfAllowed();
                     loadEmployeeBalances();
                     loadTodayInvoices();
@@ -1456,6 +1463,177 @@
             '<div><strong>العميل:</strong> ' + escapeHtml(invoice.CustomerName || "") + '</div>' +
             '<div><strong>التليفون:</strong> ' + escapeHtml(invoice.CustomerPhone || "") + '</div>' +
             '<div><strong>الصافي:</strong> ' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</div>';
+    }
+
+    function salesIndexFirst() {
+        return readBool(getPageValue("data-sales-index-first"));
+    }
+
+    function showSalesIndex() {
+        var indexPanel = byId("salesIndexPanel");
+        var entryPanel = byId("salesEntryPanel");
+        if (indexPanel) { indexPanel.classList.remove("is-hidden-ui"); }
+        if (entryPanel) { entryPanel.classList.add("is-hidden-ui"); }
+    }
+
+    function initializePosEntry(openKyc) {
+        if (posEntryInitialized) { return; }
+        posEntryInitialized = true;
+        loadContextControls();
+        preloadCommissionSettings(function () {
+            var initialMode = openKyc ? "card" : "cash-in";
+            setMode(initialMode);
+            applyPermissions();
+            calculateTotals();
+            if (initialMode === "card") {
+                openKycModal();
+            }
+            setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", !commissionsReady);
+        });
+    }
+
+    function showSalesEntry() {
+        var indexPanel = byId("salesIndexPanel");
+        var entryPanel = byId("salesEntryPanel");
+        if (indexPanel) { indexPanel.classList.add("is-hidden-ui"); }
+        if (entryPanel) { entryPanel.classList.remove("is-hidden-ui"); }
+        initializePosEntry(queryValue("openKyc") === "true");
+    }
+
+    function initSalesIndexFilters() {
+        var from = byId("salesSearchFromDate");
+        var to = byId("salesSearchToDate");
+        var today = localIsoDate();
+        if (from && !from.value) { from.value = today; }
+        if (to && !to.value) { to.value = today; }
+    }
+
+    function closeSalesBranchResults() {
+        var results = byId("salesSearchBranchResults");
+        if (results) {
+            results.classList.remove("is-open");
+            results.innerHTML = "";
+        }
+    }
+
+    function setSalesBranch(branchId, branchName) {
+        if (byId("salesSearchBranchId")) { byId("salesSearchBranchId").value = branchId || ""; }
+        if (byId("salesSearchBranchText")) { byId("salesSearchBranchText").value = branchName || ""; }
+        closeSalesBranchResults();
+    }
+
+    function renderSalesBranchResults(term) {
+        var results = byId("salesSearchBranchResults");
+        if (!results) { return; }
+        var value = (term || "").trim().toLowerCase();
+        var branches = salesBranchCache || [];
+        var filtered = [];
+        for (var i = 0; i < branches.length; i++) {
+            var id = String(branches[i].BranchId || "");
+            var name = branches[i].BranchName || "";
+            if (!value || (id + " " + name).toLowerCase().indexOf(value) !== -1) {
+                filtered.push(branches[i]);
+            }
+            if (filtered.length >= 30) { break; }
+        }
+
+        if (!filtered.length) {
+            results.innerHTML = '<span class="lookup-row empty">لا توجد نتائج</span>';
+            results.classList.add("is-open");
+            return;
+        }
+
+        var html = "";
+        for (var j = 0; j < filtered.length; j++) {
+            html += '<button type="button" class="lookup-row" data-sales-branch-id="' + escapeHtml(filtered[j].BranchId) + '" data-sales-branch-name="' + escapeHtml(filtered[j].BranchName || "") + '">' +
+                '<strong>' + escapeHtml(filtered[j].BranchName || ("فرع " + filtered[j].BranchId)) + '</strong>' +
+                '<small>' + escapeHtml(filtered[j].BranchId || "") + '</small>' +
+                '</button>';
+        }
+        results.innerHTML = html;
+        results.classList.add("is-open");
+    }
+
+    function ensureSalesBranchesLoaded(callback) {
+        if (salesBranchCache) {
+            if (callback) { callback(); }
+            return;
+        }
+        if (salesBranchLoading) { return; }
+        salesBranchLoading = true;
+        requestJsonWithLoading("GET", getUrl("data-branches-url"), null, function (status, data) {
+            salesBranchLoading = false;
+            salesBranchCache = (status >= 200 && status < 300 && data && data.length) ? data : [];
+            if (callback) { callback(); }
+        }, "جاري تحميل الفروع...");
+    }
+
+    function renderSalesIndex(invoices, hasSearchTerm) {
+        var container = byId("salesIndexResults");
+        if (!container) { return; }
+        container.innerHTML = "";
+
+        if (!invoices || !invoices.length) {
+            container.innerHTML = '<div class="empty-state">' + (hasSearchTerm ? "لا توجد نتائج مطابقة" : "لا توجد فواتير للعرض") + '</div>';
+            return;
+        }
+
+        var html = '<div class="responsive-table"><table class="pos-table sales-index-table"><thead><tr>' +
+            '<th>رقم الفاتورة</th><th>رقم الحركة</th><th>النوع</th><th>التاريخ</th><th>الوقت</th><th>العميل</th><th>الهاتف</th><th>الصافي</th><th>إجراء</th>' +
+            '</tr></thead><tbody>';
+        for (var i = 0; i < invoices.length; i++) {
+            var invoice = invoices[i] || {};
+            html += '<tr>' +
+                '<td>' + escapeHtml(invoice.NoteSerial1 || "") + '</td>' +
+                '<td>' + escapeHtml(invoice.Transaction_ID || "") + '</td>' +
+                '<td>' + escapeHtml(invoice.ServiceType || "") + '</td>' +
+                '<td>' + escapeHtml(invoice.TransactionDate || "") + '</td>' +
+                '<td>' + escapeHtml(invoice.TransactionTime || "") + '</td>' +
+                '<td>' + escapeHtml(invoice.CustomerName || "") + '</td>' +
+                '<td>' + escapeHtml(invoice.CustomerPhone || "") + '</td>' +
+                '<td>' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</td>' +
+                '<td><button type="button" class="secondary-action compact-action" data-sales-open="' + escapeHtml(invoice.Transaction_ID || "") + '">عرض</button></td>' +
+                '</tr>';
+        }
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    function loadSalesIndexInvoices() {
+        var url = getUrl("data-today-invoices-url");
+        var termInput = byId("salesSearchText");
+        var typeFilter = byId("salesSearchType");
+        var fromDateInput = byId("salesSearchFromDate");
+        var toDateInput = byId("salesSearchToDate");
+        var branchInput = byId("salesSearchBranchId");
+        var term = termInput ? termInput.value.trim() : "";
+        var operationType = typeFilter ? typeFilter.value : "";
+        var fromDate = fromDateInput ? fromDateInput.value : "";
+        var toDate = toDateInput ? toDateInput.value : "";
+        var branchId = branchInput ? branchInput.value : "";
+        var message = byId("salesIndexMessage");
+        if (!url) { return; }
+
+        if (term && term.length < 2) {
+            if (message) { message.innerText = "اكتب حرفين على الأقل للبحث."; }
+            return;
+        }
+
+        if (message) { message.innerText = ""; }
+        if (byId("salesIndexResults")) { byId("salesIndexResults").innerHTML = '<div class="empty-state">جاري البحث...</div>'; }
+        requestJsonWithLoading("GET", url + "?term=" + encodeURIComponent(term) +
+            "&operationType=" + encodeURIComponent(operationType || "") +
+            "&fromDate=" + encodeURIComponent(fromDate || "") +
+            "&toDate=" + encodeURIComponent(toDate || "") +
+            "&branchId=" + encodeURIComponent(branchId || ""), null, function (status, data) {
+            if (status < 200 || status >= 300 || !data) {
+                if (message) { message.innerText = "تعذر تحميل الفواتير."; }
+                renderSalesIndex([], !!term);
+                return;
+            }
+            salesIndexCache = data;
+            renderSalesIndex(data, !!term);
+        }, "جاري تحميل الفواتير...");
     }
 
     function setTodayInvoicesCollapsed(collapsed, persist) {
@@ -1611,6 +1789,23 @@
         return text;
     }
 
+    function firstTextValue() {
+        for (var i = 0; i < arguments.length; i++) {
+            if (arguments[i] !== null && arguments[i] !== undefined) {
+                var value = String(arguments[i]).trim();
+                if (value) { return value; }
+            }
+        }
+        return "";
+    }
+
+    function setInvoiceIdentityFields(data) {
+        if (!data) { return; }
+
+        byId("ipn").value = firstTextValue(data.IPN, data.Ipn, data.ID, data.Id, data.NoID);
+        byId("manualNo").value = firstTextValue(data.ManualNO, data.ManualNo, data.ManualNumber, data.IPNManual);
+    }
+
     function loadInvoiceForReview(transactionId) {
         if (!transactionId) { return; }
 
@@ -1632,6 +1827,7 @@
                 byId("transactionDate").value = dateInputValue(data.TransactionDate);
                 byId("transactionDate").disabled = true;
             }
+            if (byId("invoiceNumber")) { byId("invoiceNumber").value = data.NoteSerial1 || ""; }
             lastCashOutBankMachineCommission = (data.TransactionType || "") === "cash-out" ? (parseFloat(data.BankMachineCommission) || 0) : 0;
             lastCashOutMachineWithdrawalAmount = (data.TransactionType || "") === "cash-out" ? (parseFloat(data.CashOutMachineWithdrawalAmount) || 0) : 0;
             bindReviewServiceSelects(data);
@@ -1645,8 +1841,7 @@
             if (data.Emp_ID) { byId("empId").value = data.Emp_ID; }
             byId("cashCustomerPhone").value = data.CashCustomerPhone || "";
             byId("cashCustomerName").value = data.CashCustomerName || "";
-            byId("ipn").value = data.IPN || "";
-            byId("manualNo").value = data.ManualNO || "";
+            setInvoiceIdentityFields(data);
             byId("phone2").value = data.Phone2 || "";
             byId("visaNumber").value = data.VisaNumber || "";
             byId("paymentCardNo").value = data.VisaNumber || "";
@@ -1683,6 +1878,7 @@
             byId("remainValue").value = decimalText(data.RemainValue);
 
             byId("branchId").disabled = true;
+            setInvoiceIdentityFields(data);
             updateSaveButtonState();
             byId("saveResult").innerHTML = "وضع مراجعة فقط - رقم الفاتورة: " + escapeHtml(data.NoteSerial1 || "") + "<br />رقم الحركة: " + escapeHtml(data.Transaction_ID || "");
             enablePrintIfAllowed();
@@ -2384,7 +2580,7 @@
             }
 
             byId("todaySummaryMessage").innerText = "آخر تحديث: " + (data.GeneratedAt || "");
-            renderTodaySummary(data.Items || [], data.SellerRank || data.sellerRank || null);
+            renderTodaySummary(data.Items || [], data.SellerRank || data.sellerRank || null, data.TargetAchievement || data.targetAchievement || null);
         });
     }
 
@@ -2395,7 +2591,7 @@
         panel.setAttribute("aria-hidden", "true");
     }
 
-    function renderTodaySummary(items, sellerRank) {
+    function renderTodaySummary(items, sellerRank, targetAchievement) {
         var labels = {
             "cash-in": "كاش إن",
             "cash-out": "كاش أوت",
@@ -2419,10 +2615,39 @@
                 '<div><span>الصافي</span><strong>' + decimalText(item.NetValue) + '</strong></div>' +
                 '</article>';
         }
+        html += renderTodayTargetCard(targetAchievement || {});
         if (sellerRank) {
             html += renderSellerRankCard(sellerRank);
         }
         byId("todaySummaryCards").innerHTML = html;
+    }
+
+    function renderTodayTargetCard(target) {
+        var configured = target.IsConfigured === true || target.isConfigured === true;
+        var cssClass = target.PerformanceClass || target.performanceClass || "target-neutral";
+        var statusText = target.StatusText || target.statusText || (configured ? "مؤشر التارجت" : "التارجت غير مضبوط");
+        var message = target.Message || target.message || "";
+        var rechargeTarget = parseFloat(target.DailyRechargeTarget || target.dailyRechargeTarget || 0) || 0;
+        var cardTarget = parseFloat(target.DailyCardTarget || target.dailyCardTarget || 0) || 0;
+        var rechargeAchievement = parseFloat(target.RechargeAchievement || target.rechargeAchievement || 0) || 0;
+        var cardAchievement = parseFloat(target.CardAchievement || target.cardAchievement || 0) || 0;
+        var rechargePercent = parseFloat(target.RechargeAchievementPercent || target.rechargeAchievementPercent || 0) || 0;
+        var cardPercent = parseFloat(target.CardAchievementPercent || target.cardAchievementPercent || 0) || 0;
+        var overallPercent = parseFloat(target.OverallAchievementPercent || target.overallAchievementPercent || 0) || 0;
+        var progress = Math.max(0, Math.min(100, overallPercent));
+
+        return '<article class="summary-card today-target-card ' + escapeHtml(cssClass) + '">' +
+            '<div class="today-target-head">' +
+            '<div><h3>تارجت اليوم</h3><span>' + escapeHtml(statusText) + '</span></div>' +
+            '<strong>' + decimalText(overallPercent) + '%</strong>' +
+            '</div>' +
+            '<div class="today-target-grid">' +
+            '<div><span>الشحنات</span><b>' + decimalText(rechargeAchievement) + '</b><small>من ' + decimalText(rechargeTarget) + ' - ' + decimalText(rechargePercent) + '%</small></div>' +
+            '<div><span>الكروت</span><b>' + decimalText(cardAchievement) + '</b><small>من ' + decimalText(cardTarget) + ' - ' + decimalText(cardPercent) + '%</small></div>' +
+            '</div>' +
+            '<div class="today-target-progress" title="' + escapeHtml(progress.toFixed(0)) + '%"><span style="width:' + progress.toFixed(0) + '%"></span></div>' +
+            '<p>' + escapeHtml(message || "تابع تحقيقك اليومي من هنا.") + '</p>' +
+            '</article>';
     }
 
     function renderSellerRankCard(rank) {
@@ -2904,6 +3129,7 @@
             byId("transactionDate").value = localIsoDate();
             byId("transactionDate").disabled = true;
         }
+        if (byId("invoiceNumber")) { byId("invoiceNumber").value = ""; }
         byId("tetNumPoket").value = "";
         byId("violationWalletNo").value = "";
         byId("violationValue").value = "0";
@@ -2983,6 +3209,39 @@
         }
         if (event.target.id === "loadDuplicateKycCustomerBtn") {
             loadPendingDuplicateKycCustomer();
+        }
+        if (event.target.id === "salesSearchBtn") {
+            loadSalesIndexInvoices();
+        }
+        if (event.target.id === "salesClearSearchBtn") {
+            if (byId("salesSearchText")) { byId("salesSearchText").value = ""; }
+            if (byId("salesSearchType")) { byId("salesSearchType").value = ""; }
+            if (byId("salesSearchFromDate")) { byId("salesSearchFromDate").value = localIsoDate(); }
+            if (byId("salesSearchToDate")) { byId("salesSearchToDate").value = localIsoDate(); }
+            setSalesBranch("", "");
+            salesIndexCache = [];
+            if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = ""; }
+            if (byId("salesIndexResults")) { byId("salesIndexResults").innerHTML = '<div class="empty-state">اضغط بحث البيانات لعرض الفواتير.</div>'; }
+        }
+        if (event.target.id === "salesSearchBranchClear") {
+            setSalesBranch("", "");
+        }
+        if (event.target.id === "salesAddNewBtn") {
+            showSalesEntry();
+            reloadContextAndReset();
+        }
+        if (event.target.id === "backToSalesIndexBtn") {
+            showSalesIndex();
+        }
+        var salesOpenButton = event.target.closest ? event.target.closest("[data-sales-open]") : null;
+        if (salesOpenButton) {
+            var salesTransactionId = salesOpenButton.getAttribute("data-sales-open");
+            showSalesEntry();
+            loadInvoiceForReview(salesTransactionId);
+        }
+        var salesBranchButton = event.target.closest ? event.target.closest("[data-sales-branch-id]") : null;
+        if (salesBranchButton) {
+            setSalesBranch(salesBranchButton.getAttribute("data-sales-branch-id"), salesBranchButton.getAttribute("data-sales-branch-name"));
         }
         var invoiceButton = event.target.closest ? event.target.closest(".today-invoice-item") : null;
         if (invoiceButton) {
@@ -3137,6 +3396,22 @@
             }, 250);
         }
 
+        if (event.target.id === "salesSearchText") {
+            window.clearTimeout(todayInvoicesTimer);
+            todayInvoicesTimer = window.setTimeout(function () {
+                if ((event.target.value || "").trim().length >= 2) {
+                    loadSalesIndexInvoices();
+                }
+            }, 300);
+        }
+        if (event.target.id === "salesSearchBranchText") {
+            if (byId("salesSearchBranchId")) { byId("salesSearchBranchId").value = ""; }
+            var branchTerm = event.target.value || "";
+            ensureSalesBranchesLoaded(function () {
+                renderSalesBranchResults(branchTerm);
+            });
+        }
+
         uxApplyFlow();
     });
 
@@ -3149,6 +3424,11 @@
     document.addEventListener("focusin", function (event) {
         if (event.target && (event.target.id === "branchId" || event.target.id === "paymentType" || event.target.id === "boxId")) {
             ensureContextControlsLoaded();
+        }
+        if (event.target && event.target.id === "salesSearchBranchText") {
+            ensureSalesBranchesLoaded(function () {
+                renderSalesBranchResults(event.target.value || "");
+            });
         }
     });
 
@@ -3184,6 +3464,12 @@
         if (event.target.id === "todayInvoiceTypeFilter") {
             loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
         }
+        if (event.target.id === "salesSearchType") {
+            loadSalesIndexInvoices();
+        }
+        if (event.target.id === "salesSearchFromDate" || event.target.id === "salesSearchToDate") {
+            loadSalesIndexInvoices();
+        }
         uxApplyFlow();
     });
 
@@ -3200,18 +3486,13 @@
         byId("transactionDate").value = localIsoDate();
         byId("transactionDate").disabled = true;
     }
+    initSalesIndexFilters();
     initTodayInvoicesPanelState();
-    loadContextControls();
-    preloadCommissionSettings(function () {
-        var initialMode = queryValue("openKyc") === "true" ? "card" : "cash-in";
-        setMode(initialMode);
-        applyPermissions();
-        calculateTotals();
-        if (initialMode === "card") {
-            openKycModal();
-        }
-        setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", !commissionsReady);
-    });
+    if (salesIndexFirst()) {
+        showSalesIndex();
+    } else {
+        initializePosEntry(queryValue("openKyc") === "true");
+    }
     updateSaveButtonState();
     uxApplyFlow();
 })();

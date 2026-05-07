@@ -138,6 +138,51 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
+        public JsonResult Get(int transactionId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!CanOpen(context))
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية عرض فواتير المشتريات" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var detail = _repository.GetPurchaseInvoiceDetail(transactionId, context);
+            if (detail == null)
+            {
+                Response.StatusCode = 404;
+                return Json(new { success = false, message = "لم يتم العثور على الفاتورة أو لا تملك صلاحية عرضها" }, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new
+            {
+                success = true,
+                invoice = new
+                {
+                    detail.TransactionId,
+                    detail.InvoiceNumber,
+                    InvoiceDate = detail.InvoiceDate.ToString("yyyy-MM-dd"),
+                    detail.SupplierId,
+                    detail.SupplierName,
+                    detail.BranchId,
+                    detail.StoreId,
+                    detail.PaymentType,
+                    detail.BoxId,
+                    detail.BankId,
+                    detail.ManualNo,
+                    detail.Remarks,
+                    detail.Items
+                }
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
         public JsonResult Units(int itemId)
         {
             var context = GetPosContext();
@@ -247,7 +292,21 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool CanOpen(PosUserContext context)
         {
-            return context != null && (context.IsFullAccess || context.CanSave);
+            return context != null && (context.IsFullAccess || (!IsTellerOnly(context) && context.CanSave));
+        }
+
+        private static bool IsTellerOnly(PosUserContext context)
+        {
+            if (context == null || context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0)
+            {
+                return false;
+            }
+
+            var category = (context.UserCategory ?? string.Empty).Trim();
+            return context.UserType.GetValueOrDefault(-1) == 2
+                || context.CanTeller
+                || string.Equals(category, "تلر", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(category, "Teller", StringComparison.OrdinalIgnoreCase);
         }
 
         private PosUserContext GetPosContext()

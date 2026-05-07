@@ -15,6 +15,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewBag.Title</title>
     <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <style>
+        .payments-index-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
+        .payments-entry-header {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .payments-entry-header h3 {
+            margin: 0;
+        }
+
+        .is-hidden-ui {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <div class="pos-page pos-payments-page"
@@ -25,10 +52,10 @@
          data-lookup-url="@Url.Action("Lookup", "Payments", new { area = "Pos" })"
          data-can-edit="@(canEdit ? "true" : "false")">
         <div class="pos-shell">
-            <section class="pos-panel">
+            <section class="pos-panel" id="paymentIndexPanel">
                 <div class="panel-heading">
                     <h2>تمويل العهدة</h2>
-                    <span>مطابقة منطق FrmPayments1: Notes.NoteType = 50</span>
+                    <span>ابحث عن حركة سابقة أو ابدأ حركة تمويل عهدة جديدة.</span>
                 </div>
 
                 <div class="pos-panel soft-panel payment-search-panel">
@@ -41,6 +68,19 @@
                         <label>من تاريخ<input type="date" id="paymentSearchFrom" /></label>
                         <label>إلى تاريخ<input type="date" id="paymentSearchTo" /></label>
                         <label>
+                            الفرع
+                            <select id="paymentSearchBranch" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                <option value="">كل الفروع</option>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
                             الموظف
                             <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentSearchEmpId" data-text-id="paymentSearchEmpText">
                                 <input type="hidden" id="paymentSearchEmpId" />
@@ -50,11 +90,21 @@
                             </span>
                         </label>
                     </div>
-                    <div class="pos-actions">
+                    <div class="payments-index-actions">
                         <button type="button" class="secondary-action" id="searchPaymentBtn">بحث</button>
                         <button type="button" class="secondary-action" id="newPaymentBtn">حركة جديدة</button>
                     </div>
                     <div id="paymentSearchResult" class="report-result compact-result"></div>
+                </div>
+            </section>
+
+            <section class="pos-panel is-hidden-ui" id="paymentEntryPanel">
+                <div class="payments-entry-header">
+                    <div>
+                        <h3>حركة تمويل العهدة</h3>
+                        <span>بيانات الحركة والقيد المحاسبي</span>
+                    </div>
+                    <button type="button" class="secondary-action" id="backToPaymentIndexBtn">رجوع للبحث</button>
                 </div>
 
                 <div class="payments-section-title">
@@ -349,9 +399,17 @@
                     SearchText: byId("paymentSearchText").value || "",
                     FromDate: byId("paymentSearchFrom").value || null,
                     ToDate: byId("paymentSearchTo").value || null,
-                    BranchId: parseInt(byId("paymentBranchId").value, 10) || null,
+                    BranchId: parseInt(byId("paymentSearchBranch").value, 10) || null,
                     EmpId: parseInt(byId("paymentSearchEmpId").value, 10) || null
                 };
+            }
+            function showIndex() {
+                byId("paymentIndexPanel").classList.remove("is-hidden-ui");
+                byId("paymentEntryPanel").classList.add("is-hidden-ui");
+            }
+            function showEntry() {
+                byId("paymentIndexPanel").classList.add("is-hidden-ui");
+                byId("paymentEntryPanel").classList.remove("is-hidden-ui");
             }
             function post(url, payload, done) {
                 var xhr = new XMLHttpRequest();
@@ -420,6 +478,7 @@
                 byId("savePaymentBtn").disabled = @(canExecute ? "false" : "true");
                 byId("savePaymentBtn").innerText = "تنفيذ العملية";
                 setMessage("");
+                showEntry();
             }
             function applyMovement(movement, canEdit, editMessage) {
                 if (!movement) { return; }
@@ -444,6 +503,7 @@
                 byId("savePaymentBtn").disabled = !canEdit;
                 byId("savePaymentBtn").innerText = canEdit ? "حفظ التعديل" : "عرض فقط";
                 setMessage(canEdit ? "تم تحميل الحركة للتعديل" : (editMessage || "ليس لديك صلاحية تعديل هذه الحركة"), !canEdit);
+                showEntry();
             }
             document.addEventListener("click", function (event) {
                 if (event.target.getAttribute("data-payment-tab")) {
@@ -472,6 +532,9 @@
                 }
                 if (event.target.id === "newPaymentBtn") {
                     resetPaymentForm();
+                }
+                if (event.target.id === "backToPaymentIndexBtn") {
+                    showIndex();
                 }
                 if (event.target.classList && event.target.classList.contains("load-payment-row")) {
                     var id = event.target.getAttribute("data-note-id");

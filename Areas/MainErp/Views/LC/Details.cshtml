@@ -1,0 +1,69 @@
+@model MyERP.Areas.MainErp.ViewModels.LC.LCDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الاعتمادات المستندية";
+    var openBalanceType = Model.OpenBalanceType == 0 ? "مدين" : Model.OpenBalanceType == 1 ? "دائن" : "غير محدد";
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>شاشة الاعتماد المستندي - قراءة فعلية من TblLC</h3>
+            <p>هذه الصفحة أصبحت مرتبة على نفس منطق FrmLC.frm: بيانات أساسية، مصاريف الفتح، الفواتير المالية، تعديلات الضمان، قروض الاعتمادات، Refinance، وAcceptance Advice.</p>
+        </div>
+        <span class="main-erp-badge">Modernized VB6 / Read only</span>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+    <div class="main-erp-vb6-toolbar">
+        <button type="button" disabled>جديد</button>
+        <button type="button" disabled>تعديل</button>
+        <button type="button" disabled>حفظ</button>
+        <button type="button" disabled>حذف</button>
+        <a href="@Url.Action("Index", "LC", new { area = "MainErp" })">بحث / رجوع</a>
+        <button type="button" disabled>إنشاء القيد</button>
+        <button type="button" disabled>طباعة القيد</button>
+    </div>
+
+    <div class="main-erp-tabs">
+        <section>
+            <h4>البيانات الأساسية</h4>
+            <dl class="main-erp-details">
+                <dt>TblLCID</dt><dd>@Model.TblLCID</dd>
+                <dt>LCNO</dt><dd>@Model.LCNO</dd>
+                <dt>الاسم</dt><dd>@Model.Name</dd>
+                <dt>البنك</dt><dd>@Model.BankName</dd>
+                <dt>المورد</dt><dd>@Model.VendorName</dd>
+                <dt>العملة</dt><dd>@Model.CurrencyName</dd>
+                <dt>القيمة</dt><dd>@String.Format("{0:n2}", Model.Value)</dd>
+                <dt>من تاريخ</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.FromDate)</dd>
+                <dt>إلى تاريخ</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.ToDate)</dd>
+                <dt>الفرع</dt><dd>@Model.BranchID</dd>
+            </dl>
+        </section>
+        <section>
+            <h4>الحسابات المرتبطة كما في FrmLC</h4>
+            <dl class="main-erp-details">
+                <dt>حساب الاعتماد</dt><dd>@Model.AccountCode</dd>
+                <dt>حساب الكاش مارجن</dt><dd>@Model.MarginAccountCode</dd>
+                <dt>حساب Acceptance</dt><dd>@Model.AcceptAccountCode</dd>
+                <dt>حساب المصروف</dt><dd>@Model.ExpenseAccountCode</dd>
+                <dt>رصيد افتتاحي</dt><dd>@String.Format("{0:n2}", Model.OpenBalance)</dd>
+                <dt>نوع الرصيد</dt><dd>@openBalanceType</dd>
+            </dl>
+        </section>
+        <section>
+            <h4>مصاريف الفتح</h4>
+            <div class="main-erp-vb6-grid-placeholder">سيتم تحميل بيانات txtOPenValue وPaymentType/Box/Bank/Cheque من نفس حقول FrmLC في مرحلة الحفظ الفعلية. لا توجد كتابة حاليا.</div>
+        </section>
+        <section>
+            <h4>الفواتير المالية / revised bond amount / قروض الاعتمادات / Refinance / acceptance advice</h4>
+            <div class="main-erp-vb6-grid-placeholder">الجداول الحقيقية GrdMargin وGrdBondHistory وGrdMargin2 وGrdMargin3 وGrdMargin4 لم يتم ترحيلها بعد. هذا مقصود حتى لا ننشئ قيود أو Notes قبل مطابقة VB6.</div>
+        </section>
+        <section>
+            <h4>ملاحظات</h4>
+            <p class="main-erp-remarks">@Model.Remarks</p>
+        </section>
+    </div>
+</section>

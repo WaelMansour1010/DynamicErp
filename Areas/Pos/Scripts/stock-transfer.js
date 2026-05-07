@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     "use strict";
 
     var page = document.querySelector(".stock-page");
@@ -9,6 +9,19 @@
     var lookupTimers = {};
     var busy = false;
     var lastImportResults = [];
+    var gridPage = 1;
+    var gridPageSize = 100;
+    var initialHeader = {};
+    var activeRowId = null;
+    var serialPicker = {
+        rowId: null,
+        item: null,
+        page: 1,
+        pageSize: 50,
+        totalRows: 0,
+        rows: [],
+        selected: {}
+    };
 
     function byId(id) { return document.getElementById(id); }
 
@@ -49,6 +62,7 @@
         byId("importSerialTextBtn").disabled = value;
         byId("importExcelBtn").disabled = value;
         byId("addTransferRowBtn").disabled = value;
+        byId("openSelectedSerialPickerBtn").disabled = value;
     }
 
     function buildItemText(code, name) {
@@ -111,7 +125,12 @@
 
     function renderRows() {
         var body = byId("transferItemsBody");
-        body.innerHTML = rows.map(function (row) {
+        var totalPages = Math.max(1, Math.ceil(rows.length / gridPageSize));
+        if (gridPage > totalPages) { gridPage = totalPages; }
+        if (gridPage < 1) { gridPage = 1; }
+        var start = (gridPage - 1) * gridPageSize;
+        var pageRows = rows.slice(start, start + gridPageSize);
+        body.innerHTML = pageRows.map(function (row) {
             return "<tr data-row-id=\"" + row.id + "\" class=\"" + (row.haveSerial ? "is-serial" : "") + "\">" +
                 "<td class=\"item-cell\"><div class=\"lookup-wrap\">" +
                 "<input type=\"hidden\" class=\"row-item-id\" value=\"" + escapeHtml(row.itemId || "") + "\" />" +
@@ -119,13 +138,60 @@
                 "<div class=\"lookup-results row-item-results\" role=\"listbox\"></div></div></td>" +
                 "<td class=\"unit-cell\"><input type=\"text\" class=\"form-control\" value=\"" + escapeHtml(row.unitName) + "\" readonly /></td>" +
                 "<td class=\"number-cell\"><input type=\"number\" min=\"0\" step=\"0.001\" class=\"form-control row-number\" data-field=\"quantity\" value=\"" + escapeHtml(row.quantity) + "\" " + (row.haveSerial ? "readonly" : "") + " /></td>" +
-                "<td class=\"serial-cell\"><input type=\"text\" class=\"form-control row-serial\" value=\"" + escapeHtml(row.serial) + "\" placeholder=\"رقم السيريال\" " + (!row.haveSerial ? "disabled" : "") + " />" +
+                "<td class=\"serial-cell\"><div class=\"serial-input-row\"><input type=\"text\" class=\"form-control row-serial\" value=\"" + escapeHtml(row.serial) + "\" placeholder=\"رقم السيريال\" " + (!row.haveSerial ? "disabled" : "") + " />" +
+                "<button type=\"button\" class=\"btn btn-default btn-sm serial-picker-open\" " + (!row.haveSerial || !row.itemId ? "disabled" : "") + ">اختيار</button></div>" +
                 "<div class=\"serial-badge\">صنف مسلسل: الكمية 1 والسيريال مطلوب</div></td>" +
                 "<td class=\"number-cell\"><input type=\"number\" min=\"0\" step=\"0.01\" class=\"form-control row-number\" data-field=\"price\" value=\"" + escapeHtml(row.price) + "\" /></td>" +
                 "<td class=\"remove-cell\"><button type=\"button\" class=\"btn btn-danger btn-sm row-remove\">حذف</button></td>" +
                 "</tr>";
         }).join("");
         renderTotals();
+        renderGridPager();
+    }
+
+    function renderGridPager() {
+        var pager = byId("transferItemsPager");
+        if (!pager) { return; }
+        var totalRows = rows.length;
+        var totalPages = Math.max(1, Math.ceil(totalRows / gridPageSize));
+        if (gridPage > totalPages) { gridPage = totalPages; }
+        var start = totalRows ? ((gridPage - 1) * gridPageSize) + 1 : 0;
+        var end = Math.min(totalRows, gridPage * gridPageSize);
+        pager.innerHTML =
+            "<div class=\"grid-page-info\">عرض " + start + " - " + end + " من " + totalRows + " سطر</div>" +
+            "<div class=\"grid-page-actions\">" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"first\"" + (gridPage <= 1 ? " disabled" : "") + ">الأولى</button>" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"prev\"" + (gridPage <= 1 ? " disabled" : "") + ">السابق</button>" +
+            "<span class=\"grid-page-current\">صفحة " + gridPage + " / " + totalPages + "</span>" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"next\"" + (gridPage >= totalPages ? " disabled" : "") + ">التالي</button>" +
+            "<button type=\"button\" class=\"btn btn-default btn-sm\" data-grid-page=\"last\"" + (gridPage >= totalPages ? " disabled" : "") + ">الأخيرة</button>" +
+            "</div>";
+    }
+
+    function captureInitialHeader() {
+        initialHeader = {
+            transferDate: byId("transferDate").value || "",
+            branchId: byId("transferBranchId").value || "",
+            sourceStoreId: byId("transferSourceStoreId").value || "",
+            destinationStoreId: byId("transferDestinationStoreId").value || ""
+        };
+    }
+
+    function resetTransferForm() {
+        byId("transferVoucherNumber").value = "";
+        byId("transferDate").value = initialHeader.transferDate || "";
+        byId("transferBranchId").value = initialHeader.branchId || "";
+        byId("transferSourceStoreId").value = initialHeader.sourceStoreId || "";
+        byId("transferDestinationStoreId").value = initialHeader.destinationStoreId || "";
+        byId("transferRemarks").value = "";
+        byId("serialText").value = "";
+        byId("serialFileName").textContent = "لم يتم اختيار ملف";
+        rows = [createRow()];
+        gridPage = 1;
+        lastImportResults = [];
+        showImportResults();
+        renderRows();
+        message("", false);
     }
 
     function renderTotals() {
@@ -145,9 +211,24 @@
         var tr = element.closest("tr[data-row-id]");
         if (!tr) { return null; }
         var id = parseInt(tr.getAttribute("data-row-id"), 10);
+        activeRowId = id;
         for (var i = 0; i < rows.length; i++) {
             if (rows[i].id === id) { return rows[i]; }
         }
+        return null;
+    }
+
+    function getActiveRow() {
+        if (activeRowId) {
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].id === activeRowId) { return rows[i]; }
+            }
+        }
+
+        for (var j = 0; j < rows.length; j++) {
+            if (rows[j].itemId && rows[j].haveSerial) { return rows[j]; }
+        }
+
         return null;
     }
 
@@ -166,12 +247,234 @@
             row.serial = "";
         }
         renderRows();
+        if (row.haveSerial) {
+            openSerialPicker(row);
+        }
+    }
+
+    function selectedSerialCount() {
+        var count = 0;
+        Object.keys(serialPicker.selected).forEach(function (key) {
+            if (serialPicker.selected[key]) { count++; }
+        });
+        return count;
+    }
+
+    function setSerialPickerStatus(value) {
+        var target = byId("serialPickerStatus");
+        if (target) { target.textContent = value || ""; }
+    }
+
+    function buildSerialRequest(page, pageSize) {
+        return {
+            BranchId: parseInt(byId("transferBranchId").value || "0", 10),
+            SourceStoreId: parseInt(byId("transferSourceStoreId").value || "0", 10),
+            ItemId: serialPicker.item ? serialPicker.item.itemId : 0,
+            TransferDate: byId("transferDate").value,
+            SerialFrom: byId("serialPickerFrom").value,
+            SerialTo: byId("serialPickerTo").value,
+            SerialTerm: byId("serialPickerTerm").value,
+            Page: page || serialPicker.page,
+            PageSize: pageSize || serialPicker.pageSize
+        };
+    }
+
+    function fetchSerialPickerPage(page, pageSize) {
+        return fetch(getUrl("data-available-serials-url"), {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(buildSerialRequest(page, pageSize))
+        }).then(function (response) {
+            return response.json().then(function (data) { return { ok: response.ok, data: data }; });
+        }).then(function (result) {
+            if (!result.ok || !result.data.success) {
+                throw new Error((result.data && (result.data.technicalMessage || result.data.message)) || "تعذر تحميل السيريالات");
+            }
+            return result.data;
+        });
+    }
+
+    function renderSerialPicker() {
+        var body = byId("serialPickerBody");
+        var totalPages = Math.max(1, Math.ceil(serialPicker.totalRows / serialPicker.pageSize));
+        byId("serialPickerPageInfo").textContent = "صفحة " + serialPicker.page + " / " + totalPages + " - إجمالي " + serialPicker.totalRows;
+        byId("serialPickerPrevBtn").disabled = serialPicker.page <= 1;
+        byId("serialPickerNextBtn").disabled = serialPicker.page >= totalPages;
+        byId("serialPickerCheckAll").checked = serialPicker.rows.length > 0 && serialPicker.rows.every(function (row) {
+            return !!serialPicker.selected[text(row.Serial).toLowerCase()];
+        });
+
+        if (!serialPicker.rows.length) {
+            body.innerHTML = "<tr><td colspan=\"4\" class=\"empty-index-row\">لا توجد سيريالات متاحة مطابقة.</td></tr>";
+            setSerialPickerStatus("المحدد: " + selectedSerialCount());
+            return;
+        }
+
+        body.innerHTML = serialPicker.rows.map(function (row) {
+            var key = text(row.Serial).toLowerCase();
+            return "<tr>" +
+                "<td><input type=\"checkbox\" class=\"serial-picker-check\" data-serial=\"" + escapeHtml(row.Serial) + "\" " + (serialPicker.selected[key] ? "checked" : "") + " /></td>" +
+                "<td>" + escapeHtml(row.Serial) + "</td>" +
+                "<td>" + escapeHtml(row.ItemName || "") + "</td>" +
+                "<td>" + escapeHtml(toNumber(row.AvailableQty).toFixed(3)) + "</td>" +
+                "</tr>";
+        }).join("");
+        setSerialPickerStatus("المحدد: " + selectedSerialCount());
+    }
+
+    function loadSerialPicker(page) {
+        serialPicker.page = page || 1;
+        serialPicker.pageSize = parseInt(byId("serialPickerPageSize").value || "50", 10) || 50;
+        setSerialPickerStatus("جاري تحميل السيريالات...");
+        fetchSerialPickerPage(serialPicker.page, serialPicker.pageSize)
+            .then(function (data) {
+                serialPicker.rows = data.rows || [];
+                serialPicker.totalRows = data.totalRows || 0;
+                renderSerialPicker();
+            })
+            .catch(function (error) {
+                serialPicker.rows = [];
+                serialPicker.totalRows = 0;
+                renderSerialPicker();
+                setSerialPickerStatus(error.message);
+            });
+    }
+
+    function openSerialPicker(row) {
+        if (!row || !row.itemId || !row.haveSerial) { return; }
+        serialPicker.rowId = row.id;
+        serialPicker.item = row;
+        serialPicker.page = 1;
+        serialPicker.totalRows = 0;
+        serialPicker.rows = [];
+        serialPicker.selected = {};
+        if (row.serial) {
+            serialPicker.selected[text(row.serial).toLowerCase()] = {
+                ItemId: row.itemId,
+                ItemCode: row.itemCode,
+                ItemName: row.itemName,
+                UnitId: row.unitId,
+                UnitName: row.unitName,
+                Quantity: 1,
+                UnitFactor: row.unitFactor || 1,
+                Price: row.price || 0,
+                HaveSerial: true,
+                Serial: row.serial
+            };
+        }
+        byId("serialPickerItemName").textContent = row.searchText || row.itemName || "";
+        byId("serialPickerFrom").value = "";
+        byId("serialPickerTo").value = "";
+        byId("serialPickerTerm").value = "";
+        byId("serialPickerOverlay").classList.add("is-open");
+        byId("serialPickerOverlay").setAttribute("aria-hidden", "false");
+        loadSerialPicker(1);
+    }
+
+    function closeSerialPicker() {
+        byId("serialPickerOverlay").classList.remove("is-open");
+        byId("serialPickerOverlay").setAttribute("aria-hidden", "true");
+    }
+
+    function toggleSerialPickerRows(checked) {
+        serialPicker.rows.forEach(function (row) {
+            var key = text(row.Serial).toLowerCase();
+            serialPicker.selected[key] = checked ? row : null;
+        });
+        renderSerialPicker();
+    }
+
+    function addSelectedSerialRows() {
+        var selected = Object.keys(serialPicker.selected).map(function (key) { return serialPicker.selected[key]; }).filter(Boolean);
+        if (!selected.length) {
+            setSerialPickerStatus("اختر سيريال واحد على الأقل.");
+            return;
+        }
+
+        var baseRow = rows.filter(function (row) { return row.id === serialPicker.rowId; })[0];
+        var firstApplied = false;
+        selected.forEach(function (row) {
+            var serialKey = text(row.Serial).toLowerCase();
+            if (serialKey && rows.some(function (candidate) {
+                return candidate.id !== serialPicker.rowId && text(candidate.serial).toLowerCase() === serialKey;
+            })) {
+                return;
+            }
+
+            var target = !firstApplied && baseRow && baseRow.itemId === serialPicker.item.itemId ? baseRow : null;
+            if (!target) {
+                target = createRow();
+                rows.push(target);
+            }
+
+            target.itemId = row.ItemId || row.itemId || serialPicker.item.itemId;
+            target.itemCode = row.ItemCode || row.itemCode || serialPicker.item.itemCode;
+            target.itemName = row.ItemName || row.itemName || serialPicker.item.itemName;
+            target.searchText = buildItemText(target.itemCode, target.itemName);
+            target.unitId = row.UnitId || row.unitId || serialPicker.item.unitId;
+            target.unitName = row.UnitName || row.unitName || serialPicker.item.unitName;
+            target.quantity = 1;
+            target.unitFactor = toNumber(row.UnitFactor || row.unitFactor || serialPicker.item.unitFactor || 1) || 1;
+            target.price = toNumber(row.Price || row.price || serialPicker.item.price || 0);
+            target.haveSerial = true;
+            target.serial = row.Serial || row.serial || "";
+            firstApplied = true;
+        });
+
+        rows = rows.filter(function (row) { return row.itemId || row.searchText || row.serial; });
+        if (!rows.length) { rows.push(createRow()); }
+        gridPage = Math.max(1, Math.ceil(rows.length / gridPageSize));
+        renderRows();
+        closeSerialPicker();
+    }
+
+    function selectAllFilteredSerials() {
+        serialPicker.selected = {};
+        serialPicker.pageSize = parseInt(byId("serialPickerPageSize").value || "50", 10) || 50;
+        var fetchSize = 500;
+        var page = 1;
+        var total = null;
+
+        function next() {
+            setSerialPickerStatus("جاري اختيار كل النتائج... " + selectedSerialCount());
+            return fetchSerialPickerPage(page, fetchSize).then(function (data) {
+                var fetchedRows = data.rows || [];
+                total = data.totalRows || fetchedRows.length;
+                fetchedRows.forEach(function (row) {
+                    serialPicker.selected[text(row.Serial).toLowerCase()] = row;
+                });
+                if (selectedSerialCount() < total && fetchedRows.length) {
+                    page++;
+                    return next();
+                }
+                renderSerialPicker();
+            });
+        }
+
+        next().catch(function (error) { setSerialPickerStatus(error.message); });
     }
 
     function bindGrid() {
         byId("addTransferRowBtn").addEventListener("click", function () {
             rows.push(createRow());
+            gridPage = Math.ceil(rows.length / gridPageSize);
             renderRows();
+        });
+
+        byId("openSelectedSerialPickerBtn").addEventListener("click", function () {
+            var row = getActiveRow();
+            if (!row || !row.itemId) {
+                window.alert("اختر صنف مسلسل أولا، ثم اضغط زر اختيار السيريالات.");
+                message("اختر صنف مسلسل أولا، ثم اضغط زر اختيار السيريالات.", true);
+                return;
+            }
+            if (!row.haveSerial) {
+                window.alert("الصنف المحدد ليس صنفا مسلسلا.");
+                message("الصنف المحدد ليس صنفا مسلسلا.", true);
+                return;
+            }
+            openSerialPicker(row);
         });
 
         byId("transferItemsBody").addEventListener("input", function (event) {
@@ -216,8 +519,15 @@
         });
 
         byId("transferItemsBody").addEventListener("click", function (event) {
+            var touchedRow = findRowFromElement(event.target);
+
+            if (event.target.classList.contains("serial-picker-open")) {
+                openSerialPicker(touchedRow);
+                return;
+            }
+
             if (!event.target.classList.contains("row-remove")) { return; }
-            var row = findRowFromElement(event.target);
+            var row = touchedRow;
             if (!row) { return; }
             rows = rows.filter(function (candidate) { return candidate.id !== row.id; });
             if (!rows.length) {
@@ -226,12 +536,59 @@
             renderRows();
         });
 
+        var pager = byId("transferItemsPager");
+        if (pager) {
+            pager.addEventListener("click", function (event) {
+                var button = event.target.closest("[data-grid-page]");
+                if (!button || button.disabled) { return; }
+                var action = button.getAttribute("data-grid-page");
+                var totalPages = Math.max(1, Math.ceil(rows.length / gridPageSize));
+                if (action === "first") { gridPage = 1; }
+                if (action === "prev") { gridPage = Math.max(1, gridPage - 1); }
+                if (action === "next") { gridPage = Math.min(totalPages, gridPage + 1); }
+                if (action === "last") { gridPage = totalPages; }
+                renderRows();
+            });
+        }
+
         byId("clearTransferBtn").addEventListener("click", function () {
             rows = [createRow()];
+            gridPage = 1;
             lastImportResults = [];
             showImportResults();
             renderRows();
             message("", false);
+        });
+    }
+
+    function bindSerialPicker() {
+        var overlay = byId("serialPickerOverlay");
+        if (!overlay) { return; }
+
+        byId("serialPickerCloseBtn").addEventListener("click", closeSerialPicker);
+        byId("serialPickerSearchBtn").addEventListener("click", function () { serialPicker.selected = {}; loadSerialPicker(1); });
+        byId("serialPickerPrevBtn").addEventListener("click", function () { loadSerialPicker(Math.max(1, serialPicker.page - 1)); });
+        byId("serialPickerNextBtn").addEventListener("click", function () {
+            var totalPages = Math.max(1, Math.ceil(serialPicker.totalRows / serialPicker.pageSize));
+            loadSerialPicker(Math.min(totalPages, serialPicker.page + 1));
+        });
+        byId("serialPickerInsertBtn").addEventListener("click", addSelectedSerialRows);
+        byId("serialPickerSelectPageBtn").addEventListener("click", function () { toggleSerialPickerRows(true); });
+        byId("serialPickerSelectAllBtn").addEventListener("click", selectAllFilteredSerials);
+        byId("serialPickerPageSize").addEventListener("change", function () { loadSerialPicker(1); });
+        byId("serialPickerCheckAll").addEventListener("change", function () { toggleSerialPickerRows(this.checked); });
+
+        byId("serialPickerBody").addEventListener("change", function (event) {
+            if (!event.target.classList.contains("serial-picker-check")) { return; }
+            var serial = event.target.getAttribute("data-serial") || "";
+            var key = serial.toLowerCase();
+            var row = serialPicker.rows.filter(function (candidate) { return text(candidate.Serial).toLowerCase() === key; })[0];
+            serialPicker.selected[key] = event.target.checked ? row : null;
+            renderSerialPicker();
+        });
+
+        overlay.addEventListener("click", function (event) {
+            if (event.target === overlay) { closeSerialPicker(); }
         });
     }
 
@@ -288,6 +645,7 @@
         });
         rows = rows.filter(function (row) { return row.itemId || row.searchText || row.serial; });
         if (!rows.length) { rows.push(createRow()); }
+        gridPage = 1;
         renderRows();
     }
 
@@ -351,7 +709,7 @@
             if (busy) { return; }
             var fileInput = byId("serialExcelFile");
             if (!fileInput.files || !fileInput.files.length) {
-                message("اختر ملف Excel أولاً", true);
+                message("اختر ملف Excel أولا", true);
                 return;
             }
 
@@ -463,10 +821,10 @@
                 .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
                 .then(function (result) {
                     if (!result.ok || !result.data.success) {
-                        throw new Error((result.data && (result.data.message || result.data.technicalMessage)) || "تعذر الحفظ");
+                        throw new Error((result.data && (result.data.technicalMessage || result.data.message)) || "تعذر الحفظ");
                     }
                     byId("transferVoucherNumber").value = result.data.result.VoucherNumber || byId("transferVoucherNumber").value;
-                    message("تم الحفظ. سند: " + result.data.result.VoucherNumber + " | حركة الصرف: " + result.data.result.SourceTransactionId + " | حركة الاستلام: " + result.data.result.DestinationTransactionId, false);
+                    message("تم الحفظ. سند: " + result.data.result.VoucherNumber + " | قيد: " + (result.data.result.NoteSerial || result.data.result.NoteId || "") + " | حركة الصرف: " + result.data.result.SourceTransactionId + " | حركة الاستلام: " + result.data.result.DestinationTransactionId, false);
                 })
                 .catch(function (error) { message(error.message, true); })
                 .finally(function () { setBusy(false); });
@@ -547,7 +905,36 @@
                 .catch(function (error) { emptyRow(error.message); });
         }
 
-        byId("stockAddNewBtn").addEventListener("click", showEntry);
+        function loadTransfer(sourceTransactionId) {
+            message("جاري تحميل سند التحويل...", false);
+            fetch(getUrl("data-get-url") + "?sourceTransactionId=" + encodeURIComponent(sourceTransactionId), { credentials: "same-origin" })
+                .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+                .then(function (result) {
+                    if (!result.ok || !result.data.success || !result.data.transfer) {
+                        throw new Error((result.data && result.data.message) || "تعذر تحميل سند التحويل");
+                    }
+
+                    var transfer = result.data.transfer;
+                    byId("transferVoucherNumber").value = transfer.VoucherNumber || "";
+                    byId("transferDate").value = transfer.TransferDate || "";
+                    byId("transferBranchId").value = transfer.BranchId || "";
+                    byId("transferSourceStoreId").value = transfer.SourceStoreId || "";
+                    byId("transferDestinationStoreId").value = transfer.DestinationStoreId || "";
+                    byId("transferRemarks").value = transfer.Remarks || "";
+                    rows = (transfer.Items || []).map(function (item) { return createRow(item); });
+                    if (!rows.length) { rows.push(createRow()); }
+                    gridPage = 1;
+                    renderRows();
+                    showEntry();
+                    message("تم تحميل سند التحويل للعرض.", false);
+                })
+                .catch(function (error) { message(error.message, true); });
+        }
+
+        byId("stockAddNewBtn").addEventListener("click", function () {
+            resetTransferForm();
+            showEntry();
+        });
         byId("stockBackToIndexBtn").addEventListener("click", showIndex);
         byId("stockSearchBtn").addEventListener("click", search);
         byId("stockClearSearchBtn").addEventListener("click", function () {
@@ -558,13 +945,21 @@
         searchBody.addEventListener("click", function (event) {
             var button = event.target.closest("[data-stock-view]");
             if (!button) { return; }
-            message("العرض التفصيلي لسندات التحويل السابقة سيستخدم نفس شاشة الإدخال بعد ربط تحميل التفاصيل.", true);
+            loadTransfer(button.getAttribute("data-stock-view"));
         });
+
+        var params = new URLSearchParams(window.location.search || "");
+        var sourceTransactionId = params.get("sourceTransactionId") || params.get("openStockTransfer");
+        if (sourceTransactionId) {
+            loadTransfer(sourceTransactionId);
+        }
     }
 
+    captureInitialHeader();
     rows.push(createRow());
     bindIndexWorkflow();
     bindGrid();
+    bindSerialPicker();
     bindBranchStores();
     bindImport();
     bindSave();

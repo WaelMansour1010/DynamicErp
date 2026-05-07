@@ -110,6 +110,9 @@ BEGIN
     DECLARE @ErrorSeverity INT;
     DECLARE @ErrorState INT;
     DECLARE @OldIssueTransactionID INT;
+    DECLARE @AllocationError NVARCHAR(4000);
+    DECLARE @DevSerialLockResult INT;
+    DECLARE @DevSerialLockResource NVARCHAR(255);
 
     DECLARE @IssueVouchers TABLE
     (
@@ -191,6 +194,8 @@ BEGIN
                 The VB6 fallback is MAX + 1 WITH (NOLOCK), but this Step 1 draft uses
                 the primary SQL Server sequence path only.
             */
+            SET @NextIDError = NULL;
+
             EXEC dbo.GetNextID_FromSequence
                 @TableName = N'Transactions',
                 @FieldName = N'Transaction_ID',
@@ -198,7 +203,10 @@ BEGIN
                 @ErrorMsg = @NextIDError OUTPUT;
 
             IF @NextIDError IS NOT NULL OR @NextTransactionID IS NULL
-                RAISERROR('Unable to allocate Transaction_ID using dbo.GetNextID_FromSequence.', 16, 1);
+            BEGIN
+                SET @AllocationError = N'Unable to allocate Transaction_ID. Source=dbo.GetNextID_FromSequence; Table=dbo.Transactions; Field=Transaction_ID; Error=' + ISNULL(@NextIDError, N'<null>') + N'; NextValue=' + ISNULL(CONVERT(NVARCHAR(50), @NextTransactionID), N'<null>');
+                RAISERROR(@AllocationError, 16, 1);
+            END;
 
             IF @NextTransactionID > 2147483647
                 RAISERROR('Allocated Transaction_ID exceeds INT range.', 16, 1);
@@ -528,6 +536,8 @@ BEGIN
         SET @NoteValue = @RechargeAmount + @LineGrossAmount + @ServiceChargeAmount;
         SET @AccountingDescription = N'فاتورة بيع رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1);
 
+        SET @NextIDError = NULL;
+
         EXEC dbo.GetNextID_FromSequence
             @TableName = N'Notes',
             @FieldName = N'NoteID',
@@ -535,7 +545,10 @@ BEGIN
             @ErrorMsg = @NextIDError OUTPUT;
 
         IF @NextIDError IS NOT NULL OR @InvoiceNextNoteID IS NULL
-            RAISERROR('Unable to allocate invoice accounting NoteID.', 16, 1);
+        BEGIN
+            SET @AllocationError = N'Unable to allocate invoice accounting NoteID. Source=dbo.GetNextID_FromSequence; Table=dbo.Notes; Field=NoteID; Error=' + ISNULL(@NextIDError, N'<null>') + N'; NextValue=' + ISNULL(CONVERT(NVARCHAR(50), @InvoiceNextNoteID), N'<null>');
+            RAISERROR(@AllocationError, 16, 1);
+        END;
 
         IF @InvoiceNextNoteID > 2147483647
             RAISERROR('Allocated invoice accounting NoteID exceeds INT range.', 16, 1);
@@ -551,6 +564,8 @@ BEGIN
         IF @InvoiceNoteReturnCode <> 0 OR @InvoiceNoteSerial IS NULL OR @InvoiceNoteSerial = 'error'
             RAISERROR('Unable to generate invoice accounting NoteSerial using dbo.usp_Notes_coding_V2.', 16, 1);
 
+        SET @NextIDError = NULL;
+
         EXEC dbo.GetNextID_FromSequence
             @TableName = N'DOUBLE_ENTREY_VOUCHERS',
             @FieldName = N'Double_Entry_Vouchers_ID',
@@ -558,19 +573,38 @@ BEGIN
             @ErrorMsg = @NextIDError OUTPUT;
 
         IF @NextIDError IS NOT NULL OR @NextDevID IS NULL
-            RAISERROR('Unable to allocate invoice accounting Double_Entry_Vouchers_ID.', 16, 1);
+        BEGIN
+            SET @AllocationError = N'Unable to allocate invoice accounting Double_Entry_Vouchers_ID. Source=dbo.GetNextID_FromSequence; Table=dbo.DOUBLE_ENTREY_VOUCHERS; Field=Double_Entry_Vouchers_ID; Error=' + ISNULL(@NextIDError, N'<null>') + N'; NextValue=' + ISNULL(CONVERT(NVARCHAR(50), @NextDevID), N'<null>');
+            RAISERROR(@AllocationError, 16, 1);
+        END;
 
         IF @NextDevID > 2147483647
             RAISERROR('Allocated invoice accounting Double_Entry_Vouchers_ID exceeds INT range.', 16, 1);
 
         SET @DevID = CONVERT(INT, @NextDevID);
+
+        SET @DevSerialLockResource = N'POS.DEV_Serial.' + CONVERT(CHAR(8), @TransactionDate, 112);
+
+        EXEC @DevSerialLockResult = sys.sp_getapplock
+            @Resource = @DevSerialLockResource,
+            @LockMode = 'Exclusive',
+            @LockOwner = 'Transaction',
+            @LockTimeout = 10000;
+
+        IF @DevSerialLockResult < 0
+        BEGIN
+            SET @AllocationError = N'Unable to allocate invoice accounting DEV_Serial. Source=sys.sp_getapplock; Resource=' + @DevSerialLockResource + N'; LockResult=' + CONVERT(NVARCHAR(20), @DevSerialLockResult) + N'; DevID=' + CONVERT(NVARCHAR(50), @DevID);
+            RAISERROR(@AllocationError, 16, 1);
+        END;
+
         SET @DevSerial =
             CONVERT(CHAR(8), @TransactionDate, 112) + N'0' +
             CONVERT(NVARCHAR(20),
                 1 + (
                     SELECT COUNT(DISTINCT Double_Entry_Vouchers_ID)
-                    FROM dbo.DOUBLE_ENTREY_VOUCHERS WITH (HOLDLOCK)
-                    WHERE CONVERT(DATE, RecordDate) = CONVERT(DATE, @TransactionDate)
+                    FROM dbo.DOUBLE_ENTREY_VOUCHERS WITH (READCOMMITTEDLOCK)
+                    WHERE RecordDate >= CONVERT(DATE, @TransactionDate)
+                      AND RecordDate < DATEADD(DAY, 1, CONVERT(DATE, @TransactionDate))
                 )
             );
 
@@ -955,7 +989,10 @@ BEGIN
                 @ErrorMsg = @NextIDError OUTPUT;
 
             IF @NextIDError IS NOT NULL OR @IssueNextTransactionID IS NULL
-                RAISERROR('Unable to allocate Issue Voucher Transaction_ID.', 16, 1);
+            BEGIN
+                SET @AllocationError = N'Unable to allocate Issue Voucher Transaction_ID. Source=dbo.GetNextID_FromSequence; Table=dbo.Transactions; Field=Transaction_ID; Error=' + ISNULL(@NextIDError, N'<null>') + N'; NextValue=' + ISNULL(CONVERT(NVARCHAR(50), @IssueNextTransactionID), N'<null>');
+                RAISERROR(@AllocationError, 16, 1);
+            END;
 
             IF @IssueNextTransactionID > 2147483647
                 RAISERROR('Allocated Issue Voucher Transaction_ID exceeds INT range.', 16, 1);
@@ -970,7 +1007,10 @@ BEGIN
                 @ErrorMsg = @NextIDError OUTPUT;
 
             IF @NextIDError IS NOT NULL OR @IssueNextNoteID IS NULL
-                RAISERROR('Unable to allocate Issue Voucher NoteID.', 16, 1);
+            BEGIN
+                SET @AllocationError = N'Unable to allocate Issue Voucher NoteID. Source=dbo.GetNextID_FromSequence; Table=dbo.Notes; Field=NoteID; Error=' + ISNULL(@NextIDError, N'<null>') + N'; NextValue=' + ISNULL(CONVERT(NVARCHAR(50), @IssueNextNoteID), N'<null>');
+                RAISERROR(@AllocationError, 16, 1);
+            END;
 
             IF @IssueNextNoteID > 2147483647
                 RAISERROR('Allocated Issue Voucher NoteID exceeds INT range.', 16, 1);

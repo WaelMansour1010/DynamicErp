@@ -204,6 +204,11 @@ namespace MyERP.Areas.Pos.Models
         public string Description { get; set; }
         public bool IsManual { get; set; }
         public string EntryKind { get; set; }
+        public int? NoteType { get; set; }
+        public string NoteTypeName { get; set; }
+        public int? AutoSourceId { get; set; }
+        public string AutoSourceName { get; set; }
+        public string AutoSourceUrl { get; set; }
         public decimal DebitTotal { get; set; }
         public decimal CreditTotal { get; set; }
         public IList<PosManualJournalLineDto> Lines { get; set; }
@@ -468,6 +473,7 @@ namespace MyERP.Areas.Pos.Models
         public string GeneratedAt { get; set; }
         public IList<PosTodaySummaryItemDto> Items { get; set; }
         public PosSellerRankDto SellerRank { get; set; }
+        public PosTodayTargetAchievementDto TargetAchievement { get; set; }
 
         public PosTodaySummaryDto()
         {
@@ -500,10 +506,26 @@ namespace MyERP.Areas.Pos.Models
         public decimal ProgressPercent { get; set; }
     }
 
+    public class PosTodayTargetAchievementDto
+    {
+        public bool IsConfigured { get; set; }
+        public decimal DailyRechargeTarget { get; set; }
+        public decimal DailyCardTarget { get; set; }
+        public decimal RechargeAchievement { get; set; }
+        public decimal CardAchievement { get; set; }
+        public decimal RechargeAchievementPercent { get; set; }
+        public decimal CardAchievementPercent { get; set; }
+        public decimal OverallAchievementPercent { get; set; }
+        public string PerformanceClass { get; set; }
+        public string StatusText { get; set; }
+        public string Message { get; set; }
+    }
+
     public class PosTodayInvoiceDto
     {
         public int Transaction_ID { get; set; }
         public string NoteSerial1 { get; set; }
+        public string TransactionDate { get; set; }
         public string TransactionTime { get; set; }
         public string CustomerName { get; set; }
         public string CustomerPhone { get; set; }
@@ -828,6 +850,12 @@ namespace MyERP.Areas.Pos.Models
         public string Status { get; set; }
     }
 
+    public class PosPurchaseInvoiceDetailDto : PosPurchaseInvoiceRequestDto
+    {
+        public int TransactionId { get; set; }
+        public string SupplierName { get; set; }
+    }
+
     public class PosPurchaseInvoiceLineDto
     {
         public int ItemId { get; set; }
@@ -910,6 +938,25 @@ namespace MyERP.Areas.Pos.Models
         public string ItemOrSerialTerm { get; set; }
     }
 
+    public class PosStockTransferSerialSearchRequestDto
+    {
+        public int BranchId { get; set; }
+        public int SourceStoreId { get; set; }
+        public int ItemId { get; set; }
+        public DateTime TransferDate { get; set; }
+        public string SerialFrom { get; set; }
+        public string SerialTo { get; set; }
+        public string SerialTerm { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+    }
+
+    public class PosStockTransferAvailableSerialDto : PosStockTransferLineDto
+    {
+        public decimal AvailableQty { get; set; }
+        public int TotalRows { get; set; }
+    }
+
     public class PosStockTransferIndexRowDto
     {
         public int SourceTransactionId { get; set; }
@@ -922,9 +969,16 @@ namespace MyERP.Areas.Pos.Models
         public decimal TotalQuantity { get; set; }
     }
 
+    public class PosStockTransferDetailDto : PosStockTransferRequestDto
+    {
+        public int SourceTransactionId { get; set; }
+        public int? DestinationTransactionId { get; set; }
+    }
+
     public class PosStockTransferLineDto
     {
         public int ItemId { get; set; }
+        public string ItemCode { get; set; }
         public string ItemName { get; set; }
         public int? UnitId { get; set; }
         public string UnitName { get; set; }
@@ -942,6 +996,7 @@ namespace MyERP.Areas.Pos.Models
         public int NoteId { get; set; }
         public string VoucherNumber { get; set; }
         public string NoteSerial { get; set; }
+        public int DoubleEntryVouchersId { get; set; }
     }
 
     public class PosStockTransferImportRequestDto

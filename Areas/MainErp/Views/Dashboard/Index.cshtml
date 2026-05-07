@@ -1,0 +1,35 @@
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "Main ERP Dashboard";
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>داشبورد النظام الرئيسي</h3>
+            <p>لوحة تنفيذ آمنة للوظائف العامة القابلة للترحيل. تعرض فقط وحدات النظام الرئيسي المعتمدة لهذه المرحلة.</p>
+        </div>
+        <span class="main-erp-badge">Read-only shell</span>
+    </div>
+    <div class="main-erp-module-grid">
+        <a class="main-erp-module" href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })">
+            <span>Accounting</span>
+            <strong>القيود اليومية</strong>
+            <small>بحث وقراءة فقط</small>
+        </a>
+        <a class="main-erp-module" href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })">
+            <span>Reports</span>
+            <strong>التقارير المحاسبية</strong>
+            <small>تصميم وتنفيذ لاحق</small>
+        </a>
+        <a class="main-erp-module" href="@Url.Action("Index", "SalesReports", new { area = "MainErp" })">
+            <span>Sales</span>
+            <strong>تقارير المبيعات</strong>
+            <small>تحت المراجعة</small>
+        </a>
+        <a class="main-erp-module" href="@Url.Action("Index", "LC", new { area = "MainErp" })">
+            <span>Trade Finance</span>
+            <strong>الاعتمادات المستندية</strong>
+            <small>قراءة فقط</small>
+        </a>
+    </div>
+</section>

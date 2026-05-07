@@ -1,0 +1,50 @@
+@model MyERP.Areas.MainErp.ViewModels.Accounting.PostingPreviewViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.Title;
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@Model.ArabicTitle</h3>
+            <p>Preview-only accounting validation. No database rows are written from this page.</p>
+        </div>
+        <span class="main-erp-badge">Preview</span>
+    </div>
+    @foreach (var error in Model.Errors)
+    {
+        <div class="main-erp-warning">@error</div>
+    }
+    @foreach (var warning in Model.Warnings)
+    {
+        <div class="main-erp-warning">@warning</div>
+    }
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>Line</th>
+                <th>Account</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th>Branch</th>
+                <th>Project</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var entry in Model.Entries)
+        {
+            <tr>
+                <td>@entry.LineNumber</td>
+                <td>@entry.AccountCode</td>
+                <td>@(entry.EntryType == MyERP.Areas.MainErp.Models.Accounting.VoucherEntryType.Debit ? String.Format("{0:n2}", entry.Value) : "")</td>
+                <td>@(entry.EntryType == MyERP.Areas.MainErp.Models.Accounting.VoucherEntryType.Credit ? String.Format("{0:n2}", entry.Value) : "")</td>
+                <td>@entry.BranchId</td>
+                <td>@entry.ProjectId</td>
+                <td>@entry.Description</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="main-erp-muted">Debit: @String.Format("{0:n2}", Model.TotalDebit) | Credit: @String.Format("{0:n2}", Model.TotalCredit) | Balanced: @Model.IsBalanced</div>
+</section>

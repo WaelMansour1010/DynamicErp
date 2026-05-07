@@ -20,7 +20,9 @@ namespace MyERP.Areas.Pos.Data
         private const int DeadlockSqlErrorNumber = 1205;
         private static readonly int[] SaveDeadlockRetryDelaysMs = { 150, 300, 600 };
         private static readonly object PosSystemErrorLogEnsureLock = new object();
+        private static readonly object PosSaveAttemptLogEnsureLock = new object();
         private static bool _posSystemErrorLogEnsured;
+        private static bool _posSaveAttemptLogEnsured;
 
         private readonly string _connectionString;
 
@@ -1077,6 +1079,209 @@ ORDER BY t.Transaction_Date DESC, t.Transaction_ID DESC;";
             return rows;
         }
 
+        public PosPurchaseInvoiceDetailDto GetPurchaseInvoiceDetail(int transactionId, PosUserContext context)
+        {
+            const string headerSql = @"
+SELECT TOP (1)
+    t.Transaction_ID,
+    t.NoteSerial1 AS InvoiceNumber,
+    t.Transaction_Date AS InvoiceDate,
+    t.CusID AS SupplierId,
+    COALESCE(NULLIF(c.CusName, N''), NULLIF(c.CusNamee, N''), N'مورد ' + CONVERT(NVARCHAR(20), t.CusID)) AS SupplierName,
+    t.BranchId,
+    t.StoreID AS StoreId,
+    ISNULL(t.PaymentType, 1) AS PaymentType,
+    t.BoxID,
+    t.BankID,
+    ISNULL(t.ManualNO, N'') AS ManualNo,
+    ISNULL(t.TransactionComment, N'') AS Remarks
+FROM dbo.Transactions t
+LEFT JOIN dbo.TblCustemers c ON c.CusID = t.CusID
+WHERE t.Transaction_ID = @TransactionId
+  AND t.Transaction_Type = 22
+  AND (@BranchId IS NULL OR t.BranchId = @BranchId);";
+
+            const string linesSql = @"
+SELECT
+    td.Item_ID AS ItemId,
+    ISNULL(i.ItemCode, N'') AS ItemCode,
+    COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(20), td.Item_ID)) AS ItemName,
+    td.UnitId,
+    COALESCE(NULLIF(u.UnitName, N''), NULLIF(u.UnitNamee, N''), CONVERT(NVARCHAR(20), td.UnitId)) AS UnitName,
+    CAST(ISNULL(NULLIF(td.ShowQty, 0), ISNULL(td.Quantity, 0)) AS DECIMAL(18, 4)) AS Quantity,
+    CAST(ISNULL(NULLIF(td.showPrice, 0), ISNULL(td.Price, 0)) AS DECIMAL(18, 4)) AS PurchasePrice,
+    CAST(ISNULL(td.discountvalue, 0) * ISNULL(td.Quantity, 0) AS DECIMAL(18, 4)) AS DiscountValue,
+    CAST(ISNULL(td.Vat, 0) AS DECIMAL(18, 4)) AS VatValue,
+    CAST(ISNULL(td.Vatyo, 0) AS DECIMAL(18, 4)) AS VatPercent,
+    CAST(ISNULL(i.HaveSerial, 0) AS BIT) AS HaveSerial,
+    ISNULL(td.ItemSerial, N'') AS ItemSerial
+FROM dbo.Transaction_Details td
+LEFT JOIN dbo.TblItems i ON i.ItemID = td.Item_ID
+LEFT JOIN dbo.TblUnites u ON u.UnitID = td.UnitId
+WHERE td.Transaction_ID = @TransactionId
+ORDER BY td.ID;";
+
+            PosPurchaseInvoiceDetailDto detail = null;
+            var branchId = context != null && !context.IsFullAccess ? context.BranchId : null;
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new SqlCommand(headerSql, connection))
+                {
+                    Add(command, "@TransactionId", SqlDbType.Int, transactionId);
+                    Add(command, "@BranchId", SqlDbType.Int, branchId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            return null;
+                        }
+
+                        detail = new PosPurchaseInvoiceDetailDto
+                        {
+                            TransactionId = ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
+                            InvoiceNumber = ReadString(reader, "InvoiceNumber"),
+                            InvoiceDate = ReadDateTime(reader, "InvoiceDate").GetValueOrDefault(DateTime.Today),
+                            SupplierId = ReadInt(reader, "SupplierId").GetValueOrDefault(),
+                            SupplierName = FixArabicMojibakeForDisplay(ReadString(reader, "SupplierName")),
+                            BranchId = ReadInt(reader, "BranchId").GetValueOrDefault(),
+                            StoreId = ReadInt(reader, "StoreId").GetValueOrDefault(),
+                            PaymentType = ReadInt(reader, "PaymentType").GetValueOrDefault(1),
+                            BoxId = ReadInt(reader, "BoxID"),
+                            BankId = ReadInt(reader, "BankID"),
+                            ManualNo = ReadString(reader, "ManualNo"),
+                            Remarks = ReadString(reader, "Remarks")
+                        };
+                    }
+                }
+
+                using (var command = new SqlCommand(linesSql, connection))
+                {
+                    Add(command, "@TransactionId", SqlDbType.Int, transactionId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            detail.Items.Add(new PosPurchaseInvoiceLineDto
+                            {
+                                ItemId = ReadInt(reader, "ItemId").GetValueOrDefault(),
+                                ItemCode = ReadString(reader, "ItemCode"),
+                                ItemName = FixArabicMojibakeForDisplay(ReadString(reader, "ItemName")),
+                                UnitId = ReadInt(reader, "UnitId"),
+                                UnitName = FixArabicMojibakeForDisplay(ReadString(reader, "UnitName")),
+                                Quantity = ReadDecimal(reader, "Quantity").GetValueOrDefault(),
+                                PurchasePrice = ReadDecimal(reader, "PurchasePrice").GetValueOrDefault(),
+                                DiscountValue = ReadDecimal(reader, "DiscountValue").GetValueOrDefault(),
+                                VatValue = ReadDecimal(reader, "VatValue").GetValueOrDefault(),
+                                VatPercent = ReadDecimal(reader, "VatPercent").GetValueOrDefault(),
+                                HaveSerial = ReadBoolean(reader, "HaveSerial"),
+                                ItemSerial = ReadString(reader, "ItemSerial")
+                            });
+                        }
+                    }
+                }
+            }
+
+            return detail;
+        }
+
+        public PosStockTransferDetailDto GetStockTransferDetail(int sourceTransactionId, PosUserContext context)
+        {
+            const string headerSql = @"
+SELECT TOP (1)
+    src.Transaction_ID AS SourceTransactionId,
+    dest.Transaction_ID AS DestinationTransactionId,
+    src.NoteSerial1 AS VoucherNumber,
+    src.Transaction_Date AS TransferDate,
+    ISNULL(src.BranchId, srcStore.BranchId) AS BranchId,
+    src.StoreID AS SourceStoreId,
+    dest.StoreID AS DestinationStoreId,
+    ISNULL(src.TransactionComment, N'') AS Remarks
+FROM dbo.Transactions src
+LEFT JOIN dbo.Transactions dest ON dest.ReturnID = src.Transaction_ID AND dest.Transaction_Type IN (11, 993)
+LEFT JOIN dbo.TblStore srcStore ON srcStore.StoreID = src.StoreID
+WHERE src.Transaction_ID = @SourceTransactionId
+  AND src.Transaction_Type IN (10, 992)
+  AND (@BranchId IS NULL OR src.BranchId = @BranchId OR srcStore.BranchId = @BranchId);";
+
+            const string linesSql = @"
+SELECT
+    td.Item_ID AS ItemId,
+    ISNULL(i.ItemCode, N'') AS ItemCode,
+    COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(20), td.Item_ID)) AS ItemName,
+    td.UnitId,
+    COALESCE(NULLIF(u.UnitName, N''), NULLIF(u.UnitNamee, N''), CONVERT(NVARCHAR(20), td.UnitId)) AS UnitName,
+    CAST(ISNULL(NULLIF(td.ShowQty, 0), ISNULL(td.Quantity, 0)) AS DECIMAL(18, 4)) AS Quantity,
+    CAST(ISNULL(NULLIF(td.showPrice, 0), ISNULL(td.Price, 0)) AS DECIMAL(18, 4)) AS Price,
+    CAST(CASE WHEN ISNULL(td.ShowQty, 0) = 0 THEN 1 ELSE ISNULL(td.Quantity, 0) / NULLIF(td.ShowQty, 0) END AS DECIMAL(18, 4)) AS UnitFactor,
+    CAST(ISNULL(i.HaveSerial, 0) AS BIT) AS HaveSerial,
+    ISNULL(td.ItemSerial, N'') AS Serial
+FROM dbo.Transaction_Details td
+LEFT JOIN dbo.TblItems i ON i.ItemID = td.Item_ID
+LEFT JOIN dbo.TblUnites u ON u.UnitID = td.UnitId
+WHERE td.Transaction_ID = @SourceTransactionId
+ORDER BY td.ID;";
+
+            PosStockTransferDetailDto detail = null;
+            var branchId = context != null && !context.IsFullAccess ? context.BranchId : null;
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var command = new SqlCommand(headerSql, connection))
+                {
+                    Add(command, "@SourceTransactionId", SqlDbType.Int, sourceTransactionId);
+                    Add(command, "@BranchId", SqlDbType.Int, branchId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            return null;
+                        }
+
+                        detail = new PosStockTransferDetailDto
+                        {
+                            SourceTransactionId = ReadInt(reader, "SourceTransactionId").GetValueOrDefault(),
+                            DestinationTransactionId = ReadInt(reader, "DestinationTransactionId"),
+                            VoucherNumber = ReadString(reader, "VoucherNumber"),
+                            TransferDate = ReadDateTime(reader, "TransferDate").GetValueOrDefault(DateTime.Today),
+                            BranchId = ReadInt(reader, "BranchId").GetValueOrDefault(),
+                            SourceStoreId = ReadInt(reader, "SourceStoreId").GetValueOrDefault(),
+                            DestinationStoreId = ReadInt(reader, "DestinationStoreId").GetValueOrDefault(),
+                            Remarks = ReadString(reader, "Remarks")
+                        };
+                    }
+                }
+
+                using (var command = new SqlCommand(linesSql, connection))
+                {
+                    Add(command, "@SourceTransactionId", SqlDbType.Int, sourceTransactionId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            detail.Items.Add(new PosStockTransferLineDto
+                            {
+                                ItemId = ReadInt(reader, "ItemId").GetValueOrDefault(),
+                                ItemCode = ReadString(reader, "ItemCode"),
+                                ItemName = FixArabicMojibakeForDisplay(ReadString(reader, "ItemName")),
+                                UnitId = ReadInt(reader, "UnitId"),
+                                UnitName = FixArabicMojibakeForDisplay(ReadString(reader, "UnitName")),
+                                Quantity = ReadDecimal(reader, "Quantity").GetValueOrDefault(),
+                                UnitFactor = ReadDecimal(reader, "UnitFactor").GetValueOrDefault(1),
+                                Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
+                                HaveSerial = ReadBoolean(reader, "HaveSerial"),
+                                Serial = ReadString(reader, "Serial")
+                            });
+                        }
+                    }
+                }
+            }
+
+            return detail;
+        }
+
         public IList<PosItemLookupDto> GetStockTransferItems(string term)
         {
             var items = new List<PosItemLookupDto>();
@@ -1222,10 +1427,136 @@ ORDER BY i.ItemID;";
             return result;
         }
 
+        public IList<PosStockTransferAvailableSerialDto> SearchStockTransferAvailableSerials(PosStockTransferSerialSearchRequestDto request)
+        {
+            if (request == null) { throw new InvalidOperationException("بيانات البحث غير مكتملة"); }
+            if (request.SourceStoreId <= 0) { throw new InvalidOperationException("المخزن المحول منه مطلوب"); }
+            if (request.ItemId <= 0) { throw new InvalidOperationException("الصنف مطلوب"); }
+
+            var rows = new List<PosStockTransferAvailableSerialDto>();
+            var page = request.Page <= 0 ? 1 : request.Page;
+            var pageSize = request.PageSize <= 0 ? 50 : request.PageSize;
+            if (pageSize > 500) { pageSize = 500; }
+
+            const string sql = @"
+;WITH AvailableSerials AS
+(
+    SELECT
+        td.Item_ID AS ItemId,
+        LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Serial,
+        SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty
+    FROM dbo.Transaction_Details td
+    INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+    INNER JOIN dbo.TransactionTypes tt ON tt.Transaction_Type = t.Transaction_Type
+    INNER JOIN dbo.TblStore st ON st.StoreID = t.StoreID
+    WHERE t.StoreID = @SourceStoreId
+      AND (@BranchId <= 0 OR ISNULL(st.BranchId, 0) = @BranchId)
+      AND t.Transaction_Date <= @TransferDate
+      AND td.Item_ID = @ItemId
+      AND ISNULL(tt.StockEffect, 0) <> 0
+      AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
+    GROUP BY td.Item_ID, LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+    HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
+),
+Filtered AS
+(
+    SELECT
+        av.ItemId,
+        av.Serial,
+        av.AvailableQty
+    FROM AvailableSerials av
+    WHERE (ISNULL(@SerialFrom, N'') = N'' OR av.Serial >= @SerialFrom)
+      AND (ISNULL(@SerialTo, N'') = N'' OR av.Serial <= @SerialTo)
+      AND (ISNULL(@SerialTerm, N'') = N'' OR av.Serial LIKE @SerialLike)
+),
+Numbered AS
+(
+    SELECT
+        f.ItemId,
+        f.Serial,
+        f.AvailableQty,
+        ROW_NUMBER() OVER (ORDER BY f.Serial) AS RowNumber,
+        COUNT(1) OVER () AS TotalRows
+    FROM Filtered f
+)
+SELECT
+    n.ItemId,
+    COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(50), i.ItemID)) AS ItemName,
+    COALESCE(NULLIF(i.Fullcode, N''), NULLIF(i.ItemCode, N''), CONVERT(NVARCHAR(50), i.ItemID)) AS ItemCode,
+    iu.UnitID AS UnitId,
+    COALESCE(NULLIF(u.UnitName, N''), NULLIF(u.UnitNamee, N''), CONVERT(NVARCHAR(50), iu.UnitID)) AS UnitName,
+    CAST(COALESCE(iu.UnitFactor, 1) AS DECIMAL(18, 4)) AS UnitFactor,
+    CAST(COALESCE(NULLIF(iu.UnitPurPrice, 0), i.CostPrice, i.PurchasePrice, 0) AS DECIMAL(18, 4)) AS Price,
+    n.Serial,
+    CAST(n.AvailableQty AS DECIMAL(18, 4)) AS AvailableQty,
+    n.TotalRows
+FROM Numbered n
+INNER JOIN dbo.TblItems i ON i.ItemID = n.ItemId
+OUTER APPLY
+(
+    SELECT TOP (1)
+        iu0.UnitID,
+        iu0.UnitFactor,
+        iu0.UnitPurPrice,
+        iu0.JunckID
+    FROM dbo.TblItemsUnits iu0
+    WHERE iu0.ItemID = i.ItemID
+    ORDER BY CASE WHEN ISNULL(iu0.DefaultUnit, 0) = 1 THEN 0 ELSE 1 END, iu0.JunckID
+) iu
+LEFT JOIN dbo.TblUnites u ON u.UnitID = iu.UnitID
+WHERE n.RowNumber BETWEEN @StartRow AND @EndRow
+ORDER BY n.RowNumber;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.CommandTimeout = 60;
+                var serialFrom = (request.SerialFrom ?? string.Empty).Trim();
+                var serialTo = (request.SerialTo ?? string.Empty).Trim();
+                var serialTerm = (request.SerialTerm ?? string.Empty).Trim();
+                Add(command, "@BranchId", SqlDbType.Int, request.BranchId);
+                Add(command, "@SourceStoreId", SqlDbType.Int, request.SourceStoreId);
+                Add(command, "@ItemId", SqlDbType.Int, request.ItemId);
+                Add(command, "@TransferDate", SqlDbType.SmallDateTime, request.TransferDate == DateTime.MinValue ? DateTime.Today : request.TransferDate.Date);
+                AddString(command, "@SerialFrom", SqlDbType.NVarChar, 255, serialFrom);
+                AddString(command, "@SerialTo", SqlDbType.NVarChar, 255, serialTo);
+                AddString(command, "@SerialTerm", SqlDbType.NVarChar, 255, serialTerm);
+                AddString(command, "@SerialLike", SqlDbType.NVarChar, 265, "%" + serialTerm + "%");
+                Add(command, "@StartRow", SqlDbType.Int, ((page - 1) * pageSize) + 1);
+                Add(command, "@EndRow", SqlDbType.Int, page * pageSize);
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new PosStockTransferAvailableSerialDto
+                        {
+                            ItemId = ReadInt(reader, "ItemId").GetValueOrDefault(),
+                            ItemCode = ReadString(reader, "ItemCode"),
+                            ItemName = ReadString(reader, "ItemName"),
+                            UnitId = ReadInt(reader, "UnitId"),
+                            UnitName = ReadString(reader, "UnitName"),
+                            Quantity = 1,
+                            UnitFactor = ReadDecimal(reader, "UnitFactor").GetValueOrDefault(1),
+                            Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
+                            HaveSerial = true,
+                            Serial = ReadString(reader, "Serial"),
+                            AvailableQty = ReadDecimal(reader, "AvailableQty").GetValueOrDefault(),
+                            TotalRows = ReadInt(reader, "TotalRows").GetValueOrDefault()
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
         public PosStockTransferResultDto SaveStockTransfer(PosStockTransferRequestDto request, int userId, int? empId)
         {
             ValidateStockTransfer(request);
             var items = BuildStockTransferItemsTable(request.Items);
+            ValidateStockTransferAvailability(request, items);
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("dbo.usp_POS_SaveStockTransfer", connection))
@@ -1259,7 +1590,8 @@ ORDER BY i.ItemID;";
                         DestinationTransactionId = ReadInt(reader, "DestinationTransaction_ID").GetValueOrDefault(),
                         NoteId = ReadInt(reader, "NoteID").GetValueOrDefault(),
                         VoucherNumber = ReadString(reader, "VoucherNumber"),
-                        NoteSerial = ReadString(reader, "NoteSerial")
+                        NoteSerial = ReadString(reader, "NoteSerial"),
+                        DoubleEntryVouchersId = ReadInt(reader, "Double_Entry_Vouchers_ID").GetValueOrDefault()
                     };
                 }
             }
@@ -2701,12 +3033,27 @@ SELECT
             var itemsTable = BuildItemsTable(request.Items);
             var paymentsTable = BuildPaymentsTable(request);
 
-            return ExecuteSaveTransactionWithDeadlockRetry(request, itemsTable, paymentsTable);
+            return ExecuteSaveTransactionWithDeadlockRetry(request, itemsTable, paymentsTable, Guid.NewGuid());
         }
 
-        private PosSaveTransactionResult ExecuteSaveTransactionWithDeadlockRetry(PosSaveTransactionRequest request, DataTable itemsTable, DataTable paymentsTable)
+        private PosSaveTransactionResult ExecuteSaveTransactionWithDeadlockRetry(PosSaveTransactionRequest request, DataTable itemsTable, DataTable paymentsTable, Guid saveAttemptId)
         {
             var attempt = 0;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var requestSummary = BuildDeadlockRetrySnapshot(request);
+
+            InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
+            {
+                SaveAttemptId = saveAttemptId,
+                EventName = "Save.Start",
+                UserID = request.UserID,
+                EmpID = request.Emp_ID,
+                BranchId = request.BranchId,
+                TransactionType = NormalizeInvoiceOperationType(request.TransactionType),
+                RetryAttempt = 0,
+                DurationMs = 0,
+                RequestSummary = requestSummary
+            });
 
             while (true)
             {
@@ -2718,7 +3065,36 @@ SELECT
                     if (attempt > 1)
                     {
                         LogSaveDeadlockRetry(request, attempt - 1, 0, null, result.Transaction_ID);
+                        InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
+                        {
+                            SaveAttemptId = saveAttemptId,
+                            EventName = "Save.Retry.Success",
+                            UserID = request.UserID,
+                            EmpID = request.Emp_ID,
+                            BranchId = request.BranchId,
+                            TransactionType = NormalizeInvoiceOperationType(request.TransactionType),
+                            RetryAttempt = attempt - 1,
+                            DurationMs = SafeElapsedMilliseconds(stopwatch),
+                            Transaction_ID = result.Transaction_ID,
+                            Status = "RetriedSuccess",
+                            RequestSummary = requestSummary
+                        });
                     }
+
+                    InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
+                    {
+                        SaveAttemptId = saveAttemptId,
+                        EventName = "Save.Success",
+                        UserID = request.UserID,
+                        EmpID = request.Emp_ID,
+                        BranchId = request.BranchId,
+                        TransactionType = NormalizeInvoiceOperationType(request.TransactionType),
+                        RetryAttempt = attempt > 1 ? (int?)(attempt - 1) : 0,
+                        DurationMs = SafeElapsedMilliseconds(stopwatch),
+                        Transaction_ID = result.Transaction_ID,
+                        Status = attempt > 1 ? "RetriedSuccess" : "Success",
+                        RequestSummary = requestSummary
+                    });
 
                     return result;
                 }
@@ -2727,11 +3103,41 @@ SELECT
                     var retryAttempt = attempt;
                     if (!IsDeadlock(ex) || retryAttempt > SaveDeadlockRetryDelaysMs.Length)
                     {
+                        InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
+                        {
+                            SaveAttemptId = saveAttemptId,
+                            EventName = "Save.Failed",
+                            UserID = request.UserID,
+                            EmpID = request.Emp_ID,
+                            BranchId = request.BranchId,
+                            TransactionType = NormalizeInvoiceOperationType(request.TransactionType),
+                            RetryAttempt = retryAttempt > SaveDeadlockRetryDelaysMs.Length ? SaveDeadlockRetryDelaysMs.Length : retryAttempt,
+                            SqlErrorNumber = GetFirstSqlErrorNumber(ex),
+                            DurationMs = SafeElapsedMilliseconds(stopwatch),
+                            Status = IsDeadlock(ex) && retryAttempt > SaveDeadlockRetryDelaysMs.Length ? "RetriedFailed" : "Failed",
+                            Message = ex.Message,
+                            RequestSummary = requestSummary
+                        });
                         throw;
                     }
 
                     var delayMs = SaveDeadlockRetryDelaysMs[retryAttempt - 1];
                     LogSaveDeadlockRetry(request, retryAttempt, delayMs, ex, null);
+                    InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
+                    {
+                        SaveAttemptId = saveAttemptId,
+                        EventName = "Save.Retry.Deadlock",
+                        UserID = request.UserID,
+                        EmpID = request.Emp_ID,
+                        BranchId = request.BranchId,
+                        TransactionType = NormalizeInvoiceOperationType(request.TransactionType),
+                        RetryAttempt = retryAttempt,
+                        SqlErrorNumber = DeadlockSqlErrorNumber,
+                        DelayMs = delayMs,
+                        DurationMs = SafeElapsedMilliseconds(stopwatch),
+                        Message = ex.Message,
+                        RequestSummary = requestSummary
+                    });
                     Thread.Sleep(delayMs);
                 }
             }
@@ -2917,6 +3323,185 @@ SELECT
             return string.Join(",", numbers.Distinct());
         }
 
+        private void InsertPosSaveAttemptLogSafe(PosSaveAttemptLogWriteRequest log)
+        {
+            try
+            {
+                InsertPosSaveAttemptLog(log);
+            }
+            catch (Exception logEx)
+            {
+                System.Diagnostics.Trace.TraceWarning("Failed to write POS save attempt log: " + logEx);
+            }
+        }
+
+        private static int SafeElapsedMilliseconds(System.Diagnostics.Stopwatch stopwatch)
+        {
+            if (stopwatch == null)
+            {
+                return 0;
+            }
+
+            return stopwatch.ElapsedMilliseconds > int.MaxValue ? int.MaxValue : Convert.ToInt32(stopwatch.ElapsedMilliseconds, CultureInfo.InvariantCulture);
+        }
+
+        private static int? GetFirstSqlErrorNumber(SqlException exception)
+        {
+            if (exception == null || exception.Errors == null || exception.Errors.Count == 0)
+            {
+                return null;
+            }
+
+            return exception.Errors[0].Number;
+        }
+
+        private static string TruncateLogMessage(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value) || maxLength <= 0 || value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            return value.Substring(0, maxLength);
+        }
+
+        private static IList<PosSaveAttemptGridRow> BuildPosSaveAttemptRows(IList<PosSaveAttemptSearchEvent> events)
+        {
+            var rows = new List<PosSaveAttemptGridRow>();
+            if (events == null || events.Count == 0)
+            {
+                return rows;
+            }
+
+            foreach (var group in events.GroupBy(e => e.SaveAttemptId).OrderByDescending(g => g.Max(e => e.CreatedAt)))
+            {
+                var ordered = group.OrderBy(e => e.CreatedAt).ThenBy(e => e.Id).ToList();
+                var first = ordered.First();
+                var last = ordered.Last();
+                var lastStatusEvent = ordered.LastOrDefault(e => !string.IsNullOrWhiteSpace(e.Status));
+                var lastTransactionEvent = ordered.LastOrDefault(e => e.Transaction_ID.HasValue);
+                var lastDurationEvent = ordered.LastOrDefault(e => e.DurationMs.HasValue);
+                var lastErrorEvent = ordered.LastOrDefault(e => !string.IsNullOrWhiteSpace(e.Message));
+                var timeline = ordered.Select(e => new PosSaveAttemptTimelineEntry
+                {
+                    Id = e.Id,
+                    SaveAttemptId = e.SaveAttemptId.ToString(),
+                    CreatedAt = e.CreatedAt,
+                    EventName = e.EventName,
+                    RetryAttempt = e.RetryAttempt,
+                    SqlErrorNumber = e.SqlErrorNumber,
+                    DelayMs = e.DelayMs,
+                    DurationMs = e.DurationMs,
+                    Transaction_ID = e.Transaction_ID,
+                    Status = e.Status,
+                    Message = e.Message,
+                    RequestSummary = e.RequestSummary
+                }).ToList();
+
+                rows.Add(new PosSaveAttemptGridRow
+                {
+                    SaveAttemptId = first.SaveAttemptId.ToString(),
+                    UserID = first.UserID,
+                    UserName = first.UserName,
+                    EmpID = first.EmpID,
+                    BranchId = first.BranchId,
+                    BranchName = first.BranchName,
+                    TransactionType = first.TransactionType,
+                    StartTime = ordered.Min(e => e.CreatedAt),
+                    EndTime = ordered.Max(e => e.CreatedAt),
+                    DurationMs = lastDurationEvent != null ? lastDurationEvent.DurationMs : (int?)ToSafeIntMilliseconds((ordered.Max(e => e.CreatedAt) - ordered.Min(e => e.CreatedAt)).TotalMilliseconds),
+                    RetryCount = ordered.Where(e => e.RetryAttempt.HasValue).Select(e => e.RetryAttempt.Value).DefaultIfEmpty(0).Max(),
+                    FinalStatus = lastStatusEvent == null ? null : lastStatusEvent.Status,
+                    Transaction_ID = lastTransactionEvent == null ? null : lastTransactionEvent.Transaction_ID,
+                    LastErrorMessage = lastErrorEvent == null ? null : lastErrorEvent.Message,
+                    Timeline = timeline
+                });
+            }
+
+            return rows;
+        }
+
+        private static PosSaveAttemptSummary BuildPosSaveAttemptSummary(IList<PosSaveAttemptGridRow> rows)
+        {
+            rows = rows ?? new List<PosSaveAttemptGridRow>();
+            var deadlockRows = rows.Where(r => r.Timeline != null && r.Timeline.Any(e => string.Equals(e.EventName, "Save.Retry.Deadlock", StringComparison.OrdinalIgnoreCase))).ToList();
+            var durationRows = rows.Where(r => r.DurationMs.HasValue).ToList();
+            var topBranch = deadlockRows
+                .GroupBy(r => new { r.BranchId, r.BranchName })
+                .OrderByDescending(g => g.Count())
+                .FirstOrDefault();
+
+            return new PosSaveAttemptSummary
+            {
+                TotalSaveAttempts = rows.Count,
+                DeadlockAffectedAttempts = deadlockRows.Count,
+                RetriedSucceeded = rows.Count(r => string.Equals(r.FinalStatus, "RetriedSuccess", StringComparison.OrdinalIgnoreCase)),
+                RetriedFailed = rows.Count(r => string.Equals(r.FinalStatus, "RetriedFailed", StringComparison.OrdinalIgnoreCase)),
+                AverageDurationMs = durationRows.Count == 0 ? 0 : Convert.ToDecimal(durationRows.Average(r => r.DurationMs.Value)),
+                MaxDurationMs = durationRows.Count == 0 ? 0 : durationRows.Max(r => r.DurationMs.Value),
+                TopDeadlockBranch = topBranch == null ? string.Empty : ((topBranch.Key.BranchName ?? string.Empty) + (topBranch.Key.BranchId.HasValue ? " (" + topBranch.Key.BranchId.Value.ToString(CultureInfo.InvariantCulture) + ")" : string.Empty))
+            };
+        }
+
+        private static int ToSafeIntMilliseconds(double value)
+        {
+            if (value <= 0)
+            {
+                return 0;
+            }
+
+            return value > int.MaxValue ? int.MaxValue : Convert.ToInt32(value);
+        }
+
+        private static string BuildJournalAutoSourceUrl(int? noteType, int? sourceId)
+        {
+            if (!noteType.HasValue || !sourceId.HasValue || sourceId.Value <= 0)
+            {
+                return string.Empty;
+            }
+
+            if (noteType.Value == 190)
+            {
+                return "/Pos/StockTransfer/Index?sourceTransactionId=" + sourceId.Value.ToString(CultureInfo.InvariantCulture);
+            }
+
+            return string.Empty;
+        }
+
+        private static IList<PosSaveAttemptGridRow> FilterPosSaveAttemptRows(IList<PosSaveAttemptGridRow> rows, string eventName, string status)
+        {
+            rows = rows ?? new List<PosSaveAttemptGridRow>();
+            eventName = (eventName ?? string.Empty).Trim();
+            status = (status ?? string.Empty).Trim();
+
+            return rows
+                .Where(r => string.IsNullOrWhiteSpace(eventName) || (r.Timeline != null && r.Timeline.Any(e => string.Equals(e.EventName, eventName, StringComparison.OrdinalIgnoreCase))))
+                .Where(r => string.IsNullOrWhiteSpace(status) || string.Equals(r.FinalStatus, status, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        private class PosSaveAttemptSearchEvent
+        {
+            public int Id { get; set; }
+            public Guid SaveAttemptId { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public string EventName { get; set; }
+            public int? UserID { get; set; }
+            public string UserName { get; set; }
+            public int? EmpID { get; set; }
+            public int? BranchId { get; set; }
+            public string BranchName { get; set; }
+            public string TransactionType { get; set; }
+            public int? RetryAttempt { get; set; }
+            public int? SqlErrorNumber { get; set; }
+            public int? DelayMs { get; set; }
+            public int? DurationMs { get; set; }
+            public int? Transaction_ID { get; set; }
+            public string Status { get; set; }
+            public string Message { get; set; }
+            public string RequestSummary { get; set; }
+        }
+
         private static DataTable BuildItemsTable(IEnumerable<PosTransactionItemDto> items)
         {
             var table = new DataTable();
@@ -3038,6 +3623,119 @@ SELECT
             }
 
             return table;
+        }
+
+        private void ValidateStockTransferAvailability(PosStockTransferRequestDto request, DataTable items)
+        {
+            const string sql = @"
+;WITH RequiredStock AS
+(
+    SELECT
+        it.ItemId,
+        LTRIM(RTRIM(ISNULL(it.Serial, N''))) AS Serial,
+        SUM(CAST(it.Quantity * it.UnitFactor AS FLOAT)) AS RequiredQty
+    FROM @Items it
+    GROUP BY it.ItemId, LTRIM(RTRIM(ISNULL(it.Serial, N'')))
+),
+AvailableStock AS
+(
+    SELECT
+        td.Item_ID AS ItemId,
+        LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Serial,
+        SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty
+    FROM dbo.Transaction_Details td
+    INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+    INNER JOIN dbo.TransactionTypes tt ON tt.Transaction_Type = t.Transaction_Type
+    INNER JOIN RequiredStock rs ON rs.ItemId = td.Item_ID
+        AND (rs.Serial = N'' OR rs.Serial = LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))))
+    WHERE t.StoreID = @SourceStoreId
+      AND t.Transaction_Date <= @TransferDate
+      AND ISNULL(tt.StockEffect, 0) <> 0
+    GROUP BY td.Item_ID, LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+),
+MissingStock AS
+(
+    SELECT TOP (1)
+        rs.ItemId,
+        COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(50), rs.ItemId)) AS ItemName,
+        rs.Serial,
+        rs.RequiredQty,
+        ISNULL(av.AvailableQty, 0) AS AvailableQty
+    FROM RequiredStock rs
+    LEFT JOIN AvailableStock av ON av.ItemId = rs.ItemId AND av.Serial = rs.Serial
+    LEFT JOIN dbo.TblItems i ON i.ItemID = rs.ItemId
+    WHERE ISNULL(av.AvailableQty, 0) < rs.RequiredQty
+    ORDER BY rs.ItemId, rs.Serial
+),
+WrongSerialItem AS
+(
+    SELECT TOP (1)
+        it.ItemId,
+        COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(50), it.ItemId)) AS ItemName,
+        LTRIM(RTRIM(ISNULL(it.Serial, N''))) AS Serial,
+        serialItem.Item_ID AS ActualItemId,
+        COALESCE(NULLIF(actual.ItemName, N''), NULLIF(actual.ItemNamee, N''), actual.ItemCode, CONVERT(NVARCHAR(50), serialItem.Item_ID)) AS ActualItemName
+    FROM @Items it
+    INNER JOIN dbo.TblItems i ON i.ItemID = it.ItemId AND ISNULL(i.HaveSerial, 0) = 1
+    OUTER APPLY
+    (
+        SELECT TOP (1) td.Item_ID
+        FROM dbo.Transaction_Details td
+        INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+        INNER JOIN dbo.TransactionTypes tt ON tt.Transaction_Type = t.Transaction_Type
+        WHERE t.StoreID = @SourceStoreId
+          AND t.Transaction_Date <= @TransferDate
+          AND ISNULL(tt.StockEffect, 0) <> 0
+          AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = LTRIM(RTRIM(ISNULL(it.Serial, N'')))
+        GROUP BY td.Item_ID
+        HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
+    ) serialItem
+    LEFT JOIN dbo.TblItems actual ON actual.ItemID = serialItem.Item_ID
+    WHERE ISNULL(serialItem.Item_ID, -1) <> it.ItemId
+    ORDER BY it.ItemId, LTRIM(RTRIM(ISNULL(it.Serial, N'')))
+)
+SELECT TOP (1) ErrorCode, Message
+FROM
+(
+SELECT
+    1 AS SortOrder,
+    N'WrongSerialItem' AS ErrorCode,
+    N'يوجد سيريال لا يخص الصنف المحدد. الصنف المختار: ' + ItemName
+    + N' | السيريال: ' + Serial
+    + CASE WHEN ActualItemName IS NOT NULL THEN N' | الصنف الفعلي للسيريال: ' + ActualItemName ELSE N'' END AS Message
+FROM WrongSerialItem
+UNION ALL
+SELECT
+    2 AS SortOrder,
+    N'MissingStock' AS ErrorCode,
+    N'يوجد صنف أو سيريال غير متاح في المخزن المحول منه. الصنف: ' + ItemName
+    + CASE WHEN Serial <> N'' THEN N' | السيريال: ' + Serial ELSE N'' END
+    + N' | المطلوب: ' + CONVERT(NVARCHAR(50), RequiredQty)
+    + N' | المتاح: ' + CONVERT(NVARCHAR(50), AvailableQty) AS Message
+FROM MissingStock
+) validationErrors
+ORDER BY SortOrder;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.CommandTimeout = 60;
+                Add(command, "@SourceStoreId", SqlDbType.Int, request.SourceStoreId);
+                Add(command, "@TransferDate", SqlDbType.SmallDateTime, request.TransferDate == DateTime.MinValue ? DateTime.Today : request.TransferDate.Date);
+
+                var itemParameter = command.Parameters.Add("@Items", SqlDbType.Structured);
+                itemParameter.TypeName = "dbo.POS_StockTransferItems";
+                itemParameter.Value = items;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        throw new InvalidOperationException(FixArabicMojibakeForDisplay(ReadString(reader, "Message")));
+                    }
+                }
+            }
         }
 
         private static void ValidatePurchaseInvoice(PosPurchaseInvoiceRequestDto request)
@@ -3469,19 +4167,28 @@ ORDER BY Transaction_ID DESC;";
             };
         }
 
-        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType)
+        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType, DateTime? fromDate, DateTime? toDate, int? filterBranchId)
         {
             var invoices = new List<PosTodayInvoiceDto>();
             var searchTerm = (term ?? string.Empty).Trim();
             var operation = NormalizeInvoiceOperationType(operationType);
             var hasSearchTerm = !string.IsNullOrWhiteSpace(searchTerm);
-            var canSearchAllDates = hasSearchTerm && (canChangeDefaults || canEditInvoice);
             var today = DateTime.Today;
             var searchFromDate = today.AddDays(-2);
+            var effectiveFromDate = fromDate.HasValue ? fromDate.Value.Date : (hasSearchTerm ? searchFromDate : today);
+            var effectiveToDate = toDate.HasValue ? toDate.Value.Date : today;
+            if (effectiveToDate < effectiveFromDate)
+            {
+                var temp = effectiveFromDate;
+                effectiveFromDate = effectiveToDate;
+                effectiveToDate = temp;
+            }
+            var effectiveBranchId = canChangeDefaults ? filterBranchId : branchId;
             const string sql = @"
 SELECT TOP (50)
     t.Transaction_ID,
     t.NoteSerial1,
+    CONVERT(VARCHAR(10), t.Transaction_Date, 120) AS TransactionDate,
     CONVERT(VARCHAR(5), t.Transaction_Date, 108) AS TransactionTime,
     t.CashCustomerName,
     t.CashCustomerPhone,
@@ -3499,20 +4206,16 @@ SELECT TOP (50)
     END AS ServiceType
 FROM dbo.Transactions t
 WHERE t.Transaction_Type = 21
+  AND t.Transaction_Date >= @fromDate
+  AND t.Transaction_Date < DATEADD(DAY, 1, @toDate)
   AND (
-      @canSearchAllDates = 1
-      OR (
-          t.Transaction_Date >= CASE WHEN @hasSearchTerm = 1 THEN @searchFromDate ELSE @today END
-          AND t.Transaction_Date < DATEADD(DAY, 1, @today)
-      )
-  )
-  AND (
-      @canSearchAllDates = 1
+      @canSeeAllBranches = 1
       OR (
           (@branchId IS NULL OR t.BranchId = @branchId)
-          AND (@canChangeDefaults = 1 OR t.UserID = @userId)
+          AND (@canSeeAllUsers = 1 OR t.UserID = @userId)
       )
   )
+  AND (@filterBranchId IS NULL OR t.BranchId = @filterBranchId)
   AND
   (
       @term = N''
@@ -3550,11 +4253,11 @@ ORDER BY t.Transaction_ID DESC;";
             {
                 command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
                 command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
-                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
-                command.Parameters.Add("@hasSearchTerm", SqlDbType.Bit).Value = hasSearchTerm;
-                command.Parameters.Add("@canSearchAllDates", SqlDbType.Bit).Value = canSearchAllDates;
-                command.Parameters.Add("@today", SqlDbType.DateTime).Value = today;
-                command.Parameters.Add("@searchFromDate", SqlDbType.DateTime).Value = searchFromDate;
+                command.Parameters.Add("@filterBranchId", SqlDbType.Int).Value = (object)effectiveBranchId ?? DBNull.Value;
+                command.Parameters.Add("@canSeeAllBranches", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@canSeeAllUsers", SqlDbType.Bit).Value = canChangeDefaults || canEditInvoice;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = effectiveFromDate;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = effectiveToDate;
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = searchTerm;
                 command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
                 connection.Open();
@@ -3566,6 +4269,7 @@ ORDER BY t.Transaction_ID DESC;";
                         {
                             Transaction_ID = ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
                             NoteSerial1 = ReadString(reader, "NoteSerial1"),
+                            TransactionDate = ReadString(reader, "TransactionDate"),
                             TransactionTime = ReadString(reader, "TransactionTime"),
                             CustomerName = ReadString(reader, "CashCustomerName"),
                             CustomerPhone = ReadString(reader, "CashCustomerPhone"),
@@ -3698,6 +4402,139 @@ ORDER BY l.CreatedAt DESC, l.Id DESC;";
             return new PosSystemErrorLogSearchResult { Items = items, Count = items.Count };
         }
 
+        public void InsertPosSaveAttemptLog(PosSaveAttemptLogWriteRequest log)
+        {
+            if (log == null)
+            {
+                return;
+            }
+
+            EnsurePosSaveAttemptLogTable();
+            const string sql = @"
+INSERT INTO dbo.POS_SaveAttemptLog
+(
+    SaveAttemptId, EventName, UserID, EmpID, BranchId, TransactionType,
+    RetryAttempt, SqlErrorNumber, DelayMs, DurationMs, Transaction_ID,
+    Status, Message, RequestSummary
+)
+VALUES
+(
+    @SaveAttemptId, @EventName, @UserID, @EmpID, @BranchId, @TransactionType,
+    @RetryAttempt, @SqlErrorNumber, @DelayMs, @DurationMs, @Transaction_ID,
+    @Status, @Message, @RequestSummary
+);";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@SaveAttemptId", SqlDbType.UniqueIdentifier).Value = log.SaveAttemptId;
+                AddString(command, "@EventName", SqlDbType.NVarChar, 100, log.EventName);
+                command.Parameters.Add("@UserID", SqlDbType.Int).Value = log.UserID.HasValue ? (object)log.UserID.Value : DBNull.Value;
+                command.Parameters.Add("@EmpID", SqlDbType.Int).Value = log.EmpID.HasValue ? (object)log.EmpID.Value : DBNull.Value;
+                command.Parameters.Add("@BranchId", SqlDbType.Int).Value = log.BranchId.HasValue ? (object)log.BranchId.Value : DBNull.Value;
+                AddString(command, "@TransactionType", SqlDbType.NVarChar, 50, log.TransactionType);
+                command.Parameters.Add("@RetryAttempt", SqlDbType.Int).Value = log.RetryAttempt.HasValue ? (object)log.RetryAttempt.Value : DBNull.Value;
+                command.Parameters.Add("@SqlErrorNumber", SqlDbType.Int).Value = log.SqlErrorNumber.HasValue ? (object)log.SqlErrorNumber.Value : DBNull.Value;
+                command.Parameters.Add("@DelayMs", SqlDbType.Int).Value = log.DelayMs.HasValue ? (object)log.DelayMs.Value : DBNull.Value;
+                command.Parameters.Add("@DurationMs", SqlDbType.Int).Value = log.DurationMs.HasValue ? (object)log.DurationMs.Value : DBNull.Value;
+                command.Parameters.Add("@Transaction_ID", SqlDbType.Int).Value = log.Transaction_ID.HasValue ? (object)log.Transaction_ID.Value : DBNull.Value;
+                AddString(command, "@Status", SqlDbType.NVarChar, 50, log.Status);
+                AddString(command, "@Message", SqlDbType.NVarChar, -1, TruncateLogMessage(log.Message, 4000));
+                AddString(command, "@RequestSummary", SqlDbType.NVarChar, -1, log.RequestSummary);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public PosSaveAttemptSearchResult SearchPosSaveAttempts(PosSaveAttemptSearchRequest request)
+        {
+            EnsurePosSaveAttemptLogTable();
+            request = request ?? new PosSaveAttemptSearchRequest();
+            var pageSize = request.PageSize <= 0 || request.PageSize > 5000 ? 2000 : request.PageSize;
+            var events = new List<PosSaveAttemptSearchEvent>();
+            const string sql = @"
+SELECT TOP (@pageSize)
+    l.Id,
+    l.SaveAttemptId,
+    l.CreatedAt,
+    l.EventName,
+    l.UserID,
+    COALESCE(NULLIF(u.UserName, N''), CONVERT(NVARCHAR(20), l.UserID)) AS UserName,
+    l.EmpID,
+    l.BranchId,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), l.BranchId)) AS BranchName,
+    l.TransactionType,
+    l.RetryAttempt,
+    l.SqlErrorNumber,
+    l.DelayMs,
+    l.DurationMs,
+    l.Transaction_ID,
+    l.Status,
+    l.Message,
+    l.RequestSummary
+FROM dbo.POS_SaveAttemptLog l
+LEFT JOIN dbo.TblBranchesData b ON b.branch_id = l.BranchId
+LEFT JOIN dbo.TblUsers u ON u.UserID = l.UserID
+WHERE (@fromDate IS NULL OR l.CreatedAt >= @fromDate)
+  AND (@toDate IS NULL OR l.CreatedAt < DATEADD(DAY, 1, @toDate))
+  AND (@branchId IS NULL OR l.BranchId = @branchId)
+  AND (@userId IS NULL OR l.UserID = @userId)
+  AND (@userKeyword = N'' OR ISNULL(u.UserName, N'') LIKE N'%' + @userKeyword + N'%' OR CONVERT(NVARCHAR(20), ISNULL(l.UserID, 0)) LIKE N'%' + @userKeyword + N'%')
+  AND (@transactionType = N'' OR ISNULL(l.TransactionType, N'') = @transactionType)
+ORDER BY l.CreatedAt DESC, l.Id DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@pageSize", SqlDbType.Int).Value = pageSize;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = request.BranchId.HasValue ? (object)request.BranchId.Value : DBNull.Value;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = request.UserId.HasValue ? (object)request.UserId.Value : DBNull.Value;
+                command.Parameters.Add("@userKeyword", SqlDbType.NVarChar, 100).Value = (request.UserKeyword ?? string.Empty).Trim();
+                command.Parameters.Add("@transactionType", SqlDbType.NVarChar, 50).Value = NormalizeInvoiceOperationType(request.TransactionType);
+                command.Parameters.Add("@eventName", SqlDbType.NVarChar, 100).Value = (request.EventName ?? string.Empty).Trim();
+                command.Parameters.Add("@status", SqlDbType.NVarChar, 50).Value = (request.Status ?? string.Empty).Trim();
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        events.Add(new PosSaveAttemptSearchEvent
+                        {
+                            Id = ReadInt(reader, "Id").GetValueOrDefault(),
+                            SaveAttemptId = ReadGuid(reader, "SaveAttemptId"),
+                            CreatedAt = ReadDateTime(reader, "CreatedAt").GetValueOrDefault(),
+                            EventName = ReadString(reader, "EventName"),
+                            UserID = ReadInt(reader, "UserID"),
+                            UserName = ReadString(reader, "UserName"),
+                            EmpID = ReadInt(reader, "EmpID"),
+                            BranchId = ReadInt(reader, "BranchId"),
+                            BranchName = ReadString(reader, "BranchName"),
+                            TransactionType = ReadString(reader, "TransactionType"),
+                            RetryAttempt = ReadInt(reader, "RetryAttempt"),
+                            SqlErrorNumber = ReadInt(reader, "SqlErrorNumber"),
+                            DelayMs = ReadInt(reader, "DelayMs"),
+                            DurationMs = ReadInt(reader, "DurationMs"),
+                            Transaction_ID = ReadInt(reader, "Transaction_ID"),
+                            Status = ReadString(reader, "Status"),
+                            Message = ReadString(reader, "Message"),
+                            RequestSummary = ReadString(reader, "RequestSummary")
+                        });
+                    }
+                }
+            }
+
+            var rows = BuildPosSaveAttemptRows(events);
+            rows = FilterPosSaveAttemptRows(rows, request.EventName, request.Status);
+            return new PosSaveAttemptSearchResult
+            {
+                Items = rows,
+                Count = rows.Count,
+                Summary = BuildPosSaveAttemptSummary(rows)
+            };
+        }
+
         public PosTodaySummaryDto GetTodaySummary(int userId, int? branchId, bool canChangeDefaults)
         {
             var summary = new PosTodaySummaryDto
@@ -3758,8 +4595,204 @@ GROUP BY
 
             // The seller's own summary remains user/branch scoped above. The ranking card is
             // motivational and must compare the teller against all sellers with movements today.
+            summary.TargetAchievement = BuildTodayTargetAchievement(summary.Items, userId, branchId);
             summary.SellerRank = GetTodaySellerRank(userId, null);
             return summary;
+        }
+
+        private PosTodayTargetAchievementDto BuildTodayTargetAchievement(IList<PosTodaySummaryItemDto> items, int userId, int? branchId)
+        {
+            var configuredTarget = GetTodayConfiguredSalesTarget(userId, branchId);
+            var monthlyRechargeTarget = configuredTarget != null
+                ? configuredTarget.MonthlyRechargeTarget
+                : GetDecimalAppSetting(
+                    "PosSalesMonthlyRechargeTarget.User." + userId.ToString(CultureInfo.InvariantCulture),
+                    branchId.HasValue ? "PosSalesMonthlyRechargeTarget.Branch." + branchId.Value.ToString(CultureInfo.InvariantCulture) : null,
+                    "PosSalesMonthlyRechargeTarget");
+            var monthlyCardTarget = configuredTarget != null
+                ? configuredTarget.MonthlyCardTarget
+                : GetDecimalAppSetting(
+                    "PosSalesMonthlyCardTarget.User." + userId.ToString(CultureInfo.InvariantCulture),
+                    branchId.HasValue ? "PosSalesMonthlyCardTarget.Branch." + branchId.Value.ToString(CultureInfo.InvariantCulture) : null,
+                    "PosSalesMonthlyCardTarget");
+            var workingDays = configuredTarget != null
+                ? configuredTarget.WorkingDaysInMonth
+                : GetIntAppSetting(
+                    "PosSalesWorkingDaysInMonth.User." + userId.ToString(CultureInfo.InvariantCulture),
+                    branchId.HasValue ? "PosSalesWorkingDaysInMonth.Branch." + branchId.Value.ToString(CultureInfo.InvariantCulture) : null,
+                    "PosSalesWorkingDaysInMonth");
+
+            var daysInMonth = DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month);
+            if (workingDays <= 0 || workingDays > 31)
+            {
+                workingDays = daysInMonth;
+            }
+
+            var target = new PosTodayTargetAchievementDto
+            {
+                DailyRechargeTarget = workingDays > 0 ? Math.Round(monthlyRechargeTarget / workingDays, 2) : 0,
+                DailyCardTarget = workingDays > 0 ? Math.Round(monthlyCardTarget / workingDays, 2) : 0
+            };
+
+            foreach (var item in items ?? new List<PosTodaySummaryItemDto>())
+            {
+                if (string.Equals(item.ServiceType, "card", StringComparison.OrdinalIgnoreCase))
+                {
+                    target.CardAchievement += item.Count;
+                }
+                else if (string.Equals(item.ServiceType, "cash-in", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(item.ServiceType, "cash-out", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(item.ServiceType, "violations", StringComparison.OrdinalIgnoreCase))
+                {
+                    target.RechargeAchievement += item.NetValue;
+                }
+            }
+
+            target.IsConfigured = target.DailyRechargeTarget > 0 || target.DailyCardTarget > 0;
+            target.RechargeAchievementPercent = target.DailyRechargeTarget > 0 ? Math.Round((target.RechargeAchievement / target.DailyRechargeTarget) * 100, 2) : 0;
+            target.CardAchievementPercent = target.DailyCardTarget > 0 ? Math.Round((target.CardAchievement / target.DailyCardTarget) * 100, 2) : 0;
+            if (target.DailyRechargeTarget > 0 && target.DailyCardTarget > 0)
+            {
+                target.OverallAchievementPercent = Math.Round((target.RechargeAchievementPercent + target.CardAchievementPercent) / 2, 2);
+            }
+            else if (target.DailyRechargeTarget > 0)
+            {
+                target.OverallAchievementPercent = target.RechargeAchievementPercent;
+            }
+            else if (target.DailyCardTarget > 0)
+            {
+                target.OverallAchievementPercent = target.CardAchievementPercent;
+            }
+
+            ApplyTodayTargetPresentation(target);
+            return target;
+        }
+
+        private PosTodayConfiguredTarget GetTodayConfiguredSalesTarget(int userId, int? branchId)
+        {
+            const string sql = @"
+IF OBJECT_ID(N'dbo.POS_SalesRepresentativeTargets', N'U') IS NULL
+BEGIN
+    SELECT TOP (0)
+        MonthlyRechargeTarget = CONVERT(DECIMAL(18, 2), 0),
+        MonthlyCardTarget = CONVERT(DECIMAL(18, 2), 0),
+        WorkingDaysInMonth = CONVERT(INT, 0);
+    RETURN;
+END;
+
+SELECT TOP (1)
+    MonthlyRechargeTarget,
+    MonthlyCardTarget = CONVERT(DECIMAL(18, 2), MonthlyCardTarget),
+    WorkingDaysInMonth
+FROM dbo.POS_SalesRepresentativeTargets WITH (NOLOCK)
+WHERE IsActive = 1
+  AND CONVERT(DATE, GETDATE()) >= CONVERT(DATE, FromDate)
+  AND CONVERT(DATE, GETDATE()) <= CONVERT(DATE, ToDate)
+  AND (UserID = @userId OR UserID IS NULL)
+  AND (@branchId IS NULL OR BranchId IS NULL OR BranchId = @branchId)
+ORDER BY
+    CASE WHEN UserID = @userId THEN 0 ELSE 1 END,
+    CASE WHEN @branchId IS NOT NULL AND BranchId = @branchId THEN 0 WHEN BranchId IS NULL THEN 1 ELSE 2 END,
+    TargetId DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new PosTodayConfiguredTarget
+                    {
+                        MonthlyRechargeTarget = ReadDecimal(reader, "MonthlyRechargeTarget").GetValueOrDefault(),
+                        MonthlyCardTarget = ReadDecimal(reader, "MonthlyCardTarget").GetValueOrDefault(),
+                        WorkingDaysInMonth = ReadInt(reader, "WorkingDaysInMonth").GetValueOrDefault()
+                    };
+                }
+            }
+        }
+
+        private static void ApplyTodayTargetPresentation(PosTodayTargetAchievementDto target)
+        {
+            if (target == null || !target.IsConfigured)
+            {
+                target.PerformanceClass = "target-neutral";
+                target.StatusText = "التارجت غير مضبوط";
+                target.Message = "يمكن ضبط التارجت من شاشة إدارة تارجت المناديب.";
+                return;
+            }
+
+            if (target.OverallAchievementPercent >= 100)
+            {
+                target.PerformanceClass = "target-success";
+                target.StatusText = "ممتاز";
+                target.Message = "محقق التارجت اليومي.";
+            }
+            else if (target.OverallAchievementPercent >= 80)
+            {
+                target.PerformanceClass = "target-warning";
+                target.StatusText = "قريب من التارجت";
+                target.Message = "باقي خطوة صغيرة للوصول للتارجت.";
+            }
+            else
+            {
+                target.PerformanceClass = "target-danger";
+                target.StatusText = "يحتاج متابعة";
+                target.Message = "زود حركات اليوم للوصول للتارجت.";
+            }
+        }
+
+        private static decimal GetDecimalAppSetting(params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    continue;
+                }
+
+                var value = ConfigurationManager.AppSettings[key];
+                decimal result;
+                if (!string.IsNullOrWhiteSpace(value) && decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+                {
+                    return result;
+                }
+            }
+
+            return 0;
+        }
+
+        private static int GetIntAppSetting(params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    continue;
+                }
+
+                var value = ConfigurationManager.AppSettings[key];
+                int result;
+                if (!string.IsNullOrWhiteSpace(value) && int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result))
+                {
+                    return result;
+                }
+            }
+
+            return 0;
+        }
+
+        private class PosTodayConfiguredTarget
+        {
+            public decimal MonthlyRechargeTarget { get; set; }
+            public decimal MonthlyCardTarget { get; set; }
+            public int WorkingDaysInMonth { get; set; }
         }
 
         private PosSellerRankDto GetTodaySellerRank(int userId, int? branchId)
@@ -4519,9 +5552,43 @@ ORDER BY a.Account_Serial, a.Account_Code;";
             var list = new List<PosJournalHeaderDto>();
             request = request ?? new PosJournalSearchRequest();
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand("dbo.usp_POS_Journal_Search", connection))
+            using (var command = new SqlCommand(@"
+SELECT TOP (200)
+    n.NoteID,
+    CASE WHEN ISNUMERIC(n.NoteSerial) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial) END AS NoteSerial,
+    CASE WHEN ISNUMERIC(n.NoteSerial1) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial1) END AS NoteSerial1,
+    n.NoteDate,
+    n.branch_no AS BranchId,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
+    ISNULL(n.Remark, N'') AS Description,
+    ISNULL(n.NoteType, 0) AS NoteType,
+    COALESCE(NULLIF(nt.NotesTypeName, N''), NULLIF(nt.NotesTypeNamee, N''), CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN N'سند قيد تسوية يدوي' ELSE N'قيد آلي' END) AS NoteTypeName,
+    CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN 1 ELSE 0 END AS IsManual,
+    CASE
+        WHEN ISNULL(n.NoteType, 0) = 190 AND n.Transaction_ID IS NOT NULL THEN n.Transaction_ID
+        ELSE n.Transaction_ID
+    END AS AutoSourceId,
+    CASE
+        WHEN ISNULL(n.NoteType, 0) = 57 THEN N''
+        ELSE COALESCE(NULLIF(nt.NotesTypeName, N''), NULLIF(nt.NotesTypeNamee, N''), N'قيد آلي')
+    END AS AutoSourceName,
+    SUM(CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END) AS DebitTotal,
+    SUM(CASE WHEN d.Credit_Or_Debit = 1 THEN d.Value ELSE 0 END) AS CreditTotal
+FROM dbo.Notes n WITH (NOLOCK)
+INNER JOIN dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK) ON d.Notes_ID = n.NoteID
+LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = n.branch_no
+LEFT JOIN dbo.TblNotesTypes nt WITH (NOLOCK) ON nt.NotesType = n.NoteType
+WHERE (@fromDate IS NULL OR n.NoteDate >= @fromDate)
+  AND (@toDate IS NULL OR n.NoteDate < DATEADD(DAY, 1, @toDate))
+  AND (@branchId IS NULL OR n.branch_no = @branchId)
+  AND (@voucherNo = N'' OR CASE WHEN ISNUMERIC(n.NoteSerial) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial) END LIKE N'%' + @voucherNo + N'%' OR CASE WHEN ISNUMERIC(n.NoteSerial1) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial1) END LIKE N'%' + @voucherNo + N'%')
+  AND (@description = N'' OR ISNULL(n.Remark, N'') LIKE N'%' + @description + N'%' OR d.Double_Entry_Vouchers_Description LIKE N'%' + @description + N'%')
+  AND (@accountCode = N'' OR d.Account_Code = @accountCode)
+  AND (@accountCodes IS NULL OR @accountCodes = N'' OR CHARINDEX(N',' + d.Account_Code + N',', N',' + @accountCodes + N',') > 0)
+  AND (@canChangeDefaults = 1 OR n.UserID = @userId OR d.UserID = @userId)
+GROUP BY n.NoteID, n.NoteSerial, n.NoteSerial1, n.NoteDate, n.branch_no, b.branch_name, b.branch_namee, n.Remark, n.NoteType, nt.NotesTypeName, nt.NotesTypeNamee, n.Transaction_ID
+ORDER BY n.NoteDate DESC, n.NoteID DESC;", connection))
             {
-                command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = 90;
                 Add(command, "@fromDate", SqlDbType.DateTime, request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value);
                 Add(command, "@toDate", SqlDbType.DateTime, request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value);
@@ -4549,6 +5616,11 @@ ORDER BY a.Account_Serial, a.Account_Code;";
                             Description = FixArabicMojibakeForDisplay(ReadString(reader, "Description")),
                             IsManual = isManual,
                             EntryKind = isManual ? "قيد يدوي" : "قيد آلي",
+                            NoteType = ReadInt(reader, "NoteType"),
+                            NoteTypeName = FixArabicMojibakeForDisplay(ReadString(reader, "NoteTypeName")),
+                            AutoSourceId = ReadInt(reader, "AutoSourceId"),
+                            AutoSourceName = FixArabicMojibakeForDisplay(ReadString(reader, "AutoSourceName")),
+                            AutoSourceUrl = BuildJournalAutoSourceUrl(ReadInt(reader, "NoteType"), ReadInt(reader, "AutoSourceId")),
                             DebitTotal = ReadDecimal(reader, "DebitTotal").GetValueOrDefault(),
                             CreditTotal = ReadDecimal(reader, "CreditTotal").GetValueOrDefault()
                         });
@@ -4565,15 +5637,20 @@ ORDER BY a.Account_Serial, a.Account_Code;";
             const string sql = @"
 SELECT TOP (1)
     n.NoteID,
-    CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
-    CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
+    CASE WHEN ISNUMERIC(n.NoteSerial) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial) END AS NoteSerial,
+    CASE WHEN ISNUMERIC(n.NoteSerial1) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial1) END AS NoteSerial1,
     n.NoteDate,
     n.branch_no AS BranchId,
     COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
     ISNULL(n.Remark, N'') AS Description,
+    ISNULL(n.NoteType, 0) AS NoteType,
+    COALESCE(NULLIF(nt.NotesTypeName, N''), NULLIF(nt.NotesTypeNamee, N''), CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN N'سند قيد تسوية يدوي' ELSE N'قيد آلي' END) AS NoteTypeName,
+    n.Transaction_ID AS AutoSourceId,
+    CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN N'' ELSE COALESCE(NULLIF(nt.NotesTypeName, N''), NULLIF(nt.NotesTypeNamee, N''), N'قيد آلي') END AS AutoSourceName,
     CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN 1 ELSE 0 END AS IsManual
 FROM dbo.Notes n WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = n.branch_no
+LEFT JOIN dbo.TblNotesTypes nt WITH (NOLOCK) ON nt.NotesType = n.NoteType
 WHERE n.NoteID = @noteId
   AND (@canChangeDefaults = 1 OR n.UserID = @userId);
 
@@ -4611,7 +5688,12 @@ ORDER BY d.DEV_ID_Line_No;";
                             BranchName = ReadString(reader, "BranchName"),
                             Description = FixArabicMojibakeForDisplay(ReadString(reader, "Description")),
                             IsManual = isManual,
-                            EntryKind = isManual ? "قيد يدوي" : "قيد آلي"
+                            EntryKind = isManual ? "قيد يدوي" : "قيد آلي",
+                            NoteType = ReadInt(reader, "NoteType"),
+                            NoteTypeName = FixArabicMojibakeForDisplay(ReadString(reader, "NoteTypeName")),
+                            AutoSourceId = ReadInt(reader, "AutoSourceId"),
+                            AutoSourceName = FixArabicMojibakeForDisplay(ReadString(reader, "AutoSourceName")),
+                            AutoSourceUrl = BuildJournalAutoSourceUrl(ReadInt(reader, "NoteType"), ReadInt(reader, "AutoSourceId"))
                         };
                     }
 
@@ -6603,6 +7685,85 @@ END;";
             }
         }
 
+        private void EnsurePosSaveAttemptLogTable()
+        {
+            if (_posSaveAttemptLogEnsured)
+            {
+                return;
+            }
+
+            lock (PosSaveAttemptLogEnsureLock)
+            {
+                if (_posSaveAttemptLogEnsured)
+                {
+                    return;
+                }
+
+                const string sql = @"
+IF OBJECT_ID(N'dbo.POS_SaveAttemptLog', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.POS_SaveAttemptLog
+    (
+        Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_POS_SaveAttemptLog PRIMARY KEY,
+        SaveAttemptId UNIQUEIDENTIFIER NOT NULL,
+        EventName NVARCHAR(100) NOT NULL,
+        UserID INT NULL,
+        EmpID INT NULL,
+        BranchId INT NULL,
+        TransactionType NVARCHAR(50) NULL,
+        RetryAttempt INT NULL,
+        SqlErrorNumber INT NULL,
+        DelayMs INT NULL,
+        DurationMs INT NULL,
+        Transaction_ID INT NULL,
+        Status NVARCHAR(50) NULL,
+        Message NVARCHAR(MAX) NULL,
+        RequestSummary NVARCHAR(MAX) NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_SaveAttemptLog_CreatedAt DEFAULT (GETDATE())
+    );
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAttemptLog_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAttemptLog'))
+BEGIN
+    CREATE INDEX IX_POS_SaveAttemptLog_CreatedAt ON dbo.POS_SaveAttemptLog(CreatedAt DESC);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAttemptLog_SaveAttemptId' AND object_id = OBJECT_ID(N'dbo.POS_SaveAttemptLog'))
+BEGIN
+    CREATE INDEX IX_POS_SaveAttemptLog_SaveAttemptId ON dbo.POS_SaveAttemptLog(SaveAttemptId, CreatedAt ASC);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAttemptLog_Branch_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAttemptLog'))
+BEGIN
+    CREATE INDEX IX_POS_SaveAttemptLog_Branch_CreatedAt ON dbo.POS_SaveAttemptLog(BranchId, CreatedAt DESC);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAttemptLog_User_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAttemptLog'))
+BEGIN
+    CREATE INDEX IX_POS_SaveAttemptLog_User_CreatedAt ON dbo.POS_SaveAttemptLog(UserID, CreatedAt DESC);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAttemptLog_Event_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAttemptLog'))
+BEGIN
+    CREATE INDEX IX_POS_SaveAttemptLog_Event_CreatedAt ON dbo.POS_SaveAttemptLog(EventName, CreatedAt DESC);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAttemptLog_Status_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAttemptLog'))
+BEGIN
+    CREATE INDEX IX_POS_SaveAttemptLog_Status_CreatedAt ON dbo.POS_SaveAttemptLog(Status, CreatedAt DESC);
+END;";
+
+                using (var connection = new SqlConnection(_connectionString))
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+
+                _posSaveAttemptLogEnsured = true;
+            }
+        }
+
         private void EnsurePosUserCategoryColumn()
         {
             const string sql = @"
@@ -7099,6 +8260,18 @@ VALUES
         {
             var ordinal = reader.GetOrdinal(name);
             return reader.IsDBNull(ordinal) ? null : Convert.ToString(reader.GetValue(ordinal), CultureInfo.InvariantCulture);
+        }
+
+        private static Guid ReadGuid(IDataRecord reader, string name)
+        {
+            var ordinal = reader.GetOrdinal(name);
+            if (reader.IsDBNull(ordinal))
+            {
+                return Guid.Empty;
+            }
+
+            var value = reader.GetValue(ordinal);
+            return value is Guid ? (Guid)value : new Guid(Convert.ToString(value, CultureInfo.InvariantCulture));
         }
 
         private static string FixArabicMojibakeForDisplay(string value)

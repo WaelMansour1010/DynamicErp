@@ -1,0 +1,18 @@
+@model MyERP.Areas.Sync.ViewModels.RolePermissionViewModel
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "صلاحيات المزامنة";
+}
+<div class="sync-card">
+    <div class="card-title">إدارة الصلاحيات</div>
+    <p class="sync-muted-text">هذه الشاشة قراءة فقط حالياً. تعديل الصلاحيات يتطلب موافقة أمنية وتطبيق جداول الإدارة.</p>
+    <table class="sync-table modern">
+        <thead><tr><th>Role</th><th>Permission</th><th>Enabled</th><th>Notes</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model.Roles)
+        {
+            <tr><td>@row.RoleName</td><td>@row.Permission</td><td><span class="status @(row.IsEnabled ? "Applied" : "Blocked")">@(row.IsEnabled ? "Enabled" : "Disabled")</span></td><td>@row.Notes</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

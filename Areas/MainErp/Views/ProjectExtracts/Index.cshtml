@@ -1,0 +1,57 @@
+@model MyERP.Areas.MainErp.ViewModels.ProjectExtracts.ProjectExtractsIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.Title;
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>مستخلصات المشاريع</h3>
+            <p>قائمة قراءة من project_billl تمهيدا لترحيل شاشة projectsbill.frm الفعلية. لا يوجد حفظ أو ترحيل قيود في هذه المرحلة.</p>
+        </div>
+        <span class="main-erp-badge">Projects</span>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+    @using (Html.BeginForm("Index", "ProjectExtracts", FormMethod.Get, new { area = "MainErp", @class = "main-erp-filter" }))
+    {
+        <input name="searchText" value="@Model.SearchText" placeholder="رقم المستخلص / يدوي / مشروع" />
+        <input name="projectId" value="@Model.ProjectId" placeholder="كود المشروع" />
+        <input name="branchId" value="@Model.BranchId" placeholder="كود الفرع" />
+        <button type="submit">بحث</button>
+    }
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>الكود</th>
+                <th>التاريخ</th>
+                <th>رقم القيد</th>
+                <th>رقم يدوي</th>
+                <th>المشروع</th>
+                <th>العميل</th>
+                <th>الإجمالي</th>
+                <th>VAT</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@String.Format("{0:yyyy-MM-dd}", item.BillDate)</td>
+                <td>@item.NoteSerial</td>
+                <td>@item.ManualNo</td>
+                <td>@item.ProjectName</td>
+                <td>@item.CustomerName</td>
+                <td>@String.Format("{0:n2}", item.Total)</td>
+                <td>@String.Format("{0:n2}", item.VatValue)</td>
+                <td><a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = item.Id })">فتح</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="main-erp-muted">عدد السجلات: @Model.Items.Count / @Model.TotalCount. قراءة فقط حاليا؛ شاشة الإدخال الفعلية ستتبع projectsbill.frm.</div>
+</section>

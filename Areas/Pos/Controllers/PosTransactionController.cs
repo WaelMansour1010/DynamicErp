@@ -37,7 +37,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
-            if (!HasRequiredSalesDefaults(context))
+            if (OpensInvoiceDirectly(context) && !HasRequiredSalesDefaults(context))
             {
                 ViewBag.Message = "لا توجد إعدادات بيع افتراضية لهذا المستخدم، برجاء مراجعة الإدارة";
                 return View("MissingSalesDefaults");
@@ -60,6 +60,21 @@ namespace MyERP.Areas.Pos.Controllers
                 && context.StoreId.GetValueOrDefault() > 0
                 && context.BoxId.GetValueOrDefault() > 0
                 && context.PaymentTypeId.GetValueOrDefault() > 0;
+        }
+
+        private static bool OpensInvoiceDirectly(PosUserContext context)
+        {
+            return context != null
+                && (IsTellerCategory(context.UserCategory) || context.CanTeller || context.UserType.GetValueOrDefault(-1) == 2)
+                && !context.IsFullAccess
+                && context.UserType.GetValueOrDefault(-1) != 0;
+        }
+
+        private static bool IsTellerCategory(string category)
+        {
+            var value = (category ?? string.Empty).Trim();
+            return string.Equals(value, "تلر", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Teller", StringComparison.OrdinalIgnoreCase);
         }
 
         [HttpGet]
@@ -369,7 +384,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetTodayInvoices(string term, string operationType)
+        public JsonResult GetTodayInvoices(string term, string operationType, DateTime? fromDate, DateTime? toDate, int? branchId)
         {
             var context = GetPosContext();
             if (context == null)
@@ -380,7 +395,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             try
             {
-                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType), JsonRequestBehavior.AllowGet);
+                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId), JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -1640,6 +1655,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return "حدث تزاحم مؤقت أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";
             }
 
+            if (message.IndexOf("Unable to allocate", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "تعذر تجهيز أرقام القيد المحاسبي أو الفاتورة أثناء الحفظ. برجاء المحاولة مرة أخرى، وتم تسجيل التفاصيل الفنية للدعم.";
+            }
+
             if (message.IndexOf("account is locked out", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "فشل الاتصال بقاعدة البيانات: حساب SQL مغلق. راجع مستخدم الاتصال في KishnyCashConnection.";
@@ -1697,6 +1717,12 @@ namespace MyERP.Areas.Pos.Controllers
 
                 if (exception != null)
                 {
+                    var sqlException = exception as SqlException;
+                    if (sqlException != null)
+                    {
+                        lines.Add("SqlErrors: " + BuildSqlErrorSummary(sqlException));
+                    }
+
                     lines.Add("Exception: " + exception.Message);
                     lines.Add("StackTrace: " + exception);
                 }

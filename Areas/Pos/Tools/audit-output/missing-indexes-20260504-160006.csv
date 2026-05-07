@@ -1,4 +1,0 @@
-﻿"DatabaseName","TableName","user_seeks","ImprovementScore","equality_columns","inequality_columns","included_columns"
-"Cash","dbo.Transactions","5914","2118255.35","[Transaction_Type], [BranchId]","","[IsWallet]"
-"Cash","dbo.TBLClosePos","8","1297.67","","[OrderDate]","[BranchID], [UserID], [NoteSerial], [NoteID], [TotalRev], [TotalRev2], [TotalRevVat], [CashOutDisc], [TotalSupply]"
-"Cash","dbo.TBLClosePos","6","937.51","","[OrderDate]","[BranchID], [UserID], [NoteSerial1], [NoteSerial], [NoteID], [OpenBalance], [LastBalance], [TotalRechargeValue], [TotalRev], [TotalVat], [CashOutTotal], [TotalSupply], [BoxBalance]"

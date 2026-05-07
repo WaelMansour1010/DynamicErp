@@ -1,0 +1,40 @@
+@{
+    Layout = null;
+    var pageTitle = string.IsNullOrWhiteSpace(Convert.ToString(ViewBag.Title))
+        ? "Main ERP Migration"
+        : Convert.ToString(ViewBag.Title);
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@pageTitle</title>
+    <link href="~/Areas/MainErp/Content/mainerp/mainerp.css" rel="stylesheet" />
+</head>
+<body class="main-erp-body">
+    <div class="main-erp-shell" dir="rtl">
+        <header class="main-erp-header">
+            <div>
+                <span class="main-erp-kicker">Main ERP Migration</span>
+                <h2>النظام الرئيسي</h2>
+            </div>
+            <nav class="main-erp-nav" aria-label="Main ERP">
+                <a href="@Url.Action("Index", "Home", new { area = "MainErp" })">الرئيسية</a>
+                <a href="@Url.Action("Index", "Dashboard", new { area = "MainErp" })">الداشبورد</a>
+                <a href="@Url.Action("Index", "Purchases", new { area = "MainErp" })">المشتريات</a>
+                <a href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })">التحويلات</a>
+                <a href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })">القيود اليومية</a>
+                <a href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })">التقارير المحاسبية</a>
+                <a href="@Url.Action("Index", "SalesReports", new { area = "MainErp" })">تقارير المبيعات</a>
+                <a href="@Url.Action("Index", "LC", new { area = "MainErp" })">الاعتمادات</a>
+                <a href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">المستخلصات</a>
+                <a href="@Url.Action("PreviewTest", "Accounting", new { area = "MainErp" })">معاينة القيود</a>
+            </nav>
+        </header>
+        <main>
+            @RenderBody()
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+@model MyERP.Areas.MainErp.ViewModels.LC.LCIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.Title;
+}
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>الاعتمادات المستندية</h3>
+            <p>قائمة قراءة من TblLC تمهيدا لترحيل شاشة FrmLC.frm الحقيقية. الحفظ والترحيل غير مفعلين.</p>
+        </div>
+        <span class="main-erp-badge">LC</span>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+    @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", @class = "main-erp-filter" }))
+    {
+        <input name="searchText" value="@Model.SearchText" placeholder="رقم الاعتماد / الاسم" />
+        <input name="bankId" value="@Model.BankId" placeholder="كود البنك" />
+        <input name="vendorId" value="@Model.VendorId" placeholder="كود المورد" />
+        <input name="branchId" value="@Model.BranchId" placeholder="كود الفرع" />
+        <button type="submit">بحث</button>
+    }
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>الكود</th>
+                <th>رقم الاعتماد</th>
+                <th>الاسم</th>
+                <th>البنك</th>
+                <th>المورد</th>
+                <th>القيمة</th>
+                <th>الفرع</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.TblLCID</td>
+                <td>@item.LCNO</td>
+                <td>@item.Name</td>
+                <td>@item.BankName</td>
+                <td>@item.VendorName</td>
+                <td>@String.Format("{0:n2}", item.Value)</td>
+                <td>@item.BranchID</td>
+                <td><a href="@Url.Action("Details", "LC", new { area = "MainErp", id = item.TblLCID })">فتح</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="main-erp-muted">عدد السجلات: @Model.Items.Count / @Model.TotalCount. قراءة فقط حاليا؛ الحفظ وإنشاء القيود سيتم ترحيلهما من VB6 بعد اكتمال خريطة الشاشة.</div>
+</section>

@@ -1,0 +1,67 @@
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{29D686C9-39E0-4B10-9B2E-56C0F6CC84FA}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SyncBranchAgent</RootNamespace>
+    <AssemblyName>SyncBranchAgent</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Agent\AgentRunner.cs" />
+    <Compile Include="Agent\BranchAgentOptions.cs" />
+    <Compile Include="Agent\BranchSyncWindowsService.cs" />
+    <Compile Include="Agent\CentralSyncApiClient.cs" />
+    <Compile Include="Agent\FileLogger.cs" />
+    <Compile Include="Agent\LocalInvoiceScanner.cs" />
+    <Compile Include="Agent\OutboxStore.cs" />
+    <Compile Include="Agent\WatermarkStore.cs" />
+    <Compile Include="Models\BranchHeartbeat.cs" />
+    <Compile Include="Models\HealthSnapshot.cs" />
+    <Compile Include="Models\InvoicePayload.cs" />
+    <Compile Include="Models\OutboxEnvelope.cs" />
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Config\BranchSyncAgent.config.template" />
+    <None Include="README.md" />
+    <None Include="Scripts\Install-BranchSyncAgent.ps1" />
+    <None Include="Scripts\New-BranchSyncAgentConfig.ps1" />
+    <None Include="Scripts\Restart-BranchSyncAgent.ps1" />
+    <None Include="Scripts\Start-BranchSyncAgent.ps1" />
+    <None Include="Scripts\Stop-BranchSyncAgent.ps1" />
+    <None Include="Scripts\Uninstall-BranchSyncAgent.ps1" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
