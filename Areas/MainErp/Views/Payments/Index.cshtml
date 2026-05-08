@@ -1,0 +1,98 @@
+@model MyERP.Areas.MainErp.ViewModels.Payments.PaymentVoucherSearchViewModel
+@functions {
+    private static string FormatVoucherSerial(string value)
+    {
+        decimal numericValue;
+        return !string.IsNullOrWhiteSpace(value)
+            && value.IndexOf("e", StringComparison.OrdinalIgnoreCase) >= 0
+            && decimal.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out numericValue)
+            ? numericValue.ToString("0.############################", System.Globalization.CultureInfo.InvariantCulture)
+            : value;
+    }
+}
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "سندات الصرف";
+    var totalValue = Model.Items.Sum(x => x.Total);
+    var balancedCount = Model.Items.Count(x => string.Equals(x.BalancedStatus, "متوازن", StringComparison.OrdinalIgnoreCase));
+}
+
+<section class="main-erp-panel voucher-workspace voucher-index-page" dir="rtl">
+    <header class="voucher-page-header">
+        <div>
+            <span class="voucher-eyebrow">FrmPayments</span>
+            <h3>سندات الصرف</h3>
+            <p>استعراض سندات الصرف من مصدر MAIN ERP مع تتبع القيد المحاسبي والتخصيصات بدون أي كتابة.</p>
+        </div>
+        <div class="voucher-header-actions">
+            <span class="main-erp-badge">قراءة فقط</span>
+            <button type="button" class="voucher-ghost-action" disabled>معاينة تأثير الحفظ</button>
+        </div>
+    </header>
+
+    <div class="voucher-metric-strip">
+        <article><span>عدد النتائج</span><strong>@Model.TotalCount</strong></article>
+        <article><span>إجمالي النتائج</span><strong>@totalValue.ToString("N2")</strong></article>
+        <article><span>قيود متوازنة</span><strong>@balancedCount</strong></article>
+        <article><span>الوضع</span><strong>عرض فقط</strong></article>
+    </div>
+
+    @using (Html.BeginForm("Index", "Payments", new { area = "MainErp" }, FormMethod.Get, new { id = "voucherSearchForm", @class = "voucher-search-panel" }))
+    {
+        <label><span>من تاريخ</span><input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" /></label>
+        <label><span>إلى تاريخ</span><input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" /></label>
+        <label><span>رقم السند</span><input type="text" name="serial" value="@Model.Serial" /></label>
+        <label><span>الطرف / الحساب</span><input type="text" name="party" value="@Model.Party" /></label>
+        <label><span>الفرع</span><input type="number" name="branchId" value="@Model.BranchId" /></label>
+        <label><span>الخزنة / البنك</span><input type="text" name="cashboxOrBank" value="@Model.CashboxOrBank" /></label>
+        <label><span>المبلغ</span><input type="number" step="0.01" name="amount" value="@Model.Amount" /></label>
+        <button type="submit">بحث</button>
+    }
+
+    <div class="voucher-table-card">
+        <div class="voucher-table-title">
+            <h4>نتائج البحث</h4>
+            <span>@Model.TotalCount سند</span>
+        </div>
+        <div class="main-erp-table-wrap voucher-table-wrap">
+            <table class="main-erp-table voucher-table">
+                <thead>
+                    <tr>
+                        <th>رقم السند</th>
+                        <th>التاريخ</th>
+                        <th>الطرف</th>
+                        <th>الفرع</th>
+                        <th>الخزنة / البنك</th>
+                        <th>المبلغ</th>
+                        <th>الضريبة</th>
+                        <th>الإجمالي</th>
+                        <th>حالة القيد</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var isBalanced = string.Equals(item.BalancedStatus, "متوازن", StringComparison.OrdinalIgnoreCase);
+                        <tr>
+                            <td><strong>@FormatVoucherSerial(item.NoteSerial)</strong></td>
+                            <td>@(item.NoteDate.HasValue ? item.NoteDate.Value.ToString("dd/MM/yyyy") : "")</td>
+                            <td>@item.PartyDisplay</td>
+                            <td>@item.BranchDisplay</td>
+                            <td>@item.CashboxOrBankDisplay</td>
+                            <td class="voucher-number">@item.Amount.ToString("N2")</td>
+                            <td class="voucher-number">@item.Vat.ToString("N2")</td>
+                            <td class="voucher-number"><strong>@item.Total.ToString("N2")</strong></td>
+                            <td><span class="voucher-status @(isBalanced ? "is-balanced" : "is-unbalanced")">@item.BalancedStatus</span></td>
+                            <td><a class="voucher-details-link" href="@Url.Action("Details", "Payments", new { area = "MainErp", id = item.NoteId })">تفاصيل</a></td>
+                        </tr>
+                    }
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="10" class="voucher-empty">لا توجد نتائج مطابقة.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

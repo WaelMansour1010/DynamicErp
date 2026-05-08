@@ -132,7 +132,7 @@ namespace MyERP.Areas.Pos.Controllers
                 Report("sales-complete-2", "تقرير المبيعات الشامل 2", "ملخص مبيعات شامل قابل للطباعة والتصدير.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("general-sales", "تقرير المبيعات العام", "تقرير المبيعات العام من بيانات كيشني.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("finance-closing", "تقرير الإغلاق المالي", "حركات إغلاق نقطة البيع.", "مصدر بيانات تقارير نقطة البيع"),
-                Report("finance-closing-discounts", "تقرير الإغلاق المالي والخصومات", "قيود الإغلاق والخصومات المرتبطة بها.", "مصدر بيانات تقارير نقطة البيع"),
+                Report("finance-closing-discounts", "تقرير الإغلاق المالي الشامل على مستوى الفروع", "قيود الإغلاق والخصومات المرتبطة بها.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("revenues", "تقرير الإيرادات", "إيرادات الرسوم والضريبة وصافي التحصيل حسب الفرع ونوع العملية.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("store-serials", "تقرير سيريالات المخزن", "السيريالات المتاحة داخل المخزن مع بحث اختياري.", "مصدر بيانات السيريالات", true)
             };
@@ -253,6 +253,30 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static string MapColumnTitle(string name)
         {
+            var crystalMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "RowNo", "م" },
+                { "BranchName", "بيان الفروع" },
+                { "TotalSupply", "إجمالي التوريد" },
+                { "CountCards", "كارت كيشني - عدد" },
+                { "CardValue", "كارت كيشني - قيمة" },
+                { "CountTransaction", "عدد عمليات الشحن" },
+                { "WalletBalance", "رصيد Wallet" },
+                { "WalletSupply", "توريد Wallet" },
+                { "BankBalanceCharge", "تكلفة رسوم" },
+                { "TotalRechargeValue", "أصل مبلغ الشحن" },
+                { "TotalRev2", "الخصم" },
+                { "TotalRevvat", "ضريبة رسوم الشحن" },
+                { "TotalRevWithVat", "رسوم الشحن شامل الضريبة" },
+                { "ReturnsCount", "المرتجعات - عدد" },
+                { "TotalReturns", "المرتجعات - قيمة" },
+                { "NetCashOut", "صافي كاش أوت" },
+                { "BoxValue", "العهدة" },
+                { "ClosingStatus", "حالة الإغلاق" }
+            };
+            string crystalTitle;
+            if (crystalMap.TryGetValue(name, out crystalTitle)) { return crystalTitle; }
+
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 { "BranchName", "الفرع" },

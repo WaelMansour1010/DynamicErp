@@ -22,7 +22,7 @@
 }
 
 <meta charset="utf-8" />
-<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260506-target")" rel="stylesheet" />
+<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260507-delete")" rel="stylesheet" />
 
 <div class="pos-page pos-mode-cash-in"
      id="posPage"
@@ -49,8 +49,10 @@
      data-context-url="@Url.Action("GetContext", "PosTransaction", new { area = "Pos" })"
      data-balances-url="@Url.Action("GetEmployeeBalances", "PosTransaction", new { area = "Pos" })"
      data-today-summary-url="@Url.Action("TodaySummary", "PosTransaction", new { area = "Pos" })"
-     data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
-     data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
+      data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
+      data-delete-invoice-url="@Url.Action("DeleteInvoice", "PosTransaction", new { area = "Pos" })"
+      data-delete-excel-invoices-url="@Url.Action("DeleteExcelInvoices", "PosTransaction", new { area = "Pos" })"
+      data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
      data-journal-url="@Url.Action("GetJournalEntry", "PosTransaction", new { area = "Pos" })"
      data-print-url="@Url.Action("Print", "PosTransaction", new { area = "Pos" })"
      data-print-preview-url="@Url.Action("PrintPreview", "PosTransaction", new { area = "Pos" })"
@@ -75,8 +77,9 @@
      data-can-print-kyc-acknowledgment="@(posContext != null && posContext.CanPrintKycAcknowledgment ? "true" : "false")"
      data-can-print-kyc-card="@(posContext != null && posContext.CanPrintKycCard ? "true" : "false")"
      data-can-edit-kyc="@(posContext != null && posContext.CanEditKyc ? "true" : "false")"
-     data-can-edit-invoice="@(posContext != null && posContext.CanEditInvoice ? "true" : "false")"
-     data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
+      data-can-edit-invoice="@(posContext != null && posContext.CanEditInvoice ? "true" : "false")"
+      data-can-admin-delete-invoice="@(posContext != null && (posContext.IsFullAccess || posContext.UserType.GetValueOrDefault(-1) == 0) ? "true" : "false")"
+      data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
      data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")"
      data-can-teller="@(posContext != null && posContext.CanTeller ? "true" : "false")"
      data-sales-index-first="@(showSalesIndexFirst ? "true" : "false")">
@@ -142,6 +145,10 @@
                 <label>إلى تاريخ
                     <input type="date" id="salesSearchToDate" min="1753-01-01" max="9999-12-31" />
                 </label>
+                <label class="check-field">
+                    <input type="checkbox" id="salesExcelOnly" />
+                    فواتير Excel فقط
+                </label>
                 <label>الفرع
                     <span class="smart-lookup sales-branch-lookup">
                         <input type="text" id="salesSearchBranchText" class="lookup-input" placeholder="اكتب كود أو اسم الفرع" autocomplete="off" />
@@ -153,6 +160,10 @@
                 <div class="sales-index-actions">
                     <button type="button" class="primary-action" id="salesSearchBtn">بحث البيانات</button>
                     <button type="button" class="secondary-action" id="salesClearSearchBtn">مسح الفلاتر</button>
+                    @if (posContext != null && (posContext.IsFullAccess || posContext.UserType.GetValueOrDefault(-1) == 0))
+                    {
+                        <button type="button" class="danger-action compact-action" id="deleteExcelRangeBtn">حذف فواتير Excel للفترة</button>
+                    }
                 </div>
             </div>
             <div id="salesIndexMessage" class="pos-validation"></div>
@@ -400,6 +411,10 @@
                 <button type="button" class="secondary-action" id="newBtn">جديد</button>
                 <button type="button" class="secondary-action" id="printBtn" disabled>طباعة</button>
                 <button type="button" class="secondary-action" id="returnLaterBtn">مرتجع لاحقًا</button>
+                @if (posContext != null && (posContext.IsFullAccess || posContext.UserType.GetValueOrDefault(-1) == 0))
+                {
+                    <button type="button" class="danger-action" id="deleteCurrentInvoiceBtn" disabled>حذف الفاتورة</button>
+                }
                 <button type="submit" class="primary-action" id="saveBtn">حفظ</button>
             </footer>
         </form>
@@ -417,6 +432,7 @@
                     <option value="card">كارت كيشني / KYC</option>
                     <option value="violations">مخالفات</option>
                 </select>
+                <label class="today-excel-filter"><input type="checkbox" id="todayExcelOnly" /> Excel فقط</label>
                 <button type="button" class="secondary-action compact-action today-clear-search" id="clearTodayInvoiceSearchBtn">مسح البحث</button>
                 <div id="todayInvoicesList" class="today-invoices-list">اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.</div>
                 <div id="todayInvoiceSummary" class="today-invoice-summary"></div>
@@ -433,4 +449,4 @@
     </div>
 </div>
 
-<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260506-target")"></script>
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260507-delete")"></script>

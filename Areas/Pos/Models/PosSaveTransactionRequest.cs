@@ -138,6 +138,7 @@ namespace MyERP.Areas.Pos.Models
         public bool IsFullAccess { get; set; }
         public bool CanChangeDefaults { get; set; }
         public bool CanManagePrintTemplates { get; set; }
+        public bool CanImportExcel { get; set; }
         public PosSystemOptionsDto SystemOptions { get; set; }
     }
 
@@ -399,7 +400,9 @@ namespace MyERP.Areas.Pos.Models
     public class PosBranchDto
     {
         public int BranchId { get; set; }
+        public string BranchCode { get; set; }
         public string BranchName { get; set; }
+        public string BranchNameEnglish { get; set; }
     }
 
     public class PosCustomerLookupDto
@@ -532,6 +535,34 @@ namespace MyERP.Areas.Pos.Models
         public decimal PayedValue { get; set; }
         public decimal NetValue { get; set; }
         public string ServiceType { get; set; }
+        public bool IsExcelImported { get; set; }
+        public long? ExcelImportBatchId { get; set; }
+    }
+
+    public class PosDeleteInvoiceRequest
+    {
+        public int TransactionId { get; set; }
+        public string AdminPassword { get; set; }
+    }
+
+    public class PosDeleteExcelInvoicesRequest
+    {
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public int? BranchId { get; set; }
+        public string AdminPassword { get; set; }
+    }
+
+    public class PosDeleteInvoiceResult
+    {
+        public int DeletedCount { get; set; }
+        public int SkippedCount { get; set; }
+        public IList<string> Messages { get; set; }
+
+        public PosDeleteInvoiceResult()
+        {
+            Messages = new List<string>();
+        }
     }
 
     public class PosInvoiceReviewDto

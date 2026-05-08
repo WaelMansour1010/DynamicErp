@@ -11,10 +11,12 @@ namespace MyERP.Areas.Pos.Controllers
     public class PosDashboardController : Controller
     {
         private readonly PosSqlRepository _repository;
+        private readonly PosLegacyScreenPermissionService _legacyPermissionService;
 
         public PosDashboardController()
         {
             _repository = new PosSqlRepository();
+            _legacyPermissionService = new PosLegacyScreenPermissionService();
         }
 
         public ActionResult Index()
@@ -65,6 +67,11 @@ namespace MyERP.Areas.Pos.Controllers
         public ActionResult Payments()
         {
             return OpenShell("payments");
+        }
+
+        public ActionResult Cashing()
+        {
+            return OpenShell("cashing");
         }
 
         public ActionResult PurchaseInvoice()
@@ -193,6 +200,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدخال أو استعراض القيود");
             }
 
+            if (screen == "cashing" && !_legacyPermissionService.CanView(context, "FrmCashing"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استعراض سندات القبض");
+            }
+
             if (screen == "system-health" && !IsAdmin(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية مراقبة النظام");
@@ -211,6 +223,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "stock-transfer" && !CanOpenPurchaseInvoice(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح سند تحويل المخزون");
+            }
+
+            if (screen == "excel-import" && !CanOpenExcelImport(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
             }
 
             ViewBag.PosContext = context;
@@ -266,6 +283,11 @@ namespace MyERP.Areas.Pos.Controllers
         private static bool CanOpenPurchaseInvoice(PosUserContext context)
         {
             return IsAdmin(context) || (context != null && !IsTellerOnly(context) && context.CanSave);
+        }
+
+        private static bool CanOpenExcelImport(PosUserContext context)
+        {
+            return IsAdmin(context) || (context != null && context.CanImportExcel);
         }
 
         private static bool HasSalesDefaults(PosUserContext context)
@@ -374,6 +396,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "payments")
             {
                 return Url.Content("~/Pos/Payments/Index");
+            }
+
+            if (screen == "cashing")
+            {
+                return Url.Content("~/Pos/Cashing/Index");
             }
 
             if (screen == "purchase-invoice")

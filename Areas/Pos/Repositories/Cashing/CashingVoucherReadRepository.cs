@@ -1,0 +1,18 @@
+using System;
+using MyERP.Areas.MainErp.ViewModels.Payments;
+
+namespace MyERP.Areas.Pos.Repositories.Cashing
+{
+    public class CashingVoucherReadRepository : MyERP.Areas.Pos.Repositories.Payments.PaymentVoucherReadRepository
+    {
+        public new PaymentVoucherSearchViewModel Search(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount)
+        {
+            return SearchCore(4, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount);
+        }
+
+        public new PaymentVoucherDetailsViewModel GetDetails(int id)
+        {
+            return GetDetailsCore(4, id);
+        }
+    }
+}

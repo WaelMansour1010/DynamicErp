@@ -78,6 +78,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new
                 {
                     success = true,
+                    reportKey = report.Key,
                     reportName = report.Title,
                     columns = ToColumns(table),
                     rows = ToRows(table)
@@ -147,7 +148,7 @@ namespace MyERP.Areas.Pos.Controllers
                 new PosReportDefinition("non-web-login-users", "مستخدمين دخلوا من غير الويب", "sales", admin || context.CanViewReports, true, "Non-Web Login Users"),
                 new PosReportDefinition("salesmen", "تقرير المناديب", "closings", admin || context.CanReportSalesmen, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("finance-closing", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, true, "بيانات الإغلاقات من TBLClosePos و Notes"),
-                new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي والخصومات", "closings", admin || context.CanReportFinanceClosing, true, "بيانات الإغلاقات والخصومات من TBLClosePos و Notes"),
+                new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي الشامل على مستوى الفروع", "closings", admin || context.CanReportFinanceClosing, true, "بيانات الإغلاقات والخصومات من TBLClosePos و Notes"),
                 new PosReportDefinition("discounts", "تقرير الخصومات", "closings", admin || context.CanReportDiscounts, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("indicators", "تقرير المؤشرات العامة", "closings", admin || context.CanReportIndicators, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("store-serials", "تقرير سيريالات المخزن", "serials", admin || context.CanReportStoreSerials, true, "تقرير المخزون والسيريالات"),
@@ -198,7 +199,17 @@ namespace MyERP.Areas.Pos.Controllers
                 return _repository.RunPosNonWebLoginUsersReport(from, to, branchId, request.UserId, request.LoginSource, context.UserId, IsAdmin(context) || context.CanViewReports);
             }
 
-            return _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+            return _repository.RunPosReport(
+                report.Key,
+                from,
+                to,
+                branchId,
+                context.UserId,
+                IsAdmin(context) || context.CanViewReports,
+                request.BranchFromId,
+                request.BranchToId,
+                request.ShowEmptyBranches,
+                request.ServiceSearch);
         }
 
         private IEnumerable<PosBranchDto> GetAllowedBranches(PosUserContext context)
@@ -306,7 +317,7 @@ namespace MyERP.Areas.Pos.Controllers
          {
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                { "BranchName", "الفرع" },
+                { "BranchName", "بيان الفروع" },
                 { "BranchCode", "كود الفرع" },
                 { "Transaction_ID", "رقم الحركة" },
                 { "NoteSerial1", "رقم الفاتورة" },
@@ -330,7 +341,22 @@ namespace MyERP.Areas.Pos.Controllers
                  { "LastTransactionId", "آخر حركة" },
                  { "LastTransactionDate", "تاريخ الدخول/آخر حركة" },
                  { "SerialStatus", "حالة السيريال" },
-                 { "ClosingDate", "تاريخ الإغلاق" },
+                { "ClosingDate", "تاريخ الإغلاق" },
+                 { "RowNo", "م" },
+                 { "TotalSupply", "إجمالي التوريد" },
+                 { "CountCards", "كارت كيشني - عدد" },
+                 { "CardValue", "كارت كيشني - قيمة" },
+                 { "WalletBalance", "رصيد Wallet" },
+                 { "WalletSupply", "توريد Wallet" },
+                 { "BankBalanceCharge", "تكلفة رسوم" },
+                 { "TotalRev2", "الخصم" },
+                 { "TotalRevvat", "ضريبة رسوم الشحن" },
+                 { "TotalRevWithVat", "رسوم الشحن شامل الضريبة" },
+                 { "ReturnsCount", "المرتجعات - عدد" },
+                 { "TotalReturns", "المرتجعات - قيمة" },
+                 { "NetCashOut", "صافي كاش أوت" },
+                 { "BoxValue", "العهدة" },
+                 { "ClosingStatus", "حالة الإغلاق" },
                  { "NoteDate", "تاريخ القيد" },
                  { "NoteID", "رقم القيد" },
                  { "NoteSerial", "مسلسل القيد" },
@@ -338,7 +364,8 @@ namespace MyERP.Areas.Pos.Controllers
                  { "VoucherNo", "رقم الفاتورة" },
                  { "OpenBalance", "رصيد افتتاحي" },
                  { "LastBalance", "رصيد ختامي" },
-                 { "TotalRechargeValue", "إجمالي الشحن" },
+                 { "TotalRechargeValue", "أصل مبلغ الشحن" },
+                 { "CountTransaction", "عدد عمليات الشحن" },
                  { "TotalRev", "إجمالي الإيرادات" },
                  { "TotalVat", "إجمالي الضريبة" },
                  { "UserId", "رقم المستخدم" },
@@ -382,12 +409,27 @@ namespace MyERP.Areas.Pos.Controllers
 
                      foreach (DataRow row in table.Rows)
                      {
-                         sheetData.Append(RowFromValues(table.Columns.Cast<DataColumn>().Select(c =>
-                         {
-                             var formatted = FormatReportValue(row[c]);
-                             return formatted == null ? string.Empty : Convert.ToString(formatted, CultureInfo.InvariantCulture);
-                         }).ToArray()));
+                     sheetData.Append(RowFromValues(table.Columns.Cast<DataColumn>().Select(c =>
+                     {
+                         var formatted = FormatReportValue(row[c]);
+                         return formatted == null ? string.Empty : Convert.ToString(formatted, CultureInfo.InvariantCulture);
+                     }).ToArray()));
                      }
+
+                    var totals = BuildTotals(table);
+                    if (totals.Count > 0)
+                    {
+                        sheetData.Append(RowFromValues(table.Columns.Cast<DataColumn>().Select((c, index) =>
+                        {
+                            decimal total;
+                            if (totals.TryGetValue(c.ColumnName, out total))
+                            {
+                                return total.ToString("0.##", CultureInfo.InvariantCulture);
+                            }
+
+                            return index == 0 ? "الإجمالي العام" : string.Empty;
+                        }).ToArray()));
+                    }
 
                     worksheetPart.Worksheet.Append(new AutoFilter { Reference = "A4:" + GetExcelColumnName(Math.Max(1, table.Columns.Count)) + Math.Max(4, table.Rows.Count + 4) });
 
@@ -444,6 +486,68 @@ namespace MyERP.Areas.Pos.Controllers
         {
             return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
+
+        private static Dictionary<string, decimal> BuildTotals(DataTable table)
+        {
+            var totals = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            if (table == null)
+            {
+                return totals;
+            }
+
+            foreach (DataColumn column in table.Columns)
+            {
+                if (!ShouldTotalColumn(column))
+                {
+                    continue;
+                }
+
+                decimal total = 0m;
+                foreach (DataRow row in table.Rows)
+                {
+                    if (row[column] == null || row[column] == DBNull.Value)
+                    {
+                        continue;
+                    }
+
+                    decimal value;
+                    if (decimal.TryParse(Convert.ToString(row[column], CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out value))
+                    {
+                        total += value;
+                    }
+                }
+
+                totals[column.ColumnName] = total;
+            }
+
+            return totals;
+        }
+
+        private static bool ShouldTotalColumn(DataColumn column)
+        {
+            if (column == null)
+            {
+                return false;
+            }
+
+            var name = column.ColumnName ?? string.Empty;
+            if (name.Equals("RowNo", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("BranchID", StringComparison.OrdinalIgnoreCase)
+                || name.IndexOf("Id", StringComparison.OrdinalIgnoreCase) >= 0
+                || name.IndexOf("Status", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return false;
+            }
+
+            var type = column.DataType;
+            return type == typeof(byte)
+                || type == typeof(short)
+                || type == typeof(int)
+                || type == typeof(long)
+                || type == typeof(float)
+                || type == typeof(double)
+                || type == typeof(decimal);
+        }
     }
 
     public class PosReportRunRequest
@@ -452,10 +556,14 @@ namespace MyERP.Areas.Pos.Controllers
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public int? BranchId { get; set; }
+        public int? BranchFromId { get; set; }
+        public int? BranchToId { get; set; }
         public int? StoreId { get; set; }
         public int? UserId { get; set; }
         public string LoginSource { get; set; }
         public string SerialSearch { get; set; }
+        public bool ShowEmptyBranches { get; set; }
+        public string ServiceSearch { get; set; }
     }
 
     internal class ReportValidationResult

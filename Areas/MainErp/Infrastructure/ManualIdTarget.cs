@@ -3,6 +3,7 @@ namespace MyERP.Areas.MainErp.Infrastructure
     public sealed class ManualIdTarget
     {
         public static readonly ManualIdTarget NotesNoteId = new ManualIdTarget("Notes", "NoteID");
+        public static readonly ManualIdTarget Notes1NoteId = new ManualIdTarget("Notes1", "NoteID");
         public static readonly ManualIdTarget TblLcId = new ManualIdTarget("TblLC", "TblLCID");
         public static readonly ManualIdTarget ProjectBillId = new ManualIdTarget("project_billl", "id");
         public static readonly ManualIdTarget VoucherId = new ManualIdTarget("DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID");

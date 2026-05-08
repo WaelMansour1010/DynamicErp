@@ -8,6 +8,10 @@
 
     var d = Model.SelectedDetails;
     var readOnlyMessage = Convert.ToString(TempData["MainErpLcReadOnlyMessage"]);
+    var canEditLc = ViewBag.CanEditLc == true;
+    var canPostLc = ViewBag.CanPostLc == true;
+    var canRebuildLc = ViewBag.CanRebuildLc == true;
+    var canDeleteLc = ViewBag.CanDeleteLc == true;
     var totalDebit = 0m;
     var totalCredit = 0m;
     var affectedAccounts = new System.Collections.Generic.HashSet<string>();
@@ -56,9 +60,18 @@
         @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", id = "lcSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
         {
             <label><span>@T("LcNumber")</span><input name="searchText" value="@Model.SearchText" placeholder="LCNO / Name" /></label>
-            <label><span>@T("Bank")</span><input name="bankId" value="@Model.BankId" placeholder="@T("Bank")" /></label>
-            <label><span>@T("Supplier")</span><input name="vendorId" value="@Model.VendorId" placeholder="@T("Supplier")" /></label>
-            <label><span>@T("Branch")</span><input name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" /></label>
+            <label>
+                <span>@T("Bank")</span>
+                @Html.DropDownList("bankId", new SelectList(Model.Banks, "Value", "Text", Model.BankId), "-- " + T("Bank") + " --")
+            </label>
+            <label>
+                <span>@T("Supplier")</span>
+                @Html.DropDownList("vendorId", new SelectList(Model.Vendors, "Value", "Text", Model.VendorId), "-- " + T("Supplier") + " --")
+            </label>
+            <label>
+                <span>@T("Branch")</span>
+                @Html.DropDownList("branchId", new SelectList(Model.Branches, "Value", "Text", Model.BranchId), "-- " + T("Branch") + " --")
+            </label>
             <button type="submit">@T("Search")</button>
         }
 
@@ -84,6 +97,14 @@
     </aside>
 
     <main class="main-erp-premium-stage">
+        @if (TempData["MainErpSuccess"] != null)
+        {
+            <div class="main-erp-ok">@TempData["MainErpSuccess"]</div>
+        }
+        @if (TempData["MainErpWarning"] != null)
+        {
+            <div class="main-erp-warning">@TempData["MainErpWarning"]</div>
+        }
         @if (!string.IsNullOrWhiteSpace(readOnlyMessage))
         {
             <div class="main-erp-warning">@readOnlyMessage</div>
@@ -120,10 +141,44 @@
                     <span class="main-erp-status-pill @(d.Locked == true || d.CloseDate.HasValue ? "is-closed" : "is-active")">
                         @(d.Locked == true || d.CloseDate.HasValue ? T("Closed") : T("Active"))
                     </span>
-                    <a href="@Url.Action("New", "LC", new { area = "MainErp" })">@T("New")</a>
+                    @if (canEditLc)
+                    {
+                        <a href="@Url.Action("New", "LC", new { area = "MainErp" })">@T("New")</a>
+                    }
                     <a href="@Url.Action("Open", "LC", new { area = "MainErp", id = d.TblLCID })">@T("Open")</a>
-                    <button type="button" class="is-disabled-action">@T("Save")</button>
-                    <button type="button" class="is-disabled-action">@T("Delete")</button>
+                    <a href="@Url.Action("Edit", "LC", new { area = "MainErp", id = d.TblLCID })">تعديل / حفظ</a>
+                    @if (canPostLc)
+                    {
+                        using (Html.BeginForm("CreateVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيد فتح الاعتماد الفعلي إذا لم يكن موجودًا. هل تريد المتابعة؟">إنشاء قيد الفتح</button>
+                        }
+                        using (Html.BeginForm("CreateOpenExpenseVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيد مصاريف فتح الاعتماد الفعلي إذا لم يكن موجودًا. هل تريد المتابعة؟">إنشاء قيد المصاريف</button>
+                        }
+                        using (Html.BeginForm("CloseLc", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="lc-post-action" data-confirm="إغلاق الاعتماد سينشئ قيد الإغلاق ويعلّم الاعتماد كمغلق. هل تريد المتابعة؟">إغلاق الاعتماد</button>
+                        }
+                        using (Html.BeginForm("CreateOpeningBalanceVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="lc-post-action" data-confirm="سيتم ترحيل الرصيد الافتتاحي على Notes1 و DOUBLE_ENTREY_VOUCHERS1. هل تريد المتابعة؟">ترحيل الرصيد الافتتاحي</button>
+                        }
+                        using (Html.BeginForm("CreateGridVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيود جريدات الاعتماد الناقصة فقط بدون حذف أو إعادة بناء القيود الموجودة. هل تريد المتابعة؟">إنشاء قيود الجريدات</button>
+                        }
+                    }
+                    else
+                    {
+                        <button type="button" class="lc-disabled-action">قيود الاعتماد غير متاحة لصلاحيتك</button>
+                    }
                 </div>
             </header>
 
@@ -134,6 +189,48 @@
                 <article class="@(missingAccounts > 0 ? "is-warning" : "is-ok")"><span>@T("AccountHealth")</span><strong>@missingAccounts</strong><small>@T("MissingAccounts")</small></article>
                 <article><span>@T("AccountingImpact")</span><strong>@d.VoucherLines.Count</strong><small>@T("GeneratedAccountingRows")</small></article>
                 <article class="@((totalDebit - totalCredit) == 0 ? "is-ok" : "is-warning")"><span>@T("Difference")</span><strong>@String.Format("{0:n2}", totalDebit - totalCredit)</strong><small>@((totalDebit - totalCredit) == 0 ? T("Balanced") : T("Unbalanced"))</small></article>
+            </section>
+
+            <section class="lc-control-zone">
+                <article class="lc-control-card is-rebuild">
+                    <div>
+                        <span>إعادة بناء القيود</span>
+                        <strong>عملية محمية بتأكيد</strong>
+                        <p>تحذف القيود الأساسية الحالية لهذا الاعتماد ثم تعيد إنشاء قيود الفتح والمصاريف والرصيد الافتتاحي حسب بيانات الاعتماد الحالية. قيود الجريدات لها زر مستقل ينشئ الناقص فقط ولا يعيد بناء الموجود.</p>
+                    </div>
+                    @using (Html.BeginForm("RebuildVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-confirm-form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input name="confirmationText" placeholder="@("REBUILD-LC-" + d.TblLCID)" autocomplete="off" />
+                        <button type="submit" class="lc-danger-action" data-confirm="هذه العملية ستحذف وتعيد إنشاء قيود الاعتماد الأساسية. استخدمها فقط على قاعدة اختبار أو بعد مراجعة Audit.">إعادة بناء القيود</button>
+                    }
+                </article>
+                <article class="lc-control-card is-rebuild">
+                    <div>
+                        <span>إعادة بناء قيود الجريدات</span>
+                        <strong>لا يلمس قيود الهيدر الأساسية</strong>
+                        <p>يحذف Notes والقيود المرتبطة بصفوف TBLLCHistory / TBLLCMargin / TBLLCMargin2 / tblLCOpenB فقط، ثم يعيد إنشاء قيود الجريدات حسب الصفوف الحالية. استخدمه بعد مراجعة Audit وعلى قاعدة اختبار.</p>
+                    </div>
+                    @using (Html.BeginForm("RebuildGridVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-confirm-form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input name="confirmationText" placeholder="@("REBUILD-LC-GRIDS-" + d.TblLCID)" autocomplete="off" />
+                        <button type="submit" class="lc-danger-action" data-confirm="سيتم حذف وإعادة إنشاء قيود الجريدات فقط، بدون لمس قيود الهيدر الأساسية. هل تريد المتابعة؟">إعادة بناء قيود الجريدات</button>
+                    }
+                </article>
+                <article class="lc-control-card is-delete">
+                    <div>
+                        <span>حذف الاعتماد</span>
+                        <strong>حذف كامل محمي</strong>
+                        <p>يحذف الاعتماد، الجريدات، Notes/Notes1، القيود العادية والافتتاحية، والحسابات المنشأة له. متاح الآن لأن Eng قاعدة اختبار.</p>
+                    </div>
+                    @using (Html.BeginForm("Delete", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-confirm-form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input name="confirmationText" placeholder="@("DELETE-LC-" + d.TblLCID)" autocomplete="off" />
+                        <button type="submit" class="lc-danger-action" data-confirm="هذه العملية ستحذف الاعتماد والقيود والجريدات المرتبطة به نهائيًا من قاعدة الاختبار.">حذف الاعتماد</button>
+                    }
+                </article>
             </section>
 
             <div class="main-erp-tab-shell" data-main-erp-tabs>
@@ -278,12 +375,16 @@
                                                     <th>@column</th>
                                                 }
                                                 <th>@T("Voucher")</th>
+                                                @if (canDeleteLc)
+                                                {
+                                                    <th>إجراء آمن</th>
+                                                }
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @if (grid.Rows.Count == 0)
                                             {
-                                                <tr><td colspan="@(grid.Columns.Count + 1)">@T("NoRows")</td></tr>
+                                                <tr><td colspan="@(grid.Columns.Count + (canDeleteLc ? 2 : 1))">@T("NoRows")</td></tr>
                                             }
                                             else
                                             {
@@ -304,6 +405,22 @@
                                                                 <span>@T("NoVisibleNoteId")</span>
                                                             }
                                                         </td>
+                                                        @if (canDeleteLc)
+                                                        {
+                                                            <td>
+                                                                @if (row.RowId.HasValue)
+                                                                {
+                                                                    using (Html.BeginForm("DeleteGridRow", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-inline-delete-grid" }))
+                                                                    {
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="sourceTable" value="@grid.SourceTable" />
+                                                                        <input type="hidden" name="rowId" value="@row.RowId.Value" />
+                                                                        <input name="confirmationText" placeholder="@("DELETE-LC-GRID-" + d.TblLCID + "-" + grid.SourceTable + "-" + row.RowId.Value)" autocomplete="off" />
+                                                                        <button type="submit" class="lc-danger-action lc-grid-delete-action" data-confirm="سيتم حذف هذا الصف فقط وتنظيف Notes والقيود المرتبطة به فقط. لن يتم لمس القيود الأساسية للاعتماد.">حذف الصف</button>
+                                                                    }
+                                                                }
+                                                            </td>
+                                                        }
                                                     </tr>
                                                 }
                                             }
@@ -334,10 +451,55 @@
                 </section>
 
                 <section id="lc-history" class="main-erp-tab-pane" hidden>
-                    <div class="main-erp-activity-feed">
-                        <article><span>@T("LcHeader")</span><strong>@T("Active")</strong><small>@String.Format("{0:yyyy-MM-dd}", d.FromDate)</small></article>
+                    <div class="main-erp-summary-grid">
+                        <article><span>عمليات مسجلة</span><strong>@d.AuditEntries.Count</strong><small>Audit</small></article>
                         <article><span>@T("AccountingImpact")</span><strong>@d.LinkedNotes.Count @T("Note")</strong><small>@d.VoucherLines.Count @T("GeneratedAccountingRows")</small></article>
-                        <article><span>@T("MarginPayments")</span><strong>@marginRows @T("Details")</strong><small>@T("WorkflowReadOnly")</small></article>
+                        <article><span>@T("MarginPayments")</span><strong>@marginRows @T("Details")</strong><small>Grid rows</small></article>
+                    </div>
+                    <div class="main-erp-activity-feed">
+                        @if (d.AuditEntries.Count == 0)
+                        {
+                            <article>
+                                <span>Audit</span>
+                                <strong>لا توجد عمليات مسجلة لهذا الاعتماد</strong>
+                                <small>قد يكون جدول MainErp_AuditLog غير مطبق على قاعدة الاختبار الحالية.</small>
+                            </article>
+                        }
+                        else
+                        {
+                            foreach (var audit in d.AuditEntries)
+                            {
+                                <article>
+                                    <span>@audit.OperationName</span>
+                                    <strong>@(!string.IsNullOrWhiteSpace(audit.Message) ? audit.Message : audit.EntityName + " #" + audit.EntityKey)</strong>
+                                    <small>
+                                        @String.Format("{0:yyyy-MM-dd HH:mm}", audit.CreatedAt)
+                                        @if (!string.IsNullOrWhiteSpace(audit.UserName))
+                                        {
+                                            @: · @audit.UserName
+                                        }
+                                        else if (audit.UserId.HasValue)
+                                        {
+                                            @: · User @audit.UserId
+                                        }
+                                    </small>
+                                    @if (!string.IsNullOrWhiteSpace(audit.BeforeSnapshot) || !string.IsNullOrWhiteSpace(audit.AfterSnapshot))
+                                    {
+                                        <details>
+                                            <summary>Before / After</summary>
+                                            @if (!string.IsNullOrWhiteSpace(audit.BeforeSnapshot))
+                                            {
+                                                <pre>@audit.BeforeSnapshot</pre>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(audit.AfterSnapshot))
+                                            {
+                                                <pre>@audit.AfterSnapshot</pre>
+                                            }
+                                        </details>
+                                    }
+                                </article>
+                            }
+                        }
                     </div>
                 </section>
 
@@ -381,6 +543,26 @@
         for (var i = 0; i < disabledButtons.length; i++) {
             disabledButtons[i].addEventListener("click", function () {
                 alert("@T("DisabledReadOnlyMessage")");
+            });
+        }
+
+        var postButtons = document.querySelectorAll(".main-erp-lc-screen .lc-post-action");
+        for (var j = 0; j < postButtons.length; j++) {
+            postButtons[j].addEventListener("click", function (event) {
+                var message = this.getAttribute("data-confirm");
+                if (message && !confirm(message)) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        var dangerButtons = document.querySelectorAll(".main-erp-lc-screen .lc-danger-action");
+        for (var d = 0; d < dangerButtons.length; d++) {
+            dangerButtons[d].addEventListener("click", function (event) {
+                var message = this.getAttribute("data-confirm");
+                if (message && !confirm(message)) {
+                    event.preventDefault();
+                }
             });
         }
     })();

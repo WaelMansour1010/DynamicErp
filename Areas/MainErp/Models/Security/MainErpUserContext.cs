@@ -18,6 +18,7 @@ namespace MyERP.Areas.MainErp.Models.Security
         public int? PaymentNetId { get; set; }
         public int? UserType { get; set; }
         public bool IsAdmin { get; set; }
+        public bool CanPostPumpInvoice { get; set; }
         public string ConnectionStringName { get; set; }
         public string DatabaseName { get; set; }
         public string DefaultsWarning { get; set; }

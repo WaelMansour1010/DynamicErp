@@ -1,0 +1,166 @@
+@model MyERP.Areas.MainErp.ViewModels.SalesInvoices.PumpSalesEditViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.TransactionId.HasValue ? "تعديل فاتورة مبيعات المضخات" : "فاتورة مبيعات مضخات جديدة";
+    Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<int?, IEnumerable<SelectListItem>, IEnumerable<SelectListItem>> withSelected = (value, items) =>
+        items.Select(x => new SelectListItem { Value = x.Value, Text = x.Text, Selected = value.HasValue && x.Value == value.Value.ToString() });
+    var customers = Model.CustomerOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    customers.Insert(0, new SelectListItem { Value = "", Text = "-- العميل --" });
+    var branches = Model.BranchOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    branches.Insert(0, new SelectListItem { Value = "", Text = "-- الفرع --" });
+    var stores = Model.StoreOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    stores.Insert(0, new SelectListItem { Value = "", Text = "-- المخزن --" });
+    var boxes = Model.BoxOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    boxes.Insert(0, new SelectListItem { Value = "", Text = "-- الصندوق --" });
+    var items = Model.ItemOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    items.Insert(0, new SelectListItem { Value = "", Text = "-- الصنف --" });
+    var units = Model.UnitOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    units.Insert(0, new SelectListItem { Value = "", Text = "-- الوحدة --" });
+    var pumps = Model.PumpOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    pumps.Insert(0, new SelectListItem { Value = "", Text = "-- المضخة --" });
+    var payments = Model.PaymentOptions.Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Display }).ToList();
+    payments.Insert(0, new SelectListItem { Value = "", Text = "-- طريقة الدفع --" });
+}
+
+<section class="main-erp-panel invoice-workspace" dir="rtl">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@ViewBag.Title</h3>
+            <p>حفظ مسودة كاملة للمضخات من `FrmSaleBill6`: الهيدر، البنود، المدفوعات، توزيع الآجل، وتحديث قراءة المضخة. القيود والمخزون ما زالت في مرحلة ترحيل مستقلة.</p>
+        </div>
+        <div class="main-erp-actions">
+            <a class="main-erp-button" href="@Url.Action("Index", "PumpSales", new { area = "MainErp" })">رجوع</a>
+            @if (Model.TransactionId.HasValue)
+            {
+                <a class="main-erp-button" href="@Url.Action("Details", "PumpSales", new { area = "MainErp", id = Model.TransactionId.Value })">عرض التفاصيل</a>
+            }
+        </div>
+    </div>
+
+    @if (!String.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="main-erp-warning">@Model.Message</div>
+    }
+    @if (Model.Warnings.Count > 0)
+    {
+        <div class="main-erp-warning"><ul>@foreach (var item in Model.Warnings) { <li>@item</li> }</ul></div>
+    }
+    @if (Model.IsLocked)
+    {
+        <div class="main-erp-warning">هذه الفاتورة مغلقة أو مرحلة أو معتمدة. التعديل ممنوع.</div>
+    }
+
+    <div class="main-erp-kpi-grid">
+        <div class="main-erp-kpi-card"><span>رقم الحركة</span><strong>@(Model.TransactionId.HasValue ? Model.TransactionId.Value.ToString() : "جديد")</strong><small>@Model.NoteSerial1</small></div>
+        <div class="main-erp-kpi-card"><span>إجمالي السطور</span><strong>@money(Model.LinesTotal)</strong><small>ضريبة @money(Model.VatTotal)</small></div>
+        <div class="main-erp-kpi-card"><span>نقدي</span><strong>@money(Model.CashTotal)</strong></div>
+        <div class="main-erp-kpi-card"><span>مدى</span><strong>@money(Model.MadaTotal)</strong></div>
+        <div class="main-erp-kpi-card"><span>فيزا</span><strong>@money(Model.VisaTotal)</strong></div>
+        <div class="main-erp-kpi-card"><span>آجل</span><strong>@money(Model.DeferredTotal)</strong></div>
+        <div class="main-erp-kpi-card"><span>مدفوعات</span><strong>@money(Model.PaymentTotal)</strong></div>
+    </div>
+
+    @using (Html.BeginForm("Edit", "PumpSales", new { area = "MainErp" }, FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(x => x.TransactionId)
+        <div class="main-erp-tabs premium-tabs">
+            <section>
+                <h4>بيانات الفاتورة</h4>
+                <div class="main-erp-two-column">
+                    <dl class="main-erp-details">
+                        <dt>التاريخ</dt><dd>@Html.TextBoxFor(x => x.TransactionDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</dd>
+                        <dt>الفرع</dt><dd>@Html.DropDownListFor(x => x.BranchId, withSelected(Model.BranchId, branches), new { @class = "main-erp-input main-erp-select" })</dd>
+                        <dt>المخزن</dt><dd>@Html.DropDownListFor(x => x.StoreId, withSelected(Model.StoreId, stores), new { @class = "main-erp-input main-erp-select" })</dd>
+                        <dt>الصندوق</dt><dd>@Html.DropDownListFor(x => x.BoxId, withSelected(Model.BoxId, boxes), new { @class = "main-erp-input main-erp-select" })</dd>
+                    </dl>
+                    <dl class="main-erp-details">
+                        <dt>العميل</dt><dd>@Html.DropDownListFor(x => x.CustomerId, withSelected(Model.CustomerId, customers), new { @class = "main-erp-input main-erp-select" })</dd>
+                        <dt>اسم عميل نقدي</dt><dd>@Html.TextBoxFor(x => x.CashCustomerName, new { @class = "main-erp-input" })</dd>
+                        <dt>رقم يدوي</dt><dd>@Html.TextBoxFor(x => x.ManualNo, new { @class = "main-erp-input" })</dd>
+                        <dt>ملاحظات</dt><dd>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = 2 })</dd>
+                    </dl>
+                </div>
+            </section>
+
+            <section>
+                <h4>بنود المضخات</h4>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>#</th><th>الصنف</th><th>الوحدة</th><th>مخزن السطر</th><th>المضخة</th>
+                                <th>السابق</th><th>الحالي</th><th>نقدي كمية/قيمة</th><th>مدى كمية/قيمة</th><th>فيزا كمية/قيمة</th><th>آجل كمية/قيمة</th><th>المتبقي</th><th>ضريبة/عمولة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Lines.Count; i++)
+                            {
+                                <tr>
+                                    <td>
+                                        @Html.HiddenFor(x => x.Lines[i].Id)
+                                        @Html.HiddenFor(x => x.Lines[i].LineNumber)
+                                        @(i + 1)
+                                    </td>
+                                    <td>@Html.DropDownListFor(x => x.Lines[i].ItemId, withSelected(Model.Lines[i].ItemId, items), new { @class = "main-erp-input main-erp-select" })</td>
+                                    <td>@Html.DropDownListFor(x => x.Lines[i].UnitId, withSelected(Model.Lines[i].UnitId, units), new { @class = "main-erp-input main-erp-select" })</td>
+                                    <td>@Html.DropDownListFor(x => x.Lines[i].StoreId2, withSelected(Model.Lines[i].StoreId2, stores), new { @class = "main-erp-input main-erp-select" })</td>
+                                    <td>@Html.DropDownListFor(x => x.Lines[i].PumpId, withSelected(Model.Lines[i].PumpId, pumps), new { @class = "main-erp-input main-erp-select" })</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].PrevQty, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].CurrentQty, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].CashQty, new { @class = "main-erp-input", type = "number", step = "0.0001" }) @Html.TextBoxFor(x => x.Lines[i].Cash, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].MadaQty, new { @class = "main-erp-input", type = "number", step = "0.0001" }) @Html.TextBoxFor(x => x.Lines[i].Mada, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].VisaQty, new { @class = "main-erp-input", type = "number", step = "0.0001" }) @Html.TextBoxFor(x => x.Lines[i].Visa, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].DeferredQty, new { @class = "main-erp-input", type = "number", step = "0.0001" }) @Html.TextBoxFor(x => x.Lines[i].Deferred, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                    <td class="@(Math.Abs(Model.Lines[i].StillPumpQty) > 0.0001m ? "main-erp-danger" : "main-erp-ok")">@money(Model.Lines[i].StillPumpQty)</td>
+                                    <td>@Html.TextBoxFor(x => x.Lines[i].AmountH, new { @class = "main-erp-input", type = "number", step = "0.0001" }) @Html.TextBoxFor(x => x.Lines[i].AmountHCommission, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                </tr>
+                                <tr class="main-erp-subrow">
+                                    <td colspan="13">
+                                        DetailsPump:
+                                        @Html.TextBoxFor(x => x.Lines[i].DetailsPump, new { @class = "main-erp-input", dir = "ltr" })
+                                        @Html.HiddenFor(x => x.Lines[i].AccountCodeInternal)
+                                        @Html.HiddenFor(x => x.Lines[i].CommissionAccountCodeInternal)
+                                        @Html.HiddenFor(x => x.Lines[i].ShowQty)
+                                        @Html.HiddenFor(x => x.Lines[i].Quantity)
+                                        @Html.HiddenFor(x => x.Lines[i].Price)
+                                        @Html.HiddenFor(x => x.Lines[i].CostPrice)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section>
+                <h4>المدفوعات</h4>
+                <table class="main-erp-table">
+                    <thead><tr><th>طريقة الدفع</th><th>القيمة</th><th>CardNo</th><th>MaxValue</th></tr></thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Payments.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.HiddenFor(x => x.Payments[i].Id)
+                                    @Html.DropDownListFor(x => x.Payments[i].PaymentId, withSelected(Model.Payments[i].PaymentId, payments), new { @class = "main-erp-input main-erp-select" })
+                                </td>
+                                <td>@Html.TextBoxFor(x => x.Payments[i].Value, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                                <td>@Html.TextBoxFor(x => x.Payments[i].CardNo, new { @class = "main-erp-input" })</td>
+                                <td>@Html.TextBoxFor(x => x.Payments[i].MaxValue, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <div class="main-erp-actions" style="margin-top:16px">
+            <button type="submit" name="command" value="preview" class="main-erp-button">معاينة الحفظ</button>
+            <button type="submit" name="command" value="save" class="main-erp-button" @(Model.IsLocked ? "disabled=\"disabled\"" : "")>حفظ مسودة كاملة</button>
+            <button type="button" class="main-erp-button" disabled title="سيتم تنفيذها في مرحلة الترحيل التالية">ترحيل القيود والمخزون</button>
+            <button type="button" class="main-erp-button" disabled title="سيتم ربط DailyPumpR.Rpt لاحقًا">طباعة</button>
+        </div>
+    }
+</section>

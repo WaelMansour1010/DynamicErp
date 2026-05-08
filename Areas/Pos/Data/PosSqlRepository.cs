@@ -95,6 +95,44 @@ ORDER BY UserID;";
             }
         }
 
+        public PosUserContext GetDefaultPosUserContextForBranch(int branchId)
+        {
+            const string sql = @"
+SELECT TOP (1)
+    u.UserID
+FROM dbo.TblUsers u
+LEFT JOIN dbo.ScreenJuncUser salePermission
+    ON salePermission.User_ID = u.UserID
+   AND salePermission.ScreenName = N'FrmSaleBill6'
+WHERE ISNULL(u.isDeactivated, 0) = 0
+  AND u.BranchId = @branchId
+  AND ISNULL(u.StoreID, 0) > 0
+  AND ISNULL(u.BoxID, 0) > 0
+  AND ISNULL(u.Empid, 0) > 0
+ORDER BY
+    CASE
+        WHEN ISNULL(u.UserType, -1) = 0 THEN 0
+        WHEN ISNULL(salePermission.FullAccess, 0) = 1 OR ISNULL(salePermission.CanAdd, 0) = 1 THEN 1
+        ELSE 2
+    END,
+    u.UserID;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
+
+                connection.Open();
+                var userId = command.ExecuteScalar();
+                if (userId == null || userId == DBNull.Value)
+                {
+                    return null;
+                }
+
+                return GetPosUserDefaults(Convert.ToInt32(userId, CultureInfo.InvariantCulture));
+            }
+        }
+
         public PosUserContext GetPosUserDefaults(int userId)
         {
             EnsurePosUserCategoryColumn();
@@ -194,6 +232,7 @@ WHERE u.UserID = @userId;";
                     context.CanReturn = context.CanReturn || permissions.CanReturn;
                     context.CanOpenCashCustomer = context.CanOpenCashCustomer || permissions.CanOpenCashCustomer;
                     context.CanManagePrintTemplates = context.IsFullAccess || permissions.CanManagePrintTemplates;
+                    context.CanImportExcel = context.IsFullAccess;
                     ApplyFullAccessReportPermissions(context);
                     ApplyTemporaryPosPermissions(context);
                     if (context.CanTeller)
@@ -342,6 +381,7 @@ WHERE User_ID = @userId
                 context.CanCreateJournalEntry = true;
                 context.CanEditJournalEntry = true;
                 context.CanDeleteJournalEntry = true;
+                context.CanImportExcel = true;
                 return;
             }
 
@@ -388,6 +428,7 @@ WHERE User_ID = @userId
             context.CanCreateJournalEntry = context.CanCreateJournalEntry || IsTemporaryAllowed(permissions, "CanCreateJournalEntry");
             context.CanEditJournalEntry = context.CanEditJournalEntry || IsTemporaryAllowed(permissions, "CanEditJournalEntry");
             context.CanDeleteJournalEntry = context.CanDeleteJournalEntry || IsTemporaryAllowed(permissions, "CanDeleteJournalEntry");
+            context.CanImportExcel = IsTemporaryAllowed(permissions, "CanImportExcel");
         }
 
         private static bool IsTemporaryAllowed(IDictionary<string, bool> permissions, string key)
@@ -1990,6 +2031,70 @@ ORDER BY t.Transaction_ID DESC;";
             return items;
         }
 
+        public IList<PosItemLookupDto> FindServiceItemsByName(string serviceText, string serviceType, int? branchId = null)
+        {
+            var items = new List<PosItemLookupDto>();
+            if (string.IsNullOrWhiteSpace(serviceText))
+            {
+                return items;
+            }
+
+            var where = string.Equals((serviceType ?? string.Empty).Trim(), "cash-in", StringComparison.OrdinalIgnoreCase)
+                ? "ti.ItemType = 1 AND ti.ChkLot = 1 AND ISNULL(ti.HaveGuarantee, 0) = 0 AND ISNULL(ti.TrafficViolations, 0) = 0"
+                : GetPrimaryServiceWhere(serviceType);
+            var sql = @"
+SELECT TOP (10)
+    ti.ItemID,
+    CASE
+        WHEN LTRIM(RTRIM(ISNULL(ti.ItemName, N''))) = @serviceText THEN 0
+        WHEN LTRIM(RTRIM(ISNULL(ti.ItemNamee, N''))) = @serviceText THEN 0
+        WHEN LTRIM(RTRIM(ISNULL(ti.ItemCode, N''))) = @serviceText THEN 1
+        WHEN ISNULL(ti.ItemName, N'') LIKE @like THEN 2
+        WHEN ISNULL(ti.ItemNamee, N'') LIKE @like THEN 2
+        WHEN ISNULL(ti.ItemCode, N'') LIKE @like THEN 3
+        ELSE 9
+    END AS MatchRank
+FROM dbo.TblItems ti
+WHERE " + where + @"
+  AND
+  (
+      LTRIM(RTRIM(ISNULL(ti.ItemName, N''))) = @serviceText
+      OR LTRIM(RTRIM(ISNULL(ti.ItemNamee, N''))) = @serviceText
+      OR LTRIM(RTRIM(ISNULL(ti.ItemCode, N''))) = @serviceText
+      OR ISNULL(ti.ItemName, N'') LIKE @like
+      OR ISNULL(ti.ItemNamee, N'') LIKE @like
+      OR ISNULL(ti.ItemCode, N'') LIKE @like
+  )
+ORDER BY MatchRank, ti.ItemID;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@serviceText", SqlDbType.NVarChar, 255, serviceText.Trim());
+                AddString(command, "@like", SqlDbType.NVarChar, 300, "%" + serviceText.Trim() + "%");
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var itemId = ReadInt(reader, "ItemID").GetValueOrDefault();
+                        if (itemId <= 0)
+                        {
+                            continue;
+                        }
+
+                        var item = GetItemById(itemId, branchId);
+                        if (item != null)
+                        {
+                            items.Add(item);
+                        }
+                    }
+                }
+            }
+
+            return items;
+        }
+
         public IList<PosServiceOptionDto> GetPrimaryServiceItems(string serviceType)
         {
             var items = new List<PosServiceOptionDto>();
@@ -2126,7 +2231,9 @@ WHERE ti.ItemID = @itemId
             const string sql = @"
 SELECT TOP (200)
     b.BranchId,
-    COALESCE(NULLIF(br.branch_name, N''), NULLIF(br.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.BranchId)) AS BranchName
+    br.branch_Code AS BranchCode,
+    COALESCE(NULLIF(br.branch_name, N''), NULLIF(br.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.BranchId)) AS BranchName,
+    br.branch_namee AS BranchNameEnglish
 FROM
 (
     SELECT branch_id AS BranchId FROM dbo.TblBranchesData WHERE branch_id IS NOT NULL
@@ -2147,7 +2254,9 @@ ORDER BY b.BranchId;";
                         branches.Add(new PosBranchDto
                         {
                             BranchId = ReadInt(reader, "BranchId").GetValueOrDefault(),
-                            BranchName = ReadString(reader, "BranchName")
+                            BranchCode = ReadString(reader, "BranchCode"),
+                            BranchName = ReadString(reader, "BranchName"),
+                            BranchNameEnglish = ReadString(reader, "BranchNameEnglish")
                         });
                     }
                 }
@@ -2189,6 +2298,546 @@ ORDER BY StoreID;";
             }
 
             return stores;
+        }
+
+        public bool ImportantIpnExistsForPosSale(string manualNo, int? excludeTransactionId = null)
+        {
+            if (string.IsNullOrWhiteSpace(manualNo))
+            {
+                return false;
+            }
+
+            const string sql = @"
+SELECT TOP (1) 1
+FROM dbo.Transactions t
+WHERE t.Transaction_Type = 21
+  AND NULLIF(LTRIM(RTRIM(ISNULL(t.ManualNO, N''))), N'') = @manualNo
+  AND (@excludeTransactionId IS NULL OR t.Transaction_ID <> @excludeTransactionId)
+  AND
+  (
+      NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL
+      OR
+      (
+          ISNULL(t.IsCashOut, 0) = 0
+          AND ISNULL(t.TrafficViolations, 0) = 0
+          AND (ISNULL(t.isRecharg, 0) = 1 OR ISNULL(t.RechargeValue, 0) > 0)
+      )
+  );";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@manualNo", SqlDbType.NVarChar, 255, manualNo.Trim());
+                Add(command, "@excludeTransactionId", SqlDbType.Int, excludeTransactionId);
+                connection.Open();
+                return command.ExecuteScalar() != null;
+            }
+        }
+
+        public bool PosExcelImportSourceRowExists(string sourceFileHash, string sourceSheet, int sourceRow)
+        {
+            EnsurePosExcelImportAuditTables();
+            const string sql = @"
+SELECT TOP (1) 1
+FROM dbo.POS_ImportBatchRow r
+INNER JOIN dbo.POS_ImportBatch b ON b.BatchId = r.BatchId
+WHERE b.SourceFileHash = @sourceFileHash
+  AND r.SourceSheet = @sourceSheet
+  AND r.SourceRow = @sourceRow
+  AND r.Status = N'Imported';";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@sourceFileHash", SqlDbType.NVarChar, 128, sourceFileHash);
+                AddString(command, "@sourceSheet", SqlDbType.NVarChar, 255, sourceSheet);
+                Add(command, "@sourceRow", SqlDbType.Int, sourceRow);
+                connection.Open();
+                return command.ExecuteScalar() != null;
+            }
+        }
+
+        public long CreatePosExcelImportBatch(string sourceFileName, string sourceFileHash, int userId, int? branchId)
+        {
+            EnsurePosExcelImportAuditTables();
+            const string sql = @"
+INSERT INTO dbo.POS_ImportBatch
+(
+    SourceFileName,
+    SourceFileHash,
+    Status,
+    CreatedByUserId,
+    BranchId,
+    CreatedAt
+)
+VALUES
+(
+    @sourceFileName,
+    @sourceFileHash,
+    N'Committing',
+    @userId,
+    @branchId,
+    GETDATE()
+);
+SELECT CONVERT(BIGINT, SCOPE_IDENTITY());";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@sourceFileName", SqlDbType.NVarChar, 255, sourceFileName);
+                AddString(command, "@sourceFileHash", SqlDbType.NVarChar, 128, sourceFileHash);
+                Add(command, "@userId", SqlDbType.Int, userId);
+                Add(command, "@branchId", SqlDbType.Int, branchId);
+                connection.Open();
+                return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+            }
+        }
+
+        public void UpdatePosExcelImportBatch(long batchId, string status, int importedCount, int failedCount)
+        {
+            EnsurePosExcelImportAuditTables();
+            const string sql = @"
+UPDATE dbo.POS_ImportBatch
+SET Status = @status,
+    ImportedInvoicesCount = @importedCount,
+    FailedRowsCount = @failedCount,
+    CompletedAt = GETDATE()
+WHERE BatchId = @batchId;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                Add(command, "@batchId", SqlDbType.BigInt, batchId);
+                AddString(command, "@status", SqlDbType.NVarChar, 50, status);
+                Add(command, "@importedCount", SqlDbType.Int, importedCount);
+                Add(command, "@failedCount", SqlDbType.Int, failedCount);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void InsertPosExcelImportBatchRow(long batchId, string sourceSheet, int sourceRow, string sourceInvoiceNo, string token, string status, int? transactionId, string message)
+        {
+            EnsurePosExcelImportAuditTables();
+            const string sql = @"
+INSERT INTO dbo.POS_ImportBatchRow
+(
+    BatchId,
+    SourceSheet,
+    SourceRow,
+    SourceInvoiceNo,
+    Token,
+    Status,
+    TransactionId,
+    Message,
+    CreatedAt
+)
+VALUES
+(
+    @batchId,
+    @sourceSheet,
+    @sourceRow,
+    @sourceInvoiceNo,
+    @token,
+    @status,
+    @transactionId,
+    @message,
+    GETDATE()
+);";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                Add(command, "@batchId", SqlDbType.BigInt, batchId);
+                AddString(command, "@sourceSheet", SqlDbType.NVarChar, 255, sourceSheet);
+                Add(command, "@sourceRow", SqlDbType.Int, sourceRow);
+                AddString(command, "@sourceInvoiceNo", SqlDbType.NVarChar, 255, sourceInvoiceNo);
+                AddString(command, "@token", SqlDbType.NVarChar, 255, token);
+                AddString(command, "@status", SqlDbType.NVarChar, 50, status);
+                Add(command, "@transactionId", SqlDbType.Int, transactionId);
+                AddString(command, "@message", SqlDbType.NVarChar, 1000, message);
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public PosExcelImportRollbackResult RollbackPosExcelImportBatch(long batchId, int userId)
+        {
+            EnsurePosExcelImportAuditTables();
+            var result = new PosExcelImportRollbackResult { BatchId = batchId, Status = "Running" };
+
+            const string selectSql = @"
+SELECT
+    r.RowId,
+    r.SourceSheet,
+    r.SourceRow,
+    r.SourceInvoiceNo,
+    r.TransactionId,
+    t.NoteSerial1,
+    t.NoteIDClose
+FROM dbo.POS_ImportBatchRow r WITH (UPDLOCK, HOLDLOCK)
+INNER JOIN dbo.POS_ImportBatch b WITH (UPDLOCK, HOLDLOCK) ON b.BatchId = r.BatchId
+LEFT JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK) ON t.Transaction_ID = r.TransactionId
+WHERE r.BatchId = @batchId
+  AND r.Status = N'Imported'
+  AND r.TransactionId IS NOT NULL
+ORDER BY r.SourceSheet, r.SourceRow;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                {
+                    try
+                    {
+                        var rows = new List<Tuple<long, string, int, string, int, string, int?>>();
+                        using (var command = new SqlCommand(selectSql, connection, transaction))
+                        {
+                            command.Parameters.Add("@batchId", SqlDbType.BigInt).Value = batchId;
+                            using (var reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    rows.Add(Tuple.Create(
+                                        Convert.ToInt64(reader["RowId"], CultureInfo.InvariantCulture),
+                                        ReadString(reader, "SourceSheet"),
+                                        ReadInt(reader, "SourceRow").GetValueOrDefault(),
+                                        ReadString(reader, "SourceInvoiceNo"),
+                                        ReadInt(reader, "TransactionId").GetValueOrDefault(),
+                                        ReadString(reader, "NoteSerial1"),
+                                        ReadInt(reader, "NoteIDClose")));
+                                }
+                            }
+                        }
+
+                        foreach (var row in rows)
+                        {
+                            var rowResult = new PosExcelImportCommitRowResult
+                            {
+                                SheetName = row.Item2,
+                                RowNumber = row.Item3,
+                                IPN = row.Item4,
+                                TransactionId = row.Item5,
+                                NoteSerial1 = row.Item6
+                            };
+
+                            if (row.Item7.HasValue && row.Item7.Value > 0)
+                            {
+                                rowResult.Status = "Failed";
+                                rowResult.Message = "لا يمكن التراجع لأن الفاتورة دخلت في إقفال/قيد يومي.";
+                                result.FailedCount++;
+                                result.Rows.Add(rowResult);
+                                continue;
+                            }
+
+                            DeletePosExcelImportedTransaction(connection, transaction, row.Item5);
+                            UpdatePosExcelImportRowStatus(connection, transaction, row.Item1, "RolledBack", null, "تم التراجع وحذف الفاتورة وآثارها.", userId);
+                            rowResult.Status = "RolledBack";
+                            rowResult.Message = "تم التراجع";
+                            result.RolledBackCount++;
+                            result.Rows.Add(rowResult);
+                        }
+
+                        if (result.FailedCount == 0)
+                        {
+                            ExecuteNonQuery(connection, transaction, @"
+UPDATE dbo.POS_ImportBatch
+SET Status = N'RolledBack',
+    ImportedInvoicesCount = 0,
+    FailedRowsCount = 0,
+    CompletedAt = GETDATE()
+WHERE BatchId = @batchId;",
+                                new SqlParameter("@batchId", batchId));
+                        }
+                        else
+                        {
+                            ExecuteNonQuery(connection, transaction, @"
+UPDATE dbo.POS_ImportBatch
+SET Status = N'RollbackPartial',
+    ImportedInvoicesCount = @remainingImported,
+    FailedRowsCount = @failedCount,
+    CompletedAt = GETDATE()
+WHERE BatchId = @batchId;",
+                                new SqlParameter("@batchId", batchId),
+                                new SqlParameter("@remainingImported", result.FailedCount),
+                                new SqlParameter("@failedCount", result.FailedCount));
+                        }
+
+                        transaction.Commit();
+                        result.Status = result.FailedCount > 0 ? "RollbackPartial" : "RolledBack";
+                        return result;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public void DeletePosExcelImportedTransactionForFailedImport(int transactionId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                {
+                    try
+                    {
+                        var exists = ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) 1
+FROM dbo.Transactions
+WHERE Transaction_ID = @transactionId
+  AND Transaction_Type = 21;",
+                            new SqlParameter("@transactionId", transactionId));
+
+                        if (!exists.HasValue)
+                        {
+                            throw new InvalidOperationException("Unable to find the Excel-import POS transaction selected for immediate rollback.");
+                        }
+
+                        DeletePosExcelImportedTransaction(connection, transaction, transactionId);
+                        transaction.Commit();
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public PosDeleteInvoiceResult DeletePosSaleInvoice(int transactionId, int userId)
+        {
+            EnsurePosExcelImportAuditTables();
+            var result = new PosDeleteInvoiceResult();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                {
+                    try
+                    {
+                        var noteClose = ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) NoteIDClose
+FROM dbo.Transactions WITH (UPDLOCK, HOLDLOCK)
+WHERE Transaction_ID = @transactionId
+  AND Transaction_Type = 21;",
+                            new SqlParameter("@transactionId", transactionId));
+
+                        if (!TransactionExists(connection, transaction, transactionId))
+                        {
+                            throw new InvalidOperationException("لم يتم العثور على الفاتورة المطلوبة.");
+                        }
+
+                        if (noteClose.HasValue && noteClose.Value > 0)
+                        {
+                            throw new InvalidOperationException("لا يمكن حذف الفاتورة لأنها دخلت في إقفال/قيد يومي.");
+                        }
+
+                        DeletePosExcelImportedTransaction(connection, transaction, transactionId);
+                        MarkExcelImportRowsDeleted(connection, transaction, transactionId, userId, "تم حذف الفاتورة من شاشة المبيعات.");
+                        transaction.Commit();
+                        result.DeletedCount = 1;
+                        result.Messages.Add("تم حذف الفاتورة وآثارها بنجاح.");
+                        return result;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public PosDeleteInvoiceResult DeletePosExcelImportedInvoices(DateTime fromDate, DateTime toDate, int? branchId, int userId)
+        {
+            EnsurePosExcelImportAuditTables();
+            var result = new PosDeleteInvoiceResult();
+            if (toDate < fromDate)
+            {
+                var temp = fromDate;
+                fromDate = toDate;
+                toDate = temp;
+            }
+
+            const string selectSql = @"
+SELECT DISTINCT
+    t.Transaction_ID,
+    t.NoteSerial1,
+    t.NoteIDClose
+FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+INNER JOIN dbo.POS_ImportBatchRow r WITH (UPDLOCK, HOLDLOCK)
+    ON r.TransactionId = t.Transaction_ID
+   AND r.Status = N'Imported'
+WHERE t.Transaction_Type = 21
+  AND t.Transaction_Date >= @fromDate
+  AND t.Transaction_Date < DATEADD(DAY, 1, @toDate)
+  AND (@branchId IS NULL OR t.BranchId = @branchId)
+ORDER BY t.Transaction_ID;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                {
+                    try
+                    {
+                        var rows = new List<Tuple<int, string, int?>>();
+                        using (var command = new SqlCommand(selectSql, connection, transaction))
+                        {
+                            command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                            command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
+                            command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId.HasValue ? (object)branchId.Value : DBNull.Value;
+                            using (var reader = command.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    rows.Add(Tuple.Create(
+                                        ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
+                                        ReadString(reader, "NoteSerial1"),
+                                        ReadInt(reader, "NoteIDClose")));
+                                }
+                            }
+                        }
+
+                        foreach (var row in rows)
+                        {
+                            if (row.Item3.HasValue && row.Item3.Value > 0)
+                            {
+                                result.SkippedCount++;
+                                result.Messages.Add("تم تخطي فاتورة " + (row.Item2 ?? row.Item1.ToString(CultureInfo.InvariantCulture)) + " لأنها دخلت في إقفال/قيد يومي.");
+                                continue;
+                            }
+
+                            DeletePosExcelImportedTransaction(connection, transaction, row.Item1);
+                            MarkExcelImportRowsDeleted(connection, transaction, row.Item1, userId, "تم حذف الفاتورة ضمن حذف فواتير Excel بالفترة.");
+                            result.DeletedCount++;
+                        }
+
+                        transaction.Commit();
+                        if (result.DeletedCount == 0 && result.SkippedCount == 0)
+                        {
+                            result.Messages.Add("لا توجد فواتير Excel مطابقة للفترة المحددة.");
+                        }
+                        else
+                        {
+                            result.Messages.Add("تم حذف " + result.DeletedCount.ToString(CultureInfo.InvariantCulture) + " فاتورة Excel.");
+                        }
+
+                        return result;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private static bool TransactionExists(SqlConnection connection, SqlTransaction transaction, int transactionId)
+        {
+            return ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) 1
+FROM dbo.Transactions
+WHERE Transaction_ID = @transactionId
+  AND Transaction_Type = 21;",
+                new SqlParameter("@transactionId", transactionId)).HasValue;
+        }
+
+        private void MarkExcelImportRowsDeleted(SqlConnection connection, SqlTransaction transaction, int transactionId, int userId, string message)
+        {
+            ExecuteNonQuery(connection, transaction, @"
+UPDATE dbo.POS_ImportBatchRow
+SET Status = N'Deleted',
+    TransactionId = NULL,
+    Message = @message
+WHERE TransactionId = @transactionId
+  AND Status = N'Imported';",
+                new SqlParameter("@transactionId", transactionId),
+                new SqlParameter("@message", message ?? string.Empty));
+        }
+
+        private void DeletePosExcelImportedTransaction(SqlConnection connection, SqlTransaction transaction, int transactionId)
+        {
+            ExecuteNonQuery(connection, transaction, @"
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+
+DECLARE @TargetTransactionId INT = @transactionId;
+DECLARE @IssueTransactionId INT;
+
+SELECT @IssueTransactionId =
+    CASE
+        WHEN ISNUMERIC(NULLIF(LTRIM(RTRIM(ISNULL(NOTS, N''))), N'')) = 1
+            THEN CONVERT(INT, NULLIF(LTRIM(RTRIM(ISNULL(NOTS, N''))), N''))
+        ELSE NULL
+    END
+FROM dbo.Transactions
+WHERE Transaction_ID = @TargetTransactionId
+  AND Transaction_Type = 21;
+
+IF @IssueTransactionId IS NOT NULL
+   AND NOT EXISTS
+   (
+       SELECT 1
+       FROM dbo.Transactions
+       WHERE Transaction_ID = @IssueTransactionId
+         AND Transaction_Type = 19
+         AND NULLIF(LTRIM(RTRIM(ISNULL(nots, N''))), N'') = CONVERT(NVARCHAR(50), @TargetTransactionId)
+   )
+BEGIN
+    SET @IssueTransactionId = NULL;
+END;
+
+DELETE dev
+FROM dbo.DOUBLE_ENTREY_VOUCHERS dev
+INNER JOIN dbo.Notes n ON n.NoteID = dev.Notes_ID
+WHERE n.Transaction_ID IN (@TargetTransactionId, ISNULL(@IssueTransactionId, -2147483648));
+
+DELETE FROM dbo.DOUBLE_ENTREY_VOUCHERS
+WHERE Transaction_ID IN (@TargetTransactionId, ISNULL(@IssueTransactionId, -2147483648));
+
+DELETE FROM dbo.Notes
+WHERE Transaction_ID IN (@TargetTransactionId, ISNULL(@IssueTransactionId, -2147483648));
+
+DELETE FROM dbo.Transaction_Details
+WHERE Transaction_ID IN (@TargetTransactionId, ISNULL(@IssueTransactionId, -2147483648));
+
+DELETE FROM dbo.TblSalesPayment
+WHERE TransID IN (@TargetTransactionId, ISNULL(@IssueTransactionId, -2147483648));
+
+DELETE FROM dbo.Transactions
+WHERE Transaction_ID = @IssueTransactionId
+  AND Transaction_Type = 19;
+
+DELETE FROM dbo.Transactions
+WHERE Transaction_ID = @TargetTransactionId
+  AND Transaction_Type = 21;",
+                new SqlParameter("@transactionId", transactionId));
+        }
+
+        private void UpdatePosExcelImportRowStatus(SqlConnection connection, SqlTransaction transaction, long rowId, string status, int? transactionId, string message, int userId)
+        {
+            ExecuteNonQuery(connection, transaction, @"
+UPDATE dbo.POS_ImportBatchRow
+SET Status = @status,
+    TransactionId = @transactionId,
+    Message = @message
+WHERE RowId = @rowId;",
+                new SqlParameter("@rowId", rowId),
+                new SqlParameter("@status", status ?? string.Empty),
+                new SqlParameter("@transactionId", transactionId.HasValue ? (object)transactionId.Value : DBNull.Value),
+                new SqlParameter("@message", message ?? string.Empty));
         }
 
         public IList<PosCashBoxDto> GetCashBoxesByUserOrBranch(int? userId, int? branchId)
@@ -4167,8 +4816,9 @@ ORDER BY Transaction_ID DESC;";
             };
         }
 
-        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType, DateTime? fromDate, DateTime? toDate, int? filterBranchId)
+        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType, DateTime? fromDate, DateTime? toDate, int? filterBranchId, bool excelOnly = false)
         {
+            EnsurePosExcelImportAuditTables();
             var invoices = new List<PosTodayInvoiceDto>();
             var searchTerm = (term ?? string.Empty).Trim();
             var operation = NormalizeInvoiceOperationType(operationType);
@@ -4203,8 +4853,20 @@ SELECT TOP (50)
         WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'كارت كيشني'
         WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'كاش أوت'
         ELSE N'كاش إن'
-    END AS ServiceType
+    END AS ServiceType,
+    CASE WHEN excelRow.RowId IS NULL THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END AS IsExcelImported,
+    excelRow.BatchId AS ExcelImportBatchId
 FROM dbo.Transactions t
+OUTER APPLY
+(
+    SELECT TOP (1)
+        r.RowId,
+        r.BatchId
+    FROM dbo.POS_ImportBatchRow r
+    WHERE r.TransactionId = t.Transaction_ID
+      AND r.Status = N'Imported'
+    ORDER BY r.RowId DESC
+) excelRow
 WHERE t.Transaction_Type = 21
   AND t.Transaction_Date >= @fromDate
   AND t.Transaction_Date < DATEADD(DAY, 1, @toDate)
@@ -4246,6 +4908,7 @@ WHERE t.Transaction_Type = 21
       OR (@operationType = N'card' AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL)
       OR (@operationType = N'violations' AND ISNULL(t.TrafficViolations, 0) = 1)
   )
+  AND (@excelOnly = 0 OR excelRow.RowId IS NOT NULL)
 ORDER BY t.Transaction_ID DESC;";
 
             using (var connection = new SqlConnection(_connectionString))
@@ -4260,6 +4923,7 @@ ORDER BY t.Transaction_ID DESC;";
                 command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = effectiveToDate;
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = searchTerm;
                 command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
+                command.Parameters.Add("@excelOnly", SqlDbType.Bit).Value = excelOnly;
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -4275,7 +4939,9 @@ ORDER BY t.Transaction_ID DESC;";
                             CustomerPhone = ReadString(reader, "CashCustomerPhone"),
                             PayedValue = ReadDecimal(reader, "PayedValue").GetValueOrDefault(),
                             NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
-                            ServiceType = ReadString(reader, "ServiceType")
+                            ServiceType = ReadString(reader, "ServiceType"),
+                            IsExcelImported = ReadBoolean(reader, "IsExcelImported"),
+                            ExcelImportBatchId = ReadLong(reader, "ExcelImportBatchId")
                         });
                     }
                 }
@@ -5250,7 +5916,7 @@ WHERE UserID = @userId
             }
         }
 
-        public DataTable RunPosReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults)
+        public DataTable RunPosReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null)
         {
             var table = new DataTable();
             using (var connection = new SqlConnection(_connectionString))
@@ -5264,6 +5930,10 @@ WHERE UserID = @userId
                 command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
                 command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@branchFromId", SqlDbType.Int).Value = branchFromId.HasValue ? (object)branchFromId.Value : DBNull.Value;
+                command.Parameters.Add("@branchToId", SqlDbType.Int).Value = branchToId.HasValue ? (object)branchToId.Value : DBNull.Value;
+                command.Parameters.Add("@showEmptyBranches", SqlDbType.Bit).Value = showEmptyBranches;
+                command.Parameters.Add("@serviceSearch", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(serviceSearch) ? (object)DBNull.Value : serviceSearch.Trim();
                 adapter.Fill(table);
             }
 
@@ -7590,6 +8260,7 @@ SELECT ISNULL(@AffectedUsers, 0) AS AffectedUsers, ISNULL(@UpdatedRows, 0) AS Up
                 new PosPermissionItemDto { Key = "CanOpenSales", Title = "فتح شاشة المبيعات" },
                 new PosPermissionItemDto { Key = "CanSaveInvoice", Title = "حفظ فواتير البيع" },
                 new PosPermissionItemDto { Key = "CanEditInvoice", Title = "تعديل فواتير البيع السابقة" },
+                new PosPermissionItemDto { Key = "CanImportExcel", Title = "استيراد العمليات من Excel" },
                 new PosPermissionItemDto { Key = "CanOpenPayments", Title = "فتح شاشة التمويل والاستعاضة" },
                 new PosPermissionItemDto { Key = "CanExecutePayments", Title = "تنفيذ التمويل والاستعاضة" },
                 new PosPermissionItemDto { Key = "CanEditPayments", Title = "تعديل حركات التمويل والاستعاضة السابقة" },
@@ -7779,6 +8450,64 @@ END";
             }
         }
 
+        private void EnsurePosExcelImportAuditTables()
+        {
+            const string sql = @"
+IF OBJECT_ID(N'dbo.POS_ImportBatch', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.POS_ImportBatch
+    (
+        BatchId BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_POS_ImportBatch PRIMARY KEY,
+        SourceFileName NVARCHAR(255) NOT NULL,
+        SourceFileHash NVARCHAR(128) NOT NULL,
+        Status NVARCHAR(50) NOT NULL,
+        CreatedByUserId INT NULL,
+        BranchId INT NULL,
+        ImportedInvoicesCount INT NOT NULL CONSTRAINT DF_POS_ImportBatch_ImportedInvoicesCount DEFAULT (0),
+        FailedRowsCount INT NOT NULL CONSTRAINT DF_POS_ImportBatch_FailedRowsCount DEFAULT (0),
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_ImportBatch_CreatedAt DEFAULT (GETDATE()),
+        CompletedAt DATETIME NULL
+    );
+END;
+
+IF OBJECT_ID(N'dbo.POS_ImportBatchRow', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.POS_ImportBatchRow
+    (
+        RowId BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_POS_ImportBatchRow PRIMARY KEY,
+        BatchId BIGINT NOT NULL,
+        SourceSheet NVARCHAR(255) NOT NULL,
+        SourceRow INT NOT NULL,
+        SourceInvoiceNo NVARCHAR(255) NULL,
+        Token NVARCHAR(255) NULL,
+        Status NVARCHAR(50) NOT NULL,
+        TransactionId INT NULL,
+        Message NVARCHAR(1000) NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_ImportBatchRow_CreatedAt DEFAULT (GETDATE())
+    );
+
+    ALTER TABLE dbo.POS_ImportBatchRow
+    ADD CONSTRAINT FK_POS_ImportBatchRow_Batch
+    FOREIGN KEY (BatchId) REFERENCES dbo.POS_ImportBatch(BatchId);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_ImportBatch_SourceFileHash' AND object_id = OBJECT_ID(N'dbo.POS_ImportBatch'))
+BEGIN
+    CREATE INDEX IX_POS_ImportBatch_SourceFileHash ON dbo.POS_ImportBatch(SourceFileHash);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_ImportBatchRow_Source' AND object_id = OBJECT_ID(N'dbo.POS_ImportBatchRow'))
+BEGIN
+    CREATE INDEX IX_POS_ImportBatchRow_Source ON dbo.POS_ImportBatchRow(BatchId, SourceSheet, SourceRow, Status);
+END;";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
         private void EnsureNotesAuditColumns()
         {
             const string sql = @"
@@ -7819,6 +8548,41 @@ WHERE Transaction_ID = @transactionId
             }
         }
 
+        public string GetPosTransactionServiceType(int transactionId)
+        {
+            const string sql = @"
+SELECT TOP (1)
+    CASE
+        WHEN ISNULL(TrafficViolations, 0) = 1 THEN N'violations'
+        WHEN NULLIF(LTRIM(RTRIM(ISNULL(VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
+        WHEN ISNULL(IsCashOut, 0) = 1 THEN N'cash-out'
+        ELSE N'cash-in'
+    END AS ServiceType
+FROM dbo.Transactions
+WHERE Transaction_ID = @transactionId
+  AND Transaction_Type = 21;";
+
+            return ExecuteScalarString(sql, new SqlParameter("@transactionId", transactionId));
+        }
+
+        public int? GetPosTransactionServiceItemId(int transactionId)
+        {
+            const string sql = @"
+SELECT TOP (1) ItemIDService
+FROM dbo.Transactions
+WHERE Transaction_ID = @transactionId
+  AND Transaction_Type = 21;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@transactionId", SqlDbType.Int).Value = transactionId;
+                connection.Open();
+                var value = command.ExecuteScalar();
+                return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            }
+        }
+
         public bool TransactionHasDetails(int transactionId)
         {
             const string sql = @"
@@ -7848,9 +8612,9 @@ WHERE Transaction_ID = @transactionId;";
         private static void NormalizeViolationServiceItem(PosItemLookupDto item)
         {
             item.Quantity = 1;
-            item.Price = item.Price <= 0 ? 50 : item.Price;
-            item.ShowPrice = item.Price;
-            item.TotalPrice = item.Price;
+            item.Price = 50;
+            item.ShowPrice = 50;
+            item.TotalPrice = 50;
             item.Vat = 0;
             item.Vatyo = 0;
             item.DiscountValue = 0;
@@ -8248,6 +9012,12 @@ VALUES
         {
             var ordinal = reader.GetOrdinal(name);
             return reader.IsDBNull(ordinal) ? (int?)null : Convert.ToInt32(reader.GetValue(ordinal), CultureInfo.InvariantCulture);
+        }
+
+        private static long? ReadLong(IDataRecord reader, string name)
+        {
+            var ordinal = reader.GetOrdinal(name);
+            return reader.IsDBNull(ordinal) ? (long?)null : Convert.ToInt64(reader.GetValue(ordinal), CultureInfo.InvariantCulture);
         }
 
         private static decimal? ReadDecimal(IDataRecord reader, string name)

@@ -1,5 +1,7 @@
 ﻿using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
+using MyERP.Areas.Pos.Repositories.Payments;
+using MyERP.Areas.Pos.Services;
 using System;
 using System.Data.SqlClient;
 using System.Linq;
@@ -10,10 +12,54 @@ namespace MyERP.Areas.Pos.Controllers
     public class PaymentsController : Controller
     {
         private readonly PosSqlRepository _repository;
+        private readonly PaymentVoucherReadRepository _voucherReadRepository;
+        private readonly PosLegacyScreenPermissionService _legacyPermissionService;
 
         public PaymentsController()
         {
             _repository = new PosSqlRepository();
+            _voucherReadRepository = new PaymentVoucherReadRepository();
+            _legacyPermissionService = new PosLegacyScreenPermissionService();
+        }
+
+        public ActionResult Vouchers(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!_legacyPermissionService.CanView(context, "FrmPayments"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استعراض سندات الصرف");
+            }
+
+            ViewBag.ActiveScreen = "payment-vouchers";
+            return View("Vouchers", _voucherReadRepository.Search(fromDate, toDate, serial, party, context.IsFullAccess ? branchId : context.BranchId, cashboxOrBank, amount));
+        }
+
+        public ActionResult Details(int id)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!_legacyPermissionService.CanView(context, "FrmPayments"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استعراض سندات الصرف");
+            }
+
+            ViewBag.ActiveScreen = "payment-vouchers";
+            var model = _voucherReadRepository.GetDetails(id);
+            if (model == null)
+            {
+                return HttpNotFound("Payment voucher was not found.");
+            }
+
+            return View("Details", model);
         }
 
         public ActionResult Index()

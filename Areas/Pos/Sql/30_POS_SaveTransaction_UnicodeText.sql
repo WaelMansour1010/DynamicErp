@@ -250,8 +250,33 @@ BEGIN
         IF NULLIF(LTRIM(RTRIM(ISNULL(@IPN, N''))), N'') IS NULL
             RAISERROR('Screen ID is required for POS transactions.', 16, 1);
 
-        IF NULLIF(LTRIM(RTRIM(ISNULL(@ManualNO, N''))), N'') IS NULL
-            RAISERROR('Screen IPN is required for POS transactions.', 16, 1);
+        IF ISNULL(@IsCashOut, 0) = 0
+           AND ISNULL(@TrafficViolations, 0) = 0
+           AND NULLIF(LTRIM(RTRIM(ISNULL(@ManualNO, N''))), N'') IS NULL
+            RAISERROR('Screen IPN is required for Cash In and Keshni Card transactions.', 16, 1);
+
+        IF ISNULL(@IsCashOut, 0) = 0
+           AND ISNULL(@TrafficViolations, 0) = 0
+           AND NULLIF(LTRIM(RTRIM(ISNULL(@ManualNO, N''))), N'') IS NOT NULL
+           AND EXISTS
+           (
+               SELECT 1
+               FROM dbo.Transactions t
+               WHERE t.Transaction_Type = 21
+                 AND NULLIF(LTRIM(RTRIM(ISNULL(t.ManualNO, N''))), N'') = NULLIF(LTRIM(RTRIM(ISNULL(@ManualNO, N''))), N'')
+                 AND (@ExistingTransactionID IS NULL OR @ExistingTransactionID <= 0 OR t.Transaction_ID <> @ExistingTransactionID)
+                 AND
+                 (
+                     NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL
+                     OR
+                     (
+                         ISNULL(t.IsCashOut, 0) = 0
+                         AND ISNULL(t.TrafficViolations, 0) = 0
+                         AND (ISNULL(t.isRecharg, 0) = 1 OR ISNULL(t.RechargeValue, 0) > 0)
+                     )
+                 )
+           )
+            RAISERROR('Screen IPN already exists for Cash In or Keshni Card transactions.', 16, 1);
 
         IF ISNULL(@ExistingTransactionID, 0) <= 0
         BEGIN

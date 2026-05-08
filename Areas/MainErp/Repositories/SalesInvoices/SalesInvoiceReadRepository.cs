@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
+using System.Xml.Linq;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.ViewModels;
 using MyERP.Areas.MainErp.ViewModels.SalesInvoices;
@@ -210,7 +211,9 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
                         }
                     }
 
+                    LoadPumpDeferredTableAllocations(connection, model);
                     LoadPumpDeferredCustomerAccounts(connection, model);
+                    LoadAuditLogs(connection, model, id);
                     BuildSavePreview(model);
                     return model;
                 }
@@ -237,6 +240,8 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
                     LoadPayments(connection, model, id);
                     LoadVoucherLines(connection, model, id, model.NoteId);
                     LoadRelatedInventoryTransactions(connection, model, id);
+                    LoadAuditLogs(connection, model, id);
+                    LoadPumpDeferredTableAllocations(connection, model);
                     LoadPumpDeferredCustomerAccounts(connection, model);
                     BuildSavePreview(model);
                 }
@@ -272,6 +277,7 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             {
                 model.Warnings.Add("Pump line was not found in Transaction_Details for this invoice.");
                 EnsureEditableRows(model);
+                LoadPumpDeferredCustomerOptions(model);
                 return model;
             }
 
@@ -279,6 +285,8 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             model.PumpName = line.PumpName;
             model.CurrentDeferred = line.Deferred;
             model.CurrentDeferredQty = line.DeferredQty;
+            model.LineQuantityLimit = line.CurrentQty ?? line.Quantity ?? line.ShowQty;
+            model.NonDeferredQuantity = (line.CashQty ?? 0m) + (line.MadaQty ?? 0m) + (line.VisaQty ?? 0m);
 
             foreach (var allocation in line.DeferredAllocations)
             {
@@ -298,6 +306,7 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             }
 
             EnsureEditableRows(model);
+            LoadPumpDeferredCustomerOptions(model);
             return model;
         }
 
@@ -314,9 +323,23 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
                 };
             }
 
+            HydratePumpDeferredAllocationCustomers(normalizedAllocations);
             var detailsPump = BuildDetailsPumpText(normalizedAllocations);
             var deferred = normalizedAllocations.Sum(x => x.Amount ?? 0m);
             var deferredQty = normalizedAllocations.Sum(x => x.Quantity ?? 0m);
+            var invoice = GetDetails(MainErpSalesInvoiceKind.Pump, model.TransactionId);
+            var line = invoice.Lines.FirstOrDefault(x => x.Id == model.LineId);
+            if (line == null)
+            {
+                throw new InvalidOperationException("Pump line was not found in the current database.");
+            }
+
+            var lineQuantityLimit = line.CurrentQty ?? line.Quantity ?? line.ShowQty;
+            var nonDeferredQuantity = (line.CashQty ?? 0m) + (line.MadaQty ?? 0m) + (line.VisaQty ?? 0m);
+            if (lineQuantityLimit.HasValue && deferredQty + nonDeferredQuantity > lineQuantityLimit.Value)
+            {
+                throw new InvalidOperationException("إجمالي كمية الآجل يتجاوز الكمية المتاحة لهذا السطر.");
+            }
 
             using (var connection = _connectionFactory.CreateOpenConnection())
             using (var command = new SqlCommand("dbo.MainErp_SalesInvoice_SavePumpDeferredDistribution", connection))
@@ -351,6 +374,273 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
                     if (reader.Read())
                     {
                         result.Message = ReadString(reader, "SafetyMessage");
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+        public PumpSalesEditViewModel GetPumpEdit(int? transactionId)
+        {
+            var model = new PumpSalesEditViewModel
+            {
+                TransactionId = transactionId,
+                TransactionDate = DateTime.Today
+            };
+
+            if (transactionId.HasValue && transactionId.Value > 0)
+            {
+                var details = GetDetails(MainErpSalesInvoiceKind.Pump, transactionId.Value);
+                model.TransactionId = details.TransactionId;
+                model.NoteSerial1 = details.NoteSerial1;
+                model.TransactionDate = details.TransactionDate ?? DateTime.Today;
+                model.BranchId = details.BranchId;
+                model.StoreId = details.StoreId;
+                model.BoxId = details.BoxId;
+                model.CustomerId = details.CustomerId;
+                model.CashCustomerName = details.CashCustomerName;
+                model.ManualNo = details.ManualNo;
+                model.Remarks = details.Remarks;
+                model.IsLocked = details.Closed == true || details.Posted == true || details.Approved == true || details.IsPosted == true;
+
+                foreach (var line in details.Lines)
+                {
+                    model.Lines.Add(new PumpSalesEditLineViewModel
+                    {
+                        Id = line.Id,
+                        LineNumber = line.LineNumber,
+                        ItemId = line.ItemId,
+                        UnitId = line.UnitId,
+                        StoreId2 = line.StoreId2,
+                        PumpId = line.PumpId,
+                        PrevQty = line.PrevQty,
+                        CurrentQty = line.CurrentQty,
+                        ShowQty = line.ShowQty ?? line.Quantity,
+                        Quantity = line.Quantity ?? line.ShowQty,
+                        Price = line.ShowPrice ?? line.Price,
+                        CostPrice = line.CostPrice,
+                        Cash = line.Cash,
+                        Mada = line.Mada,
+                        Visa = line.Visa,
+                        Deferred = line.Deferred,
+                        CashQty = line.CashQty,
+                        MadaQty = line.MadaQty,
+                        VisaQty = line.VisaQty,
+                        DeferredQty = line.DeferredQty,
+                        AmountH = line.AmountH,
+                        AmountHCommission = line.AmountHCommission,
+                        AccountCodeInternal = line.AccountCodeInternal,
+                        CommissionAccountCodeInternal = line.CommissionAccountCodeInternal,
+                        IsOther = line.IsOther,
+                        DetailsPump = line.PumpDetails
+                    });
+                }
+
+                foreach (var payment in details.Payments)
+                {
+                    model.Payments.Add(new PumpSalesEditPaymentViewModel
+                    {
+                        Id = payment.Id,
+                        PaymentId = payment.PaymentId,
+                        Value = payment.Value,
+                        CardNo = payment.CardNo,
+                        MaxValue = payment.MaxValue
+                    });
+                }
+            }
+
+            EnsurePumpEditRows(model);
+            LoadPumpEditLookups(model);
+            return model;
+        }
+
+        public SalesInvoiceSaveResultViewModel SavePumpInvoiceDraft(PumpSalesEditViewModel model, bool dryRun)
+        {
+            if (model == null)
+            {
+                throw new ArgumentNullException("model");
+            }
+
+            var activeLines = (model.Lines ?? new List<PumpSalesEditLineViewModel>())
+                .Where(x => x != null && x.ItemId.HasValue && x.ItemId.Value > 0)
+                .ToList();
+
+            if (activeLines.Count == 0)
+            {
+                return new SalesInvoiceSaveResultViewModel { Success = false, DryRun = dryRun, Message = "يجب إدخال بند مضخة واحد على الأقل." };
+            }
+
+            var badLine = activeLines.FirstOrDefault(x => Math.Abs(x.StillPumpQty) > 0.0001m);
+            if (badLine != null)
+            {
+                return new SalesInvoiceSaveResultViewModel
+                {
+                    Success = false,
+                    DryRun = dryRun,
+                    Message = "لا يمكن الحفظ: توجد كمية غير موزعة في أحد سطور المضخات."
+                };
+            }
+
+            HydratePumpEditLines(activeLines);
+            var linesXml = BuildPumpLinesXml(activeLines);
+            var paymentsXml = BuildPumpPaymentsXml(model.Payments ?? new List<PumpSalesEditPaymentViewModel>());
+            var transactionId = model.TransactionId.GetValueOrDefault();
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = new SqlCommand("dbo.MainErp_PumpSales_SaveDraftFull", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                var idParameter = command.Parameters.Add("@TransactionId", SqlDbType.Int);
+                idParameter.Direction = ParameterDirection.InputOutput;
+                idParameter.Value = transactionId > 0 ? (object)transactionId : DBNull.Value;
+                command.Parameters.Add("@TransactionDate", SqlDbType.DateTime).Value = model.TransactionDate;
+                command.Parameters.Add("@BranchId", SqlDbType.Int).Value = (object)model.BranchId ?? DBNull.Value;
+                command.Parameters.Add("@StoreId", SqlDbType.Int).Value = (object)model.StoreId ?? DBNull.Value;
+                command.Parameters.Add("@BoxId", SqlDbType.Int).Value = (object)model.BoxId ?? DBNull.Value;
+                command.Parameters.Add("@CusId", SqlDbType.Int).Value = (object)model.CustomerId ?? DBNull.Value;
+                command.Parameters.Add("@CashCustomerName", SqlDbType.NVarChar, 250).Value = string.IsNullOrWhiteSpace(model.CashCustomerName) ? (object)DBNull.Value : model.CashCustomerName.Trim();
+                command.Parameters.Add("@ManualNo", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(model.ManualNo) ? (object)DBNull.Value : model.ManualNo.Trim();
+                command.Parameters.Add("@Remarks", SqlDbType.NVarChar, -1).Value = string.IsNullOrWhiteSpace(model.Remarks) ? (object)DBNull.Value : model.Remarks.Trim();
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = DBNull.Value;
+                command.Parameters.Add("@LinesXml", SqlDbType.Xml).Value = linesXml.ToString(SaveOptions.DisableFormatting);
+                command.Parameters.Add("@PaymentsXml", SqlDbType.Xml).Value = paymentsXml.ToString(SaveOptions.DisableFormatting);
+                command.Parameters.Add("@DryRun", SqlDbType.Bit).Value = dryRun;
+                command.Parameters.Add("@EnableDraftWrite", SqlDbType.Bit).Value = !dryRun;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    var result = new SalesInvoiceSaveResultViewModel
+                    {
+                        Success = true,
+                        DryRun = dryRun,
+                        TransactionId = transactionId > 0 ? (int?)transactionId : null,
+                        Message = dryRun ? "تمت معاينة حفظ فاتورة المضخات بدون كتابة." : "تم حفظ فاتورة المضخات كمسودة كاملة بدون ترحيل قيود أو مخزون."
+                    };
+
+                    if (reader.Read())
+                    {
+                        result.TransactionId = ReadIntIfExists(reader, "TransactionId") ?? result.TransactionId;
+                        var safetyMessage = HasColumn(reader, "SafetyMessage") ? ReadString(reader, "SafetyMessage") : string.Empty;
+                        var resultMessage = HasColumn(reader, "ResultMessage") ? ReadString(reader, "ResultMessage") : string.Empty;
+                        if (!string.IsNullOrWhiteSpace(resultMessage) || !string.IsNullOrWhiteSpace(safetyMessage))
+                        {
+                            result.Message = string.IsNullOrWhiteSpace(resultMessage) ? safetyMessage : resultMessage;
+                        }
+                    }
+
+                    if (!dryRun && idParameter.Value != DBNull.Value)
+                    {
+                        result.TransactionId = Convert.ToInt32(idParameter.Value);
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+        public SalesInvoiceSaveResultViewModel PostPumpInvoice(int transactionId, int? userId, bool forceRebuild, bool dryRun, bool includeInventoryCost)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = new SqlCommand("dbo.MainErp_PumpSales_Post", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@TransactionId", SqlDbType.Int).Value = transactionId;
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = (object)userId ?? DBNull.Value;
+                command.Parameters.Add("@ForceRebuild", SqlDbType.Bit).Value = forceRebuild;
+                command.Parameters.Add("@DryRun", SqlDbType.Bit).Value = dryRun;
+                command.Parameters.Add("@IncludeInventoryCost", SqlDbType.Bit).Value = includeInventoryCost;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    var result = new SalesInvoiceSaveResultViewModel
+                    {
+                        Success = true,
+                        DryRun = dryRun,
+                        TransactionId = transactionId,
+                        Message = dryRun ? "تمت معاينة ترحيل فاتورة المضخات بدون كتابة." : "تم ترحيل فاتورة المضخات."
+                    };
+
+                    if (reader.Read())
+                    {
+                        var resultMessage = HasColumn(reader, "ResultMessage") ? ReadString(reader, "ResultMessage") : string.Empty;
+                        if (!string.IsNullOrWhiteSpace(resultMessage))
+                        {
+                            result.Message = resultMessage;
+                        }
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+        public SalesInvoiceSaveResultViewModel DeletePumpInvoiceDraft(int transactionId, int? userId, bool dryRun)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = new SqlCommand("dbo.MainErp_PumpSales_DeleteDraft", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@TransactionId", SqlDbType.Int).Value = transactionId;
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = (object)userId ?? DBNull.Value;
+                command.Parameters.Add("@DryRun", SqlDbType.Bit).Value = dryRun;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    var result = new SalesInvoiceSaveResultViewModel
+                    {
+                        Success = true,
+                        DryRun = dryRun,
+                        TransactionId = transactionId,
+                        Message = dryRun ? "تمت معاينة حذف مسودة فاتورة المضخات بدون كتابة." : "تم حذف مسودة فاتورة المضخات."
+                    };
+
+                    if (reader.Read())
+                    {
+                        var resultMessage = HasColumn(reader, "ResultMessage") ? ReadString(reader, "ResultMessage") : string.Empty;
+                        if (!string.IsNullOrWhiteSpace(resultMessage))
+                        {
+                            result.Message = resultMessage;
+                        }
+                    }
+
+                    return result;
+                }
+            }
+        }
+
+        public SalesInvoiceSaveResultViewModel PreviewPumpInvoiceCancellation(int transactionId, int? userId)
+        {
+            return CancelPumpInvoice(transactionId, userId, true);
+        }
+
+        public SalesInvoiceSaveResultViewModel CancelPumpInvoice(int transactionId, int? userId, bool dryRun)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = new SqlCommand("dbo.MainErp_PumpSales_CancelPosted", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@TransactionId", SqlDbType.Int).Value = transactionId;
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = (object)userId ?? DBNull.Value;
+                command.Parameters.Add("@DryRun", SqlDbType.Bit).Value = dryRun;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    var result = new SalesInvoiceSaveResultViewModel
+                    {
+                        Success = true,
+                        DryRun = dryRun,
+                        TransactionId = transactionId,
+                        Message = "تمت معاينة إلغاء/عكس فاتورة المضخات بدون كتابة."
+                    };
+
+                    if (reader.Read())
+                    {
+                        var resultMessage = HasColumn(reader, "ResultMessage") ? ReadString(reader, "ResultMessage") : string.Empty;
+                        if (!string.IsNullOrWhiteSpace(resultMessage))
+                        {
+                            result.Message = resultMessage;
+                        }
                     }
 
                     return result;
@@ -448,6 +738,8 @@ ORDER BY t.Transaction_ID DESC;", connection))
                 TransactionDate = ReadDate(reader, "Transaction_Date"),
                 TransactionType = ReadInt(reader, "Transaction_Type"),
                 TypeInvoice = ReadInt(reader, "TypeInvoice"),
+                CustomerId = ReadIntIfExists(reader, "CusID"),
+                BranchId = ReadIntIfExists(reader, "BranchId"),
                 CustomerName = ReadString(reader, "CustomerName"),
                 CashCustomerName = ReadString(reader, "CashCustomerName"),
                 BranchName = ReadString(reader, "BranchName"),
@@ -473,6 +765,8 @@ ORDER BY t.Transaction_ID DESC;", connection))
             model.TransactionDate = list.TransactionDate;
             model.TransactionType = list.TransactionType;
             model.TypeInvoice = list.TypeInvoice;
+            model.CustomerId = list.CustomerId;
+            model.BranchId = list.BranchId;
             model.CustomerName = list.CustomerName;
             model.CashCustomerName = list.CashCustomerName;
             model.BranchName = list.BranchName;
@@ -486,6 +780,8 @@ ORDER BY t.Transaction_ID DESC;", connection))
             model.Closed = list.Closed;
             model.Posted = ReadBoolFlexible(reader, "Posted");
             model.Approved = ReadBoolFlexible(reader, "Approved");
+            model.IsPosted = ReadBoolFlexible(reader, "IsPosted");
+            model.UserPosted = ReadIntIfExists(reader, "UserPosted");
             model.Prefix = ReadString(reader, "Prefix");
             model.FullCode = ReadString(reader, "Fullcode");
             model.CboBasedOn = ReadInt(reader, "CBoBasedON");
@@ -509,10 +805,13 @@ ORDER BY t.Transaction_ID DESC;", connection))
             var line = new SalesInvoiceLineViewModel
             {
                 Id = ReadInt(reader, "ID").GetValueOrDefault(),
+                LineNumber = ReadIntIfExists(reader, "DetailLineNo"),
                 ItemId = ReadInt(reader, "Item_ID"),
                 ItemCode = ReadString(reader, "ItemCode"),
                 ItemName = ReadString(reader, "ItemName"),
                 UnitName = ReadString(reader, "UnitName"),
+                UnitId = ReadIntIfExists(reader, "UnitId"),
+                StoreId2 = ReadIntIfExists(reader, "StoreID2"),
                 ShowQty = ReadDecimal(reader, "ShowQty"),
                 Quantity = ReadDecimal(reader, "Quantity"),
                 ShowPrice = ReadDecimal(reader, "ShowPrice"),
@@ -636,6 +935,100 @@ ORDER BY t.Transaction_ID DESC;", connection))
             }
         }
 
+        private static void LoadPumpDeferredTableAllocations(SqlConnection connection, SalesInvoiceDetailsViewModel model)
+        {
+            if (model.Kind != MainErpSalesInvoiceKind.Pump || model.Lines.Count == 0 || !TableExists(connection, "Transaction_DetailsPump"))
+            {
+                return;
+            }
+
+            var byLineNumber = model.Lines
+                .Where(x => x.LineNumber.HasValue)
+                .ToDictionary(x => x.LineNumber.Value, x => x);
+            var byDetailId = model.Lines.ToDictionary(x => x.Id, x => x);
+            var touched = new HashSet<int>();
+
+            using (var command = new SqlCommand(@"
+SELECT
+    p.ID,
+    p.LineID,
+    p.CusID,
+    p.ItemId,
+    p.Amount,
+    p.Transaction_ID,
+    p.RecNo,
+    p.Qty,
+    p.Price,
+    c.CusName,
+    c.Account_Code,
+    a.Account_Serial,
+    COALESCE(a.Account_Name, a.Account_NameEng) AS AccountName
+FROM Transaction_DetailsPump p
+LEFT JOIN TblCustemers c ON p.CusID = c.CusID
+LEFT JOIN ACCOUNTS a ON c.Account_Code = a.Account_Code
+WHERE p.Transaction_ID = @TransactionId
+ORDER BY p.LineID, p.ID;", connection))
+            {
+                command.Parameters.Add("@TransactionId", SqlDbType.Int).Value = model.TransactionId;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var lineId = ReadInt(reader, "LineID");
+                        if (!lineId.HasValue)
+                        {
+                            continue;
+                        }
+
+                        SalesInvoiceLineViewModel line;
+                        if (!byLineNumber.TryGetValue(lineId.Value, out line) && !byDetailId.TryGetValue(lineId.Value, out line))
+                        {
+                            continue;
+                        }
+
+                        if (!touched.Contains(line.Id))
+                        {
+                            line.DeferredAllocations.Clear();
+                            touched.Add(line.Id);
+                        }
+
+                        line.DeferredAllocations.Add(new SalesInvoicePumpDeferredAllocationViewModel
+                        {
+                            LineId = line.Id,
+                            CustomerId = ReadInt(reader, "CusID"),
+                            UnitId = 1,
+                            Amount = ReadDecimal(reader, "Amount"),
+                            CustomerName = ReadString(reader, "CusName"),
+                            Quantity = ReadDecimal(reader, "Qty"),
+                            UnitPrice = ReadDecimal(reader, "Price"),
+                            ReferenceNo = ReadInt(reader, "RecNo"),
+                            CustomerAccountCodeInternal = ReadString(reader, "Account_Code"),
+                            CustomerAccountDisplay = FormatAccount(reader, "Account_Serial", "AccountName", "Account_Code")
+                        });
+                    }
+                }
+            }
+        }
+
+        private static bool TableExists(SqlConnection connection, string tableName)
+        {
+            using (var command = new SqlCommand("SELECT COUNT(1) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @TableName;", connection))
+            {
+                command.Parameters.Add("@TableName", SqlDbType.NVarChar, 128).Value = tableName;
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
+            }
+        }
+
+        private static bool ColumnExists(SqlConnection connection, string tableName, string columnName)
+        {
+            using (var command = new SqlCommand("SELECT COUNT(1) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @TableName AND COLUMN_NAME = @ColumnName;", connection))
+            {
+                command.Parameters.Add("@TableName", SqlDbType.NVarChar, 128).Value = tableName;
+                command.Parameters.Add("@ColumnName", SqlDbType.NVarChar, 128).Value = columnName;
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
+            }
+        }
+
         private static void EnsureEditableRows(PumpDeferredDistributionEditViewModel model)
         {
             while (model.Allocations.Count < 8)
@@ -645,6 +1038,316 @@ ORDER BY t.Transaction_ID DESC;", connection))
                     LineId = model.LineId,
                     UnitId = 1
                 });
+            }
+        }
+
+        private static void EnsurePumpEditRows(PumpSalesEditViewModel model)
+        {
+            while (model.Lines.Count < 12)
+            {
+                model.Lines.Add(new PumpSalesEditLineViewModel
+                {
+                    LineNumber = model.Lines.Count + 1,
+                    UnitId = 1,
+                    StoreId2 = model.StoreId
+                });
+            }
+
+            while (model.Payments.Count < 6)
+            {
+                model.Payments.Add(new PumpSalesEditPaymentViewModel());
+            }
+        }
+
+        private void LoadPumpEditLookups(PumpSalesEditViewModel model)
+        {
+            try
+            {
+                using (var connection = _connectionFactory.CreateOpenConnection())
+                {
+                    LoadLookup(connection, model.CustomerOptions, @"
+SELECT TOP 500 c.CusID AS Id, CONVERT(nvarchar(50), c.CusID) + N' - ' + c.CusName AS Display, a.Account_Serial + N' - ' + COALESCE(a.Account_Name, a.Account_NameEng) AS AccountDisplay
+FROM TblCustemers c
+LEFT JOIN ACCOUNTS a ON c.Account_Code = a.Account_Code
+ORDER BY c.CusName, c.CusID;");
+
+                    LoadLookup(connection, model.BranchOptions, "SELECT branch_id AS Id, branch_name AS Display, NULL AS AccountDisplay FROM TblBranchesData ORDER BY branch_id;");
+                    LoadLookup(connection, model.BoxOptions, "SELECT BoxID AS Id, BoxName AS Display, NULL AS AccountDisplay FROM TblBoxesData ORDER BY BoxID;");
+                    LoadLookup(connection, model.ItemOptions, "SELECT TOP 1000 ItemID AS Id, COALESCE(ItemCode + N' - ', N'') + COALESCE(ItemName, ItemNamee) AS Display, NULL AS AccountDisplay FROM TblItems ORDER BY ItemName, ItemID;");
+                    LoadLookup(connection, model.UnitOptions, "SELECT UnitID AS Id, UnitName AS Display, NULL AS AccountDisplay FROM TblUnites ORDER BY UnitName, UnitID;");
+                    LoadLookup(connection, model.PumpOptions, "SELECT ID AS Id, CONVERT(nvarchar(50), ID) + N' - ' + COALESCE(Name, NameE) AS Display, NULL AS AccountDisplay FROM tblPumpType ORDER BY ID;");
+                    LoadLookup(connection, model.PaymentOptions, "SELECT PaymentID AS Id, PaymentName AS Display, NULL AS AccountDisplay FROM TblPaymentType ORDER BY PaymentID;");
+                    LoadStoreLookup(connection, model.StoreOptions);
+                }
+            }
+            catch (SqlException ex)
+            {
+                model.Warnings.Add("تعذر تحميل بعض قوائم الاختيار: " + ex.Message);
+            }
+        }
+
+        private static void LoadStoreLookup(SqlConnection connection, IList<SalesLookupOptionViewModel> options)
+        {
+            var candidates = new[] { "TblStoresData", "StoresData", "TblStoreData", "TblStores" };
+            foreach (var table in candidates)
+            {
+                if (!TableExists(connection, table))
+                {
+                    continue;
+                }
+
+                LoadLookup(connection, options, "SELECT StoreID AS Id, CONVERT(nvarchar(50), StoreID) + N' - ' + StoreName AS Display, NULL AS AccountDisplay FROM " + table + " ORDER BY StoreID;");
+                return;
+            }
+
+            LoadLookup(connection, options, "SELECT DISTINCT StoreID AS Id, CONVERT(nvarchar(50), StoreID) AS Display, NULL AS AccountDisplay FROM Transactions WHERE StoreID IS NOT NULL ORDER BY StoreID;");
+        }
+
+        private static void LoadLookup(SqlConnection connection, IList<SalesLookupOptionViewModel> options, string sql)
+        {
+            using (var command = new SqlCommand(sql, connection))
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var id = ReadInt(reader, "Id");
+                    if (!id.HasValue)
+                    {
+                        continue;
+                    }
+
+                    options.Add(new SalesLookupOptionViewModel
+                    {
+                        Id = id.Value,
+                        Display = ReadString(reader, "Display"),
+                        AccountDisplay = HasColumn(reader, "AccountDisplay") ? ReadString(reader, "AccountDisplay") : string.Empty
+                    });
+                }
+            }
+        }
+
+        private void HydratePumpEditLines(IEnumerable<PumpSalesEditLineViewModel> lines)
+        {
+            foreach (var line in lines)
+            {
+                line.LineNumber = line.LineNumber ?? 0;
+                line.ShowQty = line.ShowQty ?? line.Quantity ?? 1m;
+                line.Quantity = line.Quantity ?? line.ShowQty ?? 1m;
+                line.Price = line.Price ?? 0m;
+                line.CostPrice = line.CostPrice ?? 0m;
+                line.Cash = line.Cash ?? 0m;
+                line.Mada = line.Mada ?? 0m;
+                line.Visa = line.Visa ?? 0m;
+                line.Deferred = line.Deferred ?? 0m;
+                line.CashQty = line.CashQty ?? 0m;
+                line.MadaQty = line.MadaQty ?? 0m;
+                line.VisaQty = line.VisaQty ?? 0m;
+                line.DeferredQty = line.DeferredQty ?? 0m;
+                line.AmountH = line.AmountH ?? 0m;
+                line.AmountHCommission = line.AmountHCommission ?? 0m;
+            }
+        }
+
+        private static XDocument BuildPumpLinesXml(IEnumerable<PumpSalesEditLineViewModel> lines)
+        {
+            return new XDocument(new XElement("Lines", lines.Select(x => new XElement("Line",
+                new XAttribute("Id", x.Id ?? 0),
+                new XAttribute("LineNumber", x.LineNumber ?? 0),
+                new XAttribute("ItemId", x.ItemId ?? 0),
+                new XAttribute("UnitId", x.UnitId ?? 0),
+                new XAttribute("StoreId2", x.StoreId2 ?? 0),
+                new XAttribute("PumpId", x.PumpId ?? 0),
+                new XAttribute("PrevQty", x.PrevQty ?? 0m),
+                new XAttribute("CurrentQty", x.CurrentQty ?? 0m),
+                new XAttribute("ShowQty", x.ShowQty ?? 0m),
+                new XAttribute("Quantity", x.Quantity ?? 0m),
+                new XAttribute("Price", x.Price ?? 0m),
+                new XAttribute("CostPrice", x.CostPrice ?? 0m),
+                new XAttribute("Cash", x.Cash ?? 0m),
+                new XAttribute("Mada", x.Mada ?? 0m),
+                new XAttribute("Visa", x.Visa ?? 0m),
+                new XAttribute("Deferred", x.Deferred ?? 0m),
+                new XAttribute("CashQty", x.CashQty ?? 0m),
+                new XAttribute("MadaQty", x.MadaQty ?? 0m),
+                new XAttribute("VisaQty", x.VisaQty ?? 0m),
+                new XAttribute("DeferredQty", x.DeferredQty ?? 0m),
+                new XAttribute("AmountH", x.AmountH ?? 0m),
+                new XAttribute("AmountHComm", x.AmountHCommission ?? 0m),
+                new XAttribute("AccountCode", x.AccountCodeInternal ?? string.Empty),
+                new XAttribute("AccountCodeComm", x.CommissionAccountCodeInternal ?? string.Empty),
+                new XAttribute("IsOther", x.IsOther == true),
+                new XAttribute("DetailsPump", x.DetailsPump ?? string.Empty)))));
+        }
+
+        private static XDocument BuildPumpPaymentsXml(IEnumerable<PumpSalesEditPaymentViewModel> payments)
+        {
+            return new XDocument(new XElement("Payments", payments
+                .Where(x => x != null && (x.Value ?? 0m) != 0m)
+                .Select(x => new XElement("Payment",
+                    new XAttribute("Id", x.Id ?? 0),
+                    new XAttribute("PaymentId", x.PaymentId ?? 0),
+                    new XAttribute("Value", x.Value ?? 0m),
+                    new XAttribute("CardNo", x.CardNo ?? string.Empty),
+                    new XAttribute("MaxValue", x.MaxValue ?? 0m)))));
+        }
+
+        private void LoadPumpDeferredCustomerOptions(PumpDeferredDistributionEditViewModel model)
+        {
+            try
+            {
+                using (var connection = _connectionFactory.CreateOpenConnection())
+                using (var command = new SqlCommand(@"
+SELECT TOP 300
+    c.CusID,
+    c.CusName,
+    c.Account_Code,
+    a.Account_Serial,
+    COALESCE(a.Account_Name, a.Account_NameEng) AS AccountName
+FROM TblCustemers c
+LEFT JOIN ACCOUNTS a ON c.Account_Code = a.Account_Code
+ORDER BY c.CusName, c.CusID;", connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var customerId = ReadInt(reader, "CusID");
+                        if (!customerId.HasValue)
+                        {
+                            continue;
+                        }
+
+                        var customerName = ReadString(reader, "CusName");
+                        var accountDisplay = FormatAccount(reader, "Account_Serial", "AccountName", "Account_Code");
+                        model.CustomerOptions.Add(new SalesLookupOptionViewModel
+                        {
+                            Id = customerId.Value,
+                            Display = customerId.Value.ToString(CultureInfo.InvariantCulture) + " - " + customerName,
+                            AccountDisplay = accountDisplay
+                        });
+                    }
+                }
+
+                var loadedIds = new HashSet<int>(model.CustomerOptions.Select(x => x.Id));
+                var selectedIds = model.Allocations
+                    .Where(x => x.CustomerId.HasValue && !loadedIds.Contains(x.CustomerId.Value))
+                    .Select(x => x.CustomerId.Value)
+                    .Distinct()
+                    .ToList();
+
+                if (selectedIds.Count > 0)
+                {
+                    AddSelectedPumpCustomersToLookup(model, selectedIds);
+                }
+            }
+            catch (SqlException ex)
+            {
+                model.Warnings.Add("Customer lookup could not be loaded; CustomerId can still be entered manually. " + ex.Message);
+            }
+        }
+
+        private void AddSelectedPumpCustomersToLookup(PumpDeferredDistributionEditViewModel model, IList<int> customerIds)
+        {
+            var parameterNames = new List<string>();
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                for (var index = 0; index < customerIds.Count; index++)
+                {
+                    var parameterName = "@CusId" + index.ToString(CultureInfo.InvariantCulture);
+                    parameterNames.Add(parameterName);
+                    command.Parameters.Add(parameterName, SqlDbType.Int).Value = customerIds[index];
+                }
+
+                command.CommandText = @"
+SELECT c.CusID, c.CusName, c.Account_Code, a.Account_Serial, COALESCE(a.Account_Name, a.Account_NameEng) AS AccountName
+FROM TblCustemers c
+LEFT JOIN ACCOUNTS a ON c.Account_Code = a.Account_Code
+WHERE c.CusID IN (" + string.Join(",", parameterNames) + ");";
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var customerId = ReadInt(reader, "CusID");
+                        if (!customerId.HasValue)
+                        {
+                            continue;
+                        }
+
+                        var customerName = ReadString(reader, "CusName");
+                        model.CustomerOptions.Add(new SalesLookupOptionViewModel
+                        {
+                            Id = customerId.Value,
+                            Display = customerId.Value.ToString(CultureInfo.InvariantCulture) + " - " + customerName,
+                            AccountDisplay = FormatAccount(reader, "Account_Serial", "AccountName", "Account_Code")
+                        });
+                    }
+                }
+            }
+        }
+
+        private void HydratePumpDeferredAllocationCustomers(IList<SalesInvoicePumpDeferredAllocationViewModel> allocations)
+        {
+            var customerIds = allocations
+                .Where(x => x.CustomerId.HasValue)
+                .Select(x => x.CustomerId.Value)
+                .Distinct()
+                .ToList();
+
+            if (customerIds.Count == 0)
+            {
+                return;
+            }
+
+            var parameterNames = new List<string>();
+            var customerMap = new Dictionary<int, Tuple<string, string, string>>();
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                for (var index = 0; index < customerIds.Count; index++)
+                {
+                    var parameterName = "@CusId" + index.ToString(CultureInfo.InvariantCulture);
+                    parameterNames.Add(parameterName);
+                    command.Parameters.Add(parameterName, SqlDbType.Int).Value = customerIds[index];
+                }
+
+                command.CommandText = @"
+SELECT c.CusID, c.CusName, c.Account_Code, a.Account_Serial, COALESCE(a.Account_Name, a.Account_NameEng) AS AccountName
+FROM TblCustemers c
+LEFT JOIN ACCOUNTS a ON c.Account_Code = a.Account_Code
+WHERE c.CusID IN (" + string.Join(",", parameterNames) + ");";
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var customerId = ReadInt(reader, "CusID");
+                        if (!customerId.HasValue)
+                        {
+                            continue;
+                        }
+
+                        customerMap[customerId.Value] = Tuple.Create(
+                            ReadString(reader, "CusName"),
+                            ReadString(reader, "Account_Code"),
+                            FormatAccount(reader, "Account_Serial", "AccountName", "Account_Code"));
+                    }
+                }
+            }
+
+            foreach (var allocation in allocations)
+            {
+                if (!allocation.CustomerId.HasValue || !customerMap.ContainsKey(allocation.CustomerId.Value))
+                {
+                    continue;
+                }
+
+                var customer = customerMap[allocation.CustomerId.Value];
+                allocation.CustomerName = customer.Item1;
+                allocation.CustomerAccountCodeInternal = customer.Item2;
+                allocation.CustomerAccountDisplay = customer.Item3;
             }
         }
 
@@ -777,6 +1480,8 @@ SELECT TOP 1
     t.Transaction_Date,
     t.Transaction_Type,
     ISNULL(t.TypeInvoice, 0) AS TypeInvoice,
+    t.CusID,
+    t.BranchId,
     COALESCE(c.CusName, t.CashCustomerName) AS CustomerName,
     t.CashCustomerName,
     b.branch_name AS BranchName,
@@ -790,6 +1495,8 @@ SELECT TOP 1
     t.Closed,
     t.Posted,
     t.Approved,
+    t.IsPosted,
+    t.UserPosted,
     t.Prefix,
     t.Fullcode,
     t.CBoBasedON,
@@ -872,6 +1579,7 @@ WHERE t.Transaction_ID = @Id
             using (var command = new SqlCommand(@"
 SELECT
     d.ID,
+    d.LineID AS DetailLineNo,
     d.Item_ID,
     i.ItemCode,
     COALESCE(i.ItemName, i.ItemNamee) AS ItemName,
@@ -926,6 +1634,7 @@ ORDER BY d.ID;", connection))
                         model.Lines.Add(new SalesInvoiceLineViewModel
                         {
                             Id = ReadInt(reader, "ID").GetValueOrDefault(),
+                            LineNumber = ReadIntIfExists(reader, "DetailLineNo"),
                             ItemId = ReadInt(reader, "Item_ID"),
                             ItemCode = ReadString(reader, "ItemCode"),
                             ItemName = ReadString(reader, "ItemName"),
@@ -1093,6 +1802,61 @@ ORDER BY t.Transaction_ID DESC;", connection))
             }
         }
 
+        private static void LoadAuditLogs(SqlConnection connection, SalesInvoiceDetailsViewModel model, int id)
+        {
+            if (!TableExists(connection, "MainErp_AuditLog"))
+            {
+                return;
+            }
+
+            var hasSnapshots = ColumnExists(connection, "MainErp_AuditLog", "BeforeSnapshot")
+                && ColumnExists(connection, "MainErp_AuditLog", "AfterSnapshot");
+
+            var sql = @"
+SELECT TOP 100
+    a.AuditId,
+    a.OperationName,
+    a.EntityName,
+    a.EntityKey,
+    a.UserId,
+    u.UserName AS UserDisplay,
+    a.CorrelationId,
+    a.Message,
+    " + (hasSnapshots ? "a.BeforeSnapshot, a.AfterSnapshot," : "CAST(NULL AS nvarchar(max)) AS BeforeSnapshot, CAST(NULL AS nvarchar(max)) AS AfterSnapshot,") + @"
+    a.CreatedAt
+FROM dbo.MainErp_AuditLog a
+LEFT JOIN dbo.TblUsers u ON u.UserID = a.UserId
+WHERE EntityName = N'Transactions'
+  AND EntityKey = CONVERT(nvarchar(100), @Id)
+ORDER BY a.CreatedAt DESC, a.AuditId DESC;";
+
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        model.AuditLogs.Add(new SalesInvoiceAuditLogViewModel
+                        {
+                            AuditId = ReadInt(reader, "AuditId").GetValueOrDefault(),
+                            OperationName = ReadString(reader, "OperationName"),
+                            EntityName = ReadString(reader, "EntityName"),
+                            EntityKey = ReadString(reader, "EntityKey"),
+                            UserId = ReadInt(reader, "UserId"),
+                            UserDisplay = ReadString(reader, "UserDisplay"),
+                            CorrelationId = ReadGuid(reader, "CorrelationId"),
+                            Message = ReadString(reader, "Message"),
+                            BeforeSnapshot = ReadString(reader, "BeforeSnapshot"),
+                            AfterSnapshot = ReadString(reader, "AfterSnapshot"),
+                            CreatedAt = ReadDate(reader, "CreatedAt")
+                        });
+                    }
+                }
+            }
+        }
+
         private static string FormatAccount(IDataRecord reader, string serialColumn, string nameColumn, string codeColumn)
         {
             var serial = ReadString(reader, serialColumn);
@@ -1158,6 +1922,24 @@ ORDER BY t.Transaction_ID DESC;", connection))
             return reader.IsDBNull(ordinal) ? string.Empty : Convert.ToString(reader.GetValue(ordinal));
         }
 
+        private static bool HasColumn(IDataRecord reader, string column)
+        {
+            for (var index = 0; index < reader.FieldCount; index++)
+            {
+                if (string.Equals(reader.GetName(index), column, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static int? ReadIntIfExists(IDataRecord reader, string column)
+        {
+            return HasColumn(reader, column) ? ReadInt(reader, column) : (int?)null;
+        }
+
         private static int? ReadInt(IDataRecord reader, string column)
         {
             var ordinal = reader.GetOrdinal(column);
@@ -1168,6 +1950,12 @@ ORDER BY t.Transaction_ID DESC;", connection))
         {
             var ordinal = reader.GetOrdinal(column);
             return reader.IsDBNull(ordinal) ? (DateTime?)null : Convert.ToDateTime(reader.GetValue(ordinal));
+        }
+
+        private static Guid? ReadGuid(IDataRecord reader, string column)
+        {
+            var ordinal = reader.GetOrdinal(column);
+            return reader.IsDBNull(ordinal) ? (Guid?)null : (Guid)reader.GetValue(ordinal);
         }
 
         private static decimal? ReadDecimal(IDataRecord reader, string column)

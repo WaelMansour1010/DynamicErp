@@ -5,7 +5,7 @@
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
 
-    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "accounting-reports", "account-movement", "voucher-preview" });
+    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing" });
     var salesOpen = sectionActive(new[] { "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
     var purchasesOpen = sectionActive(new[] { "purchases" });
     var inventoryOpen = sectionActive(new[] { "stock-transfers" });
@@ -52,6 +52,8 @@
                 <a class="pos-nav-link main-erp-nav-link @(isActive("accounting-reports") ? "active" : "")" href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })" title="@T("AccountingReports")"><i class="fas fa-chart-pie"></i><span>@T("AccountingReports")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("account-movement") ? "active" : "")" href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })" title="@T("AccountMovement")"><i class="fas fa-exchange-alt"></i><span>@T("AccountMovement")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("voucher-preview") ? "active" : "")" href="@Url.Action("PreviewTest", "Accounting", new { area = "MainErp" })" title="@T("PreviewVoucher")"><i class="fas fa-eye"></i><span>@T("PreviewVoucher")</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("payments") ? "active" : "")" href="@Url.Action("Index", "Payments", new { area = "MainErp" })" title="سندات الصرف"><i class="fas fa-money-bill-wave"></i><span>سندات الصرف</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("cashing") ? "active" : "")" href="@Url.Action("Index", "Cashing", new { area = "MainErp" })" title="سندات القبض"><i class="fas fa-hand-holding-usd"></i><span>سندات القبض</span></a>
             </div>
         </section>
 

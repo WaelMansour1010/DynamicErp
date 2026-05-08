@@ -68,6 +68,13 @@ namespace MyERP.Areas.Pos
             );
 
             context.MapRoute(
+                "Pos_cashing_shell",
+                "Pos/Cashing",
+                new { controller = "PosDashboard", action = "Cashing" },
+                new[] { "MyERP.Areas.Pos.Controllers" }
+            );
+
+            context.MapRoute(
                 "Pos_permissions_shell",
                 "Pos/Permissions",
                 new { controller = "PosPermissions", action = "Index" },

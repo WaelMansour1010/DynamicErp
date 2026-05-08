@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Kishny POS production example.
+  Replace placeholders during deployment. Do not commit real customer passwords.
+  Start from the current customer Web.config and apply only the reviewed settings.
+-->
+<configuration>
+  <connectionStrings>
+    <clear />
+    <add name="KishnyCashConnection"
+         connectionString="Data Source=&lt;SQL_SERVER&gt;;Initial Catalog=&lt;KISHNY_POS_DB&gt;;User ID=&lt;POS_SQL_USER&gt;;Password=&lt;POS_SQL_PASSWORD&gt;;MultipleActiveResultSets=False;TrustServerCertificate=True;Max Pool Size=200;Min Pool Size=10;Connect Timeout=30;Pooling=True"
+         providerName="System.Data.SqlClient" />
+    <add name="MyERP_ConnectionString"
+         connectionString="Data Source=&lt;SQL_SERVER&gt;;Initial Catalog=&lt;KISHNY_POS_DB&gt;;User ID=&lt;POS_SQL_USER&gt;;Password=&lt;POS_SQL_PASSWORD&gt;;MultipleActiveResultSets=True;TrustServerCertificate=True;Max Pool Size=200;Min Pool Size=10;Connect Timeout=30;Pooling=True"
+         providerName="System.Data.SqlClient" />
+    <add name="MainErp_ConnectionString"
+         connectionString="Data Source=&lt;DISABLED&gt;;Initial Catalog=&lt;DISABLED&gt;;Integrated Security=False"
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+  <appSettings>
+    <add key="EnableKishnyPos" value="true" />
+    <add key="EnableMainErpMigration" value="false" />
+    <add key="EnableDevStart" value="false" />
+    <add key="EnableDevMasterPassword" value="false" />
+    <add key="DevMasterPassword" value="" />
+    <add key="DebugKYC" value="false" />
+    <add key="EnableDebugDatabaseSelector" value="false" />
+    <add key="EnableRunModeSelector" value="false" />
+    <add key="PosSessionRestoreEnabled" value="true" />
+    <add key="PosHealthDashboardEnabled" value="false" />
+  </appSettings>
+  <system.web>
+    <compilation targetFramework="4.8" debug="false" />
+    <machineKey validationKey="&lt;KEEP_EXISTING_CUSTOMER_VALIDATION_KEY&gt;"
+                decryptionKey="&lt;KEEP_EXISTING_CUSTOMER_DECRYPTION_KEY&gt;"
+                validation="HMACSHA256"
+                decryption="AES" />
+    <httpCookies httpOnlyCookies="true" requireSSL="true" sameSite="Lax" />
+    <sessionState mode="InProc" timeout="60" cookieless="UseCookies" />
+    <customErrors mode="RemoteOnly" />
+  </system.web>
+  <system.webServer>
+    <!-- Preserve production handlers/modules/binding redirects from current customer Web.config. -->
+  </system.webServer>
+</configuration>

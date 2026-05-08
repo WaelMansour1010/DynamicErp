@@ -420,6 +420,8 @@
     <Compile Include="Areas\MainErp\Controllers\LCController.cs" />
     <Compile Include="Areas\MainErp\Controllers\LoginController.cs" />
     <Compile Include="Areas\MainErp\Controllers\MainErpControllerBase.cs" />
+    <Compile Include="Areas\MainErp\Controllers\PaymentsController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\CashingController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectExtractsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PumpSalesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PurchasesController.cs" />
@@ -431,6 +433,7 @@
     <Compile Include="Areas\MainErp\Infrastructure\Localization\MainErpEntityLocalization.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\Localization\MainErpLocalizationService.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpDebugDatabaseOverride.cs" />
+    <Compile Include="Areas\MainErp\Infrastructure\LegacyScreenPermissionService.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpUnitOfWork.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\ManualIdAllocation.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\ManualIdTarget.cs" />
@@ -451,8 +454,11 @@
     <Compile Include="Areas\MainErp\Models\Security\MainErpUserContext.cs" />
     <Compile Include="Areas\MainErp\Repositories\Accounting\VoucherRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\Payments\PaymentVoucherReadRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\Cashing\CashingVoucherReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\LC\LcReadRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\LC\LcWriteRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\ProjectExtracts\ProjectExtractReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Reports\AccountingReportRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Reports\SalesReportRepository.cs" />
@@ -467,6 +473,8 @@
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\Payments\PaymentVoucherViewModels.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\Cashing\CashingVoucherViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\MainErpDashboardViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\PagedReadResult.cs" />
@@ -516,6 +524,7 @@
     <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemErrorLogController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\CashingController.cs" />
     <Compile Include="Areas\Pos\Controllers\PurchaseInvoiceController.cs" />
     <Compile Include="Areas\Pos\Controllers\StockTransferController.cs" />
     <Compile Include="Areas\Pos\Controllers\ExcelImportController.cs" />
@@ -534,8 +543,14 @@
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemErrorLogModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemHealthModels.cs" />
+    <Compile Include="Areas\Pos\Repositories\Payments\PaymentVoucherReadRepository.cs" />
+    <Compile Include="Areas\Pos\Repositories\Cashing\CashingVoucherReadRepository.cs" />
     <Compile Include="Areas\Pos\Services\PosPerformanceLogger.cs" />
+    <Compile Include="Areas\Pos\Services\PosLegacyScreenPermissionService.cs" />
     <Compile Include="Areas\Pos\Services\PosExcelImportParser.cs" />
+    <Compile Include="Areas\Pos\Services\PosExcelImportCommitService.cs" />
+    <Compile Include="Areas\Pos\Services\PosExcelImportWorkbookMarker.cs" />
+    <Compile Include="Areas\Pos\Services\PosExcelImportPreflightService.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemErrorLogger.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemHealthMonitor.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs">
@@ -4076,6 +4091,8 @@
     <Content Include="Areas\MainErp\Sql\01_LC_ReadModel.sql" />
     <Content Include="Areas\MainErp\Sql\02_ProjectExtracts_ReadModel.sql" />
     <Content Include="Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql" />
+    <Content Include="Areas\MainErp\Sql\04_MainErp_PaymentCashing_ReadProcedures.sql" />
+    <Content Include="Areas\MainErp\Sql\05_MainErp_AuditLog.sql" />
     <Content Include="Areas\MainErp\Views\Web.config" />
     <Content Include="Areas\MainErp\Views\Home\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Accounting\PreviewTest.cshtml" />
@@ -4086,7 +4103,12 @@
     <Content Include="Areas\MainErp\Views\DiscountNotifications\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Details.cshtml" />
+    <Content Include="Areas\MainErp\Views\Payments\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\Payments\Details.cshtml" />
+    <Content Include="Areas\MainErp\Views\Cashing\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\Cashing\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Details.cshtml" />
+    <Content Include="Areas\MainErp\Views\LC\Edit.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Login\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\ProjectExtracts\Details.cshtml" />
@@ -4171,6 +4193,10 @@
     <Content Include="Areas\Pos\Views\PrintTemplate\Index.cshtml" />
     <Content Include="App_Data\PrintTemplates\KycCard.json" />
     <Content Include="Areas\Pos\Views\Payments\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\Payments\Vouchers.cshtml" />
+    <Content Include="Areas\Pos\Views\Payments\Details.cshtml" />
+    <Content Include="Areas\Pos\Views\Cashing\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\Cashing\Details.cshtml" />
     <Content Include="Areas\Pos\Views\PosPermissions\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosReports\Index.cshtml" />
     <Content Include="Areas\Pos\Sql\25_POS_TemporaryPermissions.sql" />
@@ -4192,6 +4218,8 @@
     <Content Include="Areas\Pos\Sql\47_POS_SaveAttemptLog.sql" />
     <Content Include="Areas\Pos\Sql\48_POS_SalesRepresentativesPerformanceDashboard.sql" />
     <Content Include="Areas\Pos\Sql\49_POS_SalesRepresentativeTargets.sql" />
+    <Content Include="Areas\Pos\Sql\50_POS_ExcelImportCommitAudit.sql" />
+    <Content Include="Areas\Pos\Sql\51_POS_PaymentCashing_ReadProcedures.sql" />
     <Content Include="Areas\Pos\AI_Docs\SalesRepresentativesPerformanceDashboard.md" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />

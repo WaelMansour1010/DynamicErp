@@ -91,6 +91,67 @@ SELECT * FROM LcRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY RowNo;",
             return result;
         }
 
+        public void LoadSearchLookups(LCIndexViewModel model)
+        {
+            if (model == null)
+            {
+                return;
+            }
+
+            try
+            {
+                using (var connection = _connectionFactory.CreateOpenConnection())
+                {
+                    TryLoadLookup(connection, model.Banks, @"
+SELECT CAST(BankID AS nvarchar(50)) Value,
+       ISNULL(NULLIF(BankName, N''), ISNULL(BankNamee, N'')) Text
+FROM BanksData
+ORDER BY BankName;");
+
+                    TryLoadLookup(connection, model.Vendors, @"
+SELECT TOP 1000 CAST(CusID AS nvarchar(50)) Value,
+       ISNULL(NULLIF(CusName, N''), ISNULL(CusNamee, N'')) Text
+FROM TblCustemers
+ORDER BY CusName;");
+
+                    TryLoadLookup(connection, model.Branches, @"
+SELECT CAST(branch_id AS nvarchar(50)) Value,
+       ISNULL(NULLIF(branch_name, N''), ISNULL(branch_namee, N'')) Text
+FROM TblBranchesData
+ORDER BY branch_name;");
+                }
+            }
+            catch (SqlException ex)
+            {
+                model.Warning = string.IsNullOrWhiteSpace(model.Warning)
+                    ? "LC lookup filters are not available in the configured database yet: " + ex.Message
+                    : model.Warning + " | LC lookup filters are not available: " + ex.Message;
+            }
+        }
+
+        private static void TryLoadLookup(SqlConnection connection, IList<LCLookupOption> target, string sql)
+        {
+            try
+            {
+                using (var command = new SqlCommand(sql, connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        target.Add(new LCLookupOption
+                        {
+                            Value = ReadString(reader, "Value"),
+                            Text = ReadString(reader, "Text")
+                        });
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                // Some legacy databases do not carry every lookup table. The LC screen remains usable.
+            }
+        }
+
         public LCDetailsViewModel GetDetails(int id)
         {
             try
@@ -107,6 +168,7 @@ SELECT * FROM LcRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY RowNo;",
                     LoadLinkedNotes(connection, model);
                     LoadGridSections(connection, model);
                     LoadVoucherTrace(connection, model);
+                    LoadAuditEntries(connection, model);
                     return model;
                 }
             }
@@ -123,7 +185,7 @@ SELECT TOP 1
     l.TblLCID, l.LCNO, l.Name, l.Value, l.FromDate, l.Todate, l.BranchID,
     l.Account_Code, l.Remarks, l.Account_CodeMargin, l.MarginAccount_Code,
     l.AcceptAccount_Code, l.AccountExpensCode, l.OpenBalance, l.OpenBalanceType,
-    l.OpenValue, l.Currency_rate, l.LCTyperId, l.BankId, l.BankID2, l.BoxID,
+    l.OpenValue, l.Currency_rate, l.PercentV, l.LCTyperId, l.BankId, l.BankID2, l.BoxID,
     l.CurrencyId, l.VendorId, l.CountryId, l.project_id, l.projectName,
     l.PaymentTypeID, l.ChequeNumber, l.ChequeDueDate, l.opening_balance_voucher_id,
     l.OpenBalanceDate, l.CloseDate, l.LastParcilDate, l.AccountExpProject,
@@ -166,6 +228,7 @@ WHERE l.TblLCID = @Id;", connection))
                         AccountExpensParent = ReadString(reader, "AccountExpensParent"),
                         OpenValue = ReadDecimal(reader, "OpenValue"),
                         CurrencyRate = ReadDouble(reader, "Currency_rate"),
+                        PercentV = ReadDecimal(reader, "PercentV"),
                         LcTypeId = ReadInt(reader, "LCTyperId"),
                         BankId = ReadInt(reader, "BankId"),
                         BankId2 = ReadInt(reader, "BankID2"),
@@ -429,6 +492,7 @@ WHERE Account_Code = @AccountCode;", connection))
                         var row = new LCGridRowViewModel
                         {
                             RowNumber = rowNumber,
+                            RowId = FirstInt(ReadInt(reader, "ID"), ReadInt(reader, "Id")),
                             NoteId = FirstInt(ReadInt(reader, "NoteID"), ReadInt(reader, "NoteId")),
                             NoteId2 = ReadInt(reader, "NoteID2"),
                             NoteId3 = ReadInt(reader, "NoteID3"),
@@ -450,6 +514,58 @@ WHERE Account_Code = @AccountCode;", connection))
         {
             LoadNormalVoucherTrace(connection, model);
             LoadOpeningVoucherTrace(connection, model);
+        }
+
+        private static void LoadAuditEntries(SqlConnection connection, LCDetailsViewModel model)
+        {
+            if (!TableExists(connection, "MainErp_AuditLog"))
+            {
+                model.Warnings.Add("MainErp_AuditLog غير موجود في قاعدة البيانات الحالية؛ سجل عمليات الاعتماد غير متاح حتى تطبيق سكربت الـ Audit.");
+                return;
+            }
+
+            var hasBefore = ColumnExists(connection, "MainErp_AuditLog", "BeforeSnapshot");
+            var hasAfter = ColumnExists(connection, "MainErp_AuditLog", "AfterSnapshot");
+            var sql = @"
+SELECT TOP 50
+    a.AuditId, a.OperationName, a.EntityName, a.EntityKey, a.UserId,
+    u.UserName,
+    a.CorrelationId, a.Message, a.CreatedAt" +
+    (hasBefore ? ", a.BeforeSnapshot" : ", CAST(NULL AS nvarchar(max)) AS BeforeSnapshot") +
+    (hasAfter ? ", a.AfterSnapshot" : ", CAST(NULL AS nvarchar(max)) AS AfterSnapshot") + @"
+FROM dbo.MainErp_AuditLog a
+LEFT JOIN TblUsers u ON u.UserID = a.UserId
+WHERE
+    (a.EntityName IN (N'TblLC', N'LC', N'LetterOfCredit') AND a.EntityKey = @EntityKey)
+    OR (a.EntityName LIKE N'LC%' AND a.EntityKey = @EntityKey)
+    OR (a.Message LIKE @MessageLike)
+ORDER BY a.AuditId DESC;";
+
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@EntityKey", model.TblLCID.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                command.Parameters.AddWithValue("@MessageLike", "%LC " + (model.LCNO ?? model.TblLCID.ToString(System.Globalization.CultureInfo.InvariantCulture)) + "%");
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        model.AuditEntries.Add(new LCAuditEntryViewModel
+                        {
+                            AuditId = ReadInt(reader, "AuditId").GetValueOrDefault(),
+                            OperationName = ReadString(reader, "OperationName"),
+                            EntityName = ReadString(reader, "EntityName"),
+                            EntityKey = ReadString(reader, "EntityKey"),
+                            UserId = ReadInt(reader, "UserId"),
+                            UserName = ReadString(reader, "UserName"),
+                            CorrelationId = ReadGuid(reader, "CorrelationId"),
+                            Message = ReadString(reader, "Message"),
+                            BeforeSnapshot = ReadString(reader, "BeforeSnapshot"),
+                            AfterSnapshot = ReadString(reader, "AfterSnapshot"),
+                            CreatedAt = ReadDate(reader, "CreatedAt")
+                        });
+                    }
+                }
+            }
         }
 
         private static void LoadNormalVoucherTrace(SqlConnection connection, LCDetailsViewModel model)
@@ -621,6 +737,16 @@ ORDER BY v.RecordDate DESC, v.Double_Entry_Vouchers_ID DESC, v.DEV_ID_Line_No;";
             return columns;
         }
 
+        private static bool ColumnExists(SqlConnection connection, string tableName, string columnName)
+        {
+            using (var command = new SqlCommand("SELECT COUNT(1) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @TableName AND COLUMN_NAME = @ColumnName;", connection))
+            {
+                command.Parameters.AddWithValue("@TableName", tableName);
+                command.Parameters.AddWithValue("@ColumnName", columnName);
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
+            }
+        }
+
         private static List<string> SelectExisting(HashSet<string> columns, IEnumerable<string> requested)
         {
             var result = new List<string>();
@@ -707,6 +833,11 @@ ORDER BY v.RecordDate DESC, v.Double_Entry_Vouchers_ID DESC, v.DEV_ID_Line_No;";
         private static bool? ReadBool(IDataRecord reader, string columnName)
         {
             return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? (bool?)null : Convert.ToBoolean(reader[columnName]);
+        }
+
+        private static Guid? ReadGuid(IDataRecord reader, string columnName)
+        {
+            return !HasColumn(reader, columnName) || reader[columnName] == DBNull.Value ? (Guid?)null : (Guid)reader[columnName];
         }
 
         private static void AddSearchParameters(SqlCommand command, string searchText, int? bankId, int? vendorId, int? branchId, int page, int pageSize)

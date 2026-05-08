@@ -148,7 +148,8 @@ ORDER BY UserID;";
                 StoreId = user.StoreId,
                 BoxId = user.BoxId,
                 PaymentNetId = TryGetOptionalUserInt(connection, user.UserId, "PaymentNetid")
-                    ?? TryGetOptionalUserInt(connection, user.UserId, "PaymentNetID")
+                    ?? TryGetOptionalUserInt(connection, user.UserId, "PaymentNetID"),
+                CanPostPumpInvoice = TryGetOptionalUserBool(connection, user.UserId, "CanPostPumpInv").GetValueOrDefault()
             };
 
             context.EmpName = TryGetEmployeeName(connection, user.EmpId);
@@ -233,6 +234,28 @@ ORDER BY UserID;";
                     command.Parameters.Add("@Id", SqlDbType.Int).Value = userId;
                     var value = command.ExecuteScalar();
                     return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
+                }
+            }
+            catch (SqlException)
+            {
+                return null;
+            }
+        }
+
+        private static bool? TryGetOptionalUserBool(SqlConnection connection, int userId, string columnName)
+        {
+            try
+            {
+                if (!ColumnExists(connection, "TblUsers", columnName))
+                {
+                    return null;
+                }
+
+                using (var command = new SqlCommand("SELECT TOP (1) " + columnName + " FROM dbo.TblUsers WHERE UserID = @Id", connection))
+                {
+                    command.Parameters.Add("@Id", SqlDbType.Int).Value = userId;
+                    var value = command.ExecuteScalar();
+                    return value == null || value == DBNull.Value ? (bool?)null : Convert.ToBoolean(value);
                 }
             }
             catch (SqlException)

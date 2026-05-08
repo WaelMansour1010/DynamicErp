@@ -894,6 +894,180 @@ Safety:
 - No `AllScripts.sql` changes.
 - No `Areas\Pos` changes for this phase.
 
+## 2026-05-07 PumpSales Inventory Cost Preview And Audit UI
+
+Created:
+
+- `AI_Docs\MainErp\55_PumpSales_InventoryCostAndAudit.md`
+
+Modified:
+
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+
+Implemented:
+
+- Added controlled `@IncludeInventoryCost` support to `dbo.MainErp_PumpSales_Post`.
+- Cost preview creates two balanced entries when enabled:
+  - Debit `branches.a1` cost-of-sales account.
+  - Credit `branches.a0` inventory account.
+- Default actual posting remains unchanged with `IncludeInventoryCost = 0`.
+- Added UI button `معاينة قيد التكلفة` for dry-run only.
+- Added read-only Audit tab/section for `MainErp_AuditLog`.
+
+Nagahat validation:
+
+- Applied the MainErp sales SQL procedure script to `Wael\Sql2019 / Nagahat`.
+- Dry-run on pump invoice `74004`:
+  - Without inventory cost: 11 lines, debit/credit `431.5201`.
+  - With inventory cost: 13 lines, inventory cost `407.0136`, debit/credit `838.5337`.
+
+Safety:
+
+- Cost posting is preview/controlled only from the UI.
+- No `Areas\Pos` changes.
+- No `AllScripts.sql` changes.
+- No production configuration changes.
+
+## 2026-05-07 PumpSales Cost Posting And Posted Cancellation
+
+Created:
+
+- `AI_Docs\MainErp\56_PumpSales_CostPostingCancelReceive.md`
+
+Modified:
+
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+
+Implemented:
+
+- Activated actual `post-cost` path for pump invoices using `@IncludeInventoryCost = 1`.
+- Added actual posted cancellation workflow through `dbo.MainErp_PumpSales_CancelPosted`.
+- Cancellation creates a reversal note, reversal voucher rows, and a `Transaction_Type = 20` receive/reversal inventory document.
+- Source posted invoice is closed instead of deleted.
+- Audit UI now includes user display plus before/after snapshots.
+
+Nagahat validation:
+
+- Applied updated SQL to `Wael\Sql2019 / Nagahat`.
+- Rebuilt sample pump invoice `74004` with inventory cost posting.
+- Cancelled sample pump invoice `74004`.
+- Created reversal note `79418`.
+- Created reversal voucher group `156010`.
+- Created receive/reversal transaction `109513`.
+- Verified source invoice `74004` is `Closed = 1`, has one linked receive doc, and audit rows were written.
+
+Safety:
+
+- Original invoice was not deleted.
+- Original voucher was not deleted during cancellation.
+- Reversal was additive and traceable.
+- No `Areas\Pos` changes in this phase.
+- No `AllScripts.sql` changes.
+
+## 2026-05-07 Pump Sales Full Draft Save Start
+
+Created:
+
+- `AI_Docs\MainErp\51_PumpSales_FullDraftSave.md`
+- `Areas\MainErp\Views\PumpSales\Edit.cshtml`
+
+Modified:
+
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+
+Implemented:
+
+- Added `/MainErp/PumpSales/New` and `/MainErp/PumpSales/Edit/{id}`.
+- Added full draft save for pump invoice header in `Transactions`.
+- Added full draft save for pump lines in `Transaction_Details`.
+- Added full draft save for payment rows in `TblSalesPayment`.
+- Rebuilt pump deferred customer allocations in `Transaction_DetailsPump` from the VB6 `DetailsPump` row format.
+- Updated `tblPumpType.PercentV` from saved pump current quantities.
+- Added full pump quantity validation matching VB6:
+  `CurrentQty - PrevQty - CashQty - MadaQty - VisaQty - DeferredQty = 0`.
+- Added lock protection for closed, posted, approved, and `IsPosted` invoices.
+- Applied `dbo.MainErp_PumpSales_SaveDraftFull` to `Nagahat`.
+- Validated dry-run and actual draft save on `Nagahat` transaction `74004`.
+- Verified `Nagahat` transaction `95484` correctly fails preview because its existing pump quantity distribution is incomplete.
+
+Still pending:
+
+- `CreateIssueVoucher2`
+- `CreateRecieveVoucher`
+- `PG`
+- `Notes`
+- `DOUBLE_ENTREY_VOUCHERS`
+- `DailyPumpR.Rpt`
+- final post/approve/delete workflows
+- final audit persistence
+
+Safety:
+
+- No `Areas\Pos` changes for this phase.
+- No `AllScripts.sql` changes.
+- Real financial posting and inventory documents are still disabled.
+
+## 2026-05-07 Pump Sales Posting, Issue Voucher, Report, and Audit
+
+Created:
+
+- `AI_Docs\MainErp\52_PumpSales_PostingInventoryAudit.md`
+- `Areas\MainErp\Views\PumpSales\DailyReport.cshtml`
+
+Modified:
+
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+
+Implemented:
+
+- Added `dbo.MainErp_PumpSales_Post`.
+- Added `dbo.MainErp_AuditLog`.
+- Added posting preview, actual post, and explicit rebuild path from the Pump details screen.
+- Posting creates/updates `Notes`.
+- Posting deletes/rebuilds `DOUBLE_ENTREY_VOUCHERS` for the pump invoice note.
+- Posting creates a linked `Transaction_Type = 19` issue voucher if one does not already exist.
+- Posting writes audit row with a correlation id.
+- Added a web report route equivalent to the `DailyPumpR.Rpt` datasets:
+  `/MainErp/PumpSales/DailyReport/{id}`.
+- Strengthened draft save protection so posted/closed/approved invoices are blocked even in preview.
+
+Nagahat validation:
+
+- `74004` posting preview generated 11 balanced voucher rows: debit `431.5201`, credit `431.5201`.
+- `74004` actual rebuild/post succeeded and created audit row `PumpSales.Post`.
+- Existing linked issue voucher count for `74004` remained `1`; no duplicate issue voucher was created.
+- `95484` posting preview was correctly blocked because pump quantities are not fully distributed.
+- Draft save preview for posted `74004` is now blocked.
+
+Still pending:
+
+- Full `CreateRecieveVoucher` return-flow behavior.
+- Full inventory cost accounting voucher if required by the legacy options.
+- Crystal `.rpt` engine execution; the web route currently renders equivalent report data.
+- Delete invoice workflow with reversal/audit rules.
+- MainErp permission enforcement for post/rebuild/delete.
+
+Build note:
+
+- Full solution build is currently blocked by an unrelated existing POS compile error in `Areas\Pos\Controllers\PaymentsController.cs` referencing `MyERP.Areas.Pos.Repositories.PaymentVoucherReadRepository`.
+- MainErp SQL deployment and Nagahat stored procedure validation succeeded.
+
 ## 2026-05-07 Sales Invoice Stored Procedures Performance Foundation
 
 Created:
@@ -1028,6 +1202,337 @@ Safety:
 - No `AllScripts.sql` changes.
 - No `Areas\Pos` changes for this phase.
 
+## 2026-05-07 LC Save/Edit and Opening Voucher
+
+Created:
+
+- `AI_Docs\MainErp\49_LC_SaveEditAndOpeningVoucher.md`
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\Views\LC\Edit.cshtml`
+
+Modified:
+
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `MyERP.csproj`
+
+Implemented:
+
+- Enabled LC create and edit against `TblLC`.
+- Added account generation for missing LC linked accounts under selected parent accounts.
+- Added guarded creation of the main LC opening voucher `NoteType=22001`.
+- Voucher amount follows the confirmed FrmLC pattern: `Value * PercentV / 100 * Currency_rate`.
+- Voucher posts debit to margin account and credit to `BanksData.Account_Code`.
+- Existing voucher rows prevent duplicate posting.
+
+Deferred:
+
+- Delete.
+- LC grid posting.
+- Opening-balance posting.
+- Destructive rebuild of existing vouchers.
+
+Safety:
+
+- All write operations use MainErp connection and explicit SQL transactions.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes for this phase.
+
+Follow-up implemented in the same phase:
+
+- Added guarded `22010` open-expense voucher creation.
+- Added guarded `22005` close voucher creation.
+- `22010` posts expense + VAT input debit against bank credit, following the observed Eng/VB6 VAT-inclusive behavior.
+- `22005` posts bank debit against margin account credit and locks/closes the LC.
+- Existing voucher rows prevent duplicate creation.
+
+Eng smoke test:
+
+- Created `TblLCID=198`, `LCNO=WEBTEST-LC-20260507184202`.
+- Generated notes `222099` (`22001`), `222100` (`22010`), and `222101` (`22005`).
+- Generated vouchers `393525`, `393526`, and `393527`.
+- Verified all three voucher groups are balanced.
+- No `AllScripts.sql` changes.
+- No `Areas\Pos` changes.
+
+## 2026-05-07 LC Premium UI Completion
+
+Modified:
+
+- `Areas\MainErp\Views\LC\Edit.cshtml`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `Areas\MainErp\Views\Shared\_MainErpLayout.cshtml`
+
+Implemented:
+
+- Reworked LC create/edit into a premium operational workspace instead of a raw technical form.
+- Added an executive LC summary bar with LC number, value, expected opening voucher, expected open-expense voucher, and status.
+- Added real workflow tabs for basic data, bank/currency, linked accounts, dates/payment, and notes/control.
+- Added protected/disabled buttons for destructive or unmapped actions: delete, voucher rebuild, grid posting, opening-balance posting, and report execution.
+- Added confirmation prompts before creating actual LC vouchers from the Workbench.
+- Replaced ambiguous action labels with explicit business labels: opening voucher, open-expense voucher, close LC.
+- Added responsive CSS for dense desktop ERP use while keeping tablet/mobile stacking.
+- Bumped the MainErp CSS cache version to load the upgraded LC styling.
+
+Still pending:
+
+- Lookup dropdowns for banks, vendors, currencies, branches, countries, boxes, and accounts.
+- Save/post logic for LC grids: `TBLLCHistory`, `TBLLCMargin`, `TBLLCMargin2`, and `tblLCOpenB`.
+- Opening-balance posting into `DOUBLE_ENTREY_VOUCHERS1`.
+- Safe destructive rebuild workflow with audit and confirmation.
+- LC reports and attachments execution.
+
+Validation:
+
+- Build succeeded.
+- No `Areas\Pos` changes.
+- No `AllScripts.sql` changes.
+
+## 2026-05-07 LC Lookups and Grid Save Phase
+
+Modified:
+
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Views\LC\Edit.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+
+Implemented:
+
+- Replaced manual ID/code entry with real MainErp lookups for:
+  - LC types from `LCTypes`.
+  - bank/payment bank from `BanksData`.
+  - boxes from `TblBoxesData`.
+  - currencies from `currency`.
+  - countries from `TblCountriesData`.
+  - vendors from `TblCustemers`.
+  - branches from `TblBranchesData`.
+  - linked accounts from `ACCOUNTS`, displayed as `Account_Serial - Account_Name`.
+- Added editable LC grid sections to the LC edit screen:
+  - `TBLLCHistory`
+  - `TBLLCMargin`
+  - `TBLLCMargin2`
+  - `tblLCOpenB`
+- Grid save supports insert/update of the mapped operational fields.
+- Grid save intentionally does not generate or rebuild grid accounting notes/vouchers yet.
+
+Eng validation:
+
+- Loaded LC `197` through `LcWriteRepository.GetForEdit`.
+- Confirmed lookups loaded: banks, vendors, accounts, and existing `TBLLCMargin2` rows.
+- Saved a test `TBLLCMargin2` row for test LC `198`.
+- Verified inserted row: `TBLLCMargin2.ID = 50858`, `TblLCID = 198`, `Amount = 321.45`.
+
+Still pending:
+
+- Delete row workflow for LC grids.
+- Voucher posting for grid rows through the exact VB6 `createVoucher2 / CREATE_VOUCHER_GE2` paths.
+- Opening balance posting into `DOUBLE_ENTREY_VOUCHERS1`.
+- Lookup paging/search for very large vendor/account lists.
+
+Safety:
+
+- No `AllScripts.sql` changes.
+- No MainErp SQL migrations added.
+- No intentional `Areas\Pos` edits in this phase. The worktree already contains unrelated POS changes that were left untouched.
+
+## 2026-05-07 LC Opening Balance, Rebuild, Delete, and UI Control Phase
+
+Modified:
+
+- `Areas\MainErp\Infrastructure\ManualIdTarget.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\LC\Edit.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+- `AI_Docs\MainErp\49_LC_SaveEditAndOpeningVoucher.md`
+
+Implemented:
+
+- Added `Notes1.NoteID` as a controlled manual-id target.
+- Added LC header save/load fields for:
+  - `OpenBalance`
+  - `OpenBalanceType`
+  - `OpenBalanceDate`
+  - `opening_balance_voucher_id`
+- Implemented protected opening-balance posting into:
+  - `Notes1`
+  - `DOUBLE_ENTREY_VOUCHERS1`
+- Added protected LC rebuild:
+  - requires `REBUILD-LC-{TblLCID}`.
+  - deletes and recreates core LC normal/open-expense/opening-balance vouchers.
+  - does not recreate detailed grid vouchers yet.
+- Added protected LC delete:
+  - requires `DELETE-LC-{TblLCID}`.
+  - deletes LC notes, opening notes, normal/opening voucher rows, LC grids, LC-generated accounts, and `TblLC`.
+- Improved LC workbench control zone with professional warning cards and typed confirmation fields.
+- Added opening-balance fields to the LC edit screen.
+
+Eng validation:
+
+- Prepared test LC `198` with `OpenBalance = 222.22`, `OpenBalanceType = 0`.
+- Posted opening balance successfully:
+  - `Notes1.NoteID = 716`
+  - `DOUBLE_ENTREY_VOUCHERS1.Double_Entry_Vouchers_ID = 6577`
+  - debit `222.2200`
+  - credit `222.2200`
+  - 2 voucher lines
+- Rebuilt LC `198`; normal vouchers and opening-balance vouchers remained balanced.
+- Tested delete on temporary LC `999198`; final `TblLC` count for that id was `0`.
+- Build succeeded.
+
+## 2026-05-07 Pump/Workshop Sales Customer Deferred Distribution
+
+Created:
+
+- `AI_Docs\MainErp\50_PumpWorkshopSales_CurrentGapsAndCustomerDeferred.md`
+
+Modified:
+
+- `Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\PumpSales\DeferredDistribution.cshtml`
+
+Implemented:
+
+- Pump deferred customer distribution now reads persisted `Transaction_DetailsPump` rows, not only `Transaction_Details.DetailsPump`.
+- Distribution rows are matched to invoice detail lines by `Transaction_Details.LineID`, which matches the VB6 grid line behavior, with a safe fallback to `Transaction_Details.ID`.
+- Added a customer lookup from `TblCustemers` in the pump deferred distribution screen.
+- Existing selected customers are included in the lookup even when outside the first lookup page.
+- Save/preview hydrates customer names and account displays from `TblCustemers` and `ACCOUNTS` before rebuilding the VB6 `DetailsPump` string.
+- Customer account display uses `Account_Serial - Account_Name`; raw `Account_Code` remains internal.
+- Added quantity safety validation so deferred quantity plus non-deferred quantity cannot exceed the line quantity limit.
+
+Validation:
+
+- Built `MyERP.sln` successfully.
+- Tested against `Nagahat`, pump invoice `Transaction_ID = 95484`.
+- Loaded `24` detail lines, `1` line with persisted pump deferred distribution, total `116.50`, quantity `50`.
+- Dry-run preview rebuilt: `4#1#116.5#نجاحات للتجارة والنقل#50#2.33#255#@`.
+
+Safety:
+
+- No `Areas\Pos` changes.
+- No `AllScripts.sql` changes.
+- No Notes, voucher, accounting, or inventory posting writes were added.
+- Full invoice save/posting remains pending.
+
+Still pending:
+
+- Exact row-level voucher posting for:
+  - `TBLLCHistory`
+  - `TBLLCMargin`
+  - `TBLLCMargin2`
+  - detailed `tblLCOpenB`
+- Database audit-table persistence for rebuild/delete actions.
+- Permission-gating destructive LC actions by role.
+
+Safety:
+
+- No `Areas\Pos` changes.
+- No `AllScripts.sql` changes.
+- No schema changes or stored procedure changes.
+
+## 2026-05-07 Pump Sales Permissions and Cancellation Preview
+
+Created:
+
+- `AI_Docs\MainErp\54_PumpSales_PermissionsCancelReceiveCostPG.md`
+
+Modified:
+
+- `Areas\MainErp\Models\Security\MainErpUserContext.cs`
+- `Areas\MainErp\Services\Security\MainErpLoginService.cs`
+- `Areas\MainErp\Infrastructure\LegacyScreenPermissionService.cs`
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+
+Implemented:
+
+- Loaded `TblUsers.CanPostPumpInv` into the MainErp user context.
+- Added legacy action permission checks for add/edit/delete/print through `ScreenJuncUser`.
+- Gated pump edit, post, rebuild, draft delete, and deferred distribution actions.
+- Added `dbo.MainErp_PumpSales_CancelPreview` for posted invoice cancellation/reversal preview only.
+- Added a UI button for `معاينة إلغاء فاتورة مرحلة`.
+- Reviewed `CreateRecieveVoucher` and confirmed it is a sales-return receive-voucher path, not a normal pump sale posting path.
+- Reviewed `PG` and documented the remaining cost/inventory parity risk.
+
+Safety:
+
+- No actual cancellation/reversal writes yet.
+- No posted invoice delete.
+- No `Areas\Pos` changes.
+- No `AllScripts.sql` changes.
+
+## 2026-05-07 LC Completion Pass
+
+Created:
+
+- `AI_Docs\MainErp\57_LC_CompletionPass.md`
+
+Modified:
+
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+
+Implemented:
+
+- Replaced manual code entry for LC workbench bank/supplier/branch filters with live lookups.
+- Added editable placeholder rows for all LC grids on new and existing LC edit screens.
+- Added legacy permission checks around LC add/edit/save/delete/post/rebuild routes.
+- Styled LC select controls consistently with the premium editor inputs.
+
+Safety:
+
+- No `Areas\Pos` changes in this LC pass.
+- No `AllScripts.sql` changes.
+- No database schema changes.
+- Row-level voucher posting for LC grids moved to `58_LC_GridVoucherPosting.md`.
+
+## 2026-05-07 Pump Sales Draft Delete Safety
+
+Created:
+
+- `AI_Docs\MainErp\53_PumpSales_DraftDeleteSafety.md`
+
+Modified:
+
+- `Areas\MainErp\Sql\03_SalesInvoice_ReadWrite_Procedures.sql`
+- `Areas\MainErp\Controllers\PumpSalesController.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `Areas\MainErp\Content\mainerp\mainerp.css`
+
+Implemented:
+
+- Added `dbo.MainErp_PumpSales_DeleteDraft`.
+- Added dry-run preview for draft delete.
+- Added actual delete only for unposted, open, unapproved pump drafts.
+- Blocked delete if `Notes`, `DOUBLE_ENTREY_VOUCHERS`, or linked inventory issue/receive documents already exist.
+- Deleted draft rows from `Transaction_DetailsPump`, `TblSalesPayment`, `Transaction_Details`, and `Transactions`.
+- Added guarded `tblPumpType.PercentV` rollback to previous reading only when the current reading still matches the deleted draft current reading.
+- Added audit logging through `MainErp_AuditLog`.
+
+Safety:
+
+- Posted/approved/closed invoices are not deleted.
+- Existing vouchers are not deleted.
+- No posted cancellation/reversal is implemented yet.
+- No `Areas\Pos` changes.
+- No `AllScripts.sql` changes.
+
 ## 2026-05-07 FrmSaleBill6 Operational Workbench Phase 2
 
 Created:
@@ -1091,3 +1596,107 @@ Safety:
 - No database schema changes.
 - No `AllScripts.sql` changes.
 - No `Areas\Pos` changes for this phase.
+## 2026-05-07 LC Grid Voucher Posting Phase
+
+Created:
+
+- `AI_Docs\MainErp\58_LC_GridVoucherPosting.md`
+
+Modified:
+
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Sql\05_MainErp_AuditLog.sql`
+- `MyERP.csproj`
+- `AI_Docs\MainErp\57_LC_CompletionPass.md`
+- `AI_Docs\MainErp\31_LC_GridVoucherMapping.md`
+
+Implemented:
+
+- Added guarded creation of missing LC grid vouchers for `TBLLCHistory`, `TBLLCMargin`, `TBLLCMargin2`, and `tblLCOpenB`.
+- Mapped VB6 `createVoucher2` / `CREATE_VOUCHER_GE2` paths for `TypeGrid=1`, `TypeGrid=3`, `TypeGrid=4`, and `TypeGrid=6`.
+- Added support for `TBLLCMargin2.IsOpenBalance` rows using `Notes1` and `DOUBLE_ENTREY_VOUCHERS1`.
+- Added the LC workbench action `إنشاء قيود الجريدات`.
+- Kept grid voucher posting separate from core LC voucher rebuild.
+- Updated core rebuild safety so it does not delete grid notes when rebuilding header/opening/close vouchers.
+- Added `MainErp_AuditLog` setup script under MainErp SQL.
+- Added LC Audit UI inside the `تاريخ العمليات` tab.
+- Added safe audit writes for LC header posting, open-expense posting, close, opening balance, grid voucher posting, rebuild, and delete.
+
+Eng validation:
+
+- Applied `Areas\MainErp\Sql\05_MainErp_AuditLog.sql` to `Wael\Sql2019 / Eng`.
+- Verified `dbo.MainErp_AuditLog` exists.
+- Verified initial Audit row count is `0`.
+- Direct PowerShell repository invocation was not possible outside the web app because the full `MyERP.dll` load requires DevExpress runtime assemblies. The action is available for runtime testing through `/MainErp/LC`.
+
+Still pending:
+
+- Individual grid-row delete/rebuild with linked note cleanup.
+- Runtime validation for `TBLLCHistory` once a real Eng sample row exists.
+- Deeper audit UI for LC grid posting operations.
+
+Safety:
+
+- No `Areas\Pos` changes in this LC phase.
+- No `AllScripts.sql` changes.
+- MainErp-local audit table setup was applied to the `Eng` test database only.
+- The grid posting action creates missing grid vouchers only and does not rebuild existing grid vouchers.
+
+## 2026-05-07 LC Grid Voucher UI Test, Row Delete, and Grid Rebuild
+
+Modified:
+
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `AI_Docs\MainErp\58_LC_GridVoucherPosting.md`
+
+Runtime UI validation on `Wael\Sql2019 / Eng`:
+
+- Opened `/MainErp/LC?selectedId=198`.
+- Logged in with `admin` and the dev master password.
+- Clicked `إنشاء قيود الجريدات`.
+- Generated `Notes.NoteID=222101`, `NoteSerial=202604465` for `TBLLCMargin2.ID=50858`.
+- Verified `DOUBLE_ENTREY_VOUCHERS` has 2 lines, debit `321.45`, credit `321.45`, difference `0.00`.
+- Verified `MainErp_AuditLog` has `LC.PostGridVouchers`.
+- Opened `/MainErp/JournalEntries/DetailsByNote/222101` from the LC accounting timeline successfully.
+
+Implemented:
+
+- Safe row-level delete for LC grid rows.
+- UI delete controls inside the LC grid tab with strong confirmation.
+- Confirmation pattern: `DELETE-LC-GRID-{TblLCID}-{SourceTable}-{RowID}`.
+- Whitelisted source tables only:
+  - `TBLLCHistory`
+  - `TBLLCMargin`
+  - `TBLLCMargin2`
+  - `tblLCOpenB`
+- Row delete removes only the row's linked `Notes` / `Notes1` and `DOUBLE_ENTREY_VOUCHERS` / `DOUBLE_ENTREY_VOUCHERS1`.
+- Row delete writes `LC.DeleteGridRow` audit.
+- Grid-only rebuild action with confirmation pattern `REBUILD-LC-GRIDS-{TblLCID}`.
+- Grid rebuild clears and recreates grid row vouchers only; it does not touch header/core LC vouchers.
+
+Runtime delete validation:
+
+- Deleted `TBLLCMargin2.ID=50858` for `TblLCID=198` from the UI.
+- Verified the row was removed.
+- Verified `Notes.NoteID=222101` was removed.
+- Verified `DOUBLE_ENTREY_VOUCHERS.Notes_ID=222101` was removed.
+- Verified `MainErp_AuditLog` has `LC.DeleteGridRow`.
+
+Build:
+
+- `MyERP.sln` Debug / Any CPU builds successfully.
+- Build has existing legacy warnings only.
+
+Safety:
+
+- No `Areas\Pos` files were intentionally changed in this LC step.
+- No `AllScripts.sql` changes.
+- No schema changes beyond the already documented `MainErp_AuditLog` test setup in `Eng`.

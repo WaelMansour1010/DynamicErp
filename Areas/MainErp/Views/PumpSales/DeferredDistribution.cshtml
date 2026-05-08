@@ -39,8 +39,15 @@
         <div class="main-erp-kpi-card"><span>البند / المضخة</span><strong>@Model.ItemName</strong><small>@Model.PumpName</small></div>
         <div class="main-erp-kpi-card"><span>الآجل الحالي</span><strong>@money(Model.CurrentDeferred)</strong><small>كمية @money(Model.CurrentDeferredQty)</small></div>
         <div class="main-erp-kpi-card"><span>إجمالي التوزيع الجديد</span><strong>@money(Model.AllocationAmountTotal)</strong><small>كمية @money(Model.AllocationQuantityTotal)</small></div>
+        <div class="main-erp-kpi-card"><span>حد كمية السطر</span><strong>@money(Model.LineQuantityLimit)</strong><small>غير آجل @money(Model.NonDeferredQuantity)</small></div>
+        <div class="main-erp-kpi-card @(Model.RemainingQuantityAfterDistribution < 0 ? "is-danger" : "is-success")"><span>المتبقي بعد التوزيع</span><strong>@money(Model.RemainingQuantityAfterDistribution)</strong><small>يجب ألا يكون بالسالب</small></div>
         <div class="main-erp-kpi-card"><span>حالة الفاتورة</span><strong>@(Model.IsLocked ? "مغلقة/مرحلة" : "مسموح كتوزيع آجل")</strong><small>حفظ محدود فقط</small></div>
     </div>
+
+    @if (Model.RemainingQuantityAfterDistribution < 0)
+    {
+        <div class="main-erp-warning">إجمالي كمية التوزيع الآجل يتجاوز الكمية المتاحة لهذا السطر. راجع الكميات قبل الحفظ.</div>
+    }
 
     <div class="main-erp-warning">
         هذه الشاشة لا تنفذ حفظ فاتورة كامل. الحفظ هنا خاص بتوزيع آجِل المضخات فقط، ويمنع الإجراء المخزن التعديل إذا كانت الفاتورة مغلقة أو مرحلة أو معتمدة.
@@ -51,6 +58,8 @@
         @Html.AntiForgeryToken()
         @Html.HiddenFor(x => x.TransactionId)
         @Html.HiddenFor(x => x.LineId)
+        @Html.HiddenFor(x => x.LineQuantityLimit)
+        @Html.HiddenFor(x => x.NonDeferredQuantity)
 
         <div class="main-erp-table-wrap">
             <table class="main-erp-table">
@@ -72,9 +81,23 @@
                         <tr>
                             <td>
                                 @Html.HiddenFor(x => x.Allocations[i].LineId)
-                                @Html.TextBoxFor(x => x.Allocations[i].CustomerId, new { @class = "main-erp-input", type = "number" })
+                                @{
+                                    var customerItems = Model.CustomerOptions
+                                        .Select(x => new SelectListItem
+                                        {
+                                            Value = x.Id.ToString(),
+                                            Text = x.Display,
+                                            Selected = Model.Allocations[i].CustomerId.HasValue && Model.Allocations[i].CustomerId.Value == x.Id
+                                        })
+                                        .ToList();
+                                    customerItems.Insert(0, new SelectListItem { Value = "", Text = "-- Select customer --" });
+                                }
+                                @Html.DropDownListFor(x => x.Allocations[i].CustomerId, customerItems, new { @class = "main-erp-input main-erp-select" })
                             </td>
-                            <td>@Html.TextBoxFor(x => x.Allocations[i].CustomerName, new { @class = "main-erp-input" })</td>
+                            <td>
+                                @Html.HiddenFor(x => x.Allocations[i].CustomerName)
+                                <span class="main-erp-muted">@Model.Allocations[i].CustomerName</span>
+                            </td>
                             <td>@Html.TextBoxFor(x => x.Allocations[i].UnitId, new { @class = "main-erp-input", type = "number" })</td>
                             <td>@Html.TextBoxFor(x => x.Allocations[i].Quantity, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
                             <td>@Html.TextBoxFor(x => x.Allocations[i].UnitPrice, new { @class = "main-erp-input", type = "number", step = "0.0001" })</td>
@@ -90,7 +113,7 @@
                         <td>@money(Model.AllocationQuantityTotal)</td>
                         <td></td>
                         <td>@money(Model.AllocationAmountTotal)</td>
-                        <td colspan="2">الحالي: @money(Model.CurrentDeferred) / كمية @money(Model.CurrentDeferredQty)</td>
+                        <td colspan="2">الحالي: @money(Model.CurrentDeferred) / كمية @money(Model.CurrentDeferredQty) / المتبقي بعد التوزيع: @money(Model.RemainingQuantityAfterDistribution)</td>
                     </tr>
                 </tfoot>
             </table>

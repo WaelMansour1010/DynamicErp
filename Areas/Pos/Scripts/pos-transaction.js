@@ -94,6 +94,11 @@
         return dateInput && dateInput.value ? dateInput.value : localIsoDate();
     }
     function enablePrintIfAllowed() { byId("printBtn").disabled = !(savedTransactionId() > 0 && currentContext && currentContext.CanPrint === true); }
+    function enableDeleteIfAllowed() {
+        var button = byId("deleteCurrentInvoiceBtn");
+        if (!button) { return; }
+        button.disabled = !(savedTransactionId() > 0 && currentContext && currentContext.CanAdminDeleteInvoice === true);
+    }
     function savedKycCustomerId() {
         var element = byId("cashCustomerId");
         if (!element) { return 0; }
@@ -216,6 +221,7 @@
             CanEditKyc: readBool(data.CanEditKyc),
             CanTeller: readBool(data.CanTeller),
             CanEditInvoice: readBool(data.CanEditInvoice),
+            CanAdminDeleteInvoice: readBool(data.CanAdminDeleteInvoice) || readBool(data.IsFullAccess),
             IsFullAccess: readBool(data.IsFullAccess),
             CanChangeDefaults: readBool(data.CanChangeDefaults)
         };
@@ -245,6 +251,7 @@
             CanEditKyc: getPageValue("data-can-edit-kyc"),
             CanTeller: getPageValue("data-can-teller"),
             CanEditInvoice: getPageValue("data-can-edit-invoice"),
+            CanAdminDeleteInvoice: getPageValue("data-can-admin-delete-invoice"),
             IsFullAccess: getPageValue("data-is-full-access"),
             CanChangeDefaults: getPageValue("data-can-change-defaults")
         });
@@ -483,10 +490,14 @@
         if (!byId("cashCustomerPhone").value.trim()) { return false; }
         if (!byId("cashCustomerName").value.trim()) { return false; }
         if (!byId("ipn").value.trim()) { return false; }
-        if (!byId("manualNo").value.trim()) { return false; }
+        if (isImportantIpnMode(mode) && !byId("manualNo").value.trim()) { return false; }
         if (mode === "card" && (!byId("visaNumber").value.trim() || !byId("cashCustomerId").value)) { return false; }
         if (mode === "violations" && !byId("violationWalletNo").value.trim()) { return false; }
         return true;
+    }
+
+    function isImportantIpnMode(mode) {
+        return mode === "cash-in" || mode === "card";
     }
 
     function uxContextAllowsSave() {
@@ -1084,7 +1095,7 @@
         if (byId("cashCustomerPhone").value.trim() && !isValidEgyptianMobile(byId("cashCustomerPhone").value.trim())) { errors.push("رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015"); }
         if (!byId("cashCustomerName").value.trim()) { errors.push("اسم العميل مطلوب"); }
         if (!byId("ipn").value.trim()) { errors.push("ID مطلوب"); }
-        if (!byId("manualNo").value.trim()) { errors.push("IPN مطلوب"); }
+        if (isImportantIpnMode(mode) && !byId("manualNo").value.trim()) { errors.push("IPN مطلوب في كاش إن وكارت كيشني فقط"); }
         if (mode === "card" && !byId("visaNumber").value.trim()) { errors.push("الكارت مطلوب في حالة كارت كيشني"); }
         if (mode === "card" && !byId("cashCustomerId").value) { errors.push("يجب تفعيل الكارت وحفظ بيانات KYC قبل حفظ الفاتورة"); }
         if (mode === "violations") {
@@ -1339,6 +1350,7 @@
                     lastSavedTransactionId = parseInt(data.transactionId, 10) || null;
                     if (byId("invoiceNumber")) { byId("invoiceNumber").value = data.noteSerial1 || ""; }
                     enablePrintIfAllowed();
+                    enableDeleteIfAllowed();
                     loadEmployeeBalances();
                     loadTodayInvoices();
                     byId("saveResult").innerHTML = successMessage;
@@ -1416,7 +1428,8 @@
         }
 
         if (list) { list.innerText = "جاري البحث..."; }
-        requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || ""), null, function (status, data) {
+        var excelOnly = byId("todayExcelOnly") && byId("todayExcelOnly").checked;
+        requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || "") + "&excelOnly=" + encodeURIComponent(excelOnly ? "true" : "false"), null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
                 return;
@@ -1445,7 +1458,7 @@
             item.setAttribute("data-transaction-id", invoices[i].Transaction_ID || "");
             item.innerHTML =
                 '<strong>' + escapeHtml(invoices[i].NoteSerial1 || invoices[i].Transaction_ID) + '</strong>' +
-                '<span>' + escapeHtml(invoices[i].ServiceType || "") + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + '</span>' +
+                '<span>' + escapeHtml(invoices[i].ServiceType || "") + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + (invoices[i].IsExcelImported ? ' | Excel' : '') + '</span>' +
                 '<span>' + escapeHtml(invoices[i].CustomerName || "") + ' - ' + escapeHtml(invoices[i].CustomerPhone || "") + '</span>' +
                 '<span>الصافي: ' + escapeHtml(decimalText(invoices[i].NetValue || invoices[i].PayedValue || 0)) + '</span>';
             container.appendChild(item);
@@ -1460,9 +1473,13 @@
             '<div><strong>رقم الفاتورة:</strong> ' + escapeHtml(invoice.NoteSerial1 || "") + '</div>' +
             '<div><strong>رقم الحركة:</strong> ' + escapeHtml(invoice.Transaction_ID || "") + '</div>' +
             '<div><strong>النوع:</strong> ' + escapeHtml(invoice.ServiceType || "") + '</div>' +
+            '<div><strong>المصدر:</strong> ' + (invoice.IsExcelImported ? "Excel" : "إدخال يدوي") + '</div>' +
             '<div><strong>العميل:</strong> ' + escapeHtml(invoice.CustomerName || "") + '</div>' +
             '<div><strong>التليفون:</strong> ' + escapeHtml(invoice.CustomerPhone || "") + '</div>' +
-            '<div><strong>الصافي:</strong> ' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</div>';
+            '<div><strong>الصافي:</strong> ' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</div>' +
+            (currentContext && currentContext.CanAdminDeleteInvoice === true
+                ? '<button type="button" class="danger-action compact-action" data-delete-invoice="' + escapeHtml(invoice.Transaction_ID || "") + '">حذف الفاتورة</button>'
+                : '');
     }
 
     function salesIndexFirst() {
@@ -1579,7 +1596,7 @@
         }
 
         var html = '<div class="responsive-table"><table class="pos-table sales-index-table"><thead><tr>' +
-            '<th>رقم الفاتورة</th><th>رقم الحركة</th><th>النوع</th><th>التاريخ</th><th>الوقت</th><th>العميل</th><th>الهاتف</th><th>الصافي</th><th>إجراء</th>' +
+            '<th>رقم الفاتورة</th><th>رقم الحركة</th><th>النوع</th><th>المصدر</th><th>التاريخ</th><th>الوقت</th><th>العميل</th><th>الهاتف</th><th>الصافي</th><th>إجراء</th>' +
             '</tr></thead><tbody>';
         for (var i = 0; i < invoices.length; i++) {
             var invoice = invoices[i] || {};
@@ -1587,12 +1604,15 @@
                 '<td>' + escapeHtml(invoice.NoteSerial1 || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.Transaction_ID || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.ServiceType || "") + '</td>' +
+                '<td>' + (invoice.IsExcelImported ? '<span class="excel-badge">Excel</span>' : '<span class="manual-badge">يدوي</span>') + '</td>' +
                 '<td>' + escapeHtml(invoice.TransactionDate || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.TransactionTime || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.CustomerName || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.CustomerPhone || "") + '</td>' +
                 '<td>' + escapeHtml(decimalText(invoice.NetValue || invoice.PayedValue || 0)) + '</td>' +
-                '<td><button type="button" class="secondary-action compact-action" data-sales-open="' + escapeHtml(invoice.Transaction_ID || "") + '">عرض</button></td>' +
+                '<td><button type="button" class="secondary-action compact-action" data-sales-open="' + escapeHtml(invoice.Transaction_ID || "") + '">عرض</button>' +
+                (currentContext && currentContext.CanAdminDeleteInvoice === true ? ' <button type="button" class="danger-action compact-action" data-delete-invoice="' + escapeHtml(invoice.Transaction_ID || "") + '">حذف</button>' : '') +
+                '</td>' +
                 '</tr>';
         }
         html += '</tbody></table></div>';
@@ -1606,11 +1626,13 @@
         var fromDateInput = byId("salesSearchFromDate");
         var toDateInput = byId("salesSearchToDate");
         var branchInput = byId("salesSearchBranchId");
+        var excelOnlyInput = byId("salesExcelOnly");
         var term = termInput ? termInput.value.trim() : "";
         var operationType = typeFilter ? typeFilter.value : "";
         var fromDate = fromDateInput ? fromDateInput.value : "";
         var toDate = toDateInput ? toDateInput.value : "";
         var branchId = branchInput ? branchInput.value : "";
+        var excelOnly = excelOnlyInput && excelOnlyInput.checked;
         var message = byId("salesIndexMessage");
         if (!url) { return; }
 
@@ -1625,7 +1647,8 @@
             "&operationType=" + encodeURIComponent(operationType || "") +
             "&fromDate=" + encodeURIComponent(fromDate || "") +
             "&toDate=" + encodeURIComponent(toDate || "") +
-            "&branchId=" + encodeURIComponent(branchId || ""), null, function (status, data) {
+            "&branchId=" + encodeURIComponent(branchId || "") +
+            "&excelOnly=" + encodeURIComponent(excelOnly ? "true" : "false"), null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 if (message) { message.innerText = "تعذر تحميل الفواتير."; }
                 renderSalesIndex([], !!term);
@@ -1634,6 +1657,77 @@
             salesIndexCache = data;
             renderSalesIndex(data, !!term);
         }, "جاري تحميل الفواتير...");
+    }
+
+    function deleteInvoice(transactionId) {
+        transactionId = parseInt(transactionId, 10) || 0;
+        if (!transactionId || !currentContext || currentContext.CanAdminDeleteInvoice !== true) {
+            return;
+        }
+
+        if (!window.confirm("سيتم حذف الفاتورة وكل تفاصيلها وسنداتها وقيودها المرتبطة. هل تريد المتابعة؟")) {
+            return;
+        }
+
+        var password = window.prompt("أدخل كلمة مرور المدير لتأكيد الحذف");
+        if (!password) {
+            byId("validationSummary").innerText = "لم يتم الحذف: كلمة المرور مطلوبة.";
+            return;
+        }
+
+        requestJsonWithLoading("POST", getUrl("data-delete-invoice-url"), {
+            TransactionId: transactionId,
+            AdminPassword: password
+        }, function (status, data) {
+            if (status < 200 || status >= 300 || !data || data.success === false) {
+                byId("validationSummary").innerText = (data && data.message) || "تعذر حذف الفاتورة.";
+                return;
+            }
+
+            byId("saveResult").innerText = data.message || "تم حذف الفاتورة.";
+            if (lastSavedTransactionId === transactionId) {
+                reloadContextAndReset(data.message || "تم حذف الفاتورة.");
+            }
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            if (salesIndexFirst()) { loadSalesIndexInvoices(); }
+        }, "جاري حذف الفاتورة...");
+    }
+
+    function deleteExcelInvoicesForRange() {
+        if (!currentContext || currentContext.CanAdminDeleteInvoice !== true) { return; }
+        var fromDate = byId("salesSearchFromDate") ? byId("salesSearchFromDate").value : "";
+        var toDate = byId("salesSearchToDate") ? byId("salesSearchToDate").value : "";
+        var branchId = byId("salesSearchBranchId") ? byId("salesSearchBranchId").value : "";
+        if (!fromDate || !toDate) {
+            byId("salesIndexMessage").innerText = "حدد من تاريخ وإلى تاريخ قبل حذف فواتير Excel.";
+            return;
+        }
+
+        if (!window.confirm("سيتم حذف كل فواتير Excel داخل الفترة المحددة وكل آثارها. هل تريد المتابعة؟")) {
+            return;
+        }
+
+        var password = window.prompt("أدخل كلمة مرور المدير لتأكيد حذف فواتير Excel");
+        if (!password) {
+            byId("salesIndexMessage").innerText = "لم يتم الحذف: كلمة المرور مطلوبة.";
+            return;
+        }
+
+        requestJsonWithLoading("POST", getUrl("data-delete-excel-invoices-url"), {
+            FromDate: fromDate,
+            ToDate: toDate,
+            BranchId: branchId ? parseInt(branchId, 10) : null,
+            AdminPassword: password
+        }, function (status, data) {
+            if (status < 200 || status >= 300 || !data || data.success === false) {
+                byId("salesIndexMessage").innerText = (data && data.message) || "تعذر حذف فواتير Excel.";
+                return;
+            }
+
+            byId("salesIndexMessage").innerText = data.message || "تم حذف فواتير Excel.";
+            loadSalesIndexInvoices();
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }, "جاري حذف فواتير Excel...");
     }
 
     function setTodayInvoicesCollapsed(collapsed, persist) {
@@ -1882,6 +1976,7 @@
             updateSaveButtonState();
             byId("saveResult").innerHTML = "وضع مراجعة فقط - رقم الفاتورة: " + escapeHtml(data.NoteSerial1 || "") + "<br />رقم الحركة: " + escapeHtml(data.Transaction_ID || "");
             enablePrintIfAllowed();
+            enableDeleteIfAllowed();
             loadJournalEntry(lastSavedTransactionId);
             updateCashOutMachineDisplay();
             updateBottomSummary();
@@ -3108,6 +3203,7 @@
         loadedInvoiceBoxId = null;
         loadedInvoiceEmpId = null;
         byId("printBtn").disabled = true;
+        enableDeleteIfAllowed();
         reviewMode = false;
         clearJournalEntry();
         clearMessages();
@@ -3158,6 +3254,7 @@
         applyPermissions();
         calculateTotals();
         enablePrintIfAllowed();
+        enableDeleteIfAllowed();
     }
 
     function reloadContextAndReset(messageHtml) {
@@ -3175,12 +3272,14 @@
                 byId("saveResult").innerHTML = messageHtml;
             }
             enablePrintIfAllowed();
+            enableDeleteIfAllowed();
         });
     }
 
     function applyPermissions() {
         updateSaveButtonState();
         enablePrintIfAllowed();
+        enableDeleteIfAllowed();
         byId("returnLaterBtn").disabled = !currentContext || currentContext.CanReturn !== true || byId("transactionType").value === "violations";
         byId("saveCashCustomerBtn").disabled = !currentContext || currentContext.CanEditKyc !== true;
         byId("boxId").disabled = true;
@@ -3213,11 +3312,18 @@
         if (event.target.id === "salesSearchBtn") {
             loadSalesIndexInvoices();
         }
+        if (event.target.id === "deleteCurrentInvoiceBtn") {
+            deleteInvoice(savedTransactionId());
+        }
+        if (event.target.id === "deleteExcelRangeBtn") {
+            deleteExcelInvoicesForRange();
+        }
         if (event.target.id === "salesClearSearchBtn") {
             if (byId("salesSearchText")) { byId("salesSearchText").value = ""; }
             if (byId("salesSearchType")) { byId("salesSearchType").value = ""; }
             if (byId("salesSearchFromDate")) { byId("salesSearchFromDate").value = localIsoDate(); }
             if (byId("salesSearchToDate")) { byId("salesSearchToDate").value = localIsoDate(); }
+            if (byId("salesExcelOnly")) { byId("salesExcelOnly").checked = false; }
             setSalesBranch("", "");
             salesIndexCache = [];
             if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = ""; }
@@ -3232,6 +3338,11 @@
         }
         if (event.target.id === "backToSalesIndexBtn") {
             showSalesIndex();
+        }
+        var deleteInvoiceButton = event.target.closest ? event.target.closest("[data-delete-invoice]") : null;
+        if (deleteInvoiceButton) {
+            deleteInvoice(deleteInvoiceButton.getAttribute("data-delete-invoice"));
+            return;
         }
         var salesOpenButton = event.target.closest ? event.target.closest("[data-sales-open]") : null;
         if (salesOpenButton) {
@@ -3280,6 +3391,7 @@
         if (event.target.id === "clearTodayInvoiceSearchBtn") {
             if (byId("todayInvoiceSearch")) { byId("todayInvoiceSearch").value = ""; }
             if (byId("todayInvoiceTypeFilter")) { byId("todayInvoiceTypeFilter").value = ""; }
+            if (byId("todayExcelOnly")) { byId("todayExcelOnly").checked = false; }
             todayInvoicesCache = [];
             byId("todayInvoicesList").innerText = "اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.";
             byId("todayInvoiceSummary").innerHTML = "";
@@ -3464,7 +3576,13 @@
         if (event.target.id === "todayInvoiceTypeFilter") {
             loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
         }
+        if (event.target.id === "todayExcelOnly") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }
         if (event.target.id === "salesSearchType") {
+            loadSalesIndexInvoices();
+        }
+        if (event.target.id === "salesExcelOnly") {
             loadSalesIndexInvoices();
         }
         if (event.target.id === "salesSearchFromDate" || event.target.id === "salesSearchToDate") {

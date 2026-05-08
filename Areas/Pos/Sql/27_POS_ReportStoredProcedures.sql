@@ -8,13 +8,18 @@ CREATE PROCEDURE dbo.usp_POS_Report_Run
     @toDate DATETIME,
     @branchId INT,
     @userId INT,
-    @canChangeDefaults BIT
+    @canChangeDefaults BIT,
+    @branchFromId INT = NULL,
+    @branchToId INT = NULL,
+    @showEmptyBranches BIT = 0,
+    @serviceSearch NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @from DATETIME = CONVERT(DATE, @fromDate);
     DECLARE @toExclusive DATETIME = DATEADD(DAY, 1, CONVERT(DATE, @toDate));
+    DECLARE @serviceTerm NVARCHAR(100) = NULLIF(LTRIM(RTRIM(ISNULL(@serviceSearch, N''))), N'');
 
     IF @reportKey IN (N'daily-trans', N'daily-trans-2')
     BEGIN
@@ -126,28 +131,186 @@ BEGIN
 
     IF @reportKey = N'finance-closing-discounts'
     BEGIN
-        SELECT TOP (1000)
-            COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), c.BranchID)) AS BranchName,
-            c.OrderDate AS ClosingDate,
-            c.NoteID,
-            CONVERT(NVARCHAR(50), CAST(c.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
-            CASE WHEN ISNULL(n.NoteType, 0) = 29807 THEN N'خصومات الإغلاق' ELSE N'قيد الإغلاق المالي' END AS VoucherType,
-            ISNULL(c.TotalRev, 0) AS TotalRev,
-            ISNULL(c.TotalRev2, 0) AS TotalRev2,
-            ISNULL(c.TotalRevVat, 0) AS TotalRevVat,
-            ISNULL(c.CashOutDisc, 0) AS CashOutDisc,
-            ISNULL(c.TotalSupply, 0) AS TotalSupply,
-            ISNULL(n.Note_Value, 0) AS NoteValue,
-            u.UserName
-        FROM dbo.TBLClosePos c
-        LEFT JOIN dbo.Notes n ON n.NoteID = c.NoteID
-        LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
-        LEFT JOIN dbo.TblUsers u ON u.UserID = c.UserID
-        WHERE c.OrderDate >= @from
-          AND c.OrderDate < @toExclusive
-          AND (@branchId <= 0 OR c.BranchID = @branchId)
-          AND (@canChangeDefaults = 1 OR c.UserID = @userId)
-        ORDER BY c.OrderDate DESC, c.ID DESC;
+        ;WITH BranchScope AS
+        (
+            SELECT
+                b.branch_id AS BranchID,
+                COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.branch_id)) AS BranchName
+            FROM dbo.TblBranchesData b
+            WHERE b.branch_id IS NOT NULL
+              AND (@branchId <= 0 OR b.branch_id = @branchId)
+              AND (@branchId > 0 OR @branchFromId IS NULL OR b.branch_id >= @branchFromId)
+              AND (@branchId > 0 OR @branchToId IS NULL OR b.branch_id <= @branchToId)
+              AND
+              (
+                  @serviceTerm IS NULL
+                  OR EXISTS
+                  (
+                      SELECT 1
+                      FROM dbo.Transactions st
+                      LEFT JOIN dbo.TblItems si1 ON si1.ItemID = st.ItemIDService
+                      LEFT JOIN dbo.TblItems si2 ON si2.ItemID = st.ItemIDService2
+                      LEFT JOIN dbo.TblItems si3 ON si3.ItemID = st.ItemIDService3
+                      WHERE st.BranchId = b.branch_id
+                        AND st.Transaction_Date >= @from
+                        AND st.Transaction_Date < @toExclusive
+                        AND
+                        (
+                            CONVERT(NVARCHAR(20), ISNULL(st.ItemIDService, 0)) = @serviceTerm
+                            OR CONVERT(NVARCHAR(20), ISNULL(st.ItemIDService2, 0)) = @serviceTerm
+                            OR CONVERT(NVARCHAR(20), ISNULL(st.ItemIDService3, 0)) = @serviceTerm
+                            OR ISNULL(si1.ItemName, N'') LIKE N'%' + @serviceTerm + N'%'
+                            OR ISNULL(si2.ItemName, N'') LIKE N'%' + @serviceTerm + N'%'
+                            OR ISNULL(si3.ItemName, N'') LIKE N'%' + @serviceTerm + N'%'
+                        )
+                  )
+              )
+        ),
+        CloseRows AS
+        (
+            SELECT
+                c.BranchID,
+                b.BranchName,
+                ISNULL(c.Net, 0) AS Net,
+                ISNULL(c.TotalSaleDay2Vat, 0) AS TotalSaleDay2Vat,
+                ISNULL(c.TotalRevPOS, 0) AS TotalRevPOS,
+                ISNULL(c.NetPOS, 0) AS NetPOS,
+                ISNULL(c.CountCards, 0) AS CountCards,
+                ISNULL(c.TotalSaleDay2, 0) AS CardValue,
+                ISNULL(c.CountTransaction, 0) AS CountTransaction,
+                ISNULL(c.CashOutTotal, 0) AS CashOutTotal,
+                ISNULL(c.CashOut, 0) AS CashOut,
+                ISNULL(c.CashOutDisc, 0) AS CashOutDisc,
+                ISNULL(c.BankBalanceCharge, 0) AS BankBalanceCharge,
+                ISNULL(c.TotalRechargeValue, 0) AS TotalRechargeValue,
+                ISNULL(c.TotalRev2, 0) AS TotalRev2,
+                ISNULL(c.TotalRevvat, 0) AS TotalRevvat,
+                ISNULL(c.BoxBalance, 0) AS BoxValue,
+                ISNULL(c.IsClosed, 0) AS IsClosed
+            FROM dbo.TBLClosePos c
+            INNER JOIN BranchScope b ON b.BranchID = c.BranchID
+            WHERE c.OrderDate >= @from
+              AND c.OrderDate < @toExclusive
+              AND (@canChangeDefaults = 1 OR c.UserID = @userId)
+        ),
+        ReturnsByBranch AS
+        (
+            SELECT
+                t.BranchId AS BranchID,
+                COUNT(1) AS ReturnsCount,
+                SUM(ISNULL(t.Transaction_NetValue, 0) + ISNULL(t.RechargeValue, 0)) AS TotalReturns
+            FROM dbo.Transactions t
+            INNER JOIN BranchScope b ON b.BranchID = t.BranchId
+            WHERE t.Transaction_Type = 9
+              AND t.Transaction_Date >= @from
+              AND t.Transaction_Date < @toExclusive
+              AND
+              (
+                  @canChangeDefaults = 1
+                  OR t.UserID = @userId
+              )
+            GROUP BY t.BranchId
+        ),
+        BranchRollup AS
+        (
+            SELECT
+                c.BranchID,
+                c.BranchName,
+                SUM(c.Net) AS Net,
+                SUM(c.TotalSaleDay2Vat) AS TotalSaleDay2Vat,
+                SUM(c.TotalRevPOS) AS TotalRevPOS,
+                SUM(c.NetPOS) AS NetPOS,
+                MAX(ISNULL(r.TotalReturns, 0)) AS TotalReturns,
+                SUM(c.CountCards) AS CountCards,
+                SUM(c.CardValue) AS CardValue,
+                SUM(c.CountTransaction) AS CountTransaction,
+                SUM(c.CashOutTotal) AS CashOutTotal,
+                SUM(c.CashOut) AS CashOut,
+                SUM(c.CashOutDisc) AS CashOutDisc,
+                SUM(c.BankBalanceCharge) AS BankBalanceCharge,
+                SUM(c.TotalRechargeValue) AS TotalRechargeValue,
+                SUM(c.TotalRev2) AS TotalRev2,
+                SUM(c.TotalRevvat) AS TotalRevvat,
+                MAX(ISNULL(r.ReturnsCount, 0)) AS ReturnsCount,
+                SUM(c.BoxValue) AS BoxValue,
+                MIN(CONVERT(INT, c.IsClosed)) AS MinClosed,
+                MAX(CONVERT(INT, c.IsClosed)) AS MaxClosed
+            FROM CloseRows c
+            LEFT JOIN ReturnsByBranch r ON r.BranchID = c.BranchID
+            GROUP BY c.BranchID, c.BranchName
+        )
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY s.BranchName, s.BranchID) AS RowNo,
+            s.BranchName,
+            CAST((ISNULL(r.Net, 0) + ISNULL(r.TotalSaleDay2Vat, 0) + ISNULL(r.TotalRevPOS, 0) + ISNULL(r.NetPOS, 0) - ISNULL(r.TotalReturns, 0)) AS DECIMAL(18, 3)) AS TotalSupply,
+            CAST(ISNULL(r.CountCards, 0) AS DECIMAL(18, 0)) AS CountCards,
+            CAST(ISNULL(r.CardValue, 0) AS DECIMAL(18, 3)) AS CardValue,
+            CAST(ISNULL(r.CountTransaction, 0) AS DECIMAL(18, 0)) AS CountTransaction,
+            CAST((ISNULL(r.CashOutTotal, 0) + ISNULL(r.CashOut, 0)) AS DECIMAL(18, 3)) AS WalletBalance,
+            CAST((ISNULL(r.CashOutTotal, 0) + (ISNULL(r.CashOut, 0) - ISNULL(r.CashOutDisc, 0))) AS DECIMAL(18, 3)) AS WalletSupply,
+            CAST(ISNULL(r.BankBalanceCharge, 0) AS DECIMAL(18, 3)) AS BankBalanceCharge,
+            CAST(ISNULL(r.TotalRechargeValue, 0) AS DECIMAL(18, 3)) AS TotalRechargeValue,
+            CAST(ISNULL(r.TotalRev2, 0) AS DECIMAL(18, 3)) AS TotalRev2,
+            CAST((ISNULL(r.TotalRev2, 0) + ISNULL(r.TotalRevvat, 0)) AS DECIMAL(18, 3)) AS TotalRevWithVat,
+            ISNULL(r.ReturnsCount, 0) AS ReturnsCount,
+            CAST(ISNULL(r.TotalReturns, 0) AS DECIMAL(18, 3)) AS TotalReturns,
+            CAST((ISNULL(r.CashOut, 0) + ISNULL(r.CashOutTotal, 0) - ISNULL(r.CashOutDisc, 0)) AS DECIMAL(18, 3)) AS NetCashOut,
+            CAST(ISNULL(r.BoxValue, 0) AS DECIMAL(18, 3)) AS BoxValue,
+            CASE
+                WHEN r.BranchID IS NULL
+                  OR
+                  (
+                      ISNULL(r.Net, 0) = 0
+                      AND ISNULL(r.TotalSaleDay2Vat, 0) = 0
+                      AND ISNULL(r.TotalRevPOS, 0) = 0
+                      AND ISNULL(r.NetPOS, 0) = 0
+                      AND ISNULL(r.TotalReturns, 0) = 0
+                      AND ISNULL(r.CountCards, 0) = 0
+                      AND ISNULL(r.CardValue, 0) = 0
+                      AND ISNULL(r.CountTransaction, 0) = 0
+                      AND ISNULL(r.CashOutTotal, 0) = 0
+                      AND ISNULL(r.CashOut, 0) = 0
+                      AND ISNULL(r.CashOutDisc, 0) = 0
+                      AND ISNULL(r.BankBalanceCharge, 0) = 0
+                      AND ISNULL(r.TotalRechargeValue, 0) = 0
+                      AND ISNULL(r.TotalRev2, 0) = 0
+                      AND ISNULL(r.TotalRevvat, 0) = 0
+                      AND ISNULL(r.ReturnsCount, 0) = 0
+                      AND ISNULL(r.BoxValue, 0) = 0
+                  ) THEN N''
+                WHEN r.MinClosed = 1 AND r.MaxClosed = 1 THEN N'مغلق'
+                WHEN r.MaxClosed = 1 THEN N'إغلاق جزئي'
+                ELSE N'غير مغلق'
+            END AS ClosingStatus
+        FROM BranchScope s
+        LEFT JOIN BranchRollup r ON r.BranchID = s.BranchID
+        WHERE
+            @showEmptyBranches = 1
+            OR
+            (
+                r.BranchID IS NOT NULL
+                AND
+                (
+                    ISNULL(r.Net, 0) <> 0
+                    OR ISNULL(r.TotalSaleDay2Vat, 0) <> 0
+                    OR ISNULL(r.TotalRevPOS, 0) <> 0
+                    OR ISNULL(r.NetPOS, 0) <> 0
+                    OR ISNULL(r.TotalReturns, 0) <> 0
+                    OR ISNULL(r.CountCards, 0) <> 0
+                    OR ISNULL(r.CardValue, 0) <> 0
+                    OR ISNULL(r.CountTransaction, 0) <> 0
+                    OR ISNULL(r.CashOutTotal, 0) <> 0
+                    OR ISNULL(r.CashOut, 0) <> 0
+                    OR ISNULL(r.CashOutDisc, 0) <> 0
+                    OR ISNULL(r.BankBalanceCharge, 0) <> 0
+                    OR ISNULL(r.TotalRechargeValue, 0) <> 0
+                    OR ISNULL(r.TotalRev2, 0) <> 0
+                    OR ISNULL(r.TotalRevvat, 0) <> 0
+                    OR ISNULL(r.ReturnsCount, 0) <> 0
+                    OR ISNULL(r.BoxValue, 0) <> 0
+                )
+            )
+        ORDER BY s.BranchName, s.BranchID;
 
         RETURN;
     END;

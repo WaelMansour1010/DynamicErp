@@ -16,6 +16,7 @@ namespace MyERP.Areas.Pos.Services
         private const int HeaderRowIndex = 2;
         private const int FirstDataRowIndex = 3;
         private const int MaxDataRowIndex = 225;
+        private const int ImportStatusColumnIndex = 13;
 
         public PosExcelImportPreviewResult Parse(Stream stream, string fileName, PosExcelImportMappingDraft mapping)
         {
@@ -32,8 +33,6 @@ namespace MyERP.Areas.Pos.Services
                 WorkbookType = "OperationalDailyTransactions",
                 DetectedBranchHint = DetectBranchHint(fileName)
             };
-
-            ApplyMappingPreflight(result, mapping);
 
             using (var workbookStream = new MemoryStream(buffer))
             using (var reader = ExcelReaderFactory.CreateReader(workbookStream))
@@ -57,7 +56,6 @@ namespace MyERP.Areas.Pos.Services
                 }
             }
 
-            MarkDuplicateIpns(result);
             MarkDuplicateTokens(result);
             ApplySequentialTokenMatching(result);
             FinalizeCounts(result);
@@ -136,8 +134,26 @@ namespace MyERP.Areas.Pos.Services
                 TransactionDate = ReadDate(sheet, rowIndex, 9)
             };
 
+            ApplyViolationDefaultPricing(row);
+            ApplyExistingImportMarker(sheet, rowIndex, row);
             ValidateTransactionRow(row, mapping);
             return row;
+        }
+
+        private static void ApplyExistingImportMarker(DataTable sheet, int rowIndex, PosExcelImportRowPreview row)
+        {
+            var marker = ReadText(sheet, rowIndex, ImportStatusColumnIndex);
+            if (string.IsNullOrWhiteSpace(marker))
+            {
+                return;
+            }
+
+            var normalized = NormalizeServiceText(marker);
+            if (normalized.Contains("imported") || normalized.Contains("مرحله") || normalized.Contains("تم ترحيله") || normalized.Contains("تم الترحيل"))
+            {
+                row.Status = "ImportedBefore";
+                row.Reasons.Add("الصف معلّم في ملف Excel بأنه تم ترحيله سابقا؛ سيتم تجاهله.");
+            }
         }
 
         private static PosExcelImportTokenPreview ParseTokenRow(DataTable sheet, int rowIndex)
@@ -172,19 +188,13 @@ namespace MyERP.Areas.Pos.Services
             {
                 Reject(row, "نوع الخدمة مفقود.");
             }
-            else
-            {
-                int? mappedItemId;
-                if (!TryResolveServiceItem(row.ServiceType, mapping, out mappedItemId))
-                {
-                    Reject(row, "نوع الخدمة غير مربوط بصنف POS في إعدادات الاستيراد.");
-                }
-            }
 
             if (string.IsNullOrWhiteSpace(row.IPN))
             {
                 Warn(row, "رقم IPN مفقود؛ سيتم منع commit حتى توجد وسيلة تتبع بديلة.");
             }
+
+            var isViolation = IsViolationRow(row);
 
             if (!row.Amount.HasValue || row.Amount.Value <= 0)
             {
@@ -201,7 +211,7 @@ namespace MyERP.Areas.Pos.Services
                 Reject(row, "الإجمالي غير صالح.");
             }
 
-            if (row.Amount.HasValue && row.Fee.HasValue && row.GrossTotal.HasValue)
+            if (!isViolation && row.Amount.HasValue && row.Fee.HasValue && row.GrossTotal.HasValue)
             {
                 var expected = row.Amount.Value + row.Fee.Value;
                 if (Math.Abs(expected - row.GrossTotal.Value) > 0.02m)
@@ -214,7 +224,7 @@ namespace MyERP.Areas.Pos.Services
         private static void MarkDuplicateIpns(PosExcelImportPreviewResult result)
         {
             var duplicates = result.Rows
-                .Where(x => !string.IsNullOrWhiteSpace(x.IPN))
+                .Where(x => !string.IsNullOrWhiteSpace(x.IPN) && !string.Equals(x.Status, "ImportedBefore", StringComparison.OrdinalIgnoreCase))
                 .GroupBy(x => NormalizeKey(x.IPN))
                 .Where(x => x.Count() > 1)
                 .Select(x => x.Key)
@@ -225,7 +235,7 @@ namespace MyERP.Areas.Pos.Services
                 return;
             }
 
-            foreach (var row in result.Rows.Where(x => duplicates.Contains(NormalizeKey(x.IPN))))
+            foreach (var row in result.Rows.Where(x => !string.Equals(x.Status, "ImportedBefore", StringComparison.OrdinalIgnoreCase) && duplicates.Contains(NormalizeKey(x.IPN))))
             {
                 Reject(row, "رقم IPN مكرر داخل نفس الملف.");
             }
@@ -281,6 +291,7 @@ namespace MyERP.Areas.Pos.Services
                         MatchStatus = "Matched",
                         Strategy = "Sequential"
                     });
+                    rows[i].MatchedToken = tokens[i].Token;
                 }
 
                 foreach (var row in rows.Skip(pairCount))
@@ -298,9 +309,75 @@ namespace MyERP.Areas.Pos.Services
 
         private static bool IsTokenEligibleRow(PosExcelImportRowPreview row)
         {
-            return row != null
-                && !string.Equals(row.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
-                && string.Equals((row.ServiceType ?? string.Empty).Trim(), "كاش ان", StringComparison.OrdinalIgnoreCase);
+            if (row == null
+                || string.Equals(row.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(row.Status, "ImportedBefore", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var serviceText = NormalizeServiceText(row.ServiceType);
+            return IsKeshniCardServiceText(serviceText);
+        }
+
+        private static void ApplyViolationDefaultPricing(PosExcelImportRowPreview row)
+        {
+            if (!IsViolationRow(row))
+            {
+                return;
+            }
+
+            var usedDefault = false;
+            if (!row.Amount.HasValue || row.Amount.Value <= 0)
+            {
+                row.Amount = 50m;
+                usedDefault = true;
+            }
+
+            if (!row.Fee.HasValue || row.Fee.Value <= 0)
+            {
+                row.Fee = 50m;
+                usedDefault = true;
+            }
+
+            if (!row.GrossTotal.HasValue || row.GrossTotal.Value <= 0)
+            {
+                row.GrossTotal = 50m;
+                usedDefault = true;
+            }
+
+            if (usedDefault)
+            {
+                Warn(row, "تم استخدام قيمة 50 جنيه للمخالفات في السعر/الإجمالي حسب فواتير المخالفات السابقة.");
+            }
+        }
+
+        private static bool IsViolationRow(PosExcelImportRowPreview row)
+        {
+            return row != null && NormalizeServiceText(row.ServiceType).Contains("مخالف");
+        }
+
+        private static bool IsKeshniCardServiceText(string normalizedServiceText)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedServiceText))
+            {
+                return false;
+            }
+
+            return normalizedServiceText.Contains("كارت")
+                && normalizedServiceText.Contains("كيشني")
+                && !normalizedServiceText.Contains("شحن");
+        }
+
+        private static string NormalizeServiceText(string value)
+        {
+            return (value ?? string.Empty).Trim()
+                .Replace("ـ", string.Empty)
+                .Replace("أ", "ا")
+                .Replace("إ", "ا")
+                .Replace("آ", "ا")
+                .Replace("ى", "ي")
+                .ToLowerInvariant();
         }
 
         private static void ApplyMappingPreflight(PosExcelImportPreviewResult result, PosExcelImportMappingDraft mapping)
@@ -436,13 +513,20 @@ namespace MyERP.Areas.Pos.Services
 
         private static void Reject(PosExcelImportRowPreview row, string reason)
         {
+            if (string.Equals(row.Status, "ImportedBefore", StringComparison.OrdinalIgnoreCase))
+            {
+                row.Reasons.Add(reason);
+                return;
+            }
+
             row.Status = "Rejected";
             row.Reasons.Add(reason);
         }
 
         private static void Warn(PosExcelImportRowPreview row, string reason)
         {
-            if (!string.Equals(row.Status, "Rejected", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(row.Status, "Rejected", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(row.Status, "ImportedBefore", StringComparison.OrdinalIgnoreCase))
             {
                 row.Status = "Warning";
             }

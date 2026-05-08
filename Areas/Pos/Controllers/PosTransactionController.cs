@@ -77,6 +77,11 @@ namespace MyERP.Areas.Pos.Controllers
                 || string.Equals(value, "Teller", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsAdmin(PosUserContext context)
+        {
+            return context != null && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess);
+        }
+
         [HttpGet]
         public JsonResult GetItems(string term)
         {
@@ -364,6 +369,7 @@ namespace MyERP.Areas.Pos.Controllers
                 CanOpenPayments = context.CanOpenPayments,
                 CanExecutePayments = context.CanExecutePayments,
                 CanEditInvoice = context.CanEditInvoice,
+                CanAdminDeleteInvoice = IsAdmin(context),
                 IsFullAccess = context.IsFullAccess,
                 CanChangeDefaults = context.CanChangeDefaults,
                 CanManagePrintTemplates = context.CanManagePrintTemplates
@@ -384,7 +390,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetTodayInvoices(string term, string operationType, DateTime? fromDate, DateTime? toDate, int? branchId)
+        public JsonResult GetTodayInvoices(string term, string operationType, DateTime? fromDate, DateTime? toDate, int? branchId, bool excelOnly = false)
         {
             var context = GetPosContext();
             if (context == null)
@@ -395,13 +401,96 @@ namespace MyERP.Areas.Pos.Controllers
 
             try
             {
-                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId), JsonRequestBehavior.AllowGet);
+                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId, excelOnly), JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
                 PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "GetTodayInvoices", operationType, null, ex.Message, ex, "termLength=" + ((term ?? string.Empty).Length.ToString(CultureInfo.InvariantCulture)), "Error", "Exception");
                 SetJsonErrorStatus(500);
                 return Json(Fail("تعذر تحميل فواتير اليوم", ex.Message), JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult DeleteInvoice(PosDeleteInvoiceRequest request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+            }
+
+            if (!IsAdmin(context))
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("حذف الفواتير متاح للمدير فقط", "Current POS user is not an admin."));
+            }
+
+            if (request == null || request.TransactionId <= 0)
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("رقم الفاتورة غير صحيح", "TransactionId is required."));
+            }
+
+            if (!_repository.ValidatePosUserPassword(context.UserId, request.AdminPassword))
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("كلمة مرور المدير غير صحيحة", "Admin password validation failed."));
+            }
+
+            try
+            {
+                var result = _repository.DeletePosSaleInvoice(request.TransactionId, context.UserId);
+                return Json(new { success = true, message = string.Join(" ", result.Messages), result = result });
+            }
+            catch (Exception ex)
+            {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "DeleteInvoice", null, request.TransactionId, ex.Message, ex, "DeleteInvoice", "Error", "Exception");
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر حذف الفاتورة", ex.Message));
+            }
+        }
+
+        [HttpPost]
+        public JsonResult DeleteExcelInvoices(PosDeleteExcelInvoicesRequest request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+            }
+
+            if (!IsAdmin(context))
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("حذف فواتير Excel متاح للمدير فقط", "Current POS user is not an admin."));
+            }
+
+            if (request == null || !request.FromDate.HasValue || !request.ToDate.HasValue)
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("حدد فترة الحذف أولاً", "FromDate and ToDate are required."));
+            }
+
+            if (!_repository.ValidatePosUserPassword(context.UserId, request.AdminPassword))
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("كلمة مرور المدير غير صحيحة", "Admin password validation failed."));
+            }
+
+            try
+            {
+                var branchId = context.IsFullAccess ? request.BranchId : context.BranchId;
+                var result = _repository.DeletePosExcelImportedInvoices(request.FromDate.Value, request.ToDate.Value, branchId, context.UserId);
+                return Json(new { success = true, message = string.Join(" ", result.Messages), result = result });
+            }
+            catch (Exception ex)
+            {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "DeleteExcelInvoices", null, null, ex.Message, ex, "DeleteExcelInvoices", "Error", "Exception");
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر حذف فواتير Excel", ex.Message));
             }
         }
 
@@ -810,6 +899,7 @@ namespace MyERP.Areas.Pos.Controllers
 
                 var validationErrors = ValidateSaveRequest(request, context);
                 AddServiceTypeValidationErrors(request, validationErrors);
+                AddImportantIpnDuplicateErrors(request, validationErrors);
                 if (validationErrors.Count > 0)
                 {
                     LogPosSystemIssue(context, "Save.Validation", request, null, "POS save validation failed", "Warning", "Validation", BuildSaveRequestSummary(request, validationErrors));
@@ -951,7 +1041,7 @@ namespace MyERP.Areas.Pos.Controllers
                 errors["IPN"] = "ID مطلوب";
             }
 
-            if (string.IsNullOrWhiteSpace(request.ManualNO))
+            if (IsImportantIpnTransaction(request.TransactionType) && string.IsNullOrWhiteSpace(request.ManualNO))
             {
                 errors["ManualNO"] = "IPN مطلوب";
             }
@@ -1047,6 +1137,25 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return errors;
+        }
+
+        private void AddImportantIpnDuplicateErrors(PosSaveTransactionRequest request, IDictionary<string, string> errors)
+        {
+            if (request == null || errors == null || !IsImportantIpnTransaction(request.TransactionType) || string.IsNullOrWhiteSpace(request.ManualNO))
+            {
+                return;
+            }
+
+            if (_repository.ImportantIpnExistsForPosSale(request.ManualNO, request.Transaction_ID))
+            {
+                errors["ManualNO"] = "رقم IPN مكرر في كاش إن أو كارت كيشني";
+            }
+        }
+
+        private static bool IsImportantIpnTransaction(string transactionType)
+        {
+            return string.Equals(transactionType, "cash-in", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(transactionType, "card", StringComparison.OrdinalIgnoreCase);
         }
 
         private static Dictionary<string, string> ValidateSqlDateRange(PosCashCustomerSaveRequest request)
