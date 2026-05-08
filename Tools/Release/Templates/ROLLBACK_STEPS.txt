@@ -1,0 +1,9 @@
+Rollback steps:
+1. Stop or drain customer traffic.
+2. Restore previous web folder backup.
+3. Restore previous Web.config.
+4. Restore previous stored procedures from backup output.
+5. Drop added indexes only if required.
+6. Recycle app pool.
+7. Smoke test login/open POS.
+8. Keep deployment logs and POS_SaveAttemptLog export for investigation.

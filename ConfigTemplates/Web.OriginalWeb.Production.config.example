@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="EnableKishnyPos" value="false" />
+    <add key="EnableMainErpMigration" value="false" />
+    <add key="EnableDevStart" value="false" />
+    <add key="EnableRunModeSelector" value="false" />
+    <add key="EnableDevMasterPassword" value="false" />
+  </appSettings>
+  <system.web>
+    <compilation targetFramework="4.8" debug="false" />
+    <customErrors mode="RemoteOnly" />
+  </system.web>
+</configuration>
