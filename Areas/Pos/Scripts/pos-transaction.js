@@ -52,8 +52,19 @@
     var uxCurrentStep = "service";
     var uxDebounceMs = 200;
     var amountCommitDelayMs = 400;
+    var posDebugEnabled = false;
 
     function byId(id) { return document.getElementById(id); }
+    try {
+        posDebugEnabled = /(?:\?|&)posDebug=1(?:&|$)/.test(window.location.search || "")
+            || window.localStorage.getItem("POS_DEBUG") === "1";
+    } catch (ignoreDebugFlag) {
+        posDebugEnabled = false;
+    }
+    function posDebugLog(label, payload) {
+        if (!posDebugEnabled || !window.console || !window.console.debug) { return; }
+        window.console.debug("[POS] " + label, payload || {});
+    }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
     function numberFromInput(input) { var value = parseFloat(input.value); return isNaN(value) ? 0 : value; }
     function selectedText(select) { return select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : ""; }
@@ -460,6 +471,260 @@
         }
     }
 
+    var validationFieldSelectors = {
+        TransactionType: "#transactionType",
+        CashCustomerPhone: "#cashCustomerPhone",
+        CustomerPhone: "#cashCustomerPhone",
+        PhoneNo2: "#cashCustomerPhone",
+        CashCustomerName: "#cashCustomerName",
+        Name: "#cashCustomerName",
+        IPN: "#ipn",
+        ManualNO: "#manualNo",
+        WalletNumber: "#tetNumPoket",
+        Tet_NumPoket: "#tetNumPoket",
+        ViolationsValue: "#violationValue",
+        ViolationPayType: "input[name='violationPayType']",
+        RechargeValue: "#rechargeValue",
+        RechargeAmount: "#rechargeValue",
+        ServiceType: "#serviceItemId",
+        ItemIDService: "#serviceItemId",
+        ItemIDService2: "#serviceItemId2",
+        WalletBankId: "#serviceItemId2",
+        PaymentType: "#paymentType",
+        PaymentAmount: "#payedValue",
+        PayedValue: "#payedValue",
+        NetValue: "#netValue",
+        BoxID: "#boxId",
+        BranchId: "#branchId",
+        StoreID: "#storeId",
+        Emp_ID: "#empId",
+        VisaNumber: "#visaNumber",
+        CardNo: "#visaNumber",
+        TblCusCshId: "#visaNumber",
+        KycPhone: "#kycPhoneNo2",
+        KycName: "#kycName",
+        KycNationalId: "#kycNationalId",
+        KycCardNo: "#kycCardNo",
+        Items: "#itemsTable"
+    };
+
+    var validationMessageMap = [
+        { text: "رقم المحفظة مطلوب", field: "WalletNumber" },
+        { text: "رقم التليفون مطلوب", field: "CashCustomerPhone" },
+        { text: "رقم المحمول مطلوب", field: "CashCustomerPhone" },
+        { text: "اسم العميل مطلوب", field: "CashCustomerName" },
+        { text: "ID مطلوب", field: "IPN" },
+        { text: "IPN مطلوب", field: "ManualNO" },
+        { text: "الكارت مطلوب", field: "VisaNumber" },
+        { text: "قيمة المخالفات مطلوبة", field: "ViolationsValue" },
+        { text: "طريقة دفع المخالفات مطلوبة", field: "ViolationPayType" },
+        { text: "مبلغ الشحن", field: "RechargeValue" },
+        { text: "المحفظة/البنك مطلوبة", field: "ItemIDService2" },
+        { text: "طريقة الدفع مطلوبة", field: "PaymentType" },
+        { text: "الخزنة غير محددة", field: "BoxID" },
+        { text: "الفرع غير محدد", field: "BranchId" },
+        { text: "المخزن غير محدد", field: "StoreID" },
+        { text: "لا توجد خدمة", field: "Items" }
+    ];
+
+    function validationSelectorFor(fieldOrSelector) {
+        if (!fieldOrSelector) { return ""; }
+        var key = String(fieldOrSelector);
+        if (key.charAt(0) === "#" || key.charAt(0) === "." || key.charAt(0) === "[" || key.indexOf("input[") === 0) {
+            return key;
+        }
+        return validationFieldSelectors[key] || "[data-pos-field='" + key.replace(/'/g, "\\'") + "']";
+    }
+
+    function fieldElement(fieldOrSelector) {
+        if (fieldOrSelector === "WalletNumber" || fieldOrSelector === "Tet_NumPoket") {
+            var wallet = byId("tetNumPoket");
+            var violationWallet = byId("violationWalletNo");
+            if (wallet && isElementVisible(wallet)) { return wallet; }
+            if (violationWallet && isElementVisible(violationWallet)) { return violationWallet; }
+            return wallet || violationWallet;
+        }
+        var selector = validationSelectorFor(fieldOrSelector);
+        return selector ? document.querySelector(selector) : null;
+    }
+
+    function fieldWrapper(element) {
+        if (!element) { return null; }
+        if (element.closest) {
+            return element.closest("label") || element.closest(".smart-lookup") || element.closest(".pos-panel") || element.parentNode;
+        }
+        return element.parentNode;
+    }
+
+    function directValidationMessage(wrapper) {
+        if (!wrapper) { return null; }
+        for (var i = 0; i < wrapper.children.length; i++) {
+            if (wrapper.children[i].classList && wrapper.children[i].classList.contains("pos-validation-message")) {
+                return wrapper.children[i];
+            }
+        }
+        return null;
+    }
+
+    function isElementVisible(element) {
+        if (!element) { return false; }
+        var current = element;
+        while (current && current !== document.body) {
+            if (current.classList && current.classList.contains("is-hidden")) {
+                return false;
+            }
+            var style = window.getComputedStyle ? window.getComputedStyle(current) : null;
+            if (style && (style.display === "none" || style.visibility === "hidden")) {
+                return false;
+            }
+            current = current.parentNode;
+        }
+        return true;
+    }
+
+    function ensureFieldVisible(element) {
+        if (!element) { return; }
+        var panel = element.closest ? element.closest(".pos-panel") : null;
+        if (panel) {
+            panel.classList.remove("is-hidden");
+        }
+    }
+
+    function markFieldInvalid(fieldSelector, message) {
+        var element = fieldElement(fieldSelector);
+        if (!element) { return null; }
+        var wrapper = fieldWrapper(element);
+        if (wrapper) {
+            wrapper.classList.add("pos-field-invalid-wrap");
+            var old = directValidationMessage(wrapper);
+            if (!old) {
+                old = document.createElement("span");
+                old.className = "pos-validation-message";
+                wrapper.appendChild(old);
+            }
+            old.innerText = message || "هذا الحقل مطلوب";
+        }
+        element.classList.add("pos-field-invalid", "pos-field-pulse");
+        element.setAttribute("aria-invalid", "true");
+        window.setTimeout(function () { element.classList.remove("pos-field-pulse"); }, 450);
+        return element;
+    }
+
+    function clearFieldInvalid(fieldSelector) {
+        var element = fieldElement(fieldSelector);
+        if (!element) { return; }
+        element.classList.remove("pos-field-invalid", "pos-field-pulse");
+        element.removeAttribute("aria-invalid");
+        var wrapper = fieldWrapper(element);
+        if (wrapper) {
+            wrapper.classList.remove("pos-field-invalid-wrap");
+            var message = directValidationMessage(wrapper);
+            if (message) { message.parentNode.removeChild(message); }
+        }
+    }
+
+    function clearFixedFieldIfValid(element) {
+        if (!element || !element.classList || !element.classList.contains("pos-field-invalid")) { return; }
+        if (element.type === "radio") {
+            var checked = document.querySelector("input[name='" + element.name + "']:checked");
+            if (checked) { clearFieldInvalid("input[name='" + element.name + "']"); }
+            return;
+        }
+        var value = element.value;
+        if (value !== null && value !== undefined && String(value).trim() !== "" && String(value).trim() !== "0") {
+            clearFieldInvalid("#" + element.id);
+        }
+    }
+
+    function clearHiddenValidationHighlights() {
+        var invalid = document.querySelectorAll(".pos-field-invalid");
+        for (var i = 0; i < invalid.length; i++) {
+            if (!isElementVisible(invalid[i])) {
+                var wrapper = fieldWrapper(invalid[i]);
+                invalid[i].classList.remove("pos-field-invalid", "pos-field-pulse");
+                invalid[i].removeAttribute("aria-invalid");
+                if (wrapper) {
+                    wrapper.classList.remove("pos-field-invalid-wrap");
+                    var message = directValidationMessage(wrapper);
+                    if (message && message.parentNode) { message.parentNode.removeChild(message); }
+                }
+            }
+        }
+    }
+
+    function clearAllValidationHighlights() {
+        var invalid = document.querySelectorAll(".pos-field-invalid");
+        for (var i = 0; i < invalid.length; i++) {
+            invalid[i].classList.remove("pos-field-invalid", "pos-field-pulse");
+            invalid[i].removeAttribute("aria-invalid");
+        }
+        var wrappers = document.querySelectorAll(".pos-field-invalid-wrap");
+        for (var w = 0; w < wrappers.length; w++) {
+            wrappers[w].classList.remove("pos-field-invalid-wrap");
+        }
+        var messages = document.querySelectorAll(".pos-validation-message");
+        for (var m = 0; m < messages.length; m++) {
+            if (messages[m].parentNode) { messages[m].parentNode.removeChild(messages[m]); }
+        }
+    }
+
+    function focusFirstInvalidField() {
+        var element = document.querySelector(".pos-field-invalid");
+        if (!element) { return; }
+        ensureFieldVisible(element);
+        if (element.scrollIntoView) {
+            element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        }
+        window.setTimeout(function () {
+            try { element.focus({ preventScroll: true }); } catch (ignore) { try { element.focus(); } catch (ignore2) { } }
+        }, 220);
+    }
+
+    function addValidationError(errors, field, message) {
+        errors.push({ field: field, message: message });
+        markFieldInvalid(field, message);
+    }
+
+    function applyServerValidationErrors(data) {
+        var raw = data && (data.validationErrorsDetailed || data.ValidationErrorsDetailed || data.validationErrors || data.ValidationErrors);
+        var applied = false;
+        if (raw) {
+            if (Array.isArray(raw)) {
+                for (var i = 0; i < raw.length; i++) {
+                    var field = raw[i].field || raw[i].Field || raw[i].key || raw[i].Key;
+                    var message = raw[i].message || raw[i].Message || "";
+                    if (field) {
+                        markFieldInvalid(field, message || "هذا الحقل مطلوب");
+                        applied = true;
+                    }
+                }
+            } else {
+                for (var key in raw) {
+                    if (Object.prototype.hasOwnProperty.call(raw, key)) {
+                        markFieldInvalid(key, raw[key] || "هذا الحقل مطلوب");
+                        applied = true;
+                    }
+                }
+            }
+        }
+
+        if (!applied) {
+            var messageText = ((data && (data.message || data.Message || data.technicalMessage)) || "").trim();
+            for (var m = 0; m < validationMessageMap.length; m++) {
+                if (messageText.indexOf(validationMessageMap[m].text) >= 0) {
+                    markFieldInvalid(validationMessageMap[m].field, messageText);
+                    applied = true;
+                    break;
+                }
+            }
+        }
+
+        if (applied) {
+            focusFirstInvalidField();
+        }
+        return applied;
+    }
+
     function uxIsServiceReady() {
         var mode = byId("transactionType").value;
         if (mode === "card") {
@@ -792,6 +1057,8 @@
             byId("rechargeValue").value = "0";
         }
 
+        clearHiddenValidationHighlights();
+
         if (!suppressServiceLoad) {
             resetServiceRows();
             if (mode === "card") {
@@ -801,8 +1068,7 @@
             } else {
                 loadPrimaryServiceItems(mode);
             }
-            calculateTotals();
-            scheduleCommissionPreview();
+            recalculateInvoiceSummary({ source: "setMode", requestCommission: true });
         }
         updateCashOutMachineDisplay();
         updateBottomSummary();
@@ -829,6 +1095,12 @@
             bankCommission: bankCommission,
             withdrawalAmount: withdrawalAmount
         };
+    }
+
+    function currentMachineWithdrawalEstimate(bankCommission, withdrawalAmount) {
+        if (byId("transactionType").value !== "cash-out") { return 0; }
+        if (withdrawalAmount > 0) { return withdrawalAmount; }
+        return numberValue("rechargeValue") + (bankCommission || 0);
     }
 
     function updateCashOutMachineDisplay() {
@@ -868,10 +1140,11 @@
                 '<div class="summary-total"><span>الصافي</span><strong>' + escapeHtml(decimalText(net)) + '</strong></div>';
             var machineInfo = currentCashOutMachineInfo();
             if (mode === "cash-out") {
+                var machineWithdrawal = currentMachineWithdrawalEstimate(machineInfo.bankCommission, machineInfo.withdrawalAmount);
                 var machineHint = commissionCalculationPending
                     ? "جاري حساب عمولة الماكينة"
                     : (machineInfo.bankCommission > 0 ? ("عمولة الماكينة: " + decimalText(machineInfo.bankCommission)) : "عمولة الماكينة غير محسوبة بعد");
-                summaryHtml += '<div class="summary-total cash-out-machine-alert' + (commissionCalculationPending ? ' is-pending' : '') + '"><span>المبلغ المطلوب سحبه من الماكينة</span><strong>' + escapeHtml(decimalText(machineInfo.withdrawalAmount)) + '</strong><small>' + escapeHtml(machineHint) + '</small></div>';
+                summaryHtml += '<div class="summary-total cash-out-machine-alert' + (commissionCalculationPending ? ' is-pending' : '') + '"><span>المبلغ المطلوب سحبه من الماكينة</span><strong>' + escapeHtml(decimalText(machineWithdrawal)) + '</strong><small>' + escapeHtml(machineHint) + '</small></div>';
             }
             grid.innerHTML = summaryHtml;
             return;
@@ -1048,22 +1321,46 @@
         uxApplyFlow();
     }
 
+    function recalculateInvoiceSummary(options) {
+        options = options || {};
+        window.clearTimeout(amountCommitTimer);
+        calculateTotals();
+        posDebugLog("recalculateInvoiceSummary", {
+            source: options.source || "",
+            requestCommission: options.requestCommission === true,
+            mode: byId("transactionType").value,
+            rechargeValue: numberValue("rechargeValue"),
+            fees: numberValue("totalFees"),
+            net: numberValue("netValue"),
+            machine: currentMachineWithdrawalEstimate(currentCashOutMachineInfo().bankCommission, currentCashOutMachineInfo().withdrawalAmount)
+        });
+        if (options.requestCommission === true) {
+            if (byId("transactionType").value === "cash-out") {
+                lastCashOutMachineWithdrawalAmount = 0;
+                var firstRow = getFirstSelectedItemRow();
+                if (firstRow) { firstRow.removeAttribute("data-cashout-machine-withdrawal"); }
+                updateCashOutMachineDisplay();
+            }
+            scheduleCommissionPreview({
+                delay: 0,
+                quiet: true,
+                useOverlay: false
+            });
+        }
+    }
+
     function isAmountInput(target) {
         return target && target.matches && target.matches("#rechargeValue, #violationValue, #payedValue");
     }
 
     function commitAmountInput(target, immediate) {
         if (!target || !isAmountInput(target)) { return; }
-        window.clearTimeout(amountCommitTimer);
-        calculateTotals();
+        recalculateInvoiceSummary({
+            source: target.id,
+            requestCommission: target.id === "rechargeValue" || target.id === "violationValue"
+        });
 
-        if (target.id === "rechargeValue" || target.id === "violationValue") {
-            scheduleCommissionPreview({
-                delay: immediate ? 0 : amountCommitDelayMs,
-                quiet: true,
-                useOverlay: false
-            });
-        } else if (immediate) {
+        if (target.id === "payedValue" && immediate) {
             amountEnterAdvancePending = false;
             uxApplyFlow();
             uxFocusStep(uxCurrentStep);
@@ -1072,10 +1369,7 @@
 
     function scheduleAmountCommit(target) {
         if (!target || !isAmountInput(target)) { return; }
-        window.clearTimeout(amountCommitTimer);
-        amountCommitTimer = window.setTimeout(function () {
-            commitAmountInput(target, false);
-        }, amountCommitDelayMs);
+        commitAmountInput(target, false);
         uxApplyFlow();
     }
 
@@ -1089,35 +1383,37 @@
     function validateForm() {
         var errors = [];
         var mode = byId("transactionType").value;
+        clearAllValidationHighlights();
 
-        if (!mode) { errors.push("نوع العملية مطلوب"); }
-        if (!byId("cashCustomerPhone").value.trim()) { errors.push("رقم التليفون مطلوب"); }
-        if (byId("cashCustomerPhone").value.trim() && !isValidEgyptianMobile(byId("cashCustomerPhone").value.trim())) { errors.push("رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015"); }
-        if (!byId("cashCustomerName").value.trim()) { errors.push("اسم العميل مطلوب"); }
-        if (!byId("ipn").value.trim()) { errors.push("ID مطلوب"); }
-        if (isImportantIpnMode(mode) && !byId("manualNo").value.trim()) { errors.push("IPN مطلوب في كاش إن وكارت كيشني فقط"); }
-        if (mode === "card" && !byId("visaNumber").value.trim()) { errors.push("الكارت مطلوب في حالة كارت كيشني"); }
-        if (mode === "card" && !byId("cashCustomerId").value) { errors.push("يجب تفعيل الكارت وحفظ بيانات KYC قبل حفظ الفاتورة"); }
+        if (!mode) { addValidationError(errors, "TransactionType", "نوع العملية مطلوب"); }
+        if (!byId("cashCustomerPhone").value.trim()) { addValidationError(errors, "CashCustomerPhone", "رقم التليفون مطلوب"); }
+        if (byId("cashCustomerPhone").value.trim() && !isValidEgyptianMobile(byId("cashCustomerPhone").value.trim())) { addValidationError(errors, "CashCustomerPhone", "رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015"); }
+        if (!byId("cashCustomerName").value.trim()) { addValidationError(errors, "CashCustomerName", "اسم العميل مطلوب"); }
+        if (!byId("ipn").value.trim()) { addValidationError(errors, "IPN", "ID مطلوب"); }
+        if (isImportantIpnMode(mode) && !byId("manualNo").value.trim()) { addValidationError(errors, "ManualNO", "IPN مطلوب في كاش إن وكارت كيشني فقط"); }
+        if (mode === "card" && !byId("visaNumber").value.trim()) { addValidationError(errors, "VisaNumber", "الكارت مطلوب في حالة كارت كيشني"); }
+        if (mode === "card" && !byId("cashCustomerId").value) { addValidationError(errors, "VisaNumber", "يجب تفعيل الكارت وحفظ بيانات KYC قبل حفظ الفاتورة"); }
         if (mode === "violations") {
-            if (numberValue("violationValue") <= 0) { errors.push("قيمة المخالفات مطلوبة"); }
-            if (selectedRadioValue("violationPayType") === "") { errors.push("طريقة دفع المخالفات مطلوبة"); }
-            if (!byId("violationWalletNo").value.trim()) { errors.push("رقم المحفظة مطلوب"); }
+            if (numberValue("violationValue") <= 0) { addValidationError(errors, "ViolationsValue", "قيمة المخالفات مطلوبة"); }
+            if (selectedRadioValue("violationPayType") === "") { addValidationError(errors, "ViolationPayType", "طريقة دفع المخالفات مطلوبة"); }
+            if (!byId("violationWalletNo").value.trim()) { addValidationError(errors, "WalletNumber", "رقم المحفظة مطلوب"); }
         } else if (mode !== "card" && numberValue("rechargeValue") <= 0) {
-            errors.push("مبلغ الشحن يجب أن يكون أكبر من صفر");
+            addValidationError(errors, "RechargeValue", "مبلغ الشحن يجب أن يكون أكبر من صفر");
         }
         if (mode === "cash-out" && byId("isWallet").value === "true" && !byId("tetNumPoket").value.trim()) {
-            errors.push("رقم المحفظة مطلوب");
+            addValidationError(errors, "WalletNumber", "رقم المحفظة مطلوب");
         }
         var primaryServiceId = parseInt(byId("serviceItemId").value, 10) || 0;
         if (mode !== "card" && mode !== "violations" && (primaryServiceId === 6 || primaryServiceId === 7 || primaryServiceId === 8 || primaryServiceId === 10) && !byId("serviceItemId2").value) {
-            errors.push("المحفظة/البنك مطلوبة لهذا النوع");
+            addValidationError(errors, "ItemIDService2", "المحفظة/البنك مطلوبة لهذا النوع");
         }
-        if (!hasItemRows() || !hasValidItemSelection()) { errors.push("لا توجد خدمة كيشني محملة"); }
-        if (!hasValidQuantities()) { errors.push("من فضلك أدخل كمية وسعر صحيح"); }
-        if (!byId("branchId").value) { errors.push("الفرع غير محدد"); }
-        if (!byId("paymentType").value) { errors.push("طريقة الدفع مطلوبة"); }
-        if (!byId("boxId").value) { errors.push("الخزنة غير محددة"); }
-        byId("validationSummary").innerHTML = errors.join("<br />");
+        if (!hasItemRows() || !hasValidItemSelection()) { addValidationError(errors, "Items", "لا توجد خدمة كيشني محملة"); }
+        if (!hasValidQuantities()) { addValidationError(errors, "Items", "من فضلك أدخل كمية وسعر صحيح"); }
+        if (!byId("branchId").value) { addValidationError(errors, "BranchId", "الفرع غير محدد"); }
+        if (!byId("paymentType").value) { addValidationError(errors, "PaymentType", "طريقة الدفع مطلوبة"); }
+        if (!byId("boxId").value) { addValidationError(errors, "BoxID", "الخزنة غير محددة"); }
+        byId("validationSummary").innerHTML = errors.length ? "برجاء استكمال الحقول المطلوبة<br />" + errors.map(function (e) { return escapeHtml(e.message); }).join("<br />") : "";
+        if (errors.length) { focusFirstInvalidField(); }
         return errors.length === 0;
     }
 
@@ -1375,15 +1671,23 @@
 
     function showSaveError(data) {
         data = data || {};
+        clearAllValidationHighlights();
         var html = "";
         var validationErrors = data.validationErrors || {};
+        var hasFieldErrors = applyServerValidationErrors(data);
 
-        if (Object.keys(validationErrors).length) {
+        if (validationErrors && !Array.isArray(validationErrors) && Object.keys(validationErrors).length) {
             html += '<div class="save-error-block"><strong>أخطاء البيانات:</strong><br />';
             for (var key in validationErrors) {
                 if (Object.prototype.hasOwnProperty.call(validationErrors, key)) {
                     html += escapeHtml(validationErrors[key]) + "<br />";
                 }
+            }
+            html += "</div>";
+        } else if (Array.isArray(validationErrors) && validationErrors.length) {
+            html += '<div class="save-error-block"><strong>أخطاء البيانات:</strong><br />';
+            for (var v = 0; v < validationErrors.length; v++) {
+                html += escapeHtml(validationErrors[v].message || validationErrors[v].Message || "") + "<br />";
             }
             html += "</div>";
         }
@@ -1394,6 +1698,9 @@
         }
 
         byId("validationSummary").innerHTML = html;
+        if (hasFieldErrors) {
+            focusFirstInvalidField();
+        }
     }
 
     function loadEmployeeBalances() {
@@ -2210,8 +2517,7 @@
         }
 
         if (!suppressRecalc) {
-            calculateTotals();
-            scheduleCommissionPreview();
+            recalculateInvoiceSummary({ source: "applyServiceItem", requestCommission: true });
         }
     }
 
@@ -2882,6 +3188,11 @@
             updateSaveButtonState();
         }
         updateCashOutMachineDisplay();
+        posDebugLog("scheduleCommissionPreview", {
+            delay: options.delay === 0 ? 0 : (options.delay || 400),
+            mode: byId("transactionType").value,
+            amount: byId("transactionType").value === "violations" ? numberValue("violationValue") : numberValue("rechargeValue")
+        });
         commissionTimer = window.setTimeout(calculateCommissionPreview, options.delay === 0 ? 0 : (options.delay || 400));
     }
 
@@ -2958,6 +3269,7 @@
             updateCashOutMachineDisplay();
             return;
         }
+        posDebugLog("calculateCommissionPreview", request);
 
         var key = commissionKey(request);
         if (commissionCache[key]) {
@@ -2988,6 +3300,7 @@
             }
 
             commissionCache[key] = data;
+            posDebugLog("commissionResult", data);
             applyCommissionResult(data);
             lastCommissionKey = key;
             commissionCalculationPending = false;
@@ -3186,6 +3499,7 @@
 
     function clearMessages() {
         byId("validationSummary").innerHTML = "";
+        clearAllValidationHighlights();
         if (byId("saveResult").getAttribute("data-commission-status") !== "true") {
             byId("saveResult").innerHTML = "";
         }
@@ -3375,7 +3689,7 @@
             if (rows.length > 1) {
                 var row = event.target.closest("tr");
                 row.parentNode.removeChild(row);
-                calculateTotals();
+                recalculateInvoiceSummary({ source: "remove-row", requestCommission: false });
             }
         }
         if (event.target.id === "newBtn") { reloadContextAndReset(); }
@@ -3422,8 +3736,9 @@
     });
 
     document.addEventListener("input", function (event) {
+        clearFixedFieldIfValid(event.target);
         if (event.target.matches(".qty, .price, .vat, #commissionValue")) {
-            calculateTotals();
+            recalculateInvoiceSummary({ source: "row-input", requestCommission: false });
         }
 
         if (isAmountInput(event.target)) {
@@ -3436,6 +3751,7 @@
 
         if (event.target.id === "violationWalletNo") {
             byId("tetNumPoket").value = event.target.value;
+            clearFieldInvalid("WalletNumber");
         }
 
         if (event.target.id === "visaNumber" && byId("transactionType").value === "card") {
@@ -3551,6 +3867,7 @@
     });
 
     document.addEventListener("change", function (event) {
+        clearFixedFieldIfValid(event.target);
         if (isAmountInput(event.target)) {
             commitAmountInput(event.target, true);
         }
@@ -3569,6 +3886,10 @@
             var itemId2 = parseInt(event.target.value, 10) || null;
             loadSecondaryServiceItems(mode2, itemId2);
             loadDefaultServiceItem(mode2, false, itemId2);
+            recalculateInvoiceSummary({ source: "serviceItemId", requestCommission: true });
+        }
+        if (event.target.id === "serviceItemId2") {
+            recalculateInvoiceSummary({ source: "serviceItemId2", requestCommission: true });
         }
         if (event.target.name === "violationPayType") {
             setMode(byId("transactionType").value);

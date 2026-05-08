@@ -488,6 +488,40 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .pos-save-result { color: #1769aa; font-weight: 700; }
 .pos-save-result.is-error,
 .pos-validation.is-error { color: #b42318; }
+.pos-field-invalid {
+    background-color: #fff8f8 !important;
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15) !important;
+}
+.pos-field-invalid-wrap {
+    position: relative;
+}
+.pos-field-invalid-wrap::after {
+    color: #dc3545;
+    content: "!";
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    position: absolute;
+    top: 8px;
+    inset-inline-start: 10px;
+}
+.pos-validation-message {
+    color: #dc3545;
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+.pos-field-pulse {
+    animation: posInvalidPulse .35s ease-in-out;
+}
+@keyframes posInvalidPulse {
+    0% { transform: translateX(0); }
+    35% { transform: translateX(-3px); }
+    70% { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+}
 .save-error-block { margin-bottom: 6px; }
 .save-error-technical {
     background: #fff1f0;

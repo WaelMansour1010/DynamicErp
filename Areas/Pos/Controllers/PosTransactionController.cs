@@ -1597,6 +1597,7 @@ namespace MyERP.Areas.Pos.Controllers
                 technicalMessage = details,
                 technicalDetails = details,
                 validationErrors = errors,
+                validationErrorsDetailed = errors.Select(e => new { field = e.Key, message = e.Value }).ToArray(),
                 validationErrorsList = errors.Values.ToArray(),
                 duplicate = duplicate,
                 duplicateCustomerId = duplicateCustomerId,
