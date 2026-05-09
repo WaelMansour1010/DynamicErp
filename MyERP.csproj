@@ -4106,7 +4106,9 @@
     <Content Include="assets\xtrareportsjs\js\dx-reportdesigner.min.js" />
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.js" />
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.min.js" />
+    <Content Include="Areas\MainErp\Content\enterprise-ui.css" />
     <Content Include="Areas\MainErp\Content\mainerp\mainerp.css" />
+    <Content Include="Areas\MainErp\Scripts\enterprise-ui.js" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.ar.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.en.resx" />
