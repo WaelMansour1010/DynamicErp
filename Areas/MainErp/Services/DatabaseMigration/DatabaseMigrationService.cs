@@ -37,8 +37,6 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
         {
             using (var connection = _connectionFactory.CreateOpenConnection())
             {
-                EnsureMetadataTables(connection);
-
                 var files = DiscoverMigrationFiles();
                 var history = ReadHistory(connection, 500);
                 var classified = files.Where(x => x.IsClassified).ToList();
@@ -82,22 +80,13 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
         {
             using (var connection = _connectionFactory.CreateOpenConnection())
             {
-                EnsureMetadataTables(connection);
                 var files = DiscoverMigrationFiles();
                 var history = ReadHistory(connection, 5000);
                 MarkStates(files, history);
 
                 var result = BuildPlanResult(files, "DryRun");
-                result.RunId = InsertRun(connection, "DryRun", user, result);
-                foreach (var pending in result.Pending)
-                {
-                    InsertRunDetail(connection, result.RunId.Value, pending.ScriptName, pending.ModuleName, "Pending", null, null, pending.ScriptHash);
-                }
-                foreach (var mismatch in result.HashMismatches)
-                {
-                    InsertRunDetail(connection, result.RunId.Value, mismatch.ScriptName, mismatch.ModuleName, "HashMismatch", null, "Script name was applied before with a different hash.", mismatch.ScriptHash);
-                }
-                FinishRun(connection, result.RunId.Value, result.HashMismatches.Any() ? "Warning" : "Completed", result.AppliedCount, result.FailedCount, result.WarningCount);
+                result.Status = result.HashMismatches.Any() ? "Warning" : "Ready";
+                result.FinishedAt = DateTime.Now;
                 return result;
             }
         }
@@ -915,4 +904,3 @@ END;
 GO";
     }
 }
-

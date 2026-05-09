@@ -1,0 +1,38 @@
+@model MyERP.Areas.MainErp.ViewModels.DatabaseMigration.MigrationPreviewViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+}
+
+<link href="@Url.Content("~/Areas/MainErp/Content/database-migration-manager.css?v=20260509-db-migration")" rel="stylesheet" />
+
+<section class="dbm-page" dir="rtl">
+    <div class="dbm-header">
+        <div>
+            <span class="dbm-kicker">Read-only preview</span>
+            <h2>معاينة السكريبت</h2>
+            <p>@Model.File.ScriptName | @Model.File.ModuleName | @Model.File.ScriptPath</p>
+        </div>
+        <a class="dbm-btn dbm-btn-secondary" href="@Url.Action("Index", "DatabaseMigration", new { area = "MainErp" })">العودة</a>
+    </div>
+
+    @if (Model.Warnings.Any())
+    {
+        <div class="dbm-alert dbm-alert-danger">
+            <strong>تحذيرات قوية:</strong>
+            @foreach (var warning in Model.Warnings)
+            {
+                <span class="dbm-warning-chip">@warning.Code - @warning.Message</span>
+            }
+        </div>
+    }
+
+    <div class="dbm-preview-meta">
+        <span>Hash: @Model.File.ScriptHash</span>
+        <span>Type: @Model.File.UpdateType</span>
+        <span>Safe to rerun: @(Model.File.SafeToRerun ? "Yes" : "No")</span>
+        <span>Dependencies: @Model.File.Dependencies</span>
+    </div>
+
+    <pre class="dbm-script-preview"><code>@Model.ScriptText</code></pre>
+</section>
+

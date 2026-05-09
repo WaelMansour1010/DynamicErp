@@ -11,7 +11,8 @@
     var inventoryOpen = sectionActive(new[] { "stock-transfers" });
     var projectsOpen = sectionActive(new[] { "project-extracts" });
     var lcOpen = sectionActive(new[] { "lc" });
-    if (!(accountingOpen || salesOpen || purchasesOpen || inventoryOpen || projectsOpen || lcOpen || isActive("dashboard"))) { accountingOpen = true; }
+    var adminOpen = sectionActive(new[] { "database-migration" });
+    if (!(accountingOpen || salesOpen || purchasesOpen || inventoryOpen || projectsOpen || lcOpen || adminOpen || isActive("dashboard"))) { accountingOpen = true; }
 }
 
 <aside class="pos-main-sidebar main-erp-sidebar" id="mainErpSidebar">
@@ -95,5 +96,15 @@
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="@T("LettersOfCredit")"><span><i class="fas fa-university"></i><b>@T("LettersOfCredit")</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
             <div class="pos-nav-submenu"><a class="pos-nav-link main-erp-nav-link @(isActive("lc") ? "active" : "")" href="@Url.Action("Index", "LC", new { area = "MainErp" })"><i class="fas fa-landmark"></i><span>@T("LcScreen")</span></a></div>
         </section>
+
+        @if (mainErpContext != null && mainErpContext.IsAdmin)
+        {
+            <section class="pos-nav-section @(adminOpen ? "is-open" : "")">
+                <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="إدارة النظام"><span><i class="fas fa-shield-alt"></i><b>إدارة النظام</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
+                <div class="pos-nav-submenu">
+                    <a class="pos-nav-link main-erp-nav-link @(isActive("database-migration") ? "active" : "")" href="@Url.Action("Index", "DatabaseMigration", new { area = "MainErp" })" title="إدارة تحديثات قاعدة البيانات"><i class="fas fa-database"></i><span>تحديثات قاعدة البيانات</span></a>
+                </div>
+            </section>
+        }
     </nav>
 </aside>
