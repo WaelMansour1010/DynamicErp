@@ -10,7 +10,10 @@ Opening Dynamic Report Admin failed with:
 
 `The partial view '_PermissionsPanel' was not found`
 
-The partial file existed and was included in `MyERP.csproj`. The problem was MVC view resolution: the shared Reports admin view is reused from Web, POS, and MainErp routes, and short partial names can be resolved against the current area/controller search paths before the shared Reports path.
+On the active `main` working tree, the operational issue had two layers:
+
+1. The Phase 2-4 Reports UI files were absent from the tree after merge, including `_PermissionsPanel.cshtml`, `_CatalogPanel.cshtml`, `Review.cshtml`, and related scripts/services.
+2. The restored shared Reports views still used short partial names. Because the shared Reports admin view is reused from Web, POS, and MainErp routes, short partial names can be resolved against the current area/controller search paths before the shared Reports path.
 
 ## Fix
 
@@ -25,6 +28,7 @@ The partial file existed and was included in `MyERP.csproj`. The problem was MVC
   - POS redirects to `/Pos/Login`.
   - MainErp redirects to `/MainErp/Login`.
   - POST actions still require designer permission and return 403 when unauthorized.
+- The missing Phase 1-4 Reports files were restored into `Areas/Reports` and the classic MVC `MyERP.csproj` was updated with the required `Compile` and `Content` entries.
 
 ## Ready-To-Test URLs
 
