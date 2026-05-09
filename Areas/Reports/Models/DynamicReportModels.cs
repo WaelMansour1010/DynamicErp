@@ -71,6 +71,7 @@ namespace MyERP.Areas.Reports.Models
         public DateTime? ActivatedAt { get; set; }
         public int? ReviewedBy { get; set; }
         public DateTime? ReviewedAt { get; set; }
+        public int? CreatedBy { get; set; }
         public IList<DynamicReportParameter> Parameters { get; set; }
         public IList<DynamicReportColumn> Columns { get; set; }
     }

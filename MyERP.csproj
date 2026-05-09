@@ -4181,7 +4181,9 @@
     <Content Include="Areas\Reports\Views\Admin\Index.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\Review.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\_AdminBody.cshtml" />
+    <Content Include="Areas\Reports\Views\Admin\_CertificationBadge.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\_CatalogPanel.cshtml" />
+    <Content Include="Areas\Reports\Views\Admin\_LifecycleBadge.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\_PermissionsPanel.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\_StatusBadge.cshtml" />
     <Content Include="Areas\Reports\Views\Viewer\Index.cshtml" />

@@ -95,14 +95,34 @@
         msg("جاري تغيير الحالة...");
         $.post(api("TransitionStatus") + "&toStatus=" + encodeURIComponent(toStatus)).done(function (r) {
             var data = r.data || {};
-            $("#drRvStatus").text(data.NewStatus || toStatus);
+            $("#drRvStatus").text(data.NewLifecycleStatus || data.NewStatus || toStatus);
             msg(data.Message || "تم تغيير الحالة.");
         }).fail(function (xhr) {
             var response = xhr.responseJSON || {};
             msg(response.message || "تعذر تغيير حالة التقرير.");
             if (response.data && response.data.Errors) {
-                renderValidation({ CheckResults: response.data.Errors.map(function (e) { return { Id: "gate", Level: "Error", Message: e }; }), ErrorCount: response.data.Errors.length }, response.data.NewStatus);
+                renderValidation({ CheckResults: response.data.Errors.map(function (e) { return { Id: "gate", Level: "Error", Message: e }; }), ErrorCount: response.data.Errors.length }, response.data.NewLifecycleStatus || response.data.NewStatus);
             }
+        });
+    }
+
+    function markReviewed() {
+        $.post(api("MarkReviewed")).done(function (r) {
+            var data = r.data || {};
+            msg(data.Message || "تم حفظ المراجعة.");
+            window.location.reload();
+        }).fail(function (xhr) {
+            msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر حفظ المراجعة.");
+        });
+    }
+
+    function revertReview() {
+        $.post(api("RevertReview")).done(function (r) {
+            var data = r.data || {};
+            msg(data.Message || "تم إلغاء المراجعة.");
+            window.location.reload();
+        }).fail(function (xhr) {
+            msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر إلغاء المراجعة.");
         });
     }
 
@@ -124,6 +144,8 @@
         $("#drRvApplyAll").on("click", function () { applySuggestion("", "all"); });
         $("[data-apply-caption]").on("click", function () { applySuggestion($(this).attr("data-apply-caption"), "caption"); });
         $("[data-transition]").on("click", function () { transition($(this).attr("data-transition")); });
+        $("#drRvMarkReviewed").on("click", markReviewed);
+        $("#drRvRevertReview").on("click", revertReview);
         $("#drRvPrint").on("click", openPrintPreview);
     }
 
@@ -134,6 +156,8 @@
         applySuggestion: applySuggestion,
         applyAllSuggestions: function () { applySuggestion("", "all"); },
         transition: transition,
+        markReviewed: markReviewed,
+        revertReview: revertReview,
         openPrintPreview: openPrintPreview
     };
 

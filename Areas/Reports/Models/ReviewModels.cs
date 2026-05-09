@@ -67,18 +67,64 @@ namespace MyERP.Areas.Reports.Models
         public string Error { get; set; }
     }
 
+    public class SuggestionBundle
+    {
+        public SuggestionBundle()
+        {
+            CaptionsAr = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Formatting = new Dictionary<string, ColumnFormatting>(StringComparer.OrdinalIgnoreCase);
+            SortHints = new List<SortHint>();
+            GroupableHints = new List<string>();
+        }
+
+        public IDictionary<string, string> CaptionsAr { get; set; }
+        public IDictionary<string, ColumnFormatting> Formatting { get; set; }
+        public IList<SortHint> SortHints { get; set; }
+        public IList<string> GroupableHints { get; set; }
+    }
+
+    public class ColumnFormatting
+    {
+        public string Format { get; set; }
+        public int? Decimals { get; set; }
+    }
+
+    public class SortHint
+    {
+        public string Field { get; set; }
+        public string Direction { get; set; }
+    }
+
     public class LifecycleResult
     {
+        public LifecycleResult()
+        {
+            Errors = new List<string>();
+        }
+
         public bool Success { get; set; }
         public string NewLifecycleStatus { get; set; }
+        public string NewStatus { get; set; }
         public string NewCertificationLevel { get; set; }
         public string Message { get; set; }
         public ValidationReport LastValidation { get; set; }
+        public IList<string> Errors { get; set; }
+    }
+
+    public class ApplySuggestionsRequest
+    {
+        public bool ApplyCaptions { get; set; }
+        public bool ApplyFormatting { get; set; }
+        public bool ApplySort { get; set; }
+        public bool ApplyGroupable { get; set; }
+        public string Field { get; set; }
+        public string Kind { get; set; }
     }
 
     public class ReviewPageModel
     {
         public DynamicReportDefinition Definition { get; set; }
+        public SuggestionBundle Suggestions { get; set; }
         public CatalogEntry CatalogEntry { get; set; }
         public string RiskFlags { get; set; }
         public string ApiBase { get; set; }

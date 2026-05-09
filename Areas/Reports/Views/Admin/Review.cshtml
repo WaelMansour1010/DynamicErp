@@ -17,7 +17,8 @@
             <div>
                 <h1>@(definition == null ? "مراجعة التقرير" : (definition.ReportNameAr ?? definition.ReportNameEn ?? definition.ReportCode))</h1>
                 <div class="dr-rv-meta">
-                    <span>@Html.Partial("_StatusBadge", definition == null ? "Draft" : definition.LifecycleStatus)</span>
+                    <span>@Html.Partial("_LifecycleBadge", definition == null ? "Draft" : definition.LifecycleStatus)</span>
+                    <span>@Html.Partial("_CertificationBadge", definition == null ? "Internal" : definition.CertificationLevel)</span>
                     <span>Scope: @(definition == null ? "Web" : definition.ProjectScope)</span>
                     <span>Source: @(definition == null ? "" : definition.SourceType) / @(definition == null ? "" : definition.SourceName)</span>
                 </div>
@@ -32,6 +33,8 @@
             <button type="button" class="dr-button secondary" data-transition="Disabled">تعطيل</button>
             <button type="button" class="dr-button danger" data-transition="Archived">أرشفة</button>
             <button type="button" class="dr-button secondary" data-transition="Draft">إعادة فتح كمسودة</button>
+            <button type="button" class="dr-button secondary" id="drRvMarkReviewed">Mark as Reviewed</button>
+            <button type="button" class="dr-button secondary" id="drRvRevertReview">Revert Review</button>
         </div>
 
         <div id="drRvMessage" class="dr-message" role="status"></div>

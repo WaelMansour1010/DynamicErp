@@ -27,7 +27,7 @@ namespace MyERP.Areas.Reports.Services
 SELECT ReportId, ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName,
        RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
        LifecycleStatus, CertificationLevel, LastValidatedAt, LastValidationLog,
-       ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt
+       ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt, CreatedBy
 FROM dbo.DynamicReportDefinitions
 WHERE (@includeInactive = 1 OR IsActive = 1)
   AND (ProjectScope = @scope OR ProjectScope = N'Shared' OR @scope = N'Shared')
@@ -52,14 +52,16 @@ ORDER BY ReportNameAr, ReportNameEn;";
 SELECT ReportId, ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName,
        RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
        LifecycleStatus, CertificationLevel, LastValidatedAt, LastValidationLog,
-       ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt
+       ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt, CreatedBy
 FROM dbo.DynamicReportDefinitions
-WHERE ReportId = @reportId;";
+WHERE ReportId = @reportId
+  AND (ProjectScope = @scope OR ProjectScope = N'Shared' OR @scope = N'Shared');";
             DynamicReportDefinition definition = null;
             using (var connection = _connectionFactory.CreateOpenConnection(scope))
             using (var command = new SqlCommand(sql, connection))
             {
                 command.Parameters.Add("@reportId", SqlDbType.Int).Value = reportId;
+                command.Parameters.Add("@scope", SqlDbType.NVarChar, 20).Value = DynamicReportScopes.Normalize(scope);
                 using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read()) definition = ReadDefinition(reader);
@@ -304,7 +306,8 @@ VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefa
                 ActivatedBy = reader["ActivatedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["ActivatedBy"]),
                 ActivatedAt = reader["ActivatedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["ActivatedAt"]),
                 ReviewedBy = reader["ReviewedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["ReviewedBy"]),
-                ReviewedAt = reader["ReviewedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["ReviewedAt"])
+                ReviewedAt = reader["ReviewedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["ReviewedAt"]),
+                CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["CreatedBy"])
             };
         }
 

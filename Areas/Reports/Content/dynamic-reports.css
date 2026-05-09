@@ -600,6 +600,19 @@
 .dr-rv-status-Disabled { background: #f1f5f9; color: #64748b; }
 .dr-rv-status-Archived { background: #ece8f3; color: #5b3b82; }
 
+.dr-status-pill-Draft { background: #eef2f7; color: #334155; }
+.dr-status-pill-NeedsMapping { background: #fff8df; color: #775f00; }
+.dr-status-pill-ValidationErrors { background: #fff1f1; color: #8f1d1d; }
+.dr-status-pill-ReadyForActivation { background: #e8f3fb; color: #22577a; }
+.dr-status-pill-Active { background: #edf8f1; color: #1f6f3d; }
+.dr-status-pill-Disabled { background: #f1f5f9; color: #64748b; }
+.dr-status-pill-Archived { background: #ece8f3; color: #5b3b82; }
+
+.dr-cert-pill-Internal { background: #eef2f7; color: #334155; }
+.dr-cert-pill-Reviewed { background: #edf8f1; color: #1f6f3d; }
+.dr-cert-pill-ProductionReady { background: #e8f3fb; color: #22577a; }
+.dr-cert-pill-Certified { background: #fff8df; color: #775f00; }
+
 body:not(.unused) .dr-design-only {
     display: none;
 }

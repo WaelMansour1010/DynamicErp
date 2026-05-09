@@ -453,6 +453,48 @@ namespace MyERP.Areas.Reports.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult MarkReviewed(int id, string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                var result = _lifecycleService.MarkReviewed(id, user);
+                if (!result.Success) Response.StatusCode = 400;
+                return Json(new { success = result.Success, data = result, message = result.Message });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report mark reviewed failed: " + ex);
+                return BadRequestJson("تعذر حفظ مراجعة التقرير.");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult RevertReview(int id, string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                var result = _lifecycleService.RevertReview(id, user);
+                if (!result.Success) Response.StatusCode = 400;
+                return Json(new { success = result.Success, data = result, message = result.Message });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report revert review failed: " + ex);
+                return BadRequestJson("تعذر إلغاء مراجعة التقرير.");
+            }
+        }
+
         protected DynamicReportUserContext CurrentUser(string scope)
         {
             return DynamicReportSecurity.Build(HttpContext, scope);

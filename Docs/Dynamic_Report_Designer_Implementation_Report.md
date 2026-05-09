@@ -372,3 +372,95 @@ Backend suggestion smoke passed after build:
 - Parameter Lookups can now use `LifecycleStatus` to keep incomplete imported reports in Draft/NeedsMapping until lookup defaults and captions are ready.
 - A future execution-service enhancement should allow validation-only MaxRows=50 and CommandTimeout=10 without changing the saved definition.
 - If formatting persistence is required before Conditional Formatting, add explicit format/decimal/date-format columns or a metadata JSON field in a dedicated schema phase.
+
+## Phase 4A - Governance Completion After Review
+
+Date: 2026-05-09
+
+Branch: `claude/improve-report-designer-iAq77`
+
+### Principle Applied
+
+The existing Phase 4 implementation already contained validation, lifecycle review UI, and suggestion work. Per owner direction, this pass did not delete that work. It completed the missing Governance Core pieces on top of it:
+
+- Certification tracking (`Internal`, `Reviewed`, reserved `ProductionReady`, `Certified`).
+- Two-person `MarkReviewed` rule.
+- `RevertReview`.
+- Persistent `LastValidationLog`.
+- Scope-safe `GetDefinition` and lifecycle updates.
+- Lifecycle/certification badges split into dedicated partials.
+- Idempotent lifecycle SQL expanded to the full eight governance columns.
+
+### Files Changed In This Completion Pass
+
+| File | Notes |
+| --- | --- |
+| `Areas/Reports/Sql/06_DynamicReports_Lifecycle.sql` | Expanded from lifecycle-only to lifecycle + certification + validation log + review audit. Rebuilds `IX_DRD_Lifecycle` when needed. |
+| `Areas/Reports/Models/DynamicReportModels.cs` | Added `CertificationLevel`, `LastValidationLog`, `ReviewedBy`, `ReviewedAt`, `CreatedBy`; default constructor now initializes governance defaults. |
+| `Areas/Reports/Models/ReviewModels.cs` | Added certification constants and lifecycle-result fields while preserving existing suggestion DTOs. |
+| `Areas/Reports/Services/ReportDefinitionService.cs` | Reads/writes the new governance columns; `GetDefinition` now enforces scope/shared visibility. |
+| `Areas/Reports/Services/ReportValidationService.cs` | Added missing-column validation and renderability helper for print checks. |
+| `Areas/Reports/Services/ReportLifecycleService.cs` | Added hard activation gate, validation-log persistence, certification reset on state changes, two-person review, review revert, and scope-safe updates. |
+| `Areas/Reports/Controllers/AdminController.cs` | Added `MarkReviewed` and `RevertReview` endpoints; all review actions remain behind `RequireDesigner(scope)`. |
+| `Areas/Reports/Views/Admin/Review.cshtml` | Shows lifecycle and certification badges; added review/revert actions while preserving existing validation/suggestion UI. |
+| `Areas/Reports/Views/Admin/_LifecycleBadge.cshtml` | New lifecycle badge partial. |
+| `Areas/Reports/Views/Admin/_CertificationBadge.cshtml` | New certification badge partial. |
+| `Areas/Reports/Views/Admin/_StatusBadge.cshtml` | Backward-compatible status class alias. |
+| `Areas/Reports/Scripts/dynamic-reports-review.js` | Added review/revert handlers and compatibility with `NewLifecycleStatus`. |
+| `Areas/Reports/Content/dynamic-reports.css` | Added lifecycle/certification pill classes. |
+| `MyERP.csproj` | Added the two new Razor partials as content entries. |
+
+### Migration Verification
+
+`06_DynamicReports_Lifecycle.sql` was applied twice successfully to all three databases after this completion pass.
+
+| Scope | Database | Verified Columns | Counts After Migration |
+| --- | --- | --- | --- |
+| Web | `MyErp` | 8/8 governance columns + `IX_DRD_Lifecycle` | `Active/Internal/IsActive=1: 3`, `Disabled/Internal/IsActive=0: 1` |
+| POS | `Cash` | 8/8 governance columns + `IX_DRD_Lifecycle` | `Active/Internal/IsActive=1: 3`, `Disabled/Internal/IsActive=0: 2` |
+| MainErp | `Eng` | 8/8 governance columns + `IX_DRD_Lifecycle` | `Active/Internal/IsActive=1: 3` |
+
+Verified columns:
+
+- `LifecycleStatus`
+- `CertificationLevel`
+- `LastValidatedAt`
+- `LastValidationLog`
+- `ActivatedBy`
+- `ActivatedAt`
+- `ReviewedBy`
+- `ReviewedAt`
+
+### Governance Rules Completed
+
+- Manual transition to `ReadyForActivation`, `NeedsMapping`, or `ValidationErrors` is rejected; these are derived from validation.
+- Any transition to `Active` runs full validation first.
+- Validation errors move the report to `ValidationErrors`, keep `IsActive=0`, persist `LastValidationLog`, and return the first five errors.
+- `Archived -> Active` is rejected; it must pass through `Disabled`.
+- `Active -> Disabled` and `Active -> Archived` force `CertificationLevel='Internal'`.
+- `MarkReviewed` requires `LifecycleStatus='Active'`, `IsActive=1`, `CertificationLevel='Internal'`, and `user.UserId != CreatedBy`.
+- `RevertReview` downgrades to `Internal` and clears `ReviewedBy/ReviewedAt`.
+- Running validation for an already active reviewed report preserves the review data.
+- `GetDefinition` and lifecycle writes now enforce `ProjectScope`/`Shared` visibility to reduce cross-scope tampering risk.
+
+### Verification Results
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| Branch | Pass | `claude/improve-report-designer-iAq77`. |
+| JS syntax | Pass | `node --check` passed for `dynamic-reports-admin.js` and `dynamic-reports-review.js`. |
+| Build | Pass | `MSBuild.exe MyERP.csproj /t:Build` succeeded. Existing warnings remain in unrelated legacy code. |
+| SQL idempotence | Pass | Script 06 applied twice to `MyErp`, `Cash`, and `Eng`. |
+| Columns/index | Pass | All eight columns and `IX_DRD_Lifecycle` verified on all three databases. |
+| Migration counts | Pass | Existing active/inactive state was preserved and mapped to `Active/Internal` and `Disabled/Internal`. |
+| Lifecycle consistency queries | Pass | `IsActive=1 AND LifecycleStatus<>'Active' = 0`, `IsActive=0 AND LifecycleStatus='Active' = 0`, non-active non-internal certification = 0 on all three databases. |
+| Cross-scope hardening | Code verified | `GetDefinition` and lifecycle writes now include scope/shared predicates. |
+| Manual authenticated UI tests T2-T13 | Blocked | Requires live authenticated browser sessions for Web/POS/MainErp. |
+
+### Deferred To Phase 4B
+
+- Hardening and polishing the already-preserved suggestion UI/service.
+- ProductionReady and Certified transitions.
+- Re-classification gate before certification.
+- Suggestion caching.
+- Dedicated governance audit log.

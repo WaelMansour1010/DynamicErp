@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
 using MyERP.Areas.Reports.Models;
 
@@ -49,8 +50,8 @@ namespace MyERP.Areas.Reports.Services
 
             if (includeExec)
             {
-                ValidateExecution(report, definition, user);
-                ValidatePrint(report, controllerContext);
+                var executionResult = ValidateExecution(report, definition, user);
+                ValidatePrint(report, definition, executionResult, controllerContext);
             }
 
             Count(report);
@@ -115,6 +116,13 @@ namespace MyERP.Areas.Reports.Services
                     result.ViewEngine.ReleaseView(controllerContext, result.View);
                 }
             }
+        }
+
+        internal string RenderPrintToString(DynamicReportDefinition definition, DynamicReportExecutionResult executionResult)
+        {
+            if (definition == null) throw new InvalidOperationException("Report definition is required.");
+            if (executionResult == null || !executionResult.Success) throw new InvalidOperationException("A successful execution result is required.");
+            return "<html><body>" + HttpUtility.HtmlEncode(definition.ReportNameAr ?? definition.ReportNameEn ?? definition.ReportCode) + "</body></html>";
         }
 
         private static void ValidateMetadata(ValidationReport report, DynamicReportDefinition definition)
@@ -252,7 +260,7 @@ namespace MyERP.Areas.Reports.Services
             }
         }
 
-        private void ValidateExecution(ValidationReport report, DynamicReportDefinition definition, DynamicReportUserContext user)
+        private DynamicReportExecutionResult ValidateExecution(ValidationReport report, DynamicReportDefinition definition, DynamicReportUserContext user)
         {
             var watch = Stopwatch.StartNew();
             try
@@ -274,7 +282,7 @@ namespace MyERP.Areas.Reports.Services
                 {
                     report.ExecStats.Error = result == null ? "No result." : result.Message;
                     Add(report, "exec.run", "Error", "تشغيل العينة فشل. حدّد قيمًا افتراضية للمعاملات قبل تشغيل العينة.", null);
-                    return;
+                    return result;
                 }
 
                 if (watch.ElapsedMilliseconds > 30000)
@@ -293,6 +301,8 @@ namespace MyERP.Areas.Reports.Services
                 if (result.RowCount == 0) Add(report, "exec.rows", "Warning", "التقرير لم يرجع صفوفًا في العينة.", null);
                 else Add(report, "exec.rows", "Info", "عدد صفوف العينة: " + result.RowCount, null);
                 if (report.ExecStats.Truncated) Add(report, "exec.truncated", "Warning", "تم الوصول إلى حد الصفوف أثناء تشغيل العينة.", null);
+                ValidateMissingColumns(report, definition, result);
+                return result;
             }
             catch (Exception ex)
             {
@@ -300,13 +310,29 @@ namespace MyERP.Areas.Reports.Services
                 report.ExecStats.Ms = (int)Math.Min(int.MaxValue, watch.ElapsedMilliseconds);
                 report.ExecStats.Error = ex.Message;
                 Add(report, "exec.run", "Error", "تشغيل العينة فشل بصورة غير متوقعة.", null);
+                return null;
             }
         }
 
-        private void ValidatePrint(ValidationReport report, ControllerContext controllerContext)
+        private void ValidateMissingColumns(ValidationReport report, DynamicReportDefinition definition, DynamicReportExecutionResult result)
+        {
+            if (definition == null || definition.Columns == null || result == null || result.Columns == null) return;
+            var resultFields = new HashSet<string>(result.Columns.Select(c => c.FieldName), StringComparer.OrdinalIgnoreCase);
+            foreach (var column in definition.Columns)
+            {
+                if (column == null || string.IsNullOrWhiteSpace(column.FieldName)) continue;
+                if (!resultFields.Contains(column.FieldName))
+                {
+                    Add(report, "cols.missing", "Error", "العمود غير موجود في نتيجة التشغيل: " + column.FieldName, "NeedsMapping");
+                }
+            }
+        }
+
+        private void ValidatePrint(ValidationReport report, DynamicReportDefinition definition, DynamicReportExecutionResult executionResult, ControllerContext controllerContext)
         {
             try
             {
+                RenderPrintToString(definition, executionResult);
                 if (CanRenderPrint(controllerContext))
                 {
                     Add(report, "print.render", "Info", "صفحة الطباعة متاحة للرندر.", null);
