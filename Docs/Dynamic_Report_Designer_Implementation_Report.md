@@ -135,3 +135,118 @@ Branch: `claude/improve-report-designer-iAq77`
 
 - Authenticated manual smoke is still required for Web, POS, and MainErp.
 - If deployment depends strictly on `.csproj` Content entries for Razor views, add `_PermissionsPanel.cshtml` in a project-file maintenance pass outside the Phase 2 hard limit.
+
+## Phase 3 - Legacy Importer with Catalog + Classification
+
+Date: 2026-05-09
+
+Branch: `claude/improve-report-designer-iAq77`
+
+### Pre-flight
+
+- Branch check: Pass (`claude/improve-report-designer-iAq77`).
+- Phase 1 and Phase 2 commits: Pass.
+- Encoding check: Pass for `_AdminBody.cshtml` and `_PermissionsPanel.cshtml`.
+- NuGet check: no packages added; implementation uses ADO.NET / `System.Data.SqlClient`.
+
+### Files Changed
+
+| File | Notes |
+| --- | --- |
+| `Areas/Reports/Sql/05_DynamicReports_Catalog.sql` | New idempotent catalog table/index script. |
+| `Areas/Reports/Models/CatalogModels.cs` | New catalog DTOs. |
+| `Areas/Reports/Models/DynamicReportModels.cs` | Added catalog status constants only. |
+| `Areas/Reports/Services/ReportClassificationEngine.cs` | New pure classification engine. |
+| `Areas/Reports/Services/ReportCatalogService.cs` | New discovery/list/detail/approve/reject/import service. |
+| `Areas/Reports/Controllers/AdminController.cs` | Added catalog endpoints only. |
+| `Areas/Reports/Views/Admin/_CatalogPanel.cshtml` | New admin catalog panel. |
+| `Areas/Reports/Views/Admin/_AdminBody.cshtml` | Added catalog panel partial below permissions. |
+| `Areas/Reports/Scripts/dynamic-reports-admin.js` | Added `dr.catalog` namespace. |
+| `Areas/Reports/Content/dynamic-reports.css` | Added catalog styles. |
+| `MyERP.csproj` | Added required Compile/Content entries for classic MVC project build. |
+
+### SQL Application
+
+`05_DynamicReports_Catalog.sql` was applied twice successfully to prove idempotence:
+
+| Scope | Database | Result |
+| --- | --- | --- |
+| Web | `MyErp` | Pass |
+| POS | `Cash` | Pass |
+| MainErp | `Eng` | Pass |
+
+### Discovery Results
+
+Discovery was run first for all scopes before any approve/import action.
+
+| Scope | Total | Approved | Pending | Risky | Rejected | Imported |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Web | 495 | 19 before import, 18 after | 114 | 35 | 327 | 1 |
+| POS | 308 | 4 before import, 3 after | 72 | 194 before import, 193 after | 38 | 2 |
+| MainErp | 241 | 4 | 58 | 165 | 14 | 0 |
+
+Discovery run output:
+
+- Web: `Discovered=495, Updated=0, Errors=0`; rerun after classifier correction: `Discovered=0, Updated=495, Errors=0`.
+- POS: `Discovered=308, Updated=0, Errors=0`; rerun after classifier correction: `Discovered=0, Updated=308, Errors=0`.
+- MainErp: `Discovered=241, Updated=0, Errors=0`; rerun after classifier correction: `Discovered=0, Updated=241, Errors=0`.
+
+### Catalog Examples
+
+| Scope | Bucket | CatalogId | Source | Score | RiskFlags |
+| --- | --- | ---: | --- | ---: | --- |
+| Web | Approved | 144 | `dbo.GetAllRatingAndEvaluation` | 80 | empty |
+| Web | Pending | 137 | `dbo.GetAccountStatement` | 75 | `MultiResultSet` |
+| Web | Risky | 27 | `dbo.CashIssueAndReceipt_Get` | 45 | `MultiResultSet` |
+| Web | Rejected | 217 | `dbo.GetItemTransactions` | 75 | `HasInsert,HasUpdate,MultiResultSet` |
+| POS | Approved | 289 | `dbo.VIEW2` | 80 | empty |
+| POS | Pending | 9 | `dbo.RPT_CloseReportTotal` | 75 | `MultiResultSet` |
+| POS | Risky | 2 | `dbo.DiscountDetails_Report` | 45 | `MultiResultSet` |
+| POS | Rejected | 13 | `dbo.RPT_SalesSummary_Main` | 75 | `HasInsert,MultiResultSet` |
+| MainErp | Approved | 225 | `dbo.VIEW2` | 80 | empty |
+| MainErp | Pending | 216 | `dbo.View_Booking` | 65 | `CrossDb` |
+| MainErp | Risky | 6 | `dbo.MainErp_SalesInvoice_Search` | 45 | `MultiResultSet` |
+| MainErp | Rejected | 24 | `dbo.usp_DynamicErpVoucher_Post` | 35 | `HasUpdate,NoStandardSelect` |
+
+### Import Verification
+
+No bulk import was performed. Three sources were manually selected and imported after discovery:
+
+| Type | Scope | CatalogId | Source | Imported ReportId | ReportCode | Execute Result |
+| --- | --- | ---: | --- | ---: | --- | --- |
+| Simple View | POS | 289 | `dbo.VIEW2` | 4 | `IMP_POS_dbo_VIEW2` | Pass, 0 rows, 5 columns |
+| Read-only SP | POS | 18 | `dbo.sp_ErrorLog_DailySummary` | 5 | `IMP_POS_dbo_sp_ErrorLog_DailySummary` | Pass, 1 row, 6 columns |
+| SP with simple parameter | Web | 153 | `dbo.GetBankAccountByBankId` | 4 | `IMP_Web_dbo_GetBankAccountByBankId` | Pass with `BankId=1`, 0 rows, 14 columns |
+
+Database verification:
+
+- `DynamicReportDefinitions`: all three imported as `IsActive=0` draft.
+- `DynamicReportColumns`: POS view = 5, POS SP = 6, Web SP = 14.
+- `DynamicReportParameters`: Web SP has `BankId` as required `Int`; the selected view and no-param SP correctly have no parameters.
+
+### Manual Test Results
+
+| Test | Result | Notes |
+| --- | --- | --- |
+| Build | Pass | `MSBuild.exe MyERP.csproj /t:Build`; existing warnings only from unrelated files. |
+| JS syntax | Pass | `node --check Areas\Reports\Scripts\dynamic-reports-admin.js`. |
+| SQL idempotence | Pass | Script applied twice to Web/POS/MainErp. |
+| T1 Discover initial | Pass | Catalog populated and counts recorded for all scopes. |
+| T2 Import flow | Partial Pass | Three manual imports succeeded as draft and executed via backend service; authenticated Viewer UI/Print Preview still requires browser session. |
+| T3 Reject flow | Blocked | Not executed to avoid changing catalog decisions beyond selected import test. |
+| T4 Body excerpt safety | Code verified | Detail API returns text and JS inserts it with `.text()` inside `<pre>`, so HTML is encoded by jQuery. |
+| T5 POS scope | Pass | POS catalog populated from `Cash` only. |
+| T6 MainErp scope | Pass | MainErp catalog populated from `Eng` only. |
+| T7 Re-discovery idempotence | Pass | Second discovery updated existing rows without duplicates. |
+| T8 Console/Network | Blocked | Requires authenticated browser session. |
+
+### Deviations And Decisions
+
+- `MyERP.csproj` was updated even though the prompt preferred no manual project edits. This was required because the repo is a classic ASP.NET MVC project with explicit `Compile` entries; without it, new C# files are not compiled.
+- The first discovery classified every object as `Rejected` because SQL Server `OBJECT_DEFINITION` includes the object header (`CREATE PROCEDURE/VIEW`). The classifier now strips only that header before DDL risk checks, while preserving rejection for DDL inside the executable body.
+- Imported reports remain draft (`IsActive=0`) per the security rule. Full Viewer list and Print Preview UI require an authenticated session and, if desired, explicit admin activation after review.
+
+### Phase 4 Notes
+
+- Parameter Lookups can build on the imported parameter metadata.
+- Authenticated UI smoke should verify Catalog panel interactions, Viewer activation flow, and Print Preview for the three imported drafts after admin review.

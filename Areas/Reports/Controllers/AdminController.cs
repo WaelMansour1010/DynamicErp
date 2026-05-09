@@ -16,6 +16,7 @@ namespace MyERP.Areas.Reports.Controllers
         private readonly ReportDefinitionService _definitionService = new ReportDefinitionService();
         private readonly ReportMetadataService _metadataService = new ReportMetadataService();
         private readonly ReportPermissionService _permissionService = new ReportPermissionService();
+        private readonly ReportCatalogService _catalogService = new ReportCatalogService();
 
         public virtual ActionResult Index(string scope)
         {
@@ -187,6 +188,128 @@ namespace MyERP.Areas.Reports.Controllers
             {
                 Trace.TraceError("Dynamic report permission delete failed: " + ex);
                 return BadRequestJson("تعذر حذف صلاحية التقرير.");
+            }
+        }
+
+        [HttpGet]
+        public JsonResult CatalogList(string scope, string status)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                return Json(new { success = true, data = _catalogService.List(user.ProjectScope, status, user) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJsonGet();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report catalog list failed: " + ex);
+                return BadRequestJsonGet("تعذر تحميل كتالوج التقارير.");
+            }
+        }
+
+        [HttpGet]
+        public JsonResult CatalogDetail(int catalogId, string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                return Json(new { success = true, data = _catalogService.GetDetail(catalogId, user.ProjectScope, user) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJsonGet();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report catalog detail failed: " + ex);
+                return BadRequestJsonGet("تعذر تحميل تفاصيل المصدر.");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult CatalogDiscover(string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                var result = _catalogService.DiscoverAsync(user.ProjectScope, user).GetAwaiter().GetResult();
+                return Json(new { success = true, data = result });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report catalog discovery failed: " + ex);
+                return BadRequestJson("تعذر تنفيذ الاكتشاف. راجع السجل الداخلي.");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult CatalogApprove(int catalogId, string scope, string suggestedName)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                _catalogService.Approve(catalogId, suggestedName, user);
+                return Json(new { success = true });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report catalog approve failed: " + ex);
+                return BadRequestJson("تعذر اعتماد المصدر.");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult CatalogReject(int catalogId, string scope, string reason)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                _catalogService.Reject(catalogId, reason, user);
+                return Json(new { success = true });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report catalog reject failed: " + ex);
+                return BadRequestJson("تعذر رفض المصدر.");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult CatalogImport(int catalogId, string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                var result = _catalogService.Import(catalogId, user);
+                return Json(new { success = true, data = result });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequestJson(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report catalog import failed: " + ex);
+                return BadRequestJson("تعذر استيراد التقرير.");
             }
         }
 

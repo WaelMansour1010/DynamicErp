@@ -357,11 +357,132 @@
         };
     })();
 
+    dr.catalog = (function () {
+        function catalogMsg(text) {
+            $("#drCatalogMessage").text(text || "");
+        }
+
+        function statusClass(status) {
+            return "dr-catalog-status-" + (status || "Pending");
+        }
+
+        function list(scope, status) {
+            $.getJSON(api("CatalogList") + "&status=" + encodeURIComponent(status || "")).done(function (r) {
+                var rows = $("#drCatalogRows").empty();
+                var items = r.data || [];
+                if (!items.length) {
+                    $("<div class='dr-perm-empty'>").text("لا توجد مصادر في الكتالوج لهذا الفلتر.").appendTo(rows);
+                    return;
+                }
+
+                items.forEach(function (item) {
+                    var title = item.SourceSchema + "." + item.SourceName;
+                    var row = $("<div class='dr-catalog-row'>").addClass(statusClass(item.ClassificationStatus));
+                    row.append($("<div>").append($("<strong>").text(title)).append($("<span>").text(item.SourceType)));
+                    row.append($("<div class='dr-catalog-score'>").text(item.ClassificationScore));
+                    row.append($("<div class='dr-catalog-flags'>").text(item.RiskFlags || ""));
+                    row.append($("<div>").text(item.ClassificationStatus));
+                    var actions = $("<div class='dr-actions'>");
+                    $("<button class='dr-mini-button' type='button'>").text("تفاصيل").on("click", function () { detail(item.CatalogId, scope); }).appendTo(actions);
+                    $("<button class='dr-mini-button' type='button'>").text("اعتماد").on("click", function () {
+                        var name = window.prompt("اسم التقرير المقترح", item.SuggestedReportName || item.SourceName);
+                        if (name !== null) approve(item.CatalogId, scope, name);
+                    }).appendTo(actions);
+                    $("<button class='dr-mini-button danger' type='button'>").text("رفض").on("click", function () {
+                        var reason = window.prompt("سبب الرفض", item.RejectionReason || "");
+                        if (reason !== null) reject(item.CatalogId, scope, reason);
+                    }).appendTo(actions);
+                    $("<button class='dr-mini-button secondary' type='button'>").text("استيراد").on("click", function () { importOne(item.CatalogId, scope); }).appendTo(actions);
+                    row.append(actions);
+                    row.appendTo(rows);
+                });
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تحميل الكتالوج.");
+            });
+        }
+
+        function discover(scope) {
+            catalogMsg("جاري الاكتشاف دون تنفيذ أي مصدر...");
+            $.post(api("CatalogDiscover")).done(function (r) {
+                var d = r.data || {};
+                catalogMsg("تم الاكتشاف. جديد: " + (d.DiscoveredCount || 0) + "، محدّث: " + (d.UpdatedCount || 0) + "، أخطاء: " + (d.ErrorCount || 0));
+                list(scope, $("#drCatalogStatus").val());
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تنفيذ الاكتشاف.");
+            });
+        }
+
+        function detail(catalogId, scope) {
+            $.getJSON(api("CatalogDetail") + "&catalogId=" + encodeURIComponent(catalogId)).done(function (r) {
+                var d = r.data || {};
+                var entry = d.Entry || {};
+                var pane = $("#drCatalogDetail").empty();
+                $("<h3>").text(entry.SourceSchema + "." + entry.SourceName).appendTo(pane);
+                $("<p>").text("الحالة: " + entry.ClassificationStatus + " | الدرجة: " + entry.ClassificationScore + " | المخاطر: " + (entry.RiskFlags || "")).appendTo(pane);
+                $("<h4>").text("الأعمدة").appendTo(pane);
+                $("<pre class='dr-body-excerpt'>").text((d.Columns || []).map(function (c) { return c.FieldName + " : " + c.DataType; }).join("\n") || "لا توجد أعمدة مكتشفة.").appendTo(pane);
+                $("<h4>").text("المعاملات").appendTo(pane);
+                $("<pre class='dr-body-excerpt'>").text((d.Parameters || []).map(function (p) { return p.ParameterName + " : " + p.DataType; }).join("\n") || "لا توجد معاملات.").appendTo(pane);
+                $("<h4>").text("نص للقراءة فقط، لا يتم تنفيذه").appendTo(pane);
+                $("<pre class='dr-body-excerpt'>").text(d.BodyExcerpt || "").appendTo(pane);
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تحميل التفاصيل.");
+            });
+        }
+
+        function approve(catalogId, scope, suggestedName) {
+            $.post(api("CatalogApprove") + "&catalogId=" + encodeURIComponent(catalogId), { suggestedName: suggestedName || "" }).done(function () {
+                catalogMsg("تم اعتماد المصدر يدويًا.");
+                list(scope, $("#drCatalogStatus").val());
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر اعتماد المصدر.");
+            });
+        }
+
+        function reject(catalogId, scope, reason) {
+            $.post(api("CatalogReject") + "&catalogId=" + encodeURIComponent(catalogId), { reason: reason || "" }).done(function () {
+                catalogMsg("تم رفض المصدر.");
+                list(scope, $("#drCatalogStatus").val());
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر رفض المصدر.");
+            });
+        }
+
+        function importOne(catalogId, scope) {
+            $.post(api("CatalogImport") + "&catalogId=" + encodeURIComponent(catalogId)).done(function (r) {
+                var d = r.data || {};
+                catalogMsg(d.Message || ("تم الاستيراد: " + (d.ReportCode || "")));
+                list(scope, $("#drCatalogStatus").val());
+                loadList();
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر استيراد التقرير.");
+            });
+        }
+
+        function wire() {
+            $("#drCatalogDiscover").on("click", function () { discover(state.scope); });
+            $("#drCatalogRefresh").on("click", function () { list(state.scope, $("#drCatalogStatus").val()); });
+            $("#drCatalogStatus").on("change", function () { list(state.scope, $(this).val()); });
+            list(state.scope, "");
+        }
+
+        return {
+            discover: discover,
+            list: list,
+            detail: detail,
+            approve: approve,
+            reject: reject,
+            import: importOne,
+            wire: wire
+        };
+    })();
+
     $(function () {
         state.current = emptyDefinition();
         bindForm();
         dr.permissions.wire();
         dr.permissions.clear();
+        dr.catalog.wire();
         loadList();
         $("#drNew").on("click", function () { state.current = emptyDefinition(); bindForm(); dr.permissions.clear(); msg(""); });
         $("#drSave").on("click", save);

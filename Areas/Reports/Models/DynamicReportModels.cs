@@ -19,6 +19,15 @@ namespace MyERP.Areas.Reports.Models
         }
     }
 
+    public static class DynamicReportCatalogStatus
+    {
+        public const string Pending = "Pending";
+        public const string Approved = "Approved";
+        public const string Rejected = "Rejected";
+        public const string Risky = "Risky";
+        public const string Imported = "Imported";
+    }
+
     public class DynamicReportUserContext
     {
         public int UserId { get; set; }
