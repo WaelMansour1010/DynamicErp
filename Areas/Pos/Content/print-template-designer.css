@@ -7,6 +7,8 @@ body {
     color: #1f2937;
 }
 
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
 .ptd-page {
     display: flex;
     flex-direction: column;

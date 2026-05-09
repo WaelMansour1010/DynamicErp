@@ -1407,6 +1407,8 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 }
 
 /* POS brand refresh: keep the logo separate from the operation header. */
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
 .pos-page {
     --brand-purple: #514091;
     --brand-rose: #ef4f68;

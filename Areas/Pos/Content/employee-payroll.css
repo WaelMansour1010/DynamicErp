@@ -1,3 +1,5 @@
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
 .ep-body { margin:0; background:#f6f7fb; color:#172033; font-family:Tahoma, Arial, sans-serif; direction:rtl; }
 .ep-page { padding:18px; max-width:100%; box-sizing:border-box; overflow-x:hidden; }
 .ep-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; padding:4px 2px; }
