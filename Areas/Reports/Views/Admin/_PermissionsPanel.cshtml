@@ -1,0 +1,39 @@
+<div class="dr-panel" id="drPermissionsPanel" aria-live="polite">
+    <div class="dr-panel-head">
+        <h2>صلاحيات التقرير</h2>
+        <span class="dr-muted">اختر تقريرًا ثم امنح صلاحية مشاهدة أو تصميم أو تصدير لمستخدم محدد أو دور.</span>
+    </div>
+
+    <div class="dr-perm-toolbar">
+        <div class="dr-field">
+            <label>نوع المنح</label>
+            <select id="drPermActorType">
+                <option value="user">مستخدم</option>
+                <option value="role">دور</option>
+            </select>
+        </div>
+
+        <div class="dr-field" id="drPermUserBox">
+            <label>بحث المستخدم</label>
+            <input id="drPermUserSearch" type="text" placeholder="اكتب رقم أو اسم المستخدم" />
+            <select id="drPermUsers"></select>
+        </div>
+
+        <div class="dr-field" id="drPermRoleBox">
+            <label>الدور</label>
+            <select id="drPermRoles"></select>
+        </div>
+
+        <div class="dr-perm-flags">
+            <label><input id="drPermCanView" type="checkbox" checked="checked" /> مشاهدة</label>
+            <label><input id="drPermCanDesign" type="checkbox" /> تصميم</label>
+            <label><input id="drPermCanExport" type="checkbox" /> تصدير</label>
+        </div>
+
+        <button type="button" class="dr-button" id="drSavePermission">حفظ الصلاحية</button>
+    </div>
+
+    <div class="dr-message" id="drPermMessage" role="status"></div>
+    <div class="dr-perm-empty" id="drPermEmpty">لا توجد صلاحيات محفوظة لهذا التقرير في النطاق الحالي.</div>
+    <div class="dr-perm-grid" id="drPermRows"></div>
+</div>

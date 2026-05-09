@@ -6,6 +6,7 @@
     };
 
     function api(path) {
+        // state.apiBase already includes the controller URL (e.g. /Reports/Admin or /Pos/DynamicReportsAdmin).
         return state.apiBase.replace(/\/$/, "") + "/" + path + "?scope=" + encodeURIComponent(state.scope);
     }
 
@@ -51,6 +52,7 @@
         $.getJSON(api("Get") + "&id=" + id).done(function (r) {
             state.current = r.data;
             bindForm();
+            dr.permissions.load(state.current && state.current.ReportId);
             msg("تم تحميل التقرير");
         }).fail(function () { msg("تعذر تحميل التقرير"); });
     }
@@ -178,6 +180,7 @@
         }).done(function (r) {
             msg("تم الحفظ");
             $("#ReportId").val(r.reportId);
+            dr.permissions.load(r.reportId);
             loadList();
         }).fail(function (xhr) {
             msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر الحفظ");
@@ -197,11 +200,170 @@
         });
     }
 
+    var dr = window.DynamicReportsAdmin = window.DynamicReportsAdmin || {};
+    dr.permissions = (function () {
+        var searchTimer = null;
+
+        function panelMsg(text) {
+            $("#drPermMessage").text(text || "");
+        }
+
+        function currentReportId() {
+            return parseInt($("#ReportId").val(), 10) || 0;
+        }
+
+        function currentProjectScope() {
+            return $("#ProjectScope").val() || state.scope;
+        }
+
+        function clear() {
+            $("#drPermRows").empty();
+            $("#drPermEmpty").show();
+            panelMsg("");
+        }
+
+        function bind(items) {
+            var rows = $("#drPermRows").empty();
+            items = items || [];
+            $("#drPermEmpty").toggle(items.length === 0);
+            items.forEach(function (item) {
+                var flags = [];
+                if (item.CanView) flags.push("مشاهدة");
+                if (item.CanDesign) flags.push("تصميم");
+                if (item.CanExport) flags.push("تصدير");
+
+                $("<div class='dr-perm-row'>")
+                    .append($("<div class='dr-perm-actor'>").append($("<strong>").text(item.DisplayName || "")).append($("<span>").text(item.ProjectScope || "")))
+                    .append($("<div class='dr-perm-flags'>").text(flags.join(" / ")))
+                    .append($("<button class='dr-mini-button danger' type='button'>").text("حذف").on("click", function () { remove(item.PermissionId); }))
+                    .appendTo(rows);
+            });
+        }
+
+        function load(reportId) {
+            if (!reportId) {
+                clear();
+                return;
+            }
+
+            $.getJSON(api("ListPermissions") + "&reportId=" + encodeURIComponent(reportId))
+                .done(function (r) { bind(r.data || []); })
+                .fail(function (xhr) { panelMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تحميل الصلاحيات."); });
+        }
+
+        function loadRoles() {
+            $.getJSON(api("ListRoles")).done(function (r) {
+                var select = $("#drPermRoles").empty();
+                (r.data || []).forEach(function (role) {
+                    $("<option>").val(role.Key).text(role.Value || role.Key).appendTo(select);
+                });
+            }).fail(function () {
+                $("#drPermRoles").empty();
+                panelMsg("تعذر تحميل الأدوار.");
+            });
+        }
+
+        function searchUser(q) {
+            $.getJSON(api("ListUsersLite") + "&q=" + encodeURIComponent(q || "")).done(function (r) {
+                var select = $("#drPermUsers").empty();
+                (r.data || []).forEach(function (user) {
+                    $("<option>").val(user.Key).text(user.Value || user.Key).appendTo(select);
+                });
+            }).fail(function () {
+                $("#drPermUsers").empty();
+                panelMsg("تعذر تحميل المستخدمين.");
+            });
+        }
+
+        function collectInput() {
+            var actorType = $("#drPermActorType").val();
+            var input = {
+                ReportId: currentReportId(),
+                ProjectScope: currentProjectScope(),
+                CanView: $("#drPermCanView").is(":checked"),
+                CanDesign: $("#drPermCanDesign").is(":checked"),
+                CanExport: $("#drPermCanExport").is(":checked")
+            };
+
+            if (actorType === "role") {
+                input.RoleId = parseInt($("#drPermRoles").val(), 10) || null;
+                input.UserId = null;
+            } else {
+                input.UserId = parseInt($("#drPermUsers").val(), 10) || null;
+                input.RoleId = null;
+            }
+
+            return input;
+        }
+
+        function add(input) {
+            if (!input.ReportId) {
+                panelMsg("اختر تقريرًا أولًا.");
+                return;
+            }
+
+            $.ajax({
+                url: api("SavePermission"),
+                method: "POST",
+                data: JSON.stringify(input),
+                contentType: "application/json; charset=utf-8"
+            }).done(function () {
+                panelMsg("تم حفظ الصلاحية.");
+                load(input.ReportId);
+            }).fail(function (xhr) {
+                panelMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر حفظ الصلاحية.");
+            });
+        }
+
+        function remove(permissionId) {
+            $.post(api("DeletePermission") + "&permissionId=" + encodeURIComponent(permissionId))
+                .done(function () {
+                    panelMsg("تم حذف الصلاحية.");
+                    load(currentReportId());
+                })
+                .fail(function (xhr) {
+                    panelMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر حذف الصلاحية.");
+                });
+        }
+
+        function refreshActorMode() {
+            var isRole = $("#drPermActorType").val() === "role";
+            $("#drPermRoleBox").toggle(isRole);
+            $("#drPermUserBox").toggle(!isRole);
+        }
+
+        function wire() {
+            refreshActorMode();
+            loadRoles();
+            searchUser("");
+            $("#drPermActorType").on("change", refreshActorMode);
+            $("#drSavePermission").on("click", function () { add(collectInput()); });
+            $("#drPermUserSearch").on("input", function () {
+                var q = $(this).val();
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function () { searchUser(q); }, 250);
+            });
+        }
+
+        return {
+            load: load,
+            bind: bind,
+            add: add,
+            delete: remove,
+            searchUser: searchUser,
+            loadRoles: loadRoles,
+            clear: clear,
+            wire: wire
+        };
+    })();
+
     $(function () {
         state.current = emptyDefinition();
         bindForm();
+        dr.permissions.wire();
+        dr.permissions.clear();
         loadList();
-        $("#drNew").on("click", function () { state.current = emptyDefinition(); bindForm(); msg(""); });
+        $("#drNew").on("click", function () { state.current = emptyDefinition(); bindForm(); dr.permissions.clear(); msg(""); });
         $("#drSave").on("click", save);
         $("#drLoadMetadata").on("click", loadMetadata);
         $("#drAddParameter").on("click", function () { addParameterRow({}, $("#drParameters tbody tr").length); });

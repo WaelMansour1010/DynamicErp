@@ -128,4 +128,37 @@ namespace MyERP.Areas.Reports.Models
         public int RowCount { get; set; }
         public int MaxRows { get; set; }
     }
+
+    public class DynamicReportPermission
+    {
+        public int PermissionId { get; set; }
+        public int ReportId { get; set; }
+        public string ProjectScope { get; set; }
+        public int? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public bool CanView { get; set; }
+        public bool CanDesign { get; set; }
+        public bool CanExport { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string DisplayName { get; set; }
+    }
+
+    public class DynamicReportPermissionInput
+    {
+        public int ReportId { get; set; }
+        public string ProjectScope { get; set; }
+        public int? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public bool CanView { get; set; }
+        public bool CanDesign { get; set; }
+        public bool CanExport { get; set; }
+    }
+
+    public class EffectivePermission
+    {
+        public bool CanView { get; set; }
+        public bool CanDesign { get; set; }
+        public bool CanExport { get; set; }
+        public string Source { get; set; }
+    }
 }
