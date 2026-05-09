@@ -4468,9 +4468,6 @@
     <Content Include="Content\bootstrap-theme.min.css.map" />
     <Content Include="Content\bootstrap-theme.css.map" />
     <None Include="packages.config" />
-    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
-    <None Include="Properties\PublishProfiles\FolderProfile1.pubxml" />
-    <None Include="Properties\PublishProfiles\FolderProfile2.pubxml" />
     <Content Include="Readme.txt" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
@@ -4659,7 +4656,6 @@
     <Content Include="Views\JournalEntries\Index.cshtml" />
     <Content Include="Views\LogIn\Index.cshtml" />
     <Content Include="Views\LogIn\ResetPassword.cshtml" />
-    <Content Include="Views\Log\Index.cshtml" />
     <Content Include="Views\Maintenances\AddEdit.cshtml" />
     <Content Include="Views\Maintenances\Index.cshtml" />
     <Content Include="Views\OccuredNotifications\Index.cshtml" />

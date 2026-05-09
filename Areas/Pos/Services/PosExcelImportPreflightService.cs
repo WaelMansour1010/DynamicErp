@@ -117,7 +117,7 @@ namespace MyERP.Areas.Pos.Services
             AddPreflight(preview, "Employee/Salesman", HasValue(context.EmpId) ? "Mapped" : "Required", FormatIdName(context.EmpId, context.EmpName), "المندوب مطلوب للحفظ والحسابات.");
             AddPreflight(preview, "Store", HasValue(context.StoreId) ? "Mapped" : "Required", FormatIdName(context.StoreId, context.StoreName), "المخزن مطلوب لتأثير المخزون والإذن.");
             AddPreflight(preview, "CashBox", HasValue(context.BoxId) ? "Mapped" : "Required", FormatIdName(context.BoxId, context.BoxName), "الخزنة مطلوبة للدفع والقيد.");
-            AddPreflight(preview, "PaymentType", HasValue(context.PaymentTypeId) ? "Mapped" : "Required", FormatIdName(context.PaymentTypeId, context.PaymentName), "طريقة الدفع الافتراضية جاءت من نفس منطق POS للمستخدم.");
+            AddPreflight(preview, "PaymentType", HasValue(context.PaymentTypeId) ? "Mapped" : "Required", FormatIdName(context.PaymentTypeId, context.PaymentName), "تم تحميل طريقة الدفع الافتراضية من إعدادات المستخدم.");
 
             if (!HasValue(context.UserId) || !HasValue(context.EmpId) || !HasValue(context.StoreId) || !HasValue(context.BoxId) || !HasValue(context.PaymentTypeId))
             {
@@ -180,7 +180,7 @@ namespace MyERP.Areas.Pos.Services
                     row.ServiceItemName = item.ItemName;
                 }
 
-                AddPreflight(preview, "Service: " + serviceText, "Mapped", serviceText + " -> " + internalType + " -> " + item.Item_ID + " / " + item.ItemName, "تم حل الخدمة إلى صنف POS افتراضي بنفس منطق الشاشة.");
+                AddPreflight(preview, "Service: " + serviceText, "Mapped", serviceText + " -> " + internalType + " -> " + item.Item_ID + " / " + item.ItemName, "تم ربط الخدمة بصنف POS افتراضي معتمد.");
             }
         }
 

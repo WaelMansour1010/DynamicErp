@@ -62,8 +62,7 @@
         posDebugEnabled = false;
     }
     function posDebugLog(label, payload) {
-        if (!posDebugEnabled || !window.console || !window.console.debug) { return; }
-        window.console.debug("[POS] " + label, payload || {});
+        return;
     }
     function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
     function numberFromInput(input) { var value = parseFloat(input.value); return isNaN(value) ? 0 : value; }

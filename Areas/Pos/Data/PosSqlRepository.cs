@@ -502,7 +502,7 @@ FROM dbo.TblOptions;";
                 CashCustomerNameMustEnter = true,
                 TradingPOS = false,
                 PosShape2 = false,
-                Todo = "Commission defaults loaded from verified dbo.TblOptions fields. Other POS SystemOptions remain TODO."
+                Todo = "Commission defaults loaded from verified dbo.TblOptions fields."
             };
 
             using (var connection = new SqlConnection(_connectionString))

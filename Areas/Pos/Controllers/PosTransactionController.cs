@@ -1811,7 +1811,7 @@ namespace MyERP.Areas.Pos.Controllers
             var message = ex == null ? string.Empty : ex.Message;
             if (HasSqlError(ex, 1205))
             {
-                return "حدث تزاحم مؤقت أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";
+                return "حدث تزاحم أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";
             }
 
             if (message.IndexOf("Unable to allocate", StringComparison.OrdinalIgnoreCase) >= 0)

@@ -43,7 +43,7 @@ namespace MyERP.Areas.Pos.Data
                 values.BoxBalance = GetUserBoxOpeningBalance(connection, null, values.UserId, branchId, closingDate, out boxBalanceAccountSerial, out boxBalanceAccountCode);
                 values.BoxBalanceAccountSerial = boxBalanceAccountSerial;
                 values.BoxBalanceAccountCode = boxBalanceAccountCode;
-                values.BoxBalanceSqlSummary = "VB6 txtBoxBalance: TblUsers.UserId -> TblUsers.BoxID2 -> TblBoxesData.Account_Code -> Accounts.Account_Serial; GetAccountBalance(Account_Serial, date-1, date-2, branch).";
+                values.BoxBalanceSqlSummary = "يتم احتساب عهدة الخزنة من حساب الخزنة المرتبط بالمستخدم حتى تاريخ الإغلاق.";
                 values.OpenBalance = SumSerialStock(connection, null, branchId, closingDate.AddDays(-1));
                 values.LastBalance = SumSerialStock(connection, null, branchId, closingDate);
 
