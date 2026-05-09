@@ -1,0 +1,10 @@
+﻿@model MyERP.Areas.MainErp.ViewModels.DatabaseMigration.MigrationScriptPreviewViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+}
+<link href="@Url.Content("~/Areas/MainErp/Content/database-migration-manager.css?v=20260509-db-migration")" rel="stylesheet" />
+<section class="dbm-page" dir="rtl">
+    <div class="dbm-header"><div><span class="dbm-kicker">Preview</span><h2>@Model.ScriptName</h2><p>@Model.ScriptPath</p></div><a class="dbm-btn" href="@Url.Action("Index", "DatabaseMigration", new { area = "MainErp" })">Back</a></div>
+    @foreach (var w in Model.Warnings) { <div class="dbm-alert dbm-alert-danger"><strong>@w.Code</strong> - @w.Message</div> }
+    <pre class="dbm-preview">@Model.Content</pre>
+</section>

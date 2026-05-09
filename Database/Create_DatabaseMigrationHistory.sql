@@ -62,3 +62,46 @@ BEGIN
     ON dbo.DatabaseMigrationHistory (ModuleName, AppliedOn);
 END;
 GO
+
+IF OBJECT_ID(N'dbo.DatabaseMigrationRun', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.DatabaseMigrationRun
+    (
+        RunId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_DatabaseMigrationRun PRIMARY KEY,
+        StartedAt DATETIME NOT NULL CONSTRAINT DF_DatabaseMigrationRun_StartedAt DEFAULT (GETDATE()),
+        FinishedAt DATETIME NULL,
+        StartedBy NVARCHAR(256) NOT NULL,
+        DatabaseName SYSNAME NOT NULL,
+        ServerName NVARCHAR(128) NOT NULL,
+        Mode NVARCHAR(20) NOT NULL,
+        Status NVARCHAR(30) NOT NULL,
+        TotalScripts INT NOT NULL CONSTRAINT DF_DatabaseMigrationRun_TotalScripts DEFAULT (0),
+        AppliedCount INT NOT NULL CONSTRAINT DF_DatabaseMigrationRun_AppliedCount DEFAULT (0),
+        FailedCount INT NOT NULL CONSTRAINT DF_DatabaseMigrationRun_FailedCount DEFAULT (0),
+        WarningCount INT NOT NULL CONSTRAINT DF_DatabaseMigrationRun_WarningCount DEFAULT (0)
+    );
+END;
+GO
+
+IF OBJECT_ID(N'dbo.DatabaseMigrationRunDetail', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.DatabaseMigrationRunDetail
+    (
+        RunDetailId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_DatabaseMigrationRunDetail PRIMARY KEY,
+        RunId INT NOT NULL,
+        ScriptName NVARCHAR(260) NOT NULL,
+        ModuleName NVARCHAR(100) NOT NULL,
+        Status NVARCHAR(30) NOT NULL,
+        DurationMs INT NULL,
+        ErrorMessage NVARCHAR(MAX) NULL,
+        ScriptHash CHAR(64) NOT NULL,
+        CONSTRAINT FK_DatabaseMigrationRunDetail_Run FOREIGN KEY (RunId) REFERENCES dbo.DatabaseMigrationRun(RunId)
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_DatabaseMigrationRunDetail_RunId' AND object_id = OBJECT_ID(N'dbo.DatabaseMigrationRunDetail', N'U'))
+BEGIN
+    CREATE INDEX IX_DatabaseMigrationRunDetail_RunId ON dbo.DatabaseMigrationRunDetail (RunId);
+END;
+GO
