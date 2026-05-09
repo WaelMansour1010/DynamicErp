@@ -582,6 +582,24 @@
     padding: 10px;
 }
 
+.dr-status-pill {
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.dr-rv-status-Draft { background: #eef2f7; color: #334155; }
+.dr-rv-status-NeedsMapping { background: #fff8df; color: #775f00; }
+.dr-rv-status-ValidationErrors { background: #fff1f1; color: #8f1d1d; }
+.dr-rv-status-ReadyForActivation { background: #e8f3fb; color: #22577a; }
+.dr-rv-status-Active { background: #edf8f1; color: #1f6f3d; }
+.dr-rv-status-Disabled { background: #f1f5f9; color: #64748b; }
+.dr-rv-status-Archived { background: #ece8f3; color: #5b3b82; }
+
 body:not(.unused) .dr-design-only {
     display: none;
 }

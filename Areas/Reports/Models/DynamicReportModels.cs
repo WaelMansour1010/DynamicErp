@@ -48,6 +48,7 @@ namespace MyERP.Areas.Reports.Models
             MaxRows = 1000;
             CommandTimeoutSeconds = 30;
             IsActive = true;
+            LifecycleStatus = LifecycleStatusEnum.Draft;
         }
 
         public int ReportId { get; set; }
@@ -61,6 +62,10 @@ namespace MyERP.Areas.Reports.Models
         public int MaxRows { get; set; }
         public int CommandTimeoutSeconds { get; set; }
         public bool IsActive { get; set; }
+        public string LifecycleStatus { get; set; }
+        public DateTime? LastValidatedAt { get; set; }
+        public int? ActivatedBy { get; set; }
+        public DateTime? ActivatedAt { get; set; }
         public IList<DynamicReportParameter> Parameters { get; set; }
         public IList<DynamicReportColumn> Columns { get; set; }
     }

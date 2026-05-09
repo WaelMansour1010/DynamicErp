@@ -10,6 +10,15 @@
         return state.apiBase.replace(/\/$/, "") + "/" + path + "?scope=" + encodeURIComponent(state.scope);
     }
 
+    function reviewUrl(reportId) {
+        return state.apiBase.replace(/\/$/, "") + "/Review?scope=" + encodeURIComponent(state.scope) + "&id=" + encodeURIComponent(reportId);
+    }
+
+    function statusBadge(status) {
+        status = status || "Draft";
+        return $("<span class='dr-status-pill'>").addClass("dr-rv-status-" + status).text(status);
+    }
+
     function msg(text) {
         $("#drMessage").text(text || "");
     }
@@ -41,8 +50,12 @@
                     .append($("<td>").text(item.ReportNameAr || item.ReportNameEn))
                     .append($("<td>").text(item.ProjectScope))
                     .append($("<td>").text(item.SourceType))
+                    .append($("<td>").append(statusBadge(item.LifecycleStatus || (item.IsActive ? "Active" : "Disabled"))))
                     .append($("<td>").text(item.IsActive ? "نشط" : "متوقف"))
-                    .append($("<td>").append($("<button class='dr-button secondary' type='button'>").text("فتح").on("click", function () { loadDefinition(item.ReportId); })))
+                    .append($("<td>")
+                        .append($("<button class='dr-button secondary' type='button'>").text("فتح").on("click", function () { loadDefinition(item.ReportId); }))
+                        .append(" ")
+                        .append($("<a class='dr-button secondary'>").attr("href", reviewUrl(item.ReportId)).text("Review")))
                     .appendTo(tbody);
             });
         }).fail(function () { msg("تعذر تحميل قائمة التقارير"); });
@@ -451,7 +464,8 @@
         function importOne(catalogId, scope) {
             $.post(api("CatalogImport") + "&catalogId=" + encodeURIComponent(catalogId)).done(function (r) {
                 var d = r.data || {};
-                catalogMsg(d.Message || ("تم الاستيراد: " + (d.ReportCode || "")));
+                var openReview = d.NewReportId ? " Open Review: " + reviewUrl(d.NewReportId) : "";
+                catalogMsg((d.Message || ("تم الاستيراد: " + (d.ReportCode || ""))) + openReview);
                 list(scope, $("#drCatalogStatus").val());
                 loadList();
             }).fail(function (xhr) {

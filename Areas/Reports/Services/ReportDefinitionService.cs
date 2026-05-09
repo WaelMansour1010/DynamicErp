@@ -25,7 +25,8 @@ namespace MyERP.Areas.Reports.Services
             var list = new List<DynamicReportDefinition>();
             const string sql = @"
 SELECT ReportId, ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName,
-       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive
+       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
+       LifecycleStatus, LastValidatedAt, ActivatedBy, ActivatedAt
 FROM dbo.DynamicReportDefinitions
 WHERE (@includeInactive = 1 OR IsActive = 1)
   AND (ProjectScope = @scope OR ProjectScope = N'Shared' OR @scope = N'Shared')
@@ -48,7 +49,8 @@ ORDER BY ReportNameAr, ReportNameEn;";
         {
             const string sql = @"
 SELECT ReportId, ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName,
-       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive
+       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
+       LifecycleStatus, LastValidatedAt, ActivatedBy, ActivatedAt
 FROM dbo.DynamicReportDefinitions
 WHERE ReportId = @reportId;";
             DynamicReportDefinition definition = null;
@@ -168,9 +170,9 @@ ORDER BY SortOrder, ColumnId;";
         {
             const string sql = @"
 INSERT INTO dbo.DynamicReportDefinitions
-(ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName, RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive, CreatedBy, CreatedAt)
+(ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName, RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive, LifecycleStatus, LastValidatedAt, ActivatedBy, ActivatedAt, CreatedBy, CreatedAt)
 VALUES
-(@ReportCode, @ReportNameAr, @ReportNameEn, @ProjectScope, @SourceType, @SourceName, @RequireDateRange, @MaxRows, @CommandTimeoutSeconds, @IsActive, @UserId, GETDATE());
+(@ReportCode, @ReportNameAr, @ReportNameEn, @ProjectScope, @SourceType, @SourceName, @RequireDateRange, @MaxRows, @CommandTimeoutSeconds, 0, N'Draft', NULL, NULL, NULL, @UserId, GETDATE());
 SELECT CAST(SCOPE_IDENTITY() AS INT);";
             using (var command = new SqlCommand(sql, connection, transaction))
             {
@@ -186,7 +188,7 @@ UPDATE dbo.DynamicReportDefinitions
 SET ReportCode = @ReportCode, ReportNameAr = @ReportNameAr, ReportNameEn = @ReportNameEn,
     ProjectScope = @ProjectScope, SourceType = @SourceType, SourceName = @SourceName,
     RequireDateRange = @RequireDateRange, MaxRows = @MaxRows, CommandTimeoutSeconds = @CommandTimeoutSeconds,
-    IsActive = @IsActive, UpdatedBy = @UserId, UpdatedAt = GETDATE()
+    UpdatedBy = @UserId, UpdatedAt = GETDATE()
 WHERE ReportId = @ReportId;";
             using (var command = new SqlCommand(sql, connection, transaction))
             {
@@ -290,7 +292,11 @@ VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefa
                 RequireDateRange = Convert.ToBoolean(reader["RequireDateRange"]),
                 MaxRows = Convert.ToInt32(reader["MaxRows"]),
                 CommandTimeoutSeconds = Convert.ToInt32(reader["CommandTimeoutSeconds"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
+                IsActive = Convert.ToBoolean(reader["IsActive"]),
+                LifecycleStatus = reader["LifecycleStatus"] == DBNull.Value ? (Convert.ToBoolean(reader["IsActive"]) ? LifecycleStatusEnum.Active : LifecycleStatusEnum.Disabled) : Convert.ToString(reader["LifecycleStatus"]),
+                LastValidatedAt = reader["LastValidatedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["LastValidatedAt"]),
+                ActivatedBy = reader["ActivatedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["ActivatedBy"]),
+                ActivatedAt = reader["ActivatedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["ActivatedAt"])
             };
         }
 

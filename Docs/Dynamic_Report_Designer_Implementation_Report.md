@@ -250,3 +250,125 @@ Database verification:
 
 - Parameter Lookups can build on the imported parameter metadata.
 - Authenticated UI smoke should verify Catalog panel interactions, Viewer activation flow, and Print Preview for the three imported drafts after admin review.
+
+## Phase 4 - Draft Activation Workflow + Validation + Suggestions
+
+Date: 2026-05-09
+
+Branch: `claude/improve-report-designer-iAq77`
+
+### Pre-flight
+
+- Branch check: Pass (`claude/improve-report-designer-iAq77`).
+- Phase 1, Phase 2, Phase 3 commits: Pass.
+- Encoding check: existing admin partials still contain pre-existing Arabic mojibake in several labels. New Phase 4 files were created with readable Arabic text.
+- NuGet check: no packages added; implementation uses existing MVC/Razor, ADO.NET, and jQuery.
+
+### Files Changed
+
+| File | Delta / Notes |
+| --- | --- |
+| `Areas/Reports/Sql/06_DynamicReports_Lifecycle.sql` | New, 29 lines. Adds lifecycle columns and index. |
+| `Areas/Reports/Models/ReviewModels.cs` | New, 95 lines. Review/validation/suggestion/lifecycle DTOs. |
+| `Areas/Reports/Services/ReportValidationService.cs` | New, 324 lines. Metadata, columns, params, sample execution, print-render checks. |
+| `Areas/Reports/Services/ReportSuggestionService.cs` | New, 173 lines. Pure AR captions/format/sort/group suggestions, 115 dictionary entries. |
+| `Areas/Reports/Services/ReportLifecycleService.cs` | New, 158 lines. Server-side transition rules and activation gate. |
+| `Areas/Reports/Views/Admin/Review.cshtml` | New, 160 lines. Review page with validation, suggestions, sample, print link, risk flags. |
+| `Areas/Reports/Views/Admin/_StatusBadge.cshtml` | New, 5 lines. Shared status pill. |
+| `Areas/Reports/Scripts/dynamic-reports-review.js` | New, 130 lines. Review page AJAX/actions. |
+| `Areas/Reports/Content/dynamic-reports-review.css` | New, 111 lines. Review UI styles. |
+| `Areas/Reports/Controllers/AdminController.cs` | +241 lines. Review endpoints and lifecycle actions. |
+| `Areas/Reports/Models/DynamicReportModels.cs` | +5 lines. Lifecycle properties on `DynamicReportDefinition`. |
+| `Areas/Reports/Services/ReportDefinitionService.cs` | +12 / -6. Reads lifecycle columns; inserts new definitions as Draft; general save no longer flips lifecycle. |
+| `Areas/Reports/Views/Admin/_AdminBody.cshtml` | +1 / -1. Adds Lifecycle column. |
+| `Areas/Reports/Scripts/dynamic-reports-admin.js` | +16 / -2. Status badge and Review link; import success shows Review URL. |
+| `Areas/Reports/Content/dynamic-reports.css` | +18. Shared status pill styles. |
+| `MyERP.csproj` | +9. Required explicit Compile/Content entries for classic MVC project. |
+
+### SQL Migration
+
+`06_DynamicReports_Lifecycle.sql` was applied twice successfully to prove idempotence.
+
+| Scope | Database | Before | After |
+| --- | --- | --- | --- |
+| Web | `MyErp` | `IsActive=0: 1`, `IsActive=1: 3` | `Disabled/0: 1`, `Active/1: 3` |
+| POS | `Cash` | `IsActive=0: 2`, `IsActive=1: 3` | `Disabled/0: 2`, `Active/1: 3` |
+| MainErp | `Eng` | `IsActive=1: 3` | `Active/1: 3` |
+
+Column verification passed on all three databases:
+
+- `LifecycleStatus`
+- `LastValidatedAt`
+- `ActivatedBy`
+- `ActivatedAt`
+
+### Implementation Notes
+
+- `LifecycleStatus` is now the authoritative state. `IsActive` is synchronized only by `ReportLifecycleService`.
+- New manual definitions inserted through `ReportDefinitionService.SaveDefinition` are `Draft` and `IsActive=0`.
+- Imported reports from Phase 3 also inherit `LifecycleStatus='Draft'` through the DB default after script 06 is applied.
+- `ReportDefinitionService.UpdateDefinition` does not activate/deactivate reports. This prevents bypassing the activation gate from the old checkbox.
+- Activation to `Active` always runs full validation first. Any validation error moves the report to `ValidationErrors` and keeps `IsActive=0`.
+- Formatting suggestions are calculated and exposed in Review UI. Because Phase 4 does not add DB columns for column format strings, `ApplySuggestions` persists captions, groupable hints, summable hints, and suggested sort order only. Full persistent formatting belongs to a later schema phase.
+- `ReportExecutionService` does not support temporary MaxRows/timeout override. Sample execution therefore sends safe default parameter values but still uses the report definition's configured execution limits. This is documented as the R1 mitigation item for later improvement.
+
+### Suggestion Verification
+
+Backend suggestion smoke passed after build:
+
+| Input | Result |
+| --- | --- |
+| Dictionary size | `115` |
+| `InvoiceNo` | `رقم الفاتورة` |
+| `CustomerName` | `اسم العميل` |
+| `Total` | `الإجمالي` |
+| `CreatedAt` | `تاريخ الإنشاء` |
+| `XyzAbc` | `⚠ Xyz Abc` |
+| Decimal format | `#,##0.00` |
+| DateTime format | `yyyy-MM-dd HH:mm` |
+| `BranchId` groupable | `True` |
+
+### Backend Smoke
+
+- `ReportDefinitionService.GetDefinitions(scope, true)` passed after migration for Web/POS/MainErp.
+- Sample output:
+  - Web: `IMP_Web_dbo_GetBankAccountByBankId: Disabled, IsActive=False`
+  - POS: `IMP_POS_dbo_sp_ErrorLog_DailySummary: Disabled, IsActive=False`
+  - MainErp: `MAINERP_JOURNAL_SAMPLE: Active, IsActive=True`
+
+### Manual Test Results
+
+| Test | Result | Notes |
+| --- | --- | --- |
+| Build | Pass | Normal MSBuild passed; existing unrelated warnings remain. |
+| JS syntax | Pass | `node --check` passed for `dynamic-reports-admin.js` and `dynamic-reports-review.js`. |
+| SQL idempotence | Pass | Script 06 applied twice to Web/POS/MainErp. |
+| T1 Migration verification | Pass | Counts before/after recorded above. |
+| T2 Review existing Active report | Backend partial | Active reports remain `Active` after migration; authenticated Review UI requires browser session. |
+| T3 Import → Review → Activate | Blocked | Requires authenticated admin browser session and a fresh approved/imported catalog item. Backend services are implemented. |
+| T4 Anti-Garbage | Code verified | `meta.nameAr`, `source.name`, visible columns, and exec errors are server-side Errors. UI exercise blocked by auth session. |
+| T5 Bad Performance | Blocked | No known >30s safe report was executed; timeout override not available in `ReportExecutionService`. |
+| T6 Disabled → Re-activation | Blocked | Requires authenticated UI/session and safe test report mutation. |
+| T7 Archived flow | Code verified | `Archived → Active` is rejected in `ReportLifecycleService`; UI exercise blocked by auth session. |
+| T8 POS scope | Blocked | Requires authenticated POS admin session. |
+| T9 MainErp scope | Blocked | Requires authenticated MainErp admin session. |
+| T10 Suggestions accuracy | Pass | Backend smoke table above. |
+| T11 Console & Network | Blocked | Requires authenticated browser session. |
+
+### Additional Verification Notes
+
+- `git diff --check` passed for Phase 4 files. It reported only line-ending warnings and also surfaced pre-existing/unrelated dirty POS SQL/tool files that were not touched by this phase.
+- `MvcBuildViews=true` was attempted, but failed before view compilation because an unrelated nested file `.claude\worktrees\flamboyant-bartik\web.config` is treated as below application level and raises `ASPCONFIG`. Normal project build succeeds.
+
+### Deviations And Decisions
+
+- `MyERP.csproj` was updated manually because this classic MVC project requires explicit C# Compile and Razor/asset Content entries.
+- Persistent column formatting was not added because Phase 4 allows only lifecycle SQL. Suggestions are shown and can influence existing column flags/order; true persisted format strings should be handled in a later schema phase.
+- Review print preview opens the existing Phase 1 print endpoint in a new tab. The iframe is present but intentionally lazy/empty until the user opens preview, matching the prompt's no-auto-load requirement.
+- Existing mojibake in older admin partials was not fixed because it predates Phase 4 and is outside this phase's allowed scope.
+
+### Phase 5 Notes
+
+- Parameter Lookups can now use `LifecycleStatus` to keep incomplete imported reports in Draft/NeedsMapping until lookup defaults and captions are ready.
+- A future execution-service enhancement should allow validation-only MaxRows=50 and CommandTimeout=10 without changing the saved definition.
+- If formatting persistence is required before Conditional Formatting, add explicit format/decimal/date-format columns or a metadata JSON field in a dedicated schema phase.
