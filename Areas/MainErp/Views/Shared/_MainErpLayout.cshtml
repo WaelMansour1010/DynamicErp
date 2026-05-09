@@ -38,10 +38,6 @@
                         {
                             <text> | @T("Branch"): @(string.IsNullOrWhiteSpace(mainErpContext.BranchName) ? mainErpContext.BranchId.ToString() : mainErpContext.BranchName)</text>
                         }
-                        @if (mainErpContext != null && !string.IsNullOrWhiteSpace(mainErpContext.DatabaseName))
-                        {
-                            <text> | DB: @mainErpContext.DatabaseName</text>
-                        }
                     </p>
                 </div>
                 <div class="main-erp-topbar-actions">

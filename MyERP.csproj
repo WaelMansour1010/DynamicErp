@@ -4152,6 +4152,8 @@
     <Content Include="Areas\MainErp\Views\SalesReports\SalesSummary.cshtml" />
     <Content Include="Areas\MainErp\Views\Shared\_MainErpLayout.cshtml" />
     <Content Include="Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml" />
+    <Content Include="Areas\MainErp\Views\Shared\_EnterprisePageHeader.cshtml" />
+    <Content Include="Areas\MainErp\Views\Shared\_EnterpriseEmptyState.cshtml" />
     <Content Include="Areas\MainErp\Views\StockTransfers\Index.cshtml" />
     <Content Include="Areas\Reports\Content\dynamic-reports.css" />
     <Content Include="Areas\Reports\Scripts\dynamic-reports-admin.js" />
@@ -4469,6 +4471,7 @@
     <Content Include="Content\bootstrap.css.map" />
     <Content Include="Content\bootstrap-theme.min.css.map" />
     <Content Include="Content\bootstrap-theme.css.map" />
+    <Content Include="Docs\Enterprise_UI_System.md" />
     <None Include="packages.config" />
     <Content Include="Readme.txt" />
     <Content Include="Scripts\bootstrap.js" />

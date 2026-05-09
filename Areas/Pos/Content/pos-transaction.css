@@ -1,4 +1,6 @@
-﻿.pos-page {
+﻿@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
+.pos-page {
     --mode-color: #16834f;
     background: #f4f6f8;
     direction: rtl;
@@ -1407,7 +1409,6 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 }
 
 /* POS brand refresh: keep the logo separate from the operation header. */
-@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
 
 .pos-page {
     --brand-purple: #514091;

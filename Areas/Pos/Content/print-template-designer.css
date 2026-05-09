@@ -1,3 +1,5 @@
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
 * { box-sizing: border-box; }
 
 body {
@@ -6,8 +8,6 @@ body {
     background: #f3f4f6;
     color: #1f2937;
 }
-
-@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
 
 .ptd-page {
     display: flex;

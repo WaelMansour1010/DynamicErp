@@ -1,0 +1,25 @@
+@{
+    var title = Convert.ToString(ViewData["Title"] ?? ViewBag.Title);
+    var description = Convert.ToString(ViewData["Description"] ?? ViewBag.Description);
+    var eyebrow = Convert.ToString(ViewData["Eyebrow"] ?? ViewBag.Eyebrow);
+    var actions = ViewData["Actions"] as System.Web.IHtmlString;
+}
+<header class="erp-page-header">
+    <div>
+        @if (!string.IsNullOrWhiteSpace(eyebrow))
+        {
+            <span class="main-erp-kicker">@eyebrow</span>
+        }
+        <h1>@title</h1>
+        @if (!string.IsNullOrWhiteSpace(description))
+        {
+            <p>@description</p>
+        }
+    </div>
+    @if (actions != null)
+    {
+        <div class="erp-actions">
+            @actions
+        </div>
+    }
+</header>

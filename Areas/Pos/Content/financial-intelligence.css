@@ -1,3 +1,5 @@
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
 :root {
     --fi-bg: #f5f7fa;
     --fi-card: #ffffff;
@@ -20,8 +22,6 @@ body {
     direction: rtl;
     font-family: Tahoma, Arial, sans-serif;
 }
-
-@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
 
 .fi-page {
     min-height: 100vh;
