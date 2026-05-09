@@ -26,6 +26,7 @@
         </div>
         <div class="dr-actions">
             <button type="button" class="dr-button" id="drExecute">تشغيل التقرير</button>
+            <button id="btnPrintPreview" class="dr-button dr-btn secondary no-print" type="button">معاينة طباعة</button>
             <button type="button" class="dr-button secondary" id="drToggleDesign">تصميم التقرير</button>
             <button type="button" class="dr-button secondary" id="drLoadLayout">تحميل التصميم</button>
             <button type="button" class="dr-button secondary" id="drSaveLayout">حفظ التصميم</button>
@@ -83,8 +84,10 @@
             </div>
 
             <div class="dr-grid-wrap">
-                <div class="dr-scroll">
-                    <table class="dr-table dr-data-table" id="drData"></table>
+                <div class="dr-canvas-page">
+                    <div class="dr-scroll">
+                        <table class="dr-table dr-data-table" id="drData"></table>
+                    </div>
                 </div>
             </div>
 

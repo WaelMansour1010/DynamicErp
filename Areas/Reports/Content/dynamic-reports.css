@@ -422,6 +422,26 @@
     display: none !important;
 }
 
+.dr-canvas-page {
+    background: #fff;
+    box-shadow: 0 0 0 1px #d7dde5, 0 4px 18px rgba(0,0,0,.06);
+    padding: 1.5cm;
+    margin: 12px auto;
+    min-height: 29.7cm;
+    max-width: 21cm;
+    box-sizing: border-box;
+}
+
+.dr-drop-zone--active {
+    outline: 2px dashed #22577a;
+    background: #e8f3fb;
+}
+
+.dr-selected {
+    outline: 2px solid #22577a;
+    outline-offset: 1px;
+}
+
 body:not(.unused) .dr-design-only {
     display: none;
 }

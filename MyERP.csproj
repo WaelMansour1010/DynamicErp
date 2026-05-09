@@ -4152,6 +4152,7 @@
     <Content Include="Areas\MainErp\Views\Shared\_MainErpSidebar.cshtml" />
     <Content Include="Areas\MainErp\Views\StockTransfers\Index.cshtml" />
     <Content Include="Areas\Reports\Content\dynamic-reports.css" />
+    <Content Include="Areas\Reports\Content\dynamic-reports-print.css" />
     <Content Include="Areas\Reports\Scripts\dynamic-reports-admin.js" />
     <Content Include="Areas\Reports\Scripts\dynamic-reports-viewer.js" />
     <Content Include="Areas\Reports\Sql\01_DynamicReports_Schema.sql" />
@@ -4162,6 +4163,7 @@
     <Content Include="Areas\Reports\Views\Admin\Index.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\_AdminBody.cshtml" />
     <Content Include="Areas\Reports\Views\Viewer\Index.cshtml" />
+    <Content Include="Areas\Reports\Views\Viewer\Print.cshtml" />
     <Content Include="Areas\Reports\Views\Viewer\_ViewerBody.cshtml" />
     <Content Include="Areas\MainErp\Views\WorkshopSales\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\WorkshopSales\Details.cshtml" />
