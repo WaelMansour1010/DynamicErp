@@ -422,6 +422,197 @@
     display: none !important;
 }
 
+.dr-canvas-page {
+    background: #fff;
+    box-shadow: 0 0 0 1px #d7dde5, 0 4px 18px rgba(0,0,0,.06);
+    padding: 1.5cm;
+    margin: 12px auto;
+    min-height: 29.7cm;
+    max-width: 21cm;
+    box-sizing: border-box;
+}
+
+.dr-drop-zone--active {
+    outline: 2px dashed #22577a;
+    background: #e8f3fb;
+}
+
+.dr-selected {
+    outline: 2px solid #22577a;
+    outline-offset: 1px;
+}
+
+.dr-perm-toolbar {
+    display: grid;
+    grid-template-columns: minmax(160px, 190px) minmax(230px, 1fr) minmax(180px, 240px) minmax(220px, auto) auto;
+    gap: 12px;
+    align-items: end;
+    direction: rtl;
+}
+
+.dr-perm-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.dr-perm-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto auto;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    background: #fff;
+    padding: 10px 12px;
+}
+
+.dr-perm-actor {
+    display: grid;
+    gap: 2px;
+}
+
+.dr-perm-actor span {
+    color: #657482;
+    font-size: 12px;
+}
+
+.dr-perm-flags {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: #22577a;
+}
+
+.dr-perm-empty {
+    border: 1px dashed #d7dde5;
+    border-radius: 6px;
+    background: #f3f6f8;
+    color: #657482;
+    padding: 12px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.dr-catalog-grid {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.dr-catalog-row {
+    display: grid;
+    grid-template-columns: minmax(230px, 1.2fr) 70px minmax(180px, 1fr) 110px auto;
+    gap: 10px;
+    align-items: center;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: #fff;
+}
+
+.dr-catalog-row span {
+    display: block;
+    color: #657482;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.dr-catalog-status-Pending {
+    border-right: 4px solid #d7dde5;
+}
+
+.dr-catalog-status-Approved {
+    border-right: 4px solid #2f855a;
+    background: #f0fff4;
+}
+
+.dr-catalog-status-Rejected {
+    border-right: 4px solid #9aa7b3;
+    background: #f3f6f8;
+}
+
+.dr-catalog-status-Risky {
+    border-right: 4px solid #b7791f;
+    background: #fffaf0;
+}
+
+.dr-catalog-status-Imported {
+    border-right: 4px solid #22577a;
+    background: #e8f3fb;
+}
+
+.dr-catalog-flags {
+    color: #657482;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.dr-catalog-score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    min-height: 32px;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    color: #22577a;
+    font-weight: 700;
+    background: #fff;
+}
+
+.dr-catalog-detail-pane {
+    margin-top: 14px;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    background: #fff;
+    padding: 12px;
+}
+
+.dr-body-excerpt {
+    direction: ltr;
+    text-align: left;
+    white-space: pre-wrap;
+    overflow: auto;
+    max-height: 260px;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    background: #f3f6f8;
+    padding: 10px;
+}
+
+.dr-status-pill {
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.dr-rv-status-Draft { background: #eef2f7; color: #334155; }
+.dr-rv-status-NeedsMapping { background: #fff8df; color: #775f00; }
+.dr-rv-status-ValidationErrors { background: #fff1f1; color: #8f1d1d; }
+.dr-rv-status-ReadyForActivation { background: #e8f3fb; color: #22577a; }
+.dr-rv-status-Active { background: #edf8f1; color: #1f6f3d; }
+.dr-rv-status-Disabled { background: #f1f5f9; color: #64748b; }
+.dr-rv-status-Archived { background: #ece8f3; color: #5b3b82; }
+
+.dr-status-pill-Draft { background: #eef2f7; color: #334155; }
+.dr-status-pill-NeedsMapping { background: #fff8df; color: #775f00; }
+.dr-status-pill-ValidationErrors { background: #fff1f1; color: #8f1d1d; }
+.dr-status-pill-ReadyForActivation { background: #e8f3fb; color: #22577a; }
+.dr-status-pill-Active { background: #edf8f1; color: #1f6f3d; }
+.dr-status-pill-Disabled { background: #f1f5f9; color: #64748b; }
+.dr-status-pill-Archived { background: #ece8f3; color: #5b3b82; }
+
+.dr-cert-pill-Internal { background: #eef2f7; color: #334155; }
+.dr-cert-pill-Reviewed { background: #edf8f1; color: #1f6f3d; }
+.dr-cert-pill-ProductionReady { background: #e8f3fb; color: #22577a; }
+.dr-cert-pill-Certified { background: #fff8df; color: #775f00; }
+
 body:not(.unused) .dr-design-only {
     display: none;
 }

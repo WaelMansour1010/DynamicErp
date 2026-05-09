@@ -1,0 +1,175 @@
+@model MyERP.Areas.Reports.Models.ReviewPageModel
+@{
+    Layout = ViewBag.LayoutPath as string;
+    ViewBag.Title = "مراجعة التقرير الديناميكي";
+    var definition = Model == null ? null : Model.Definition;
+    var scope = (Model == null ? null : Model.Scope) ?? ((ViewBag.Scope as string) ?? "Web");
+    var apiBase = (Model == null ? null : Model.ApiBase) ?? ((ViewBag.DynamicReportsApiBase as string) ?? Url.Content("~/Reports/Admin"));
+    var reportId = definition == null ? 0 : definition.ReportId;
+}
+
+@helper ReviewBody()
+{
+    var definition = Model == null ? null : Model.Definition;
+    var suggestions = Model == null ? null : Model.Suggestions;
+    <section class="dr-rv-shell" dir="rtl" data-report-id="@(definition == null ? 0 : definition.ReportId)" data-scope="@(definition == null ? "Web" : definition.ProjectScope)">
+        <header class="dr-rv-header">
+            <div>
+                <h1>@(definition == null ? "مراجعة التقرير" : (definition.ReportNameAr ?? definition.ReportNameEn ?? definition.ReportCode))</h1>
+                <div class="dr-rv-meta">
+                    <span>@Html.Partial("~/Areas/Reports/Views/Admin/_LifecycleBadge.cshtml", definition == null ? "Draft" : definition.LifecycleStatus)</span>
+                    <span>@Html.Partial("~/Areas/Reports/Views/Admin/_CertificationBadge.cshtml", definition == null ? "Internal" : definition.CertificationLevel)</span>
+                    <span>Scope: @(definition == null ? "Web" : definition.ProjectScope)</span>
+                    <span>Source: @(definition == null ? "" : definition.SourceType) / @(definition == null ? "" : definition.SourceName)</span>
+                </div>
+            </div>
+            <a class="dr-button secondary" href="@((Model == null ? null : Model.ApiBase) ?? Url.Content("~/Reports/Admin"))">العودة للإدارة</a>
+        </header>
+
+        <div class="dr-rv-actions">
+            <button type="button" class="dr-button" id="drRvValidate">تشغيل الفحص</button>
+            <button type="button" class="dr-button secondary" id="drRvApplyAll">تطبيق كل الاقتراحات</button>
+            <button type="button" class="dr-button" data-transition="Active" id="drRvActivate">تفعيل</button>
+            <button type="button" class="dr-button secondary" data-transition="Disabled">تعطيل</button>
+            <button type="button" class="dr-button danger" data-transition="Archived">أرشفة</button>
+            <button type="button" class="dr-button secondary" data-transition="Draft">إعادة فتح كمسودة</button>
+            <button type="button" class="dr-button secondary" id="drRvMarkReviewed">Mark as Reviewed</button>
+            <button type="button" class="dr-button secondary" id="drRvRevertReview">Revert Review</button>
+        </div>
+
+        <div id="drRvMessage" class="dr-message" role="status"></div>
+
+        <section class="dr-rv-summary">
+            <div><strong id="drRvErrors">0</strong><span>أخطاء</span></div>
+            <div><strong id="drRvWarnings">0</strong><span>تحذيرات</span></div>
+            <div><strong id="drRvInfos">0</strong><span>معلومات</span></div>
+            <div><strong id="drRvStatus">@(definition == null ? "Draft" : definition.LifecycleStatus)</strong><span>الحالة الحالية</span></div>
+        </section>
+
+        <section class="dr-rv-metadata">
+            <h2>بيانات التقرير</h2>
+            <div class="dr-grid">
+                <div class="dr-field"><label>كود التقرير</label><input type="text" readonly value="@(definition == null ? "" : definition.ReportCode)" dir="ltr" /></div>
+                <div class="dr-field"><label>الاسم العربي</label><input id="drRvNameAr" type="text" value="@(definition == null ? "" : definition.ReportNameAr)" /></div>
+                <div class="dr-field"><label>الاسم الإنجليزي</label><input id="drRvNameEn" type="text" value="@(definition == null ? "" : definition.ReportNameEn)" /></div>
+                <div class="dr-field"><label>آخر فحص</label><input type="text" readonly value="@(definition != null && definition.LastValidatedAt.HasValue ? definition.LastValidatedAt.Value.ToString("yyyy-MM-dd HH:mm") : "")" /></div>
+            </div>
+        </section>
+
+        <section class="dr-rv-cols">
+            <h2>الأعمدة والاقتراحات</h2>
+            <div class="dr-scroll">
+                <table class="dr-table">
+                    <thead>
+                        <tr><th>Field</th><th>Caption الحالي</th><th>اقتراح عربي</th><th>النوع</th><th>Group</th><th>Format</th><th></th></tr>
+                    </thead>
+                    <tbody id="drRvColumns">
+                    @if (definition != null && definition.Columns != null)
+                    {
+                        foreach (var column in definition.Columns)
+                        {
+                            var caption = suggestions != null && suggestions.CaptionsAr.ContainsKey(column.FieldName) ? suggestions.CaptionsAr[column.FieldName] : "";
+                            var format = suggestions != null && suggestions.Formatting.ContainsKey(column.FieldName) ? suggestions.Formatting[column.FieldName].Format : "";
+                            var group = suggestions != null && suggestions.GroupableHints.Contains(column.FieldName) ? "نعم" : "";
+                            <tr data-field="@column.FieldName">
+                                <td dir="ltr">@column.FieldName</td>
+                                <td>@column.CaptionAr</td>
+                                <td>@caption</td>
+                                <td>@column.DataType</td>
+                                <td>@group</td>
+                                <td dir="ltr">@format</td>
+                                <td><button type="button" class="dr-mini-button" data-apply-caption="@column.FieldName">تطبيق</button></td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="dr-rv-params">
+            <h2>المعاملات</h2>
+            <div class="dr-scroll">
+                <table class="dr-table">
+                    <thead><tr><th>Parameter</th><th>Caption</th><th>Type</th><th>Required</th><th>Default</th></tr></thead>
+                    <tbody>
+                    @if (definition != null && definition.Parameters != null)
+                    {
+                        foreach (var parameter in definition.Parameters)
+                        {
+                            <tr>
+                                <td dir="ltr">@parameter.ParameterName</td>
+                                <td>@parameter.CaptionAr</td>
+                                <td>@parameter.DataType</td>
+                                <td>@(parameter.IsRequired ? "نعم" : "لا")</td>
+                                <td>@parameter.DefaultValue</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="dr-rv-sample">
+            <div class="dr-panel-head">
+                <h2>تشغيل عينة</h2>
+                <button type="button" class="dr-button secondary" id="drRvRunSample">تشغيل العينة</button>
+            </div>
+            <div id="drRvSampleStats" class="dr-muted"></div>
+            <div class="dr-scroll"><table class="dr-table" id="drRvSampleTable"></table></div>
+        </section>
+
+        <section class="dr-rv-print-frame">
+            <div class="dr-panel-head">
+                <h2>معاينة الطباعة</h2>
+                <button type="button" class="dr-button secondary" id="drRvPrint">فتح معاينة الطباعة</button>
+            </div>
+            <iframe id="drRvPrintFrame" title="Print Preview" loading="lazy"></iframe>
+        </section>
+
+        <section class="dr-rv-risk">
+            <h2>مخاطر المصدر الأصلي</h2>
+            <p>@(string.IsNullOrWhiteSpace(Model == null ? null : Model.RiskFlags) ? "لا توجد RiskFlags محفوظة لهذا التقرير." : Model.RiskFlags)</p>
+        </section>
+
+        <section class="dr-rv-suggest">
+            <h2>اقتراحات عامة</h2>
+            <div id="drRvChecks" class="dr-rv-checks"></div>
+            @if (suggestions != null && suggestions.SortHints.Count > 0)
+            {
+                <p>الترتيب المقترح: <strong dir="ltr">@suggestions.SortHints[0].Field @suggestions.SortHints[0].Direction</strong></p>
+            }
+        </section>
+    </section>
+}
+
+@if (Layout == null)
+{
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>مراجعة التقرير الديناميكي</title>
+        <script src="@Url.Content("~/Scripts/jquery-3.3.1.min.js")"></script>
+        <link href="@Url.Content("~/Areas/Reports/Content/dynamic-reports.css")" rel="stylesheet" />
+        <link href="@Url.Content("~/Areas/Reports/Content/dynamic-reports-review.css")" rel="stylesheet" />
+    </head>
+    <body>
+        @ReviewBody()
+        <script>window.DynamicReportsScope = "@scope"; window.DynamicReportsApiBase = "@apiBase"; window.DynamicReportReviewId = @reportId;</script>
+        <script src="@Url.Content("~/Areas/Reports/Scripts/dynamic-reports-review.js")"></script>
+    </body>
+    </html>
+}
+else
+{
+    @section scripts {
+        <script>window.DynamicReportsScope = "@scope"; window.DynamicReportsApiBase = "@apiBase"; window.DynamicReportReviewId = @reportId;</script>
+        <script src="@Url.Content("~/Areas/Reports/Scripts/dynamic-reports-review.js")"></script>
+    }
+    <link href="@Url.Content("~/Areas/Reports/Content/dynamic-reports.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Reports/Content/dynamic-reports-review.css")" rel="stylesheet" />
+    @ReviewBody()
+}

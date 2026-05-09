@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
 using MyERP.Areas.Reports.Models;
@@ -85,6 +86,62 @@ namespace MyERP.Areas.Reports.Controllers
             var user = CurrentUser(scope);
             _layoutService.DeleteLayout(layoutId, user);
             return Json(new { success = true });
+        }
+
+        [HttpPost]
+        public virtual ActionResult Print(int reportId, int? layoutId, string scope, FormCollection form)
+        {
+            var user = CurrentUser(scope);
+            if (!IsAuthenticatedForScope(user))
+            {
+                return RedirectToScopeLogin(user.ProjectScope);
+            }
+
+            var definition = _definitionService.GetDefinition(reportId, user.ProjectScope);
+            if (!_permissionService.CanView(user, definition))
+            {
+                return new HttpStatusCodeResult(403, "Print preview is not allowed for this report.");
+            }
+
+            var parameters = new Dictionary<string, string>();
+            foreach (var key in form.AllKeys)
+            {
+                if (string.IsNullOrWhiteSpace(key)) continue;
+                if (string.Equals(key, "reportId", System.StringComparison.OrdinalIgnoreCase)) continue;
+                if (string.Equals(key, "layoutId", System.StringComparison.OrdinalIgnoreCase)) continue;
+                if (string.Equals(key, "scope", System.StringComparison.OrdinalIgnoreCase)) continue;
+                parameters[key] = form[key];
+            }
+
+            var request = new DynamicReportExecutionRequest
+            {
+                ReportId = reportId,
+                ProjectScope = user.ProjectScope,
+                Parameters = parameters
+            };
+            var result = _executionService.Execute(request, user);
+            if (!result.Success)
+            {
+                Response.StatusCode = 400;
+            }
+
+            string layoutJson = null;
+            if (layoutId.GetValueOrDefault() > 0)
+            {
+                var layout = _layoutService.GetLayouts(reportId, user).FirstOrDefault(x => x.LayoutId == layoutId.Value);
+                if (layout != null)
+                {
+                    layoutJson = layout.LayoutJson;
+                }
+            }
+
+            ViewBag.Definition = definition;
+            ViewBag.Result = result;
+            ViewBag.LayoutJson = layoutJson;
+            ViewBag.User = user;
+            ViewBag.Parameters = parameters;
+            ViewBag.GeneratedAt = System.DateTime.Now;
+            return View("~/Areas/Reports/Views/Viewer/Print.cshtml");
         }
 
         protected DynamicReportUserContext CurrentUser(string scope)

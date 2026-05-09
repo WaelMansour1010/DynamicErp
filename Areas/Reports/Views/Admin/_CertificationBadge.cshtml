@@ -1,0 +1,5 @@
+@model string
+@{
+    var level = string.IsNullOrWhiteSpace(Model) ? "Internal" : Model;
+}
+<span class="dr-status-pill dr-cert-pill-@level">@level</span>

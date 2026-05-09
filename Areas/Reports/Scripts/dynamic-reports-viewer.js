@@ -11,7 +11,8 @@
         selectedField: null,
         sort: null,
         page: 1,
-        layout: createEmptyLayout()
+        layout: createEmptyLayout(),
+        currentLayoutId: null
     };
 
     function api(path) {
@@ -211,6 +212,7 @@
                 .attr("draggable", "true")
                 .attr("data-field", c.FieldName)
                 .toggleClass("selected", state.selectedField === c.FieldName)
+                .toggleClass("dr-selected", state.selectedField === c.FieldName)
                 .append($("<input type='checkbox' class='dr-field-visible'>").prop("checked", state.layout.visibleColumns[c.FieldName] !== false))
                 .append($("<span class='dr-type-icon'>").text(iconFor(c)))
                 .append($("<span class='dr-field-caption'>").text(display))
@@ -355,6 +357,18 @@
         state.layout.conditionalFormatting = rules;
     }
 
+    function collectParameterValues() {
+        var parameters = {};
+        var missing = false;
+        $("#drParameters [data-param]").each(function () {
+            var input = $(this);
+            var value = input.attr("type") === "checkbox" ? input.is(":checked") : input.val();
+            if (input.is("[required]") && !value) missing = true;
+            parameters[input.attr("data-param")] = value;
+        });
+        return { parameters: parameters, missing: missing };
+    }
+
     function execute() {
         if (!state.definition) {
             msg("اختر تقريرًا أولًا.", true);
@@ -476,6 +490,7 @@
             var th = $("<th>")
                 .attr("data-field", c.FieldName)
                 .attr("draggable", state.designMode ? "true" : "false")
+                .toggleClass("dr-selected", state.selectedField === c.FieldName)
                 .css("width", (state.layout.widths[c.FieldName] || 140) + "px")
                 .append($("<span>").text(label(c)))
                 .append(sortMark(c.FieldName));
@@ -677,7 +692,8 @@
             method: "POST",
             data: currentLayoutJson(),
             contentType: "application/json; charset=utf-8"
-        }).done(function () {
+        }).done(function (r) {
+            if (r && r.layoutId) state.currentLayoutId = r.layoutId;
             msg(forceDefault ? "تم حفظ التصميم وجعله افتراضيًا." : "تم حفظ التصميم.");
             loadLayouts();
         }).fail(function () { msg("تعذر حفظ التصميم", true); });
@@ -687,11 +703,13 @@
         if (!state.definition) return;
         $.getJSON(api("Layouts") + "&reportId=" + state.definition.ReportId).done(function (r) {
             var select = $("#drLayouts").empty();
+            state.currentLayoutId = null;
             select.append($("<option>").val("").text("اختر تصميمًا محفوظًا"));
             (r.data || []).forEach(function (item) {
                 select.append($("<option>").val(item.LayoutId).attr("data-json", item.LayoutJson).text((item.IsDefault ? "★ " : "") + item.LayoutName));
                 if (item.IsDefault) {
                     $("#drLayouts").val(item.LayoutId);
+                    state.currentLayoutId = item.LayoutId;
                     applyLayoutJson(item.LayoutJson, true);
                 }
             });
@@ -699,8 +717,10 @@
     }
 
     function applySelectedLayout() {
-        var raw = $("#drLayouts option:selected").attr("data-json");
+        var option = $("#drLayouts option:selected");
+        var raw = option.attr("data-json");
         if (!raw) return;
+        state.currentLayoutId = parseInt(option.val(), 10) || null;
         applyLayoutJson(raw, false);
     }
 
@@ -749,6 +769,39 @@
         document.body.removeChild(link);
     }
 
+    function printPreview() {
+        if (!state.definition) {
+            msg("اختر تقريرًا أولًا.", true);
+            return;
+        }
+        var collected = collectParameterValues();
+        if (collected.missing) {
+            msg("أدخل المعايير المطلوبة قبل معاينة الطباعة.", true);
+            return;
+        }
+        var form = document.createElement("form");
+        form.method = "POST";
+        form.target = "_blank";
+        form.action = state.apiBase.replace(/\/$/, "") + "/Print";
+        addHidden(form, "reportId", state.definition.ReportId);
+        addHidden(form, "layoutId", state.currentLayoutId || "");
+        addHidden(form, "scope", state.scope);
+        Object.keys(collected.parameters).forEach(function (key) {
+            addHidden(form, key, collected.parameters[key]);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+
+    function addHidden(form, name, value) {
+        var input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value == null ? "" : value;
+        form.appendChild(input);
+    }
+
     function csvCell(value) {
         value = value === null || value === undefined ? "" : String(value);
         return '"' + value.replace(/"/g, '""') + '"';
@@ -786,11 +839,11 @@
             draggedField = $(this).attr("data-field");
             e.originalEvent.dataTransfer.setData("text/plain", draggedField);
         });
-        $("#drGroupArea").on("dragover", function (e) { e.preventDefault(); $(this).addClass("drag-over"); });
-        $("#drGroupArea").on("dragleave", function () { $(this).removeClass("drag-over"); });
+        $("#drGroupArea").on("dragover", function (e) { e.preventDefault(); $(this).addClass("drag-over dr-drop-zone--active"); });
+        $("#drGroupArea").on("dragleave", function () { $(this).removeClass("drag-over dr-drop-zone--active"); });
         $("#drGroupArea").on("drop", function (e) {
             e.preventDefault();
-            $(this).removeClass("drag-over");
+            $(this).removeClass("drag-over dr-drop-zone--active");
             addGroup(e.originalEvent.dataTransfer.getData("text/plain") || draggedField);
         });
         $("#drData").on("dragover", "th", function (e) { e.preventDefault(); });
@@ -850,5 +903,6 @@
         $("#drResetLayout").on("click", resetLayout);
         $("#drDeleteLayout").on("click", deleteSelectedLayout);
         $("#drExportCsv").on("click", exportCsv);
+        $("#btnPrintPreview").on("click", printPreview);
     });
 })();

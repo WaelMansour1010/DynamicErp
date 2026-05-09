@@ -19,6 +19,15 @@ namespace MyERP.Areas.Reports.Models
         }
     }
 
+    public static class DynamicReportCatalogStatus
+    {
+        public const string Pending = "Pending";
+        public const string Approved = "Approved";
+        public const string Rejected = "Rejected";
+        public const string Risky = "Risky";
+        public const string Imported = "Imported";
+    }
+
     public class DynamicReportUserContext
     {
         public int UserId { get; set; }
@@ -39,6 +48,8 @@ namespace MyERP.Areas.Reports.Models
             MaxRows = 1000;
             CommandTimeoutSeconds = 30;
             IsActive = true;
+            LifecycleStatus = LifecycleStatusEnum.Draft;
+            CertificationLevel = DynamicReportCertificationLevel.Internal;
         }
 
         public int ReportId { get; set; }
@@ -52,6 +63,15 @@ namespace MyERP.Areas.Reports.Models
         public int MaxRows { get; set; }
         public int CommandTimeoutSeconds { get; set; }
         public bool IsActive { get; set; }
+        public string LifecycleStatus { get; set; }
+        public string CertificationLevel { get; set; }
+        public DateTime? LastValidatedAt { get; set; }
+        public string LastValidationLog { get; set; }
+        public int? ActivatedBy { get; set; }
+        public DateTime? ActivatedAt { get; set; }
+        public int? ReviewedBy { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+        public int? CreatedBy { get; set; }
         public IList<DynamicReportParameter> Parameters { get; set; }
         public IList<DynamicReportColumn> Columns { get; set; }
     }
@@ -127,5 +147,38 @@ namespace MyERP.Areas.Reports.Models
         public IList<IDictionary<string, object>> Rows { get; set; }
         public int RowCount { get; set; }
         public int MaxRows { get; set; }
+    }
+
+    public class DynamicReportPermission
+    {
+        public int PermissionId { get; set; }
+        public int ReportId { get; set; }
+        public string ProjectScope { get; set; }
+        public int? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public bool CanView { get; set; }
+        public bool CanDesign { get; set; }
+        public bool CanExport { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string DisplayName { get; set; }
+    }
+
+    public class DynamicReportPermissionInput
+    {
+        public int ReportId { get; set; }
+        public string ProjectScope { get; set; }
+        public int? UserId { get; set; }
+        public int? RoleId { get; set; }
+        public bool CanView { get; set; }
+        public bool CanDesign { get; set; }
+        public bool CanExport { get; set; }
+    }
+
+    public class EffectivePermission
+    {
+        public bool CanView { get; set; }
+        public bool CanDesign { get; set; }
+        public bool CanExport { get; set; }
+        public string Source { get; set; }
     }
 }

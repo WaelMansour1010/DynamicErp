@@ -47,6 +47,10 @@
         <button type="button" class="dr-button secondary" id="drLoadMetadata">تحميل الأعمدة والباراميترز</button>
     </div>
 
+    @Html.Partial("~/Areas/Reports/Views/Admin/_PermissionsPanel.cshtml")
+
+    @Html.Partial("~/Areas/Reports/Views/Admin/_CatalogPanel.cshtml")
+
     <div class="dr-panel">
         <div class="dr-panel-head">
             <h2>Parameters</h2>
@@ -90,7 +94,7 @@
         <div class="dr-scroll">
             <table class="dr-table" id="drReports">
                 <thead>
-                    <tr><th>الكود</th><th>الاسم</th><th>النطاق</th><th>المصدر</th><th>الحالة</th><th></th></tr>
+                    <tr><th>الكود</th><th>الاسم</th><th>النطاق</th><th>المصدر</th><th>Lifecycle</th><th>الحالة</th><th></th></tr>
                 </thead>
                 <tbody></tbody>
             </table>

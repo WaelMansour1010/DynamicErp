@@ -25,7 +25,9 @@ namespace MyERP.Areas.Reports.Services
             var list = new List<DynamicReportDefinition>();
             const string sql = @"
 SELECT ReportId, ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName,
-       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive
+       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
+       LifecycleStatus, CertificationLevel, LastValidatedAt, LastValidationLog,
+       ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt, CreatedBy
 FROM dbo.DynamicReportDefinitions
 WHERE (@includeInactive = 1 OR IsActive = 1)
   AND (ProjectScope = @scope OR ProjectScope = N'Shared' OR @scope = N'Shared')
@@ -48,14 +50,18 @@ ORDER BY ReportNameAr, ReportNameEn;";
         {
             const string sql = @"
 SELECT ReportId, ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName,
-       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive
+       RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
+       LifecycleStatus, CertificationLevel, LastValidatedAt, LastValidationLog,
+       ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt, CreatedBy
 FROM dbo.DynamicReportDefinitions
-WHERE ReportId = @reportId;";
+WHERE ReportId = @reportId
+  AND (ProjectScope = @scope OR ProjectScope = N'Shared' OR @scope = N'Shared');";
             DynamicReportDefinition definition = null;
             using (var connection = _connectionFactory.CreateOpenConnection(scope))
             using (var command = new SqlCommand(sql, connection))
             {
                 command.Parameters.Add("@reportId", SqlDbType.Int).Value = reportId;
+                command.Parameters.Add("@scope", SqlDbType.NVarChar, 20).Value = DynamicReportScopes.Normalize(scope);
                 using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read()) definition = ReadDefinition(reader);
@@ -168,9 +174,11 @@ ORDER BY SortOrder, ColumnId;";
         {
             const string sql = @"
 INSERT INTO dbo.DynamicReportDefinitions
-(ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName, RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive, CreatedBy, CreatedAt)
+(ReportCode, ReportNameAr, ReportNameEn, ProjectScope, SourceType, SourceName, RequireDateRange, MaxRows, CommandTimeoutSeconds, IsActive,
+ LifecycleStatus, CertificationLevel, LastValidatedAt, LastValidationLog, ActivatedBy, ActivatedAt, ReviewedBy, ReviewedAt, CreatedBy, CreatedAt)
 VALUES
-(@ReportCode, @ReportNameAr, @ReportNameEn, @ProjectScope, @SourceType, @SourceName, @RequireDateRange, @MaxRows, @CommandTimeoutSeconds, @IsActive, @UserId, GETDATE());
+(@ReportCode, @ReportNameAr, @ReportNameEn, @ProjectScope, @SourceType, @SourceName, @RequireDateRange, @MaxRows, @CommandTimeoutSeconds, 0,
+ N'Draft', N'Internal', NULL, NULL, NULL, NULL, NULL, NULL, @UserId, GETDATE());
 SELECT CAST(SCOPE_IDENTITY() AS INT);";
             using (var command = new SqlCommand(sql, connection, transaction))
             {
@@ -186,7 +194,7 @@ UPDATE dbo.DynamicReportDefinitions
 SET ReportCode = @ReportCode, ReportNameAr = @ReportNameAr, ReportNameEn = @ReportNameEn,
     ProjectScope = @ProjectScope, SourceType = @SourceType, SourceName = @SourceName,
     RequireDateRange = @RequireDateRange, MaxRows = @MaxRows, CommandTimeoutSeconds = @CommandTimeoutSeconds,
-    IsActive = @IsActive, UpdatedBy = @UserId, UpdatedAt = GETDATE()
+    UpdatedBy = @UserId, UpdatedAt = GETDATE()
 WHERE ReportId = @ReportId;";
             using (var command = new SqlCommand(sql, connection, transaction))
             {
@@ -290,7 +298,16 @@ VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefa
                 RequireDateRange = Convert.ToBoolean(reader["RequireDateRange"]),
                 MaxRows = Convert.ToInt32(reader["MaxRows"]),
                 CommandTimeoutSeconds = Convert.ToInt32(reader["CommandTimeoutSeconds"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
+                IsActive = Convert.ToBoolean(reader["IsActive"]),
+                LifecycleStatus = reader["LifecycleStatus"] == DBNull.Value ? (Convert.ToBoolean(reader["IsActive"]) ? LifecycleStatusEnum.Active : LifecycleStatusEnum.Disabled) : Convert.ToString(reader["LifecycleStatus"]),
+                CertificationLevel = reader["CertificationLevel"] == DBNull.Value ? DynamicReportCertificationLevel.Internal : Convert.ToString(reader["CertificationLevel"]),
+                LastValidatedAt = reader["LastValidatedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["LastValidatedAt"]),
+                LastValidationLog = reader["LastValidationLog"] == DBNull.Value ? null : Convert.ToString(reader["LastValidationLog"]),
+                ActivatedBy = reader["ActivatedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["ActivatedBy"]),
+                ActivatedAt = reader["ActivatedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["ActivatedAt"]),
+                ReviewedBy = reader["ReviewedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["ReviewedBy"]),
+                ReviewedAt = reader["ReviewedAt"] == DBNull.Value ? null : (DateTime?)Convert.ToDateTime(reader["ReviewedAt"]),
+                CreatedBy = reader["CreatedBy"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["CreatedBy"])
             };
         }
 

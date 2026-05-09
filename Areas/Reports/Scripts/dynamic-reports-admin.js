@@ -6,7 +6,17 @@
     };
 
     function api(path) {
+        // state.apiBase already includes the controller URL (e.g. /Reports/Admin or /Pos/DynamicReportsAdmin).
         return state.apiBase.replace(/\/$/, "") + "/" + path + "?scope=" + encodeURIComponent(state.scope);
+    }
+
+    function reviewUrl(reportId) {
+        return state.apiBase.replace(/\/$/, "") + "/Review?scope=" + encodeURIComponent(state.scope) + "&id=" + encodeURIComponent(reportId);
+    }
+
+    function statusBadge(status) {
+        status = status || "Draft";
+        return $("<span class='dr-status-pill'>").addClass("dr-rv-status-" + status).text(status);
     }
 
     function msg(text) {
@@ -40,8 +50,12 @@
                     .append($("<td>").text(item.ReportNameAr || item.ReportNameEn))
                     .append($("<td>").text(item.ProjectScope))
                     .append($("<td>").text(item.SourceType))
+                    .append($("<td>").append(statusBadge(item.LifecycleStatus || (item.IsActive ? "Active" : "Disabled"))))
                     .append($("<td>").text(item.IsActive ? "نشط" : "متوقف"))
-                    .append($("<td>").append($("<button class='dr-button secondary' type='button'>").text("فتح").on("click", function () { loadDefinition(item.ReportId); })))
+                    .append($("<td>")
+                        .append($("<button class='dr-button secondary' type='button'>").text("فتح").on("click", function () { loadDefinition(item.ReportId); }))
+                        .append(" ")
+                        .append($("<a class='dr-button secondary'>").attr("href", reviewUrl(item.ReportId)).text("Review")))
                     .appendTo(tbody);
             });
         }).fail(function () { msg("تعذر تحميل قائمة التقارير"); });
@@ -51,6 +65,7 @@
         $.getJSON(api("Get") + "&id=" + id).done(function (r) {
             state.current = r.data;
             bindForm();
+            dr.permissions.load(state.current && state.current.ReportId);
             msg("تم تحميل التقرير");
         }).fail(function () { msg("تعذر تحميل التقرير"); });
     }
@@ -178,6 +193,7 @@
         }).done(function (r) {
             msg("تم الحفظ");
             $("#ReportId").val(r.reportId);
+            dr.permissions.load(r.reportId);
             loadList();
         }).fail(function (xhr) {
             msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر الحفظ");
@@ -197,11 +213,292 @@
         });
     }
 
+    var dr = window.DynamicReportsAdmin = window.DynamicReportsAdmin || {};
+    dr.permissions = (function () {
+        var searchTimer = null;
+
+        function panelMsg(text) {
+            $("#drPermMessage").text(text || "");
+        }
+
+        function currentReportId() {
+            return parseInt($("#ReportId").val(), 10) || 0;
+        }
+
+        function currentProjectScope() {
+            return $("#ProjectScope").val() || state.scope;
+        }
+
+        function clear() {
+            $("#drPermRows").empty();
+            $("#drPermEmpty").show();
+            panelMsg("");
+        }
+
+        function bind(items) {
+            var rows = $("#drPermRows").empty();
+            items = items || [];
+            $("#drPermEmpty").toggle(items.length === 0);
+            items.forEach(function (item) {
+                var flags = [];
+                if (item.CanView) flags.push("مشاهدة");
+                if (item.CanDesign) flags.push("تصميم");
+                if (item.CanExport) flags.push("تصدير");
+
+                $("<div class='dr-perm-row'>")
+                    .append($("<div class='dr-perm-actor'>").append($("<strong>").text(item.DisplayName || "")).append($("<span>").text(item.ProjectScope || "")))
+                    .append($("<div class='dr-perm-flags'>").text(flags.join(" / ")))
+                    .append($("<button class='dr-mini-button danger' type='button'>").text("حذف").on("click", function () { remove(item.PermissionId); }))
+                    .appendTo(rows);
+            });
+        }
+
+        function load(reportId) {
+            if (!reportId) {
+                clear();
+                return;
+            }
+
+            $.getJSON(api("ListPermissions") + "&reportId=" + encodeURIComponent(reportId))
+                .done(function (r) { bind(r.data || []); })
+                .fail(function (xhr) { panelMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تحميل الصلاحيات."); });
+        }
+
+        function loadRoles() {
+            $.getJSON(api("ListRoles")).done(function (r) {
+                var select = $("#drPermRoles").empty();
+                (r.data || []).forEach(function (role) {
+                    $("<option>").val(role.Key).text(role.Value || role.Key).appendTo(select);
+                });
+            }).fail(function () {
+                $("#drPermRoles").empty();
+                panelMsg("تعذر تحميل الأدوار.");
+            });
+        }
+
+        function searchUser(q) {
+            $.getJSON(api("ListUsersLite") + "&q=" + encodeURIComponent(q || "")).done(function (r) {
+                var select = $("#drPermUsers").empty();
+                (r.data || []).forEach(function (user) {
+                    $("<option>").val(user.Key).text(user.Value || user.Key).appendTo(select);
+                });
+            }).fail(function () {
+                $("#drPermUsers").empty();
+                panelMsg("تعذر تحميل المستخدمين.");
+            });
+        }
+
+        function collectInput() {
+            var actorType = $("#drPermActorType").val();
+            var input = {
+                ReportId: currentReportId(),
+                ProjectScope: currentProjectScope(),
+                CanView: $("#drPermCanView").is(":checked"),
+                CanDesign: $("#drPermCanDesign").is(":checked"),
+                CanExport: $("#drPermCanExport").is(":checked")
+            };
+
+            if (actorType === "role") {
+                input.RoleId = parseInt($("#drPermRoles").val(), 10) || null;
+                input.UserId = null;
+            } else {
+                input.UserId = parseInt($("#drPermUsers").val(), 10) || null;
+                input.RoleId = null;
+            }
+
+            return input;
+        }
+
+        function add(input) {
+            if (!input.ReportId) {
+                panelMsg("اختر تقريرًا أولًا.");
+                return;
+            }
+
+            $.ajax({
+                url: api("SavePermission"),
+                method: "POST",
+                data: JSON.stringify(input),
+                contentType: "application/json; charset=utf-8"
+            }).done(function () {
+                panelMsg("تم حفظ الصلاحية.");
+                load(input.ReportId);
+            }).fail(function (xhr) {
+                panelMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر حفظ الصلاحية.");
+            });
+        }
+
+        function remove(permissionId) {
+            $.post(api("DeletePermission") + "&permissionId=" + encodeURIComponent(permissionId))
+                .done(function () {
+                    panelMsg("تم حذف الصلاحية.");
+                    load(currentReportId());
+                })
+                .fail(function (xhr) {
+                    panelMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر حذف الصلاحية.");
+                });
+        }
+
+        function refreshActorMode() {
+            var isRole = $("#drPermActorType").val() === "role";
+            $("#drPermRoleBox").toggle(isRole);
+            $("#drPermUserBox").toggle(!isRole);
+        }
+
+        function wire() {
+            refreshActorMode();
+            loadRoles();
+            searchUser("");
+            $("#drPermActorType").on("change", refreshActorMode);
+            $("#drSavePermission").on("click", function () { add(collectInput()); });
+            $("#drPermUserSearch").on("input", function () {
+                var q = $(this).val();
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function () { searchUser(q); }, 250);
+            });
+        }
+
+        return {
+            load: load,
+            bind: bind,
+            add: add,
+            delete: remove,
+            searchUser: searchUser,
+            loadRoles: loadRoles,
+            clear: clear,
+            wire: wire
+        };
+    })();
+
+    dr.catalog = (function () {
+        function catalogMsg(text) {
+            $("#drCatalogMessage").text(text || "");
+        }
+
+        function statusClass(status) {
+            return "dr-catalog-status-" + (status || "Pending");
+        }
+
+        function list(scope, status) {
+            $.getJSON(api("CatalogList") + "&status=" + encodeURIComponent(status || "")).done(function (r) {
+                var rows = $("#drCatalogRows").empty();
+                var items = r.data || [];
+                if (!items.length) {
+                    $("<div class='dr-perm-empty'>").text("لا توجد مصادر في الكتالوج لهذا الفلتر.").appendTo(rows);
+                    return;
+                }
+
+                items.forEach(function (item) {
+                    var title = item.SourceSchema + "." + item.SourceName;
+                    var row = $("<div class='dr-catalog-row'>").addClass(statusClass(item.ClassificationStatus));
+                    row.append($("<div>").append($("<strong>").text(title)).append($("<span>").text(item.SourceType)));
+                    row.append($("<div class='dr-catalog-score'>").text(item.ClassificationScore));
+                    row.append($("<div class='dr-catalog-flags'>").text(item.RiskFlags || ""));
+                    row.append($("<div>").text(item.ClassificationStatus));
+                    var actions = $("<div class='dr-actions'>");
+                    $("<button class='dr-mini-button' type='button'>").text("تفاصيل").on("click", function () { detail(item.CatalogId, scope); }).appendTo(actions);
+                    $("<button class='dr-mini-button' type='button'>").text("اعتماد").on("click", function () {
+                        var name = window.prompt("اسم التقرير المقترح", item.SuggestedReportName || item.SourceName);
+                        if (name !== null) approve(item.CatalogId, scope, name);
+                    }).appendTo(actions);
+                    $("<button class='dr-mini-button danger' type='button'>").text("رفض").on("click", function () {
+                        var reason = window.prompt("سبب الرفض", item.RejectionReason || "");
+                        if (reason !== null) reject(item.CatalogId, scope, reason);
+                    }).appendTo(actions);
+                    $("<button class='dr-mini-button secondary' type='button'>").text("استيراد").on("click", function () { importOne(item.CatalogId, scope); }).appendTo(actions);
+                    row.append(actions);
+                    row.appendTo(rows);
+                });
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تحميل الكتالوج.");
+            });
+        }
+
+        function discover(scope) {
+            catalogMsg("جاري الاكتشاف دون تنفيذ أي مصدر...");
+            $.post(api("CatalogDiscover")).done(function (r) {
+                var d = r.data || {};
+                catalogMsg("تم الاكتشاف. جديد: " + (d.DiscoveredCount || 0) + "، محدّث: " + (d.UpdatedCount || 0) + "، أخطاء: " + (d.ErrorCount || 0));
+                list(scope, $("#drCatalogStatus").val());
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تنفيذ الاكتشاف.");
+            });
+        }
+
+        function detail(catalogId, scope) {
+            $.getJSON(api("CatalogDetail") + "&catalogId=" + encodeURIComponent(catalogId)).done(function (r) {
+                var d = r.data || {};
+                var entry = d.Entry || {};
+                var pane = $("#drCatalogDetail").empty();
+                $("<h3>").text(entry.SourceSchema + "." + entry.SourceName).appendTo(pane);
+                $("<p>").text("الحالة: " + entry.ClassificationStatus + " | الدرجة: " + entry.ClassificationScore + " | المخاطر: " + (entry.RiskFlags || "")).appendTo(pane);
+                $("<h4>").text("الأعمدة").appendTo(pane);
+                $("<pre class='dr-body-excerpt'>").text((d.Columns || []).map(function (c) { return c.FieldName + " : " + c.DataType; }).join("\n") || "لا توجد أعمدة مكتشفة.").appendTo(pane);
+                $("<h4>").text("المعاملات").appendTo(pane);
+                $("<pre class='dr-body-excerpt'>").text((d.Parameters || []).map(function (p) { return p.ParameterName + " : " + p.DataType; }).join("\n") || "لا توجد معاملات.").appendTo(pane);
+                $("<h4>").text("نص للقراءة فقط، لا يتم تنفيذه").appendTo(pane);
+                $("<pre class='dr-body-excerpt'>").text(d.BodyExcerpt || "").appendTo(pane);
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تحميل التفاصيل.");
+            });
+        }
+
+        function approve(catalogId, scope, suggestedName) {
+            $.post(api("CatalogApprove") + "&catalogId=" + encodeURIComponent(catalogId), { suggestedName: suggestedName || "" }).done(function () {
+                catalogMsg("تم اعتماد المصدر يدويًا.");
+                list(scope, $("#drCatalogStatus").val());
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر اعتماد المصدر.");
+            });
+        }
+
+        function reject(catalogId, scope, reason) {
+            $.post(api("CatalogReject") + "&catalogId=" + encodeURIComponent(catalogId), { reason: reason || "" }).done(function () {
+                catalogMsg("تم رفض المصدر.");
+                list(scope, $("#drCatalogStatus").val());
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر رفض المصدر.");
+            });
+        }
+
+        function importOne(catalogId, scope) {
+            $.post(api("CatalogImport") + "&catalogId=" + encodeURIComponent(catalogId)).done(function (r) {
+                var d = r.data || {};
+                var openReview = d.NewReportId ? " Open Review: " + reviewUrl(d.NewReportId) : "";
+                catalogMsg((d.Message || ("تم الاستيراد: " + (d.ReportCode || ""))) + openReview);
+                list(scope, $("#drCatalogStatus").val());
+                loadList();
+            }).fail(function (xhr) {
+                catalogMsg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر استيراد التقرير.");
+            });
+        }
+
+        function wire() {
+            $("#drCatalogDiscover").on("click", function () { discover(state.scope); });
+            $("#drCatalogRefresh").on("click", function () { list(state.scope, $("#drCatalogStatus").val()); });
+            $("#drCatalogStatus").on("change", function () { list(state.scope, $(this).val()); });
+            list(state.scope, "");
+        }
+
+        return {
+            discover: discover,
+            list: list,
+            detail: detail,
+            approve: approve,
+            reject: reject,
+            import: importOne,
+            wire: wire
+        };
+    })();
+
     $(function () {
         state.current = emptyDefinition();
         bindForm();
+        dr.permissions.wire();
+        dr.permissions.clear();
+        dr.catalog.wire();
         loadList();
-        $("#drNew").on("click", function () { state.current = emptyDefinition(); bindForm(); msg(""); });
+        $("#drNew").on("click", function () { state.current = emptyDefinition(); bindForm(); dr.permissions.clear(); msg(""); });
         $("#drSave").on("click", save);
         $("#drLoadMetadata").on("click", loadMetadata);
         $("#drAddParameter").on("click", function () { addParameterRow({}, $("#drParameters tbody tr").length); });
