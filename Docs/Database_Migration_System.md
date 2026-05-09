@@ -4,10 +4,21 @@
 
 DynamicErp now has a lightweight migration system for SQL Server 2012 without EF Migrations. It gives every database a clear record of applied scripts, prevents accidental re-runs, detects edited scripts, and supports dry-run reporting before changes are applied.
 
+The primary production/customer workflow is now the MainErp web screen:
+
+```text
+/MainErp/DatabaseMigration
+```
+
+The PowerShell runner remains as a developer/helper fallback, not the normal customer execution path.
+
 ## Files
 
 - `Database/Create_DatabaseMigrationHistory.sql`: creates `dbo.DatabaseMigrationHistory`.
 - `Database/Migrations/{Module}`: canonical migration source.
+- `Areas/MainErp/Services/DatabaseMigration/DatabaseMigrationService.cs`: web execution service.
+- `Areas/MainErp/Controllers/DatabaseMigrationController.cs`: secured MainErp UI controller.
+- `Areas/MainErp/Views/DatabaseMigration`: web screens for dashboard and preview.
 - `Tools/DatabaseMigrationRunner/DatabaseMigrationRunner.ps1`: runner tool.
 - `Tools/DatabaseMigrationRunner/README.md`: command examples.
 
@@ -29,6 +40,11 @@ The runner records each attempt in `dbo.DatabaseMigrationHistory`:
 - `ErrorMessage`
 - `BatchNo`
 - `ReleaseNo`
+
+The web manager also records apply batches in:
+
+- `dbo.DatabaseMigrationRun`
+- `dbo.DatabaseMigrationRunDetail`
 
 Successful applications are unique by `ScriptName + ScriptHash`, so an already applied script is skipped. If the same `ScriptName` appears with a different hash, the runner reports a hash mismatch and blocks `Apply`.
 
@@ -84,7 +100,16 @@ Keep old folders as historical source until the conversion is complete:
 
 Release package SQL under `Releases/*/Sql` should be treated as packaged copies, not canonical migration sources.
 
-## Runner Modes
+## Web Manager Modes
+
+- `Index`: reads current database state and configured migration folders.
+- `DryRun`: shows pending scripts and warnings without applying scripts.
+- `PreviewScript`: read-only script view with dangerous SQL warnings.
+- `ApplySelected`: applies only selected pending migrations after `APPLY` confirmation.
+- `ApplyAll`: applies all pending migrations after `APPLY` confirmation.
+- `ExportReport`: exports CSV report for release records.
+
+## PowerShell Helper Modes
 
 - `DryRun`: compares files to history and prints pending/skipped/mismatch lists. Does not create or change database objects.
 - `ReportOnly`: same safe reporting behavior; use for audit pipelines.

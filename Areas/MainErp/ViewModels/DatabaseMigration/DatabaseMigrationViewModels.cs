@@ -115,6 +115,11 @@ namespace MyERP.Areas.MainErp.ViewModels.DatabaseMigration
 
     public class MigrationRunViewModel
     {
+        public MigrationRunViewModel()
+        {
+            Details = new List<MigrationRunDetailViewModel>();
+        }
+
         public long RunId { get; set; }
         public DateTime StartedAt { get; set; }
         public DateTime? FinishedAt { get; set; }
@@ -127,6 +132,7 @@ namespace MyERP.Areas.MainErp.ViewModels.DatabaseMigration
         public int AppliedCount { get; set; }
         public int FailedCount { get; set; }
         public int WarningCount { get; set; }
+        public IList<MigrationRunDetailViewModel> Details { get; set; }
     }
 
     public class MigrationRunDetailViewModel
@@ -161,4 +167,3 @@ namespace MyERP.Areas.MainErp.ViewModels.DatabaseMigration
         public IList<MigrationWarning> Warnings { get; set; }
     }
 }
-

@@ -411,6 +411,14 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
 
             foreach (var line in match.Groups[1].Value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
             {
+                var safePrefix = "Safe to rerun?";
+                var trimmed = line.Trim();
+                if (trimmed.StartsWith(safePrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    values[safePrefix] = trimmed.Substring(safePrefix.Length).Trim().Trim(':').Trim();
+                    continue;
+                }
+
                 var index = line.IndexOf(':');
                 if (index <= 0)
                 {
@@ -595,7 +603,62 @@ ORDER BY RunId DESC;", connection))
                 }
             }
 
+            if (rows.Count > 0 && TableExists(connection, "DatabaseMigrationRunDetail"))
+            {
+                var runIds = rows.Select(x => x.RunId).ToList();
+                var details = ReadRunDetails(connection, runIds);
+                foreach (var run in rows)
+                {
+                    List<MigrationRunDetailViewModel> runDetails;
+                    if (details.TryGetValue(run.RunId, out runDetails))
+                    {
+                        run.Details = runDetails;
+                    }
+                }
+            }
+
             return rows;
+        }
+
+        private static Dictionary<long, List<MigrationRunDetailViewModel>> ReadRunDetails(SqlConnection connection, IList<long> runIds)
+        {
+            var result = new Dictionary<long, List<MigrationRunDetailViewModel>>();
+            if (runIds == null || runIds.Count == 0)
+            {
+                return result;
+            }
+
+            var idList = string.Join(",", runIds.Select(x => x.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            using (var command = new SqlCommand(@"
+SELECT RunId, ScriptName, ModuleName, Status, DurationMs, ErrorMessage, ScriptHash
+FROM dbo.DatabaseMigrationRunDetail
+WHERE RunId IN (" + idList + @")
+ORDER BY RunId DESC, RunDetailId;", connection))
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var runId = Convert.ToInt64(reader["RunId"]);
+                    List<MigrationRunDetailViewModel> rows;
+                    if (!result.TryGetValue(runId, out rows))
+                    {
+                        rows = new List<MigrationRunDetailViewModel>();
+                        result[runId] = rows;
+                    }
+
+                    rows.Add(new MigrationRunDetailViewModel
+                    {
+                        ScriptName = Convert.ToString(reader["ScriptName"]),
+                        ModuleName = Convert.ToString(reader["ModuleName"]),
+                        Status = Convert.ToString(reader["Status"]),
+                        DurationMs = reader["DurationMs"] == DBNull.Value ? (int?)null : Convert.ToInt32(reader["DurationMs"]),
+                        ErrorMessage = reader["ErrorMessage"] == DBNull.Value ? null : Convert.ToString(reader["ErrorMessage"]),
+                        ScriptHash = Convert.ToString(reader["ScriptHash"])
+                    });
+                }
+            }
+
+            return result;
         }
 
         private void EnsureMetadataTables(SqlConnection connection)
