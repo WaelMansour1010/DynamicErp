@@ -78,7 +78,7 @@ namespace MyERP.Areas.Pos.Controllers
             try
             {
                 _repository.SavePosUserTemporaryPermissions(request.UserId, request.Permissions);
-                return Json(new { success = true, message = "تم حفظ صلاحيات POS المؤقتة. تظهر بعد إعادة تسجيل الدخول أو تحديث السياق." });
+                return Json(new { success = true, message = "تم حفظ صلاحيات POS. تظهر بعد إعادة تسجيل الدخول أو تحديث السياق." });
             }
             catch (Exception ex)
             {

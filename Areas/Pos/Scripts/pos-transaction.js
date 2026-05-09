@@ -57,8 +57,7 @@
 
     function byId(id) { return document.getElementById(id); }
     try {
-        posDebugEnabled = /(?:\?|&)posDebug=1(?:&|$)/.test(window.location.search || "")
-            || window.localStorage.getItem("POS_DEBUG") === "1";
+        posDebugEnabled = false;
     } catch (ignoreDebugFlag) {
         posDebugEnabled = false;
     }
@@ -1646,7 +1645,7 @@
                 updateSaveButtonState();
 
                 if (status >= 200 && status < 300 && data && data.success) {
-                    var successMessage = "تم الحفظ التجريبي بنجاح<br />رقم الفاتورة: " + (data.noteSerial1 || "") + "<br />رقم الحركة: " + (data.transactionId || "");
+                    var successMessage = "تم الحفظ بنجاح<br />رقم الفاتورة: " + (data.noteSerial1 || "") + "<br />رقم الحركة: " + (data.transactionId || "");
                     lastSavedTransactionId = parseInt(data.transactionId, 10) || null;
                     if (byId("invoiceNumber")) { byId("invoiceNumber").value = data.noteSerial1 || ""; }
                     enablePrintIfAllowed();
@@ -1696,8 +1695,8 @@
             html += "</div>";
         }
 
-        html += '<div class="save-error-block">السبب: ' + escapeHtml(data.message || "تعذر الحفظ التجريبي") + "</div>";
-        if (data.technicalMessage) {
+        html += '<div class="save-error-block">السبب: ' + escapeHtml(data.message || "تعذر الحفظ") + "</div>";
+        if (posDebugEnabled && data.technicalMessage) {
             html += '<div class="save-error-technical">التفاصيل الفنية: ' + escapeHtml(data.technicalMessage) + "</div>";
         }
 
@@ -3726,7 +3725,7 @@
             var kycItems = byId("kycSearchResults")._items || [];
             applyKeshniCustomer(kycItems[parseInt(kycResultButton.getAttribute("data-index"), 10)]);
         }
-        if (event.target.id === "returnLaterBtn") { byId("saveResult").innerText = "هذه شاشة تجريبية فقط"; }
+        if (event.target.id === "returnLaterBtn") { byId("saveResult").innerText = "هذه العملية غير متاحة حاليا."; }
         if (event.target.id === "saveCashCustomerBtn") { saveCashCustomer(); }
         if (event.target.id === "refreshBalancesBtn") { loadEmployeeBalances(); }
         uxApplyFlow();

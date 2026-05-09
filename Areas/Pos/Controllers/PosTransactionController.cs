@@ -1013,7 +1013,7 @@ namespace MyERP.Areas.Pos.Controllers
                 LogPosSystemIssue(context, "Save.Exception", request, ex, ex.Message, "Error", "Exception", BuildSaveRequestSummary(request, null));
                 LogPosSaveFailure("Save.Exception", request, ex);
                 SetJsonErrorStatus(500);
-                return Json(Fail("حدث خطأ أثناء الحفظ التجريبي", ex.Message));
+                return Json(Fail("حدث خطأ أثناء الحفظ", ex.Message));
             }
         }
 
@@ -1835,7 +1835,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return "فشل تنفيذ الحفظ بسبب صلاحيات غير كافية على قاعدة البيانات.";
             }
 
-            return "حدث خطأ من قاعدة البيانات أثناء الحفظ التجريبي";
+            return "حدث خطأ من قاعدة البيانات أثناء الحفظ";
         }
 
         private static bool HasSqlError(SqlException exception, int errorNumber)
