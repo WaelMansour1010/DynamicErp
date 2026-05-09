@@ -326,7 +326,15 @@ namespace MyERP.Areas.Reports.Controllers
         {
             try
             {
-                var user = RequireDesigner(scope);
+                var user = CurrentUser(scope);
+                if (!IsAuthenticatedForScope(user))
+                {
+                    return RedirectToScopeLogin(user.ProjectScope);
+                }
+                if (!_permissionService.CanDesign(user))
+                {
+                    return new HttpStatusCodeResult(403, "Dynamic report administration requires admin permission.");
+                }
                 var definition = _definitionService.GetDefinition(id, user.ProjectScope);
                 if (definition == null) return HttpNotFound("Dynamic report definition was not found.");
                 PrepareView(user, ResolveAdminApiBase(user.ProjectScope), ResolveAdminLayout(user.ProjectScope));

@@ -17,8 +17,8 @@
             <div>
                 <h1>@(definition == null ? "مراجعة التقرير" : (definition.ReportNameAr ?? definition.ReportNameEn ?? definition.ReportCode))</h1>
                 <div class="dr-rv-meta">
-                    <span>@Html.Partial("_LifecycleBadge", definition == null ? "Draft" : definition.LifecycleStatus)</span>
-                    <span>@Html.Partial("_CertificationBadge", definition == null ? "Internal" : definition.CertificationLevel)</span>
+                    <span>@Html.Partial("~/Areas/Reports/Views/Admin/_LifecycleBadge.cshtml", definition == null ? "Draft" : definition.LifecycleStatus)</span>
+                    <span>@Html.Partial("~/Areas/Reports/Views/Admin/_CertificationBadge.cshtml", definition == null ? "Internal" : definition.CertificationLevel)</span>
                     <span>Scope: @(definition == null ? "Web" : definition.ProjectScope)</span>
                     <span>Source: @(definition == null ? "" : definition.SourceType) / @(definition == null ? "" : definition.SourceName)</span>
                 </div>
