@@ -49,6 +49,7 @@ namespace MyERP.Areas.Reports.Models
             CommandTimeoutSeconds = 30;
             IsActive = true;
             LifecycleStatus = LifecycleStatusEnum.Draft;
+            CertificationLevel = DynamicReportCertificationLevel.Internal;
         }
 
         public int ReportId { get; set; }
@@ -63,9 +64,13 @@ namespace MyERP.Areas.Reports.Models
         public int CommandTimeoutSeconds { get; set; }
         public bool IsActive { get; set; }
         public string LifecycleStatus { get; set; }
+        public string CertificationLevel { get; set; }
         public DateTime? LastValidatedAt { get; set; }
+        public string LastValidationLog { get; set; }
         public int? ActivatedBy { get; set; }
         public DateTime? ActivatedAt { get; set; }
+        public int? ReviewedBy { get; set; }
+        public DateTime? ReviewedAt { get; set; }
         public IList<DynamicReportParameter> Parameters { get; set; }
         public IList<DynamicReportColumn> Columns { get; set; }
     }
