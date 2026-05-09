@@ -464,3 +464,127 @@ Verified columns:
 - Re-classification gate before certification.
 - Suggestion caching.
 - Dedicated governance audit log.
+
+## Operational Wiring Fix
+
+Date: 2026-05-10
+
+Scope: operational wiring and view resolution only. No new features, business logic changes, PDF/XLSX, lookups, or Phase 4B work.
+
+### What Was Checked
+
+- Admin shared views under `Areas/Reports/Views/Admin`.
+- Partial references from:
+  - `Areas/Reports/Views/Admin/_AdminBody.cshtml`
+  - `Areas/Reports/Views/Admin/Review.cshtml`
+- Admin controller rendering flow:
+  - `Reports/Admin/Index`
+  - `Pos/DynamicReportsAdmin/Index`
+  - `MainErp/DynamicReportsAdmin/Index`
+  - `Reports/Admin/Review`
+  - `Pos/DynamicReportsAdmin/Review`
+  - `MainErp/DynamicReportsAdmin/Review`
+- `MyERP.csproj` content/compile inclusion.
+- Route and ViewEngine usage.
+
+### Findings
+
+The required admin partials are physically present in:
+
+- `~/Areas/Reports/Views/Admin/_PermissionsPanel.cshtml`
+- `~/Areas/Reports/Views/Admin/_CatalogPanel.cshtml`
+- `~/Areas/Reports/Views/Admin/_StatusBadge.cshtml`
+- `~/Areas/Reports/Views/Admin/_LifecycleBadge.cshtml`
+- `~/Areas/Reports/Views/Admin/_CertificationBadge.cshtml`
+- `~/Areas/Reports/Views/Admin/Review.cshtml`
+
+`AdminController.Index()` renders the shared Reports admin page using an absolute view path:
+
+`View("~/Areas/Reports/Views/Admin/Index.cshtml")`
+
+POS and MainErp wrapper controllers also render the same shared Reports admin page by absolute path.
+
+No custom ViewEngine was found for Dynamic Reports. MainErp routes disable namespace fallback, and POS/MainErp controllers inherit from the Reports admin controller. This makes short partial names fragile when a shared Reports view is rendered through another area route.
+
+### Root Cause
+
+The operational failure was runtime view resolution, not missing backend logic.
+
+Short-name partial calls such as:
+
+`@Html.Partial("_PermissionsPanel")`
+
+can be resolved relative to the active controller/area context. With inherited POS/MainErp controllers rendering a shared view from `Areas/Reports`, MVC can search paths that do not contain the Reports partials. That produced:
+
+`The partial view '_PermissionsPanel' was not found`
+
+`MyERP.csproj` was also checked because this is a classic MVC project. The Reports admin/review partials and scripts are included as `Content`, and the related C# files are included as `Compile`.
+
+### Fix Applied
+
+The short-term stable fix is absolute virtual paths for shared Reports partials.
+
+Current partial calls:
+
+- `@Html.Partial("~/Areas/Reports/Views/Admin/_PermissionsPanel.cshtml")`
+- `@Html.Partial("~/Areas/Reports/Views/Admin/_CatalogPanel.cshtml")`
+- `@Html.Partial("~/Areas/Reports/Views/Admin/_LifecycleBadge.cshtml", ...)`
+- `@Html.Partial("~/Areas/Reports/Views/Admin/_CertificationBadge.cshtml", ...)`
+
+This avoids copying partials into POS/MainErp folders and avoids route/data-token hacks.
+
+`Review` GET also follows the same auth behavior as Admin Index: unauthenticated users are redirected to the correct login page for their scope. POST actions still require designer permission.
+
+### Why This Fix
+
+This is a temporary stable operational fix, not a full architectural refactor.
+
+It was chosen because:
+
+- It is the smallest safe change.
+- It directly addresses MVC view resolution.
+- It keeps one shared Reports UI implementation.
+- It avoids duplicating partials into POS/MainErp.
+- It does not change business logic.
+- It is compatible with Web, POS, and MainErp inheritance flows.
+
+### Verification
+
+Build and syntax:
+
+- `node --check Areas\Reports\Scripts\dynamic-reports-admin.js` - Pass
+- `node --check Areas\Reports\Scripts\dynamic-reports-review.js` - Pass
+- `node --check Areas\Reports\Scripts\dynamic-reports-viewer.js` - Pass
+- `MSBuild.exe MyERP.csproj /t:Build /p:Configuration=Debug /p:Platform="AnyCPU"` - Pass
+
+Unauthenticated route smoke under IIS Express:
+
+| Test | Result |
+| --- | --- |
+| `/Reports/Admin/Index` | 302 to `/Login?ReturnUrl=...` |
+| `/Pos/DynamicReportsAdmin/Index` | 302 to `/Pos/Login?returnUrl=...` |
+| `/MainErp/DynamicReportsAdmin/Index` | 302 to `/MainErp/Login?returnUrl=...` |
+| `/Reports/Admin/Review?id=1&scope=Web` | 302 to Web login |
+| `/Pos/DynamicReportsAdmin/Review?id=4&scope=POS` | 302 to POS login |
+| `/MainErp/DynamicReportsAdmin/Review?id=3&scope=MainErp` | 302 to MainErp login |
+
+The unauthenticated smoke confirms the routes no longer fail with missing partials before auth handling. A browser session with real login is still required for visual W1-W8 confirmation inside the pages.
+
+### Required Authenticated Manual Checks
+
+After logging in:
+
+1. Open `/Reports/Admin/Index`.
+2. Open `/Pos/DynamicReportsAdmin/Index`.
+3. Open `/MainErp/DynamicReportsAdmin/Index`.
+4. Confirm the Permissions panel appears.
+5. Confirm the Catalog panel appears.
+6. Confirm the Reports list includes Lifecycle and Review.
+7. Open a Review link.
+8. Confirm lifecycle/certification badges render.
+9. Confirm no 500, missing partials, or Razor errors.
+10. Check browser Network/Console.
+
+### Notes
+
+The untracked POS hardening evidence files present in the working tree were not touched by this operational Reports fix.
