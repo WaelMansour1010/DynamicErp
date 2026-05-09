@@ -1934,6 +1934,14 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
     opacity: .72;
 }
 
+.voucher-row-actions {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
 .voucher-metric-strip,
 .voucher-kpi-grid {
     display: grid;
@@ -1964,6 +1972,91 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
     color: #172033;
     font-size: 18px;
     overflow-wrap: anywhere;
+}
+
+.voucher-allocation-summary {
+    margin-bottom: 14px;
+}
+
+.voucher-allocation-summary article {
+    min-height: 74px;
+}
+
+.voucher-allocation-summary small {
+    color: #657386;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.voucher-edit-form {
+    display: grid;
+    gap: 16px;
+}
+
+.voucher-form-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.voucher-form-grid.is-wide {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.voucher-form-grid label {
+    color: #334155;
+    display: grid;
+    font-size: 13px;
+    font-weight: 800;
+    gap: 6px;
+}
+
+.voucher-form-grid input,
+.voucher-form-grid select,
+.voucher-form-grid textarea {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #172033;
+    min-height: 42px;
+    padding: 8px 10px;
+    width: 100%;
+}
+
+.voucher-form-grid textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.voucher-check {
+    align-content: end;
+}
+
+.voucher-check input {
+    height: 20px;
+    min-height: 20px;
+    width: 20px;
+}
+
+.voucher-primary-action {
+    background: #166534;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 900;
+    min-height: 42px;
+    padding: 0 18px;
+}
+
+.voucher-inline-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.voucher-ghost-action.is-danger {
+    border-color: #fecaca;
+    color: #991b1b;
 }
 
 .voucher-search-panel {
@@ -2278,6 +2371,26 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
     background: #eff6ff;
     border-color: #bfdbfe;
     color: #1d4ed8;
+}
+
+.voucher-pager {
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    color: #475569;
+    display: flex;
+    font-size: 13px;
+    font-weight: 900;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 12px 16px;
+}
+
+.voucher-pager > div {
+    display: flex;
+    gap: 8px;
 }
 
 .voucher-table-card,
@@ -2845,4 +2958,24 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
 
 .main-erp-danger-button:hover {
     background: #fef3f2;
+}
+
+.main-erp-alert {
+    border: 1px solid #dbe4ef;
+    border-radius: 10px;
+    font-weight: 900;
+    margin: 12px 0;
+    padding: 12px 14px;
+}
+
+.main-erp-alert.is-success {
+    background: #ecfdf3;
+    border-color: #abefc6;
+    color: #067647;
+}
+
+.main-erp-alert.is-danger {
+    background: #fff1f3;
+    border-color: #fecdd3;
+    color: #b42318;
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.ViewModels;
 using MyERP.Areas.MainErp.ViewModels.ProjectExtracts;
@@ -91,7 +92,8 @@ SELECT * FROM ExtractRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             }
             catch (SqlException ex)
             {
-                result.Warning = "Project Extract read model is not available in the configured database yet: " + ex.Message;
+                Trace.TraceWarning("MainErp Project Extract search schema warning: " + ex);
+                result.Warning = "تعذر تحميل قائمة مستخلصات المشاريع من قاعدة البيانات الحالية. تأكد أن قاعدة التشغيل تحتوي على جداول وحقول مستخلصات المشاريع الخاصة بالنظام الرئيسي.";
             }
 
             return result;
@@ -118,7 +120,8 @@ SELECT * FROM ExtractRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             }
             catch (SqlException ex)
             {
-                model.Warning = "Project extract details are not available in the configured database yet: " + ex.Message;
+                Trace.TraceWarning("MainErp Project Extract details schema warning: " + ex);
+                model.Warning = "تعذر تحميل تفاصيل المستخلص من قاعدة البيانات الحالية. قد تكون قاعدة التشغيل لا تحتوي على نفس حقول مستخلصات المشاريع الموجودة في قاعدة Eng.";
             }
 
             return model;

@@ -16,9 +16,9 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             _connectionFactory = connectionFactory;
         }
 
-        public PaymentVoucherSearchViewModel Search(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount)
+        public PaymentVoucherSearchViewModel Search(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount, int page = 1, int pageSize = 50)
         {
-            return SearchCore(5, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount);
+            return SearchCore(5, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount, page, pageSize);
         }
 
         public PaymentVoucherDetailsViewModel GetDetails(int id)
@@ -26,8 +26,10 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             return GetDetailsCore(5, id);
         }
 
-        protected PaymentVoucherSearchViewModel SearchCore(int noteType, DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount)
+        protected PaymentVoucherSearchViewModel SearchCore(int noteType, DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount, int page = 1, int pageSize = 50)
         {
+            page = Math.Max(1, page);
+            pageSize = Math.Max(10, Math.Min(200, pageSize));
             var model = new PaymentVoucherSearchViewModel
             {
                 FromDate = fromDate,
@@ -36,17 +38,24 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
                 Party = party,
                 BranchId = branchId,
                 CashboxOrBank = cashboxOrBank,
-                Amount = amount
+                Amount = amount,
+                Page = page,
+                PageSize = pageSize
             };
 
             using (var connection = _connectionFactory.CreateOpenConnection())
             using (var command = CreateStoredProcedureCommand(connection, "dbo.usp_DynamicErpVoucher_Search"))
             {
-                AddSearchParameters(command, noteType, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount);
+                AddSearchParameters(command, noteType, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount, page, pageSize);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
+                        if (model.TotalCount == 0)
+                        {
+                            model.TotalCount = ReadInt(reader, "TotalRows");
+                        }
+
                         var debit = ReadDecimal(reader, "DebitTotal");
                         var credit = ReadDecimal(reader, "CreditTotal");
                         model.Items.Add(new PaymentVoucherListItemViewModel
@@ -66,7 +75,11 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
                 }
             }
 
-            model.TotalCount = model.Items.Count;
+            if (model.TotalCount == 0)
+            {
+                model.TotalCount = model.Items.Count;
+            }
+
             return model;
         }
 
@@ -233,6 +246,8 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
                         model.Allocations.Add(new PaymentVoucherAllocationLineViewModel
                         {
                             Source = ReadString(reader, "Source"),
+                            SourceDisplay = MapAllocationSource(ReadString(reader, "Source")),
+                            SourceKind = MapAllocationKind(ReadString(reader, "Source")),
                             Serial = ReadSerialString(reader, "Serial"),
                             Date = ReadDate(reader, "Date"),
                             OriginalValue = ReadDecimal(reader, "OriginalValue"),
@@ -245,7 +260,7 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             }
         }
 
-        private static void AddSearchParameters(SqlCommand command, int noteType, DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount)
+        private static void AddSearchParameters(SqlCommand command, int noteType, DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount, int page, int pageSize)
         {
             command.Parameters.Add("@noteType", SqlDbType.Int).Value = noteType;
             command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = (object)fromDate ?? DBNull.Value;
@@ -255,6 +270,8 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
             command.Parameters.Add("@cashboxOrBank", SqlDbType.NVarChar, 200).Value = (cashboxOrBank ?? string.Empty).Trim();
             command.Parameters.Add("@amount", SqlDbType.Decimal).Value = (object)amount ?? DBNull.Value;
+            command.Parameters.Add("@pageNumber", SqlDbType.Int).Value = page;
+            command.Parameters.Add("@pageSize", SqlDbType.Int).Value = pageSize;
         }
 
         private static SqlCommand CreateStoredProcedureCommand(SqlConnection connection, string procedureName)
@@ -345,13 +362,67 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             }
         }
 
-        protected static string ReadString(SqlDataReader reader, string name)
+        private static string MapAllocationSource(string source)
+        {
+            switch ((source ?? string.Empty).Trim())
+            {
+                case "TblNotesBillBuyPayment":
+                    return "فواتير مشتريات";
+                case "TblNotesBillProjectPayment":
+                    return "فواتير مشاريع";
+                case "TblNotesBillVindorPayment":
+                    return "فواتير موردين";
+                case "ContracttBillInstallmentsDone":
+                case "TblContractInstallments by contract":
+                    return "أقساط عقارية";
+                case "TblAqarCommissions":
+                    return "عمولات عقارية";
+                case "TblNotesSales":
+                    return "مبيعات مرتبطة";
+                case "TblUnitNoInformation":
+                    return "بيانات وحدة";
+                case "TblAqrEarnest":
+                    return "عربون عقار";
+                case "TblOtheExpensAqar":
+                    return "مصروفات عقارية";
+                case "TblFiterWaiver":
+                    return "تنازل / تسوية";
+                default:
+                    return string.IsNullOrWhiteSpace(source) ? "تخصيص غير مصنف" : source;
+            }
+        }
+
+        private static string MapAllocationKind(string source)
+        {
+            switch ((source ?? string.Empty).Trim())
+            {
+                case "TblNotesBillBuyPayment":
+                    return "purchase";
+                case "TblNotesBillProjectPayment":
+                    return "project";
+                case "TblNotesBillVindorPayment":
+                    return "vendor";
+                case "ContracttBillInstallmentsDone":
+                case "TblContractInstallments by contract":
+                case "TblAqarCommissions":
+                case "TblNotesSales":
+                case "TblUnitNoInformation":
+                case "TblAqrEarnest":
+                case "TblOtheExpensAqar":
+                case "TblFiterWaiver":
+                    return "real-estate";
+                default:
+                    return "other";
+            }
+        }
+
+        public static string ReadString(SqlDataReader reader, string name)
         {
             var value = reader[name];
             return value == DBNull.Value ? string.Empty : Convert.ToString(value);
         }
 
-        protected static string ReadSerialString(SqlDataReader reader, string name)
+        public static string ReadSerialString(SqlDataReader reader, string name)
         {
             var value = reader[name];
             if (value == DBNull.Value)
@@ -376,25 +447,25 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             return text;
         }
 
-        protected static int ReadInt(SqlDataReader reader, string name)
+        public static int ReadInt(SqlDataReader reader, string name)
         {
             var value = reader[name];
             return value == DBNull.Value ? 0 : Convert.ToInt32(value);
         }
 
-        protected static int? ReadNullableInt(SqlDataReader reader, string name)
+        public static int? ReadNullableInt(SqlDataReader reader, string name)
         {
             var value = reader[name];
             return value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
         }
 
-        protected static DateTime? ReadDate(SqlDataReader reader, string name)
+        public static DateTime? ReadDate(SqlDataReader reader, string name)
         {
             var value = reader[name];
             return value == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(value);
         }
 
-        protected static decimal ReadDecimal(SqlDataReader reader, string name)
+        public static decimal ReadDecimal(SqlDataReader reader, string name)
         {
             var value = reader[name];
             return value == DBNull.Value ? 0m : Convert.ToDecimal(value);

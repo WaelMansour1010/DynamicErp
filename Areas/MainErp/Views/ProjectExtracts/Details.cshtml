@@ -15,6 +15,7 @@
             <p>قراءة فعلية من `project_billl` و `project_bill_details` مع الدفعات المقدمة والقيود المحاسبية المرتبطة. لا توجد أي عمليات حفظ أو ترحيل في هذه المرحلة.</p>
         </div>
         <div class="main-erp-actions">
+            <a class="main-erp-button" href="@Url.Action("Report", "ProjectExtracts", new { area = "MainErp", id = Model.Id })">تقرير المستخلص</a>
             <a class="main-erp-button" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">رجوع للقائمة</a>
             <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الترحيل">حفظ فعلي</button>
             <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الترحيل">ترحيل</button>

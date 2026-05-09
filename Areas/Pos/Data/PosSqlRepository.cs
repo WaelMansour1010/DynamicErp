@@ -18,6 +18,7 @@ namespace MyERP.Areas.Pos.Data
         public const string WebInvoiceSourceMarker = "WEB_POS";
 
         private const int DeadlockSqlErrorNumber = 1205;
+        private const decimal MaxCommissionRangeLookupValue = 1000000m;
         private static readonly int[] SaveDeadlockRetryDelaysMs = { 150, 300, 600 };
         private static readonly object PosSystemErrorLogEnsureLock = new object();
         private static readonly object PosSaveAttemptLogEnsureLock = new object();
@@ -533,6 +534,7 @@ FROM dbo.TblOptions;";
             }
 
             var rechargeValue = request.RechargeValue < 0 ? 0 : request.RechargeValue;
+            EnsureCommissionAmountInRange(rechargeValue);
             var isCashOut = IsCashOutService(request.ServiceType);
             var isViolations = IsViolationsService(request.ServiceType);
             var isCard = IsCardService(request.ServiceType);
@@ -2357,6 +2359,99 @@ WHERE b.SourceFileHash = @sourceFileHash
             }
         }
 
+        public T ExecuteWithPosExcelImportBranchLock<T>(int branchId, Func<T> action)
+        {
+            if (action == null)
+            {
+                throw new ArgumentNullException("action");
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                var resourceName = "POS_EXCEL_IMPORT_BRANCH_" + branchId.ToString(CultureInfo.InvariantCulture);
+                using (var lockCommand = new SqlCommand("EXEC @result = sp_getapplock @Resource = @resource, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 30000;", connection))
+                {
+                    var resultParameter = lockCommand.Parameters.Add("@result", SqlDbType.Int);
+                    resultParameter.Direction = ParameterDirection.Output;
+                    lockCommand.Parameters.Add("@resource", SqlDbType.NVarChar, 255).Value = resourceName;
+                    lockCommand.ExecuteNonQuery();
+                    var lockResult = Convert.ToInt32(resultParameter.Value, CultureInfo.InvariantCulture);
+                    if (lockResult < 0)
+                    {
+                        throw new InvalidOperationException("تعذر تأمين استيراد Excel لهذا الفرع الآن. حاول مرة أخرى بعد انتهاء أي عملية استيراد أخرى.");
+                    }
+                }
+
+                try
+                {
+                    return action();
+                }
+                finally
+                {
+                    using (var releaseCommand = new SqlCommand("EXEC sp_releaseapplock @Resource = @resource, @LockOwner = 'Session';", connection))
+                    {
+                        releaseCommand.Parameters.Add("@resource", SqlDbType.NVarChar, 255).Value = resourceName;
+                        releaseCommand.ExecuteNonQuery();
+                    }
+                }
+            }
+        }
+
+        public PosExcelImportOverlapResult GetPosExcelImportDateOverlap(int branchId, DateTime fromDate, DateTime toDate)
+        {
+            EnsurePosExcelImportAuditTables();
+            if (toDate < fromDate)
+            {
+                var temp = fromDate;
+                fromDate = toDate;
+                toDate = temp;
+            }
+
+            const string sql = @"
+SELECT
+    COUNT(DISTINCT t.Transaction_ID) AS InvoiceCount,
+    MIN(t.Transaction_Date) AS ExistingFromDate,
+    MAX(t.Transaction_Date) AS ExistingToDate,
+    MAX(b.BatchId) AS BatchId
+FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+INNER JOIN dbo.POS_ImportBatchRow r WITH (UPDLOCK, HOLDLOCK)
+    ON r.TransactionId = t.Transaction_ID
+   AND r.Status = N'Imported'
+INNER JOIN dbo.POS_ImportBatch b WITH (UPDLOCK, HOLDLOCK)
+    ON b.BatchId = r.BatchId
+WHERE t.Transaction_Type = 21
+  AND t.BranchId = @branchId
+  AND t.Transaction_Date >= @fromDate
+  AND t.Transaction_Date < DATEADD(DAY, 1, @toDate);";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
+                Add(command, "@fromDate", SqlDbType.DateTime, fromDate.Date);
+                Add(command, "@toDate", SqlDbType.DateTime, toDate.Date);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return new PosExcelImportOverlapResult();
+                    }
+
+                    var count = ReadInt(reader, "InvoiceCount").GetValueOrDefault();
+                    return new PosExcelImportOverlapResult
+                    {
+                        HasOverlap = count > 0,
+                        InvoiceCount = count,
+                        BatchId = ReadLong(reader, "BatchId"),
+                        ExistingFromDate = ReadDateTime(reader, "ExistingFromDate"),
+                        ExistingToDate = ReadDateTime(reader, "ExistingToDate")
+                    };
+                }
+            }
+        }
+
         public long CreatePosExcelImportBatch(string sourceFileName, string sourceFileHash, int userId, int? branchId)
         {
             EnsurePosExcelImportAuditTables();
@@ -2653,10 +2748,11 @@ WHERE Transaction_ID = @transactionId
             }
         }
 
-        public PosDeleteInvoiceResult DeletePosExcelImportedInvoices(DateTime fromDate, DateTime toDate, int? branchId, int userId)
+        public PosDeleteInvoiceResult DeletePosExcelImportedInvoices(DateTime fromDate, DateTime toDate, int? branchId, string operationType, int userId)
         {
             EnsurePosExcelImportAuditTables();
             var result = new PosDeleteInvoiceResult();
+            var operation = NormalizeInvoiceOperationType(operationType);
             if (toDate < fromDate)
             {
                 var temp = fromDate;
@@ -2677,6 +2773,17 @@ WHERE t.Transaction_Type = 21
   AND t.Transaction_Date >= @fromDate
   AND t.Transaction_Date < DATEADD(DAY, 1, @toDate)
   AND (@branchId IS NULL OR t.BranchId = @branchId)
+  AND
+  (
+      @operationType = N''
+      OR (@operationType = N'cash-in'
+          AND ISNULL(t.TrafficViolations, 0) = 0
+          AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NULL
+          AND ISNULL(t.IsCashOut, 0) = 0)
+      OR (@operationType = N'cash-out' AND ISNULL(t.IsCashOut, 0) = 1)
+      OR (@operationType = N'card' AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL)
+      OR (@operationType = N'violations' AND ISNULL(t.TrafficViolations, 0) = 1)
+  )
 ORDER BY t.Transaction_ID;";
 
             using (var connection = new SqlConnection(_connectionString))
@@ -2692,6 +2799,7 @@ ORDER BY t.Transaction_ID;";
                             command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
                             command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
                             command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId.HasValue ? (object)branchId.Value : DBNull.Value;
+                            command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
                             using (var reader = command.ExecuteReader())
                             {
                                 while (reader.Read())
@@ -4682,6 +4790,7 @@ WHERE ItemID = @itemId;";
         private decimal? GetPriceRangeSalesCommission(decimal rechargeValue)
         {
             const string sql = "SELECT dbo.CheckPriceRangeSales2(@upperRange, @lowerRange) AS CommissionValue;";
+            EnsureCommissionAmountInRange(rechargeValue);
             var roundedValue = Convert.ToInt32(Math.Round(rechargeValue, 0, MidpointRounding.AwayFromZero), CultureInfo.InvariantCulture);
 
             using (var connection = new SqlConnection(_connectionString))
@@ -4703,6 +4812,7 @@ SELECT TOP (1)
     CashBack,
     Cost
 FROM dbo.CheckPriceRangeSales3(@upperRange, @lowerRange, @itemId);";
+            EnsureCommissionAmountInRange(rechargeValue);
             var roundedValue = Convert.ToInt32(Math.Round(rechargeValue, 0, MidpointRounding.AwayFromZero), CultureInfo.InvariantCulture);
 
             using (var connection = new SqlConnection(_connectionString))
@@ -8649,6 +8759,14 @@ WHERE Transaction_ID = @transactionId;";
             }
 
             return value;
+        }
+
+        private static void EnsureCommissionAmountInRange(decimal value)
+        {
+            if (value > MaxCommissionRangeLookupValue)
+            {
+                throw new InvalidOperationException("المبلغ أكبر من الحد المسموح لهذه الخدمة");
+            }
         }
 
         private static string GetServiceFilter(string serviceType)

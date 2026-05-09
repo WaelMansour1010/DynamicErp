@@ -36,6 +36,16 @@ namespace MyERP.Areas.Pos.Services
             ValidateCommitReadiness(preview);
 
             var defaults = preview.EffectiveDefaults;
+            var branchId = defaults.BranchId.GetValueOrDefault();
+            var importRange = GetImportDateRange(preview);
+            return _repository.ExecuteWithPosExcelImportBranchLock(branchId, delegate
+            {
+                var overlap = _repository.GetPosExcelImportDateOverlap(branchId, importRange.Item1, importRange.Item2);
+                if (overlap != null && overlap.HasOverlap)
+                {
+                    throw new InvalidOperationException(BuildOverlapMessage(defaults, importRange.Item1, importRange.Item2, overlap));
+                }
+
             var batchId = _repository.CreatePosExcelImportBatch(preview.SourceFileName, preview.SourceFileHash, importContext.UserId, defaults.BranchId);
             var result = new PosExcelImportCommitResult { BatchId = batchId, Status = "Committing" };
             var totalCount = preview.Rows.Count;
@@ -114,6 +124,40 @@ namespace MyERP.Areas.Pos.Services
             _repository.UpdatePosExcelImportBatch(batchId, result.Status, result.ImportedCount, result.FailedCount);
             ReportProgress(progressCallback, result, totalCount, processedCount, null, "انتهى الترحيل");
             return result;
+            });
+        }
+
+        private static Tuple<DateTime, DateTime> GetImportDateRange(PosExcelImportPreviewResult preview)
+        {
+            var dates = preview.Rows
+                .Where(x => x != null && x.TransactionDate.HasValue)
+                .Select(x => x.TransactionDate.Value.Date)
+                .ToList();
+
+            if (dates.Count == 0)
+            {
+                throw new InvalidOperationException("لا يمكن تحديد فترة ملف Excel لأن الصفوف لا تحتوي على تاريخ صالح.");
+            }
+
+            return Tuple.Create(dates.Min(), dates.Max());
+        }
+
+        private static string BuildOverlapMessage(PosExcelImportDefaultContext defaults, DateTime importFrom, DateTime importTo, PosExcelImportOverlapResult overlap)
+        {
+            var branchName = defaults == null || string.IsNullOrWhiteSpace(defaults.BranchName)
+                ? "الفرع المحدد"
+                : defaults.BranchName;
+            var existingFrom = overlap.ExistingFromDate.HasValue ? overlap.ExistingFromDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "-";
+            var existingTo = overlap.ExistingToDate.HasValue ? overlap.ExistingToDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "-";
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "تم رفض ترحيل ملف Excel بالكامل: توجد {0} فاتورة Excel سابقة للفرع {1} داخل فترة متداخلة. فترة الملف {2} إلى {3}. الفترة الموجودة {4} إلى {5}. لا يتم حفظ أي فاتورة من الملف.",
+                overlap.InvoiceCount,
+                branchName,
+                importFrom.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                importTo.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                existingFrom,
+                existingTo);
         }
 
         private static void ReportProgress(Action<PosExcelImportCommitProgress> progressCallback, PosExcelImportCommitResult result, int totalCount, int processedCount, PosExcelImportRowPreview row, string message)

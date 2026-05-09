@@ -14,7 +14,7 @@
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     ViewBag.Title = "سندات الصرف";
     var totalValue = Model.Items.Sum(x => x.Total);
-    var balancedCount = Model.Items.Count(x => string.Equals(x.BalancedStatus, "متوازن", StringComparison.OrdinalIgnoreCase));
+    var hasUnbalancedEntries = Model.Items.Any(x => !string.Equals(x.BalancedStatus, "متوازن", StringComparison.OrdinalIgnoreCase));
 }
 
 <section class="main-erp-panel voucher-workspace voucher-index-page" dir="rtl">
@@ -22,19 +22,22 @@
         <div>
             <span class="voucher-eyebrow">FrmPayments</span>
             <h3>سندات الصرف</h3>
-            <p>استعراض سندات الصرف من مصدر MAIN ERP مع تتبع القيد المحاسبي والتخصيصات بدون أي كتابة.</p>
+            <p>استعراض وتشغيل سندات الصرف من مصدر MAIN ERP مع تتبع القيد المحاسبي والتخصيصات عبر stored procedures.</p>
         </div>
         <div class="voucher-header-actions">
-            <span class="main-erp-badge">قراءة فقط</span>
-            <button type="button" class="voucher-ghost-action" disabled>معاينة تأثير الحفظ</button>
+            <span class="main-erp-badge">تشغيل فعلي</span>
+            <a class="voucher-primary-action" href="@Url.Action("Create", "Payments", new { area = "MainErp" })">إضافة سند صرف</a>
         </div>
     </header>
 
     <div class="voucher-metric-strip">
         <article><span>عدد النتائج</span><strong>@Model.TotalCount</strong></article>
         <article><span>إجمالي النتائج</span><strong>@totalValue.ToString("N2")</strong></article>
-        <article><span>قيود متوازنة</span><strong>@balancedCount</strong></article>
-        <article><span>الوضع</span><strong>عرض فقط</strong></article>
+        @if (hasUnbalancedEntries)
+        {
+            <article><span>تنبيه القيود</span><strong>يوجد غير متوازن</strong></article>
+        }
+        <article><span>الوضع</span><strong>عرض وحفظ</strong></article>
     </div>
 
     @using (Html.BeginForm("Index", "Payments", new { area = "MainErp" }, FormMethod.Get, new { id = "voucherSearchForm", @class = "voucher-search-panel" }))
@@ -66,7 +69,10 @@
                         <th>المبلغ</th>
                         <th>الضريبة</th>
                         <th>الإجمالي</th>
-                        <th>حالة القيد</th>
+                        @if (hasUnbalancedEntries)
+                        {
+                            <th>تنبيه القيد</th>
+                        }
                         <th></th>
                     </tr>
                 </thead>
@@ -83,16 +89,43 @@
                             <td class="voucher-number">@item.Amount.ToString("N2")</td>
                             <td class="voucher-number">@item.Vat.ToString("N2")</td>
                             <td class="voucher-number"><strong>@item.Total.ToString("N2")</strong></td>
-                            <td><span class="voucher-status @(isBalanced ? "is-balanced" : "is-unbalanced")">@item.BalancedStatus</span></td>
-                            <td><a class="voucher-details-link" href="@Url.Action("Details", "Payments", new { area = "MainErp", id = item.NoteId })">تفاصيل</a></td>
+                            @if (hasUnbalancedEntries)
+                            {
+                                <td>
+                                    @if (!isBalanced)
+                                    {
+                                        <span class="voucher-status is-unbalanced">@item.BalancedStatus</span>
+                                    }
+                                </td>
+                            }
+                            <td>
+                                <div class="voucher-row-actions">
+                                    <a class="voucher-details-link" href="@Url.Action("Details", "Payments", new { area = "MainErp", id = item.NoteId })">تفاصيل</a>
+                                    <a class="voucher-details-link" href="@Url.Action("Edit", "Payments", new { area = "MainErp", id = item.NoteId })">تعديل</a>
+                                </div>
+                            </td>
                         </tr>
                     }
                     @if (Model.Items.Count == 0)
                     {
-                        <tr><td colspan="10" class="voucher-empty">لا توجد نتائج مطابقة.</td></tr>
+                        <tr><td colspan="@(hasUnbalancedEntries ? 10 : 9)" class="voucher-empty">لا توجد نتائج مطابقة.</td></tr>
                     }
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="voucher-pager">
+        <span>صفحة @Model.Page من @Math.Max(1, (int)Math.Ceiling(Model.TotalCount / (double)Model.PageSize))</span>
+        <div>
+            @if (Model.HasPreviousPage)
+            {
+                <a class="voucher-details-link" href="@Url.Action("Index", "Payments", new { area = "MainErp", fromDate = Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : null, toDate = Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : null, serial = Model.Serial, party = Model.Party, branchId = Model.BranchId, cashboxOrBank = Model.CashboxOrBank, amount = Model.Amount, page = Model.Page - 1, pageSize = Model.PageSize })">السابق</a>
+            }
+            @if (Model.HasNextPage)
+            {
+                <a class="voucher-details-link" href="@Url.Action("Index", "Payments", new { area = "MainErp", fromDate = Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : null, toDate = Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : null, serial = Model.Serial, party = Model.Party, branchId = Model.BranchId, cashboxOrBank = Model.CashboxOrBank, amount = Model.Amount, page = Model.Page + 1, pageSize = Model.PageSize })">التالي</a>
+            }
         </div>
     </div>
 </section>

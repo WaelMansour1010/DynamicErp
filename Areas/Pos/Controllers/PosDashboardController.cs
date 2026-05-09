@@ -89,6 +89,26 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("excel-import");
         }
 
+        public ActionResult EmployeePayroll()
+        {
+            return OpenShell("employee-payroll");
+        }
+
+        public ActionResult SalaryRun()
+        {
+            return OpenShell("salary-run");
+        }
+
+        public ActionResult MedicalInsurance()
+        {
+            return OpenShell("medical-insurance");
+        }
+
+        public ActionResult MedicalInsuranceReports()
+        {
+            return OpenShell("medical-insurance-reports");
+        }
+
         public ActionResult SystemHealth()
         {
             return OpenShell("system-health");
@@ -230,6 +250,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
             }
 
+            if ((screen == "employee-payroll" || screen == "salary-run" || screen == "medical-insurance" || screen == "medical-insurance-reports") && !CanOpenEmployeePayroll(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشات الموظفين والرواتب");
+            }
+
             ViewBag.PosContext = context;
             ViewBag.ActiveScreen = screen;
             ViewBag.InitialScreenUrl = ScreenUrl(screen);
@@ -288,6 +313,12 @@ namespace MyERP.Areas.Pos.Controllers
         private static bool CanOpenExcelImport(PosUserContext context)
         {
             return IsAdmin(context) || (context != null && context.CanImportExcel);
+        }
+
+        private bool CanOpenEmployeePayroll(PosUserContext context)
+        {
+            return IsAdmin(context)
+                || (context != null && (_legacyPermissionService.CanView(context, "FrmEmployee") || _legacyPermissionService.CanView(context, "FrmEmpSalary5")));
         }
 
         private static bool HasSalesDefaults(PosUserContext context)
@@ -416,6 +447,26 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "excel-import")
             {
                 return Url.Content("~/Pos/ExcelImport/Index");
+            }
+
+            if (screen == "employee-payroll")
+            {
+                return Url.Content("~/Pos/EmployeePayroll/Employees");
+            }
+
+            if (screen == "salary-run")
+            {
+                return Url.Content("~/Pos/EmployeePayroll/SalaryRun");
+            }
+
+            if (screen == "medical-insurance")
+            {
+                return Url.Content("~/Pos/EmployeePayroll/MedicalInsurance");
+            }
+
+            if (screen == "medical-insurance-reports")
+            {
+                return Url.Content("~/Pos/EmployeePayroll/MedicalInsuranceReports");
             }
 
             if (screen == "system-health")

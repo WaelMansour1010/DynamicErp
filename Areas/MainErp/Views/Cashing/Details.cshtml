@@ -15,6 +15,10 @@
     ViewBag.Title = "تفاصيل سند قبض";
     var h = Model.Header;
     var cashboxOrBank = string.IsNullOrWhiteSpace(h.CashboxDisplay) ? h.BankDisplay : h.CashboxDisplay;
+    var allocationSummary = Model.Allocations
+        .GroupBy(x => string.IsNullOrWhiteSpace(x.SourceDisplay) ? x.Source : x.SourceDisplay)
+        .Select(g => new { Source = g.Key, Count = g.Count(), Paid = g.Sum(x => x.PaidValue), Remaining = g.Sum(x => x.RemainingValue) })
+        .ToList();
 }
 
 <section class="main-erp-panel voucher-workspace voucher-details-page" dir="rtl">
@@ -25,10 +29,21 @@
             <p>@(string.IsNullOrWhiteSpace(h.Remark) ? "تفاصيل سند القبض والتخصيصات والتتبع المحاسبي المرتبط به." : h.Remark)</p>
         </div>
         <div class="voucher-header-actions">
-            <span class="voucher-status @(Model.IsBalanced ? "is-balanced" : "is-unbalanced")">@(Model.IsBalanced ? "القيد متوازن" : "القيد غير متوازن")</span>
+            @if (!Model.IsBalanced)
+            {
+                <span class="voucher-status is-unbalanced">القيد غير متوازن</span>
+            }
             <a class="voucher-ghost-action" href="@Url.Action("Index", "Cashing", new { area = "MainErp" })">رجوع</a>
         </div>
     </header>
+    @if (TempData["VoucherMessage"] != null)
+    {
+        <div class="main-erp-alert is-success">@TempData["VoucherMessage"]</div>
+    }
+    @if (TempData["VoucherError"] != null)
+    {
+        <div class="main-erp-alert is-danger">@TempData["VoucherError"]</div>
+    }
 
     <div class="voucher-kpi-grid">
         <article><span>رقم السند</span><strong>@FormatVoucherSerial(h.NoteSerial)</strong></article>
@@ -38,7 +53,10 @@
         <article><span>المبلغ</span><strong>@h.Amount.ToString("N2")</strong></article>
         <article><span>الضريبة</span><strong>@h.Vat.ToString("N2")</strong></article>
         <article><span>الإجمالي</span><strong>@h.Total.ToString("N2")</strong></article>
-        <article><span>حالة القيد</span><strong>@(Model.IsBalanced ? "متوازن" : "غير متوازن")</strong></article>
+        @if (!Model.IsBalanced)
+        {
+            <article><span>تنبيه القيد</span><strong>غير متوازن</strong></article>
+        }
     </div>
 
     <nav class="voucher-tab-strip" aria-label="أقسام السند">
@@ -50,8 +68,18 @@
     </nav>
 
     <div class="voucher-action-row">
-        <button type="button" class="voucher-ghost-action" disabled>معاينة تأثير الحفظ</button>
-        <button type="button" class="voucher-ghost-action" disabled>طباعة / تقرير</button>
+        <a class="voucher-ghost-action" href="@Url.Action("Edit", "Cashing", new { area = "MainErp", id = h.NoteId })">تعديل</a>
+        <a class="voucher-ghost-action" href="@Url.Action("Print", "Cashing", new { area = "MainErp", id = h.NoteId })" target="_blank">طباعة / تقرير</a>
+        @using (Html.BeginForm("Post", "Cashing", new { area = "MainErp", id = h.NoteId }, FormMethod.Post, new { @class = "voucher-inline-form" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="voucher-ghost-action">ترحيل</button>
+        }
+        @using (Html.BeginForm("Delete", "Cashing", new { area = "MainErp", id = h.NoteId }, FormMethod.Post, new { @class = "voucher-inline-form", onsubmit = "return confirm('تأكيد حذف السند غير المرحل؟');" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="voucher-ghost-action is-danger">حذف</button>
+        }
     </div>
 
     <div class="voucher-section-stack">
@@ -79,13 +107,22 @@
 
         <section id="voucher-allocation" class="voucher-section">
             <h4>تفاصيل السداد/التخصيص</h4>
+            @if (allocationSummary.Count > 0)
+            {
+                <div class="voucher-metric-strip voucher-allocation-summary">
+                    @foreach (var item in allocationSummary)
+                    {
+                        <article><span>@item.Source</span><strong>@item.Paid.ToString("N2")</strong><small>@item.Count بند / متبقي @item.Remaining.ToString("N2")</small></article>
+                    }
+                </div>
+            }
             <div class="main-erp-table-wrap voucher-table-wrap">
                 <table class="main-erp-table voucher-table">
                     <thead><tr><th>المصدر</th><th>الرقم</th><th>التاريخ</th><th>الأصل</th><th>المدفوع</th><th>المتبقي</th><th>الوصف</th></tr></thead>
                     <tbody>
                         @foreach (var line in Model.Allocations)
                         {
-                            <tr><td>@line.Source</td><td>@FormatVoucherSerial(line.Serial)</td><td>@(line.Date.HasValue ? line.Date.Value.ToString("dd/MM/yyyy") : "")</td><td class="voucher-number">@line.OriginalValue.ToString("N2")</td><td class="voucher-number">@line.PaidValue.ToString("N2")</td><td class="voucher-number">@line.RemainingValue.ToString("N2")</td><td>@line.Description</td></tr>
+                            <tr><td>@(string.IsNullOrWhiteSpace(line.SourceDisplay) ? line.Source : line.SourceDisplay)</td><td>@FormatVoucherSerial(line.Serial)</td><td>@(line.Date.HasValue ? line.Date.Value.ToString("dd/MM/yyyy") : "")</td><td class="voucher-number">@line.OriginalValue.ToString("N2")</td><td class="voucher-number">@line.PaidValue.ToString("N2")</td><td class="voucher-number">@line.RemainingValue.ToString("N2")</td><td>@line.Description</td></tr>
                         }
                         @if (Model.Allocations.Count == 0) { <tr><td colspan="7" class="voucher-empty">لا توجد تخصيصات مسجلة.</td></tr> }
                     </tbody>
@@ -114,7 +151,7 @@
 
         <section id="voucher-print" class="voucher-section">
             <h4>التقارير والطباعة</h4>
-            <p class="main-erp-muted">تم حجز موضع الطباعة فقط في هذه الموجة. لا توجد كتابة أو ترحيل.</p>
+            <p class="main-erp-muted">الطباعة تعمل من نفس بيانات السند والقيد عبر stored procedures. تقرير VB6 المرجعي: @h.ReportName</p>
         </section>
 
         <section id="voucher-log" class="voucher-section">

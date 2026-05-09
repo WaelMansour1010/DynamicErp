@@ -1,0 +1,5 @@
+-- POS uses the same employee/payroll tables as MainErp in the selected company database.
+-- Apply the canonical script:
+-- Areas\MainErp\Sql\06_EmployeePayroll_MedicalInsurance.sql
+--
+-- This POS file is intentionally a pointer so there is one executable DDL source.

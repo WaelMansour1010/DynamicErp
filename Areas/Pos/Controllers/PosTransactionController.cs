@@ -21,6 +21,8 @@ namespace MyERP.Areas.Pos.Controllers
     [SkipERPAuthorize]
     public class PosTransactionController : Controller
     {
+        private const decimal DefaultMaxRechargeValue = 1000000m;
+
         private readonly PosSqlRepository _repository;
 
         public PosTransactionController()
@@ -223,6 +225,13 @@ namespace MyERP.Areas.Pos.Controllers
             if (context != null && !request.BranchId.HasValue)
             {
                 request.BranchId = context.BranchId;
+            }
+
+            var amountError = ValidateCommissionAmount(request);
+            if (!string.IsNullOrWhiteSpace(amountError))
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail(amountError, amountError));
             }
 
             try
@@ -483,7 +492,7 @@ namespace MyERP.Areas.Pos.Controllers
             try
             {
                 var branchId = context.IsFullAccess ? request.BranchId : context.BranchId;
-                var result = _repository.DeletePosExcelImportedInvoices(request.FromDate.Value, request.ToDate.Value, branchId, context.UserId);
+                var result = _repository.DeletePosExcelImportedInvoices(request.FromDate.Value, request.ToDate.Value, branchId, request.OperationType, context.UserId);
                 return Json(new { success = true, message = string.Join(" ", result.Messages), result = result });
             }
             catch (Exception ex)
@@ -1068,6 +1077,16 @@ namespace MyERP.Areas.Pos.Controllers
                 errors["RechargeValue"] = "مبلغ الشحن يجب أن يكون أكبر من صفر";
             }
 
+            if (!isCard && !isViolations && request.RechargeValue.GetValueOrDefault() > GetMaxRechargeValue())
+            {
+                errors["RechargeValue"] = "مبلغ الشحن أكبر من الحد المسموح لهذه الخدمة";
+            }
+
+            if (isViolations && request.ViolationsValue.GetValueOrDefault() > GetMaxRechargeValue())
+            {
+                errors["ViolationsValue"] = "قيمة المخالفات أكبر من الحد المسموح لهذه الخدمة";
+            }
+
             if (isCashOut && string.IsNullOrWhiteSpace(request.Tet_NumPoket))
             {
                 errors["Tet_NumPoket"] = "رقم المحفظة مطلوب";
@@ -1248,6 +1267,36 @@ namespace MyERP.Areas.Pos.Controllers
             };
 
             return string.Join("; ", parts);
+        }
+
+        private static string ValidateCommissionAmount(PosCommissionRequest request)
+        {
+            if (request == null)
+            {
+                return null;
+            }
+
+            if (string.Equals(request.ServiceType, "card", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            if (request.RechargeValue < 0)
+            {
+                return "المبلغ يجب أن يكون أكبر من أو يساوي صفر";
+            }
+
+            return request.RechargeValue > GetMaxRechargeValue()
+                ? "المبلغ أكبر من الحد المسموح لهذه الخدمة"
+                : null;
+        }
+
+        private static decimal GetMaxRechargeValue()
+        {
+            decimal configured;
+            return decimal.TryParse(ConfigurationManager.AppSettings["PosMaxRechargeValue"], NumberStyles.Any, CultureInfo.InvariantCulture, out configured) && configured > 0
+                ? configured
+                : DefaultMaxRechargeValue;
         }
 
         private static string GetCommissionFailureMessage(PosCommissionRequest request)

@@ -271,4 +271,14 @@ namespace MyERP.Areas.Pos.Models
             Rows = new List<PosExcelImportCommitRowResult>();
         }
     }
+
+    public class PosExcelImportOverlapResult
+    {
+        public bool HasOverlap { get; set; }
+        public int InvoiceCount { get; set; }
+        public long? BatchId { get; set; }
+        public string SourceFileName { get; set; }
+        public DateTime? ExistingFromDate { get; set; }
+        public DateTime? ExistingToDate { get; set; }
+    }
 }

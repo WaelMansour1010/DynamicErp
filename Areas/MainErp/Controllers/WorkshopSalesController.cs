@@ -53,5 +53,11 @@ namespace MyERP.Areas.MainErp.Controllers
             ViewBag.ActiveScreen = "workshop-sales";
             return View(_repository.GetDetails(MainErpSalesInvoiceKind.Workshop, id));
         }
+
+        public ActionResult Report(int id)
+        {
+            ViewBag.ActiveScreen = "workshop-sales";
+            return View(_repository.GetDetails(MainErpSalesInvoiceKind.Workshop, id));
+        }
     }
 }

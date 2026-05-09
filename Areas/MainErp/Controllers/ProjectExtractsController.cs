@@ -51,5 +51,11 @@ namespace MyERP.Areas.MainErp.Controllers
             ViewBag.ActiveScreen = "project-extracts";
             return View(_repository.GetDetails(id));
         }
+
+        public ActionResult Report(int id)
+        {
+            ViewBag.ActiveScreen = "project-extracts";
+            return View(_repository.GetDetails(id));
+        }
     }
 }

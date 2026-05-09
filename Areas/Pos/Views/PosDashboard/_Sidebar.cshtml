@@ -20,7 +20,7 @@
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
     var operationsOpen = sectionActive(new[] { "sales", "closing", "payments", "purchase-invoice", "stock-transfer", "excel-import" });
-    var accountingOpen = hasReportMenuAccess || sectionActive(new[] { "journal-entries", "discount-notifications", "accounting-reports", "reports", "sales-performance", "sales-targets", "payment-vouchers", "cashing" });
+    var accountingOpen = hasReportMenuAccess || sectionActive(new[] { "journal-entries", "discount-notifications", "accounting-reports", "reports", "sales-performance", "sales-targets", "payment-vouchers", "cashing", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
     var financialIntelligenceOpen = (isAdmin || (posContext != null && posContext.CanViewAccountingReports)) || sectionActive(new[] { "financial-intelligence" });
     var kycOpen = sectionActive(new[] { "kyc", "kyc-bank-follow-up" });
     var systemOpen = sectionActive(new[] { "system-health", "system-error-log", "permissions" });
@@ -246,6 +246,12 @@
                        title="التقارير الذكية">
                         <i class="fas fa-chart-bar" aria-hidden="true"></i><span>التقارير الذكية</span>
                     </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/DynamicReports/Index")"
+                       data-screen-url="@Url.Content("~/Pos/DynamicReports/Index")"
+                       title="مصمم التقارير الديناميكي">
+                        <i class="fas fa-sliders-h" aria-hidden="true"></i><span>مصمم التقارير الديناميكي</span>
+                    </a>
                 }
                 @if (isAdmin || (posContext != null && (posContext.CanReportSalesmen || posContext.CanReportSalesComplete || posContext.CanReportAllSales || posContext.CanViewReports)))
                 {
@@ -258,6 +264,30 @@
                 }
                 @if (isAdmin)
                 {
+                    <a class="pos-nav-link @(isActive("employee-payroll") ? "active" : "")"
+                       href="@Url.Action("EmployeePayroll", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/Employees")"
+                       title="الموظفون">
+                        <i class="fas fa-users" aria-hidden="true"></i><span>الموظفون</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("salary-run") ? "active" : "")"
+                       href="@Url.Action("SalaryRun", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/SalaryRun")"
+                       title="مسير الرواتب">
+                        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>مسير الرواتب</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("medical-insurance") ? "active" : "")"
+                       href="@Url.Action("MedicalInsurance", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/MedicalInsurance")"
+                       title="التأمين الطبي">
+                        <i class="fas fa-briefcase-medical" aria-hidden="true"></i><span>التأمين الطبي</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("medical-insurance-reports") ? "active" : "")"
+                       href="@Url.Action("MedicalInsuranceReports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/MedicalInsuranceReports")"
+                       title="تقارير التأمين الطبي">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i><span>تقارير التأمين</span>
+                    </a>
                     <a class="pos-nav-link @(isActive("sales-targets") ? "active" : "")"
                        href="@Url.Content("~/Pos/SalesTargets/Index")"
                        data-screen-url="@Url.Content("~/Pos/SalesTargets/Index")"
@@ -317,6 +347,12 @@
                        data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")"
                        title="صلاحيات POS">
                         <i class="fas fa-shield-alt" aria-hidden="true"></i><span>صلاحيات POS</span>
+                    </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/DynamicReportsAdmin/Index")"
+                       data-screen-url="@Url.Content("~/Pos/DynamicReportsAdmin/Index")"
+                       title="إدارة التقارير الديناميكية">
+                        <i class="fas fa-cogs" aria-hidden="true"></i><span>إدارة التقارير الديناميكية</span>
                     </a>
                 </div>
             </section>

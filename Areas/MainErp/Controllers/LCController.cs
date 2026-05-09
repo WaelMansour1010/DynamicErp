@@ -12,6 +12,11 @@ namespace MyERP.Areas.MainErp.Controllers
         private readonly LcWriteRepository _writeRepository;
         private readonly LegacyScreenPermissionService _permissionService;
         private const string LegacyScreenName = "FrmLC";
+        private const string PermissionPostHeader = "MainErp.LC.PostHeader";
+        private const string PermissionPostGrids = "MainErp.LC.PostGrids";
+        private const string PermissionRebuild = "MainErp.LC.Rebuild";
+        private const string PermissionDelete = "MainErp.LC.Delete";
+        private const string PermissionReports = "MainErp.LC.Reports";
 
         public LCController()
             : this(new LcReadRepository(new MainErpDbConnectionFactory()),
@@ -134,7 +139,7 @@ namespace MyERP.Areas.MainErp.Controllers
             SetPermissions();
             try
             {
-                if (!CanPostLc())
+                if (!CanPostHeaderLc())
                 {
                     return new HttpStatusCodeResult(403, "ليست لديك صلاحية إنشاء قيود الاعتمادات المستندية.");
                 }
@@ -158,7 +163,7 @@ namespace MyERP.Areas.MainErp.Controllers
             SetPermissions();
             try
             {
-                if (!CanPostLc())
+                if (!CanPostHeaderLc())
                 {
                     return new HttpStatusCodeResult(403, "ليست لديك صلاحية إنشاء قيود الاعتمادات المستندية.");
                 }
@@ -182,7 +187,7 @@ namespace MyERP.Areas.MainErp.Controllers
             SetPermissions();
             try
             {
-                if (!CanPostLc())
+                if (!CanPostHeaderLc())
                 {
                     return new HttpStatusCodeResult(403, "ليست لديك صلاحية إغلاق الاعتمادات المستندية.");
                 }
@@ -206,7 +211,7 @@ namespace MyERP.Areas.MainErp.Controllers
             SetPermissions();
             try
             {
-                if (!CanPostLc())
+                if (!CanPostHeaderLc())
                 {
                     return new HttpStatusCodeResult(403, "ليست لديك صلاحية ترحيل الرصيد الافتتاحي للاعتمادات.");
                 }
@@ -230,7 +235,7 @@ namespace MyERP.Areas.MainErp.Controllers
             SetPermissions();
             try
             {
-                if (!CanPostLc())
+                if (!CanPostGridsLc())
                 {
                     return new HttpStatusCodeResult(403, "ليست لديك صلاحية إنشاء قيود جريدات الاعتمادات.");
                 }
@@ -349,12 +354,28 @@ namespace MyERP.Areas.MainErp.Controllers
             return View(_repository.GetDetails(id));
         }
 
+        public ActionResult Report(int id)
+        {
+            ViewBag.ActiveScreen = "lc";
+            SetPermissions();
+            if (!CanReportLc())
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية تقارير الاعتمادات المستندية.");
+            }
+
+            var model = _repository.GetDetails(id);
+            return View(model);
+        }
+
         private void SetPermissions()
         {
             ViewBag.CanEditLc = CanEditLc();
-            ViewBag.CanPostLc = CanPostLc();
+            ViewBag.CanPostLc = CanPostHeaderLc() || CanPostGridsLc();
+            ViewBag.CanPostHeaderLc = CanPostHeaderLc();
+            ViewBag.CanPostGridsLc = CanPostGridsLc();
             ViewBag.CanRebuildLc = CanRebuildLc();
             ViewBag.CanDeleteLc = CanDeleteLc();
+            ViewBag.CanReportLc = CanReportLc();
         }
 
         private bool CanEditLc()
@@ -365,21 +386,44 @@ namespace MyERP.Areas.MainErp.Controllers
 
         private bool CanDeleteLc()
         {
-            return _permissionService.CanDelete(MainErpUserContext, LegacyScreenName);
+            return CanNamedPermission(PermissionDelete, _permissionService.CanDelete(MainErpUserContext, LegacyScreenName));
         }
 
-        private bool CanPostLc()
+        private bool CanPostHeaderLc()
         {
-            return MainErpUserContext != null
-                && (MainErpUserContext.IsAdmin || MainErpUserContext.UserType.GetValueOrDefault(-1) == 0)
-                && CanEditLc();
+            return CanNamedPermission(PermissionPostHeader, CanEditLc());
+        }
+
+        private bool CanPostGridsLc()
+        {
+            return CanNamedPermission(PermissionPostGrids, CanEditLc());
         }
 
         private bool CanRebuildLc()
         {
-            return MainErpUserContext != null
-                && (MainErpUserContext.IsAdmin || MainErpUserContext.UserType.GetValueOrDefault(-1) == 0)
-                && CanEditLc();
+            return CanNamedPermission(PermissionRebuild, CanEditLc());
+        }
+
+        private bool CanReportLc()
+        {
+            return CanNamedPermission(PermissionReports, _permissionService.CanPrint(MainErpUserContext, LegacyScreenName));
+        }
+
+        private bool CanNamedPermission(string permissionName, bool legacyFallback)
+        {
+            if (MainErpUserContext == null)
+            {
+                return false;
+            }
+
+            if (MainErpUserContext.IsAdmin || MainErpUserContext.UserType.GetValueOrDefault(-1) == 0)
+            {
+                return true;
+            }
+
+            // Dedicated MainErp permission storage is not finalized yet.
+            // Until then, keep the VB6 screen permission fallback to avoid blocking migrated users.
+            return legacyFallback;
         }
     }
 }

@@ -40,7 +40,7 @@
         .crystal-sales-total .total-caption { align-items: center; background: #ffffff; border: 1px solid #ffffff; color: #111827; display: flex; flex-direction: column; font-weight: 800; justify-content: center; min-height: 150px; }
         .crystal-sales-total .total-caption span:last-child { color: #dc2626; }
         @@media (max-width: 900px) { .crystal-summary { grid-template-columns: 1fr; } }
-        .report-check-filter { align-items: center; display: flex; flex-direction: row; gap: 8px; justify-content: flex-end; padding-top: 24px; }
+        .report-check-filter { align-items: center; display: flex; flex-direction: row; gap: 8px; justify-content: flex-end; padding-top: 0; }
         .report-check-filter input { width: auto; }
         .report-print { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; color: #24364f; cursor: pointer; font-weight: 700; padding: 10px 12px; width: 100%; }
         .report-print:disabled { color: #9aa8bc; cursor: not-allowed; }
@@ -52,14 +52,14 @@
          data-run-report-url="@Url.Action("Run", "PosReports", new { area = "Pos" })"
          data-export-report-url="@Url.Action("Export", "PosReports", new { area = "Pos" })">
         <div class="pos-shell">
-            <section class="pos-panel">
-                <div class="panel-heading">
-                    <h2>تقارير</h2>
+            <section class="pos-panel pos-card pos-filter-card">
+                <div class="panel-heading pos-card-heading">
+                    <h2>فلاتر التقارير</h2>
                     <span>المستخدم: @(posContext != null ? posContext.UserName : "")</span>
                 </div>
 
-                <div class="pos-grid four-cols reports-filter-grid">
-                    <label>
+                <div class="pos-grid four-cols reports-filter-grid pos-filter-grid">
+                    <label class="pos-field">
                         الفرع
                         <select id="reportBranchId">
                             <option value="">كل الفروع المتاحة</option>
@@ -69,7 +69,7 @@
                             }
                         </select>
                     </label>
-                    <label>
+                    <label class="pos-field">
                         من فرع
                         <select id="reportBranchFromId">
                             <option value="">بداية الفروع</option>
@@ -79,7 +79,7 @@
                             }
                         </select>
                     </label>
-                    <label>
+                    <label class="pos-field">
                         إلى فرع
                         <select id="reportBranchToId">
                             <option value="">نهاية الفروع</option>
@@ -89,9 +89,9 @@
                             }
                         </select>
                     </label>
-                    <label>من تاريخ<input type="date" id="reportFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
-                    <label>إلى تاريخ<input type="date" id="reportToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
-                    <label>
+                    <label class="pos-field">من تاريخ<input type="date" id="reportFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label class="pos-field">إلى تاريخ<input type="date" id="reportToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label class="pos-field">
                         المستخدم
                         <select id="reportUserId">
                             <option value="">كل المستخدمين</option>
@@ -101,10 +101,10 @@
                             }
                         </select>
                     </label>
-                    <label>فلتر خدمة/نشاط<input type="text" id="reportServiceSearch" placeholder="اسم الخدمة أو كودها" /></label>
-                    <label class="report-check-filter"><input type="checkbox" id="reportShowEmptyBranches" /> إظهار الفروع الفاضية</label>
-                    <label>مصدر الدخول<input type="text" id="reportLoginSource" placeholder="مثال: Desktop / VB6" /></label>
-                    <label class="serial-filter is-hidden-ui">
+                    <label class="pos-field">فلتر خدمة/نشاط<input type="text" id="reportServiceSearch" placeholder="اسم الخدمة أو كودها" /></label>
+                    <label class="report-check-filter pos-check-field"><input type="checkbox" id="reportShowEmptyBranches" /> <span>إظهار الفروع الخاضعة / الفاضية</span></label>
+                    <label class="pos-field">مصدر الدخول<input type="text" id="reportLoginSource" placeholder="مثال: Desktop / VB6" /></label>
+                    <label class="serial-filter is-hidden-ui pos-field">
                         المخزن
                         <select id="reportStoreId">
                             <option value="">كل المخازن المتاحة</option>
@@ -114,11 +114,11 @@
                             }
                         </select>
                     </label>
-                    <label class="serial-filter is-hidden-ui">بحث سيريال/صنف<input type="text" id="reportSerialSearch" /></label>
+                    <label class="serial-filter is-hidden-ui pos-field">بحث سيريال/صنف<input type="text" id="reportSerialSearch" /></label>
                 </div>
             </section>
 
-            <section class="pos-panel">
+            <section class="pos-panel pos-card">
                 <div class="report-tabs" id="reportTabs">
                     <button type="button" class="active" data-report-group="sales">تقارير المبيعات</button>
                     <button type="button" data-report-group="closings">تقارير الإغلاقات</button>
@@ -160,7 +160,7 @@
                 </div>
             </section>
 
-            <section class="pos-panel">
+            <section class="pos-panel pos-card">
                 <div id="reportMessage" class="pos-validation"></div>
                 <div id="reportResult" class="report-result"></div>
             </section>
@@ -662,9 +662,6 @@
                         try {
                             var data = text ? JSON.parse(text) : null;
                             byId("reportMessage").innerText = (data && data.message) || "تعذر تصدير Excel";
-                            if (data && data.technicalMessage && window.console) {
-                                console.error(data.technicalMessage);
-                            }
                         } catch (ignore) {
                             byId("reportMessage").innerText = text || "تعذر تصدير Excel";
                         }

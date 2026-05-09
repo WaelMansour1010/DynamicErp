@@ -33,3 +33,53 @@ Still pending before save/post:
 - Map all `DCboCashType` branches to explicit Arabic labels and expected visible sections.
 - Replace report placeholders with the exact Crystal/report route selected by `ReportName` and bank report settings.
 - Implement save/edit/delete/post only after stored procedures are approved.
+
+## Production-readiness pass - 2026-05-09
+
+Completed after the VB6 comparison:
+
+- POS and MainErp list pages now hide balanced accounting status completely. Only unbalanced vouchers get a warning badge/column.
+- Details pages now hide the normal balanced state and keep only an unbalanced warning when needed.
+- Voucher lists use server-side paging through `dbo.usp_DynamicErpVoucher_Search` with `@pageNumber` and `@pageSize`.
+- Details now display allocation sources using Arabic/business labels instead of raw table names such as `TblNotesBillBuyPayment`.
+- Details include an allocation summary by source with paid/remaining totals.
+- Header readback includes manual number, order/reference, payment descriptions, cheque data, VAT include flag, currency/rate, cost center, project, and VB6 report name where the live schema exposes them.
+- POS UI was restyled with a scoped voucher workspace partial; MainErp uses the MainErp ERP styling.
+
+Validation:
+
+- `MyERP.sln` built successfully on 2026-05-09.
+- POS real-session checks returned HTTP 200 for `/Pos/Payments/Vouchers`, `/Pos/Payments/Vouchers?page=2&pageSize=10`, `/Pos/Cashing/Index`, and a payment details page.
+- MainErp real-session checks returned HTTP 200 for `/MainErp/Payments`, `/MainErp/Payments?page=2&pageSize=10`, `/MainErp/Cashing`, and a payment details page.
+- HTML scans found no literal `Account_Code`, no scientific-notation voucher serials, no raw allocation table names, and no visible `القيد متوازن` text.
+- No new repository/controller read path contains `INSERT`, `UPDATE`, `DELETE`, or `ExecuteNonQuery`.
+
+## Write/print wave - 2026-05-09
+
+Implemented for the production-safe direct voucher path:
+
+- Add/Edit UI for `FrmPayments` in both modules:
+  - MainErp: `/MainErp/Payments/Create`, `/MainErp/Payments/Edit/{id}`
+  - POS: `/Pos/Payments/CreateVoucher`, `/Pos/Payments/EditVoucher/{id}`
+- Save is done only through `dbo.usp_DynamicErpVoucher_Save`; MVC does not issue inline write SQL.
+- The save procedure writes `Notes` and rebuilds the linked `DOUBLE_ENTREY_VOUCHERS` rows in one transaction.
+- The direct payment-voucher accounting rule is:
+  - debit: party account
+  - credit: selected cashbox/bank account
+- Post is done through `dbo.usp_DynamicErpVoucher_Post`.
+- Delete is done through `dbo.usp_DynamicErpVoucher_Delete`, but the SP blocks posted vouchers and vouchers with legacy allocation rows.
+- Print is implemented as an HTML print view using the read stored procedures:
+  - MainErp: `/MainErp/Payments/Print/{id}`
+  - POS: `/Pos/Payments/PrintVoucher/{id}`
+
+Safety gates kept in place:
+
+- Allocated payment vouchers from VB6 grids are not rewritten by the generic direct-voucher form. The SP raises an error if legacy allocation rows exist.
+- Full allocation rebuild for `TblNotesBillBuyPayment`, `TblNotesBillProjectPayment`, and `TblNotesBillVindorPayment` remains a dedicated allocation workflow, not a generic direct save.
+- VAT is persisted on `Notes`; the direct accounting entry posts the total value as a balanced two-line entry until the exact VAT-account branch is implemented for each VB6 cashing type.
+
+Validation:
+
+- Stored procedures deployed to MainErp `Eng` and POS/Kishny `Cash`.
+- Transaction/rollback database tests executed `dbo.usp_DynamicErpVoucher_Save` for payment vouchers in both databases without leaving test rows.
+- Real-session HTTP checks returned 200 for create, edit, and print pages in both modules.

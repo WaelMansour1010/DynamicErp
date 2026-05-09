@@ -47,7 +47,6 @@ namespace MyERP.Areas.MainErp.Repositories.LC
         {
             using (var connection = _connectionFactory.CreateOpenConnection())
             {
-                LoadLookups(connection, model);
                 if (model.TblLCID.HasValue && model.TblLCID.Value > 0)
                 {
                     LoadEditableGridRows(connection, model);
@@ -56,6 +55,8 @@ namespace MyERP.Areas.MainErp.Repositories.LC
                 {
                     EnsureEditableGridPlaceholders(model);
                 }
+
+                LoadLookups(connection, model);
             }
         }
 
@@ -134,8 +135,8 @@ WHERE TblLCID = @Id;", connection))
                 }
 
                 model.HasPostedVoucher = HasPostedVoucher(connection, noteId);
-                LoadLookups(connection, model);
                 LoadEditableGridRows(connection, model);
+                LoadLookups(connection, model);
                 return model;
             }
         }
@@ -1023,11 +1024,103 @@ WHERE NoteID IN (SELECT " + Bracket(noteColumn) + " FROM " + Bracket(tableName) 
             TryLoadLookup(connection, model.Countries, "SELECT CAST(CountryID AS nvarchar(50)) Value, ISNULL(CountryName, ECountryName) Text FROM TblCountriesData ORDER BY CountryName;");
             TryLoadLookup(connection, model.Vendors, "SELECT TOP 1000 CAST(CusID AS nvarchar(50)) Value, ISNULL(CusName, CusNamee) Text FROM TblCustemers ORDER BY CusName;");
             TryLoadLookup(connection, model.Branches, "SELECT CAST(branch_id AS nvarchar(50)) Value, ISNULL(branch_name, branch_namee) Text FROM TblBranchesData ORDER BY branch_name;");
-            TryLoadLookup(connection, model.Accounts, @"
-SELECT TOP 3000 Account_Code Value,
+            LoadAccountLookup(connection, model);
+        }
+
+        private static void LoadAccountLookup(SqlConnection connection, LCEditViewModel model)
+        {
+            try
+            {
+                var selectedCodes = CollectSelectedAccountCodes(model)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var sql = @"
+WITH AccountSeed AS (
+    SELECT Account_Code, Account_Serial, Account_Name, Account_NameEng
+    FROM (
+        SELECT TOP 220 Account_Code, Account_Serial, Account_Name, Account_NameEng
+        FROM ACCOUNTS
+        ORDER BY Account_Serial, Account_Name
+    ) TopAccounts
+    {0}
+)
+SELECT Account_Code Value,
        ISNULL(NULLIF(Account_Serial, N''), Account_Code) + N' - ' + ISNULL(Account_Name, ISNULL(Account_NameEng, N'')) Text
-FROM ACCOUNTS
-ORDER BY Account_Serial, Account_Name;");
+FROM AccountSeed
+GROUP BY Account_Code, Account_Serial, Account_Name, Account_NameEng
+ORDER BY Account_Serial, Account_Name;";
+
+                var selectedSql = string.Empty;
+                if (selectedCodes.Count > 0)
+                {
+                    selectedSql = @"
+    UNION
+    SELECT Account_Code, Account_Serial, Account_Name, Account_NameEng
+    FROM ACCOUNTS
+    WHERE Account_Code IN (" + string.Join(",", selectedCodes.Select((x, i) => "@AccountCode" + i)) + ")";
+                }
+
+                using (var command = new SqlCommand(string.Format(sql, selectedSql), connection))
+                {
+                    for (var i = 0; i < selectedCodes.Count; i++)
+                    {
+                        command.Parameters.AddWithValue("@AccountCode" + i, selectedCodes[i]);
+                    }
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            model.Accounts.Add(new LCLookupOption
+                            {
+                                Value = ReadString(reader, "Value"),
+                                Text = ReadString(reader, "Text")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                // Account lookup is intentionally non-fatal because legacy databases can differ.
+            }
+        }
+
+        private static System.Collections.Generic.IEnumerable<string> CollectSelectedAccountCodes(LCEditViewModel model)
+        {
+            yield return model.AccountLGParent;
+            yield return model.AccountMarginParent;
+            yield return model.AccountAcceptanceParent;
+            yield return model.AccountExpensParent;
+            yield return model.LCAccountCode;
+            yield return model.MarginAccountCode;
+            yield return model.AcceptanceAccountCode;
+            yield return model.ExpenseAccountCode;
+            yield return model.ProjectExpenseAccountCode;
+
+            foreach (var row in model.MarginRows)
+            {
+                if (row == null) continue;
+                yield return row.MarginAccountCode;
+                yield return row.BankAccountCode;
+            }
+
+            foreach (var row in model.Margin2Rows)
+            {
+                if (row == null) continue;
+                yield return row.MarginAccountCode;
+                yield return row.BankAccountCode;
+                yield return row.AccountMargen2;
+            }
+
+            foreach (var row in model.OpenBalanceRows)
+            {
+                if (row == null) continue;
+                yield return row.MarginAccountCode;
+                yield return row.BankAccountCode;
+            }
         }
 
         private static void TryLoadLookup(SqlConnection connection, System.Collections.Generic.IList<LCLookupOption> target, string sql)

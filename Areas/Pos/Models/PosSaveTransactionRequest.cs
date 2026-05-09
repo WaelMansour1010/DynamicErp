@@ -550,6 +550,7 @@ namespace MyERP.Areas.Pos.Models
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public int? BranchId { get; set; }
+        public string OperationType { get; set; }
         public string AdminPassword { get; set; }
     }
 

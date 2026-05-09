@@ -14,11 +14,25 @@ namespace MyERP.Areas.MainErp.ViewModels.Payments
         public decimal? Amount { get; set; }
         public string Warning { get; set; }
         public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
         public List<PaymentVoucherListItemViewModel> Items { get; private set; }
+
+        public bool HasPreviousPage
+        {
+            get { return Page > 1; }
+        }
+
+        public bool HasNextPage
+        {
+            get { return Page * PageSize < TotalCount; }
+        }
 
         public PaymentVoucherSearchViewModel()
         {
             Items = new List<PaymentVoucherListItemViewModel>();
+            Page = 1;
+            PageSize = 50;
         }
     }
 
@@ -95,6 +109,8 @@ namespace MyERP.Areas.MainErp.ViewModels.Payments
     public class PaymentVoucherAllocationLineViewModel
     {
         public string Source { get; set; }
+        public string SourceDisplay { get; set; }
+        public string SourceKind { get; set; }
         public string Serial { get; set; }
         public DateTime? Date { get; set; }
         public decimal OriginalValue { get; set; }
@@ -123,5 +139,65 @@ namespace MyERP.Areas.MainErp.ViewModels.Payments
         public DateTime? NoteDate { get; set; }
         public decimal Amount { get; set; }
         public string Remark { get; set; }
+    }
+
+    public class PaymentVoucherEditViewModel
+    {
+        public int? NoteId { get; set; }
+        public int NoteType { get; set; }
+        public string ScreenName { get; set; }
+        public string Title { get; set; }
+        public string BackAction { get; set; }
+        public string BackController { get; set; }
+        public DateTime NoteDate { get; set; }
+        public string NoteSerial { get; set; }
+        public string ManualNo { get; set; }
+        public string OrderNo { get; set; }
+        public string PartyAccountCode { get; set; }
+        public string PartyAccountDisplay { get; set; }
+        public string PartyDisplay { get; set; }
+        public int? BranchId { get; set; }
+        public int? BoxId { get; set; }
+        public int? BankId { get; set; }
+        public int? PaymentMethod { get; set; }
+        public int? CashingType { get; set; }
+        public int? ReceiptClass { get; set; }
+        public string ChequeNumber { get; set; }
+        public DateTime? ChequeDueDate { get; set; }
+        public decimal Amount { get; set; }
+        public decimal Vat { get; set; }
+        public bool IncludeVat { get; set; }
+        public string Remark { get; set; }
+        public string PayDescription { get; set; }
+        public string PayDescription2 { get; set; }
+        public bool IsPosted { get; set; }
+        public string Warning { get; set; }
+        public List<PaymentVoucherLookupItemViewModel> Branches { get; private set; }
+        public List<PaymentVoucherLookupItemViewModel> Boxes { get; private set; }
+        public List<PaymentVoucherLookupItemViewModel> Banks { get; private set; }
+        public List<PaymentVoucherLookupItemViewModel> Accounts { get; private set; }
+
+        public PaymentVoucherEditViewModel()
+        {
+            NoteDate = DateTime.Today;
+            Branches = new List<PaymentVoucherLookupItemViewModel>();
+            Boxes = new List<PaymentVoucherLookupItemViewModel>();
+            Banks = new List<PaymentVoucherLookupItemViewModel>();
+            Accounts = new List<PaymentVoucherLookupItemViewModel>();
+        }
+    }
+
+    public class PaymentVoucherLookupItemViewModel
+    {
+        public string Value { get; set; }
+        public string Text { get; set; }
+    }
+
+    public class PaymentVoucherSaveResultViewModel
+    {
+        public int NoteId { get; set; }
+        public string NoteSerial { get; set; }
+        public int VoucherId { get; set; }
+        public string Message { get; set; }
     }
 }

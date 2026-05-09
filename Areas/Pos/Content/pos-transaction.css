@@ -97,6 +97,78 @@
 .pos-mode-violations { --mode-color: #c05600; }
 
 .pos-shell { max-width: 1440px; margin: 0 auto; }
+.pos-card {
+    background: #fff;
+    border: 1px solid #dfe7f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .045);
+}
+
+.pos-card-heading {
+    border-bottom: 1px solid #edf2f7;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+}
+
+.pos-filter-card {
+    overflow: visible;
+}
+
+.pos-filter-grid,
+.pos-form-grid {
+    align-items: end;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.pos-field,
+.pos-grid label.pos-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.pos-field input,
+.pos-field select,
+.pos-field textarea {
+    min-width: 0;
+}
+
+.pos-check-field,
+.pos-grid label.pos-check-field {
+    align-items: center;
+    align-self: end;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #334155;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    min-height: 44px;
+    padding: 9px 11px;
+    white-space: normal;
+}
+
+.pos-check-field input[type="checkbox"] {
+    flex: 0 0 auto;
+    height: 16px;
+    min-height: 0;
+    width: 16px;
+}
+
+.pos-check-field span {
+    line-height: 1.45;
+}
+
+.pos-table-wrap,
+.responsive-table {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    width: 100%;
+}
 .login-shell { max-width: 640px; }
 
 .pos-header {
@@ -695,10 +767,23 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 }
 
 .check-field,
-.today-excel-filter {
+.today-excel-filter,
+.pos-grid label.check-field,
+.pos-grid label.today-excel-filter {
     align-items: center;
     display: flex;
+    flex-direction: row;
     gap: 8px;
+    justify-content: flex-start;
+}
+
+.check-field input[type="checkbox"],
+.today-excel-filter input[type="checkbox"],
+.pos-grid input[type="checkbox"] {
+    flex: 0 0 auto;
+    height: 16px;
+    min-height: 0;
+    width: 16px;
 }
 
 .pos-page.today-invoices-collapsed .today-invoices-panel {
@@ -1619,17 +1704,30 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 }
 
 .reports-filter-grid.four-cols {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
 .dashboard-filter-grid label,
 .reports-filter-grid label {
     min-width: 0;
+    width: 100%;
 }
 
+.dashboard-filter-grid input,
 .dashboard-filter-grid select,
+.reports-filter-grid input,
 .reports-filter-grid select {
+    box-sizing: border-box;
+    min-width: 0;
     width: 100%;
+}
+
+.reports-filter-grid .smart-lookup {
+    min-width: 0;
+}
+
+.reports-filter-grid .lookup-results {
+    max-width: min(520px, 92vw);
 }
 
 .report-tabs {
@@ -1793,9 +1891,11 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .report-card {
     background: #fff;
     border: 1px solid #e4e9f0;
+    border-radius: 8px;
     display: grid;
     gap: 8px;
     padding: 12px;
+    min-width: 0;
 }
 
 .report-card small {
@@ -2084,6 +2184,16 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 
 .report-result {
     margin-top: 10px;
+    min-width: 0;
+}
+
+.report-result .responsive-table {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.report-result .pos-table {
+    min-width: 980px;
 }
 
 @media (max-width: 1000px) {
@@ -2097,12 +2207,21 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     .pos-main-sidebar, .pos-main-topbar { display: none; }
     .pos-main-content { padding: 0; }
     .pos-main-frame-card, .pos-main-frame-card iframe { border: 0; min-height: 100vh; height: 100vh; }
-    .reports-filter-grid.three-cols, .reports-button-grid, .admin-kpi-grid, .admin-dashboard-grid, .permissions-grid, .insight-grid, .recommendation-list { grid-template-columns: 1fr; }
+    .reports-filter-grid.three-cols, .reports-filter-grid.four-cols, .reports-button-grid, .admin-kpi-grid, .admin-dashboard-grid, .permissions-grid, .insight-grid, .recommendation-list { grid-template-columns: 1fr; }
     .pos-admin-dashboard { display: none !important; }
 }
 
 @media (max-width: 640px) {
     .two-cols, .three-cols, .four-cols, .five-cols, .closing-values-grid { grid-template-columns: 1fr; }
+    .panel-heading,
+    .pos-card-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .report-tabs button,
+    .report-card button {
+        width: 100%;
+    }
 }
 
 /* Modern POS visual refresh: presentation only, no business logic changes. */
@@ -3067,6 +3186,14 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     border: 1px solid #bfdbfe;
     border-radius: 8px;
     color: var(--primary);
+}
+
+.voucher-row-actions {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
 }
 
 .voucher-metric-strip,

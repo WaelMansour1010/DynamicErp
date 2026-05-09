@@ -1700,3 +1700,150 @@ Safety:
 - No `Areas\Pos` files were intentionally changed in this LC step.
 - No `AllScripts.sql` changes.
 - No schema changes beyond the already documented `MainErp_AuditLog` test setup in `Eng`.
+
+## 2026-05-09 Open Screens Completion Pass
+
+Created:
+
+- `AI_Docs\MainErp\59_OpenScreens_CompletionPass.md`
+- `Areas\MainErp\Views\LC\Report.cshtml`
+- `Areas\MainErp\Views\ProjectExtracts\Report.cshtml`
+- `Areas\MainErp\Views\WorkshopSales\Report.cshtml`
+
+Modified:
+
+- `Areas\MainErp\Controllers\LCController.cs`
+- `Areas\MainErp\Controllers\ProjectExtractsController.cs`
+- `Areas\MainErp\Controllers\WorkshopSalesController.cs`
+- `Areas\MainErp\Views\LC\Index.cshtml`
+- `Areas\MainErp\Views\ProjectExtracts\Details.cshtml`
+- `Areas\MainErp\Views\WorkshopSales\Details.cshtml`
+- `MyERP.csproj`
+
+Implemented:
+
+- Added granular LC permission constants for header posting, grid posting, rebuild, delete, and reports.
+- Kept VB6 `FrmLC` permission fallback until final MainErp permission persistence is introduced.
+- Added a read-only LC Web Report route and view.
+- Added a read-only Project Extract Web Report route and view.
+- Added a read-only Workshop Sales Web Report route and view.
+- Registered existing Pump Sales MainErp views in the project file.
+- Fixed `SalesInvoiceReadRepository` optional FrmSaleBill6 trace-field reading so missing columns such as `IsPosted` do not crash Workshop Sales report/details paths.
+- Added a compile-safe `Areas\Reports` skeleton because `MyERP.csproj` already referenced those files but the files were missing from disk.
+
+Build:
+
+- `MyERP.sln` Debug / Any CPU builds successfully.
+
+Runtime validation:
+
+- `/MainErp/LC/Report/198` returns HTTP 200 without server/Razor/404 errors.
+- `/MainErp/ProjectExtracts/Report/222097` returns HTTP 200 without server/Razor/404 errors.
+- `/MainErp/WorkshopSales/Report/3832` returns HTTP 200 without server/Razor/404 errors.
+
+Safety:
+
+- No new database writes were introduced by these report routes.
+- No `AllScripts.sql` changes.
+- No intentional `Areas\Pos` changes in this pass.
+
+## 2026-05-09 LC and Project Extracts UAT Delivery Test
+
+Created:
+
+- `AI_Docs\MainErp\60_UAT_LC_ProjectExtracts_20260509.md`
+
+Modified:
+
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+
+Test database:
+
+- `MainErp_ConnectionString -> Wael\Sql2019 / Eng`
+
+LC UAT sample:
+
+- Created `TblLCID=199`, `LCNO=UAT-LC-20260509164035`.
+- Auto-created 4 linked accounts under the selected parent accounts.
+- Edited the same LC and verified `Value`, `OpenValue`, `OpenBalance`, `ProjectName`, and `Remarks`.
+- Created real LC header/opening voucher:
+  - `Notes.NoteID=222101`
+  - Debit `625.00`
+  - Credit `625.00`
+- Created real LC open-expense voucher:
+  - `Notes.NoteID=222102`
+  - Debit `333.33`
+  - Credit `333.33`
+- Created real opening-balance rows in `DOUBLE_ENTREY_VOUCHERS1`:
+  - `opening_balance_voucher_id=6578`
+  - Debit `1100.00`
+  - Credit `1100.00`
+- Verified journal links for `222101` and `222102`.
+- Verified audit entries for header posting, expense posting, opening balance posting, and grid voucher action.
+
+LC usability/performance fix:
+
+- Reduced LC edit account lookup rendering from about `9.29 MB` to about `874 KB`.
+- Account lookup now loads a bounded working set plus all selected account codes.
+- Future recommended improvement: AJAX account search for very large charts of accounts.
+
+Project Extracts UAT sample:
+
+- Tested `project_billl.id=3499`, `NoteID=222097`.
+- Verified list/search/details/report routes return HTTP 200.
+- Verified one real `project_bill_details` row is loaded.
+- Verified linked voucher rows are balanced:
+  - Debit `1725.00`
+  - Credit `1725.00`
+- Verified no linked advance payments exist for this sample and the screen shows a real empty state.
+
+Current known gap:
+
+- Project Extracts are still read-only in code. Create/edit/save/post/delete/account creation are not implemented yet.
+
+Build:
+
+- `MyERP.sln` Debug / Any CPU builds successfully.
+
+Safety:
+
+- No `AllScripts.sql` changes.
+- No intentional `Areas\Pos` changes in this UAT pass.
+
+## 2026-05-09 Completion & Hardening Delivery Pass
+
+Created:
+
+- `AI_Docs\MainErp\61_CompletionHardening_FinalDeliveryReport_20260509.md`
+
+Modified:
+
+- `Areas\MainErp\Repositories\LC\LcReadRepository.cs`
+- `Areas\MainErp\Repositories\LC\LcWriteRepository.cs`
+- `Areas\MainErp\Repositories\ProjectExtracts\ProjectExtractReadRepository.cs`
+- `Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs`
+
+Implemented hardening:
+
+- Converted raw user-facing SQL schema errors into friendly Arabic compatibility warnings.
+- Preserved full SQL details internally through `Trace.TraceWarning`.
+- Re-tested MainErp route set on both `Eng` and `Cash`.
+- Re-tested key report/print routes on both `Eng` and `Cash`.
+- Restarted IIS Express after build so validation used the updated binaries.
+
+Validation:
+
+- `MyERP.sln` Debug / Any CPU builds successfully.
+- MainErp tested routes on `Eng`: Dashboard, LC, ProjectExtracts, WorkshopSales, PumpSales, JournalEntries, AccountingReports, SalesReports, Payments, Cashing, DiscountNotifications.
+- MainErp tested routes on `Cash`: same route set.
+- Report/print routes tested:
+  - LC report.
+  - Project Extract report.
+  - Workshop Sales report.
+  - Payment details/print.
+  - Cashing details/print.
+
+Outcome:
+
+- No server errors, stack traces, null reference errors, raw SQL schema errors, or unhandled exceptions were detected in the tested route responses.
+- Remaining production gaps are documented clearly in report 61, especially Project Extract write lifecycle and full sales posting/cancel/reverse matrix.

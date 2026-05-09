@@ -7,7 +7,7 @@ Both modules are based on MAIN ERP VB6:
 - `Frm\FrmPayments.frm`
 - `Frm\New frm\RealEstateMnag\FrmCashing1.frm`
 
-Both read `Notes`, `DOUBLE_ENTREY_VOUCHERS`, `ACCOUNTS`, parties, branches, boxes, banks, and allocation tables. Both are first-wave read-only and expose no save/edit/delete/post behavior.
+Both read `Notes`, `DOUBLE_ENTREY_VOUCHERS`, `ACCOUNTS`, parties, branches, boxes, banks, and allocation tables. The first wave was read-only; the 2026-05-09 wave adds direct save/edit/delete/post through stored procedures.
 
 ## MainErp web
 
@@ -28,7 +28,7 @@ Both read `Notes`, `DOUBLE_ENTREY_VOUCHERS`, `ACCOUNTS`, parties, branches, boxe
 - Session/layout: POS login context and POS iframe pages
 - Sidebar: accounting section links added for voucher readers where accounting-report permission exists.
 
-## Excluded until a later wave
+## Originally excluded from the first read-only wave
 
 - Save/edit/delete/post
 - Note numbering
@@ -82,4 +82,92 @@ Both read `Notes`, `DOUBLE_ENTREY_VOUCHERS`, `ACCOUNTS`, parties, branches, boxe
   - `TblAqrEarnest`
   - `TblOtheExpensAqar`
   - `TblFiterWaiver`
-- No save/edit/delete/post procedures were deployed in this slice.
+- No save/edit/delete/post procedures were deployed in that slice. They were added later in the 2026-05-09 write/print wave below.
+
+## UI and paging hardening on 2026-05-09
+
+- POS voucher screens were restyled with a scoped premium ERP workspace partial:
+  - `Areas\Pos\Views\Shared\_VoucherScreenStyles.cshtml`
+- MainErp voucher screens continue to use:
+  - `Areas\MainErp\Content\mainerp\mainerp.css`
+- Balanced accounting state is no longer shown to users. Only unbalanced vouchers display a warning.
+- Allocation source names are displayed as Arabic/business labels in both modules; raw SQL table names remain an internal trace concern only.
+- Search/list screens now page through the stored procedure instead of loading a fixed first batch only.
+- Both modules keep separate controllers, repositories, views, sessions, layouts, and connection strings.
+- Validation on 2026-05-09:
+  - Build: `MyERP.sln` succeeded.
+  - POS real-session pages returned HTTP 200 for list, paging, cashing list, and payment details.
+  - MainErp real-session pages returned HTTP 200 for list, paging, cashing list, and payment details.
+  - Content scans found no literal `Account_Code`, no scientific notation serials, no raw allocation table names, and no visible balanced-state label.
+
+## Remaining gated work
+
+- Generic direct save/edit/delete/post is now implemented through stored procedures in both modules.
+- Crystal/DevExpress binary report rendering is still not used directly. HTML print views are implemented and expose the VB6 report name/bank report metadata as the reporting anchor.
+- Full edit-mode allocation rebuilding from the VB6 grids remains gated behind dedicated allocation workflows because it touches note allocation and reversal behavior.
+
+## Write/print implementation on 2026-05-09
+
+New stored procedures, deployed to both `Eng` and `Cash`:
+
+- `dbo.usp_DynamicErpVoucher_EditLookups`
+- `dbo.usp_DynamicErpVoucher_EditHeader`
+- `dbo.usp_DynamicErpVoucher_Save`
+- `dbo.usp_DynamicErpVoucher_Post`
+- `dbo.usp_DynamicErpVoucher_Delete`
+
+Implemented routes:
+
+- MainErp payment: `/MainErp/Payments/Create`, `/MainErp/Payments/Edit/{id}`, `/MainErp/Payments/Print/{id}`
+- MainErp receipt: `/MainErp/Cashing/Create`, `/MainErp/Cashing/Edit/{id}`, `/MainErp/Cashing/Print/{id}`
+- POS payment: `/Pos/Payments/CreateVoucher`, `/Pos/Payments/EditVoucher/{id}`, `/Pos/Payments/PrintVoucher/{id}`
+- POS receipt: `/Pos/Cashing/Create`, `/Pos/Cashing/Edit/{id}`, `/Pos/Cashing/Print/{id}`
+
+Module separation remains:
+
+- MainErp uses `MainErp_ConnectionString`, MainErp session, MainErp layout, and MainErp legacy permissions.
+- POS uses `KishnyCashConnection`, POS session, POS layout, and POS legacy permissions.
+- Controllers and repositories are still separate at the area boundary; only neutral view models/read-write repository mechanics are reused where the connection factory is injected.
+
+Current write coverage:
+
+- Direct payment/receipt voucher save with two-line balanced journal entry.
+- Edit of unposted, unallocated direct vouchers.
+- Delete of unposted, unallocated direct vouchers.
+- Post flag update for voucher and journal rows.
+- HTML print from stored-procedure read data.
+
+Protected exclusions:
+
+- Allocated purchase/project/vendor payment vouchers are blocked from the generic edit/delete SP.
+- Real-estate allocated receipts are blocked from the generic edit/delete SP.
+- Exact Crystal report execution remains pending; the web print view is production usable but not a Crystal renderer.
+
+## End-to-end validation on 2026-05-09
+
+Full UI flows were tested after real login sessions:
+
+- MainErp payments: create, details, edit, print, delete.
+- MainErp cashing: create, details, edit, print, delete.
+- POS payments: create, details, edit, print, delete.
+- POS cashing: create, details, edit, print, delete.
+
+Posting was tested separately for all four screens:
+
+- MainErp payments post.
+- MainErp cashing post.
+- POS payments post.
+- POS cashing post.
+
+Database validation after posting:
+
+- `Notes.NotePosted = 1`
+- `DOUBLE_ENTREY_VOUCHERS.Posted = 1`
+- two journal lines per direct voucher
+- debit/credit difference = `0`
+
+Cleanup:
+
+- All `AUTO-*` and `POST-*` Codex test vouchers were removed after validation.
+- Verification query returned zero Codex test rows in both `Eng` and `Cash`.
+- `MyERP.sln` built successfully after the end-to-end tests.

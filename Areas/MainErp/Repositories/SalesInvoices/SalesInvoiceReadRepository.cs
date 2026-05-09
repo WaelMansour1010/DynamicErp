@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
@@ -65,7 +66,8 @@ namespace MyERP.Areas.MainErp.Repositories.SalesInvoices
             {
                 if (!IsMissingStoredProcedure(ex))
                 {
-                    result.Warning = "Sales invoice stored procedure read failed, falling back to inline read: " + ex.Message;
+                    Trace.TraceWarning("MainErp sales invoice stored procedure search warning: " + ex);
+                    result.Warning = "تعذر تشغيل إجراء العرض المحسن للفواتير؛ سيتم استخدام القراءة المباشرة المتاحة.";
                 }
             }
 
@@ -139,7 +141,8 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             }
             catch (SqlException ex)
             {
-                result.Warning = "Sales invoice read model is not available in the configured database yet: " + ex.Message;
+                Trace.TraceWarning("MainErp sales invoice search schema warning: " + ex);
+                result.Warning = "تعذر تحميل فواتير المبيعات من قاعدة البيانات الحالية. قد تكون قاعدة التشغيل لا تحتوي على نفس حقول فواتير الورشة/المضخات الخاصة بالنظام الرئيسي.";
             }
 
             if (kind == MainErpSalesInvoiceKind.Pump)
@@ -222,7 +225,8 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             {
                 if (!IsMissingStoredProcedure(ex))
                 {
-                    model.Warning = "Sales invoice stored procedure details read failed, falling back to inline read: " + ex.Message;
+                    Trace.TraceWarning("MainErp sales invoice stored procedure details warning: " + ex);
+                    model.Warning = "تعذر تشغيل إجراء تفاصيل الفاتورة المحسن؛ سيتم استخدام القراءة المباشرة المتاحة.";
                 }
             }
 
@@ -248,7 +252,8 @@ SELECT * FROM InvoiceRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY Row
             }
             catch (SqlException ex)
             {
-                model.Warning = "Sales invoice details are not available in the configured database yet: " + ex.Message;
+                Trace.TraceWarning("MainErp sales invoice details schema warning: " + ex);
+                model.Warning = "تعذر تحميل تفاصيل الفاتورة من قاعدة البيانات الحالية. قد تكون قاعدة التشغيل لا تحتوي على نفس حقول فواتير الورشة/المضخات الخاصة بالنظام الرئيسي.";
             }
 
             return model;
@@ -720,7 +725,8 @@ ORDER BY t.Transaction_ID DESC;", connection))
             }
             catch (SqlException ex)
             {
-                diagnostics.FilterDescription += " | Diagnostics warning: " + ex.Message;
+                Trace.TraceWarning("MainErp pump sales diagnostics schema warning: " + ex);
+                diagnostics.FilterDescription += " | تحذير تشخيصي: تعذر قراءة بعض مؤشرات المضخات بسبب اختلاف بنية قاعدة البيانات الحالية.";
             }
 
             return diagnostics;
@@ -782,22 +788,22 @@ ORDER BY t.Transaction_ID DESC;", connection))
             model.Approved = ReadBoolFlexible(reader, "Approved");
             model.IsPosted = ReadBoolFlexible(reader, "IsPosted");
             model.UserPosted = ReadIntIfExists(reader, "UserPosted");
-            model.Prefix = ReadString(reader, "Prefix");
-            model.FullCode = ReadString(reader, "Fullcode");
-            model.CboBasedOn = ReadInt(reader, "CBoBasedON");
-            model.PosBillType = ReadInt(reader, "POSBillType");
-            model.TransactionNetValue = ReadDecimal(reader, "Transaction_NetValue");
-            model.SumValueLine = ReadDecimal(reader, "SumValueLine");
-            model.SumVatLine = ReadDecimal(reader, "SumVATLine");
-            model.DateRec = ReadDate(reader, "DateRec");
-            model.Remarks = ReadString(reader, "Remarks");
-            model.PaymentTypeLabel = ReadString(reader, "PaymentType");
-            model.CurrencyId = ReadString(reader, "Currency_id");
-            model.CurrencyRate = ReadDecimal(reader, "Currency_rate");
-            model.OrderNo = ReadString(reader, "order_no");
-            model.StoreId = ReadInt(reader, "StoreID");
-            model.BoxId = ReadInt(reader, "BoxID");
-            model.PaymentNetId = ReadInt(reader, "PaymentNetid");
+            model.Prefix = ReadStringIfExists(reader, "Prefix");
+            model.FullCode = ReadStringIfExists(reader, "Fullcode");
+            model.CboBasedOn = ReadIntIfExists(reader, "CBoBasedON");
+            model.PosBillType = ReadIntIfExists(reader, "POSBillType");
+            model.TransactionNetValue = ReadDecimalIfExists(reader, "Transaction_NetValue");
+            model.SumValueLine = ReadDecimalIfExists(reader, "SumValueLine");
+            model.SumVatLine = ReadDecimalIfExists(reader, "SumVATLine");
+            model.DateRec = ReadDateIfExists(reader, "DateRec");
+            model.Remarks = ReadStringIfExists(reader, "Remarks");
+            model.PaymentTypeLabel = ReadStringIfExists(reader, "PaymentType");
+            model.CurrencyId = ReadStringIfExists(reader, "Currency_id");
+            model.CurrencyRate = ReadDecimalIfExists(reader, "Currency_rate");
+            model.OrderNo = ReadStringIfExists(reader, "order_no");
+            model.StoreId = ReadIntIfExists(reader, "StoreID");
+            model.BoxId = ReadIntIfExists(reader, "BoxID");
+            model.PaymentNetId = ReadIntIfExists(reader, "PaymentNetid");
         }
 
         private static void AddLine(SalesInvoiceDetailsViewModel model, IDataRecord reader)
@@ -1082,7 +1088,8 @@ ORDER BY c.CusName, c.CusID;");
             }
             catch (SqlException ex)
             {
-                model.Warnings.Add("تعذر تحميل بعض قوائم الاختيار: " + ex.Message);
+                Trace.TraceWarning("MainErp pump sales lookup schema warning: " + ex);
+                model.Warnings.Add("تعذر تحميل بعض قوائم الاختيار بسبب اختلاف بنية قاعدة البيانات الحالية.");
             }
         }
 
@@ -1241,7 +1248,8 @@ ORDER BY c.CusName, c.CusID;", connection))
             }
             catch (SqlException ex)
             {
-                model.Warnings.Add("Customer lookup could not be loaded; CustomerId can still be entered manually. " + ex.Message);
+                Trace.TraceWarning("MainErp pump sales customer lookup schema warning: " + ex);
+                model.Warnings.Add("تعذر تحميل قائمة العملاء؛ يمكن استخدام رقم العميل يدويًا لحين مراجعة بنية قاعدة البيانات.");
             }
         }
 
@@ -1922,6 +1930,11 @@ ORDER BY a.CreatedAt DESC, a.AuditId DESC;";
             return reader.IsDBNull(ordinal) ? string.Empty : Convert.ToString(reader.GetValue(ordinal));
         }
 
+        private static string ReadStringIfExists(IDataRecord reader, string column)
+        {
+            return HasColumn(reader, column) ? ReadString(reader, column) : string.Empty;
+        }
+
         private static bool HasColumn(IDataRecord reader, string column)
         {
             for (var index = 0; index < reader.FieldCount; index++)
@@ -1952,6 +1965,11 @@ ORDER BY a.CreatedAt DESC, a.AuditId DESC;";
             return reader.IsDBNull(ordinal) ? (DateTime?)null : Convert.ToDateTime(reader.GetValue(ordinal));
         }
 
+        private static DateTime? ReadDateIfExists(IDataRecord reader, string column)
+        {
+            return HasColumn(reader, column) ? ReadDate(reader, column) : (DateTime?)null;
+        }
+
         private static Guid? ReadGuid(IDataRecord reader, string column)
         {
             var ordinal = reader.GetOrdinal(column);
@@ -1962,6 +1980,11 @@ ORDER BY a.CreatedAt DESC, a.AuditId DESC;";
         {
             var ordinal = reader.GetOrdinal(column);
             return reader.IsDBNull(ordinal) ? (decimal?)null : Convert.ToDecimal(reader.GetValue(ordinal));
+        }
+
+        private static decimal? ReadDecimalIfExists(IDataRecord reader, string column)
+        {
+            return HasColumn(reader, column) ? ReadDecimal(reader, column) : (decimal?)null;
         }
 
         private static string GetPart(string[] parts, int index)
@@ -2001,6 +2024,11 @@ ORDER BY a.CreatedAt DESC, a.AuditId DESC;";
 
         private static bool? ReadBoolFlexible(IDataRecord reader, string column)
         {
+            if (!HasColumn(reader, column))
+            {
+                return null;
+            }
+
             var ordinal = reader.GetOrdinal(column);
             if (reader.IsDBNull(ordinal))
             {

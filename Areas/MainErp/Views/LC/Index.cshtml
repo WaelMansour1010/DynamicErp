@@ -10,8 +10,11 @@
     var readOnlyMessage = Convert.ToString(TempData["MainErpLcReadOnlyMessage"]);
     var canEditLc = ViewBag.CanEditLc == true;
     var canPostLc = ViewBag.CanPostLc == true;
+    var canPostHeaderLc = ViewBag.CanPostHeaderLc == true;
+    var canPostGridsLc = ViewBag.CanPostGridsLc == true;
     var canRebuildLc = ViewBag.CanRebuildLc == true;
     var canDeleteLc = ViewBag.CanDeleteLc == true;
+    var canReportLc = ViewBag.CanReportLc == true;
     var totalDebit = 0m;
     var totalCredit = 0m;
     var affectedAccounts = new System.Collections.Generic.HashSet<string>();
@@ -505,7 +508,14 @@
 
                 <section id="lc-reports" class="main-erp-tab-pane" hidden>
                     <div class="main-erp-report-tiles">
-                        <a class="is-disabled"><span>@T("Reports")</span><strong>@T("LettersOfCredit")</strong><small>@T("DisabledReadOnlyMessage")</small></a>
+                        @if (canReportLc)
+                        {
+                            <a href="@Url.Action("Report", "LC", new { area = "MainErp", id = d.TblLCID })"><span>@T("Reports")</span><strong>@T("LettersOfCredit")</strong><small>Web report - read only</small></a>
+                        }
+                        else
+                        {
+                            <a class="is-disabled"><span>@T("Reports")</span><strong>@T("LettersOfCredit")</strong><small>@T("DisabledReadOnlyMessage")</small></a>
+                        }
                         <a class="is-disabled"><span>@T("ReportsAndAttachments")</span><strong>@T("PreviewVoucher")</strong><small>@T("WorkflowReadOnly")</small></a>
                     </div>
                 </section>

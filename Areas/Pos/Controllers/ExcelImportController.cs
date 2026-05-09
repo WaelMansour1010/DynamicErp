@@ -36,23 +36,23 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                return Json(new { ok = false, message = "ظٹط¬ط¨ طھط³ط¬ظٹظ„ ط¯ط®ظˆظ„ ظ†ظ‚ط·ط© ط§ظ„ط¨ظٹط¹ ظ‚ط¨ظ„ ط§ظ„طھط±ط­ظٹظ„." });
+                return Json(new { ok = false, message = "يجب تسجيل دخول نقطة البيع قبل الترحيل." });
             }
 
             if (!CanExecuteExcelImport(context))
             {
-                return Json(new { ok = false, message = "ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط© ط§ط³طھظٹط±ط§ط¯ ط§ظ„ط¹ظ…ظ„ظٹط§طھ ظ…ظ† Excel." });
+                return Json(new { ok = false, message = "ليست لديك صلاحية استيراد العمليات من Excel." });
             }
 
             if (!_repository.ValidatePosUserPassword(context.UserId, adminPassword))
             {
-                return Json(new { ok = false, message = "ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط؛ظٹط± طµط­ظٹط­ط©. ظ„ط§ ظٹظ…ظƒظ† طھظ†ظپظٹط° ط§ط³طھظٹط±ط§ط¯ Excel." });
+                return Json(new { ok = false, message = "كلمة المرور غير صحيحة. لا يمكن تنفيذ استيراد Excel." });
             }
 
             var preview = Session[PreviewSessionKey] as PosExcelImportPreviewResult;
             if (preview == null)
             {
-                return Json(new { ok = false, message = "ظ„ط§ طھظˆط¬ط¯ ظ…ط¹ط§ظٹظ†ط© ظ…ط­ظپظˆط¸ط©. ط§ط±ظپط¹ ظ…ظ„ظپ Excel ظˆط§ط¹ظ…ظ„ ظ…ط¹ط§ظٹظ†ط© ظ‚ط¨ظ„ ط§ظ„طھط±ط­ظٹظ„." });
+                return Json(new { ok = false, message = "لا توجد معاينة محفوظة. ارفع ملف Excel واعمل معاينة قبل الترحيل." });
             }
 
             var jobId = Guid.NewGuid().ToString("N");
@@ -62,7 +62,7 @@ namespace MyERP.Areas.Pos.Controllers
                 JobId = jobId,
                 Status = "Queued",
                 TotalCount = preview.Rows.Count,
-                CurrentMessage = "طھظ… ظˆط¶ط¹ ط§ظ„طھط±ط­ظٹظ„ ظپظٹ ظ‚ط§ط¦ظ…ط© ط§ظ„طھظ†ظپظٹط°"
+                CurrentMessage = "تم وضع الترحيل في قائمة التنفيذ"
             };
             CommitJobs[jobId] = initialProgress;
 
@@ -76,7 +76,7 @@ namespace MyERP.Areas.Pos.Controllers
             PosExcelImportCommitProgress progress;
             if (string.IsNullOrWhiteSpace(jobId) || !CommitJobs.TryGetValue(jobId, out progress))
             {
-                return Json(new { ok = false, message = "ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط¹ظ…ظ„ظٹط© ط§ظ„طھط±ط­ظٹظ„." }, JsonRequestBehavior.AllowGet);
+                return Json(new { ok = false, message = "لم يتم العثور على عملية الترحيل." }, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new
@@ -111,7 +111,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                return Json(new { ok = false, message = "ظٹط¬ط¨ طھط³ط¬ظٹظ„ ط¯ط®ظˆظ„ ظ†ظ‚ط·ط© ط§ظ„ط¨ظٹط¹ ظ‚ط¨ظ„ ط§ظ„طھط±ط§ط¬ط¹." });
+                return Json(new { ok = false, message = "يجب تسجيل دخول نقطة البيع قبل التراجع." });
             }
 
             if (!CanExecuteExcelImport(context))
@@ -127,13 +127,13 @@ namespace MyERP.Areas.Pos.Controllers
             PosExcelImportCommitProgress progress;
             if (string.IsNullOrWhiteSpace(jobId) || !CommitJobs.TryGetValue(jobId, out progress) || progress.Result == null || progress.Result.BatchId <= 0)
             {
-                return Json(new { ok = false, message = "ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ batch طµط§ظ„ط­ ظ„ظ„طھط±ط§ط¬ط¹." });
+                return Json(new { ok = false, message = "لم يتم العثور على batch صالح للتراجع." });
             }
 
             var preview = Session[PreviewSessionKey] as PosExcelImportPreviewResult;
             if (preview == null)
             {
-                return Json(new { ok = false, message = "ظ„ط§ طھظˆط¬ط¯ ظ…ط¹ط§ظٹظ†ط© ظ…ط­ظپظˆط¸ط© ظ„ظ„طھط±ط§ط¬ط¹ ط¹ظ† ط£ط«ط±ظ‡ط§ ط¹ظ„ظ‰ ظ…ظ„ظپ Excel." });
+                return Json(new { ok = false, message = "لا توجد معاينة محفوظة للتراجع عن أثرها على ملف Excel." });
             }
 
             var outputDirectory = GetImportWorkDirectory();
@@ -142,7 +142,7 @@ namespace MyERP.Areas.Pos.Controllers
                 JobId = jobId,
                 Status = "RollbackRunning",
                 TotalCount = progress.ImportedCount,
-                CurrentMessage = "ط¨ط¯ط£ ط§ظ„طھط±ط§ط¬ط¹ ط¹ظ† ظپظˆط§طھظٹط± Excel",
+                CurrentMessage = "بدأ التراجع عن فواتير Excel",
                 Result = progress.Result
             };
 
@@ -161,7 +161,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (!CanExecuteExcelImport(context))
             {
-                return new HttpStatusCodeResult(403, "ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط© ط§ط³طھظٹط±ط§ط¯ ط§ظ„ط¹ظ…ظ„ظٹط§طھ ظ…ظ† Excel");
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
             }
 
             ViewBag.PosContext = context;
@@ -183,7 +183,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (!CanExecuteExcelImport(context))
             {
-                return new HttpStatusCodeResult(403, "ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط© ط§ط³طھظٹط±ط§ط¯ ط§ظ„ط¹ظ…ظ„ظٹط§طھ ظ…ظ† Excel");
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
             }
 
             ViewBag.PosContext = context;
@@ -214,7 +214,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 return View("Preview", new PosExcelImportPreviewViewModel
                 {
-                    ErrorMessage = "طھط¹ط°ط± ظ‚ط±ط§ط،ط© ظ…ظ„ظپ Excel: " + ex.Message
+                    ErrorMessage = "تعذر قراءة ملف Excel: " + ex.Message
                 });
             }
         }
@@ -239,7 +239,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return View("Preview", new PosExcelImportPreviewViewModel
                 {
                     Preview = preview,
-                    ErrorMessage = "ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط© ط§ط³طھظٹط±ط§ط¯ ط§ظ„ط¹ظ…ظ„ظٹط§طھ ظ…ظ† Excel."
+                    ErrorMessage = "ليست لديك صلاحية استيراد العمليات من Excel."
                 });
             }
 
@@ -248,7 +248,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return View("Preview", new PosExcelImportPreviewViewModel
                 {
                     Preview = preview,
-                    ErrorMessage = "ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط± ط؛ظٹط± طµط­ظٹط­ط©. ظ„ط§ ظٹظ…ظƒظ† طھظ†ظپظٹط° ط§ط³طھظٹط±ط§ط¯ Excel."
+                    ErrorMessage = "كلمة المرور غير صحيحة. لا يمكن تنفيذ استيراد Excel."
                 });
             }
 
@@ -256,7 +256,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 return View("Preview", new PosExcelImportPreviewViewModel
                 {
-                    ErrorMessage = "ظ„ط§ طھظˆط¬ط¯ ظ…ط¹ط§ظٹظ†ط© ظ…ط­ظپظˆط¸ط©. ط§ط±ظپط¹ ظ…ظ„ظپ Excel ظˆط§ط¹ظ…ظ„ ظ…ط¹ط§ظٹظ†ط© ظ‚ط¨ظ„ ط§ظ„طھط±ط­ظٹظ„."
+                    ErrorMessage = "لا توجد معاينة محفوظة. ارفع ملف Excel واعمل معاينة قبل الترحيل."
                 });
             }
 
@@ -275,7 +275,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return View("Preview", new PosExcelImportPreviewViewModel
                 {
                     Preview = preview,
-                    ErrorMessage = "طھط¹ط°ط± طھط±ط­ظٹظ„ ظپظˆط§طھظٹط± Excel: " + ex.Message
+                    ErrorMessage = "تعذر ترحيل فواتير Excel: " + ex.Message
                 });
             }
         }
@@ -291,7 +291,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (!CanExecuteExcelImport(context))
             {
-                return new HttpStatusCodeResult(403, "ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط© طھط­ظ…ظٹظ„ ظ…ظ„ظپ Excel ط§ظ„ظ†ط§طھط¬");
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية تحميل ملف Excel الناتج");
             }
 
             var safeName = Path.GetFileName(file ?? string.Empty);
@@ -333,7 +333,7 @@ namespace MyERP.Areas.Pos.Controllers
                     JobId = jobId,
                     Status = "Running",
                     TotalCount = preview.Rows.Count,
-                    CurrentMessage = "ط¨ط¯ط£ ط§ظ„طھط±ط­ظٹظ„"
+                    CurrentMessage = "بدأ الترحيل"
                 };
 
                 var result = commitService.Commit(preview, context, progress =>
@@ -354,7 +354,7 @@ namespace MyERP.Areas.Pos.Controllers
                     ImportedCount = result.ImportedCount,
                     FailedCount = result.FailedCount,
                     SkippedCount = result.SkippedCount,
-                    CurrentMessage = "ط§ظ†طھظ‡ظ‰ ط§ظ„طھط±ط­ظٹظ„",
+                    CurrentMessage = "انتهى الترحيل",
                     MarkedWorkbookFileName = result.MarkedWorkbookFileName,
                     Result = result
                 };
@@ -389,7 +389,7 @@ namespace MyERP.Areas.Pos.Controllers
                     ImportedCount = 0,
                     FailedCount = rollbackResult.FailedCount,
                     SkippedCount = rollbackResult.RolledBackCount,
-                    CurrentMessage = rollbackResult.FailedCount > 0 ? "طھظ… ط§ظ„طھط±ط§ط¬ط¹ ط¬ط²ط¦ظٹط§. ط¨ط¹ط¶ ط§ظ„ظپظˆط§طھظٹط± ظ„ظ… طھط­ط°ظپ." : "طھظ… ط§ظ„طھط±ط§ط¬ط¹ ظˆط­ط°ظپ ظپظˆط§طھظٹط± Excel.",
+                    CurrentMessage = rollbackResult.FailedCount > 0 ? "تم التراجع جزئيا. بعض الفواتير لم تحذف." : "تم التراجع وحذف فواتير Excel.",
                     MarkedWorkbookFileName = rollbackResult.ClearedWorkbookFileName
                 };
             }

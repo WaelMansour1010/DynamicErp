@@ -53,6 +53,7 @@
     var uxDebounceMs = 200;
     var amountCommitDelayMs = 400;
     var posDebugEnabled = false;
+    var maxRechargeValue = 1000000;
 
     function byId(id) { return document.getElementById(id); }
     try {
@@ -1395,10 +1396,13 @@
         if (mode === "card" && !byId("cashCustomerId").value) { addValidationError(errors, "VisaNumber", "يجب تفعيل الكارت وحفظ بيانات KYC قبل حفظ الفاتورة"); }
         if (mode === "violations") {
             if (numberValue("violationValue") <= 0) { addValidationError(errors, "ViolationsValue", "قيمة المخالفات مطلوبة"); }
+            if (numberValue("violationValue") > maxRechargeValue) { addValidationError(errors, "ViolationsValue", "قيمة المخالفات أكبر من الحد المسموح لهذه الخدمة"); }
             if (selectedRadioValue("violationPayType") === "") { addValidationError(errors, "ViolationPayType", "طريقة دفع المخالفات مطلوبة"); }
             if (!byId("violationWalletNo").value.trim()) { addValidationError(errors, "WalletNumber", "رقم المحفظة مطلوب"); }
         } else if (mode !== "card" && numberValue("rechargeValue") <= 0) {
             addValidationError(errors, "RechargeValue", "مبلغ الشحن يجب أن يكون أكبر من صفر");
+        } else if (mode !== "card" && numberValue("rechargeValue") > maxRechargeValue) {
+            addValidationError(errors, "RechargeValue", "مبلغ الشحن أكبر من الحد المسموح لهذه الخدمة");
         }
         if (mode === "cash-out" && byId("isWallet").value === "true" && !byId("tetNumPoket").value.trim()) {
             addValidationError(errors, "WalletNumber", "رقم المحفظة مطلوب");
@@ -2005,6 +2009,7 @@
         var fromDate = byId("salesSearchFromDate") ? byId("salesSearchFromDate").value : "";
         var toDate = byId("salesSearchToDate") ? byId("salesSearchToDate").value : "";
         var branchId = byId("salesSearchBranchId") ? byId("salesSearchBranchId").value : "";
+        var operationType = byId("salesSearchType") ? byId("salesSearchType").value : "";
         if (!fromDate || !toDate) {
             byId("salesIndexMessage").innerText = "حدد من تاريخ وإلى تاريخ قبل حذف فواتير Excel.";
             return;
@@ -2024,6 +2029,7 @@
             FromDate: fromDate,
             ToDate: toDate,
             BranchId: branchId ? parseInt(branchId, 10) : null,
+            OperationType: operationType || "",
             AdminPassword: password
         }, function (status, data) {
             if (status < 200 || status >= 300 || !data || data.success === false) {
@@ -3201,11 +3207,16 @@
         if (!firstRow) {
             return null;
         }
+        var amount = byId("transactionType").value === "card" ? 0 : (byId("transactionType").value === "violations" ? numberValue("violationValue") : numberValue("rechargeValue"));
+        if (amount > maxRechargeValue) {
+            setCommissionStatus("المبلغ أكبر من الحد المسموح لهذه الخدمة", true);
+            return null;
+        }
 
         return {
             ServiceType: byId("transactionType").value,
             ItemID: parseInt(firstRow.getAttribute("data-item-id"), 10) || null,
-            RechargeValue: byId("transactionType").value === "card" ? 0 : (byId("transactionType").value === "violations" ? numberValue("violationValue") : numberValue("rechargeValue")),
+            RechargeValue: amount,
             Vatyo: parseFloat(firstRow.getAttribute("data-vatyo")) || 14,
             IsWallet: byId("isWallet").value === "true",
             HaveGuarantee: byId("haveGuarantee").value === "true"

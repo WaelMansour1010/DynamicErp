@@ -87,6 +87,7 @@ namespace MyERP.Areas.Pos.Controllers
             catch (Exception ex)
             {
                 Response.StatusCode = 500;
+                System.Diagnostics.Trace.TraceError("PosReports.Run failed: " + ex);
                 return Json(Fail("تعذر تشغيل التقرير", ex.Message));
             }
         }
@@ -126,7 +127,8 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                return Json(Fail("تعذر تصدير Excel: " + ex.Message, ex.ToString()), JsonRequestBehavior.AllowGet);
+                System.Diagnostics.Trace.TraceError("PosReports.Export failed: " + ex);
+                return Json(Fail("تعذر تصدير Excel", ex.ToString()), JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -479,7 +481,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static object Fail(string message, string technicalMessage)
         {
-            return new { success = false, message = message, technicalMessage = technicalMessage };
+            return new { success = false, message = message };
         }
 
         private PosUserContext GetPosContext()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Linq;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.Infrastructure.Localization;
@@ -85,7 +86,8 @@ SELECT * FROM LcRows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY RowNo;",
             }
             catch (SqlException ex)
             {
-                result.Warning = "LC read model is not available in the configured database yet: " + ex.Message;
+                Trace.TraceWarning("MainErp LC search schema warning: " + ex);
+                result.Warning = "تعذر تحميل بيانات الاعتمادات من قاعدة البيانات الحالية. تأكد أن قاعدة التشغيل تحتوي على جداول وحقول الاعتمادات المستندية الخاصة بالنظام الرئيسي.";
             }
 
             return result;
@@ -123,9 +125,11 @@ ORDER BY branch_name;");
             }
             catch (SqlException ex)
             {
+                Trace.TraceWarning("MainErp LC lookup schema warning: " + ex);
+                var friendlyMessage = "تعذر تحميل بعض فلاتر الاعتمادات من قاعدة البيانات الحالية؛ ستظل الشاشة قابلة للفتح بالبيانات المتاحة.";
                 model.Warning = string.IsNullOrWhiteSpace(model.Warning)
-                    ? "LC lookup filters are not available in the configured database yet: " + ex.Message
-                    : model.Warning + " | LC lookup filters are not available: " + ex.Message;
+                    ? friendlyMessage
+                    : model.Warning + " | " + friendlyMessage;
             }
         }
 
@@ -174,7 +178,8 @@ ORDER BY branch_name;");
             }
             catch (SqlException ex)
             {
-                return new LCDetailsViewModel { TblLCID = id, Warning = "LC details are not available in the configured database yet: " + ex.Message };
+                Trace.TraceWarning("MainErp LC details schema warning: " + ex);
+                return new LCDetailsViewModel { TblLCID = id, Warning = "تعذر تحميل تفاصيل الاعتماد من قاعدة البيانات الحالية. قد تكون قاعدة التشغيل لا تحتوي على نفس حقول الاعتمادات الموجودة في قاعدة Eng." };
             }
         }
 
@@ -423,7 +428,8 @@ WHERE Account_Code = @AccountCode;", connection))
             }
             catch (SqlException ex)
             {
-                model.Warnings.Add(tableName + " trace failed: " + ex.Message);
+                Trace.TraceWarning("MainErp LC trace schema warning for " + tableName + ": " + ex);
+                model.Warnings.Add("تعذر تحميل جزء من تتبع " + tableName + " بسبب اختلاف بنية قاعدة البيانات الحالية.");
             }
         }
 

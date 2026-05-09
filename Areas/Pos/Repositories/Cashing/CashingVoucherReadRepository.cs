@@ -5,9 +5,9 @@ namespace MyERP.Areas.Pos.Repositories.Cashing
 {
     public class CashingVoucherReadRepository : MyERP.Areas.Pos.Repositories.Payments.PaymentVoucherReadRepository
     {
-        public new PaymentVoucherSearchViewModel Search(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount)
+        public new PaymentVoucherSearchViewModel Search(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount, int page = 1, int pageSize = 50)
         {
-            return SearchCore(4, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount);
+            return SearchCore(4, fromDate, toDate, serial, party, branchId, cashboxOrBank, amount, page, pageSize);
         }
 
         public new PaymentVoucherDetailsViewModel GetDetails(int id)

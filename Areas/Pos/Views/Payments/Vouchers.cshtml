@@ -14,8 +14,7 @@
     {
         return !string.IsNullOrWhiteSpace(value)
             && value.IndexOf("غير", StringComparison.OrdinalIgnoreCase) < 0
-            && (value.IndexOf("متوازن", StringComparison.OrdinalIgnoreCase) >= 0
-                || value.IndexOf("ظ…طھظˆط§ط²ظ†", StringComparison.OrdinalIgnoreCase) >= 0);
+            && value.IndexOf("متوازن", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 }
 @{
@@ -41,11 +40,11 @@
             <div>
                 <span class="voucher-eyebrow">FrmPayments</span>
                 <h2>سندات الصرف</h2>
-                <p>قراءة فقط مع تتبع القيد المحاسبي من قاعدة POS/Kishny.</p>
+                <p>عرض وتشغيل سندات الصرف مع تتبع القيد المحاسبي من قاعدة POS/Kishny.</p>
             </div>
             <div class="voucher-header-actions">
-                <span class="voucher-status is-readonly">قراءة فقط</span>
-                <button type="button" class="secondary-action voucher-ghost-action" disabled>معاينة تأثير الحفظ</button>
+                <span class="voucher-status is-readonly">تشغيل فعلي</span>
+                <a class="primary-action voucher-primary-action" href="@Url.Action("CreateVoucher", "Payments", new { area = "Pos" })">إضافة سند صرف</a>
             </div>
         </header>
 
@@ -56,7 +55,7 @@
             {
                 <article><span>قيود غير متوازنة</span><strong>@unbalancedCount</strong></article>
             }
-            <article><span>الوضع</span><strong>عرض فقط</strong></article>
+            <article><span>الوضع</span><strong>عرض وحفظ</strong></article>
         </div>
 
         @using (Html.BeginForm("Vouchers", "Payments", new { area = "Pos" }, FormMethod.Get, new { @class = "voucher-search-panel" }))
@@ -93,12 +92,31 @@
                             {
                                 <td>@if (!isBalanced) { <span class="voucher-status is-unbalanced">@item.BalancedStatus</span> }</td>
                             }
-                            <td><a class="voucher-details-link" href="@Url.Action("Details", "Payments", new { area = "Pos", id = item.NoteId })">تفاصيل</a></td>
+                            <td>
+                                <div class="voucher-row-actions">
+                                    <a class="voucher-details-link" href="@Url.Action("Details", "Payments", new { area = "Pos", id = item.NoteId })">تفاصيل</a>
+                                    <a class="voucher-details-link" href="@Url.Action("EditVoucher", "Payments", new { area = "Pos", id = item.NoteId })">تعديل</a>
+                                </div>
+                            </td>
                         </tr>
                     }
                     @if (Model.Items.Count == 0) { <tr><td colspan="@(showAccountingStatus ? 7 : 6)" class="voucher-empty">لا توجد نتائج مطابقة.</td></tr> }
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div class="voucher-pager">
+            <span>صفحة @Model.Page من @Math.Max(1, (int)Math.Ceiling(Model.TotalCount / (double)Model.PageSize))</span>
+            <div>
+                @if (Model.HasPreviousPage)
+                {
+                    <a class="voucher-details-link" href="@Url.Action("Vouchers", "Payments", new { area = "Pos", fromDate = Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : null, toDate = Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : null, serial = Model.Serial, party = Model.Party, branchId = Model.BranchId, cashboxOrBank = Model.CashboxOrBank, amount = Model.Amount, page = Model.Page - 1, pageSize = Model.PageSize })">السابق</a>
+                }
+                @if (Model.HasNextPage)
+                {
+                    <a class="voucher-details-link" href="@Url.Action("Vouchers", "Payments", new { area = "Pos", fromDate = Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : null, toDate = Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : null, serial = Model.Serial, party = Model.Party, branchId = Model.BranchId, cashboxOrBank = Model.CashboxOrBank, amount = Model.Amount, page = Model.Page + 1, pageSize = Model.PageSize })">التالي</a>
+                }
             </div>
         </div>
     </section>

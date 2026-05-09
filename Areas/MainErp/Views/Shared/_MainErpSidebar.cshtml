@@ -5,7 +5,7 @@
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
 
-    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing" });
+    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing", "dynamic-reports", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
     var salesOpen = sectionActive(new[] { "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
     var purchasesOpen = sectionActive(new[] { "purchases" });
     var inventoryOpen = sectionActive(new[] { "stock-transfers" });
@@ -50,10 +50,19 @@
                 <a class="pos-nav-link main-erp-nav-link @(isActive("journal-entries") ? "active" : "")" href="@Url.Action("Index", "JournalEntries", new { area = "MainErp" })" title="@T("JournalEntries")"><i class="fas fa-list-alt"></i><span>@T("JournalEntries")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("discount-notifications") ? "active" : "")" href="@Url.Action("Index", "DiscountNotifications", new { area = "MainErp" })" title="@T("DiscountNotifications")"><i class="fas fa-file-invoice-dollar"></i><span>@T("DiscountNotifications")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("accounting-reports") ? "active" : "")" href="@Url.Action("Index", "AccountingReports", new { area = "MainErp" })" title="@T("AccountingReports")"><i class="fas fa-chart-pie"></i><span>@T("AccountingReports")</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("dynamic-reports") ? "active" : "")" href="@Url.Content("~/MainErp/DynamicReports/Index")" title="التقارير الديناميكية"><i class="fas fa-sliders-h"></i><span>التقارير الديناميكية</span></a>
+                @if (mainErpContext != null && mainErpContext.IsAdmin)
+                {
+                    <a class="pos-nav-link main-erp-nav-link" href="@Url.Content("~/MainErp/DynamicReportsAdmin/Index")" title="إدارة التقارير الديناميكية"><i class="fas fa-cogs"></i><span>إدارة التقارير الديناميكية</span></a>
+                }
                 <a class="pos-nav-link main-erp-nav-link @(isActive("account-movement") ? "active" : "")" href="@Url.Action("AccountMovement", "AccountingReports", new { area = "MainErp" })" title="@T("AccountMovement")"><i class="fas fa-exchange-alt"></i><span>@T("AccountMovement")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("voucher-preview") ? "active" : "")" href="@Url.Action("PreviewTest", "Accounting", new { area = "MainErp" })" title="@T("PreviewVoucher")"><i class="fas fa-eye"></i><span>@T("PreviewVoucher")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("payments") ? "active" : "")" href="@Url.Action("Index", "Payments", new { area = "MainErp" })" title="سندات الصرف"><i class="fas fa-money-bill-wave"></i><span>سندات الصرف</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("cashing") ? "active" : "")" href="@Url.Action("Index", "Cashing", new { area = "MainErp" })" title="سندات القبض"><i class="fas fa-hand-holding-usd"></i><span>سندات القبض</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("employee-payroll") ? "active" : "")" href="@Url.Action("Employees", "EmployeePayroll", new { area = "MainErp" })" title="الموظفون"><i class="fas fa-users"></i><span>الموظفون</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("salary-run") ? "active" : "")" href="@Url.Action("SalaryRun", "EmployeePayroll", new { area = "MainErp" })" title="مسير الرواتب"><i class="fas fa-file-invoice-dollar"></i><span>مسير الرواتب</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("medical-insurance") ? "active" : "")" href="@Url.Action("MedicalInsurance", "EmployeePayroll", new { area = "MainErp" })" title="التأمين الطبي"><i class="fas fa-briefcase-medical"></i><span>التأمين الطبي</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("medical-insurance-reports") ? "active" : "")" href="@Url.Action("MedicalInsuranceReports", "EmployeePayroll", new { area = "MainErp" })" title="تقارير التأمين الطبي"><i class="fas fa-chart-bar"></i><span>تقارير التأمين</span></a>
             </div>
         </section>
 
