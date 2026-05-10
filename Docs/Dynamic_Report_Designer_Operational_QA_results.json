@@ -1,0 +1,140 @@
+{
+  "startedAt": "2026-05-10T03:54:22.285Z",
+  "baseUrl": "http://localhost:63735",
+  "screenshots": [
+    "F:\\Source Code\\DynamicErp\\Docs\\Operational_QA_Screenshots\\web-admin.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\Operational_QA_Screenshots\\pos-admin.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\Operational_QA_Screenshots\\mainerp-admin.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\Operational_QA_Screenshots\\web-review-1.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\Operational_QA_Screenshots\\pos-review-2.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\Operational_QA_Screenshots\\mainerp-review-3.png"
+  ],
+  "tests": [
+    {
+      "name": "Web login as admin",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/Reports/Admin/Index\",\"filled\":{\"u\":true,\"p\":true,\"url\":\"http://localhost:63735/Login?ReturnUrl=%2FReports%2FAdmin%2FIndex\"}}"
+    },
+    {
+      "name": "POS login as admin",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/Pos\",\"filled\":{\"u\":true,\"p\":true,\"url\":\"http://localhost:63735/Pos/PosLogin/Index\"}}"
+    },
+    {
+      "name": "MainErp login as admin",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/MainErp/DynamicReportsAdmin/Index\",\"filled\":{\"u\":true,\"p\":true,\"url\":\"http://localhost:63735/MainErp/Login/Index?returnUrl=%2FMainErp%2FDynamicReportsAdmin%2FIndex\"}}"
+    },
+    {
+      "name": "Web Admin page renders",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/Reports/Admin/Index\",\"isLogin\":false,\"missingPartial\":false,\"permissionsPanel\":true,\"catalogPanel\":true,\"reportsTable\":true,\"lifecycleBadges\":2,\"reviewLinks\":9,\"text\":\"0\\n Online Users \\n ErpAdmin \\nEnglish\\nإدارة التقارير الديناميكية\\n\\nعرّف التقرير من مصدر آمن، حمّل الأعمدة، ثم اضبط الكابشن والصلاحيات الأساسية. المستخدم لا يرى SourceName ولا يكتب SQL.\\n\\nتقرير جديد\\nحفظ التقرير\\nتعريف التقرير\\nمصدر البيانات يحدده Admin فقط ويجب أن يكون Stored Procedure أو View آمن.\\nكود التقرير\\nالاسم العربي\\nالاسم الإنجليزي\\nنطاق المشروع\\nWeb\\nPOS\\nMainErp\\nShared\\nWeb\\nنوع المصدر\\nStored Procedure\\nView\\nStored Procedure\\nاسم المصدر الآمن\\nأقصى عدد صفوف\\nTimeout بالثواني\\nيتطلب فترة تاريخ\\nنشط\\nتحميل الأعمدة والباراميترز\\nصلاحيات التقرير\\nاختر تقريرًا ثم امنح صلاحية مشاهدة أو تصميم أو تصدير لمستخدم محدد أو دور.\\nنوع المنح\\nمستخدم\\nدور\\nمستخدم\\nبحث المستخدم\\n \\nuser1\\nابوعمر\\nاحمد الضبوعي\\nجمعه سليم\\nحجاج محمد\\nحسن\\nحسن باكر\\nحسن صالح\\nسلمان القاسم\\nسليمان قاسم\\nشريف احمد\\nصبرى العولقى\\nطيب بدوي\\nعبدالسلام سلامه\\nقاسم محمد\\nمحمد القاسم\\nمحمد بسيوني\\nمحمود سلامه\\nمشير سلامه\\nمهند بابكر\\nنواف القاسم\\nوائل سلامه\\nيوسف بريكة\\nuser1\\n مشاهدة\\n تصميم\\n تصدير\\nحفظ الصلاحية\\nلا توجد صلاحيات محفوظة لهذا التقرير في النطاق الحالي.\\nكتالوج مص\",\"screenshot\":\"F:\\\\Source Code\\\\DynamicErp\\\\Docs\\\\Operational_QA_Screenshots\\\\web-admin.png\"}"
+    },
+    {
+      "name": "POS Admin page renders",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/Pos/DynamicReportsAdmin/Index\",\"isLogin\":false,\"missingPartial\":false,\"permissionsPanel\":true,\"catalogPanel\":true,\"reportsTable\":true,\"lifecycleBadges\":6,\"reviewLinks\":6,\"text\":\"إدارة التقارير الديناميكية\\n\\nعرّف التقرير من مصدر آمن، حمّل الأعمدة، ثم اضبط الكابشن والصلاحيات الأساسية. المستخدم لا يرى SourceName ولا يكتب SQL.\\n\\nتقرير جديد\\nحفظ التقرير\\nتعريف التقرير\\nمصدر البيانات يحدده Admin فقط ويجب أن يكون Stored Procedure أو View آمن.\\nكود التقرير\\nالاسم العربي\\nالاسم الإنجليزي\\nنطاق المشروع\\nWeb\\nPOS\\nMainErp\\nShared\\nنوع المصدر\\nStored Procedure\\nView\\nاسم المصدر الآمن\\nأقصى عدد صفوف\\nTimeout بالثواني\\nيتطلب فترة تاريخ\\nنشط\\nتحميل الأعمدة والباراميترز\\nصلاحيات التقرير\\nاختر تقريرًا ثم امنح صلاحية مشاهدة أو تصميم أو تصدير لمستخدم محدد أو دور.\\nنوع المنح\\nمستخدم\\nدور\\nبحث المستخدم\\n \\nadmin\\nAhmed Adel\\nAhmed Mokhtar\\nAhmed Naser\\nAkram\\nDonia\\nDr monabwy\\nEC001\\nEC002\\nEC003\\nEC004\\nEC005\\nEC006\\nEC007\\nEC008\\nEC009\\nEC010\\nEC011\\nEC012\\nEC013\\nEC014\\nEC015\\nEC016\\nEC017\\nEC018\\nEC019\\nEC020\\nEC021\\nEC022\\nEC023\\n مشاهدة\\n تصميم\\n تصدير\\nحفظ الصلاحية\\nلا توجد صلاحيات محفوظة لهذا التقرير في النطاق الحالي.\\nكتالوج مصادر التقارير\\nالاكتشاف يقرأ تعريفات dbo فقط، ولا ينفذ أي Stored Procedure.\\nاكتشاف المصادر الآن\\nالحالة\\nالكل\\nApp\",\"screenshot\":\"F:\\\\Source Code\\\\DynamicErp\\\\Docs\\\\Operational_QA_Screenshots\\\\pos-admin.png\"}"
+    },
+    {
+      "name": "MainErp Admin page renders",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/MainErp/DynamicReportsAdmin/Index\",\"isLogin\":false,\"missingPartial\":false,\"permissionsPanel\":true,\"catalogPanel\":true,\"reportsTable\":true,\"lifecycleBadges\":0,\"reviewLinks\":0,\"text\":\"ERP\\nالنظام الرئيسي\\nMainErp\\nadmin\\nشركه اتحاد الهندسه الانشائيه ( يونك)\\nلوحة التحكم\\nالحسابات\\nالقيود اليومية\\nالإشعارات\\nالتقارير المحاسبية\\nالتقارير الديناميكية\\nإدارة التقارير الديناميكية\\nحركة حساب\\nمعاينة القيد\\nسندات الصرف\\nسندات القبض\\nالموظفون\\nمسير الرواتب\\nالتأمين الطبي\\nتقارير التأمين\\nالمبيعات\\nالمشتريات\\nالمخزون\\nالمشاريع\\nالاعتمادات المستندية\\nإدارة النظام\\nDynamic Report Admin\\n\\nالمستخدم: admin | الفرع: شركه اتحاد الهندسه الانشائيه ( يونك)\\n\\nEnglish\\nلوحة التحكم\\nخروج\\nإدارة التقارير الديناميكية\\n\\nعرّف التقرير من مصدر آمن، حمّل الأعمدة، ثم اضبط الكابشن والصلاحيات الأساسية. المستخدم لا يرى SourceName ولا يكتب SQL.\\n\\nتقرير جديد\\nحفظ التقرير\\nتعريف التقرير\\nمصدر البيانات يحدده Admin فقط ويجب أن يكون Stored Procedure أو View آمن.\\nكود التقرير\\nالاسم العربي\\nالاسم الإنجليزي\\nنطاق المشروع\\nWeb\\nPOS\\nMainErp\\nShared\\nنوع المصدر\\nStored Procedure\\nView\\nاسم المصدر الآمن\\nأقصى عدد صفوف\\nTimeout بالثواني\\nيتطلب فترة تاريخ\\nنشط\\nتحميل الأعمدة والباراميترز\\nصلاحيات التقرير\\nاختر تقريرًا ثم امنح صلاحية مشاهدة أو تصميم أو تصدير لمستخدم\",\"screenshot\":\"F:\\\\Source Code\\\\DynamicErp\\\\Docs\\\\Operational_QA_Screenshots\\\\mainerp-admin.png\"}"
+    },
+    {
+      "name": "Web Review page renders",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/Reports/Admin/Review?id=1&scope=Web\",\"isLogin\":false,\"missingPartial\":false,\"shell\":true,\"life\":true,\"cert\":true,\"validate\":true,\"activate\":true,\"risk\":true,\"text\":\"0\\n Online Users \\n ErpAdmin \\nEnglish\\nطھظ‚ط±ظٹط± ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†\\nActive\\nInternal\\nScope: Web\\nSource: View / dbo.DynamicReport_vw_WebUsersSample\\nالعودة للإدارة\\nتشغيل الفحص\\nتطبيق كل الاقتراحات\\nتفعيل\\nتعطيل\\nأرشفة\\nإعادة فتح كمسودة\\nMark as Reviewed\\nRevert Review\\n0\\nأخطاء\\n0\\nتحذيرات\\n0\\nمعلومات\\nActive\\nالحالة الحالية\\nبيانات التقرير\\nكود التقرير\\nالاسم العربي\\nالاسم الإنجليزي\\nآخر فحص\\nالأعمدة والاقتراحات\\nField\\tCaption الحالي\\tاقتراح عربي\\tالنوع\\tGroup\\tFormat\\t\\nالمعاملات\\nParameter\\tCaption\\tType\\tRequired\\tDefault\\nتشغيل عينة\\nتشغيل العينة\\nمعاينة الطباعة\\nفتح معاينة الطباعة\\nمخاطر المصدر الأصلي\\n\\nلا توجد RiskFlags محفوظة لهذا التقرير.\\n\\nاقتراحات عامة\",\"screenshot\":\"F:\\\\Source Code\\\\DynamicErp\\\\Docs\\\\Operational_QA_Screenshots\\\\web-review-1.png\"}"
+    },
+    {
+      "name": "POS Review page renders",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/Pos/DynamicReportsAdmin/Review?id=2&scope=POS\",\"isLogin\":false,\"missingPartial\":false,\"shell\":true,\"life\":true,\"cert\":true,\"validate\":true,\"activate\":true,\"risk\":true,\"text\":\"تقرير مبيعات نقطة البيع\\nActive\\nInternal\\nScope: POS\\nSource: View / dbo.DynamicReport_vw_PosSalesSample\\nالعودة للإدارة\\nتشغيل الفحص\\nتطبيق كل الاقتراحات\\nتفعيل\\nتعطيل\\nأرشفة\\nإعادة فتح كمسودة\\nMark as Reviewed\\nRevert Review\\n0\\nأخطاء\\n0\\nتحذيرات\\n0\\nمعلومات\\nActive\\nالحالة الحالية\\nبيانات التقرير\\nكود التقرير\\nالاسم العربي\\nالاسم الإنجليزي\\nآخر فحص\\nالأعمدة والاقتراحات\\nField\\tCaption الحالي\\tاقتراح عربي\\tالنوع\\tGroup\\tFormat\\t\\nالمعاملات\\nParameter\\tCaption\\tType\\tRequired\\tDefault\\nتشغيل عينة\\nتشغيل العينة\\nمعاينة الطباعة\\nفتح معاينة الطباعة\\nمخاطر المصدر الأصلي\\n\\nلا توجد RiskFlags محفوظة لهذا التقرير.\\n\\nاقتراحات عامة\",\"screenshot\":\"F:\\\\Source Code\\\\DynamicErp\\\\Docs\\\\Operational_QA_Screenshots\\\\pos-review-2.png\"}"
+    },
+    {
+      "name": "MainErp Review page renders",
+      "status": "Pass",
+      "detail": "{\"url\":\"http://localhost:63735/MainErp/DynamicReportsAdmin/Review?id=3&scope=MainErp\",\"isLogin\":false,\"missingPartial\":false,\"shell\":true,\"life\":true,\"cert\":true,\"validate\":true,\"activate\":true,\"risk\":true,\"text\":\"ERP\\nالنظام الرئيسي\\nMainErp\\nadmin\\nشركه اتحاد الهندسه الانشائيه ( يونك)\\nلوحة التحكم\\nالحسابات\\nالقيود اليومية\\nالإشعارات\\nالتقارير المحاسبية\\nالتقارير الديناميكية\\nإدارة التقارير الديناميكية\\nحركة حساب\\nمعاينة القيد\\nسندات الصرف\\nسندات القبض\\nالموظفون\\nمسير الرواتب\\nالتأمين الطبي\\nتقارير التأمين\\nالمبيعات\\nالمشتريات\\nالمخزون\\nالمشاريع\\nالاعتمادات المستندية\\nإدارة النظام\\nمراجعة التقرير الديناميكي\\n\\nالمستخدم: admin | الفرع: شركه اتحاد الهندسه الانشائيه ( يونك)\\n\\nEnglish\\nلوحة التحكم\\nخروج\\nتقرير القيود اليومية\\nActive\\nInternal\\nScope: MainErp\\nSource: View / dbo.DynamicReport_vw_MainErpJournalSample\\nالعودة للإدارة\\nتشغيل الفحص\\nتطبيق كل الاقتراحات\\nتفعيل\\nتعطيل\\nأرشفة\\nإعادة فتح كمسودة\\nMark as Reviewed\\nRevert Review\\n0\\nأخطاء\\n0\\nتحذيرات\\n0\\nمعلومات\\nActive\\nالحالة الحالية\\nبيانات التقرير\\nكود التقرير\\nالاسم العربي\\nالاسم الإنجليزي\\nآخر فحص\\nالأعمدة والاقتراحات\\nField\\tCaption الحالي\\tاقتراح عربي\\tالنوع\\tGroup\\tFormat\\t\\nالمعاملات\\nParameter\\tCaption\\tType\\tRequired\\tDefault\\nتشغيل عينة\\nتشغيل العينة\\nمعاينة الطباعة\\nفتح معاينة الطباعة\\nمخاطر المصدر الأص\",\"screenshot\":\"F:\\\\Source Code\\\\DynamicErp\\\\Docs\\\\Operational_QA_Screenshots\\\\mainerp-review-3.png\"}"
+    },
+    {
+      "name": "Scope isolation Web admin list",
+      "status": "Fail",
+      "detail": "[]"
+    },
+    {
+      "name": "Scope isolation POS admin list",
+      "status": "Fail",
+      "detail": "[]"
+    },
+    {
+      "name": "Scope isolation MainErp admin list",
+      "status": "Fail",
+      "detail": "[]"
+    },
+    {
+      "name": "Import button behavior - Pending rejected",
+      "status": "Fail",
+      "detail": "{\"json\":null,\"text\":\"\"}"
+    },
+    {
+      "name": "Import button behavior - Imported not duplicated",
+      "status": "Fail",
+      "detail": "{\"json\":null,\"text\":\"\"}"
+    },
+    {
+      "name": "Import button behavior - Approved imports",
+      "status": "Fail",
+      "detail": "{\"json\":null,\"text\":\"\"}"
+    },
+    {
+      "name": "Missing partial errors absent",
+      "status": "Pass",
+      "detail": "Checked Admin and Review rendering."
+    },
+    {
+      "name": "Network has no 404/500 during browser run",
+      "status": "Pass",
+      "detail": "[]"
+    },
+    {
+      "name": "Console has no JS errors during browser run",
+      "status": "Fail",
+      "detail": "[{\"type\":\"exception\",\"text\":\"Uncaught\",\"url\":\"http://localhost:63735/Areas/Reports/Scripts/dynamic-reports-admin.js\"},{\"type\":\"exception\",\"text\":\"Uncaught\",\"url\":\"http://localhost:63735/Areas/Reports/Scripts/dynamic-reports-admin.js\"},{\"type\":\"exception\",\"text\":\"Uncaught\",\"url\":\"http://localhost:63735/Areas/Reports/Scripts/dynamic-reports-review.js\"}]"
+    }
+  ],
+  "errors": [],
+  "console": [
+    {
+      "type": "exception",
+      "text": "Uncaught",
+      "url": "http://localhost:63735/Areas/Reports/Scripts/dynamic-reports-admin.js"
+    },
+    {
+      "type": "exception",
+      "text": "Uncaught",
+      "url": "http://localhost:63735/Areas/Reports/Scripts/dynamic-reports-admin.js"
+    },
+    {
+      "type": "exception",
+      "text": "Uncaught",
+      "url": "http://localhost:63735/Areas/Reports/Scripts/dynamic-reports-review.js"
+    }
+  ],
+  "network": [],
+  "importTests": {
+    "pending": {},
+    "imported": {},
+    "approved": {}
+  },
+  "scopeLists": {
+    "web": null,
+    "pos": null,
+    "main": null
+  },
+  "importedReport": {
+    "scope": "MainErp",
+    "catalogId": 89,
+    "response": null,
+    "reportId": null
+  },
+  "completedAt": "2026-05-10T03:55:17.356Z"
+}

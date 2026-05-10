@@ -1,0 +1,17 @@
+﻿[
+    {
+        "name":  "AuthAdmin",
+        "status":  200,
+        "bodyContainsAdmin":  true
+    },
+    {
+        "name":  "Pending",
+        "status":  404,
+        "body":  ""
+    },
+    {
+        "name":  "Imported",
+        "status":  404,
+        "body":  ""
+    }
+]

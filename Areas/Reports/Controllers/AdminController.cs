@@ -563,24 +563,28 @@ namespace MyERP.Areas.Reports.Controllers
         protected JsonResult ForbiddenJson()
         {
             Response.StatusCode = 403;
+            Response.TrySkipIisCustomErrors = true;
             return Json(new { success = false, message = "ليست لديك صلاحية لتنفيذ هذه العملية." });
         }
 
         protected JsonResult ForbiddenJsonGet()
         {
             Response.StatusCode = 403;
+            Response.TrySkipIisCustomErrors = true;
             return Json(new { success = false, message = "ليست لديك صلاحية لتنفيذ هذه العملية." }, JsonRequestBehavior.AllowGet);
         }
 
         protected JsonResult BadRequestJson(string message)
         {
             Response.StatusCode = 400;
+            Response.TrySkipIisCustomErrors = true;
             return Json(new { success = false, message });
         }
 
         protected JsonResult BadRequestJsonGet(string message)
         {
             Response.StatusCode = 400;
+            Response.TrySkipIisCustomErrors = true;
             return Json(new { success = false, message }, JsonRequestBehavior.AllowGet);
         }
 

@@ -1,0 +1,185 @@
+﻿{
+    "startedAt":  "2026-05-10T06:56:59",
+    "tests":  [
+                  {
+                      "name":  "Web login POST",
+                      "status":  "Fail",
+                      "detail":  "Operation is not valid due to the current state of the object."
+                  },
+                  {
+                      "name":  "POS login POST",
+                      "status":  "Fail",
+                      "detail":  "Operation is not valid due to the current state of the object."
+                  },
+                  {
+                      "name":  "MainErp login POST",
+                      "status":  "Fail",
+                      "detail":  "Operation is not valid due to the current state of the object."
+                  },
+                  {
+                      "name":  "Web Admin authenticated render",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200 http://localhost:63735/Reports/Admin/Index"
+                  },
+                  {
+                      "name":  "POS Admin authenticated render",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200 http://localhost:63735/Pos/DynamicReportsAdmin/Index"
+                  },
+                  {
+                      "name":  "MainErp Admin authenticated render",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200 http://localhost:63735/MainErp/DynamicReportsAdmin/Index"
+                  },
+                  {
+                      "name":  "Web missing partial scan",
+                      "status":  "Pass",
+                      "detail":  "Permissions/Catalog present=True/True"
+                  },
+                  {
+                      "name":  "POS missing partial scan",
+                      "status":  "Pass",
+                      "detail":  "Permissions/Catalog present=True/True"
+                  },
+                  {
+                      "name":  "MainErp missing partial scan",
+                      "status":  "Pass",
+                      "detail":  "Permissions/Catalog present=True/True"
+                  },
+                  {
+                      "name":  "Web Review route render",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200 http://localhost:63735/Reports/Admin/Review?id=1\u0026scope=Web"
+                  },
+                  {
+                      "name":  "POS Review route render",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200 http://localhost:63735/Pos/DynamicReportsAdmin/Review?id=2\u0026scope=POS"
+                  },
+                  {
+                      "name":  "MainErp Review route render",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200 http://localhost:63735/MainErp/DynamicReportsAdmin/Review?id=3\u0026scope=MainErp"
+                  },
+                  {
+                      "name":  "Web Review content scan",
+                      "status":  "Pass",
+                      "detail":  "shell=True; validation=True"
+                  },
+                  {
+                      "name":  "POS Review content scan",
+                      "status":  "Pass",
+                      "detail":  "shell=True; validation=True"
+                  },
+                  {
+                      "name":  "MainErp Review content scan",
+                      "status":  "Pass",
+                      "detail":  "shell=True; validation=True"
+                  },
+                  {
+                      "name":  "Scope isolation Web list",
+                      "status":  "Pass",
+                      "detail":  "[{\"ReportId\":4,\"ReportCode\":\"IMP_Web_dbo_GetBankAccountByBankId\",\"ProjectScope\":\"Web\"},{\"ReportId\":1,\"ReportCode\":\"WEB_USERS_SAMPLE\",\"ProjectScope\":\"Web\"}]"
+                  },
+                  {
+                      "name":  "Scope isolation POS list",
+                      "status":  "Pass",
+                      "detail":  "[{\"ReportId\":5,\"ReportCode\":\"IMP_POS_dbo_sp_ErrorLog_DailySummary\",\"ProjectScope\":\"POS\"},{\"ReportId\":4,\"ReportCode\":\"IMP_POS_dbo_VIEW2\",\"ProjectScope\":\"POS\"},{\"ReportId\":6,\"ReportCode\":\"IMP_POS_dbo_RPT_CloseReportTotal\",\"ProjectScope\":\"POS\"},{\"ReportId\":7,\"ReportCode\":\"IMP_POS_dbo_RPT_CloseReportTotal_ByBranchDay\",\"ProjectScope\":\"POS\"},{\"ReportId\":8,\"ReportCode\":\"IMP_POS_dbo_RPT_CloseReportTotalMini\",\"ProjectScope\":\"POS\"},{\"ReportId\":2,\"ReportCode\":\"POS_SALES_SAMPLE\",\"ProjectScope\":\"POS\"}]"
+                  },
+                  {
+                      "name":  "Scope isolation MainErp list",
+                      "status":  "Pass",
+                      "detail":  "[{\"ReportId\":4,\"ReportCode\":\"IMP_MainErp_dbo_printed_card\",\"ProjectScope\":\"MainErp\"},{\"ReportId\":3,\"ReportCode\":\"MAINERP_JOURNAL_SAMPLE\",\"ProjectScope\":\"MainErp\"}]"
+                  },
+                  {
+                      "name":  "Import Pending is rejected",
+                      "status":  "Pass",
+                      "detail":  "HTTP 400; "
+                  },
+                  {
+                      "name":  "Import Imported is not duplicated",
+                      "status":  "Pass",
+                      "detail":  "HTTP 400; "
+                  },
+                  {
+                      "name":  "Import Approved succeeds",
+                      "status":  "Fail",
+                      "detail":  "HTTP 400; "
+                  }
+              ],
+    "responses":  {
+                      "importPending":  {
+                                            "status":  400,
+                                            "raw":  "",
+                                            "json":  null
+                                        },
+                      "posList":  [
+                                      {
+                                          "ReportId":  5,
+                                          "ReportCode":  "IMP_POS_dbo_sp_ErrorLog_DailySummary",
+                                          "ProjectScope":  "POS"
+                                      },
+                                      {
+                                          "ReportId":  4,
+                                          "ReportCode":  "IMP_POS_dbo_VIEW2",
+                                          "ProjectScope":  "POS"
+                                      },
+                                      {
+                                          "ReportId":  6,
+                                          "ReportCode":  "IMP_POS_dbo_RPT_CloseReportTotal",
+                                          "ProjectScope":  "POS"
+                                      },
+                                      {
+                                          "ReportId":  7,
+                                          "ReportCode":  "IMP_POS_dbo_RPT_CloseReportTotal_ByBranchDay",
+                                          "ProjectScope":  "POS"
+                                      },
+                                      {
+                                          "ReportId":  8,
+                                          "ReportCode":  "IMP_POS_dbo_RPT_CloseReportTotalMini",
+                                          "ProjectScope":  "POS"
+                                      },
+                                      {
+                                          "ReportId":  2,
+                                          "ReportCode":  "POS_SALES_SAMPLE",
+                                          "ProjectScope":  "POS"
+                                      }
+                                  ],
+                      "webList":  [
+                                      {
+                                          "ReportId":  4,
+                                          "ReportCode":  "IMP_Web_dbo_GetBankAccountByBankId",
+                                          "ProjectScope":  "Web"
+                                      },
+                                      {
+                                          "ReportId":  1,
+                                          "ReportCode":  "WEB_USERS_SAMPLE",
+                                          "ProjectScope":  "Web"
+                                      }
+                                  ],
+                      "importedReportId":  null,
+                      "importApproved":  {
+                                             "status":  400,
+                                             "raw":  "",
+                                             "json":  null
+                                         },
+                      "importImported":  {
+                                             "status":  400,
+                                             "raw":  "",
+                                             "json":  null
+                                         },
+                      "mainList":  [
+                                       {
+                                           "ReportId":  4,
+                                           "ReportCode":  "IMP_MainErp_dbo_printed_card",
+                                           "ProjectScope":  "MainErp"
+                                       },
+                                       {
+                                           "ReportId":  3,
+                                           "ReportCode":  "MAINERP_JOURNAL_SAMPLE",
+                                           "ProjectScope":  "MainErp"
+                                       }
+                                   ]
+                  },
+    "completedAt":  "2026-05-10T06:57:00"
+}

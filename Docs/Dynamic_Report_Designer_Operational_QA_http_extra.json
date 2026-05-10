@@ -1,0 +1,293 @@
+﻿{
+    "tests":  [
+                  {
+                      "name":  "Import Approved succeeds (MainErp Catalog 221)",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200; {\"success\":true,\"data\":{\"NewReportId\":5,\"ReportCode\":\"IMP_MainErp_dbo_VIEW10\",\"Message\":\"تم استيراد التقرير كمسودة غير مفعلة.\"}}"
+                  },
+                  {
+                      "name":  "Imported Review route render (Catalog 221)",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200; shell=True"
+                  },
+                  {
+                      "name":  "Run Validation on imported report 221",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200; {\"success\":true,\"data\":{\"CheckResults\":[{\"Id\":\"exec.timing\",\"Level\":\"Info\",\"Message\":\"زمن تشغيل العينة مناسب.\",\"Hint\":null},{\"Id\":\"exec.rows\",\"Level\":\"Warning\",\"Message\":\"التقرير لم يرجع صفوفًا في العينة.\",\"Hint\":null},{\"Id\":\"print.render\",\"Level\":\"Info\",\"Message\":\"صفحة الطباعة متاحة للرندر.\",\"Hint\":null}],\"ErrorCount\":0,\"WarningCount\":1,\"InfoCount\":2,\"ExecStats\":{\"Ms\":10,\"RowCount\":0,\"Truncated\":false,\"ColumnCount\":9,\"Error\":null},\"ValidatedAt\":\"\\/Date(1778385465894)\\/\"},\"status\":\"ReadyForActivation\"}"
+                  },
+                  {
+                      "name":  "Activate imported report 221",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200; {\"success\":true,\"data\":{\"Success\":true,\"NewLifecycleStatus\":\"Active\",\"NewStatus\":\"Active\",\"NewCertificationLevel\":\"Internal\",\"Message\":\"تم تغيير حالة التقرير إلى Active.\",\"LastValidation\":{\"CheckResults\":[{\"Id\":\"exec.timing\",\"Level\":\"Info\",\"Message\":\"زمن تشغيل العينة مناسب.\",\"Hint\":null},{\"Id\":\"exec.rows\",\"Level\":\"Warning\",\"Message\":\"التقرير لم يرجع صفوفًا في العينة.\",\"Hint\":null},{\"Id\":\"print.render\",\"Level\":\"Info\",\"Message\":\"صفحة الطباعة متاحة للرندر.\",\"Hint\":null}],\"ErrorCount\":0,\"WarningCount\":1,\"InfoCount\":2,\"ExecStats\":{\"Ms\":1,\"RowCount\":0,\"Truncated\":false,\"ColumnCount\":9,\"Error\":null},"
+                  },
+                  {
+                      "name":  "Viewer lists activated imported report 221",
+                      "status":  "Fail",
+                      "detail":  "ReportId=5 appears=False"
+                  },
+                  {
+                      "name":  "Viewer executes activated imported report 221",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200; {\"Success\":true,\"Message\":\"OK\",\"Columns\":[{\"ColumnId\":15,\"ReportId\":5,\"FieldName\":\"Emp_ID\",\"CaptionAr\":\"Emp_ID\",\"CaptionEn\":\"Emp_ID\",\"DataType\":\"Int\",\"IsVisibleDefault\":true,\"IsFilterable\":true,\"IsSortable\":true,\"IsGroupable\":true,\"IsSummable\":true,\"Width\":140,\"SortOrder\":0},{\"ColumnId\":16,\"ReportId\":5,\"FieldName\":\"Emp_Name\",\"CaptionAr\":\"Emp_Name\",\"CaptionEn\":\"Emp_Name\",\"DataType\":\"String\",\"IsVisibleDefault\":true,\"IsFilterable\":true,\"IsSortable\":true,\"IsGroupable\":true,\"IsSummable\":false,\"Width\""
+                  },
+                  {
+                      "name":  "Print Preview renders activated imported report 221",
+                      "status":  "Pass",
+                      "detail":  "HTTP 200; len=1821"
+                  }
+              ],
+    "responses":  {
+                      "validate":  {
+                                       "status":  200,
+                                       "raw":  "{\"success\":true,\"data\":{\"CheckResults\":[{\"Id\":\"exec.timing\",\"Level\":\"Info\",\"Message\":\"زمن تشغيل العينة مناسب.\",\"Hint\":null},{\"Id\":\"exec.rows\",\"Level\":\"Warning\",\"Message\":\"التقرير لم يرجع صفوفًا في العينة.\",\"Hint\":null},{\"Id\":\"print.render\",\"Level\":\"Info\",\"Message\":\"صفحة الطباعة متاحة للرندر.\",\"Hint\":null}],\"ErrorCount\":0,\"WarningCount\":1,\"InfoCount\":2,\"ExecStats\":{\"Ms\":10,\"RowCount\":0,\"Truncated\":false,\"ColumnCount\":9,\"Error\":null},\"ValidatedAt\":\"\\/Date(1778385465894)\\/\"},\"status\":\"ReadyForActivation\"}",
+                                       "json":  {
+                                                    "success":  true,
+                                                    "data":  {
+                                                                 "CheckResults":  [
+                                                                                      {
+                                                                                          "Id":  "exec.timing",
+                                                                                          "Level":  "Info",
+                                                                                          "Message":  "زمن تشغيل العينة مناسب.",
+                                                                                          "Hint":  null
+                                                                                      },
+                                                                                      {
+                                                                                          "Id":  "exec.rows",
+                                                                                          "Level":  "Warning",
+                                                                                          "Message":  "التقرير لم يرجع صفوفًا في العينة.",
+                                                                                          "Hint":  null
+                                                                                      },
+                                                                                      {
+                                                                                          "Id":  "print.render",
+                                                                                          "Level":  "Info",
+                                                                                          "Message":  "صفحة الطباعة متاحة للرندر.",
+                                                                                          "Hint":  null
+                                                                                      }
+                                                                                  ],
+                                                                 "ErrorCount":  0,
+                                                                 "WarningCount":  1,
+                                                                 "InfoCount":  2,
+                                                                 "ExecStats":  {
+                                                                                   "Ms":  10,
+                                                                                   "RowCount":  0,
+                                                                                   "Truncated":  false,
+                                                                                   "ColumnCount":  9,
+                                                                                   "Error":  null
+                                                                               },
+                                                                 "ValidatedAt":  "\/Date(1778385465894)\/"
+                                                             },
+                                                    "status":  "ReadyForActivation"
+                                                }
+                                   },
+                      "reportId":  5,
+                      "activate":  {
+                                       "status":  200,
+                                       "raw":  "{\"success\":true,\"data\":{\"Success\":true,\"NewLifecycleStatus\":\"Active\",\"NewStatus\":\"Active\",\"NewCertificationLevel\":\"Internal\",\"Message\":\"تم تغيير حالة التقرير إلى Active.\",\"LastValidation\":{\"CheckResults\":[{\"Id\":\"exec.timing\",\"Level\":\"Info\",\"Message\":\"زمن تشغيل العينة مناسب.\",\"Hint\":null},{\"Id\":\"exec.rows\",\"Level\":\"Warning\",\"Message\":\"التقرير لم يرجع صفوفًا في العينة.\",\"Hint\":null},{\"Id\":\"print.render\",\"Level\":\"Info\",\"Message\":\"صفحة الطباعة متاحة للرندر.\",\"Hint\":null}],\"ErrorCount\":0,\"WarningCount\":1,\"InfoCount\":2,\"ExecStats\":{\"Ms\":1,\"RowCount\":0,\"Truncated\":false,\"ColumnCount\":9,\"Error\":null},\"ValidatedAt\":\"\\/Date(1778385465970)\\/\"},\"Errors\":[]},\"message\":\"تم تغيير حالة التقرير إلى Active.\"}",
+                                       "json":  {
+                                                    "success":  true,
+                                                    "data":  {
+                                                                 "Success":  true,
+                                                                 "NewLifecycleStatus":  "Active",
+                                                                 "NewStatus":  "Active",
+                                                                 "NewCertificationLevel":  "Internal",
+                                                                 "Message":  "تم تغيير حالة التقرير إلى Active.",
+                                                                 "LastValidation":  {
+                                                                                        "CheckResults":  [
+                                                                                                             {
+                                                                                                                 "Id":  "exec.timing",
+                                                                                                                 "Level":  "Info",
+                                                                                                                 "Message":  "زمن تشغيل العينة مناسب.",
+                                                                                                                 "Hint":  null
+                                                                                                             },
+                                                                                                             {
+                                                                                                                 "Id":  "exec.rows",
+                                                                                                                 "Level":  "Warning",
+                                                                                                                 "Message":  "التقرير لم يرجع صفوفًا في العينة.",
+                                                                                                                 "Hint":  null
+                                                                                                             },
+                                                                                                             {
+                                                                                                                 "Id":  "print.render",
+                                                                                                                 "Level":  "Info",
+                                                                                                                 "Message":  "صفحة الطباعة متاحة للرندر.",
+                                                                                                                 "Hint":  null
+                                                                                                             }
+                                                                                                         ],
+                                                                                        "ErrorCount":  0,
+                                                                                        "WarningCount":  1,
+                                                                                        "InfoCount":  2,
+                                                                                        "ExecStats":  {
+                                                                                                          "Ms":  1,
+                                                                                                          "RowCount":  0,
+                                                                                                          "Truncated":  false,
+                                                                                                          "ColumnCount":  9,
+                                                                                                          "Error":  null
+                                                                                                      },
+                                                                                        "ValidatedAt":  "\/Date(1778385465970)\/"
+                                                                                    },
+                                                                 "Errors":  [
+
+                                                                            ]
+                                                             },
+                                                    "message":  "تم تغيير حالة التقرير إلى Active."
+                                                }
+                                   },
+                      "execute":  {
+                                      "Success":  true,
+                                      "Message":  "OK",
+                                      "Columns":  [
+                                                      {
+                                                          "ColumnId":  15,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Emp_ID",
+                                                          "CaptionAr":  "Emp_ID",
+                                                          "CaptionEn":  "Emp_ID",
+                                                          "DataType":  "Int",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  true,
+                                                          "Width":  140,
+                                                          "SortOrder":  0
+                                                      },
+                                                      {
+                                                          "ColumnId":  16,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Emp_Name",
+                                                          "CaptionAr":  "Emp_Name",
+                                                          "CaptionEn":  "Emp_Name",
+                                                          "DataType":  "String",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  false,
+                                                          "Width":  140,
+                                                          "SortOrder":  1
+                                                      },
+                                                      {
+                                                          "ColumnId":  17,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Emp_Salary",
+                                                          "CaptionAr":  "Emp_Salary",
+                                                          "CaptionEn":  "Emp_Salary",
+                                                          "DataType":  "String",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  false,
+                                                          "Width":  140,
+                                                          "SortOrder":  2
+                                                      },
+                                                      {
+                                                          "ColumnId":  18,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Dis_type",
+                                                          "CaptionAr":  "Dis_type",
+                                                          "CaptionEn":  "Dis_type",
+                                                          "DataType":  "String",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  false,
+                                                          "Width":  140,
+                                                          "SortOrder":  3
+                                                      },
+                                                      {
+                                                          "ColumnId":  19,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "TotalDiscount",
+                                                          "CaptionAr":  "TotalDiscount",
+                                                          "CaptionEn":  "TotalDiscount",
+                                                          "DataType":  "Decimal",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  true,
+                                                          "Width":  140,
+                                                          "SortOrder":  4
+                                                      },
+                                                      {
+                                                          "ColumnId":  20,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "TransDate",
+                                                          "CaptionAr":  "TransDate",
+                                                          "CaptionEn":  "TransDate",
+                                                          "DataType":  "DateTime",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  false,
+                                                          "Width":  140,
+                                                          "SortOrder":  5
+                                                      },
+                                                      {
+                                                          "ColumnId":  21,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Type",
+                                                          "CaptionAr":  "Type",
+                                                          "CaptionEn":  "Type",
+                                                          "DataType":  "Int",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  true,
+                                                          "Width":  140,
+                                                          "SortOrder":  6
+                                                      },
+                                                      {
+                                                          "ColumnId":  22,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Mokafea",
+                                                          "CaptionAr":  "Mokafea",
+                                                          "CaptionEn":  "Mokafea",
+                                                          "DataType":  "Decimal",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  true,
+                                                          "Width":  140,
+                                                          "SortOrder":  7
+                                                      },
+                                                      {
+                                                          "ColumnId":  23,
+                                                          "ReportId":  5,
+                                                          "FieldName":  "Notes",
+                                                          "CaptionAr":  "Notes",
+                                                          "CaptionEn":  "Notes",
+                                                          "DataType":  "String",
+                                                          "IsVisibleDefault":  true,
+                                                          "IsFilterable":  true,
+                                                          "IsSortable":  true,
+                                                          "IsGroupable":  true,
+                                                          "IsSummable":  false,
+                                                          "Width":  140,
+                                                          "SortOrder":  8
+                                                      }
+                                                  ],
+                                      "Rows":  [
+
+                                               ],
+                                      "RowCount":  0,
+                                      "MaxRows":  5000
+                                  },
+                      "printStatus":  200,
+                      "importApproved221":  {
+                                                "status":  200,
+                                                "raw":  "{\"success\":true,\"data\":{\"NewReportId\":5,\"ReportCode\":\"IMP_MainErp_dbo_VIEW10\",\"Message\":\"تم استيراد التقرير كمسودة غير مفعلة.\"}}",
+                                                "json":  {
+                                                             "success":  true,
+                                                             "data":  {
+                                                                          "NewReportId":  5,
+                                                                          "ReportCode":  "IMP_MainErp_dbo_VIEW10",
+                                                                          "Message":  "تم استيراد التقرير كمسودة غير مفعلة."
+                                                                      }
+                                                         }
+                                            }
+                  }
+}
