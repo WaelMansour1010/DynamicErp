@@ -4181,6 +4181,7 @@
     <Content Include="Areas\Reports\Sql\04_DynamicReports_LegacyPosMainErp_SeedViews.sql" />
     <Content Include="Areas\Reports\Sql\05_DynamicReports_Catalog.sql" />
     <Content Include="Areas\Reports\Sql\06_DynamicReports_Lifecycle.sql" />
+    <Content Include="Areas\Reports\Sql\07_DynamicReports_4B_Intelligence.sql" />
     <Content Include="Areas\Reports\Views\Web.config" />
     <Content Include="Areas\Reports\Views\Admin\Index.cshtml" />
     <Content Include="Areas\Reports\Views\Admin\Review.cshtml" />

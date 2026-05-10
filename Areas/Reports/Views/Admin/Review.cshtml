@@ -3,6 +3,7 @@
     Layout = ViewBag.LayoutPath as string;
     ViewBag.Title = "مراجعة التقرير الديناميكي";
     var definition = Model == null ? null : Model.Definition;
+    var suggestions = Model == null ? null : Model.Suggestions;
     var scope = (Model == null ? null : Model.Scope) ?? ((ViewBag.Scope as string) ?? "Web");
     var apiBase = (Model == null ? null : Model.ApiBase) ?? ((ViewBag.DynamicReportsApiBase as string) ?? Url.Content("~/Reports/Admin"));
     var reportId = definition == null ? 0 : definition.ReportId;
@@ -19,8 +20,8 @@
                 <div class="dr-rv-meta">
                     <span>@Html.Partial("~/Areas/Reports/Views/Admin/_LifecycleBadge.cshtml", definition == null ? "Draft" : definition.LifecycleStatus)</span>
                     <span>@Html.Partial("~/Areas/Reports/Views/Admin/_CertificationBadge.cshtml", definition == null ? "Internal" : definition.CertificationLevel)</span>
-                    <span>Scope: @(definition == null ? "Web" : definition.ProjectScope)</span>
-                    <span>Source: @(definition == null ? "" : definition.SourceType) / @(definition == null ? "" : definition.SourceName)</span>
+                    <span>النطاق: @(definition == null ? "Web" : definition.ProjectScope)</span>
+                    <span>المصدر: @(definition == null ? "" : definition.SourceType) / @(definition == null ? "" : definition.SourceName)</span>
                 </div>
             </div>
             <a class="dr-button secondary" href="@((Model == null ? null : Model.ApiBase) ?? Url.Content("~/Reports/Admin"))">العودة للإدارة</a>
@@ -28,13 +29,14 @@
 
         <div class="dr-rv-actions">
             <button type="button" class="dr-button" id="drRvValidate">تشغيل الفحص</button>
-            <button type="button" class="dr-button secondary" id="drRvApplyAll">تطبيق كل الاقتراحات</button>
             <button type="button" class="dr-button" data-transition="Active" id="drRvActivate">تفعيل</button>
             <button type="button" class="dr-button secondary" data-transition="Disabled">تعطيل</button>
             <button type="button" class="dr-button danger" data-transition="Archived">أرشفة</button>
             <button type="button" class="dr-button secondary" data-transition="Draft">إعادة فتح كمسودة</button>
-            <button type="button" class="dr-button secondary" id="drRvMarkReviewed">Mark as Reviewed</button>
-            <button type="button" class="dr-button secondary" id="drRvRevertReview">Revert Review</button>
+            <button type="button" class="dr-button secondary" id="drRvMarkReviewed">اعتماد كمراجع</button>
+            <button type="button" class="dr-button secondary" id="drRvProductionReady">جاهز للإنتاج</button>
+            <button type="button" class="dr-button secondary" id="drRvCertified">اعتماد نهائي</button>
+            <button type="button" class="dr-button secondary" id="drRvRevertReview">إلغاء الاعتماد</button>
         </div>
 
         <div id="drRvMessage" class="dr-message" role="status"></div>
@@ -57,11 +59,18 @@
         </section>
 
         <section class="dr-rv-cols">
-            <h2>الأعمدة والاقتراحات</h2>
+            <h2>الأعمدة ومعاينة الاقتراحات</h2>
+            <div class="dr-rv-suggestion-toolbar">
+                <button type="button" class="dr-button secondary" data-apply-kind="caption">Apply Captions</button>
+                <button type="button" class="dr-button secondary" data-apply-kind="format">Apply Formatting</button>
+                <button type="button" class="dr-button secondary" data-apply-kind="layout">Apply Width/Alignment</button>
+                <button type="button" class="dr-button secondary" data-apply-kind="hints">Apply Group/Sort/Filter hints</button>
+                <button type="button" class="dr-button" id="drRvApplyAll">Apply All</button>
+            </div>
             <div class="dr-scroll">
                 <table class="dr-table">
                     <thead>
-                        <tr><th>Field</th><th>Caption الحالي</th><th>اقتراح عربي</th><th>النوع</th><th>Group</th><th>Format</th><th></th></tr>
+                        <tr><th>Field</th><th>Caption الحالي</th><th>Caption مقترح</th><th>النوع</th><th>Format</th><th>Width</th><th>Align</th><th>Hints</th><th></th></tr>
                     </thead>
                     <tbody id="drRvColumns">
                     @if (definition != null && definition.Columns != null)
@@ -70,15 +79,23 @@
                         {
                             var caption = suggestions != null && suggestions.CaptionsAr.ContainsKey(column.FieldName) ? suggestions.CaptionsAr[column.FieldName] : "";
                             var format = suggestions != null && suggestions.Formatting.ContainsKey(column.FieldName) ? suggestions.Formatting[column.FieldName].Format : "";
-                            var group = suggestions != null && suggestions.GroupableHints.Contains(column.FieldName) ? "نعم" : "";
+                            var width = suggestions != null && suggestions.Widths.ContainsKey(column.FieldName) ? suggestions.Widths[column.FieldName].ToString() : "";
+                            var align = suggestions != null && suggestions.Alignment.ContainsKey(column.FieldName) ? suggestions.Alignment[column.FieldName] : "";
+                            var hints = new System.Collections.Generic.List<string>();
+                            if (suggestions != null && suggestions.GroupableHints.Contains(column.FieldName)) { hints.Add("Group"); }
+                            if (suggestions != null && suggestions.FilterableHints.Contains(column.FieldName)) { hints.Add("Filter"); }
+                            if (suggestions != null && suggestions.SortableHints.Contains(column.FieldName)) { hints.Add("Sort"); }
+                            if (suggestions != null && suggestions.AggregateFunctions.ContainsKey(column.FieldName)) { hints.Add("Aggregate:" + suggestions.AggregateFunctions[column.FieldName]); }
                             <tr data-field="@column.FieldName">
                                 <td dir="ltr">@column.FieldName</td>
                                 <td>@column.CaptionAr</td>
                                 <td>@caption</td>
                                 <td>@column.DataType</td>
-                                <td>@group</td>
                                 <td dir="ltr">@format</td>
-                                <td><button type="button" class="dr-mini-button" data-apply-caption="@column.FieldName">تطبيق</button></td>
+                                <td>@width</td>
+                                <td>@align</td>
+                                <td dir="ltr">@string.Join(", ", hints)</td>
+                                <td><button type="button" class="dr-mini-button" data-apply-caption="@column.FieldName">تطبيق Caption</button></td>
                             </tr>
                         }
                     }
@@ -125,7 +142,6 @@
                 <h2>معاينة الطباعة</h2>
                 <button type="button" class="dr-button secondary" id="drRvPrint">فتح معاينة الطباعة</button>
             </div>
-            <iframe id="drRvPrintFrame" title="Print Preview" loading="lazy"></iframe>
         </section>
 
         <section class="dr-rv-risk">
@@ -134,7 +150,7 @@
         </section>
 
         <section class="dr-rv-suggest">
-            <h2>اقتراحات عامة</h2>
+            <h2>نتائج الفحص</h2>
             <div id="drRvChecks" class="dr-rv-checks"></div>
             @if (suggestions != null && suggestions.SortHints.Count > 0)
             {

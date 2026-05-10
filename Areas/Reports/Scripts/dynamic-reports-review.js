@@ -59,7 +59,6 @@
         columns.slice(0, 12).forEach(function (c) {
             $("<th>").text(c.CaptionAr || c.CaptionEn || c.FieldName).appendTo(headRow);
         });
-
         var tbody = $("<tbody>").appendTo(table);
         rows.slice(0, 5).forEach(function (row) {
             var tr = $("<tr>").appendTo(tbody);
@@ -73,18 +72,25 @@
         var payload = {
             Field: field || "",
             Kind: kind || "",
-            ApplyCaptions: !field,
-            ApplyFormatting: !field,
-            ApplySort: !field,
-            ApplyGroupable: !field
+            ApplyCaptions: kind === "caption" || kind === "all",
+            ApplyFormatting: kind === "format" || kind === "all",
+            ApplyWidthAlignment: kind === "layout" || kind === "all",
+            ApplySort: kind === "hints" || kind === "all",
+            ApplyGroupable: kind === "hints" || kind === "all",
+            ApplyFilterable: kind === "hints" || kind === "all",
+            ApplySortable: kind === "hints" || kind === "all",
+            ApplyAggregate: kind === "hints" || kind === "all"
         };
+        if (field) {
+            payload.ApplyCaptions = kind === "caption";
+        }
         $.ajax({
             url: api("ApplySuggestions"),
             method: "POST",
             data: JSON.stringify(payload),
             contentType: "application/json; charset=utf-8"
         }).done(function (r) {
-            msg("تم تطبيق الاقتراحات: " + (r.updated || 0));
+            msg("تم تطبيق الاقتراحات. عدد الحقول/الخصائص المحدثة: " + (r.updated || 0));
             window.location.reload();
         }).fail(function (xhr) {
             msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر تطبيق الاقتراحات.");
@@ -106,23 +112,13 @@
         });
     }
 
-    function markReviewed() {
-        $.post(api("MarkReviewed")).done(function (r) {
+    function postLifecycle(path, fallback) {
+        $.post(api(path)).done(function (r) {
             var data = r.data || {};
-            msg(data.Message || "تم حفظ المراجعة.");
+            msg(data.Message || fallback);
             window.location.reload();
         }).fail(function (xhr) {
-            msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر حفظ المراجعة.");
-        });
-    }
-
-    function revertReview() {
-        $.post(api("RevertReview")).done(function (r) {
-            var data = r.data || {};
-            msg(data.Message || "تم إلغاء المراجعة.");
-            window.location.reload();
-        }).fail(function (xhr) {
-            msg((xhr.responseJSON && xhr.responseJSON.message) || "تعذر إلغاء المراجعة.");
+            msg((xhr.responseJSON && xhr.responseJSON.message) || fallback || "تعذرت العملية.");
         });
     }
 
@@ -142,10 +138,13 @@
         $("#drRvValidate").on("click", validate);
         $("#drRvRunSample").on("click", runSample);
         $("#drRvApplyAll").on("click", function () { applySuggestion("", "all"); });
+        $("[data-apply-kind]").on("click", function () { applySuggestion("", $(this).attr("data-apply-kind")); });
         $("[data-apply-caption]").on("click", function () { applySuggestion($(this).attr("data-apply-caption"), "caption"); });
         $("[data-transition]").on("click", function () { transition($(this).attr("data-transition")); });
-        $("#drRvMarkReviewed").on("click", markReviewed);
-        $("#drRvRevertReview").on("click", revertReview);
+        $("#drRvMarkReviewed").on("click", function () { postLifecycle("MarkReviewed", "تم حفظ المراجعة."); });
+        $("#drRvProductionReady").on("click", function () { postLifecycle("MarkProductionReady", "تم اعتماد التقرير كجاهز للإنتاج."); });
+        $("#drRvCertified").on("click", function () { postLifecycle("MarkCertified", "تم اعتماد التقرير نهائيًا."); });
+        $("#drRvRevertReview").on("click", function () { postLifecycle("RevertReview", "تم إلغاء الاعتماد."); });
         $("#drRvPrint").on("click", openPrintPreview);
     }
 
@@ -156,8 +155,8 @@
         applySuggestion: applySuggestion,
         applyAllSuggestions: function () { applySuggestion("", "all"); },
         transition: transition,
-        markReviewed: markReviewed,
-        revertReview: revertReview,
+        markReviewed: function () { postLifecycle("MarkReviewed", "تم حفظ المراجعة."); },
+        revertReview: function () { postLifecycle("RevertReview", "تم إلغاء الاعتماد."); },
         openPrintPreview: openPrintPreview
     };
 

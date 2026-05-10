@@ -73,20 +73,33 @@ namespace MyERP.Areas.Reports.Models
         {
             CaptionsAr = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Formatting = new Dictionary<string, ColumnFormatting>(StringComparer.OrdinalIgnoreCase);
+            Widths = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            Alignment = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            AggregateFunctions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             SortHints = new List<SortHint>();
             GroupableHints = new List<string>();
+            FilterableHints = new List<string>();
+            SortableHints = new List<string>();
         }
 
         public IDictionary<string, string> CaptionsAr { get; set; }
         public IDictionary<string, ColumnFormatting> Formatting { get; set; }
+        public IDictionary<string, int> Widths { get; set; }
+        public IDictionary<string, string> Alignment { get; set; }
+        public IDictionary<string, string> AggregateFunctions { get; set; }
         public IList<SortHint> SortHints { get; set; }
         public IList<string> GroupableHints { get; set; }
+        public IList<string> FilterableHints { get; set; }
+        public IList<string> SortableHints { get; set; }
     }
 
     public class ColumnFormatting
     {
         public string Format { get; set; }
         public int? Decimals { get; set; }
+        public string TextAlign { get; set; }
+        public int? Width { get; set; }
+        public string AggregateFunction { get; set; }
     }
 
     public class SortHint
@@ -115,8 +128,12 @@ namespace MyERP.Areas.Reports.Models
     {
         public bool ApplyCaptions { get; set; }
         public bool ApplyFormatting { get; set; }
+        public bool ApplyWidthAlignment { get; set; }
         public bool ApplySort { get; set; }
         public bool ApplyGroupable { get; set; }
+        public bool ApplyFilterable { get; set; }
+        public bool ApplySortable { get; set; }
+        public bool ApplyAggregate { get; set; }
         public string Field { get; set; }
         public string Kind { get; set; }
     }

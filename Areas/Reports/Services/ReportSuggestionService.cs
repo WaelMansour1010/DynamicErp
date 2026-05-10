@@ -14,12 +14,12 @@ namespace MyERP.Areas.Reports.Services
         private static readonly Dictionary<string, string> ArDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "Id", "رقم" }, { "No", "رقم" }, { "Number", "رقم" }, { "Code", "الرمز" },
-            { "At", "" }, { "Is", "" }, { "Has", "" },
+            { "At", "" }, { "Is", "" }, { "Has", "" }, { "Incl", "شامل" },
             { "Name", "الاسم" }, { "Ar", "عربي" }, { "En", "إنجليزي" }, { "Desc", "الوصف" },
             { "Description", "الوصف" }, { "Type", "النوع" }, { "Status", "الحالة" }, { "State", "الحالة" },
             { "Invoice", "الفاتورة" }, { "Bill", "الفاتورة" }, { "Voucher", "القيد" }, { "Receipt", "إيصال" },
-            { "Payment", "دفع" }, { "Order", "طلب" }, { "Sale", "بيع" }, { "Sales", "المبيعات" },
-            { "Purchase", "شراء" }, { "Return", "مرتجع" }, { "Customer", "العميل" }, { "Client", "العميل" },
+            { "Payment", "الدفع" }, { "Order", "الطلب" }, { "Sale", "البيع" }, { "Sales", "المبيعات" },
+            { "Purchase", "الشراء" }, { "Return", "مرتجع" }, { "Customer", "العميل" }, { "Client", "العميل" },
             { "Supplier", "المورد" }, { "Vendor", "المورد" }, { "Product", "المنتج" }, { "Item", "الصنف" },
             { "Branch", "الفرع" }, { "Store", "المخزن" }, { "Warehouse", "المخزن" }, { "Company", "الشركة" },
             { "Account", "الحساب" }, { "Bank", "البنك" }, { "Cash", "النقدية" }, { "Treasury", "الخزينة" },
@@ -44,10 +44,7 @@ namespace MyERP.Areas.Reports.Services
             { "Delivery", "التوصيل" }, { "Expense", "المصروف" }, { "Revenue", "الإيراد" }, { "Profit", "الربح" }
         };
 
-        public int DictionarySize
-        {
-            get { return ArDictionary.Count; }
-        }
+        public int DictionarySize { get { return ArDictionary.Count; } }
 
         public SuggestionBundle BuildSuggestions(DynamicReportDefinition definition)
         {
@@ -57,18 +54,20 @@ namespace MyERP.Areas.Reports.Services
             {
                 if (column == null || string.IsNullOrWhiteSpace(column.FieldName)) continue;
                 bundle.CaptionsAr[column.FieldName] = SuggestArabicCaption(column.FieldName);
+                bundle.Widths[column.FieldName] = SuggestWidth(column);
+                bundle.Alignment[column.FieldName] = SuggestAlignment(column);
                 var numeric = SuggestNumericFormat(column.DataType, column.FieldName);
                 if (numeric != null) bundle.Formatting[column.FieldName] = numeric;
                 var date = SuggestDateFormat(column.DataType);
                 if (date != null) bundle.Formatting[column.FieldName] = date;
                 if (SuggestGroupable(column)) bundle.GroupableHints.Add(column.FieldName);
+                if (SuggestFilterable(column)) bundle.FilterableHints.Add(column.FieldName);
+                if (SuggestSortable(column)) bundle.SortableHints.Add(column.FieldName);
+                var aggregate = SuggestAggregateFunction(column);
+                if (!string.IsNullOrWhiteSpace(aggregate)) bundle.AggregateFunctions[column.FieldName] = aggregate;
             }
 
-            foreach (var hint in SuggestSort(columns))
-            {
-                bundle.SortHints.Add(hint);
-            }
-
+            foreach (var hint in SuggestSort(columns)) bundle.SortHints.Add(hint);
             return bundle;
         }
 
@@ -95,38 +94,48 @@ namespace MyERP.Areas.Reports.Services
             var cleaned = output.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
             if (cleaned.Count > 1 && (cleaned[cleaned.Count - 1] == "رقم" || cleaned[cleaned.Count - 1] == "الاسم"))
             {
-                var last = cleaned[cleaned.Count - 1];
-                if (last == "الاسم") last = "اسم";
+                var last = cleaned[cleaned.Count - 1] == "الاسم" ? "اسم" : cleaned[cleaned.Count - 1];
                 cleaned.RemoveAt(cleaned.Count - 1);
                 cleaned.Insert(0, last);
             }
 
             var caption = string.Join(" ", cleaned).Trim();
-            if (translated * 2 < words.Count)
-            {
-                caption = "⚠ " + ToTitleWords(words);
-            }
-
+            if (translated * 2 < words.Count) caption = "⚠ " + ToTitleWords(words);
             return caption.Length > 100 ? caption.Substring(0, 100) : caption;
         }
 
         public ColumnFormatting SuggestNumericFormat(string dataType, string fieldName)
         {
             if ((fieldName ?? string.Empty).IndexOf("Percent", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return new ColumnFormatting { Format = "0.00%", Decimals = 2 };
-            }
-
-            if (IsDecimal(dataType)) return new ColumnFormatting { Format = "#,##0.00", Decimals = 2 };
-            if (IsInteger(dataType)) return new ColumnFormatting { Format = "#,##0", Decimals = 0 };
+                return new ColumnFormatting { Format = "percent", Decimals = 2, TextAlign = "left", Width = 110, AggregateFunction = "avg" };
+            if (IsDecimal(dataType)) return new ColumnFormatting { Format = "number", Decimals = 2, TextAlign = "left", Width = 130, AggregateFunction = "sum" };
+            if (IsInteger(dataType)) return new ColumnFormatting { Format = "#,##0", Decimals = 0, TextAlign = "left", Width = 100, AggregateFunction = "sum" };
             return null;
         }
 
         public ColumnFormatting SuggestDateFormat(string dataType)
         {
-            if (string.Equals(dataType, "Date", StringComparison.OrdinalIgnoreCase)) return new ColumnFormatting { Format = "yyyy-MM-dd" };
-            if (string.Equals(dataType, "DateTime", StringComparison.OrdinalIgnoreCase)) return new ColumnFormatting { Format = "yyyy-MM-dd HH:mm" };
+            if (string.Equals(dataType, "Date", StringComparison.OrdinalIgnoreCase)) return new ColumnFormatting { Format = "yyyy-MM-dd", Width = 120, TextAlign = "center" };
+            if (string.Equals(dataType, "DateTime", StringComparison.OrdinalIgnoreCase)) return new ColumnFormatting { Format = "datetime", Width = 150, TextAlign = "center" };
             return null;
+        }
+
+        public int SuggestWidth(DynamicReportColumn column)
+        {
+            if (column == null) return 140;
+            if (IsDate(column.DataType)) return string.Equals(column.DataType, "DateTime", StringComparison.OrdinalIgnoreCase) ? 150 : 120;
+            if (IsNumeric(column.DataType)) return 130;
+            if (ContainsAny(column.FieldName, "Notes", "Description", "Address")) return 220;
+            if (ContainsAny(column.FieldName, "Name", "Customer", "Supplier", "Product", "Item")) return 180;
+            return 140;
+        }
+
+        public string SuggestAlignment(DynamicReportColumn column)
+        {
+            if (column == null) return "right";
+            if (IsNumeric(column.DataType)) return "left";
+            if (IsDate(column.DataType) || string.Equals(column.DataType, "Bool", StringComparison.OrdinalIgnoreCase)) return "center";
+            return "right";
         }
 
         public IList<SortHint> SuggestSort(IEnumerable<DynamicReportColumn> columns)
@@ -145,6 +154,23 @@ namespace MyERP.Areas.Reports.Services
             return string.Equals(column.DataType, "Bool", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(column.DataType, "tinyint", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(column.DataType, "smallint", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool SuggestFilterable(DynamicReportColumn column)
+        {
+            return column != null && (SuggestGroupable(column) || IsDate(column.DataType) || ContainsAny(column.FieldName, "Name", "Code", "No"));
+        }
+
+        public bool SuggestSortable(DynamicReportColumn column)
+        {
+            return column != null && !string.IsNullOrWhiteSpace(column.FieldName);
+        }
+
+        public string SuggestAggregateFunction(DynamicReportColumn column)
+        {
+            if (column == null || !IsNumeric(column.DataType)) return null;
+            if (ContainsAny(column.FieldName, "Id", "No", "Code")) return null;
+            return ContainsAny(column.FieldName, "Percent", "Rate") ? "avg" : "sum";
         }
 
         private static IEnumerable<string> SplitWords(string fieldName)
@@ -173,6 +199,17 @@ namespace MyERP.Areas.Reports.Services
         {
             value = value ?? string.Empty;
             return needles.Any(n => value.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        private static bool IsDate(string dataType)
+        {
+            return string.Equals(dataType, "Date", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(dataType, "DateTime", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsNumeric(string dataType)
+        {
+            return IsDecimal(dataType) || IsInteger(dataType);
         }
 
         private static bool IsDecimal(string dataType)

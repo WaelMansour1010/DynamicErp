@@ -105,6 +105,11 @@ namespace MyERP.Areas.Reports.Models
         public bool IsGroupable { get; set; }
         public bool IsSummable { get; set; }
         public int? Width { get; set; }
+        public string DisplayFormat { get; set; }
+        public int? DecimalPlaces { get; set; }
+        public string TextAlign { get; set; }
+        public bool IsAggregatable { get; set; }
+        public string AggregateFunction { get; set; }
         public int SortOrder { get; set; }
     }
 

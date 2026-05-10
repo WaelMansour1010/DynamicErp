@@ -70,5 +70,6 @@ namespace MyERP.Areas.Reports.Models
         public int NewReportId { get; set; }
         public string ReportCode { get; set; }
         public string Message { get; set; }
+        public bool AlreadyImported { get; set; }
     }
 }

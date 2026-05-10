@@ -181,7 +181,7 @@
     {
         var alignment = GetMap(layout, "alignment");
         object raw;
-        var value = alignment != null && alignment.TryGetValue(column.FieldName, out raw) ? Convert.ToString(raw) : "";
+        var value = alignment != null && alignment.TryGetValue(column.FieldName, out raw) ? Convert.ToString(raw) : column.TextAlign;
         if (string.Equals(value, "left", StringComparison.OrdinalIgnoreCase)) return "dr-print-left";
         if (string.Equals(value, "center", StringComparison.OrdinalIgnoreCase)) return "dr-print-center";
         return "dr-print-right";
@@ -192,9 +192,15 @@
         if (value == null) return "";
         var fieldFormat = GetNestedMap(layout, "formatting", column.FieldName);
         var format = GetMapValue(fieldFormat, "format");
+        if (string.IsNullOrWhiteSpace(format)) format = column.DisplayFormat;
         var decimalsRaw = GetMapValue(fieldFormat, "decimals");
         int decimals;
         var hasDecimals = int.TryParse(decimalsRaw, out decimals);
+        if (!hasDecimals && column.DecimalPlaces.HasValue)
+        {
+            decimals = column.DecimalPlaces.Value;
+            hasDecimals = true;
+        }
         decimal number;
         if (decimal.TryParse(Convert.ToString(value), NumberStyles.Any, CultureInfo.InvariantCulture, out number))
         {

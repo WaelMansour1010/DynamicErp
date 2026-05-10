@@ -112,10 +112,13 @@
                 state.layout.widths[c.FieldName] = c.Width || 140;
             }
             if (!state.layout.alignment[c.FieldName]) {
-                state.layout.alignment[c.FieldName] = isNumeric(c) ? "left" : "right";
+                state.layout.alignment[c.FieldName] = c.TextAlign || (isNumeric(c) ? "left" : "right");
             }
-            if (c.IsSummable && isNumeric(c) && !state.layout.summaries[c.FieldName]) {
-                state.layout.summaries[c.FieldName] = "sum";
+            if ((c.IsAggregatable || c.IsSummable) && isNumeric(c) && !state.layout.summaries[c.FieldName]) {
+                state.layout.summaries[c.FieldName] = c.AggregateFunction || "sum";
+            }
+            if ((c.DisplayFormat || (c.DecimalPlaces !== null && c.DecimalPlaces !== undefined)) && !state.layout.formatting[c.FieldName]) {
+                state.layout.formatting[c.FieldName] = { format: c.DisplayFormat || "", decimals: c.DecimalPlaces };
             }
         });
         state.layout.columnOrder = state.layout.columnOrder.filter(function (field) { return !!findColumn(field); });

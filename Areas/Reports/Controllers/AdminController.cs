@@ -304,7 +304,7 @@ namespace MyERP.Areas.Reports.Controllers
             {
                 var user = RequireDesigner(scope);
                 var result = _catalogService.Import(catalogId, user);
-                return Json(new { success = true, data = result });
+                return Json(new { success = true, data = result, reviewUrl = Url.Action("Review", new { id = result.NewReportId, scope = user.ProjectScope }) });
             }
             catch (HttpException)
             {
@@ -503,6 +503,48 @@ namespace MyERP.Areas.Reports.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult MarkProductionReady(int id, string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                var result = _lifecycleService.MarkProductionReady(id, user);
+                if (!result.Success) Response.StatusCode = 400;
+                return Json(new { success = result.Success, data = result, message = result.Message });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report production ready failed: " + ex);
+                return BadRequestJson("تعذر اعتماد التقرير كجاهز للإنتاج.");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult MarkCertified(int id, string scope)
+        {
+            try
+            {
+                var user = RequireDesigner(scope);
+                var result = _lifecycleService.MarkCertified(id, user);
+                if (!result.Success) Response.StatusCode = 400;
+                return Json(new { success = result.Success, data = result, message = result.Message });
+            }
+            catch (HttpException)
+            {
+                return ForbiddenJson();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Dynamic report certify failed: " + ex);
+                return BadRequestJson("تعذر الاعتماد النهائي للتقرير.");
+            }
+        }
+
         protected DynamicReportUserContext CurrentUser(string scope)
         {
             return DynamicReportSecurity.Build(HttpContext, scope);
@@ -629,6 +671,7 @@ namespace MyERP.Areas.Reports.Controllers
                 if (request.ApplyCaptions || string.Equals(request.Kind, "caption", StringComparison.OrdinalIgnoreCase))
                 {
                     string caption;
+                    if (!string.IsNullOrWhiteSpace(column.CaptionAr) && column.CaptionAr.Trim().StartsWith("⚠", StringComparison.Ordinal)) column.CaptionAr = null;
                     if ((string.IsNullOrWhiteSpace(column.CaptionAr) || column.CaptionAr.Trim().StartsWith("⚠", StringComparison.Ordinal)) &&
                         suggestions.CaptionsAr.TryGetValue(column.FieldName, out caption))
                     {
@@ -654,6 +697,61 @@ namespace MyERP.Areas.Reports.Controllers
                         updated++;
                     }
                 }
+
+                ColumnFormatting formatting;
+                if ((request.ApplyFormatting || string.Equals(request.Kind, "format", StringComparison.OrdinalIgnoreCase)) &&
+                    suggestions.Formatting.TryGetValue(column.FieldName, out formatting))
+                {
+                    column.DisplayFormat = formatting.Format;
+                    column.DecimalPlaces = formatting.Decimals;
+                    updated++;
+                }
+
+                if (request.ApplyWidthAlignment || string.Equals(request.Kind, "layout", StringComparison.OrdinalIgnoreCase))
+                {
+                    int width;
+                    string align;
+                    if (suggestions.Widths.TryGetValue(column.FieldName, out width))
+                    {
+                        column.Width = width;
+                        updated++;
+                    }
+                    if (suggestions.Alignment.TryGetValue(column.FieldName, out align))
+                    {
+                        column.TextAlign = align;
+                        updated++;
+                    }
+                }
+
+                if (request.ApplyAggregate || string.Equals(request.Kind, "aggregate", StringComparison.OrdinalIgnoreCase))
+                {
+                    string aggregate;
+                    if (suggestions.AggregateFunctions.TryGetValue(column.FieldName, out aggregate))
+                    {
+                        column.IsAggregatable = true;
+                        column.IsSummable = true;
+                        column.AggregateFunction = aggregate;
+                        updated++;
+                    }
+                }
+
+                if (request.ApplyFilterable || string.Equals(request.Kind, "filter", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (suggestions.FilterableHints.Contains(column.FieldName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        column.IsFilterable = true;
+                        updated++;
+                    }
+                }
+
+                if (request.ApplySortable || string.Equals(request.Kind, "sort", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (suggestions.SortableHints.Contains(column.FieldName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        column.IsSortable = true;
+                        updated++;
+                    }
+                }
             }
 
             if (request.ApplySort && suggestions.SortHints.Count > 0)
@@ -668,7 +766,31 @@ namespace MyERP.Areas.Reports.Controllers
             }
 
             _definitionService.SaveDefinition(definition, user);
+            InsertAudit(definition.ReportId, user.ProjectScope, "ApplySuggestions", null, updated.ToString(), user.UserId, request.Kind);
             return updated;
+        }
+
+        private void InsertAudit(int reportId, string scope, string actionType, string oldValue, string newValue, int userId, string notes)
+        {
+            const string sql = @"
+IF OBJECT_ID('dbo.DynamicReportAuditLog', 'U') IS NOT NULL
+BEGIN
+    INSERT INTO dbo.DynamicReportAuditLog
+    (ReportId, ProjectScope, ActionType, OldValue, NewValue, PerformedBy, Notes)
+    VALUES (@ReportId, @ProjectScope, @ActionType, @OldValue, @NewValue, @UserId, @Notes);
+END";
+            using (var connection = _connectionFactory.CreateOpenConnection(scope))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@ReportId", SqlDbType.Int).Value = reportId;
+                command.Parameters.Add("@ProjectScope", SqlDbType.NVarChar, 20).Value = DynamicReportScopes.Normalize(scope);
+                command.Parameters.Add("@ActionType", SqlDbType.NVarChar, 50).Value = actionType;
+                command.Parameters.Add("@OldValue", SqlDbType.NVarChar, -1).Value = (object)oldValue ?? DBNull.Value;
+                command.Parameters.Add("@NewValue", SqlDbType.NVarChar, -1).Value = (object)newValue ?? DBNull.Value;
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId > 0 ? (object)userId : DBNull.Value;
+                command.Parameters.Add("@Notes", SqlDbType.NVarChar, 1000).Value = (object)notes ?? DBNull.Value;
+                command.ExecuteNonQuery();
+            }
         }
 
         private static IDictionary<string, string> FormToDictionary(FormCollection form)

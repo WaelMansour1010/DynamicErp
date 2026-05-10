@@ -164,6 +164,18 @@ WHERE CatalogId = @CatalogId AND ProjectScope = @ProjectScope;";
                 try
                 {
                     var entry = GetEntry(connection, transaction, catalogId, user.ProjectScope);
+                    if (entry != null && entry.ImportedReportId.HasValue)
+                    {
+                        var existingCode = GetReportCode(connection, transaction, entry.ImportedReportId.Value);
+                        transaction.Commit();
+                        return new CatalogImportResult
+                        {
+                            NewReportId = entry.ImportedReportId.Value,
+                            ReportCode = existingCode,
+                            AlreadyImported = true,
+                            Message = "تم استيراد هذا المصدر من قبل. افتح شاشة المراجعة للتقرير الموجود."
+                        };
+                    }
                     if (entry == null) throw new InvalidOperationException("العنصر غير موجود في الكتالوج.");
                     if (entry.ClassificationStatus != DynamicReportCatalogStatus.Approved) throw new InvalidOperationException("لا يمكن الاستيراد إلا بعد الاعتماد اليدوي.");
                     if (entry.ImportedReportId.HasValue) throw new InvalidOperationException("تم استيراد هذا العنصر من قبل.");
@@ -177,6 +189,7 @@ WHERE CatalogId = @CatalogId AND ProjectScope = @ProjectScope;";
                     InsertColumns(connection, transaction, reportId, columns);
                     InsertParameters(connection, transaction, reportId, parameters);
                     MarkImported(connection, transaction, catalogId, user.ProjectScope, reportId);
+                    InsertAudit(connection, transaction, reportId, user.ProjectScope, "Import", null, reportCode, user.UserId, objectName);
                     transaction.Commit();
                     return new CatalogImportResult
                     {
@@ -472,6 +485,11 @@ WHERE CatalogId = @CatalogId AND ProjectScope = @ProjectScope;";
                     IsGroupable = true,
                     IsSummable = IsNumericSql(columns[i].SqlType),
                     Width = 140,
+                    DisplayFormat = IsNumericSql(columns[i].SqlType) ? "number" : null,
+                    DecimalPlaces = IsNumericSql(columns[i].SqlType) ? 2 : (int?)null,
+                    TextAlign = IsNumericSql(columns[i].SqlType) ? "left" : "right",
+                    IsAggregatable = IsNumericSql(columns[i].SqlType),
+                    AggregateFunction = IsNumericSql(columns[i].SqlType) ? "sum" : null,
                     SortOrder = i
                 });
             }
@@ -523,6 +541,15 @@ WHERE CatalogId = @CatalogId AND ProjectScope = @ProjectScope;";
             }
         }
 
+        private static string GetReportCode(SqlConnection connection, SqlTransaction transaction, int reportId)
+        {
+            using (var command = new SqlCommand("SELECT TOP (1) ReportCode FROM dbo.DynamicReportDefinitions WHERE ReportId = @ReportId;", connection, transaction))
+            {
+                command.Parameters.Add("@ReportId", SqlDbType.Int).Value = reportId;
+                return Convert.ToString(command.ExecuteScalar());
+            }
+        }
+
         private static int InsertDefinition(SqlConnection connection, SqlTransaction transaction, CatalogEntry entry, string reportCode, DynamicReportUserContext user)
         {
             const string sql = @"
@@ -548,9 +575,9 @@ SELECT CAST(SCOPE_IDENTITY() AS INT);";
         {
             const string sql = @"
 INSERT INTO dbo.DynamicReportColumns
-(ReportId, FieldName, CaptionAr, CaptionEn, DataType, IsVisibleDefault, IsFilterable, IsSortable, IsGroupable, IsSummable, Width, SortOrder)
+(ReportId, FieldName, CaptionAr, CaptionEn, DataType, IsVisibleDefault, IsFilterable, IsSortable, IsGroupable, IsSummable, Width, DisplayFormat, DecimalPlaces, TextAlign, IsAggregatable, AggregateFunction, SortOrder)
 VALUES
-(@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, 1, 1, 1, 1, @IsSummable, @Width, @SortOrder);";
+(@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, 1, 1, 1, 1, @IsSummable, @Width, @DisplayFormat, @DecimalPlaces, @TextAlign, @IsAggregatable, @AggregateFunction, @SortOrder);";
             foreach (var column in columns)
             {
                 using (var command = new SqlCommand(sql, connection, transaction))
@@ -562,6 +589,11 @@ VALUES
                     command.Parameters.Add("@DataType", SqlDbType.NVarChar, 50).Value = column.DataType;
                     command.Parameters.Add("@IsSummable", SqlDbType.Bit).Value = column.IsSummable;
                     command.Parameters.Add("@Width", SqlDbType.Int).Value = column.Width ?? 140;
+                    command.Parameters.Add("@DisplayFormat", SqlDbType.NVarChar, 50).Value = (object)column.DisplayFormat ?? DBNull.Value;
+                    command.Parameters.Add("@DecimalPlaces", SqlDbType.Int).Value = (object)column.DecimalPlaces ?? DBNull.Value;
+                    command.Parameters.Add("@TextAlign", SqlDbType.NVarChar, 10).Value = (object)column.TextAlign ?? DBNull.Value;
+                    command.Parameters.Add("@IsAggregatable", SqlDbType.Bit).Value = column.IsAggregatable;
+                    command.Parameters.Add("@AggregateFunction", SqlDbType.NVarChar, 20).Value = (object)column.AggregateFunction ?? DBNull.Value;
                     command.Parameters.Add("@SortOrder", SqlDbType.Int).Value = column.SortOrder;
                     command.ExecuteNonQuery();
                 }
@@ -606,6 +638,28 @@ WHERE CatalogId = @CatalogId
                 command.Parameters.Add("@ProjectScope", SqlDbType.NVarChar, 20).Value = scope;
                 command.Parameters.Add("@ReportId", SqlDbType.Int).Value = reportId;
                 if (command.ExecuteNonQuery() == 0) throw new InvalidOperationException("تعذر تحديث حالة الاستيراد.");
+            }
+        }
+
+        private static void InsertAudit(SqlConnection connection, SqlTransaction transaction, int reportId, string scope, string actionType, string oldValue, string newValue, int userId, string notes)
+        {
+            const string sql = @"
+IF OBJECT_ID('dbo.DynamicReportAuditLog', 'U') IS NOT NULL
+BEGIN
+    INSERT INTO dbo.DynamicReportAuditLog
+    (ReportId, ProjectScope, ActionType, OldValue, NewValue, PerformedBy, Notes)
+    VALUES (@ReportId, @ProjectScope, @ActionType, @OldValue, @NewValue, @UserId, @Notes);
+END";
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                command.Parameters.Add("@ReportId", SqlDbType.Int).Value = reportId;
+                command.Parameters.Add("@ProjectScope", SqlDbType.NVarChar, 20).Value = scope;
+                command.Parameters.Add("@ActionType", SqlDbType.NVarChar, 50).Value = actionType;
+                command.Parameters.Add("@OldValue", SqlDbType.NVarChar, -1).Value = (object)oldValue ?? DBNull.Value;
+                command.Parameters.Add("@NewValue", SqlDbType.NVarChar, -1).Value = (object)newValue ?? DBNull.Value;
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId > 0 ? (object)userId : DBNull.Value;
+                command.Parameters.Add("@Notes", SqlDbType.NVarChar, 1000).Value = (object)notes ?? DBNull.Value;
+                command.ExecuteNonQuery();
             }
         }
 

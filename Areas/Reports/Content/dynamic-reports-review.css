@@ -49,6 +49,13 @@
     gap: 8px;
 }
 
+.dr-rv-suggestion-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
 .dr-rv-summary {
     display: grid;
     gap: 10px;

@@ -153,7 +153,8 @@ ORDER BY SortOrder, ParameterId;";
             var list = new List<DynamicReportColumn>();
             const string sql = @"
 SELECT ColumnId, ReportId, FieldName, CaptionAr, CaptionEn, DataType, IsVisibleDefault,
-       IsFilterable, IsSortable, IsGroupable, IsSummable, Width, SortOrder
+       IsFilterable, IsSortable, IsGroupable, IsSummable, Width, DisplayFormat,
+       DecimalPlaces, TextAlign, IsAggregatable, AggregateFunction, SortOrder
 FROM dbo.DynamicReportColumns
 WHERE ReportId = @reportId
 ORDER BY SortOrder, ColumnId;";
@@ -245,8 +246,8 @@ VALUES (@ReportId, @ParameterName, @CaptionAr, @CaptionEn, @DataType, @IsRequire
             }
             if (columns == null) return;
             const string sql = @"INSERT INTO dbo.DynamicReportColumns
-(ReportId, FieldName, CaptionAr, CaptionEn, DataType, IsVisibleDefault, IsFilterable, IsSortable, IsGroupable, IsSummable, Width, SortOrder)
-VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefault, @IsFilterable, @IsSortable, @IsGroupable, @IsSummable, @Width, @SortOrder);";
+(ReportId, FieldName, CaptionAr, CaptionEn, DataType, IsVisibleDefault, IsFilterable, IsSortable, IsGroupable, IsSummable, Width, DisplayFormat, DecimalPlaces, TextAlign, IsAggregatable, AggregateFunction, SortOrder)
+VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefault, @IsFilterable, @IsSortable, @IsGroupable, @IsSummable, @Width, @DisplayFormat, @DecimalPlaces, @TextAlign, @IsAggregatable, @AggregateFunction, @SortOrder);";
             foreach (var c in columns)
             {
                 if (string.IsNullOrWhiteSpace(c.FieldName)) continue;
@@ -263,6 +264,11 @@ VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefa
                     command.Parameters.Add("@IsGroupable", SqlDbType.Bit).Value = c.IsGroupable;
                     command.Parameters.Add("@IsSummable", SqlDbType.Bit).Value = c.IsSummable;
                     command.Parameters.Add("@Width", SqlDbType.Int).Value = (object)c.Width ?? DBNull.Value;
+                    command.Parameters.Add("@DisplayFormat", SqlDbType.NVarChar, 50).Value = (object)c.DisplayFormat ?? DBNull.Value;
+                    command.Parameters.Add("@DecimalPlaces", SqlDbType.Int).Value = (object)c.DecimalPlaces ?? DBNull.Value;
+                    command.Parameters.Add("@TextAlign", SqlDbType.NVarChar, 10).Value = (object)c.TextAlign ?? DBNull.Value;
+                    command.Parameters.Add("@IsAggregatable", SqlDbType.Bit).Value = c.IsAggregatable;
+                    command.Parameters.Add("@AggregateFunction", SqlDbType.NVarChar, 20).Value = (object)c.AggregateFunction ?? DBNull.Value;
                     command.Parameters.Add("@SortOrder", SqlDbType.Int).Value = c.SortOrder;
                     command.ExecuteNonQuery();
                 }
@@ -327,6 +333,11 @@ VALUES (@ReportId, @FieldName, @CaptionAr, @CaptionEn, @DataType, @IsVisibleDefa
                 IsGroupable = Convert.ToBoolean(reader["IsGroupable"]),
                 IsSummable = Convert.ToBoolean(reader["IsSummable"]),
                 Width = reader["Width"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["Width"]),
+                DisplayFormat = reader["DisplayFormat"] == DBNull.Value ? null : Convert.ToString(reader["DisplayFormat"]),
+                DecimalPlaces = reader["DecimalPlaces"] == DBNull.Value ? null : (int?)Convert.ToInt32(reader["DecimalPlaces"]),
+                TextAlign = reader["TextAlign"] == DBNull.Value ? null : Convert.ToString(reader["TextAlign"]),
+                IsAggregatable = reader["IsAggregatable"] != DBNull.Value && Convert.ToBoolean(reader["IsAggregatable"]),
+                AggregateFunction = reader["AggregateFunction"] == DBNull.Value ? null : Convert.ToString(reader["AggregateFunction"]),
                 SortOrder = Convert.ToInt32(reader["SortOrder"])
             };
         }

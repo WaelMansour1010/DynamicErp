@@ -156,6 +156,11 @@
             .append(checkCell("IsGroupable", !!c.IsGroupable))
             .append(checkCell("IsSummable", !!c.IsSummable))
             .append($("<td>").append($("<input type='number' data-field='Width'>").val(c.Width || 140)))
+            .append($("<input type='hidden' data-field='DisplayFormat'>").val(c.DisplayFormat || ""))
+            .append($("<input type='hidden' data-field='DecimalPlaces'>").val(c.DecimalPlaces == null ? "" : c.DecimalPlaces))
+            .append($("<input type='hidden' data-field='TextAlign'>").val(c.TextAlign || ""))
+            .append($("<input type='hidden' data-field='IsAggregatable'>").val(c.IsAggregatable ? "true" : "false"))
+            .append($("<input type='hidden' data-field='AggregateFunction'>").val(c.AggregateFunction || ""))
             .append($("<td>").append($("<input type='number' data-field='SortOrder'>").val(c.SortOrder || index || 0)))
             .appendTo("#drColumns tbody");
     }
@@ -178,6 +183,11 @@
                 IsGroupable: $(this).find("[data-field=IsGroupable]").is(":checked"),
                 IsSummable: $(this).find("[data-field=IsSummable]").is(":checked"),
                 Width: parseInt($(this).find("[data-field=Width]").val(), 10) || 140,
+                DisplayFormat: $(this).find("[data-field=DisplayFormat]").val() || null,
+                DecimalPlaces: parseInt($(this).find("[data-field=DecimalPlaces]").val(), 10),
+                TextAlign: $(this).find("[data-field=TextAlign]").val() || null,
+                IsAggregatable: $(this).find("[data-field=IsAggregatable]").val() === "true",
+                AggregateFunction: $(this).find("[data-field=AggregateFunction]").val() || null,
                 SortOrder: parseInt($(this).find("[data-field=SortOrder]").val(), 10) || 0
             });
         });
@@ -405,7 +415,11 @@
                         var reason = window.prompt("سبب الرفض", item.RejectionReason || "");
                         if (reason !== null) reject(item.CatalogId, scope, reason);
                     }).appendTo(actions);
-                    $("<button class='dr-mini-button secondary' type='button'>").text("استيراد").on("click", function () { importOne(item.CatalogId, scope); }).appendTo(actions);
+                    if (item.ImportedReportId) {
+                        $("<a class='dr-mini-button secondary'>").attr("href", reviewUrl(item.ImportedReportId)).text("Open Review").appendTo(actions);
+                    } else {
+                        $("<button class='dr-mini-button secondary' type='button'>").text("استيراد").on("click", function () { importOne(item.CatalogId, scope); }).appendTo(actions);
+                    }
                     row.append(actions);
                     row.appendTo(rows);
                 });
@@ -464,7 +478,7 @@
         function importOne(catalogId, scope) {
             $.post(api("CatalogImport") + "&catalogId=" + encodeURIComponent(catalogId)).done(function (r) {
                 var d = r.data || {};
-                var openReview = d.NewReportId ? " Open Review: " + reviewUrl(d.NewReportId) : "";
+                var openReview = (r.reviewUrl || d.NewReportId) ? " Open Review: " + (r.reviewUrl || reviewUrl(d.NewReportId)) : "";
                 catalogMsg((d.Message || ("تم الاستيراد: " + (d.ReportCode || ""))) + openReview);
                 list(scope, $("#drCatalogStatus").val());
                 loadList();
