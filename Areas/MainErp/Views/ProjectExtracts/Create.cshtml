@@ -1,6 +1,9 @@
 @model MyERP.Areas.MainErp.ViewModels.Projects.ProjectExtractCreateViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<DateTime?, string> dateValue = value => value.HasValue && value.Value.Year >= 1900
+        ? value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+        : String.Empty;
     ViewBag.Title = "مستخلص مشروع جديد";
 }
 
@@ -28,7 +31,7 @@
         <section class="erp-card">
             <div class="erp-card-head"><h2>بيانات المستخلص</h2></div>
             <div class="erp-form-grid">
-                <label class="erp-field"><span>تاريخ المستخلص</span>@Html.TextBoxFor(x => x.BillDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date", required = "required" })</label>
+                <label class="erp-field"><span>تاريخ المستخلص</span><input class="main-erp-input" type="date" name="BillDate" value="@dateValue(Model.BillDate)" required="required" /></label>
                 <label class="erp-field"><span>رقم يدوي</span>@Html.TextBoxFor(x => x.ManualNo, new { @class = "main-erp-input" })</label>
                 <label class="erp-field"><span>قيمة المستخلص</span>@Html.TextBoxFor(x => x.Total, new { @class = "main-erp-input", inputmode = "decimal" })</label>
                 <label class="erp-field"><span>الضريبة</span>@Html.TextBoxFor(x => x.VatValue, new { @class = "main-erp-input", inputmode = "decimal" })</label>

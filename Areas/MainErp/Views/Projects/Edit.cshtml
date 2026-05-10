@@ -2,6 +2,9 @@
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     var isNewProject = Model.IsNewProject;
+    Func<DateTime?, string> dateValue = value => value.HasValue && value.Value.Year >= 1900
+        ? value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+        : String.Empty;
     ViewBag.Title = isNewProject ? "مشروع جديد" : "تعديل مشروع";
 }
 
@@ -55,9 +58,9 @@
                 <label class="erp-field"><span>قيمة الخصم</span>@Html.TextBoxFor(x => x.GeneralDiscount, new { @class = "main-erp-input", inputmode = "decimal" })</label>
                 <label class="erp-field"><span>نسبة الخصم</span>@Html.TextBoxFor(x => x.DiscountPercentage, new { @class = "main-erp-input", inputmode = "decimal" })</label>
                 <label class="erp-field"><span>العملة</span>@Html.DropDownListFor(x => x.CurrencyId, new SelectList(Model.Currencies, "Value", "Text", Model.CurrencyId), "-- اختر --", new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>تاريخ البداية</span>@Html.TextBoxFor(x => x.StartDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
-                <label class="erp-field"><span>تاريخ الانتهاء</span>@Html.TextBoxFor(x => x.EndDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
-                <label class="erp-field"><span>أقرب نهاية</span>@Html.TextBoxFor(x => x.NearEndDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
+                <label class="erp-field"><span>تاريخ البداية</span><input class="main-erp-input" type="date" name="StartDate" value="@dateValue(Model.StartDate)" /></label>
+                <label class="erp-field"><span>تاريخ الانتهاء</span><input class="main-erp-input" type="date" name="EndDate" value="@dateValue(Model.EndDate)" /></label>
+                <label class="erp-field"><span>أقرب نهاية</span><input class="main-erp-input" type="date" name="NearEndDate" value="@dateValue(Model.NearEndDate)" /></label>
                 <label class="erp-field"><span>التأمين</span>@Html.TextBoxFor(x => x.Insurance, new { @class = "main-erp-input", inputmode = "decimal" })</label>
             </div>
         </section>

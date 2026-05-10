@@ -1065,6 +1065,14 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     color: #b91c1c;
 }
 
+.kyc-save-message.is-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    color: #2563eb;
+    padding: 8px 10px;
+}
+
 .modal-actions {
     align-items: center;
     display: flex;

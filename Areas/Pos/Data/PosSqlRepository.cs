@@ -586,6 +586,7 @@ FROM dbo.TblOptions;";
                 }
 
                 var purchaseCommission = ApplyMinMax(rechargeValue * percent / 100m, min, max);
+                cashOutMachineCommission = decimal.Round((rechargeValue + purchaseCommission) * 0.008m, 2, MidpointRounding.AwayFromZero);
                 return BuildCommissionResult(request.ItemID, rechargeValue, purchaseCommission, vatPercent, source, percent, min, max, true, cashOutMachineCommission);
             }
 
@@ -3098,6 +3099,73 @@ ORDER BY c.Id DESC;";
         public PosCustomerLookupDto LookupKeshniCardCustomer(string term, int? branchId, bool canChangeDefaults)
         {
             return SearchKeshniCardCustomers(term, branchId, canChangeDefaults).FirstOrDefault();
+        }
+
+        public PosKycBranchHintDto FindKeshniCardCustomerOtherBranchHint(string term, int? branchId)
+        {
+            if (string.IsNullOrWhiteSpace(term) || !branchId.HasValue)
+            {
+                return null;
+            }
+
+            const string sql = @"
+SELECT TOP (1)
+    c.BranchID,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), c.BranchID)) AS BranchName
+FROM dbo.TblCusCsh c
+LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
+WHERE ISNULL(c.EasyCashType, 0) = 0
+  AND c.BranchID IS NOT NULL
+  AND c.BranchID <> @branchId
+  AND
+    (
+      c.PhoneNo2 = @term
+      OR c.PhoneNo = @term
+      OR c.tel = @term
+      OR c.CardNo = @term
+      OR c.CardId = @term
+      OR c.Tet_NumPoket = @term
+      OR c.PhoneNo2 LIKE N'%' + @term + N'%'
+      OR c.PhoneNo LIKE N'%' + @term + N'%'
+      OR c.tel LIKE N'%' + @term + N'%'
+      OR c.CardNo LIKE N'%' + @term + N'%'
+      OR c.CardId LIKE N'%' + @term + N'%'
+      OR c.Tet_NumPoket LIKE N'%' + @term + N'%'
+      OR c.name LIKE N'%' + @term + N'%'
+      OR c.CustName LIKE N'%' + @term + N'%'
+      OR c.namee LIKE N'%' + @term + N'%'
+      OR c.ArabicName0 LIKE N'%' + @term + N'%'
+      OR c.ArabicName1 LIKE N'%' + @term + N'%'
+      OR c.ArabicName2 LIKE N'%' + @term + N'%'
+      OR c.ArabicName3 LIKE N'%' + @term + N'%'
+      OR c.EnglishName0 LIKE N'%' + @term + N'%'
+      OR c.EnglishName1 LIKE N'%' + @term + N'%'
+      OR c.EnglishName2 LIKE N'%' + @term + N'%'
+      OR c.EnglishName3 LIKE N'%' + @term + N'%'
+  )
+ORDER BY c.Id DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 255).Value = term.Trim();
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId.Value;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new PosKycBranchHintDto
+                        {
+                            BranchId = ReadInt(reader, "BranchID"),
+                            BranchName = ReadString(reader, "BranchName")
+                        };
+                    }
+                }
+            }
+
+            return null;
         }
 
         public IList<PosCustomerLookupDto> SearchUnusedKeshniCardCustomers(string term, int? branchId, bool canChangeDefaults)

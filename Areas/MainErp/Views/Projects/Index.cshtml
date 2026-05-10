@@ -1,6 +1,9 @@
 @model MyERP.Areas.MainErp.ViewModels.Projects.ProjectsIndexViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<DateTime?, string> dateValue = value => value.HasValue && value.Value.Year >= 1900
+        ? value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+        : String.Empty;
     ViewBag.Title = "المشاريع";
 }
 
@@ -89,8 +92,8 @@
                                 <td><span class="main-erp-status-pill">@item.StatusName</span></td>
                                 <td>@item.BranchName</td>
                                 <td>@String.Format("{0:N2}", item.NetCost ?? item.ProjectCost)</td>
-                                <td>@String.Format("{0:yyyy-MM-dd}", item.StartDate)</td>
-                                <td>@String.Format("{0:yyyy-MM-dd}", item.EndDate)</td>
+                                <td>@dateValue(item.StartDate)</td>
+                                <td>@dateValue(item.EndDate)</td>
                                 <td class="main-erp-actions">
                                     <a class="erp-btn" href="@Url.Action("Edit", "Projects", new { area = "MainErp", id = item.Id })"><i class="fas fa-edit"></i> فتح</a>
                                     <a class="erp-btn" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp", projectId = item.Id })"><i class="fas fa-file-invoice"></i> مستخلص</a>

@@ -233,7 +233,7 @@
                     <label>رقم الفاتورة<input type="text" id="invoiceNumber" readonly placeholder="يظهر بعد الحفظ" /></label>
                     <label class="employee-field is-hidden">المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
                     <label class="store-field is-hidden">المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
-                    <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field" placeholder="05xxxxxxxx" inputmode="numeric" /></label>
+                    <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="cashCustomerPhone">0 / 11</span></label>
                     <label>اسم العميل<input type="text" id="cashCustomerName" class="required-field" placeholder="اسم العميل" /></label>
                     <label>ID<input type="text" id="ipn" class="required-field" placeholder="ID" /></label>
                     <label>IPN<input type="text" id="manualNo" class="required-field" placeholder="IPN" /></label>
@@ -241,7 +241,7 @@
                     <label class="card-field">رقم الكارت<input type="text" id="visaNumber" placeholder="أدخل رقم الكارت أو التوكن" inputmode="numeric" /></label>
                     <label class="card-field">نوع الكارت<input type="text" id="cardTypeName" readonly /></label>
                     <label class="card-field">الرقم القومي<input type="text" id="cardNationalId" placeholder="الرقم القومي" /></label>
-                    <label class="wallet-field pos-primary-wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" data-pos-field="WalletNumber" placeholder="05xxxxxxxx" inputmode="numeric" /></label>
+                    <label class="wallet-field pos-primary-wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" class="pos-eg-phone" data-pos-field="WalletNumber" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="tetNumPoket">0 / 11</span></label>
                     <label class="card-field card-action-field"><span>&nbsp;</span><button type="button" class="primary-action" id="activateCardBtn">تفعيل الكارت</button></label>
                 </div>
             </section>
@@ -268,7 +268,7 @@
                     <label>الاسم الإنجليزي الثاني<input type="text" id="kycEnglishName1" dir="ltr" lang="en" /></label>
                     <label>الاسم الإنجليزي الثالث<input type="text" id="kycEnglishName2" dir="ltr" lang="en" /></label>
                     <label>الاسم الإنجليزي كامل<input type="text" id="kycNameE" dir="ltr" lang="en" /></label>
-                    <label>موبايل أساسي<input type="text" id="kycPhoneNo2" placeholder="أدخل رقم التليفون" /></label>
+                    <label>موبايل أساسي<input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></label>
                     <input type="hidden" id="kycPhoneNo" />
                     <label>رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
                     <label>الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
@@ -383,7 +383,7 @@
                             <label><input type="radio" name="violationPayType" value="1" /> تحويل</label>
                         </span>
                     </label>
-                    <label>رقم المحفظة<input type="text" id="violationWalletNo" data-pos-field="WalletNumber" placeholder="05xxxxxxxx" inputmode="numeric" /></label>
+                    <label>رقم المحفظة<input type="text" id="violationWalletNo" class="pos-eg-phone" data-pos-field="WalletNumber" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="violationWalletNo">0 / 11</span></label>
                 </div>
             </section>
 

@@ -444,6 +444,12 @@ namespace MyERP.Areas.Pos.Models
         public string BranchName { get; set; }
     }
 
+    public class PosKycBranchHintDto
+    {
+        public int? BranchId { get; set; }
+        public string BranchName { get; set; }
+    }
+
     public class PosKycAttachmentDto
     {
         public int Id { get; set; }

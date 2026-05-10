@@ -170,7 +170,67 @@
         window.open(previewUrl.replace(/\/$/, "") + "/" + encodeURIComponent(transactionId), "_blank");
         return true;
     }
-    function isValidEgyptianMobile(value) { return /^(010|011|012|015)[0-9]{8}$/.test(value || ""); }
+    function isValidEgyptianMobile(value) { return /^01[0-9]{9}$/.test(amountDigits(value || "")); }
+
+    function phoneValidationMessage(value) {
+        var digits = amountDigits(value || "");
+        if (!digits) { return ""; }
+        if (digits.length < 11) { return "رقم الهاتف يجب أن يتكون من 11 رقم"; }
+        if (digits.substring(0, 2) !== "01") { return "رقم الهاتف المصري يجب أن يبدأ بـ 01"; }
+        return "";
+    }
+
+    function updatePhoneHelper(input) {
+        if (!input) { return; }
+        var helper = document.querySelector("[data-phone-helper-for='" + input.id + "']");
+        if (!helper) { return; }
+        helper.innerText = amountDigits(input.value).length + " / 11";
+    }
+
+    function setPhoneValidState(input, isValid) {
+        if (!input) { return; }
+        input.classList.toggle("pos-field-valid", isValid);
+        var wrapper = fieldWrapper(input);
+        if (wrapper) { wrapper.classList.toggle("pos-field-valid-wrap", isValid); }
+    }
+
+    function normalizePhoneInput(input, showBlurErrors) {
+        if (!input) { return true; }
+        var digits = amountDigits(input.value).slice(0, 11);
+        if (input.value !== digits) { input.value = digits; }
+        updatePhoneHelper(input);
+        setPhoneValidState(input, false);
+
+        if (!digits) {
+            clearFieldInvalid("#" + input.id);
+            return false;
+        }
+
+        if (digits.length >= 2 && digits.substring(0, 2) !== "01") {
+            markFieldInvalid("#" + input.id, "رقم الهاتف المصري يجب أن يبدأ بـ 01");
+            return false;
+        }
+
+        if (digits.length < 11) {
+            if (showBlurErrors) {
+                markFieldInvalid("#" + input.id, "رقم الهاتف يجب أن يتكون من 11 رقم");
+            } else {
+                clearFieldInvalid("#" + input.id);
+            }
+            return false;
+        }
+
+        clearFieldInvalid("#" + input.id);
+        setPhoneValidState(input, true);
+        return true;
+    }
+
+    function refreshPhoneInputs() {
+        var inputs = document.querySelectorAll(".pos-eg-phone");
+        for (var i = 0; i < inputs.length; i++) {
+            normalizePhoneInput(inputs[i], false);
+        }
+    }
     function selectedRadioValue(name) {
         var selected = document.querySelector('input[name="' + name + '"]:checked');
         return selected ? selected.value : "";
@@ -1341,11 +1401,11 @@
         setKycMessage("");
     }
 
-    function setKycMessage(message, isError) {
+    function setKycMessage(message, isError, isInfo) {
         var messageBox = byId("kycSaveMessage");
         if (!messageBox) { return; }
         messageBox.innerText = message || "";
-        messageBox.className = "kyc-save-message" + (message ? (isError ? " is-error" : " is-success") : "");
+        messageBox.className = "kyc-save-message" + (message ? (isError ? " is-error" : (isInfo ? " is-info" : " is-success")) : "");
     }
 
     function showDuplicateKycCustomerAction(data, message) {
@@ -1536,7 +1596,7 @@
             addValidationError(errors, mode === "violations" ? "ViolationsValue" : "RechargeValue", "قيمة المبلغ غير صحيحة. يبدو أنك أدخلت رقم هاتف بدل مبلغ العملية.");
         }
         if (!byId("cashCustomerPhone").value.trim()) { addValidationError(errors, "CashCustomerPhone", "رقم التليفون مطلوب"); }
-        if (byId("cashCustomerPhone").value.trim() && !isValidEgyptianMobile(byId("cashCustomerPhone").value.trim())) { addValidationError(errors, "CashCustomerPhone", "رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015"); }
+        if (byId("cashCustomerPhone").value.trim() && !normalizePhoneInput(byId("cashCustomerPhone"), true)) { addValidationError(errors, "CashCustomerPhone", phoneValidationMessage(byId("cashCustomerPhone").value) || "رقم الهاتف يجب أن يتكون من 11 رقم"); }
         if (!byId("cashCustomerName").value.trim()) { addValidationError(errors, "CashCustomerName", "اسم العميل مطلوب"); }
         if (!byId("ipn").value.trim()) { addValidationError(errors, "IPN", "ID مطلوب"); }
         if (isImportantIpnMode(mode) && !byId("manualNo").value.trim()) { addValidationError(errors, "ManualNO", "IPN مطلوب في كاش إن وكارت كيشني فقط"); }
@@ -1547,6 +1607,7 @@
             if (numberValue("violationValue") > maxRechargeValue) { addValidationError(errors, "ViolationsValue", "قيمة المخالفات أكبر من الحد المسموح لهذه الخدمة"); }
             if (selectedRadioValue("violationPayType") === "") { addValidationError(errors, "ViolationPayType", "طريقة دفع المخالفات مطلوبة"); }
             if (!byId("violationWalletNo").value.trim()) { addValidationError(errors, "WalletNumber", "رقم المحفظة مطلوب"); }
+            if (byId("violationWalletNo").value.trim() && !normalizePhoneInput(byId("violationWalletNo"), true)) { addValidationError(errors, "WalletNumber", phoneValidationMessage(byId("violationWalletNo").value)); }
         } else if (mode !== "card" && numberValue("rechargeValue") <= 0) {
             addValidationError(errors, "RechargeValue", "مبلغ الشحن يجب أن يكون أكبر من صفر");
         } else if (mode !== "card" && numberValue("rechargeValue") > maxRechargeValue) {
@@ -1554,6 +1615,9 @@
         }
         if (mode === "cash-out" && byId("isWallet").value === "true" && !byId("tetNumPoket").value.trim()) {
             addValidationError(errors, "WalletNumber", "رقم المحفظة مطلوب");
+        }
+        if (mode === "cash-out" && byId("tetNumPoket").value.trim() && !normalizePhoneInput(byId("tetNumPoket"), true)) {
+            addValidationError(errors, "WalletNumber", phoneValidationMessage(byId("tetNumPoket").value));
         }
         var primaryServiceId = parseInt(byId("serviceItemId").value, 10) || 0;
         if (mode !== "card" && mode !== "violations" && (primaryServiceId === 6 || primaryServiceId === 7 || primaryServiceId === 8 || primaryServiceId === 10) && !byId("serviceItemId2").value) {
@@ -3316,7 +3380,25 @@
 
         byId("kycSearchResults").innerHTML = "جاري البحث...";
         requestJson("GET", getUrl("data-customer-search-url") + "?term=" + encodeURIComponent(term), null, function (status, data) {
-            if (status < 200 || status >= 300 || !data || !data.length) {
+            var resultsBox = byId("kycSearchResults");
+            if (status < 200 || status >= 300 || !data) {
+                resultsBox.innerHTML = "لا توجد نتائج";
+                return;
+            }
+
+            if (!Array.isArray(data)) {
+                resultsBox._items = [];
+                resultsBox.innerHTML = "";
+                if (data.otherBranch === true) {
+                    setKycMessage(data.message || "تم العثور على بيانات KYC في فرع آخر.", false, true);
+                    return;
+                }
+                resultsBox.innerHTML = data.message || "لا توجد نتائج";
+                return;
+            }
+
+            if (!data.length) {
+                resultsBox._items = [];
                 byId("kycSearchResults").innerHTML = "لا توجد نتائج";
                 return;
             }
@@ -3382,6 +3464,13 @@
             if (data.multiple === true && data.customers && data.customers.length) {
                 renderKycCustomerChoices(data.customers);
                 setKycMessage(data.message || "يوجد أكثر من عميل مطابق. برجاء اختيار العميل من النتائج أو البحث ببيانات أدق.", true);
+                return;
+            }
+
+            if (data.otherBranch === true) {
+                byId("kycSearchResults")._items = [];
+                byId("kycSearchResults").innerHTML = "";
+                setKycMessage(data.message || "تم العثور على بيانات KYC في فرع آخر.", false, true);
             }
         });
     }
@@ -3428,6 +3517,7 @@
         return {
             ServiceType: byId("transactionType").value,
             ItemID: parseInt(firstRow.getAttribute("data-item-id"), 10) || null,
+            BranchId: parseInt(byId("branchId").value, 10) || null,
             RechargeValue: amount,
             Vatyo: parseFloat(firstRow.getAttribute("data-vatyo")) || 14,
             IsWallet: byId("isWallet").value === "true",
@@ -3984,6 +4074,9 @@
 
     document.addEventListener("input", function (event) {
         clearFixedFieldIfValid(event.target);
+        if (event.target.classList && event.target.classList.contains("pos-eg-phone")) {
+            normalizePhoneInput(event.target, false);
+        }
         if (event.target.matches(".qty, .price, .vat, #commissionValue")) {
             recalculateInvoiceSummary({ source: "row-input", requestCommission: false });
         }
@@ -3998,6 +4091,7 @@
 
         if (event.target.id === "violationWalletNo") {
             byId("tetNumPoket").value = event.target.value;
+            normalizePhoneInput(byId("tetNumPoket"), false);
             clearFieldInvalid("WalletNumber");
         }
 
@@ -4033,8 +4127,9 @@
         }
 
         if (event.target.id === "cashCustomerPhone") {
-            if (byId("transactionType").value !== "card") { return; }
             byId("kycPhoneNo2").value = event.target.value;
+            normalizePhoneInput(byId("kycPhoneNo2"), false);
+            if (byId("transactionType").value !== "card") { return; }
             window.clearTimeout(customerLookupTimer);
             customerLookupTimer = window.setTimeout(function () {
                 var phone = event.target.value.trim();
@@ -4045,6 +4140,10 @@
         }
 
         if (event.target.id === "kycPhoneNo2" || event.target.id === "kycCardNo") {
+            if (event.target.id === "kycPhoneNo2") {
+                byId("cashCustomerPhone").value = event.target.value;
+                normalizePhoneInput(byId("cashCustomerPhone"), false);
+            }
             scheduleUnusedKycLookup(event.target.value);
         }
 
@@ -4106,6 +4205,12 @@
             });
         }
     });
+
+    document.addEventListener("blur", function (event) {
+        if (event.target.classList && event.target.classList.contains("pos-eg-phone")) {
+            normalizePhoneInput(event.target, true);
+        }
+    }, true);
 
     document.addEventListener("focusout", function (event) {
         if (isAmountInput(event.target)) {
@@ -4176,6 +4281,7 @@
 
     byId("posForm").addEventListener("submit", saveTransaction);
     setInitialContextFromPage();
+    loadEmployeeBalances();
     if (byId("transactionDate")) {
         byId("transactionDate").value = localIsoDate();
         byId("transactionDate").disabled = true;

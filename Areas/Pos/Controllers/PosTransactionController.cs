@@ -136,7 +136,12 @@ namespace MyERP.Areas.Pos.Controllers
         public JsonResult LookupCustomerByPhone(string phone)
         {
             var context = GetPosContext();
-            return Json(_repository.LookupKeshniCardCustomer(phone, context != null ? context.BranchId : null, context != null && context.CanChangeDefaults), JsonRequestBehavior.AllowGet);
+            if (context == null || !context.BranchId.HasValue)
+            {
+                return Json(null, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(_repository.LookupKeshniCardCustomer(phone, context.BranchId, context.CanChangeDefaults), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -155,7 +160,20 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new List<object>(), JsonRequestBehavior.AllowGet);
             }
 
-            return Json(_repository.SearchKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults), JsonRequestBehavior.AllowGet);
+            if (!context.BranchId.HasValue)
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("الفرع غير محدد", "POS branch context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            var matches = _repository.SearchKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults);
+            if (matches.Count > 0)
+            {
+                return Json(matches, JsonRequestBehavior.AllowGet);
+            }
+
+            var otherBranchHint = context.CanChangeDefaults ? null : BuildOtherBranchKycHint(term, context.BranchId);
+            return Json(otherBranchHint ?? (object)matches, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -177,6 +195,12 @@ namespace MyERP.Areas.Pos.Controllers
                     found = false,
                     message = string.Empty
                 }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.BranchId.HasValue)
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("الفرع غير محدد", "POS branch context is missing."), JsonRequestBehavior.AllowGet);
             }
 
             var matches = _repository.SearchUnusedKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults);
@@ -201,6 +225,12 @@ namespace MyERP.Areas.Pos.Controllers
                     customers = matches,
                     message = "يوجد أكثر من عميل مطابق. برجاء اختيار العميل من النتائج أو البحث ببيانات أدق."
                 }, JsonRequestBehavior.AllowGet);
+            }
+
+            var otherBranchHint = context.CanChangeDefaults ? null : BuildOtherBranchKycHint(term, context.BranchId);
+            if (otherBranchHint != null)
+            {
+                return Json(otherBranchHint, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new
@@ -1649,6 +1679,28 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 request.ItemIDService2 = secondaryItems[0].Id;
             }
+        }
+
+        private object BuildOtherBranchKycHint(string term, int? branchId)
+        {
+            var hint = _repository.FindKeshniCardCustomerOtherBranchHint(term, branchId);
+            if (hint == null)
+            {
+                return null;
+            }
+
+            var branchName = string.IsNullOrWhiteSpace(hint.BranchName)
+                ? "فرع آخر"
+                : hint.BranchName.Trim();
+
+            return new
+            {
+                success = true,
+                found = false,
+                otherBranch = true,
+                branchName = branchName,
+                message = "تم العثور على بيانات KYC في فرع آخر: " + branchName
+            };
         }
 
         private static object Fail(string message, string technicalMessage, IDictionary<string, string> validationErrors = null, int? duplicateCustomerId = null, bool duplicate = false, PosCustomerLookupDto existingCustomer = null)
