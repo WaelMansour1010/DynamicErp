@@ -1299,7 +1299,7 @@
     function currentMachineWithdrawalEstimate(bankCommission, withdrawalAmount) {
         if (byId("transactionType").value !== "cash-out") { return 0; }
         if (withdrawalAmount > 0) { return withdrawalAmount; }
-        return numberValue("rechargeValue") + (bankCommission || 0);
+        return Math.max(numberValue("netValue") - (bankCommission || 0), 0);
     }
 
     function updateCashOutMachineDisplay() {
@@ -1389,6 +1389,8 @@
         byId("kycCardNo").value = "";
         byId("kycNationalId").value = "";
         byId("kycCardSource").value = "";
+        byId("kycCreatedBranch").value = "";
+        byId("kycCreatedDate").value = "";
         byId("kycBirthDate").value = "";
         byId("kycCardDate").value = "";
         byId("kycCardEndDate").value = "";
@@ -2508,8 +2510,6 @@
             if (byId("invoiceNumber")) { byId("invoiceNumber").value = data.NoteSerial1 || ""; }
             lastCashOutBankMachineCommission = (data.TransactionType || "") === "cash-out" ? (parseFloat(data.BankMachineCommission) || 0) : 0;
             lastCashOutMachineWithdrawalAmount = (data.TransactionType || "") === "cash-out" ? (parseFloat(data.CashOutMachineWithdrawalAmount) || 0) : 0;
-            bindReviewServiceSelects(data);
-
             if (data.BranchId) { ensureSelectOption("branchId", data.BranchId, data.BranchName || ("فرع " + data.BranchId)); }
             if (data.StoreID) {
                 byId("storeId").value = data.StoreID;
@@ -2547,6 +2547,7 @@
                     reviewRow.setAttribute("data-cashout-machine-withdrawal", lastCashOutMachineWithdrawalAmount);
                 }
             }
+            bindReviewServiceSelects(data);
 
             byId("rechargeValue").value = decimalText(data.RechargeValue);
             byId("commissionValue").value = decimalText(data.NetValue);
@@ -2887,6 +2888,7 @@
 
     function loadPrimaryServiceItems(mode) {
         var requestedMode = mode || "cash-in";
+        if (reviewMode) { return; }
         if (primaryServiceCache[requestedMode]) {
             var cachedSelectedId = populateServiceSelect(byId("serviceItemId"), primaryServiceCache[requestedMode], "");
             loadSecondaryServiceItems(requestedMode, cachedSelectedId);
@@ -2896,7 +2898,7 @@
 
         setSelectLoading(byId("serviceItemId"), "تحميل...");
         requestJsonWithLoading("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(requestedMode), null, function (status, data) {
-            if (byId("transactionType").value !== requestedMode) {
+            if (reviewMode || byId("transactionType").value !== requestedMode) {
                 return;
             }
 
@@ -2920,6 +2922,7 @@
         for (var i = 0; i < fields.length; i++) {
             fields[i].classList.toggle("is-hidden", hidden);
         }
+        if (reviewMode) { return; }
 
         if (hidden || !itemId) {
             populateServiceSelect(select, [], hidden ? "" : "لا توجد بيانات");
@@ -2934,7 +2937,7 @@
 
         setSelectLoading(select, "تحميل...");
         requestJsonWithLoading("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
-            if (byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
+            if (reviewMode || byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
                 return;
             }
 
@@ -3020,7 +3023,7 @@
 
         markCommissionPending("جاري تحميل خدمة كيشني وإعدادات العمولات...");
         requestJsonWithLoading("GET", url, null, function (status, data) {
-            if (requestId !== serviceLoadSequence || byId("transactionType").value !== requestedMode) {
+            if (reviewMode || requestId !== serviceLoadSequence || byId("transactionType").value !== requestedMode) {
                 return;
             }
 
@@ -3186,6 +3189,8 @@
         byId("kycPhoneNo").value = data.Phone || "";
         byId("kycCardNo").value = data.VisaNumber || "";
         byId("kycCardSource").value = data.CardSource || "";
+        byId("kycCreatedBranch").value = data.BranchName || (data.BranchId ? ("فرع " + data.BranchId) : "");
+        byId("kycCreatedDate").value = dateForInput(data.CreatedDate);
         byId("kycBirthDate").value = dateForInput(data.BirthDate);
         byId("kycCardDate").value = dateForInput(data.CardDate);
         byId("kycCardEndDate").value = dateForInput(data.CardEndDate);

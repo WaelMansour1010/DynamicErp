@@ -260,6 +260,8 @@
                 </div>
                 <div id="kycSearchResults" class="kyc-results"></div>
                 <div class="pos-grid four-cols">
+                    <label>فرع إنشاء KYC<input type="text" id="kycCreatedBranch" readonly /></label>
+                    <label>تاريخ إنشاء KYC<input type="text" id="kycCreatedDate" readonly /></label>
                     <label>الاسم العربي الأول<input type="text" id="kycArabicName0" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>
                     <label>الاسم العربي الثاني<input type="text" id="kycArabicName1" dir="rtl" lang="ar" /></label>
                     <label>الاسم العربي الثالث<input type="text" id="kycArabicName2" dir="rtl" lang="ar" /></label>
@@ -463,4 +465,4 @@
     </div>
 </div>
 
-<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260510-teller-ux")"></script>
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260510-kyc-created-info")"></script>

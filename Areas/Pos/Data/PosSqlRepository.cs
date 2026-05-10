@@ -3042,7 +3042,8 @@ SELECT TOP (50)
     c.OrderDate,
     c.EasyCashType,
     c.BranchID,
-    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName,
+    COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) AS CreatedDate
 FROM dbo.TblCusCsh c
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
 WHERE ISNULL(c.EasyCashType, 0) = 0
@@ -3209,7 +3210,8 @@ SELECT TOP (20)
     c.OrderDate,
     c.EasyCashType,
     c.BranchID,
-    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName,
+    COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) AS CreatedDate
 FROM dbo.TblCusCsh c
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
 WHERE ISNULL(c.EasyCashType, 0) = 0
@@ -3292,7 +3294,8 @@ SELECT TOP (1)
     c.OrderDate,
     c.EasyCashType,
     c.BranchID,
-    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), c.BranchID)) AS BranchName,
+    COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) AS CreatedDate
 FROM dbo.TblCusCsh c
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = c.BranchID
 WHERE c.Id = @id
@@ -4970,9 +4973,7 @@ ORDER BY Transaction_ID DESC;";
             var totalFees = serviceFee + vatValue;
             var totalValue = includeRechargeInTotal ? rechargeValue + totalFees : totalFees;
             bankMachineCommission = decimal.Round(bankMachineCommission, 2, MidpointRounding.AwayFromZero);
-            var machineWithdrawalAmount = bankMachineCommission > 0m
-                ? decimal.Round(totalValue - bankMachineCommission, 2, MidpointRounding.AwayFromZero)
-                : 0m;
+            var machineWithdrawalAmount = decimal.Round(totalValue - bankMachineCommission, 2, MidpointRounding.AwayFromZero);
 
             return new PosCommissionResult
             {
@@ -9017,7 +9018,8 @@ WHERE Transaction_ID = @transactionId;";
                 OrderDate = ReadDateTime(reader, "OrderDate"),
                 EasyCashType = ReadInt(reader, "EasyCashType"),
                 BranchId = ReadInt(reader, "BranchID"),
-                BranchName = ReadString(reader, "BranchName")
+                BranchName = ReadString(reader, "BranchName"),
+                CreatedDate = ReadDateTime(reader, "CreatedDate")
             };
         }
 
