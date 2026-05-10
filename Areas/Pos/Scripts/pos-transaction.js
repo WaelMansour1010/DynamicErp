@@ -1341,8 +1341,8 @@
             if (mode === "cash-out") {
                 var machineWithdrawal = currentMachineWithdrawalEstimate(machineInfo.bankCommission, machineInfo.withdrawalAmount);
                 var machineHint = commissionCalculationPending
-                    ? "جاري حساب عمولة الماكينة"
-                    : (machineInfo.bankCommission > 0 ? ("عمولة الماكينة: " + decimalText(machineInfo.bankCommission)) : "عمولة الماكينة غير محسوبة بعد");
+                    ? "جاري حساب عمولة السحب من الماكينة"
+                    : (machineInfo.bankCommission > 0 ? ("عمولة السحب من الماكينة: " + decimalText(machineInfo.bankCommission)) : "عمولة السحب من الماكينة غير محسوبة بعد");
                 summaryHtml += '<div class="summary-total cash-out-machine-alert' + (commissionCalculationPending ? ' is-pending' : '') + '"><span>المبلغ المطلوب سحبه من الماكينة</span><strong>' + escapeHtml(decimalText(machineWithdrawal)) + '</strong><small>' + escapeHtml(machineHint) + '</small></div>';
             }
             grid.innerHTML = summaryHtml;
@@ -2524,6 +2524,7 @@
             byId("visaNumber").value = data.VisaNumber || "";
             byId("paymentCardNo").value = data.VisaNumber || "";
             byId("tetNumPoket").value = textReference(data.Tet_NumPoket);
+            refreshPhoneInputs();
             byId("rechargeValue").value = decimalText(data.RechargeValue);
             byId("commissionValue").value = decimalText(data.NetValue);
             byId("vatValue").value = decimalText(data.VatValue);
@@ -3192,6 +3193,7 @@
         byId("kycMailAddress").value = data.MailAdress || "";
         byId("kycTel").value = data.Tel || "";
         byId("kycCard").value = data.CardSerial || "";
+        refreshPhoneInputs();
     }
 
     function renderKycAttachments(attachments) {
@@ -3530,6 +3532,7 @@
         return [
             request.ServiceType || "",
             request.ItemID || "",
+            request.BranchId || "",
             decimalText(request.RechargeValue),
             decimalText(request.Vatyo),
             request.IsWallet ? "1" : "0",
@@ -3643,10 +3646,11 @@
             return;
         }
         var kycPhone = (byId("kycPhoneNo2").value || byId("cashCustomerPhone").value).trim();
-        if (!/^(010|011|012|015)[0-9]{8}$/.test(kycPhone)) {
-            var phoneFormatMessage = "رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015";
+        if (!isValidEgyptianMobile(kycPhone)) {
+            var phoneFormatMessage = phoneValidationMessage(kycPhone) || "رقم الهاتف يجب أن يتكون من 11 رقم";
             byId("validationSummary").innerText = phoneFormatMessage;
             setKycMessage(phoneFormatMessage, true);
+            normalizePhoneInput(byId("kycPhoneNo2"), true);
             return;
         }
         if (!(byId("kycName").value || byId("cashCustomerName").value).trim()) {
@@ -4288,6 +4292,7 @@
     }
     initSalesIndexFilters();
     initTodayInvoicesPanelState();
+    refreshPhoneInputs();
     if (salesIndexFirst()) {
         showSalesIndex();
     } else {

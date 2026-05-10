@@ -567,6 +567,23 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     border-color: #dc3545 !important;
     box-shadow: 0 0 0 .2rem rgba(220, 53, 69, .15) !important;
 }
+.pos-field-valid {
+    border-color: #16a34a !important;
+    box-shadow: 0 0 0 .16rem rgba(22, 163, 74, .12) !important;
+}
+.pos-field-valid-wrap {
+    position: relative;
+}
+.pos-field-valid-wrap::after {
+    color: #16a34a;
+    content: "✓";
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1;
+    position: absolute;
+    top: 8px;
+    inset-inline-start: 10px;
+}
 .pos-field-invalid-wrap {
     position: relative;
 }
@@ -587,6 +604,16 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     font-weight: 600;
     margin-top: 4px;
 }
+.pos-phone-helper {
+    color: #64748b;
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 4px;
+    transition: color .16s ease;
+}
+.pos-field-invalid-wrap .pos-phone-helper { color: #dc3545; }
+.pos-field-valid-wrap .pos-phone-helper { color: #16a34a; }
 .pos-field-pulse {
     animation: posInvalidPulse .35s ease-in-out;
 }
