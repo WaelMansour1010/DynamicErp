@@ -586,7 +586,6 @@ FROM dbo.TblOptions;";
                 }
 
                 var purchaseCommission = ApplyMinMax(rechargeValue * percent / 100m, min, max);
-                cashOutMachineCommission = decimal.Round((rechargeValue + purchaseCommission) * 0.008m, 2, MidpointRounding.AwayFromZero);
                 return BuildCommissionResult(request.ItemID, rechargeValue, purchaseCommission, vatPercent, source, percent, min, max, true, cashOutMachineCommission);
             }
 
