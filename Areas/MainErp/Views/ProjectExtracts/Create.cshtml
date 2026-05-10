@@ -1,0 +1,45 @@
+@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectExtractCreateViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "مستخلص مشروع جديد";
+}
+
+<section class="erp-page main-erp-project-extract-create" dir="rtl">
+    <header class="erp-page-header">
+        <div>
+            <h1>مستخلص مشروع جديد</h1>
+            <p>@Model.ProjectFullCode - @Model.ProjectName</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <a class="erp-btn" href="@Url.Action("Edit", "Projects", new { area = "MainErp", id = Model.ProjectId })"><i class="fas fa-arrow-right"></i> رجوع للمشروع</a>
+            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp", projectId = Model.ProjectId })"><i class="fas fa-search"></i> مستخلصات المشروع</a>
+        </div>
+    </header>
+
+    @using (Html.BeginForm("Create", "ProjectExtracts", new { area = "MainErp" }, FormMethod.Post, new { @class = "project-extract-form", autocomplete = "off" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(x => x.ProjectId)
+        @Html.HiddenFor(x => x.ProjectName)
+        @Html.HiddenFor(x => x.ProjectFullCode)
+        @Html.HiddenFor(x => x.BranchNo)
+        @Html.ValidationSummary(false, "", new { @class = "main-erp-warning" })
+
+        <section class="erp-card">
+            <div class="erp-card-head"><h2>بيانات المستخلص</h2></div>
+            <div class="erp-form-grid">
+                <label class="erp-field"><span>تاريخ المستخلص</span>@Html.TextBoxFor(x => x.BillDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date", required = "required" })</label>
+                <label class="erp-field"><span>رقم يدوي</span>@Html.TextBoxFor(x => x.ManualNo, new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>قيمة المستخلص</span>@Html.TextBoxFor(x => x.Total, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                <label class="erp-field"><span>الضريبة</span>@Html.TextBoxFor(x => x.VatValue, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                <label class="erp-field"><span>الصافي</span>@Html.TextBoxFor(x => x.NetValue, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                <label class="erp-field" style="grid-column:1/-1"><span>ملاحظات</span>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = "4" })</label>
+            </div>
+        </section>
+
+        <footer class="main-erp-actions">
+            <button class="erp-btn erp-btn-primary" type="submit"><i class="fas fa-save"></i> حفظ المستخلص</button>
+            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp", projectId = Model.ProjectId })"><i class="fas fa-times"></i> إلغاء</a>
+        </footer>
+    }
+</section>

@@ -22,7 +22,7 @@
 }
 
 <meta charset="utf-8" />
-<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260507-delete")" rel="stylesheet" />
+<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260510-teller-ux")" rel="stylesheet" />
 
 <div class="pos-page pos-mode-cash-in"
      id="posPage"
@@ -233,15 +233,15 @@
                     <label>رقم الفاتورة<input type="text" id="invoiceNumber" readonly placeholder="يظهر بعد الحفظ" /></label>
                     <label class="employee-field is-hidden">المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
                     <label class="store-field is-hidden">المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
-                    <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field" placeholder="أدخل رقم التليفون" /></label>
+                    <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field" placeholder="05xxxxxxxx" inputmode="numeric" /></label>
                     <label>اسم العميل<input type="text" id="cashCustomerName" class="required-field" placeholder="اسم العميل" /></label>
                     <label>ID<input type="text" id="ipn" class="required-field" placeholder="ID" /></label>
                     <label>IPN<input type="text" id="manualNo" class="required-field" placeholder="IPN" /></label>
                     <input type="hidden" id="phone2" />
-                    <label class="card-field">رقم الكارت / التوكن<input type="text" id="visaNumber" placeholder="رقم الكارت أو التوكن" /></label>
+                    <label class="card-field">رقم الكارت<input type="text" id="visaNumber" placeholder="أدخل رقم الكارت أو التوكن" inputmode="numeric" /></label>
                     <label class="card-field">نوع الكارت<input type="text" id="cardTypeName" readonly /></label>
                     <label class="card-field">الرقم القومي<input type="text" id="cardNationalId" placeholder="الرقم القومي" /></label>
-                    <label class="wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" data-pos-field="WalletNumber" placeholder="رقم المحفظة" /></label>
+                    <label class="wallet-field pos-primary-wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" data-pos-field="WalletNumber" placeholder="05xxxxxxxx" inputmode="numeric" /></label>
                     <label class="card-field card-action-field"><span>&nbsp;</span><button type="button" class="primary-action" id="activateCardBtn">تفعيل الكارت</button></label>
                 </div>
             </section>
@@ -319,13 +319,13 @@
                 <div class="pos-grid five-cols amount-grid" id="amountGrid">
                     <label class="service-primary-field">نوع الشحن<select id="serviceItemId"><option value="">تحميل...</option></select></label>
                     <label class="service-secondary-field">المحفظة/البنك<select id="serviceItemId2"><option value="">تحميل...</option></select></label>
-                    <label class="recharge-field">قيمة الشحن<input type="number" id="rechargeValue" min="0" step="0.01" value="0" /></label>
-                    <label class="amount-service-field"><span id="commissionLabel">قيمة الخدمة</span><input type="number" id="commissionValue" min="0" step="0.01" value="0" readonly /></label>
-                    <label class="amount-vat-field"><span id="vatLabel">الضريبة</span><input type="number" id="vatValue" min="0" step="0.01" value="0" readonly /></label>
-                    <label class="amount-fees-field"><span id="totalFeesLabel">إجمالي الرسوم</span><input type="number" id="totalFees" min="0" step="0.01" value="0" readonly /></label>
-                    <label class="amount-net-field">الإجمالي<input type="number" id="netValue" min="0" step="0.01" value="0" readonly /></label>
-                    <label class="payment-amount-field">المدفوع<input type="number" id="payedValue" min="0" step="0.01" value="0" /></label>
-                    <label class="payment-amount-field">المتبقي<input type="number" id="remainValue" min="0" step="0.01" value="0" readonly /></label>
+                    <label class="recharge-field pos-hero-amount-field">مبلغ العملية<input type="text" id="rechargeValue" inputmode="decimal" value="0" placeholder="مثال: 1000" autocomplete="off" /></label>
+                    <label class="amount-service-field"><span id="commissionLabel">العمولة</span><input type="text" id="commissionValue" inputmode="decimal" value="0" readonly /></label>
+                    <label class="amount-vat-field"><span id="vatLabel">الضريبة</span><input type="text" id="vatValue" inputmode="decimal" value="0" readonly /></label>
+                    <label class="amount-fees-field"><span id="totalFeesLabel">إجمالي الرسوم</span><input type="text" id="totalFees" inputmode="decimal" value="0" readonly /></label>
+                    <label class="amount-net-field pos-net-field">الإجمالي<input type="text" id="netValue" inputmode="decimal" value="0" readonly /></label>
+                    <label class="payment-amount-field">المدفوع<input type="text" id="payedValue" inputmode="decimal" value="0" /></label>
+                    <label class="payment-amount-field">المتبقي<input type="text" id="remainValue" inputmode="decimal" value="0" readonly /></label>
                 </div>
             </section>
 
@@ -376,14 +376,14 @@
             <section class="pos-panel violation-panel" id="violationPanel">
                 <div class="panel-heading"><h2>مخالفات</h2></div>
                 <div class="pos-grid four-cols">
-                    <label>قيمة المخالفات<input type="number" id="violationValue" min="0" step="0.01" value="0" /></label>
+                    <label class="pos-hero-amount-field">قيمة المخالفات<input type="text" id="violationValue" inputmode="decimal" value="0" placeholder="مثال: 1000" autocomplete="off" /></label>
                     <label class="radio-field">طريقة الدفع
                         <span class="radio-row">
                             <label><input type="radio" name="violationPayType" value="0" checked /> انستا باى</label>
                             <label><input type="radio" name="violationPayType" value="1" /> تحويل</label>
                         </span>
                     </label>
-                    <label>رقم المحفظة<input type="text" id="violationWalletNo" data-pos-field="WalletNumber" placeholder="رقم المحفظة" /></label>
+                    <label>رقم المحفظة<input type="text" id="violationWalletNo" data-pos-field="WalletNumber" placeholder="05xxxxxxxx" inputmode="numeric" /></label>
                 </div>
             </section>
 
@@ -441,6 +441,20 @@
         </div>
         </div>
     </div>
+    <section class="pos-modal" id="saveConfirmPanel" aria-hidden="true">
+        <div class="pos-modal-backdrop" id="saveConfirmBackdrop"></div>
+        <div class="pos-modal-dialog save-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="saveConfirmTitle">
+            <div class="panel-heading modal-heading">
+                <h2 id="saveConfirmTitle">تأكيد العملية</h2>
+                <button type="button" class="icon-action" id="cancelSaveConfirmBtn">إغلاق</button>
+            </div>
+            <div id="saveConfirmSummary" class="save-confirm-summary"></div>
+            <div class="modal-actions">
+                <button type="button" class="secondary-action" id="editSaveConfirmBtn">مراجعة</button>
+                <button type="button" class="primary-action" id="confirmSaveBtn">تأكيد العملية</button>
+            </div>
+        </div>
+    </section>
     <div class="pos-loading-overlay" id="posLoadingOverlay" aria-live="polite" aria-hidden="true">
         <div class="pos-loading-box">
             <span class="pos-loading-spinner" aria-hidden="true"></span>
@@ -449,4 +463,4 @@
     </div>
 </div>
 
-<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260507-delete")"></script>
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260510-teller-ux")"></script>

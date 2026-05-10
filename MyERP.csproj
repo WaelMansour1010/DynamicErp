@@ -412,6 +412,7 @@
     <Compile Include="Areas\MainErp\MainErpAreaRegistration.cs" />
     <Compile Include="Areas\MainErp\Controllers\AccountingController.cs" />
     <Compile Include="Areas\MainErp\Controllers\AccountingReportsController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\AccountChartsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DashboardController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DatabaseMigrationController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DiscountNotificationsController.cs" />
@@ -425,6 +426,7 @@
     <Compile Include="Areas\MainErp\Controllers\MainErpControllerBase.cs" />
     <Compile Include="Areas\MainErp\Controllers\PaymentsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\CashingController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\ProjectsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectExtractsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PumpSalesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PurchasesController.cs" />
@@ -463,6 +465,7 @@
     <Compile Include="Areas\MainErp\Repositories\SalesInvoices\SalesInvoiceReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\LC\LcReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\LC\LcWriteRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\Projects\ProjectRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\ProjectExtracts\ProjectExtractReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Reports\AccountingReportRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Reports\SalesReportRepository.cs" />
@@ -472,6 +475,7 @@
     <Compile Include="Areas\MainErp\Services\Accounting\NoteNumberingService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\PostingPreviewService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\VoucherPostingService.cs" />
+    <Compile Include="Areas\MainErp\Services\AccountCharts\AccountChartsService.cs" />
     <Compile Include="Areas\MainErp\Security\DatabaseMigrationPermissions.cs" />
     <Compile Include="Areas\MainErp\Security\MainErpSessionKeys.cs" />
     <Compile Include="Areas\MainErp\Services\DatabaseMigration\DatabaseMigrationService.cs" />
@@ -497,6 +501,7 @@
     <Compile Include="Areas\Reports\Services\ReportSqlSafety.cs" />
     <Compile Include="Areas\Reports\Services\ReportValidationService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\AccountCharts\AccountChartsViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Payments\PaymentVoucherViewModels.cs" />
@@ -504,6 +509,7 @@
     <Compile Include="Areas\MainErp\ViewModels\LC\LCIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\MainErpDashboardViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\PagedReadResult.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\Projects\ProjectViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\ProjectExtracts\ProjectExtractsIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\SalesInvoices\SalesInvoiceViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Reports\ReportRowViewModels.cs" />
@@ -4121,9 +4127,11 @@
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.js" />
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.min.js" />
     <Content Include="Areas\MainErp\Content\database-migration-manager.css" />
+    <Content Include="Areas\MainErp\Content\account-charts.css" />
     <Content Include="Areas\MainErp\Content\enterprise-ui.css" />
     <Content Include="Areas\MainErp\Content\mainerp\mainerp.css" />
     <Content Include="Areas\MainErp\Scripts\enterprise-ui.js" />
+    <Content Include="Areas\MainErp\Scripts\account-charts.js" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.ar.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.en.resx" />
@@ -4134,12 +4142,14 @@
     <Content Include="Areas\MainErp\Sql\04_MainErp_PaymentCashing_ReadProcedures.sql" />
     <Content Include="Areas\MainErp\Sql\05_MainErp_AuditLog.sql" />
     <Content Include="Areas\MainErp\Sql\06_EmployeePayroll_MedicalInsurance.sql" />
+    <Content Include="Areas\MainErp\Sql\07_MainErp_Projects_ReadWrite_Procedures.sql" />
     <Content Include="Areas\MainErp\Views\Web.config" />
     <Content Include="Areas\MainErp\Views\Home\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Accounting\PreviewTest.cshtml" />
     <Content Include="Areas\MainErp\Views\AccountingReports\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\AccountingReports\AccountMovement.cshtml" />
     <Content Include="Areas\MainErp\Views\AccountingReports\JournalEntries.cshtml" />
+    <Content Include="Areas\MainErp\Views\AccountCharts\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DatabaseMigration\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DatabaseMigration\PreviewScript.cshtml" />
     <Content Include="Areas\MainErp\Views\Dashboard\Index.cshtml" />
@@ -4161,6 +4171,9 @@
     <Content Include="Areas\MainErp\Views\LC\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\LC\Report.cshtml" />
     <Content Include="Areas\MainErp\Views\Login\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\Projects\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\Projects\Edit.cshtml" />
+    <Content Include="Areas\MainErp\Views\ProjectExtracts\Create.cshtml" />
     <Content Include="Areas\MainErp\Views\ProjectExtracts\Details.cshtml" />
     <Content Include="Areas\MainErp\Views\ProjectExtracts\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\ProjectExtracts\Report.cshtml" />

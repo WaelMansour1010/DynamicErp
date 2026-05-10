@@ -21,7 +21,7 @@ namespace MyERP.Areas.Pos.Controllers
     [SkipERPAuthorize]
     public class PosTransactionController : Controller
     {
-        private const decimal DefaultMaxRechargeValue = 1000000m;
+        private const decimal DefaultMaxRechargeValue = 100000m;
 
         private readonly PosSqlRepository _repository;
 
@@ -1079,12 +1079,16 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (!isCard && !isViolations && request.RechargeValue.GetValueOrDefault() > GetMaxRechargeValue())
             {
-                errors["RechargeValue"] = "مبلغ الشحن أكبر من الحد المسموح لهذه الخدمة";
+                errors["RechargeValue"] = LooksLikePhoneNumber(request.RechargeValue.GetValueOrDefault())
+                    ? "قيمة المبلغ غير صحيحة. يبدو أنك أدخلت رقم هاتف بدل مبلغ العملية."
+                    : "مبلغ الشحن أكبر من الحد المسموح لهذه الخدمة";
             }
 
             if (isViolations && request.ViolationsValue.GetValueOrDefault() > GetMaxRechargeValue())
             {
-                errors["ViolationsValue"] = "قيمة المخالفات أكبر من الحد المسموح لهذه الخدمة";
+                errors["ViolationsValue"] = LooksLikePhoneNumber(request.ViolationsValue.GetValueOrDefault())
+                    ? "قيمة المبلغ غير صحيحة. يبدو أنك أدخلت رقم هاتف بدل مبلغ العملية."
+                    : "قيمة المخالفات أكبر من الحد المسموح لهذه الخدمة";
             }
 
             if (isCashOut && string.IsNullOrWhiteSpace(request.Tet_NumPoket))
@@ -1156,6 +1160,17 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return errors;
+        }
+
+        private static bool LooksLikePhoneNumber(decimal value)
+        {
+            if (value <= 0 || value != decimal.Truncate(value))
+            {
+                return false;
+            }
+
+            var digits = value.ToString("0", CultureInfo.InvariantCulture);
+            return digits.Length >= 10 && digits.Length <= 14;
         }
 
         private void AddImportantIpnDuplicateErrors(PosSaveTransactionRequest request, IDictionary<string, string> errors)
@@ -1287,7 +1302,9 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return request.RechargeValue > GetMaxRechargeValue()
-                ? "المبلغ أكبر من الحد المسموح لهذه الخدمة"
+                ? (LooksLikePhoneNumber(request.RechargeValue)
+                    ? "قيمة المبلغ غير صحيحة. يبدو أنك أدخلت رقم هاتف بدل مبلغ العملية."
+                    : "المبلغ أكبر من الحد المسموح لهذه الخدمة")
                 : null;
         }
 

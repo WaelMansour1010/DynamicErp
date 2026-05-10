@@ -18,7 +18,7 @@ namespace MyERP.Areas.Pos.Data
         public const string WebInvoiceSourceMarker = "WEB_POS";
 
         private const int DeadlockSqlErrorNumber = 1205;
-        private const decimal MaxCommissionRangeLookupValue = 1000000m;
+        private const decimal MaxCommissionRangeLookupValue = 100000m;
         private static readonly int[] SaveDeadlockRetryDelaysMs = { 150, 300, 600 };
         private static readonly object PosSystemErrorLogEnsureLock = new object();
         private static readonly object PosSaveAttemptLogEnsureLock = new object();

@@ -1,0 +1,81 @@
+@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectEditViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    var isNewProject = Model.IsNewProject;
+    ViewBag.Title = isNewProject ? "مشروع جديد" : "تعديل مشروع";
+}
+
+<section class="erp-page main-erp-projects-screen" dir="rtl">
+    <header class="erp-page-header">
+        <div>
+            <h1>@ViewBag.Title</h1>
+            <p>@(String.IsNullOrWhiteSpace(Model.FullCode) ? "إضافة مشروع جديد" : Model.FullCode)</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <a class="erp-btn" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-arrow-right"></i> القائمة</a>
+            @if (!isNewProject && Model.Id > 0)
+            {
+                <a class="erp-btn" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp", projectId = Model.Id })"><i class="fas fa-file-invoice"></i> مستخلص جديد</a>
+            }
+        </div>
+    </header>
+
+    @if (TempData["Projects.Success"] != null)
+    {
+        <div class="erp-alert is-active">@TempData["Projects.Success"]</div>
+    }
+
+    @using (Html.BeginForm("Save", "Projects", new { area = "MainErp" }, FormMethod.Post, new { @class = "project-editor-form", autocomplete = "off" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(x => x.Id)
+        @Html.HiddenFor(x => x.IsNewProject)
+        @Html.ValidationSummary(false, "", new { @class = "main-erp-warning" })
+
+        <section class="erp-card">
+            <div class="erp-card-head"><h2>البيانات الأساسية</h2></div>
+            <div class="erp-form-grid">
+                <label class="erp-field"><span>بادئة الكود</span>@Html.TextBoxFor(x => x.Prefix, new { @class = "main-erp-input", maxlength = "50" })</label>
+                <label class="erp-field"><span>كود المشروع</span>@Html.TextBoxFor(x => x.Code, new { @class = "main-erp-input", maxlength = "50", required = "required" })</label>
+                <label class="erp-field"><span>اسم المشروع عربي</span>@Html.TextBoxFor(x => x.ProjectName, new { @class = "main-erp-input", required = "required", dir = "rtl" })</label>
+                <label class="erp-field"><span>اسم المشروع إنجليزي</span>@Html.TextBoxFor(x => x.ProjectNameEnglish, new { @class = "main-erp-input", dir = "ltr" })</label>
+                <label class="erp-field"><span>العميل النهائي</span>@Html.DropDownListFor(x => x.EndUserId, new SelectList(Model.Customers, "Value", "Text", Model.EndUserId), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
+                <label class="erp-field"><span>مقاول الباطن</span>@Html.DropDownListFor(x => x.SubContractorId, new SelectList(Model.Customers, "Value", "Text", Model.SubContractorId), "-- بدون --", new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>الفرع</span>@Html.DropDownListFor(x => x.BranchNo, new SelectList(Model.Branches, "Value", "Text", Model.BranchNo), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
+                <label class="erp-field"><span>حالة المشروع</span>@Html.DropDownListFor(x => x.StatusId, new SelectList(Model.Statuses, "Value", "Text", Model.StatusId), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
+                <label class="erp-field"><span>نوع العقد</span>@Html.DropDownListFor(x => x.ContractType, new SelectList(Model.ContractTypes, "Value", "Text", Model.ContractType), "-- اختر --", new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>رقم العقد</span>@Html.TextBoxFor(x => x.ContractNo, new { @class = "main-erp-input" })</label>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head"><h2>القيم والتواريخ</h2></div>
+            <div class="erp-form-grid">
+                <label class="erp-field"><span>قيمة المشروع</span>@Html.TextBoxFor(x => x.ProjectCost, new { @class = "main-erp-input", inputmode = "decimal", required = "required" })</label>
+                <label class="erp-field"><span>قيمة الخصم</span>@Html.TextBoxFor(x => x.GeneralDiscount, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                <label class="erp-field"><span>نسبة الخصم</span>@Html.TextBoxFor(x => x.DiscountPercentage, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                <label class="erp-field"><span>العملة</span>@Html.DropDownListFor(x => x.CurrencyId, new SelectList(Model.Currencies, "Value", "Text", Model.CurrencyId), "-- اختر --", new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>تاريخ البداية</span>@Html.TextBoxFor(x => x.StartDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
+                <label class="erp-field"><span>تاريخ الانتهاء</span>@Html.TextBoxFor(x => x.EndDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
+                <label class="erp-field"><span>أقرب نهاية</span>@Html.TextBoxFor(x => x.NearEndDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
+                <label class="erp-field"><span>التأمين</span>@Html.TextBoxFor(x => x.Insurance, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head"><h2>إدارة المشروع</h2></div>
+            <div class="erp-form-grid">
+                <label class="erp-field"><span>مدير الموقع</span>@Html.DropDownListFor(x => x.ManagerEmployeeId, new SelectList(Model.Employees, "Value", "Text", Model.ManagerEmployeeId), "-- اختر --", new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>المندوب</span>@Html.DropDownListFor(x => x.SalesEmployeeId, new SelectList(Model.Employees, "Value", "Text", Model.SalesEmployeeId), "-- اختر --", new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>نوع المشروع</span>@Html.DropDownListFor(x => x.PState, new SelectList(new[] { new { Value = "0", Text = "جديد" }, new { Value = "1", Text = "افتتاحي" } }, "Value", "Text", Model.PState), new { @class = "main-erp-input" })</label>
+                <label class="erp-field"><span>تحت التنفيذ</span>@Html.DropDownListFor(x => x.UnderImplementation, new SelectList(new[] { new { Value = "0", Text = "فعلي" }, new { Value = "1", Text = "تقديري" }, new { Value = "2", Text = "تحت التنفيذ" } }, "Value", "Text", Model.UnderImplementation), new { @class = "main-erp-input" })</label>
+                <label class="erp-field" style="grid-column:1/-1"><span>ملاحظات</span>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = "4" })</label>
+            </div>
+        </section>
+
+        <footer class="main-erp-actions">
+            <button class="erp-btn erp-btn-primary" type="submit"><i class="fas fa-save"></i> حفظ</button>
+            <a class="erp-btn" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-times"></i> إلغاء</a>
+        </footer>
+    }
+</section>

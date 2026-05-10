@@ -53,7 +53,9 @@
     var uxDebounceMs = 200;
     var amountCommitDelayMs = 400;
     var posDebugEnabled = false;
-    var maxRechargeValue = 1000000;
+    var amountWarningLimit = 20000;
+    var maxRechargeValue = 100000;
+    var pendingSaveConfirmation = false;
 
     function byId(id) { return document.getElementById(id); }
     try {
@@ -64,8 +66,19 @@
     function posDebugLog(label, payload) {
         return;
     }
-    function numberValue(id) { var value = parseFloat(byId(id).value); return isNaN(value) ? 0 : value; }
-    function numberFromInput(input) { var value = parseFloat(input.value); return isNaN(value) ? 0 : value; }
+    function normalizeDigits(value) {
+        return String(value === null || value === undefined ? "" : value)
+            .replace(/[٠-٩]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); })
+            .replace(/[۰-۹]/g, function (d) { return "۰۱۲۳۴۵۶۷۸۹".indexOf(d); });
+    }
+    function parseMoney(value) {
+        var text = normalizeDigits(value).replace(/,/g, "").replace(/\s/g, "").trim();
+        if (!text) { return 0; }
+        var parsed = parseFloat(text);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+    function numberValue(id) { return parseMoney(byId(id).value); }
+    function numberFromInput(input) { return parseMoney(input.value); }
     function selectedText(select) { return select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : ""; }
     function savedTransactionId() { var value = parseInt(lastSavedTransactionId, 10); return isNaN(value) ? 0 : value; }
     function localIsoDate(value) {
@@ -619,6 +632,10 @@
             wrapper.classList.remove("pos-field-invalid-wrap");
             var message = directValidationMessage(wrapper);
             if (message) { message.parentNode.removeChild(message); }
+            var smartAction = wrapper.querySelector(".pos-smart-warning-action");
+            if (smartAction && smartAction.parentNode) { smartAction.parentNode.removeChild(smartAction); }
+            var softWarning = wrapper.querySelector(".pos-soft-limit-warning");
+            if (softWarning && softWarning.parentNode) { softWarning.parentNode.removeChild(softWarning); }
         }
     }
 
@@ -665,6 +682,10 @@
         for (var m = 0; m < messages.length; m++) {
             if (messages[m].parentNode) { messages[m].parentNode.removeChild(messages[m]); }
         }
+        var extras = document.querySelectorAll(".pos-smart-warning-action, .pos-soft-limit-warning");
+        for (var e = 0; e < extras.length; e++) {
+            if (extras[e].parentNode) { extras[e].parentNode.removeChild(extras[e]); }
+        }
     }
 
     function focusFirstInvalidField() {
@@ -682,6 +703,83 @@
     function addValidationError(errors, field, message) {
         errors.push({ field: field, message: message });
         markFieldInvalid(field, message);
+    }
+
+    function amountDigits(value) {
+        return normalizeDigits(value).replace(/\D/g, "");
+    }
+
+    function looksLikeWalletOrPhone(value) {
+        var raw = normalizeDigits(value).replace(/[,.\s]/g, "").trim();
+        var digits = amountDigits(value);
+        if (!digits) { return false; }
+        return /^(010|011|012|015)[0-9]{8}$/.test(digits)
+            || /^1[0-9]{10}$/.test(digits)
+            || (digits.length >= 10 && digits.length <= 14 && parseMoney(raw) > maxRechargeValue);
+    }
+
+    function amountFieldName(id) {
+        return id === "violationValue" ? "ViolationsValue" : "RechargeValue";
+    }
+
+    function amountFieldFriendlyName(id) {
+        return id === "violationValue" ? "قيمة المخالفات" : "مبلغ العملية";
+    }
+
+    function targetWalletInputForMode() {
+        return byId("transactionType").value === "violations" ? byId("violationWalletNo") : byId("tetNumPoket");
+    }
+
+    function transferSuspiciousAmountToWallet(sourceInput) {
+        var wallet = targetWalletInputForMode();
+        if (!sourceInput || !wallet) { return; }
+        wallet.value = amountDigits(sourceInput.value);
+        if (byId("transactionType").value === "violations") {
+            byId("tetNumPoket").value = wallet.value;
+        }
+        sourceInput.value = "";
+        clearFieldInvalid(amountFieldName(sourceInput.id));
+        clearFieldInvalid("WalletNumber");
+        recalculateInvoiceSummary({ source: "transfer-phone-like-amount", requestCommission: false });
+        wallet.focus();
+    }
+
+    function showSuspiciousAmountWarning(input) {
+        var fieldName = amountFieldName(input.id);
+        var element = markFieldInvalid(fieldName, "يبدو أنك أدخلت رقم محفظة في خانة " + amountFieldFriendlyName(input.id));
+        var wrapper = element ? fieldWrapper(element) : null;
+        if (!wrapper || wrapper.querySelector(".pos-smart-warning-action")) { return; }
+        var actions = document.createElement("span");
+        actions.className = "pos-smart-warning-action";
+        actions.innerHTML =
+            '<span>نقل الرقم إلى خانة المحفظة؟</span>' +
+            '<button type="button" data-transfer-phone-like-amount="' + input.id + '">نعم</button>' +
+            '<button type="button" data-dismiss-phone-like-amount="' + input.id + '">لا</button>';
+        wrapper.appendChild(actions);
+    }
+
+    function validateAmountSafety(input, showWarning) {
+        if (!input) { return true; }
+        clearFieldInvalid(amountFieldName(input.id));
+        var value = parseMoney(input.value);
+        if (looksLikeWalletOrPhone(input.value)) {
+            if (showWarning !== false) { showSuspiciousAmountWarning(input); }
+            return false;
+        }
+        if (value > maxRechargeValue) {
+            markFieldInvalid(amountFieldName(input.id), "المبلغ أكبر من الحد المسموح. الحد الأقصى 100,000");
+            return false;
+        }
+        if (value > amountWarningLimit && showWarning !== false) {
+            var warning = fieldWrapper(input);
+            if (warning && !warning.querySelector(".pos-soft-limit-warning")) {
+                var soft = document.createElement("span");
+                soft.className = "pos-soft-limit-warning";
+                soft.innerText = "مبلغ كبير. راجع القيمة قبل التأكيد.";
+                warning.appendChild(soft);
+            }
+        }
+        return true;
     }
 
     function applyServerValidationErrors(data) {
@@ -904,6 +1002,48 @@
         }
         uxShowGuide();
         uxFocusStep(uxCurrentStep);
+    }
+
+    function focusPreviousEditable(current) {
+        var controls = Array.prototype.slice.call(document.querySelectorAll("#posForm input, #posForm select, #posForm button"));
+        controls = controls.filter(function (item) {
+            return item && !item.disabled && !item.readOnly && isElementVisible(item) && item.type !== "hidden";
+        });
+        var index = controls.indexOf(current);
+        var target = controls[Math.max(index - 1, 0)] || controls[0];
+        if (target && target.focus) { target.focus(); }
+    }
+
+    function handleGlobalShortcuts(event) {
+        if (!event) { return false; }
+        if (event.key === "F2") { event.preventDefault(); switchTransactionMode("cash-in"); return true; }
+        if (event.key === "F3") { event.preventDefault(); switchTransactionMode("cash-out"); return true; }
+        if (event.key === "F4") { event.preventDefault(); switchTransactionMode("card"); return true; }
+        if (event.key === "F5") {
+            event.preventDefault();
+            if (uxIsSaveReady()) {
+                byId("posForm").requestSubmit ? byId("posForm").requestSubmit() : byId("saveBtn").click();
+            } else {
+                uxShowGuide();
+                uxFocusStep(uxCurrentStep);
+            }
+            return true;
+        }
+        if (event.key === "Escape") {
+            event.preventDefault();
+            if (byId("saveConfirmPanel") && byId("saveConfirmPanel").classList.contains("is-open")) {
+                closeSaveConfirmation();
+            } else {
+                reloadContextAndReset();
+            }
+            return true;
+        }
+        if (event.key === "Enter" && event.shiftKey) {
+            event.preventDefault();
+            focusPreviousEditable(event.target);
+            return true;
+        }
+        return false;
     }
 
     function updateSaveButtonState() {
@@ -1354,6 +1494,13 @@
 
     function commitAmountInput(target, immediate) {
         if (!target || !isAmountInput(target)) { return; }
+        if (!validateAmountSafety(target, true)) {
+            commissionCalculationPending = false;
+            amountEnterAdvancePending = false;
+            clearCommissionPreviewValues();
+            updateSaveButtonState();
+            return;
+        }
         recalculateInvoiceSummary({
             source: target.id,
             requestCommission: target.id === "rechargeValue" || target.id === "violationValue"
@@ -1385,6 +1532,9 @@
         clearAllValidationHighlights();
 
         if (!mode) { addValidationError(errors, "TransactionType", "نوع العملية مطلوب"); }
+        if (mode !== "card" && !validateAmountSafety(byId(mode === "violations" ? "violationValue" : "rechargeValue"), true)) {
+            addValidationError(errors, mode === "violations" ? "ViolationsValue" : "RechargeValue", "قيمة المبلغ غير صحيحة. يبدو أنك أدخلت رقم هاتف بدل مبلغ العملية.");
+        }
         if (!byId("cashCustomerPhone").value.trim()) { addValidationError(errors, "CashCustomerPhone", "رقم التليفون مطلوب"); }
         if (byId("cashCustomerPhone").value.trim() && !isValidEgyptianMobile(byId("cashCustomerPhone").value.trim())) { addValidationError(errors, "CashCustomerPhone", "رقم التليفون يجب أن يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015"); }
         if (!byId("cashCustomerName").value.trim()) { addValidationError(errors, "CashCustomerName", "اسم العميل مطلوب"); }
@@ -1603,6 +1753,47 @@
         return false;
     }
 
+    function maskedReference(value) {
+        var text = String(value || "").trim();
+        if (text.length <= 6) { return text; }
+        return text.substring(0, 4) + "xxxx" + text.substring(text.length - 2);
+    }
+
+    function buildSaveConfirmationHtml() {
+        var mode = byId("transactionType").value;
+        var config = modes[mode] || modes["cash-in"];
+        var amount = mode === "violations" ? numberValue("violationValue") : (mode === "card" ? numberValue("netValue") : numberValue("rechargeValue"));
+        var wallet = mode === "violations" ? byId("violationWalletNo").value : byId("tetNumPoket").value;
+        var reference = mode === "card" ? byId("visaNumber").value : wallet;
+        return '<div class="save-confirm-type">' + escapeHtml(config.label) + '</div>' +
+            '<div class="save-confirm-amount">' + escapeHtml(decimalText(amount)) + ' جنيه</div>' +
+            (reference ? '<div class="save-confirm-reference">' + escapeHtml(maskedReference(reference)) + '</div>' : '') +
+            '<dl>' +
+            '<div><dt>العمولة</dt><dd>' + escapeHtml(decimalText(numberValue("commissionValue"))) + '</dd></div>' +
+            '<div><dt>الضريبة</dt><dd>' + escapeHtml(decimalText(numberValue("vatValue"))) + '</dd></div>' +
+            '<div><dt>الإجمالي</dt><dd>' + escapeHtml(decimalText(numberValue("netValue"))) + '</dd></div>' +
+            '</dl>';
+    }
+
+    function openSaveConfirmation() {
+        var panel = byId("saveConfirmPanel");
+        if (!panel) { return false; }
+        byId("saveConfirmSummary").innerHTML = buildSaveConfirmationHtml();
+        panel.classList.add("is-open");
+        panel.setAttribute("aria-hidden", "false");
+        window.setTimeout(function () {
+            if (byId("confirmSaveBtn")) { byId("confirmSaveBtn").focus(); }
+        }, 50);
+        return true;
+    }
+
+    function closeSaveConfirmation() {
+        var panel = byId("saveConfirmPanel");
+        if (!panel) { return; }
+        panel.classList.remove("is-open");
+        panel.setAttribute("aria-hidden", "true");
+    }
+
     function saveTransaction(event) {
         event.preventDefault();
         if (saveRequestInFlight || uxIsBusy() || uxDebounced()) {
@@ -1622,6 +1813,11 @@
         if (!validateForm()) { return; }
 
         var request = buildRequest();
+        if (!pendingSaveConfirmation) {
+            openSaveConfirmation();
+            return;
+        }
+        pendingSaveConfirmation = false;
         if (reviewMode && loadedInvoiceCreatedUserId && currentContext && loadedInvoiceCreatedUserId !== currentContext.UserId) {
             var password = window.prompt("أدخل كلمة مرور المستخدم الحالي لتأكيد تعديل الفاتورة");
             if (!password) {
@@ -2174,8 +2370,21 @@
     }
 
     function decimalText(value) {
-        var number = parseFloat(value);
-        return isNaN(number) ? "0.00" : number.toFixed(2);
+        var number = parseMoney(value);
+        if (isNaN(number)) { number = 0; }
+        try {
+            return number.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (ignore) {
+            return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+    }
+
+    function formatMoneyInput(input) {
+        if (!input || input.readOnly || input.disabled) { return; }
+        var value = parseMoney(input.value);
+        if (value > 0 || String(input.value || "").trim()) {
+            input.value = decimalText(value);
+        }
     }
 
     function textReference(value) {
@@ -3206,8 +3415,13 @@
             return null;
         }
         var amount = byId("transactionType").value === "card" ? 0 : (byId("transactionType").value === "violations" ? numberValue("violationValue") : numberValue("rechargeValue"));
+        var amountInput = byId("transactionType").value === "violations" ? byId("violationValue") : byId("rechargeValue");
+        if (byId("transactionType").value !== "card" && !validateAmountSafety(amountInput, true)) {
+            setCommissionStatus("قيمة المبلغ غير صحيحة. راجع خانة المبلغ قبل حساب العمولة.", true);
+            return null;
+        }
         if (amount > maxRechargeValue) {
-            setCommissionStatus("المبلغ أكبر من الحد المسموح لهذه الخدمة", true);
+            setCommissionStatus("المبلغ أكبر من الحد المسموح لهذه الخدمة. الحد الأقصى 100,000", true);
             return null;
         }
 
@@ -3517,6 +3731,8 @@
 
     function clearFormForNewTransaction(clearLastSavedTransaction) {
         byId("posForm").reset();
+        pendingSaveConfirmation = false;
+        closeSaveConfirmation();
         if (clearLastSavedTransaction) {
             lastSavedTransactionId = null;
         }
@@ -3614,6 +3830,26 @@
     }
 
     document.addEventListener("click", function (event) {
+        var transferAmountButton = event.target.closest ? event.target.closest("[data-transfer-phone-like-amount]") : null;
+        if (transferAmountButton) {
+            transferSuspiciousAmountToWallet(byId(transferAmountButton.getAttribute("data-transfer-phone-like-amount")));
+            return;
+        }
+        var dismissAmountButton = event.target.closest ? event.target.closest("[data-dismiss-phone-like-amount]") : null;
+        if (dismissAmountButton) {
+            clearFieldInvalid(amountFieldName(dismissAmountButton.getAttribute("data-dismiss-phone-like-amount")));
+            return;
+        }
+        if (event.target.id === "confirmSaveBtn") {
+            pendingSaveConfirmation = true;
+            closeSaveConfirmation();
+            byId("posForm").requestSubmit ? byId("posForm").requestSubmit() : byId("saveBtn").click();
+            return;
+        }
+        if (event.target.id === "cancelSaveConfirmBtn" || event.target.id === "editSaveConfirmBtn" || event.target.id === "saveConfirmBackdrop") {
+            closeSaveConfirmation();
+            return;
+        }
         if (event.target.classList.contains("pos-type-btn")) { switchTransactionMode(event.target.getAttribute("data-mode")); }
         if (event.target.id === "addItemBtn") { addItemRow(); }
         if (event.target.id === "printBtn") {
@@ -3731,10 +3967,12 @@
     });
 
     document.addEventListener("keydown", function (event) {
+        if (handleGlobalShortcuts(event)) { return; }
         if (event.key === "Enter" && isAmountInput(event.target)) {
             event.preventDefault();
             amountEnterAdvancePending = true;
             commitAmountInput(event.target, true);
+            formatMoneyInput(event.target);
             if (event.target.id !== "payedValue") {
                 uxShowGuide("جاري حساب القيمة...");
             }
@@ -3869,6 +4107,13 @@
         }
     });
 
+    document.addEventListener("focusout", function (event) {
+        if (isAmountInput(event.target)) {
+            validateAmountSafety(event.target, true);
+            formatMoneyInput(event.target);
+        }
+    });
+
     document.addEventListener("mousedown", function (event) {
         if (event.target && (event.target.id === "branchId" || event.target.id === "paymentType" || event.target.id === "boxId")) {
             ensureContextControlsLoaded();
@@ -3879,6 +4124,7 @@
         clearFixedFieldIfValid(event.target);
         if (isAmountInput(event.target)) {
             commitAmountInput(event.target, true);
+            formatMoneyInput(event.target);
         }
         if (event.target.id === "branchId") {
             if (currentContext && currentContext.CanChangeDefaults === true) {

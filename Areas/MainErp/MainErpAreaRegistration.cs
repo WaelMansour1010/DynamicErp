@@ -27,6 +27,14 @@ namespace MyERP.Areas.MainErp
             );
             lcRoute.DataTokens["UseNamespaceFallback"] = false;
 
+            var projectsRoute = context.MapRoute(
+                "MainErp_projects",
+                "MainErp/Projects",
+                new { controller = "Projects", action = "Index" },
+                new[] { "MyERP.Areas.MainErp.Controllers" }
+            );
+            projectsRoute.DataTokens["UseNamespaceFallback"] = false;
+
             var projectExtractRoute = context.MapRoute(
                 "MainErp_project_extracts",
                 "MainErp/ProjectExtracts",
