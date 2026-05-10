@@ -1,0 +1,507 @@
+﻿
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>إدارة تحديثات قاعدة البيانات</title>
+    <style>
+        :root { --bg:#f5f7fb; --text:#172033; --muted:#64748b; --line:#d9e1ec; --brand:#0f766e; --danger:#b42318; --warn:#b45309; --ok:#15803d; --info:#1d4ed8; }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:Tahoma, Arial, sans-serif; background:var(--bg); color:var(--text); }
+        .page { padding:22px; max-width:1500px; margin:0 auto; }
+        .header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+        h1 { margin:0 0 8px; font-size:24px; }
+        .subtitle { color:var(--muted); font-size:13px; line-height:1.7; }
+        .status-pill { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:6px; font-weight:700; border:1px solid var(--line); background:#fff; }
+        .status-pill.ok { color:var(--ok); border-color:#bbf7d0; background:#f0fdf4; }
+        .status-pill.pending { color:var(--warn); border-color:#fed7aa; background:#fff7ed; }
+        .status-pill.danger, .status-pill.blocked { color:var(--danger); border-color:#fecaca; background:#fef2f2; }
+        .cards { display:grid; grid-template-columns:repeat(5,minmax(140px,1fr)); gap:12px; margin-bottom:18px; }
+        .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px; min-height:84px; }
+        .card span { display:block; color:var(--muted); font-size:12px; margin-bottom:8px; }
+        .card strong { font-size:22px; }
+        .actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:14px; }
+        button, .button { border:0; border-radius:6px; padding:10px 14px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; }
+        .primary { background:var(--brand); color:#fff; }
+        .secondary { background:#e2e8f0; color:#0f172a; }
+        .danger { background:var(--danger); color:#fff; }
+        .confirm { display:flex; align-items:center; gap:8px; color:#334155; font-size:13px; }
+        .alert { border-radius:8px; padding:12px 14px; margin-bottom:14px; border:1px solid var(--line); background:#fff; }
+        .alert.ok { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
+        .alert.error { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
+        .warning { border-color:#fed7aa; background:#fff7ed; color:#9a3412; }
+        .table-wrap { background:#fff; border:1px solid var(--line); border-radius:8px; overflow:auto; }
+        table { width:100%; border-collapse:collapse; min-width:1100px; }
+        th, td { padding:10px; border-bottom:1px solid #edf2f7; text-align:right; vertical-align:top; font-size:12px; }
+        th { background:#f8fafc; color:#334155; position:sticky; top:0; z-index:1; }
+        .hash { direction:ltr; text-align:left; font-family:Consolas, monospace; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .badge { display:inline-block; padding:5px 8px; border-radius:999px; font-weight:700; font-size:11px; }
+        .badge.applied { background:#dcfce7; color:#166534; }
+        .badge.pending { background:#ffedd5; color:#9a3412; }
+        .badge.failed { background:#fee2e2; color:#991b1b; }
+        .badge.hash-mismatch { background:#ffe4e6; color:#be123c; }
+        .badge.manual { background:#e0e7ff; color:#3730a3; }
+        .runs { margin-top:16px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px; }
+        .runs h2 { font-size:16px; margin:0 0 10px; }
+        .small { color:var(--muted); font-size:12px; }
+        @media (max-width:900px) { .header { display:block; } .cards { grid-template-columns:repeat(2,minmax(0,1fr)); } .page { padding:14px; } }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="header">
+            <div>
+                <h1>إدارة تحديثات قاعدة البيانات</h1>
+                <div class="subtitle">
+                    قاعدة البيانات: <strong>POSWebSqlUpdate_20260510</strong> |
+                    السيرفر: <strong>WAEL\SQL2019</strong> |
+                    الموديول: <strong>Kishny POS</strong>
+                </div>
+            </div>
+            <div class="status-pill danger">
+                يوجد اختلاف Hash
+            </div>
+        </section>
+
+            <div class="alert error">يوجد اختلاف Hash في سكريبتات مطبقة سابقاً. يجب المراجعة قبل التنفيذ.</div>
+
+                    <div class="alert error">يوجد اختلاف Hash في سكريبت مطبق سابقاً. التنفيذ متوقف حتى تتم المراجعة الفنية.</div>
+
+        <section class="cards">
+            <div class="card"><span>تم تطبيقها</span><strong>25</strong></div>
+            <div class="card"><span>منتظرة</span><strong>0</strong></div>
+            <div class="card"><span>فشل سابق</span><strong>2</strong></div>
+            <div class="card"><span>تحذيرات Hash</span><strong>1</strong></div>
+            <div class="card"><span>آخر تطبيق</span><strong style="font-size:14px">2026-05-10 07:08:35</strong></div>
+        </section>
+
+        <section class="actions">
+<form action="/Pos/PosSqlUpdates/DryRun" method="post"><input name="__RequestVerificationToken" type="hidden" value="3JZkoiq2Ev6gdvO_Ep9SroF2kSoFvQSXGgcgwNOxegxP3gcmE6t4dPsuveYkyS_x6V7T79Mvvu0wjGAJKykG2Kv5VCFvmGOEwjM_SksCy-w1" />                <button type="submit" class="secondary">فحص بدون تنفيذ</button>
+</form>            <form action="/Pos/PosSqlUpdates/ApplyPending" method="post" onsubmit="return confirm(&#39;سيتم تطبيق تحديثات على قاعدة البيانات. تأكد من وجود Backup. هل تريد المتابعة؟&#39;);"><input name="__RequestVerificationToken" type="hidden" value="C_qKr_mubUSShzM5KkyRweFZX7toXj3ZEF-wmKko_JeMLEJDrVC6gbKDx7pnFfYeTq6M_UmyVXBwRy3VwJG_cLLY3JadtHLdRB5fQocLAYQ1" />                <label class="confirm">
+                    <input type="checkbox" name="confirmBackup" value="true" />
+                    أؤكد أنه تم أخذ نسخة احتياطية كاملة من قاعدة البيانات قبل تطبيق التحديثات.
+                </label>
+                <button type="submit" class="danger" disabled>تطبيق التحديثات المنتظرة</button>
+</form>                            <a class="button primary" href="/Pos/PosSqlUpdates/DownloadLog/4">تحميل سجل آخر تشغيل</a>
+        </section>
+
+        <section class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>الترتيب</th>
+                        <th>السكريبت</th>
+                        <th>الغرض</th>
+                        <th>الحالة</th>
+                        <th>تاريخ التطبيق</th>
+                        <th>بواسطة</th>
+                        <th>Hash</th>
+                        <th>آخر خطأ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        <tr>
+                            <td>25</td>
+                            <td><strong>25_POS_TemporaryPermissions.sql</strong><div class="small">Areas/Pos/Sql/25_POS_TemporaryPermissions.sql</div></td>
+                            <td>Create POS user permissions table if missing.</td>
+                            <td><span class="badge hash-mismatch">اختلاف Hash</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="8062282E515E41D5DA615EC9FFA9DA58484B11C3CA28B704F2BEEE072E669DA8">8062282E515E41D5DA615EC9FFA9DA58484B11C3CA28B704F2BEEE072E669DA8</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>26</td>
+                            <td><strong>26_POS_TellerPermission_ECUsers.sql</strong><div class="small">Areas/Pos/Sql/26_POS_TellerPermission_ECUsers.sql</div></td>
+                            <td>Seed teller permission defaults from EC users.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="D55B5374729FFB39DA207A7B8D518A47B001F691F33B8333F2B3154EF553F232">D55B5374729FFB39DA207A7B8D518A47B001F691F33B8333F2B3154EF553F232</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>27</td>
+                            <td><strong>27_POS_ReportStoredProcedures.sql</strong><div class="small">Areas/Pos/Sql/27_POS_ReportStoredProcedures.sql</div></td>
+                            <td>POS report stored procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="D7831BE8E0BC362CBE99F6640E623DE91535C98392309A2505120FEAEFAC59B0">D7831BE8E0BC362CBE99F6640E623DE91535C98392309A2505120FEAEFAC59B0</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>28</td>
+                            <td><strong>28_POS_Payments_Audit.sql</strong><div class="small">Areas/Pos/Sql/28_POS_Payments_Audit.sql</div></td>
+                            <td>Payment/cashing audit columns.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="54B7A6959CA62460BF484E0170D53EEC4DED9574C43982D29CA9FAA54A260F61">54B7A6959CA62460BF484E0170D53EEC4DED9574C43982D29CA9FAA54A260F61</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>29</td>
+                            <td><strong>29_POS_UserCategory_BulkPermissions.sql</strong><div class="small">Areas/Pos/Sql/29_POS_UserCategory_BulkPermissions.sql</div></td>
+                            <td>User category and bulk permissions support.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="4C3079030983DA25E2CA3AD58066DE80B33CBE76DF9143EEBFEB661A807EB386">4C3079030983DA25E2CA3AD58066DE80B33CBE76DF9143EEBFEB661A807EB386</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>30</td>
+                            <td><strong>30_POS_SaveTransaction_UnicodeText.sql</strong><div class="small">Areas/Pos/Sql/30_POS_SaveTransaction_UnicodeText.sql</div></td>
+                            <td>Latest dbo.usp_POS_SaveTransaction.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="FE03C610165244A972950C3F004BDF04534C4778489BF98641A76A557DB51FAA">FE03C610165244A972950C3F004BDF04534C4778489BF98641A76A557DB51FAA</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>31</td>
+                            <td><strong>31_POS_GetNextID_FromSequence_Concurrency.sql</strong><div class="small">Areas/Pos/Sql/31_POS_GetNextID_FromSequence_Concurrency.sql</div></td>
+                            <td>Serialized sequence allocator.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="BD7386D1CFF106A9E1D5165038ED7BA9FA53FD7F6AE40FD5E35C76F843791E6D">BD7386D1CFF106A9E1D5165038ED7BA9FA53FD7F6AE40FD5E35C76F843791E6D</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>32</td>
+                            <td><strong>32_POS_WebInvoiceAuditReport.sql</strong><div class="small">Areas/Pos/Sql/32_POS_WebInvoiceAuditReport.sql</div></td>
+                            <td>Web invoice audit report procedure.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="F4A018FF858D99D96EBE2BC307BA47F7F08BE40690FEDEADD8C051E3730BFE2F">F4A018FF858D99D96EBE2BC307BA47F7F08BE40690FEDEADD8C051E3730BFE2F</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>33</td>
+                            <td><strong>33_POS_JournalEntryAuditColumns.sql</strong><div class="small">Areas/Pos/Sql/33_POS_JournalEntryAuditColumns.sql</div></td>
+                            <td>Journal entry audit columns.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="AB256A226AA8703279B13252EB648482726BB3F74BFAA2F1B5D679F650C8861E">AB256A226AA8703279B13252EB648482726BB3F74BFAA2F1B5D679F650C8861E</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>34</td>
+                            <td><strong>34_POS_PerformanceStoredProcedures.sql</strong><div class="small">Areas/Pos/Sql/34_POS_PerformanceStoredProcedures.sql</div></td>
+                            <td>Final POS performance stored procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="79586D438154F74D6621119A2242D191B56D8FDE2850DA3E1BD788FE0E22FF96">79586D438154F74D6621119A2242D191B56D8FDE2850DA3E1BD788FE0E22FF96</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>37</td>
+                            <td><strong>37_POS_SystemErrorLog.sql</strong><div class="small">Areas/Pos/Sql/37_POS_SystemErrorLog.sql</div></td>
+                            <td>POS system error log table.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="91E49749FA85C26FB8B27CF45FC75AC9D4DE4659AB574E62D37A58CB4D817E87">91E49749FA85C26FB8B27CF45FC75AC9D4DE4659AB574E62D37A58CB4D817E87</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>38</td>
+                            <td><strong>38_POS_SystemHealthEncodingHotfix.sql</strong><div class="small">Areas/Pos/Sql/38_POS_SystemHealthEncodingHotfix.sql</div></td>
+                            <td>System health procedure with Unicode text.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="86DA0F7925E1460716103F2D1A166A84EA2712498A2BD256193D9539ECA2B37C">86DA0F7925E1460716103F2D1A166A84EA2712498A2BD256193D9539ECA2B37C</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>39</td>
+                            <td><strong>39_POS_NonWebLoginUsersReport.sql</strong><div class="small">Areas/Pos/Sql/39_POS_NonWebLoginUsersReport.sql</div></td>
+                            <td>Non-web login users report procedure.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="6DD2F0CEF66D5EB009E836D09C9DA216F3F6477BB3EE9E9085EE689DBF0F6E9F">6DD2F0CEF66D5EB009E836D09C9DA216F3F6477BB3EE9E9085EE689DBF0F6E9F</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>40</td>
+                            <td><strong>40_POS_Dashboard_DailySnapshots.sql</strong><div class="small">Areas/Pos/Sql/40_POS_Dashboard_DailySnapshots.sql</div></td>
+                            <td>Dashboard daily snapshot tables/procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="87935F58CE8300AAAC5BCF18A1C889358B17679F226723DE1A1A136F66D4C87E">87935F58CE8300AAAC5BCF18A1C889358B17679F226723DE1A1A136F66D4C87E</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>41</td>
+                            <td><strong>41_POS_PurchaseInvoice.sql</strong><div class="small">Areas/Pos/Sql/41_POS_PurchaseInvoice.sql</div></td>
+                            <td>Purchase invoice type/procedure.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="508C0C616AC8BD04F57D02547482D5D42FB90C96A9CA3FF7F2693FED11CCBFBE">508C0C616AC8BD04F57D02547482D5D42FB90C96A9CA3FF7F2693FED11CCBFBE</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>42</td>
+                            <td><strong>42_POS_StockTransfer.sql</strong><div class="small">Areas/Pos/Sql/42_POS_StockTransfer.sql</div></td>
+                            <td>Stock transfer types/procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:07:36</td>
+                            <td>admin</td>
+                            <td class="hash" title="95B34ED5DD14141608FE71A7C58C7B0EEC9D1A95C3993EF057A4250B18215FF5">95B34ED5DD14141608FE71A7C58C7B0EEC9D1A95C3993EF057A4250B18215FF5</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>45</td>
+                            <td><strong>45_POS_ExcelImport.sql</strong><div class="small">Areas/Pos/Sql/45_POS_ExcelImport.sql</div></td>
+                            <td>Excel import audit/mapping tables.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="5092FBBA190D6C62EC3025185601CE7D3E468A0DA5DEF4FA89EC2ADEFBA980C0">5092FBBA190D6C62EC3025185601CE7D3E468A0DA5DEF4FA89EC2ADEFBA980C0</td>
+                            <td>Column name &#39;SourceSheetName&#39; does not exist in the target table or view.</td>
+                        </tr>
+                        <tr>
+                            <td>45.1</td>
+                            <td><strong>45_POS_FinancialIntelligenceReports.sql</strong><div class="small">Areas/Pos/Sql/45_POS_FinancialIntelligenceReports.sql</div></td>
+                            <td>Financial intelligence read procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="CBCF8D57CB2B64D5ED540756A0DAD19E00CC656234B252403151EF589AC7B42F">CBCF8D57CB2B64D5ED540756A0DAD19E00CC656234B252403151EF589AC7B42F</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>46</td>
+                            <td><strong>46_POS_SaveTransaction_ConcurrencyIndexes.sql</strong><div class="small">Areas/Pos/Sql/46_POS_SaveTransaction_ConcurrencyIndexes.sql</div></td>
+                            <td>Approved save transaction concurrency indexes.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="65E62A7F613F4F0B2770CA78F9D2096D421443A3928EA01FC47C26F288013FF4">65E62A7F613F4F0B2770CA78F9D2096D421443A3928EA01FC47C26F288013FF4</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>47</td>
+                            <td><strong>47_POS_SaveAttemptLog.sql</strong><div class="small">Areas/Pos/Sql/47_POS_SaveAttemptLog.sql</div></td>
+                            <td>POS save attempt log table/indexes.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="68A416ECEB75D45894B6B8709855742C894A5F380E43342B11290E4F1C8505D1">68A416ECEB75D45894B6B8709855742C894A5F380E43342B11290E4F1C8505D1</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>48</td>
+                            <td><strong>48_POS_SalesRepresentativesPerformanceDashboard.sql</strong><div class="small">Areas/Pos/Sql/48_POS_SalesRepresentativesPerformanceDashboard.sql</div></td>
+                            <td>Sales representatives performance procedure.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="54C34A245C7E976362833FF72A3AE70B8FA83759F803E6BCBB988B087F6FA178">54C34A245C7E976362833FF72A3AE70B8FA83759F803E6BCBB988B087F6FA178</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>49</td>
+                            <td><strong>49_POS_SalesRepresentativeTargets.sql</strong><div class="small">Areas/Pos/Sql/49_POS_SalesRepresentativeTargets.sql</div></td>
+                            <td>Sales representative targets table/procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="402AC3BC7071FD3ECAA731585440BECA5AF7C0EB2E59175493994F9CAAC02FE9">402AC3BC7071FD3ECAA731585440BECA5AF7C0EB2E59175493994F9CAAC02FE9</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>50</td>
+                            <td><strong>50_POS_ExcelImportCommitAudit.sql</strong><div class="small">Areas/Pos/Sql/50_POS_ExcelImportCommitAudit.sql</div></td>
+                            <td>Excel import commit audit constraints/indexes.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="59FAFE08AF81390D6C61DCC986A1D7EFC50EEECA019816188CDA1F1F446DF116">59FAFE08AF81390D6C61DCC986A1D7EFC50EEECA019816188CDA1F1F446DF116</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>51</td>
+                            <td><strong>51_POS_PaymentCashing_ReadProcedures.sql</strong><div class="small">Areas/Pos/Sql/51_POS_PaymentCashing_ReadProcedures.sql</div></td>
+                            <td>Payment/cashing read procedures.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="B177BBC3BA0D3BFD2EF7D72E950985D2A6968CF6FEEB9EBF1666A75A958E8B3F">B177BBC3BA0D3BFD2EF7D72E950985D2A6968CF6FEEB9EBF1666A75A958E8B3F</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>54</td>
+                            <td><strong>54_POS_DoubleEntryVoucherSequence_Fix.sql</strong><div class="small">Areas/Pos/Sql/54_POS_DoubleEntryVoucherSequence_Fix.sql</div></td>
+                            <td>Safe double-entry voucher sequence repair.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="CC0C6114240A3C9E1325B244F0CDF7F0257FBF0D31962FFCF91C9AB82762CE96">CC0C6114240A3C9E1325B244F0CDF7F0257FBF0D31962FFCF91C9AB82762CE96</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>55</td>
+                            <td><strong>55_POS_SaveTransaction_Allocator_Hardening.sql</strong><div class="small">Areas/Pos/Sql/55_POS_SaveTransaction_Allocator_Hardening.sql</div></td>
+                            <td>Latest allocator hardening procedure.</td>
+                            <td><span class="badge applied">تم التطبيق</span></td>
+                            <td>2026-05-10 07:08:35</td>
+                            <td>admin</td>
+                            <td class="hash" title="85B82E95340641F93AD27F2A8B21EDC42483874BCEC7F75C693ED89627405DC7">85B82E95340641F93AD27F2A8B21EDC42483874BCEC7F75C693ED89627405DC7</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td><strong>35_POS_SystemHealthPermissions.sql</strong><div class="small">Areas/Pos/Sql/35_POS_SystemHealthPermissions.sql</div></td>
+                            <td>Requires sysadmin/master login and replacing the app SQL login placeholder.</td>
+                            <td><span class="badge manual">يدوي</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="C27066A958CE405B17D9397D1AD7386DF4D8927EE5DAAE7E86561FDDACCA2636">C27066A958CE405B17D9397D1AD7386DF4D8927EE5DAAE7E86561FDDACCA2636</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td><strong>36_POS_PerformanceIndexRollback.sql</strong><div class="small">Areas/Pos/Sql/36_POS_PerformanceIndexRollback.sql</div></td>
+                            <td>Rollback-only script for previously deployed experimental indexes.</td>
+                            <td><span class="badge manual">يدوي</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="35C07A46F1354DBB3A3CD3588EF0A23DAD586F04D080446FCCA98455C2808F1E">35C07A46F1354DBB3A3CD3588EF0A23DAD586F04D080446FCCA98455C2808F1E</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td><strong>39_POS_Deadlock_Diagnostics.sql</strong><div class="small">Areas/Pos/Sql/39_POS_Deadlock_Diagnostics.sql</div></td>
+                            <td>Read-only diagnostic script, not an updater.</td>
+                            <td><span class="badge manual">يدوي</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="E4C1003A439D912669012C134BD06B8C4314F7331054F7C65C15614CD47BF4B0">E4C1003A439D912669012C134BD06B8C4314F7331054F7C65C15614CD47BF4B0</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td><strong>52_POS_EmployeePayroll_MedicalInsurance.sql</strong><div class="small">Areas/Pos/Sql/52_POS_EmployeePayroll_MedicalInsurance.sql</div></td>
+                            <td>Pointer to MainErp canonical script, not executable POS DDL.</td>
+                            <td><span class="badge manual">يدوي</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="30CB3FD5B942D6D7431F46B9B5D70D34AD0A515BF8669B8C6C2863BA1E93B872">30CB3FD5B942D6D7431F46B9B5D70D34AD0A515BF8669B8C6C2863BA1E93B872</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td><strong>53_POS_DoubleEntryVoucherSequence_Diagnostics.sql</strong><div class="small">Areas/Pos/Sql/53_POS_DoubleEntryVoucherSequence_Diagnostics.sql</div></td>
+                            <td>Read-only diagnostic script.</td>
+                            <td><span class="badge manual">يدوي</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="F42B247DDB7FBCF78387A08B234D2A61764EA91E2D6DF5BEA580A7D1F0FEB9B7">F42B247DDB7FBCF78387A08B234D2A61764EA91E2D6DF5BEA580A7D1F0FEB9B7</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>-</td>
+                            <td><strong>56_POS_RechargeValue_Validation.sql</strong><div class="small">Areas/Pos/Sql/56_POS_RechargeValue_Validation.sql</div></td>
+                            <td>Read-only diagnostic helper.</td>
+                            <td><span class="badge manual">يدوي</span></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td class="hash" title="F3607EB87F8849BD39E935149D4BE665D73B38F1CC5CF4740BEB3A429E947449">F3607EB87F8849BD39E935149D4BE665D73B38F1CC5CF4740BEB3A429E947449</td>
+                            <td>-</td>
+                        </tr>
+                </tbody>
+            </table>
+        </section>
+
+            <section class="runs">
+                <h2>آخر عمليات التشغيل</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>RunId</th>
+                                <th>البداية</th>
+                                <th>النهاية</th>
+                                <th>الحالة</th>
+                                <th>المستخدم</th>
+                                <th>IP</th>
+                                <th>إجمالي</th>
+                                <th>تم</th>
+                                <th>تخطى</th>
+                                <th>فشل</th>
+                                <th>السجل</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                <tr>
+                                    <td>4</td>
+                                    <td>2026-05-10 07:08:35</td>
+                                    <td>2026-05-10 07:08:35</td>
+                                    <td>Completed</td>
+                                    <td>admin</td>
+                                    <td>::1</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                    <td>26</td>
+                                    <td>0</td>
+                                    <td><a href="/Pos/PosSqlUpdates/DownloadLog/4">تحميل</a></td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>2026-05-10 07:08:35</td>
+                                    <td>2026-05-10 07:08:35</td>
+                                    <td>Completed</td>
+                                    <td>admin</td>
+                                    <td>::1</td>
+                                    <td>10</td>
+                                    <td>10</td>
+                                    <td>16</td>
+                                    <td>0</td>
+                                    <td><a href="/Pos/PosSqlUpdates/DownloadLog/3">تحميل</a></td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>2026-05-10 07:07:36</td>
+                                    <td>2026-05-10 07:07:36</td>
+                                    <td>Failed</td>
+                                    <td>admin</td>
+                                    <td>::1</td>
+                                    <td>10</td>
+                                    <td>0</td>
+                                    <td>16</td>
+                                    <td>1</td>
+                                    <td><a href="/Pos/PosSqlUpdates/DownloadLog/2">تحميل</a></td>
+                                </tr>
+                                <tr>
+                                    <td>1</td>
+                                    <td>2026-05-10 07:07:36</td>
+                                    <td>2026-05-10 07:07:36</td>
+                                    <td>Failed</td>
+                                    <td>admin</td>
+                                    <td>::1</td>
+                                    <td>26</td>
+                                    <td>16</td>
+                                    <td>0</td>
+                                    <td>1</td>
+                                    <td><a href="/Pos/PosSqlUpdates/DownloadLog/1">تحميل</a></td>
+                                </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+    </main>
+</body>
+</html>
+

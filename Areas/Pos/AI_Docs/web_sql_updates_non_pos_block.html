@@ -1,0 +1,38 @@
+﻿
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<title>تسجيل دخول نقطة البيع</title>
+<link href="/Areas/Pos/Content/pos-transaction.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="pos-page pos-mode-card pos-login-page" dir="rtl">
+    <div class="pos-shell login-shell">
+        <div class="login-brand-card">
+                <img src="/Areas/Pos/assets/images/company-logo.png"
+                     alt="Company Logo"
+                     class="login-company-logo" />
+            <div>
+                <h1>كيشني - تسجيل دخول نقطة البيع</h1>
+                <p>أدخل بيانات مستخدم نقطة البيع للمتابعة</p>
+            </div>
+        </div>
+
+        <section class="pos-panel login-panel">
+<form action="/Pos/Login" autocomplete="off" method="post"><input name="__RequestVerificationToken" type="hidden" value="yI0ZC5f8bO7XCOpSiTewh4Mf5WNFmU39gh98iqw7-EH67apdVlwhgy8Ud7lgq9Txmuu9svxUtWLwMP14lG-Nx7_jXvu8DUT3s70yqaJIZzQ1" />                <div class="pos-grid">
+                    <label>اسم المستخدم<input type="text" name="UserName" autofocus /></label>
+                    <label>كلمة المرور<input type="password" name="Password" /></label>
+                </div>
+                    <div class="pos-validation">انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى</div>
+                <footer class="pos-actions">
+                    <button type="submit" class="primary-action">دخول</button>
+                </footer>
+</form>        </section>
+    </div>
+</div>
+</body>
+</html>
+

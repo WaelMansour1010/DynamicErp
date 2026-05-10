@@ -23,7 +23,7 @@
     var accountingOpen = hasReportMenuAccess || sectionActive(new[] { "journal-entries", "discount-notifications", "accounting-reports", "reports", "sales-performance", "sales-targets", "payment-vouchers", "cashing", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
     var financialIntelligenceOpen = (isAdmin || (posContext != null && posContext.CanViewAccountingReports)) || sectionActive(new[] { "financial-intelligence" });
     var kycOpen = sectionActive(new[] { "kyc", "kyc-bank-follow-up" });
-    var systemOpen = sectionActive(new[] { "system-health", "system-error-log", "permissions" });
+    var systemOpen = sectionActive(new[] { "system-health", "system-error-log", "permissions", "sql-updates" });
     var otherOpen = sectionActive(new[] { "dashboard", "print-templates" });
     if (!(operationsOpen || accountingOpen || financialIntelligenceOpen || kycOpen || systemOpen || otherOpen))
     {
@@ -347,6 +347,12 @@
                        data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")"
                        title="صلاحيات POS">
                         <i class="fas fa-shield-alt" aria-hidden="true"></i><span>صلاحيات POS</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("sql-updates") ? "active" : "")"
+                       href="@Url.Action("SqlUpdates", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosSqlUpdates/Index")"
+                       title="إدارة تحديثات قاعدة البيانات">
+                        <i class="fas fa-database" aria-hidden="true"></i><span>تحديثات قاعدة البيانات</span>
                     </a>
                     <a class="pos-nav-link"
                        href="@Url.Content("~/Pos/DynamicReportsAdmin/Index")"

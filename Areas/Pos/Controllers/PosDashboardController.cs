@@ -114,6 +114,11 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("system-health");
         }
 
+        public ActionResult SqlUpdates()
+        {
+            return OpenShell("sql-updates");
+        }
+
         public ActionResult PrintTemplates()
         {
             return OpenShell("print-templates");
@@ -228,6 +233,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "system-health" && !IsAdmin(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية مراقبة النظام");
+            }
+
+            if (screen == "sql-updates" && !IsAdmin(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدارة تحديثات قاعدة البيانات");
             }
 
             if (screen == "print-templates" && !CanOpenPrintTemplates(context))
@@ -472,6 +482,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "system-health")
             {
                 return Url.Content("~/Pos/PosSystemHealth/Index");
+            }
+
+            if (screen == "sql-updates")
+            {
+                return Url.Content("~/Pos/PosSqlUpdates/Index");
             }
 
             if (screen == "print-templates")

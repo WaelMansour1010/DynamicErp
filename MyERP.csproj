@@ -553,6 +553,7 @@
     <Compile Include="Areas\Pos\Controllers\PosDashboardController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
+    <Compile Include="Areas\Pos\Controllers\PosSqlUpdatesController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemErrorLogController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
     <Compile Include="Areas\Pos\Controllers\CashingController.cs" />
@@ -575,6 +576,7 @@
     <Compile Include="Areas\Pos\Models\PosSaveTransactionRequest.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemErrorLogModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemHealthModels.cs" />
+    <Compile Include="Areas\Pos\Models\PosSqlUpdateModels.cs" />
     <Compile Include="Areas\Pos\Repositories\Payments\PaymentVoucherReadRepository.cs" />
     <Compile Include="Areas\Pos\Repositories\Payments\PaymentVoucherWriteRepository.cs" />
     <Compile Include="Areas\Pos\Repositories\Cashing\CashingVoucherReadRepository.cs" />
@@ -585,6 +587,7 @@
     <Compile Include="Areas\Pos\Services\PosExcelImportWorkbookMarker.cs" />
     <Compile Include="Areas\Pos\Services\PosExcelImportPreflightService.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemErrorLogger.cs" />
+    <Compile Include="Areas\Pos\Services\PosSqlAutoUpdateService.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemHealthMonitor.cs" />
     <Compile Include="Areas\Pos\Reports\KycCardAcknowledgmentReport.cs">
       <SubType>Component</SubType>
@@ -4264,6 +4267,7 @@
     <Content Include="Areas\Pos\Views\PosDashboard\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemErrorLog\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\PosSqlUpdates\Index.cshtml" />
     <Content Include="Areas\Pos\Views\DiscountNotifications\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PurchaseInvoice\Index.cshtml" />
     <Content Include="Areas\Pos\Views\StockTransfer\Index.cshtml" />
@@ -4303,6 +4307,9 @@
     <Content Include="Areas\Pos\Sql\35_POS_SystemHealthPermissions.sql" />
     <Content Include="Areas\Pos\Sql\36_POS_PerformanceIndexRollback.sql" />
     <Content Include="Areas\Pos\Sql\37_POS_SystemErrorLog.sql" />
+    <Content Include="Areas\Pos\Sql\38_POS_SystemHealthEncodingHotfix.sql" />
+    <Content Include="Areas\Pos\Sql\39_POS_Deadlock_Diagnostics.sql" />
+    <Content Include="Areas\Pos\Sql\39_POS_NonWebLoginUsersReport.sql" />
     <Content Include="Areas\Pos\Sql\40_POS_Dashboard_DailySnapshots.sql" />
     <Content Include="Areas\Pos\Sql\45_POS_ExcelImport.sql" />
     <Content Include="Areas\Pos\Sql\46_POS_SaveTransaction_ConcurrencyIndexes.sql" />
@@ -4311,11 +4318,14 @@
     <Content Include="Areas\Pos\Sql\49_POS_SalesRepresentativeTargets.sql" />
     <Content Include="Areas\Pos\Sql\50_POS_ExcelImportCommitAudit.sql" />
     <Content Include="Areas\Pos\Sql\51_POS_PaymentCashing_ReadProcedures.sql" />
+    <Content Include="Areas\Pos\Sql\53_POS_DoubleEntryVoucherSequence_Diagnostics.sql" />
     <Content Include="Areas\Pos\Sql\54_POS_DoubleEntryVoucherSequence_Fix.sql" />
     <Content Include="Areas\Pos\Sql\55_POS_SaveTransaction_Allocator_Hardening.sql" />
     <Content Include="Areas\Pos\Sql\56_POS_RechargeValue_Validation.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
+    <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />
+    <Content Include="Areas\Pos\Tools\Invoke-PosSqlAutoUpdate.ps1" />
     <Content Include="Areas\Pos\assets\images\company-logo.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-1.png" />
     <Content Include="Areas\Pos\assets\images\company-logo-2.png" />
