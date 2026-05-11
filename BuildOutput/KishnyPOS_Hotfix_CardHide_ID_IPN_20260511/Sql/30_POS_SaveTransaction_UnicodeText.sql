@@ -2,11 +2,6 @@
     DROP PROCEDURE dbo.usp_POS_SaveTransaction;
 GO
 
-SET ANSI_NULLS ON;
-GO
-SET QUOTED_IDENTIFIER ON;
-GO
-
 CREATE PROCEDURE dbo.usp_POS_SaveTransaction
     @TransactionDate SMALLDATETIME,
     @BranchId INT,
@@ -252,19 +247,19 @@ BEGIN
 
         SET @LineGrossAmount = ISNULL(@LineNetAmount, 0) + ISNULL(@VatAmount, 0);
 
-        IF ISNULL(@IsPOS, 0) = 0
+        IF NULLIF(LTRIM(RTRIM(ISNULL(@VisaNumber, N''))), N'') IS NULL
            AND NULLIF(LTRIM(RTRIM(ISNULL(@IPN, N''))), N'') IS NULL
             RAISERROR('Screen ID is required for POS transactions.', 16, 1);
 
-        IF ISNULL(@IsPOS, 0) = 0
-           AND ISNULL(@IsCashOut, 0) = 0
+        IF ISNULL(@IsCashOut, 0) = 0
            AND ISNULL(@TrafficViolations, 0) = 0
+           AND NULLIF(LTRIM(RTRIM(ISNULL(@VisaNumber, N''))), N'') IS NULL
            AND NULLIF(LTRIM(RTRIM(ISNULL(@ManualNO, N''))), N'') IS NULL
             RAISERROR('Screen IPN is required for Cash In transactions.', 16, 1);
 
-        IF ISNULL(@IsPOS, 0) = 0
-           AND ISNULL(@IsCashOut, 0) = 0
+        IF ISNULL(@IsCashOut, 0) = 0
            AND ISNULL(@TrafficViolations, 0) = 0
+           AND NULLIF(LTRIM(RTRIM(ISNULL(@VisaNumber, N''))), N'') IS NULL
            AND NULLIF(LTRIM(RTRIM(ISNULL(@ManualNO, N''))), N'') IS NOT NULL
            AND EXISTS
            (

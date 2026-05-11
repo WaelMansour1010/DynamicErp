@@ -1,3 +1,4 @@
+using System.Configuration;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.MainErp
@@ -11,6 +12,11 @@ namespace MyERP.Areas.MainErp
 
         public override void RegisterArea(AreaRegistrationContext context)
         {
+            if (!IsMainErpEnabled())
+            {
+                return;
+            }
+
             var rootRoute = context.MapRoute(
                 "MainErp_root",
                 "MainErp",
@@ -66,6 +72,12 @@ namespace MyERP.Areas.MainErp
                 new[] { "MyERP.Areas.MainErp.Controllers" }
             );
             defaultRoute.DataTokens["UseNamespaceFallback"] = false;
+        }
+
+        private static bool IsMainErpEnabled()
+        {
+            bool enabled;
+            return bool.TryParse(ConfigurationManager.AppSettings["EnableMainErpMigration"], out enabled) && enabled;
         }
     }
 }

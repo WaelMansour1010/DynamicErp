@@ -1,5 +1,7 @@
 ﻿using System.Web.Mvc;
 
+using System.Configuration;
+
 namespace MyERP.Areas.Pos
 {
     public class PosAreaRegistration : AreaRegistration
@@ -11,6 +13,11 @@ namespace MyERP.Areas.Pos
 
         public override void RegisterArea(AreaRegistrationContext context)
         {
+            if (!IsKishnyPosEnabled())
+            {
+                return;
+            }
+
             context.MapRoute(
                 "Pos_root",
                 "Pos",
@@ -94,6 +101,12 @@ namespace MyERP.Areas.Pos
                 new { controller = "PosTransaction", action = "Index", id = UrlParameter.Optional },
                 new[] { "MyERP.Areas.Pos.Controllers" }
             );
+        }
+
+        private static bool IsKishnyPosEnabled()
+        {
+            bool enabled;
+            return bool.TryParse(ConfigurationManager.AppSettings["EnableKishnyPos"], out enabled) && enabled;
         }
     }
 }

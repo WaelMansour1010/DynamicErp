@@ -980,6 +980,7 @@
     // --- Variable Declaration ---//
     var EditAmount = 0;
     var savedPropertyContractTerminationId = @(Model?.PropertyContractTerminationId ?? 0);
+    var savedIsInvoiceSelected = @Html.Raw(Model != null && Model.SourceTypeId == 1 && Model.IsInvoiceSelected == true ? "true" : "false");
     //---------- Ready Function --------------------//
     $(document).ready(function () {
 
@@ -1038,15 +1039,6 @@
             $("#Date").prop('disabled', true);
         }
 
-        if ($('#IsInvoiceSelected').prop("checked") == true && $('#SourceTypeId').val() == 1) {
-            $('#IsInvoiceSelected').prop('disabled', false);
-            $('#IsInvoiceSelected').prop('readonly', false);
-            $('#SalesInvoiceActualPayment').show();
-        }
-        else {
-            $('#SalesInvoiceActualPayment').hide();
-        }
-
         sourceTypeChange();
         getCustomerSalesInvoices();
         $('#CashReceiptPaymentMethodId').trigger('change');
@@ -1101,6 +1093,19 @@
         }
         return parseCashReceiptNumber(value);
     }
+    function applyInvoiceSelectionState(isSelected) {
+        $('#IsInvoiceSelected').prop('checked', isSelected);
+        if (isSelected && $('#SourceTypeId').val() == 1) {
+            $('#IsInvoiceSelected').prop('disabled', false);
+            $('#IsInvoiceSelected').prop('readonly', false);
+            $('#SalesInvoiceActualPayment').show();
+            $('#MoneyAmount').prop('disabled', true).prop('readonly', true).attr('placeholder', '0.00');
+        }
+        else {
+            $('#SalesInvoiceActualPayment').hide();
+            $('#MoneyAmount').prop('disabled', false).prop('readonly', false).attr('placeholder', '@MyERP.Properties.Resources.Amount');
+        }
+    }
     $(document).on('focusout', '.ActualPaymentPaidAmount', function () {
         var paidAmount = getCashReceiptInputNumber($(this));
         if (paidAmount > 0) {
@@ -1129,12 +1134,10 @@
             if (getCashReceiptInputNumber($('#MoneyAmount')) > 0) {
                 $('#MoneyAmount').val(0)
             }
-            $('#SalesInvoiceActualPayment').show();
-            $('#MoneyAmount').prop('disabled', true).prop('readonly', true).attr('placeholder', '0.00');
+            applyInvoiceSelectionState(true);
         }
         else {
-            $('#SalesInvoiceActualPayment').hide();
-            $('#MoneyAmount').prop('disabled', false).prop('readonly', false).attr('placeholder','@MyERP.Properties.Resources.Amount');
+            applyInvoiceSelectionState(false);
         }
     });
     $('#MoneyAmount').on('focusout', function () {
@@ -1257,8 +1260,7 @@ function sourceTypeChange() {
     $('#balanceTable').hide();
     $('#IsInvoiceSelected').prop('disabled', true);
     $('#IsInvoiceSelected').prop('readonly', true);
-    $('#IsInvoiceSelected').prop("checked", false);
-    $('#SalesInvoiceActualPayment').hide();
+    applyInvoiceSelectionState(false);
     $('#Month_Year').hide();
     $('#PropertyBillRegisteration').hide();
     $('#CashReceiptVoucherPropertyContractBatchesTable').hide();
@@ -1300,8 +1302,11 @@ function sourceTypeChange() {
         $('.balance-details-btn').text('@MyERP.Properties.Resources.CustomerBalance');
         $('#IsInvoiceSelected').prop('disabled', false);
         $('#IsInvoiceSelected').prop('readonly', false);
-        if ($('#IsInvoiceSelected').prop("checked") == true) {
-            $('#SalesInvoiceActualPayment').show();
+        if (checkId() && savedIsInvoiceSelected) {
+            applyInvoiceSelectionState(true);
+        }
+        else if ($('#IsInvoiceSelected').prop("checked") == true) {
+            applyInvoiceSelectionState(true);
         }
     }
     else if ($('#SourceTypeId').val() == 8) {
@@ -1492,6 +1497,8 @@ function sourceTypeChange() {
             var DueDate;
             let tr;
             var Remain;
+            var hasLinkedInvoicePayments = false;
+            var linkedInvoicePaymentsTotal = 0;
             for (var i = 0; i < r.length; i++) {
                 if (r[i].Paid == null) {
                     r[i].Paid = 0;
@@ -1512,6 +1519,11 @@ function sourceTypeChange() {
                 var invoiceSourceName = r[i].InvoiceSourceName || (invoiceSourceType == 'ServiceInvoice' ? 'فاتورة خدمات' : 'فاتورة مبيعات');
                 var salesInvoiceId = invoiceSourceType == 'ServiceInvoice' ? '' : (r[i].SalesInvoiceId || r[i].Id);
                 var serviceInvoiceId = invoiceSourceType == 'ServiceInvoice' ? (r[i].ServiceInvoiceId || r[i].Id) : '';
+                var paidInCurrentVoucher = parseCashReceiptNumber(r[i].PaidAmount);
+                if (checkId() && paidInCurrentVoucher > 0) {
+                    hasLinkedInvoicePayments = true;
+                    linkedInvoicePaymentsTotal += paidInCurrentVoucher;
+                }
                 if (checkId() ) {
                     Remain = (parseFloat(r[i].PaidInTransaction) + parseFloat(r[i].RemainAmount)).toFixed(2);
                     var TotalRequiredAmount = (parseFloat(Remain) - parseFloat(r[i].PaidAmount)).toFixed(2);
@@ -1552,8 +1564,17 @@ function sourceTypeChange() {
                 //    $('.IsAllPaid').prop('checked', true);
                 //}
 
-                if (getCashReceiptInputNumber($('#MoneyAmount')) > 0 && $('#IsInvoiceSelected').prop("checked") == false) {
+                if (!checkId() && getCashReceiptInputNumber($('#MoneyAmount')) > 0 && $('#IsInvoiceSelected').prop("checked") == false) {
                     $('#MoneyAmount').trigger('focusout');
+                }
+            }
+            if (checkId() && $('#SourceTypeId').val() == 1) {
+                if (hasLinkedInvoicePayments) {
+                    applyInvoiceSelectionState(true);
+                    $('#MoneyAmount').val(linkedInvoicePaymentsTotal.toFixed(2));
+                }
+                else if (savedIsInvoiceSelected) {
+                    applyInvoiceSelectionState(true);
                 }
             }
         });

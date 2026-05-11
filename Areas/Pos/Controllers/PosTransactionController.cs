@@ -987,7 +987,7 @@ namespace MyERP.Areas.Pos.Controllers
                 AddImportantIpnDuplicateErrors(request, validationErrors);
                 if (validationErrors.Count > 0)
                 {
-                    LogPosSystemIssue(context, "Save.Validation", request, null, "POS save validation failed", "Warning", "Validation", BuildSaveRequestSummary(request, validationErrors));
+                    LogPosSystemIssue(context, "Save.Validation", request, null, "POS save validation failed", "Warning", "Validation", BuildSaveDiagnostic("PosTransactionController.Save", request, validationErrors, null));
                     SetJsonErrorStatus(400);
                     return Json(Fail("راجع بيانات العملية قبل الحفظ", "Client request failed POS server validation.", validationErrors));
                 }
@@ -1082,17 +1082,20 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (SqlException ex)
             {
-                LogPosSystemIssue(context, "Save.SqlException", request, ex, ex.Message, "Error", "SqlException", AppendSqlErrorSummary(BuildSaveRequestSummary(request, null), ex));
+                var diagnostic = BuildSaveDiagnostic("PosTransactionController.Save", request, null, ex);
+                LogPosSystemIssue(context, "Save.SqlException", request, ex, ex.Message, "Error", "SqlException", AppendSqlErrorSummary(diagnostic, ex));
                 LogPosSaveFailure("Save.SqlException", request, ex);
                 SetJsonErrorStatus(500);
                 return Json(Fail(FriendlySqlSaveMessage(ex), ex.Message));
             }
             catch (Exception ex)
             {
-                LogPosSystemIssue(context, "Save.Exception", request, ex, ex.Message, "Error", "Exception", BuildSaveRequestSummary(request, null));
+                var diagnostic = BuildSaveDiagnostic("PosTransactionController.Save", request, null, ex);
+                LogPosSystemIssue(context, "Save.Exception", request, ex, ex.Message, "Error", "Exception", diagnostic);
                 LogPosSaveFailure("Save.Exception", request, ex);
                 SetJsonErrorStatus(500);
-                return Json(Fail("حدث خطأ أثناء الحفظ", ex.Message));
+                var visibleMessage = "تعذر حفظ الفاتورة. " + SafeExceptionMessage(ex);
+                return Json(Fail(visibleMessage, diagnostic));
             }
         }
 
@@ -1124,7 +1127,7 @@ namespace MyERP.Areas.Pos.Controllers
                 errors["CashCustomerName"] = "اسم العميل مطلوب";
             }
 
-            if (string.IsNullOrWhiteSpace(request.IPN))
+            if (!isCard && string.IsNullOrWhiteSpace(request.IPN))
             {
                 errors["IPN"] = "ID مطلوب";
             }
@@ -1267,8 +1270,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool IsImportantIpnTransaction(string transactionType)
         {
-            return string.Equals(transactionType, "cash-in", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(transactionType, "card", StringComparison.OrdinalIgnoreCase);
+            return string.Equals(transactionType, "cash-in", StringComparison.OrdinalIgnoreCase);
         }
 
         private static Dictionary<string, string> ValidateSqlDateRange(PosCashCustomerSaveRequest request)
@@ -1438,6 +1440,43 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return string.Join("; ", parts);
+        }
+
+        private static string BuildSaveDiagnostic(string endpointName, PosSaveTransactionRequest request, IDictionary<string, string> validationErrors, Exception exception)
+        {
+            var isCard = request != null && IsKeshniCardTransaction(request.TransactionType);
+            var exceptionText = exception == null
+                ? string.Empty
+                : ("Exception=" + (exception.Message ?? string.Empty) + "; InnerException=" + (exception.InnerException != null ? exception.InnerException.Message : string.Empty));
+
+            return string.Join("; ", new[]
+            {
+                "Endpoint=" + (endpointName ?? string.Empty),
+                "ServiceType=" + (request != null ? (request.TransactionType ?? string.Empty) : string.Empty),
+                "IsCard=" + isCard,
+                BuildSaveRequestSummary(request, validationErrors),
+                exceptionText
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+
+        private static string SafeExceptionMessage(Exception ex)
+        {
+            if (ex == null)
+            {
+                return "حدث خطأ غير متوقع.";
+            }
+
+            var message = string.IsNullOrWhiteSpace(ex.Message) ? null : ex.Message.Trim();
+            var inner = ex.InnerException != null && !string.IsNullOrWhiteSpace(ex.InnerException.Message)
+                ? ex.InnerException.Message.Trim()
+                : null;
+
+            if (!string.IsNullOrWhiteSpace(message) && !string.IsNullOrWhiteSpace(inner) && !string.Equals(message, inner, StringComparison.Ordinal))
+            {
+                return message + " | " + inner;
+            }
+
+            return !string.IsNullOrWhiteSpace(message) ? message : "حدث خطأ غير متوقع.";
         }
 
         private static string AppendSqlErrorSummary(string requestSummary, SqlException exception)

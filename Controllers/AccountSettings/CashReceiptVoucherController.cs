@@ -14,6 +14,9 @@ using MyERP.Repository;
 using System.Data.Entity.Core.Objects;
 using System.Linq.Expressions;
 using MyERP.Models.MyModels;
+using System.Globalization;
+using System.IO;
+using System.Text;
 
 namespace MyERP.Controllers.AccountSettings
 {
@@ -688,6 +691,18 @@ namespace MyERP.Controllers.AccountSettings
             {
                 return HttpNotFound();
             }
+            if (cashReceiptVoucher.SourceTypeId == 1 && cashReceiptVoucher.IsInvoiceSelected != true)
+            {
+                var hasSalesInvoicePayments = await db.SalesInvoiceActualPayments.AnyAsync(p =>
+                    p.CashReceiptVoucherId == cashReceiptVoucher.Id &&
+                    p.IsDeleted == false &&
+                    (p.Amount ?? 0) > 0);
+
+                if (hasSalesInvoicePayments)
+                {
+                    cashReceiptVoucher.IsInvoiceSelected = true;
+                }
+            }
             ViewBag.TechnicianId = new SelectList(db.Techanicians.Where(b => b.IsDeleted == false && b.IsActive == true).Select(b => new
             {
                 b.Id,
@@ -856,8 +871,13 @@ namespace MyERP.Controllers.AccountSettings
         //[ValidateAntiForgeryToken]
         public async Task<ActionResult> AddEdit(CashReceiptVoucher cashReceiptVoucher)
         {
+            var diagnosticId = Guid.NewGuid().ToString("N");
+            HttpContext.Items["CashReceiptVoucherSaveDiagnosticId"] = diagnosticId;
+            var saveStage = "Start";
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+            NormalizeSalesInvoiceActualPaymentDates(cashReceiptVoucher, diagnosticId);
             var serviceInvoiceActualPayments = ExtractServiceInvoiceActualPayments(cashReceiptVoucher);
+            LogCashReceiptVoucherSaveTrace("Request received", cashReceiptVoucher, BuildCashReceiptVoucherSaveDetails(cashReceiptVoucher, serviceInvoiceActualPayments));
 
             /*--- Document Coding ---*/
             var DocumentCoding = "";
@@ -1045,18 +1065,22 @@ namespace MyERP.Controllers.AccountSettings
                 {
                     if (db.CashReceiptVouchers.Find(cashReceiptVoucher.Id).IsPosted == true)
                     {
-                        return Content("false");
+                        LogCashReceiptVoucherSaveTrace("Posted voucher blocked", cashReceiptVoucher, "Voucher is posted, returning false.");
+                        return Json(new { success = "false", diagnosticId, stage = "Posted voucher blocked" });
                     }
                     try
                     {
 
                    
                     cashReceiptVoucher.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+                    saveStage = "Edit: serialize SalesInvoiceActualPayments";
                     MyXML.xPathName = "SalesInvoiceActualPayment";
                     var SalesInvoiceActualPaymentXml = MyXML.GetXML(cashReceiptVoucher.SalesInvoiceActualPayments);
+                    saveStage = "Edit: serialize CashReceiptVoucherPropertyContractBatches";
                     MyXML.xPathName = "CashReceiptVoucherPropertyContractBatches";
                     var CashReceiptVoucherPropertyContractBatches = MyXML.GetXML(cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches);
-                    db.CashReceiptVoucher_Update(
+                    saveStage = "Edit: execute CashReceiptVoucher_Update";
+                    var updateResult = db.CashReceiptVoucher_Update(
                         cashReceiptVoucher.Id, 
                         cashReceiptVoucher.DocumentNumber, 
                         cashReceiptVoucher.BranchId, 
@@ -1083,15 +1107,22 @@ namespace MyERP.Controllers.AccountSettings
                         cashReceiptVoucher.GasBillValue,
                         cashReceiptVoucher.ViolationBillValue,
                         CashReceiptVoucherPropertyContractBatches, cashReceiptVoucher.PropertyContractTerminationId);
-                    SaveServiceInvoiceActualPayments(cashReceiptVoucher.Id, serviceInvoiceActualPayments, userId);
-                    EnsureCashReceiptCustomerParty(cashReceiptVoucher.Id);
+                    LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "StoredProcedureReturn=" + updateResult);
+                    saveStage = "Edit: execute ServiceInvoiceActualPayment_SaveForCashReceipt";
+                    var serviceSaveResult = SaveServiceInvoiceActualPayments(cashReceiptVoucher.Id, serviceInvoiceActualPayments, userId);
+                    LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "ExecuteSqlCommandReturn=" + serviceSaveResult);
+                    saveStage = "Edit: execute EnsureCashReceiptCustomerParty";
+                    var ensurePartyResult = EnsureCashReceiptCustomerParty(cashReceiptVoucher.Id);
+                    LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "ExecuteSqlCommandReturn=" + ensurePartyResult);
                     ////-------------------- Notification-------------------------////
+                    saveStage = "Edit: Notification.GetNotification";
                     Notification.GetNotification("CashReceiptVoucher", "Edit", "AddEdit", id, null, " سند القبض");
                     ////////////////-----------------------------------------------------------------------
                     }
                     catch(Exception ex)
                     {
-                        var r = ex;
+                        LogCashReceiptVoucherSaveException(saveStage, ex, cashReceiptVoucher);
+                        return Json(new { success = "false", diagnosticId, stage = saveStage });
                     }
                 
                 
@@ -1102,13 +1133,17 @@ namespace MyERP.Controllers.AccountSettings
                     cashReceiptVoucher.IsActive = true;
                     cashReceiptVoucher.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
                     var idResult = new ObjectParameter("Id", typeof(Int32));
+                    saveStage = "Insert: serialize SalesInvoiceActualPayments";
                     MyXML.xPathName = "SalesInvoiceActualPayment";
                     var SalesInvoiceActualPaymentXml = MyXML.GetXML(cashReceiptVoucher.SalesInvoiceActualPayments);
+                    saveStage = "Insert: prepare CashReceiptVoucherPropertyContractBatches";
                     MyXML.xPathName = "CashReceiptVoucherPropertyContractBatches";
                     try
                     {
+                        saveStage = "Insert: serialize CashReceiptVoucherPropertyContractBatches";
                         var CashReceiptVoucherPropertyContractBatches = MyXML.GetXML(cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches);
-                        db.CashReceiptVoucher_Insert(
+                        saveStage = "Insert: execute CashReceiptVoucher_Insert";
+                        var insertResult = db.CashReceiptVoucher_Insert(
                             idResult, 
                             cashReceiptVoucher.BranchId, 
                             cashReceiptVoucher.MoneyAmount, 
@@ -1142,45 +1177,72 @@ namespace MyERP.Controllers.AccountSettings
     cashReceiptVoucher.ViolationBillValue,
     CashReceiptVoucherPropertyContractBatches
                             );
+                        LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "StoredProcedureReturn=" + insertResult + Environment.NewLine + "OutputId=" + idResult.Value);
                     }
                     catch (Exception ex)
                     {
-                        var t = ex.Message;
-                        throw;
+                        LogCashReceiptVoucherSaveException(saveStage, ex, cashReceiptVoucher);
+                        return Json(new { success = "false", diagnosticId, stage = saveStage });
                     }
                     id = (int)idResult.Value;
-                    SaveServiceInvoiceActualPayments(id, serviceInvoiceActualPayments, userId);
-                    EnsureCashReceiptCustomerParty(id);
-
-                    ////-------------------- Notification-------------------------////
-                    Notification.GetNotification("CashReceiptVoucher", "Add", "AddEdit", cashReceiptVoucher.Id, null, "سند القبض");
-                }
-                QueryHelper.AddLog(new MyLog()
-                {
-                    ArAction = cashReceiptVoucher.Id > 0 ? "تعديل سند قبض" : "اضافة سند قبض",
-                    EnAction = "AddEdit",
-                    ControllerName = "CashReceiptVoucher",
-                    UserName = User.Identity.Name,
-                    UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
-                    LogDate = DateTime.Now,
-                    RequestMethod = "POST",
-                    SelectedItem = id,
-                    CodeOrDocNo = cashReceiptVoucher.DocumentNumber
-                });
-                if (cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches.Count() > 0)
-                {
-                    foreach (var item in cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches)
+                    try
                     {
-                        var Batches = db.PropertyContractBatches.Where(a => a.IsDeleted == false && a.Id == item.PropertyContractBatchId).FirstOrDefault();
-                        if (Batches != null)
-                        {
-                            Batches.IsDelivered = item.IsDelivered;
-                            db.Entry(Batches).State = EntityState.Modified;
-                        }
+                        saveStage = "Insert: execute ServiceInvoiceActualPayment_SaveForCashReceipt";
+                        var serviceSaveResult = SaveServiceInvoiceActualPayments(id, serviceInvoiceActualPayments, userId);
+                        LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "NewId=" + id + Environment.NewLine + "ExecuteSqlCommandReturn=" + serviceSaveResult);
+                        saveStage = "Insert: execute EnsureCashReceiptCustomerParty";
+                        var ensurePartyResult = EnsureCashReceiptCustomerParty(id);
+                        LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "NewId=" + id + Environment.NewLine + "ExecuteSqlCommandReturn=" + ensurePartyResult);
 
+                        ////-------------------- Notification-------------------------////
+                        saveStage = "Insert: Notification.GetNotification";
+                        Notification.GetNotification("CashReceiptVoucher", "Add", "AddEdit", cashReceiptVoucher.Id, null, "سند القبض");
                     }
-                    db.SaveChanges();
+                    catch (Exception ex)
+                    {
+                        LogCashReceiptVoucherSaveException(saveStage, ex, cashReceiptVoucher, "NewId=" + id);
+                        return Json(new { success = "false", diagnosticId, stage = saveStage });
+                    }
                 }
+                try
+                {
+                    saveStage = "QueryHelper.AddLog";
+                    QueryHelper.AddLog(new MyLog()
+                    {
+                        ArAction = cashReceiptVoucher.Id > 0 ? "تعديل سند قبض" : "اضافة سند قبض",
+                        EnAction = "AddEdit",
+                        ControllerName = "CashReceiptVoucher",
+                        UserName = User.Identity.Name,
+                        UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value),
+                        LogDate = DateTime.Now,
+                        RequestMethod = "POST",
+                        SelectedItem = id,
+                        CodeOrDocNo = cashReceiptVoucher.DocumentNumber
+                    });
+                    LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "SavedId=" + id);
+                    if (cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches.Count() > 0)
+                    {
+                        saveStage = "Update PropertyContractBatches delivery state";
+                        foreach (var item in cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches)
+                        {
+                            var Batches = db.PropertyContractBatches.Where(a => a.IsDeleted == false && a.Id == item.PropertyContractBatchId).FirstOrDefault();
+                            if (Batches != null)
+                            {
+                                Batches.IsDelivered = item.IsDelivered;
+                                db.Entry(Batches).State = EntityState.Modified;
+                            }
+
+                        }
+                        var saveChangesResult = db.SaveChanges();
+                        LogCashReceiptVoucherSaveTrace(saveStage + " succeeded", cashReceiptVoucher, "SavedId=" + id + Environment.NewLine + "SaveChangesReturn=" + saveChangesResult);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogCashReceiptVoucherSaveException(saveStage, ex, cashReceiptVoucher, "SavedId=" + id);
+                    return Json(new { success = "false", diagnosticId, stage = saveStage });
+                }
+                LogCashReceiptVoucherSaveTrace("Returning success response", cashReceiptVoucher, "SavedId=" + id);
                 return Json(new { success = "true", id });
             }
             else
@@ -1189,6 +1251,11 @@ namespace MyERP.Controllers.AccountSettings
                     .Where(x => x.Value.Errors.Count > 0)
                     .Select(x => new { x.Key, x.Value.Errors })
                     .ToArray();
+                LogCashReceiptVoucherModelState(cashReceiptVoucher);
+                if (Request.IsAjaxRequest() || (Request.ContentType ?? "").IndexOf("json", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return Json(new { success = "false", diagnosticId, stage = "ModelState invalid" });
+                }
                 DepartmentRepository departmentRepository = new DepartmentRepository(db);
                 CashboxReposistory cashboxReposistory = new CashboxReposistory(db);
                 ViewBag.TechnicianId = new SelectList(db.Techanicians.Where(b => b.IsDeleted == false && b.IsActive == true).Select(b => new
@@ -1827,6 +1894,98 @@ namespace MyERP.Controllers.AccountSettings
 
         }
 
+        private void NormalizeSalesInvoiceActualPaymentDates(CashReceiptVoucher cashReceiptVoucher, string diagnosticId)
+        {
+            if (cashReceiptVoucher?.SalesInvoiceActualPayments == null)
+            {
+                return;
+            }
+
+            var payments = cashReceiptVoucher.SalesInvoiceActualPayments.ToList();
+            var dateKeys = ModelState.Keys
+                .Where(k => k.IndexOf("SalesInvoiceActualPayments[", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                            k.EndsWith(".SalesInvoiceDate", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            foreach (var key in dateKeys)
+            {
+                var modelState = ModelState[key];
+                var attemptedValue = modelState?.Value?.AttemptedValue;
+                var trimmedValue = (attemptedValue ?? string.Empty).Trim();
+                var index = GetCollectionIndexFromModelStateKey(key, "SalesInvoiceActualPayments");
+
+                if (index < 0 || index >= payments.Count)
+                {
+                    LogCashReceiptVoucherSaveTrace("SalesInvoiceDate parse skipped", cashReceiptVoucher,
+                        "DiagnosticId=" + diagnosticId + Environment.NewLine +
+                        "Key=" + key + Environment.NewLine +
+                        "Reason=Index outside bound payment collection" + Environment.NewLine +
+                        "AttemptedValue=" + attemptedValue);
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(trimmedValue))
+                {
+                    payments[index].SalesInvoiceDate = null;
+                    ModelState[key].Errors.Clear();
+                    continue;
+                }
+
+                DateTime parsedDate;
+                if (TryParseCashReceiptInvoicePaymentDate(trimmedValue, out parsedDate))
+                {
+                    payments[index].SalesInvoiceDate = parsedDate;
+                    ModelState.SetModelValue(key, new ValueProviderResult(parsedDate, trimmedValue, CultureInfo.InvariantCulture));
+                    ModelState[key].Errors.Clear();
+                }
+                else
+                {
+                    LogCashReceiptVoucherSaveTrace("SalesInvoiceDate parse failed", cashReceiptVoucher,
+                        "DiagnosticId=" + diagnosticId + Environment.NewLine +
+                        "Key=" + key + Environment.NewLine +
+                        "AttemptedValue=" + attemptedValue + Environment.NewLine +
+                        "TrimmedValue=" + trimmedValue);
+                }
+            }
+
+            cashReceiptVoucher.SalesInvoiceActualPayments = payments;
+        }
+
+        private static int GetCollectionIndexFromModelStateKey(string key, string collectionName)
+        {
+            var prefix = collectionName + "[";
+            var start = key.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+            if (start < 0)
+            {
+                return -1;
+            }
+
+            start += prefix.Length;
+            var end = key.IndexOf("]", start, StringComparison.OrdinalIgnoreCase);
+            if (end <= start)
+            {
+                return -1;
+            }
+
+            int index;
+            return int.TryParse(key.Substring(start, end - start), out index) ? index : -1;
+        }
+
+        private static bool TryParseCashReceiptInvoicePaymentDate(string value, out DateTime parsedDate)
+        {
+            var formats = new[]
+            {
+                "M/d/yyyy",
+                "MM/dd/yyyy",
+                "d/M/yyyy",
+                "dd/MM/yyyy",
+                "yyyy-M-d",
+                "yyyy-MM-dd"
+            };
+
+            return DateTime.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate);
+        }
+
         private List<SalesInvoiceActualPayment> ExtractServiceInvoiceActualPayments(CashReceiptVoucher cashReceiptVoucher)
         {
             var allPayments = (cashReceiptVoucher.SalesInvoiceActualPayments ?? new List<SalesInvoiceActualPayment>()).ToList();
@@ -1841,9 +2000,229 @@ namespace MyERP.Controllers.AccountSettings
             return servicePayments;
         }
 
-        private void EnsureCashReceiptCustomerParty(int cashReceiptVoucherId)
+        private void LogCashReceiptVoucherSaveTrace(string stage, CashReceiptVoucher cashReceiptVoucher, string details = null)
         {
-            db.Database.ExecuteSqlCommand(@"
+            LogCashReceiptVoucherSave(stage, null, cashReceiptVoucher, details);
+        }
+
+        private void LogCashReceiptVoucherSaveException(string stage, Exception exception, CashReceiptVoucher cashReceiptVoucher, string details = null)
+        {
+            LogCashReceiptVoucherSave(stage, exception, cashReceiptVoucher, details);
+        }
+
+        private void LogCashReceiptVoucherModelState(CashReceiptVoucher cashReceiptVoucher)
+        {
+            var errors = ModelState
+                .Where(x => x.Value.Errors.Any())
+                .Select(x => x.Key + ": " + string.Join(" | ", x.Value.Errors.Select(e => e.ErrorMessage + " " + (e.Exception != null ? e.Exception.Message : ""))));
+
+            LogCashReceiptVoucherSave("ModelState invalid", null, cashReceiptVoucher, string.Join(Environment.NewLine, errors));
+        }
+
+        private string BuildCashReceiptVoucherSaveDetails(CashReceiptVoucher cashReceiptVoucher, List<SalesInvoiceActualPayment> serviceInvoiceActualPayments)
+        {
+            var details = new StringBuilder();
+            try
+            {
+                details.AppendLine("PhysicalApplicationPath: " + (Request?.PhysicalApplicationPath ?? ""));
+                details.AppendLine("ApplicationPath: " + (Request?.ApplicationPath ?? ""));
+                details.AppendLine("ContentType: " + (Request?.ContentType ?? ""));
+                details.AppendLine("ContentLength: " + (Request?.ContentLength ?? 0));
+                details.AppendLine("Request.Form.Keys: " + string.Join(", ", Request?.Form?.AllKeys ?? new string[0]));
+                details.AppendLine("Request.QueryString.Keys: " + string.Join(", ", Request?.QueryString?.AllKeys ?? new string[0]));
+                details.AppendLine("IsInvoiceSelectionMode: " + (cashReceiptVoucher?.IsInvoiceSelected == true));
+                details.AppendLine("DbContextTransactionIsNull: " + (db.Database.CurrentTransaction == null));
+                details.AppendLine("ServiceInvoiceActualPaymentsCount: " + (serviceInvoiceActualPayments?.Count ?? 0));
+
+                if (cashReceiptVoucher?.SalesInvoiceActualPayments != null)
+                {
+                    details.AppendLine("SalesInvoiceActualPayments:");
+                    foreach (var payment in cashReceiptVoucher.SalesInvoiceActualPayments.Take(20))
+                    {
+                        details.AppendLine("  SalesInvoiceId=" + payment.SalesInvoiceId
+                            + ", ServiceInvoiceId=" + payment.ServiceInvoiceId
+                            + ", InvoiceSourceType=" + payment.InvoiceSourceType
+                            + ", Amount=" + payment.Amount
+                            + ", NetAmountRemain=" + payment.NetAmountRemain);
+                    }
+                }
+
+                if (serviceInvoiceActualPayments != null && serviceInvoiceActualPayments.Any())
+                {
+                    details.AppendLine("ServiceInvoiceActualPayments:");
+                    foreach (var payment in serviceInvoiceActualPayments.Take(20))
+                    {
+                        details.AppendLine("  ServiceInvoiceId=" + payment.ServiceInvoiceId
+                            + ", InvoiceSourceType=" + payment.InvoiceSourceType
+                            + ", Amount=" + payment.Amount
+                            + ", NetAmountRemain=" + payment.NetAmountRemain);
+                    }
+                }
+
+                if (cashReceiptVoucher?.CashReceiptVoucherPropertyContractBatches != null)
+                {
+                    details.AppendLine("CashReceiptVoucherPropertyContractBatches:");
+                    foreach (var batch in cashReceiptVoucher.CashReceiptVoucherPropertyContractBatches.Take(20))
+                    {
+                        details.AppendLine("  PropertyContractBatchId=" + batch.PropertyContractBatchId
+                            + ", Paid=" + batch.Paid
+                            + ", Remain=" + batch.Remain
+                            + ", IsDelivered=" + batch.IsDelivered);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                details.AppendLine("BuildDetailsError: " + ex.Message);
+            }
+
+            return details.ToString();
+        }
+
+        private void LogCashReceiptVoucherSave(string stage, Exception exception, CashReceiptVoucher cashReceiptVoucher, string details = null)
+        {
+            try
+            {
+                var logDirectory = Server.MapPath("~/App_Data/Logs");
+                Directory.CreateDirectory(logDirectory);
+
+                var log = new StringBuilder();
+                log.AppendLine("============================================================");
+                log.AppendLine("DiagnosticId: " + (HttpContext?.Items["CashReceiptVoucherSaveDiagnosticId"] ?? ""));
+                log.AppendLine("Utc: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                log.AppendLine("Local: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                log.AppendLine("Stage: " + stage);
+                log.AppendLine("User: " + (User?.Identity?.Name ?? ""));
+                log.AppendLine("Url: " + (Request?.RawUrl ?? ""));
+                log.AppendLine("Ajax: " + (Request?.IsAjaxRequest() == true));
+                log.AppendLine("PhysicalApplicationPath: " + (Request?.PhysicalApplicationPath ?? ""));
+                log.AppendLine("ServerMapPathRoot: " + (Server?.MapPath("~/") ?? ""));
+                log.AppendLine("AppDomainBaseDirectory: " + AppDomain.CurrentDomain.BaseDirectory);
+                log.AppendLine("AppDataLogsPath: " + logDirectory);
+                log.AppendLine("ConnectionString: " + MaskConnectionString(db.Database.Connection.ConnectionString));
+                AppendDatabaseDiagnostics(log);
+                log.AppendLine("VoucherId: " + cashReceiptVoucher?.Id);
+                log.AppendLine("DocumentNumber: " + cashReceiptVoucher?.DocumentNumber);
+                log.AppendLine("SourceTypeId: " + cashReceiptVoucher?.SourceTypeId);
+                log.AppendLine("DepartmentId: " + cashReceiptVoucher?.DepartmentId);
+                log.AppendLine("CustomerId: " + cashReceiptVoucher?.CustomerId);
+                log.AppendLine("MoneyAmount: " + cashReceiptVoucher?.MoneyAmount);
+                log.AppendLine("IsInvoiceSelected: " + cashReceiptVoucher?.IsInvoiceSelected);
+                log.AppendLine("SalesInvoiceActualPaymentsCount: " + (cashReceiptVoucher?.SalesInvoiceActualPayments?.Count() ?? 0));
+                log.AppendLine("PropertyContractBatchesCount: " + (cashReceiptVoucher?.CashReceiptVoucherPropertyContractBatches?.Count() ?? 0));
+                if (!string.IsNullOrWhiteSpace(details))
+                {
+                    log.AppendLine("Details:");
+                    log.AppendLine(details);
+                }
+
+                if (exception != null)
+                {
+                    var current = exception;
+                    var level = 0;
+                    while (current != null)
+                    {
+                        log.AppendLine("Exception Level " + level + ": " + current.GetType().FullName);
+                        log.AppendLine("Message: " + current.Message);
+                        log.AppendLine("StackTrace:");
+                        log.AppendLine(current.StackTrace);
+
+                        var sqlException = current as SqlException;
+                        if (sqlException != null)
+                        {
+                            foreach (SqlError sqlError in sqlException.Errors)
+                            {
+                                log.AppendLine("SQL Error:");
+                                log.AppendLine("  Number: " + sqlError.Number);
+                                log.AppendLine("  Severity: " + sqlError.Class);
+                                log.AppendLine("  State: " + sqlError.State);
+                                log.AppendLine("  Procedure: " + sqlError.Procedure);
+                                log.AppendLine("  LineNumber: " + sqlError.LineNumber);
+                                log.AppendLine("  Message: " + sqlError.Message);
+                            }
+                        }
+
+                        current = current.InnerException;
+                        level++;
+                    }
+                }
+
+                System.IO.File.AppendAllText(Path.Combine(logDirectory, "CashReceiptVoucher_Save.log"), log.ToString(), Encoding.UTF8);
+            }
+            catch
+            {
+                // Never let temporary diagnostics break the save flow.
+            }
+        }
+
+        private void AppendDatabaseDiagnostics(StringBuilder log)
+        {
+            try
+            {
+                var diagnostics = db.Database.SqlQuery<DatabaseDiagnosticRow>(@"
+SELECT
+    DB_NAME() AS DatabaseName,
+    SUSER_SNAME() AS ServerLogin,
+    USER_NAME() AS DatabaseUser,
+    ORIGINAL_LOGIN() AS OriginalLogin,
+    HOST_NAME() AS HostName,
+    APP_NAME() AS AppName").FirstOrDefault();
+
+                if (diagnostics != null)
+                {
+                    log.AppendLine("DatabaseName: " + diagnostics.DatabaseName);
+                    log.AppendLine("SqlServerLogin: " + diagnostics.ServerLogin);
+                    log.AppendLine("SqlDatabaseUser: " + diagnostics.DatabaseUser);
+                    log.AppendLine("SqlOriginalLogin: " + diagnostics.OriginalLogin);
+                    log.AppendLine("SqlHostName: " + diagnostics.HostName);
+                    log.AppendLine("SqlAppName: " + diagnostics.AppName);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.AppendLine("DatabaseDiagnosticsError: " + ex.Message);
+            }
+        }
+
+        private string MaskConnectionString(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                return "";
+            }
+
+            try
+            {
+                var builder = new SqlConnectionStringBuilder(connectionString);
+                if (!string.IsNullOrEmpty(builder.Password))
+                {
+                    builder.Password = "***";
+                }
+                if (!string.IsNullOrEmpty(builder.UserID))
+                {
+                    builder.UserID = "***";
+                }
+                return builder.ConnectionString;
+            }
+            catch
+            {
+                return connectionString;
+            }
+        }
+
+        private class DatabaseDiagnosticRow
+        {
+            public string DatabaseName { get; set; }
+            public string ServerLogin { get; set; }
+            public string DatabaseUser { get; set; }
+            public string OriginalLogin { get; set; }
+            public string HostName { get; set; }
+            public string AppName { get; set; }
+        }
+
+        private int EnsureCashReceiptCustomerParty(int cashReceiptVoucherId)
+        {
+            return db.Database.ExecuteSqlCommand(@"
 UPDATE jed
 SET jed.PartyType = 1,
     jed.PartyId = crv.CustomerId
@@ -1866,10 +2245,10 @@ WHERE je.SourceId = @CashReceiptVoucherId
                 new SqlParameter("@CashReceiptVoucherId", cashReceiptVoucherId));
         }
 
-        private void SaveServiceInvoiceActualPayments(int cashReceiptVoucherId, List<SalesInvoiceActualPayment> servicePayments, int userId)
+        private int SaveServiceInvoiceActualPayments(int cashReceiptVoucherId, List<SalesInvoiceActualPayment> servicePayments, int userId)
         {
             MyXML.xPathName = "SalesInvoiceActualPayment";
-            db.Database.ExecuteSqlCommand(
+            return db.Database.ExecuteSqlCommand(
                 "EXEC dbo.ServiceInvoiceActualPayment_SaveForCashReceipt @CashReceiptVoucherId, @Payments, @UserId",
                 new SqlParameter("@CashReceiptVoucherId", cashReceiptVoucherId),
                 new SqlParameter("@Payments", MyXML.GetXML(servicePayments ?? new List<SalesInvoiceActualPayment>())),

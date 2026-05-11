@@ -3516,6 +3516,7 @@
     <Compile Include="Utils\SmsService.cs" />
     <Compile Include="Utils\StockIssueAuthorize.cs" />
     <Compile Include="Utils\ZhipuAiService.cs" />
+    <Compile Include="ViewModels\AllowedScreensViewModel.cs" />
     <Compile Include="ViewModels\PropertyBillRegisterationViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -5327,6 +5328,7 @@
     <Content Include="Views\PropertyContract\Index.cshtml" />
     <Content Include="Views\PropertyContract\AddEdit.cshtml" />
     <Content Include="Views\SystemSetting\AllowedModule.cshtml" />
+    <Content Include="Views\SystemSetting\AllowedScreens.cshtml" />
     <Content Include="Views\BookingInstruction\Index.cshtml" />
     <Content Include="Views\Report\MealReservationReceipt.cshtml" />
     <Content Include="Views\Report\RoomLeavePermissionInDate.cshtml" />

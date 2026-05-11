@@ -1,0 +1,37 @@
+{
+  "domCheck": {
+    "mode": "card",
+    "wrappers": [
+      {
+        "className": "id-ipn-field is-hidden-ui",
+        "display": "none",
+        "width": 0,
+        "height": 0
+      },
+      {
+        "className": "id-ipn-field is-hidden-ui",
+        "display": "none",
+        "width": 0,
+        "height": 0
+      }
+    ],
+    "ipn": "",
+    "manual": ""
+  },
+  "card": {
+    "status": 200,
+    "text": "{\"success\":true,\"transactionId\":1241764,\"noteSerial1\":\"12605004\",\"branchId\":1,\"userId\":1}"
+  },
+  "cashInDup": {
+    "status": 400,
+    "text": "{\"success\":false,\"message\":\"راجع بيانات العملية قبل الحفظ\",\"details\":\"Client request failed POS server validation.\",\"technicalMessage\":\"Client request failed POS server validation.\",\"technicalDetails\":\"Client request failed POS server validation.\",\"validationErrors\":{\"Items\":\"الخدمة المحملة لا تطابق نوع العملية المحدد\",\"ItemIDService\":\"نوع الشحن لا يطابق نوع العملية المحدد\",\"ManualNO\":\"رقم IPN مكرر في كاش إن أو كارت كيشني\"},\"validationErrorsDetailed\":[{\"field\":\"Items\",\"message\":\"الخدمة المحملة لا تطابق نوع العملية المحدد\"},{\"field\":\"ItemIDService\",\"message\":\"نوع الشحن لا يطابق نوع العملية المحدد\"},{\"field\":\"ManualNO\",\"message\":\"رقم IPN مكرر في كاش إن أو كارت كيشني\"}],\"validationErrorsList\":[\"الخدمة المحملة لا تطابق نوع العملية المحدد\",\"نوع الشحن لا يطابق نوع العملية المحدد\",\"رقم IPN مكرر في كاش إن أو كارت كيشني\"],\"duplicate\":false,\"duplicateCustomerId\":null,\"existingCustomerId\":null,\"existingCustomer\":null}"
+  },
+  "cashOut": {
+    "status": 500,
+    "text": "{\"success\":false,\"message\":\"حدث خطأ من قاعدة البيانات أثناء الحفظ\",\"details\":\"Invoice accounting account mapping is missing for one or more required rows.\",\"technicalMessage\":\"Invoice accounting account mapping is missing for one or more required rows.\",\"technicalDetails\":\"Invoice accounting account mapping is missing for one or more required rows.\",\"validationErrors\":{},\"validationErrorsDetailed\":[],\"validationErrorsList\":[],\"duplicate\":false,\"duplicateCustomerId\":null,\"existingCustomerId\":null,\"existingCustomer\":null}"
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}

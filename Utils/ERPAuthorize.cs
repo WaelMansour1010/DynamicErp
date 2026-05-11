@@ -86,6 +86,10 @@ namespace MyERP
                     controllerName = "SalesInvoice";//inherit salesInvoice privileges
                 else if (controllerName == "PosSalesReturn")
                     controllerName = "SalesReturn";//inherit salesReturn privileges
+                if (!IsCompanyScreenAvailable(db, controllerName))
+                {
+                    return false;
+                }
                 if (userId == 1 || controllerName == "Report" ||
                     actionName == "Unauthorized" ||
                     controllerName == "LogIn" ||
@@ -168,6 +172,67 @@ namespace MyERP
         {
             var area = routeData.DataTokens["area"] as string;
             return string.Equals(area, "Pos", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsCompanyScreenAvailable(MySoftERPEntity db, string controllerName)
+        {
+            if (string.IsNullOrWhiteSpace(controllerName) || IsCriticalController(controllerName))
+            {
+                return true;
+            }
+
+            var tableExists = db.Database.SqlQuery<int>(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.CompanyAllowedPages', N'U') IS NULL THEN 0 ELSE 1 END").FirstOrDefault() == 1;
+            if (!tableExists)
+            {
+                return true;
+            }
+
+            var configured = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.CompanyAllowedPages").FirstOrDefault() > 0;
+            if (!configured)
+            {
+                return true;
+            }
+
+            var pageExists = db.SystemPages.Any(p =>
+                p.IsActive == true &&
+                p.IsDeleted == false &&
+                p.ControllerName == controllerName);
+            if (!pageExists)
+            {
+                return true;
+            }
+
+            return db.Database.SqlQuery<int>(
+                @"SELECT COUNT(1)
+                  FROM dbo.CompanyAllowedPages cap
+                  INNER JOIN dbo.SystemPage sp ON sp.Id = cap.SystemPageId
+                  WHERE cap.IsSelected = 1
+                    AND sp.IsActive = 1
+                    AND sp.IsDeleted = 0
+                    AND sp.ControllerName = @p0",
+                controllerName).FirstOrDefault() > 0;
+        }
+
+        private static bool IsCriticalController(string controllerName)
+        {
+            return CriticalCompanyAvailabilityControllers().Contains(controllerName);
+        }
+
+        private static string[] CriticalCompanyAvailabilityControllers()
+        {
+            return new[]
+            {
+                "SystemSetting",
+                "ERPUsers",
+                "ERPRoles",
+                "RolePrivilege",
+                "UserPrivilege",
+                "Helper",
+                "Home",
+                "LogIn",
+                "LogOut"
+            };
         }
 
     }

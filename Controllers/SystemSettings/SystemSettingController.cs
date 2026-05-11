@@ -1,7 +1,9 @@
 ﻿using MyERP.Models;
+using MyERP.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -252,16 +254,171 @@ namespace MyERP.Controllers.SystemSettings
         {
             if (ModelState.IsValid)
             {
-                var PrevRecord = db.AllowedModules.ToList();
-                if (PrevRecord.Count > 0)
+                var selectedModules = (allowedModules ?? new List<AllowedModule>())
+                    .Where(a => a.SystemPageId.HasValue && a.IsSelected != false)
+                    .GroupBy(a => a.SystemPageId.Value)
+                    .Select(g => new AllowedModule
+                    {
+                        SystemPageId = g.Key,
+                        IsSelected = true,
+                        UserId = null
+                    })
+                    .ToList();
+
+                using (var transaction = db.Database.BeginTransaction())
                 {
-                    db.AllowedModules.RemoveRange(PrevRecord);
+                    try
+                    {
+                        var prevRecord = db.AllowedModules.ToList();
+                        if (prevRecord.Count > 0)
+                        {
+                            db.AllowedModules.RemoveRange(prevRecord);
+                        }
+
+                        db.AllowedModules.AddRange(selectedModules);
+                        db.SaveChanges();
+                        transaction.Commit();
+                        return Content("true");
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
                 }
-                db.AllowedModules.AddRange(allowedModules);
-                db.SaveChanges();
-                return Content("true");
             }
             return Content("false");
+        }
+
+        public ActionResult AllowedScreens()
+        {
+            ViewBag.SchemaMissing = !CompanyAllowedPagesTableExists();
+            return View(GetAllowedScreensViewModel());
+        }
+
+        [HttpPost]
+        public ActionResult AllowedScreens(ICollection<AllowedScreensSaveItem> allowedScreens)
+        {
+            if (!CompanyAllowedPagesTableExists())
+            {
+                return Content("schema-missing");
+            }
+
+            var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+            var criticalPageIds = GetCriticalPageIds();
+            var selectedPageIds = (allowedScreens ?? new List<AllowedScreensSaveItem>())
+                .Where(a => a.IsSelected)
+                .Select(a => a.SystemPageId)
+                .Concat(criticalPageIds)
+                .Distinct()
+                .ToList();
+
+            using (var transaction = db.Database.BeginTransaction())
+            {
+                try
+                {
+                    db.Database.ExecuteSqlCommand("DELETE FROM dbo.CompanyAllowedPages");
+
+                    foreach (var pageId in selectedPageIds)
+                    {
+                        db.Database.ExecuteSqlCommand(
+                            @"INSERT INTO dbo.CompanyAllowedPages
+                              (SystemPageId, IsSelected, CreatedDate, CreatedBy, UpdatedDate, UpdatedBy)
+                              VALUES (@SystemPageId, 1, GETDATE(), @UserId, GETDATE(), @UserId)",
+                            new SqlParameter("@SystemPageId", pageId),
+                            new SqlParameter("@UserId", userId));
+                    }
+
+                    transaction.Commit();
+                    return Content("true");
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        private List<AllowedScreensViewModel> GetAllowedScreensViewModel()
+        {
+            var session = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+            var tableExists = CompanyAllowedPagesTableExists();
+            var configured = tableExists && db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.CompanyAllowedPages").FirstOrDefault() > 0;
+            var selectedPageIds = configured
+                ? db.Database.SqlQuery<int>("SELECT SystemPageId FROM dbo.CompanyAllowedPages WHERE IsSelected = 1").ToList()
+                : new List<int>();
+            var criticalPageIds = GetCriticalPageIds();
+            var modules = db.SystemPages
+                .Where(p => p.IsDeleted == false && p.IsModule == true)
+                .Select(p => new { p.Id, p.ArName, p.EnName })
+                .ToList()
+                .ToDictionary(p => p.Id);
+
+            return db.SystemPages
+                .Where(p => p.IsActive == true
+                            && p.IsDeleted == false
+                            && p.IsModule != true
+                            && p.ControllerName != null
+                            && p.ControllerName != "")
+                .Select(p => new
+                {
+                    p.Id,
+                    p.ArName,
+                    p.EnName,
+                    p.ControllerName,
+                    p.ParentId
+                })
+                .ToList()
+                .Select(p => new AllowedScreensViewModel
+                {
+                    SystemPageId = p.Id,
+                    SystemPageName = session == "en" && !string.IsNullOrEmpty(p.EnName) ? p.EnName : p.ArName,
+                    ControllerName = p.ControllerName,
+                    ModuleId = p.ParentId,
+                    ModuleName = p.ParentId.HasValue && modules.ContainsKey(p.ParentId.Value)
+                        ? (session == "en" && !string.IsNullOrEmpty(modules[p.ParentId.Value].EnName)
+                            ? modules[p.ParentId.Value].EnName
+                            : modules[p.ParentId.Value].ArName)
+                        : "",
+                    IsCritical = criticalPageIds.Contains(p.Id) || IsCriticalController(p.ControllerName),
+                    IsSelected = !configured || selectedPageIds.Contains(p.Id) || criticalPageIds.Contains(p.Id) || IsCriticalController(p.ControllerName)
+                })
+                .OrderBy(p => p.ModuleName)
+                .ThenBy(p => p.SystemPageName)
+                .ToList();
+        }
+
+        private bool CompanyAllowedPagesTableExists()
+        {
+            return db.Database.SqlQuery<int>(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.CompanyAllowedPages', N'U') IS NULL THEN 0 ELSE 1 END").FirstOrDefault() == 1;
+        }
+
+        private List<int> GetCriticalPageIds()
+        {
+            var criticalControllers = CriticalCompanyAvailabilityControllers();
+            return db.SystemPages
+                .Where(p => p.IsDeleted == false && criticalControllers.Contains(p.ControllerName))
+                .Select(p => p.Id)
+                .ToList();
+        }
+
+        private static bool IsCriticalController(string controllerName)
+        {
+            return CriticalCompanyAvailabilityControllers().Contains(controllerName);
+        }
+
+        private static string[] CriticalCompanyAvailabilityControllers()
+        {
+            return new[]
+            {
+                "SystemSetting",
+                "ERPUsers",
+                "ERPRoles",
+                "RolePrivilege",
+                "UserPrivilege"
+            };
         }
 
         protected override void Dispose(bool disposing)

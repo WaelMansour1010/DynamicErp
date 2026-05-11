@@ -20,7 +20,7 @@ namespace MyERP.Controllers
                 return View("Index");
             }
 
-            return Redirect("~/Pos/PosLogin/Index");
+            return Redirect("~/Home/Index");
         }
 
         [HttpGet]

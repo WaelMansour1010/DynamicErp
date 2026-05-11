@@ -229,16 +229,18 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             queryParameter4.Name = "@CompanyId";
             queryParameter4.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter4.Value = new DevExpress.DataAccess.Expression("?CompanyId", typeof(int));
-            storedProcQuery1.Parameters.Add(queryParameter1);
-            storedProcQuery1.Parameters.Add(queryParameter2);
-            storedProcQuery1.Parameters.Add(queryParameter3);
-            storedProcQuery1.Parameters.Add(queryParameter4);
+            storedProcQuery1.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter1,
+            queryParameter2,
+            queryParameter3,
+            queryParameter4});
             storedProcQuery1.StoredProcName = "CustomerOB_Get";
             storedProcQuery2.Name = "UserDepartment";
             queryParameter5.Name = "@UserId";
             queryParameter5.Type = typeof(DevExpress.DataAccess.Expression);
             queryParameter5.Value = new DevExpress.DataAccess.Expression("?UserId", typeof(int));
-            storedProcQuery2.Parameters.Add(queryParameter5);
+            storedProcQuery2.Parameters.AddRange(new DevExpress.DataAccess.Sql.QueryParameter[] {
+            queryParameter5});
             storedProcQuery2.StoredProcName = "Department_ReportUserDepartments";
             columnExpression1.ColumnName = "Id";
             table3.MetaSerializable = "<Meta X=\"30\" Y=\"30\" Width=\"125\" Height=\"1274\" />";
@@ -350,7 +352,7 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             this.Time.StylePriority.UseBackColor = false;
             this.Time.StylePriority.UseFont = false;
             this.Time.StylePriority.UseForeColor = false;
-            this.Time.BeforePrint += new BeforePrintEventHandler(this.Time_BeforePrint);
+            this.Time.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.Time_BeforePrint);
             // 
             // xrLabel6
             // 
@@ -414,7 +416,7 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrPictureBox1.Name = "xrPictureBox1";
             this.xrPictureBox1.SizeF = new System.Drawing.SizeF(162.0418F, 96.79159F);
             this.xrPictureBox1.Sizing = DevExpress.XtraPrinting.ImageSizeMode.ZoomImage;
-            this.xrPictureBox1.BeforePrint += new BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
+            this.xrPictureBox1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrPictureBox1_BeforePrint);
             // 
             // xrLabel2
             // 
@@ -700,7 +702,7 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrRichText1.SizeF = new System.Drawing.SizeF(63.78705F, 23F);
             this.xrRichText1.StylePriority.UseForeColor = false;
             this.xrRichText1.Target = "_blank";
-            this.xrRichText1.BeforePrint += new BeforePrintEventHandler(this.xrRichText1_BeforePrint);
+            this.xrRichText1.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrRichText1_BeforePrint);
             // 
             // tableCell11
             // 
@@ -727,7 +729,7 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             this.xrRichText2.SizeF = new System.Drawing.SizeF(65.60919F, 23F);
             this.xrRichText2.StylePriority.UseForeColor = false;
             this.xrRichText2.Target = "_blank";
-            this.xrRichText2.BeforePrint += new BeforePrintEventHandler(this.xrRichText2_BeforePrint);
+            this.xrRichText2.BeforePrint += new DevExpress.XtraReports.UI.BeforePrintEventHandler(this.xrRichText2_BeforePrint);
             // 
             // tableCell12
             // 
@@ -979,7 +981,7 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             this.DataSource = this.sqlDataSource1;
             this.FilterString = "[Date] >= ?FromDate And [Date] <= ?ToDate";
             this.Font = new DevExpress.Drawing.DXFont("Arial", 9.75F);
-            this.Margins = new DevExpress.Drawing.DXMargins(40, 40, 40, 67);
+            this.Margins = new DevExpress.Drawing.DXMargins(40F, 40F, 40F, 66.91666F);
             this.PageHeight = 1169;
             this.PageWidth = 827;
             this.PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
@@ -999,7 +1001,7 @@ public class CustomersBalanceSheet_Report : DevExpress.XtraReports.UI.XtraReport
             this.DetailData1,
             this.DetailData3_Odd,
             this.PageInfo});
-            this.Version = "20.1";
+            this.Version = "23.1";
             ((System.ComponentModel.ISupportInitialize)(this.table1)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.table2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xrRichText1)).EndInit();

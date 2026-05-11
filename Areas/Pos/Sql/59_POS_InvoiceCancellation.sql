@@ -132,3 +132,12 @@ BEGIN
     END CATCH
 END;
 GO
+
+
+Select DepartmentId from JournalEntryDetail
+
+IF COL_LENGTH('dbo.JournalEntryDetail', 'DepartmentId') IS NULL
+IF OBJECT_ID('dbo.JournalEntryDetail', 'U') IS NOT NULL
+   AND COL_LENGTH('dbo.JournalEntryDetail', 'DepartmentId') IS NULL
+BEGIN
+Select * from Department

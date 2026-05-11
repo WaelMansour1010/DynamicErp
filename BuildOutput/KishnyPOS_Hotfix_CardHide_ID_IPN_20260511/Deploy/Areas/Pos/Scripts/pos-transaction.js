@@ -1231,13 +1231,8 @@
         for (var pa = 0; pa < paymentAmountFields.length; pa++) {
             paymentAmountFields[pa].classList.toggle("is-hidden", mode === "card" || mode === "cash-in" || mode === "cash-out" || mode === "violations");
         }
-        var idIpnFields = document.querySelectorAll(".id-ipn-field");
-        for (var idf = 0; idf < idIpnFields.length; idf++) {
-            idIpnFields[idf].classList.toggle("is-hidden-ui", mode === "card");
-        }
+        toggleFields(".id-ipn-field", mode !== "card");
         if (mode === "card") {
-            byId("ipn").value = "";
-            byId("manualNo").value = "";
             clearFieldInvalid("IPN");
             clearFieldInvalid("ManualNO");
         }

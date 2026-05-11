@@ -4581,6 +4581,7 @@
                                                 <a href="/FieldsCoding" pv="/FieldsCoding"><i class="fa  fa-caret-left"></i> @MyERP.Properties.Resources.FieldsCoding</a>
                                             </div>
                                             <div class="col-sm-3">
+                                                <a href="/SystemSetting/AllowedScreens" pv="/SystemSetting/AllowedScreens"><i class="fa  fa-caret-left"></i> Allowed Screens</a>
                                             </div>
                                         </div>
                                         @* 9. Users and Permissions (المستخدمين والصلاحيات) *@
@@ -5178,6 +5179,90 @@
     }
     let UseItemUnitSession = [];
     let Modules = [];
+    function normalizePvKey(value) {
+        if (!value) return '';
+        var v = value.toString().trim().toLowerCase();
+        if (!v) return '';
+        v = v.replace(/^~\//, '/');
+        var queryIndex = v.indexOf('?');
+        if (queryIndex > -1) v = v.substring(0, queryIndex);
+        var hashIndex = v.indexOf('#');
+        if (hashIndex > -1) v = v.substring(0, hashIndex);
+        if (v.charAt(0) !== '/') v = '/' + v;
+        v = v.replace(/\/+/g, '/');
+        if (v.length > 1 && v.endsWith('/')) v = v.substring(0, v.length - 1);
+        return v;
+    }
+
+    function applyPvMenuFilter(r) {
+        if (!r || r.SkipFiltering === true) return;
+
+        var allowedSet = {};
+        (r.AllowedPvKeys || []).forEach(function (k) {
+            var key = normalizePvKey(k);
+            if (key) allowedSet[key] = true;
+        });
+
+        $('#side-menu a[pv]').each(function () {
+            var pv = normalizePvKey($(this).attr('pv'));
+            if (!pv) return;
+            var root = pv.split('/').slice(0, 2).join('/');
+            var allowed = !!(allowedSet[pv] || allowedSet[root] || allowedSet[pv + '/index']);
+            if (!allowed) {
+                $(this).hide();
+                $(this).closest('li').hide();
+            }
+        });
+
+        // Hide groups that only contain hidden pv links.
+        $('#side-menu li').each(function () {
+            var li = $(this);
+            var pvDesc = li.find('a[pv]');
+            if (pvDesc.length === 0) return;
+            if (pvDesc.filter(':visible').length === 0 && li.children('a[pv]').length === 0) {
+                li.hide();
+            }
+        });
+
+        $('#side-menu ul').each(function () {
+            var ul = $(this);
+            if (ul.children('li:visible').length === 0) {
+                ul.hide();
+            }
+        });
+    }
+
+    function applyCompanyScreenMenuFilter(r) {
+        if (!r || r.IsConfigured !== true || !r.Controllers) return;
+
+        var allowedControllers = {};
+        r.Controllers.forEach(function (controller) {
+            if (controller) allowedControllers[controller.toString().toLowerCase()] = true;
+        });
+
+        $('#side-menu a[pv]').each(function () {
+            var pv = normalizePvKey($(this).attr('pv'));
+            if (!pv) return;
+
+            var controller = '';
+            var parts = pv.split('/');
+            for (var i = 0; i < parts.length; i++) {
+                if (parts[i]) {
+                    controller = parts[i].toLowerCase();
+                    break;
+                }
+            }
+
+            if (controller && !allowedControllers[controller]) {
+                $(this).hide();
+                $(this).closest('li').hide();
+                if (!$(this).closest('li').length) {
+                    $(this).closest('div').hide();
+                }
+            }
+        });
+    }
+
     //---------- to get active modules and shown them in sidemenue
     $.get('/Helper/GetNotActiveModules').done(function (r) {
         Modules = r;
@@ -5197,7 +5282,15 @@
                     $(this).hide();
                 }
             }
-        })
+        });
+
+        $.get('/Helper/GetCompanyAllowedScreensForMenu').done(function (screenResult) {
+            applyCompanyScreenMenuFilter(screenResult);
+        });
+
+        $.get('/Helper/GetAllowedPvKeys').done(function (pvResult) {
+            applyPvMenuFilter(pvResult);
+        });
     });
     function searchSideMenu() {
         var name = $('#side-menu-search').val();

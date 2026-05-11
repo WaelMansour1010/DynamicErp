@@ -1,5 +1,24 @@
+@using MyERP.Models
+@{
+    var syncModuleId = 0;
+    using (var db = new MySoftERPEntity())
+    {
+        // Resolve existing Sync module id (do not hardcode).
+        syncModuleId = db.SystemPages
+            .Where(s => s.IsDeleted == false
+                        && s.IsActive == true
+                        && s.IsModule == true
+                        && s.ParentId == null
+                        && (s.ControllerName == "Sync"
+                            || s.TableName == "Sync"
+                            || s.Code == "SYNC_MODULE"
+                            || s.ArName == "مركز التحكم بالمزامنة"))
+            .Select(s => s.Id)
+            .FirstOrDefault();
+    }
+}
 <li>
-    <input hidden value="0" />
+    <input hidden value="@syncModuleId" />
     <a href="javascript:void(0);" class="waves-effect">
         <i class="remixicon-shield-check-line"></i>
         <span> مركز التحكم بالمزامنة </span>

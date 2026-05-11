@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNet.Identity;
 using MyERP.Models;
 using MyERP.Repository;
+using MyERP.ViewModels;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -839,11 +840,17 @@ namespace MyERP.Controllers
             //               Id = s.Id,
             //               ArName = session.ToString() == "en" && s.EnName != null ? s.EnName : s.ArName,
             //           });
-            var systemPages = db.AllowedModules.Select(a => new
-            {
-                Id = a.SystemPageId,
-                ArName = a.SystemPage.ArName
-            }).ToList();
+            var systemPages = db.AllowedModules
+                .Where(a => a.SystemPageId.HasValue && a.IsSelected != false)
+                .Select(a => new
+                {
+                    Id = a.SystemPageId.Value,
+                    ArName = session == "en" && a.SystemPage.EnName != null ? a.SystemPage.EnName : a.SystemPage.ArName
+                })
+                .ToList()
+                .GroupBy(a => a.Id)
+                .Select(a => a.First())
+                .ToList();
             return Json(systemPages, JsonRequestBehavior.AllowGet);
             ////return Json(db.SystemPages.Where(a => a.IsModule == true && a.ParentId == null && !a.IsActive).Select(a=>new {
             ////    Id=a.Id,
@@ -957,6 +964,197 @@ namespace MyERP.Controllers
             //    s.Paid,
             //    s.VoucherDate
             //}).Take(5).ToList(), JsonRequestBehavior.AllowGet);
+        }
+
+        [SkipERPAuthorize]
+        public JsonResult GetCompanyAllowedScreensForMenu()
+        {
+            var result = new AllowedScreensMenuResult
+            {
+                IsConfigured = false,
+                Controllers = new List<string>()
+            };
+
+            if (!CompanyAllowedPagesTableExists())
+            {
+                return Json(result, JsonRequestBehavior.AllowGet);
+            }
+
+            var configured = db.Database.SqlQuery<int>("SELECT COUNT(1) FROM dbo.CompanyAllowedPages").FirstOrDefault() > 0;
+            if (!configured)
+            {
+                return Json(result, JsonRequestBehavior.AllowGet);
+            }
+
+            var controllers = db.Database.SqlQuery<string>(
+                    @"SELECT DISTINCT sp.ControllerName
+                      FROM dbo.CompanyAllowedPages cap
+                      INNER JOIN dbo.SystemPage sp ON sp.Id = cap.SystemPageId
+                      WHERE cap.IsSelected = 1
+                        AND sp.ControllerName IS NOT NULL
+                        AND sp.ControllerName <> ''")
+                .ToList()
+                .Concat(CriticalCompanyAvailabilityControllers())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            result.IsConfigured = true;
+            result.Controllers = controllers;
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        private bool CompanyAllowedPagesTableExists()
+        {
+            return db.Database.SqlQuery<int>(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.CompanyAllowedPages', N'U') IS NULL THEN 0 ELSE 1 END").FirstOrDefault() == 1;
+        }
+
+        private static string[] CriticalCompanyAvailabilityControllers()
+        {
+            return new[]
+            {
+                "SystemSetting",
+                "ERPUsers",
+                "ERPRoles",
+                "RolePrivilege",
+                "UserPrivilege"
+            };
+        }
+
+        [SkipERPAuthorize]
+        public JsonResult GetAllowedPvKeys()
+        {
+            db.Configuration.ProxyCreationEnabled = false;
+            var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+            var roleId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("RoleId").Value);
+
+            var isAdminOrSuperAdmin = userId == 1 || db.ERPUsers.Where(u => u.Id == userId).Select(u => u.SystemAdmin).FirstOrDefault() == true;
+            if (isAdminOrSuperAdmin)
+            {
+                return Json(new
+                {
+                    SkipFiltering = true,
+                    AllowedPvKeys = new string[] { }
+                }, JsonRequestBehavior.AllowGet);
+            }
+
+            var userPrivileges = db.UserPrivileges
+                .Where(u => u.UserId == userId
+                            && u.PageId.HasValue
+                            && u.ActionId.HasValue
+                            && u.PageAction.IsActive == true
+                            && u.SystemPage.IsActive == true
+                            && u.SystemPage.IsDeleted == false)
+                .Select(u => new
+                {
+                    PageId = u.PageId.Value,
+                    ActionId = u.ActionId.Value,
+                    Privileged = u.Privileged
+                })
+                .ToList();
+
+            var rolePrivileges = db.RolePrivileges
+                .Where(r => r.RoleId == roleId
+                            && r.PageId.HasValue
+                            && r.ActionId.HasValue
+                            && r.PageAction.IsActive == true
+                            && r.SystemPage.IsActive == true
+                            && r.SystemPage.IsDeleted == false)
+                .Select(r => new
+                {
+                    PageId = r.PageId.Value,
+                    ActionId = r.ActionId.Value,
+                    Privileged = r.Privileged
+                })
+                .ToList();
+
+            var pages = db.SystemPages
+                .Where(s => s.IsActive == true && s.IsDeleted == false)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.ControllerName,
+                    s.TableName
+                })
+                .ToList();
+
+            var actions = db.PageActions
+                .Where(a => a.IsActive == true && a.PageId.HasValue)
+                .Select(a => new
+                {
+                    a.Id,
+                    PageId = a.PageId.Value,
+                    a.Action
+                })
+                .ToList();
+
+            var userMap = userPrivileges.ToDictionary(x => x.ActionId, x => x.Privileged);
+            var roleMap = rolePrivileges.ToDictionary(x => x.ActionId, x => x.Privileged);
+
+            var allowedPageIds = new HashSet<int>();
+            var allowedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var action in actions)
+            {
+                bool? userPriv = null;
+                bool? rolePriv = null;
+                if (userMap.ContainsKey(action.Id))
+                {
+                    userPriv = userMap[action.Id];
+                }
+                if (roleMap.ContainsKey(action.Id))
+                {
+                    rolePriv = roleMap[action.Id];
+                }
+
+                var effective = userPriv ?? rolePriv;
+                if (effective != true)
+                {
+                    continue;
+                }
+
+                allowedPageIds.Add(action.PageId);
+                var page = pages.FirstOrDefault(p => p.Id == action.PageId);
+                if (page == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(page.ControllerName))
+                {
+                    var controller = page.ControllerName.Trim('/').Trim();
+                    allowedKeys.Add("/" + controller);
+                    allowedKeys.Add("/" + controller + "/index");
+                    if (!string.IsNullOrWhiteSpace(action.Action))
+                    {
+                        allowedKeys.Add("/" + controller + "/" + action.Action.Trim('/').Trim());
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(page.TableName))
+                {
+                    var table = page.TableName.Trim('/').Trim();
+                    allowedKeys.Add("/" + table);
+                    allowedKeys.Add("/" + table + "/index");
+                }
+            }
+
+            // Ensure any page with at least one allowed action contributes base controller key.
+            foreach (var page in pages.Where(p => allowedPageIds.Contains(p.Id)))
+            {
+                if (!string.IsNullOrWhiteSpace(page.ControllerName))
+                {
+                    var controller = page.ControllerName.Trim('/').Trim();
+                    allowedKeys.Add("/" + controller);
+                    allowedKeys.Add("/" + controller + "/index");
+                }
+            }
+
+            return Json(new
+            {
+                SkipFiltering = false,
+                AllowedPvKeys = allowedKeys
+            }, JsonRequestBehavior.AllowGet);
         }
 
         private class CustomerInvoiceActualPaymentRow
