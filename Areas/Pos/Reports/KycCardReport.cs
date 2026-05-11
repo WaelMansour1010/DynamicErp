@@ -53,8 +53,12 @@ namespace MyERP.Areas.Pos.Reports
             _template = template ?? LoadStoredTemplate("KycCard") ?? BuildDefaultTemplate();
             _values = BuildValues(customer, issuedAt);
 
-            RightToLeft = RightToLeft.Yes;
-            RightToLeftLayout = RightToLeftLayout.Yes;
+            // Page coordinates are LTR: BoundsF.X is the distance from the
+            // page's LEFT edge, matching what the visual designer shows.
+            // Per-label RTL text shaping is set on each XRLabel via the
+            // field's Direction property; the page itself is NOT mirrored.
+            RightToLeft = RightToLeft.No;
+            RightToLeftLayout = RightToLeftLayout.No;
             PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
             Landscape = false;
             Margins = new Margins(0, 0, 0, 0);
@@ -70,9 +74,13 @@ namespace MyERP.Areas.Pos.Reports
         // yet, and as the print-time fallback if /App_Data is empty.
         public static PrintTemplate BuildDefaultTemplate()
         {
+            // Coordinates use the LTR system: X = distance from the page's
+            // LEFT edge. These values preserve the original visual layout
+            // (they are the mirrored values of the legacy v1 defaults).
             return new PrintTemplate
             {
                 Name = "KycCard",
+                TemplateVersion = PrintTemplate.CurrentVersion,
                 PrintBackground = false,
                 PageWidth = A4Width,
                 PageHeight = A4Height,
@@ -82,27 +90,27 @@ namespace MyERP.Areas.Pos.Reports
                 GlobalYShift = 0F,
                 Fields = new List<PrintTemplateField>
                 {
-                    Cells("Token", "رقم Token (فوق)", 75F, 205F, 55F, 24F, 12),
+                    Cells("Token", "رقم Token (فوق)", 92F, 205F, 55F, 24F, 12),
                     Text("ArabicName", "الاسم بالعربي", 0F, 265F, A4Width, 22F,
                         true, "Center", "RTL", 10F),
                     Text("EnglishName", "الاسم بالإنجليزي", 0F, 310F, A4Width, 22F,
                         true, "Center", "LTR", 10F),
                     Text("Address", "العنوان", 0F, 360F, A4Width, 22F,
                         true, "Center", "LTR", 9F),
-                    Text("Nationality", "الجنسية", 580F, 450F, 200F, 20F,
+                    Text("Nationality", "الجنسية", 47F, 450F, 200F, 20F,
                         true, "Right", "RTL", 9F),
-                    Text("BirthDate", "تاريخ الميلاد", 580F, 485F, 200F, 20F,
+                    Text("BirthDate", "تاريخ الميلاد", 47F, 485F, 200F, 20F,
                         true, "Right", "LTR", 9F),
-                    Cells("NationalId", "الرقم القومي", 95F, 525F, 44F, 22F, 14),
-                    Text("IssueDate", "تاريخ الإصدار", 610F, 580F, 130F, 20F,
+                    Cells("NationalId", "الرقم القومي", 116F, 525F, 44F, 22F, 14),
+                    Text("IssueDate", "تاريخ الإصدار", 87F, 580F, 130F, 20F,
                         true, "Right", "LTR", 9F),
-                    Text("Source", "جهة الإصدار", 290F, 580F, 290F, 20F,
+                    Text("Source", "جهة الإصدار", 247F, 580F, 290F, 20F,
                         true, "Center", "RTL", 9F),
-                    Text("ExpiryDate", "تاريخ الانتهاء", 45F, 580F, 130F, 20F,
+                    Text("ExpiryDate", "تاريخ الانتهاء", 652F, 580F, 130F, 20F,
                         true, "Left", "LTR", 9F),
-                    Cells("Phone", "رقم المحمول", 130F, 660F, 50F, 22F, 11),
-                    Cells("TokenNo", "Token NO. (تحت)", 75F, 925F, 55F, 24F, 12),
-                    Text("SignatureName", "اسم العميل (توقيع)", 420F, 1110F, 280F, 20F,
+                    Cells("Phone", "رقم المحمول", 147F, 660F, 50F, 22F, 11),
+                    Cells("TokenNo", "Token NO. (تحت)", 92F, 925F, 55F, 24F, 12),
+                    Text("SignatureName", "اسم العميل (توقيع)", 127F, 1110F, 280F, 20F,
                         true, "Center", "RTL", 9F),
                     Text("FooterDate", "التاريخ", 0F, 1150F, A4Width, 20F,
                         true, "Center", "RTL", 9F)
@@ -239,18 +247,19 @@ namespace MyERP.Areas.Pos.Reports
 
             // Render only the chars that fit. char[0] always goes in the
             // FIRST visual cell in the chosen reading direction:
-            //   CellDirection = "LTR" -> char[0] at the visual LEFT.
-            //   CellDirection = "RTL" -> char[0] at the visual RIGHT.
-            //
-            // The card report sets RightToLeftLayout = Yes, which makes
-            // BoundsF.X measure from the page's RIGHT edge. So for LTR
-            // cells we have to invert the X offset (cellCount-1-i) so
-            // that char[0] lands at the leftmost cell visually.
+            //   CellDirection = "LTR" -> char[0] at the visual LEFT
+            //                            (offset 0 from field.X).
+            //   CellDirection = "RTL" -> char[0] at the visual RIGHT
+            //                            (offset (count-1)*pitch from field.X).
+            // The page now uses an LTR coordinate system (field.X is the
+            // distance from the page's LEFT edge), so no axis inversion is
+            // needed - we walk the cells in their natural left-to-right
+            // order for LTR content and reverse only for RTL content.
             int charLimit = Math.Min(content.Length, cellCount);
             for (int i = 0; i < charLimit; i++)
             {
                 char ch = content[i];
-                int physicalIndex = isRtlCell ? i : (cellCount - 1 - i);
+                int physicalIndex = isRtlCell ? (cellCount - 1 - i) : i;
                 float xOffset = physicalIndex * pitch;
 
                 band.Controls.Add(new XRLabel

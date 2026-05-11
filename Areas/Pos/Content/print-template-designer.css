@@ -171,7 +171,10 @@ body {
     background: #ffffff;
     box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     border: 1px solid #9ca3af;
-    transform-origin: top right;
+    /* Page coordinates are LTR: (0,0) is the top-LEFT corner of the page
+       and every field's left/top is measured from there. Do not change
+       this even when the surrounding shell is dir="rtl". */
+    transform-origin: top left;
     direction: ltr;
 }
 
