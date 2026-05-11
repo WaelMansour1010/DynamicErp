@@ -88,15 +88,135 @@ namespace MyERP.Areas.Pos.Reports
             });
             y += 52F;
 
-            AddFullLine(band, width, ref y, "أقر أنا/ " + customerName + " الموقع أدناه بأنني استلمت بطاقة بنك مصر - Easy Cash ميزة المدفوعة مقدمًا المذكورة أعلاه");
-            AddFullLine(band, width, ref y, "وقد استلمت البطاقة بالرقم المرجعي لها (Token) الموضح أعلاه بعد مراجعة بياناتي كاملة.");
-            AddFullLine(band, width, ref y, "في يوم وتاريخ " + date + " الساعة " + time + " من السادة شركة إيزي كاش للدفع الإلكتروني.");
+            const float h = 30F;
+            const float pad = 4F;
+
+            // سطر 1: [أقر أنا] [اسم العميل تحت خط] [الموقع أدناه بأنني استلمت بطاقة بنك مصر - Easy Cash]
+            float rightPrefixW = 75F;
+            float leftSuffixW = 360F;
+            float nameW = width - rightPrefixW - leftSuffixW - (pad * 2F);
+            float nameX = leftSuffixW + pad;
+
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(width - rightPrefixW, y, rightPrefixW, h),
+                Text = "أقر أنا",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(nameX, y, nameW, h),
+                Text = customerName,
+                Font = _lineBoldFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderWidth = 0.7F,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(0F, y, leftSuffixW, h),
+                Text = "الموقع أدناه بأنني استلمت بطاقة بنك مصر - Easy Cash",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            y += h + 6F;
+
+            // سطر 2: [ميزة ... بالرقم المرجعي لها] [Token تحت خط]
+            float line2RightW = 420F;
+            float line2TokenW = width - line2RightW - pad;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(width - line2RightW, y, line2RightW, h),
+                Text = "ميزة المدفوعة مقدمًا المذكورة أعلاه بالرقم المرجعي لها (Token)",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(0F, y, line2TokenW, h),
+                Text = tokenValue,
+                Font = _lineBoldFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderWidth = 0.7F,
+                WordWrap = false
+            });
+            y += h + 6F;
+
+            // سطر 3: [في يوم وتاريخ] [date] [الساعة] [time] [من السادة شركة إيزي كاش للدفع الإلكتروني]
+            float dateLabelW = 95F;
+            float dateW = 120F;
+            float timeLabelW = 62F;
+            float timeW = 105F;
+            float suffixW = width - (dateLabelW + dateW + timeLabelW + timeW) - pad;
+
+            float x = width;
+            x -= dateLabelW;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(x, y, dateLabelW, h),
+                Text = "في يوم وتاريخ",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            x -= dateW;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(x, y, dateW, h),
+                Text = date,
+                Font = _lineBoldFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderWidth = 0.7F,
+                WordWrap = false
+            });
+            x -= timeLabelW;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(x, y, timeLabelW, h),
+                Text = "الساعة",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            x -= timeW;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(x, y, timeW, h),
+                Text = time,
+                Font = _lineBoldFont,
+                TextAlignment = TextAlignment.MiddleCenter,
+                Borders = BorderSide.Bottom,
+                BorderWidth = 0.7F,
+                WordWrap = false
+            });
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(0F, y, suffixW, h),
+                Text = "من السادة شركة إيزي كاش للدفع الإلكتروني",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            y += h + 6F;
+
             AddFullLine(band, width, ref y, "وأقر بصحة البيانات المدونة، وأتحمل مسؤولية استخدامها وفقًا للشروط المعتمدة.");
-            y += 12F;
-
-            AddFullLine(band, width, ref y, "المقر بما فيه ،،", true);
             y += 8F;
-
+            AddFullLine(band, width, ref y, "المقر بما فيه ،،", true);
+            y += 6F;
             AddFullLine(band, width, ref y, "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:");
             y += 8F;
 
@@ -143,7 +263,7 @@ namespace MyERP.Areas.Pos.Reports
         {
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0F, y, width, 31F),
+                BoundsF = new RectangleF(0F, y, width, 35F),
                 Text = text,
                 Font = bold ? _lineBoldFont : _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
@@ -151,7 +271,7 @@ namespace MyERP.Areas.Pos.Reports
                 Padding = new PaddingInfo(2, 2, 0, 0),
                 WordWrap = false
             });
-            y += 34F;
+            y += 40F;
         }
 
         private void DrawHeaderLogos(DetailBand band, float width)
