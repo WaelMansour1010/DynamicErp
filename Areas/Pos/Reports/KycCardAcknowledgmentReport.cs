@@ -16,6 +16,11 @@ namespace MyERP.Areas.Pos.Reports
         private readonly Font _titleFont = new Font("Tahoma", 16F, FontStyle.Bold | FontStyle.Underline);
         private readonly Font _lineFont = new Font("Tahoma", 11F, FontStyle.Regular);
         private readonly Font _lineBoldFont = new Font("Tahoma", 11F, FontStyle.Bold);
+        // Smaller variants used where the bounds are too narrow for the
+        // 11pt content (customer name underline; long left-side caption
+        // on line 3). Keeps the layout intact and just rescales the text.
+        private readonly Font _lineSmallFont = new Font("Tahoma", 9F, FontStyle.Regular);
+        private readonly Font _lineSmallBoldFont = new Font("Tahoma", 9F, FontStyle.Bold);
         private readonly Font _tokenFont = new Font("Tahoma", 12F, FontStyle.Bold);
 
         public KycCardAcknowledgmentReport(PosCustomerLookupDto customer, DateTime issuedAt)
@@ -111,7 +116,10 @@ namespace MyERP.Areas.Pos.Reports
                 BoundsF = new RectangleF(bodyRight - rightPrefixW, y, rightPrefixW, h),
                 Text = "أقر أنا",
                 Font = _lineFont,
-                TextAlignment = TextAlignment.MiddleRight,
+                // MiddleLeft (under RTL=Yes) -> visual right edge of bounds,
+                // so this short label hugs the same right margin as the
+                // AddFullLine paragraphs below.
+                TextAlignment = TextAlignment.MiddleLeft,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
                 WordWrap = false
@@ -120,7 +128,9 @@ namespace MyERP.Areas.Pos.Reports
             {
                 BoundsF = new RectangleF(nameX, y, nameW, h),
                 Text = customerName,
-                Font = _lineBoldFont,
+                // Name underline area is only ~194pt wide; full Arabic
+                // names overflow at 11pt, so use the 9pt variant.
+                Font = _lineSmallBoldFont,
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
                 BorderWidth = 0.7F,
@@ -147,7 +157,7 @@ namespace MyERP.Areas.Pos.Reports
                 BoundsF = new RectangleF(bodyRight - line2RightW, y, line2RightW, h),
                 Text = "ميزة المدفوعة مقدمًا المذكورة أعلاه بالرقم المرجعي لها (Token)",
                 Font = _lineFont,
-                TextAlignment = TextAlignment.MiddleRight,
+                TextAlignment = TextAlignment.MiddleLeft,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
                 WordWrap = false
@@ -178,7 +188,7 @@ namespace MyERP.Areas.Pos.Reports
                 BoundsF = new RectangleF(x, y, dateLabelW, h),
                 Text = "في يوم وتاريخ",
                 Font = _lineFont,
-                TextAlignment = TextAlignment.MiddleRight,
+                TextAlignment = TextAlignment.MiddleLeft,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
                 WordWrap = false
@@ -219,7 +229,10 @@ namespace MyERP.Areas.Pos.Reports
             {
                 BoundsF = new RectangleF(bodyX, y, suffixW, h),
                 Text = "من السادة شركة إيزي كاش للدفع الإلكتروني",
-                Font = _lineFont,
+                // 11pt overflows the ~251pt suffix slot and gets clipped
+                // (the user saw "للدفع الإل" with the tail cut off);
+                // 9pt fits the full phrase.
+                Font = _lineSmallFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
