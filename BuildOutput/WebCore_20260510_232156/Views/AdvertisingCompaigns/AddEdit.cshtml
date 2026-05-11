@@ -1,0 +1,177 @@
+﻿@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+}
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    <input type="button" class="btn btn-info btnAdd" name="AddEdit" value=@MyERP.Properties.Resources.Back onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')" style="float:left;">
+                    <h4>@MyERP.Properties.Resources.CampaignData :</h4>
+                </div>
+                <div class="form-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Code</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="txtCode" id="txtCode" placeholder=@MyERP.Properties.Resources.Code required>
+                                <span class="Asterisks">*</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.ArName</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" name="txtArName" id="txtArName" placeholder=@MyERP.Properties.Resources.ArName required>
+                                <span class="Asterisks">*</span>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.EnName</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="txtEnName" placeholder=@MyERP.Properties.Resources.EnName>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.Goal</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="target" placeholder=@MyERP.Properties.Resources.Goal>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label">@MyERP.Properties.Resources.ExpectedSales</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="exsales" placeholder=@MyERP.Properties.Resources.ExpectedSales >
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label"> @MyERP.Properties.Resources.StartDate </label>
+                            <div class="col-sm-9">
+                                <input type="date" class="form-control" id="Sdate" placeholder=@MyERP.Properties.Resources.StartDate>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label"> @MyERP.Properties.Resources.EndDate </label>
+                            <div class="col-sm-9">
+                                <input type="date" class="form-control" id="Edate" placeholder=@MyERP.Properties.Resources.EndDate>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputtext3" class="col-sm-3 control-label"> @MyERP.Properties.Resources.Notes</label>
+                            <div class="col-sm-9">
+                                <input type="number" step="any" class="form-control" id="notes" placeholder=@MyERP.Properties.Resources.Notes>
+                            </div>
+                        </div>
+                        <div class="col-sm-offset-2">
+                            <button type="button" class="btn btn-success" onclick="save()">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <button type="reset" class="btn btn-danger" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')">
+                                @MyERP.Properties.Resources.Back
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hdnobjID" />
+<input type="hidden" id="hdnUserId" />
+<input type="hidden" id="hdnIsDeleted" />
+<input type="hidden" id="hdnIsActive" />
+<input type="hidden" id="hdnImage" />
+<script>
+
+
+    function save() {
+
+        CheckInputs();
+
+        if ($("form").valid() && $('.error:visible').length == 0) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: MainDomain + 'api/AdvertisingCompaigns/' + $('#hdnobjID').val(),
+                    type: ((@ViewBag.ID.ToString() != '') ? 'PUT' : 'POST'),
+                    data: {
+                        "Id": $('#hdnobjID').val(),
+                        "Code": $('#txtCode').val(),
+                        "ArName": $('#txtArName').val(),
+                        "EnName": $('#txtEnName').val(),
+                        "Target": $('#target').val(),
+                        "ExpectedSales": $('#exsales').val(),
+                        "StartDate": $('#Sdate').val(),
+                        "EndDate": $('#Edate').val(),
+                        "Notes": $('#note').val(),
+                        "UserId": $('#hdnUserId').val(),
+                        "IsDeleted": (@ViewBag.ID.ToString() != '') ? $('#hdnIsDeleted').val() : false,
+                        "IsActive": (@ViewBag.ID.ToString() != '') ? $('#hdnIsActive').val() : true,
+                        "Image": (@ViewBag.ID.ToString() != '') ? $('#hdnImage').val() : true,
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                    },
+                    error: function (e) {
+                        if (e.responseJSON.Message == 'Duplicate Code Found') {
+                            alert('@MyERP.Properties.Resources.CodeExistsBefore');
+                            $('#preloader, #status').fadeOut();
+                        } else
+                            window.location = '/logout/';
+                    },
+                    success: function (r) {
+                        back('@ViewContext.RouteData.Values["controller"].ToString()');
+                    }
+                });
+        } else {
+            CheckSave();
+            $("label.error").html('@MyERP.Properties.Resources.Required');
+            $('html').animate({ scrollTop: $('.error:visible').offset().top - 170 }, '500', 'swing');
+        }
+    }
+
+    if (@ViewBag.ID.ToString() != '') {
+
+        $.ajax(
+            {
+                url: MainDomain + 'api/AdvertisingCompaigns/@ViewBag.ID.ToString()',
+                type: 'Get',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                },
+                error: function (e) {
+                    console.log(e);
+                    window.location = '/logout/';
+                },
+                success: function (r) {
+
+                    if (r != null) {
+
+                        $('#txtArName').val(r['ArName']);
+
+
+
+                        $('#txtCode').val(r['Code']);
+
+                        $('#txtEnName').val(r['EnName']);
+
+
+
+                        $('#hdnImage').val(r['Image']);
+                        $('#hdnobjID').val(r['Id']);
+                        $('#hdnUserId').val(r['UserId']);
+                        $('#hdnIsDeleted').val(r['IsDeleted']);
+                        $('#hdnIsActive').val(r['IsActive']);
+
+                        FillAutoCompelete();
+                    }
+
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+    }
+
+</script>
+

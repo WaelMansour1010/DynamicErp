@@ -95,6 +95,18 @@ namespace MyERP.Areas.Pos.Reports
             decimal totalPaid = invoice.PayedValue > 0 ? invoice.PayedValue : depositValue + feesWithVat;
 
             y = DrawHeader(band, y, width, barcodeText);
+            if (invoice.IsCancelled)
+            {
+                band.Controls.Add(new XRLabel
+                {
+                    BoundsF = new RectangleF(0, y, width, 14),
+                    Text = "فاتورة ملغاة",
+                    Font = new Font("Tahoma", 8F, FontStyle.Bold),
+                    ForeColor = Color.DarkRed,
+                    TextAlignment = TextAlignment.MiddleCenter
+                });
+                y += 16;
+            }
 
             y = DrawSectionHeader(band, "بيانات الإيصال", y, width);
             y = DrawTriRow(band, "REF No.", "الرقم المرجعي", referenceNo, y, width, _smallBold);

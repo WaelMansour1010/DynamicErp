@@ -1,0 +1,558 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="A fully featured admin theme which can be used to build CRM, CMS, etc." name="description" />
+    <meta content="Coderthemes" name="author" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="~/assets/images/favicon.ico">
+
+    <!-- App css -->
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+    <link href="~/assets/libs/switchery/switchery.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
+    <link href="~/assets/libs/select2/select2.min.css" rel="stylesheet" />
+
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js"></script>
+
+    <style>
+        .was-validated select.form-control:invalid + .select2 .selection .select2-selection {
+            border: 1px solid #f1556c;
+        }
+
+        .was-validated select.form-control:valid + .select2 .selection .select2-selection {
+            border: 1px solid #1abc9c;
+        }
+
+        .header-title, .page-title {
+            font-family: Tahoma !important;
+        }
+
+        #preloader {
+            opacity: 0.5;
+            background-color: black !important;
+        }
+
+        .enlarged .side-menu-search {
+            display: none;
+        }
+    </style>
+
+    <script src="~/Scripts/jquery-3.3.1.min.js"></script>
+    <script>
+        var requestCache = {};
+
+        function requestData(apiUrl) {
+            if (!requestCache[apiUrl]) {
+                requestCache[apiUrl] = $.get(apiUrl);
+            }
+            return requestCache[apiUrl];
+        }
+    </script>
+    <!-- Vendor js -->
+    <script src="~/assets/js/vendor.min.js"></script>
+</head>
+
+<body class="enlarged" data-keep-enlarged="true">
+    <div id="preloader">
+        <div id="status">
+            <div class="bouncingLoader"><div></div><div></div><div></div></div>
+        </div>
+    </div>
+    <!-- Begin page -->
+    <div id="wrapper">
+
+        <!-- Topbar Start -->
+        <div class="navbar-custom">
+            <ul class="list-unstyled topnav-menu float-right mb-0">
+
+                <li class="dropdown notification-list">
+                    <a class="nav-link dropdown-toggle  waves-effect waves-light" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                        <i class="fe-bell noti-icon"></i>
+                        <span class="badge badge-danger rounded-circle noti-icon-badge" style="display:none;"></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right dropdown-lg">
+
+                        <!-- item-->
+                        <div class="dropdown-item noti-title">
+                            <h5 class="m-0">
+                                Notification
+                            </h5>
+                        </div>
+
+                        <div class="slimscroll noti-scroll" id="user-notifications" style="max-height:350px; min-height:275px;">
+
+                        </div>
+
+                        <!-- All-->
+                        <a href="/OccuredNotifications/Index" class="dropdown-item text-center text-primary notify-item notify-all">
+                            View all
+                            <i class="fi-arrow-right"></i>
+                        </a>
+
+                    </div>
+                </li>
+
+                <li class="dropdown notification-list">
+                    <a class="nav-link dropdown-toggle nav-user mr-0 waves-effect waves-light" data-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                        <img src="~/assets/images/users/avatar-1.jpg" alt="user-image" class="rounded-circle">
+                        <span class="pro-user-name ml-1">
+                            @HttpContext.Current.User.Identity.Name <i class="mdi mdi-chevron-down"></i>
+                        </span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right profile-dropdown ">
+                        <a href="/LogIn/ResetPassword" class="dropdown-item notify-item">
+                            <i class="remixicon-lock-line"></i>
+                            <span>تغيير كلمة المرور</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="/LogOut" class="dropdown-item notify-item">
+                            <i class="remixicon-logout-box-line"></i>
+                            <span>تسجيل خروج</span>
+                        </a>
+
+                    </div>
+                </li>
+
+            </ul>
+
+            <!-- LOGO -->
+            <div class="logo-box">
+                <a href="/Home" class="logo text-center">
+                    <span class="logo-lg">
+                        @if (System.Web.Configuration.WebConfigurationManager.AppSettings["OwnerName"] == "MySoft")
+                        {
+                            <img src="~/assets/images/logo-light.png" alt="" height="20">
+                        }
+                        else
+                        {
+                            <img src="~/assets/images/logo-light2.png" alt="" height="20">
+                        }
+                        <!-- <span class="logo-lg-text-light">Xeria</span> -->
+                    </span>
+                    <span class="logo-sm">
+                        <!-- <span class="logo-sm-text-dark">X</span> -->
+                        <img src="~/assets/images/logo-sm.png" alt="" height="24">
+                    </span>
+                </a>
+            </div>
+
+            <ul class="list-unstyled topnav-menu topnav-menu-left m-0">
+                <li>
+                    <button class="button-menu-mobile waves-effect waves-light">
+                        <i class="fe-menu"></i>
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <!-- end Topbar -->
+        <!-- ========== Left Sidebar Start ========== -->
+        <div class="left-side-menu">
+
+            <div class="slimscroll-menu">
+
+                <!--- Sidemenu -->
+                <div id="sidebar-menu">
+                    <div class="input-group side-menu-search">
+                        <input type="text" class="form-control form-control-sm" id="side-menu-search" placeholder="بحث..." onkeyup="searchSideMenu();">
+                    </div>
+                    <ul class="metismenu" id="side-menu">
+                        <!--<li class="menu-title">Navigation</li>-->
+                        <li>
+                            <a href="/Home" class="waves-effect">
+                                <i class="fa fa-home nav_icon"></i>
+                                <!--<span class="badge badge-success badge-pill float-right">2</span>-->
+                                <span> الرئيسية </span>
+                            </a>
+                        </li>
+
+
+
+                        <li>
+                            <a href="javascript:void(0);" class="waves-effect">
+                                <i class="mdi mdi-account-supervisor"></i>
+                                <span>العملاء و الموردين</span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <ul class="nav-second-level" aria-expanded="false">
+                                <li>
+                                    <a href="/Customers" pv="/Customers">
+                                        <i class="fa fa-caret-left"></i>
+                                        العملاء
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/VendorsGroup" pv="/VendorsGroup">
+                                        <i class="fa fa-caret-left"></i>
+                                        مجموعات الموردين
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/Vendor" pv="/Vendor">
+                                        <i class="fa fa-caret-left"></i>
+                                        الموردين
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="javascript: void(0);" class="waves-effect">
+                                <i class="remixicon-file-copy-2-line"></i>
+                                <span>  المشتريات </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <ul class="nav-second-level" aria-expanded="false">
+                                <li>
+                                    <a href="/ItemGroups"><i class="fa fa-caret-left"></i>  مجموعات الأصناف</a>
+                                </li>
+                                <li>
+                                    <a href="/ItemUnits"> <i class="fa fa-caret-left"></i>  وحدات الأصناف</a>
+                                </li>
+                                <li>
+                                    <a href="/Item"> <i class="fa fa-caret-left"></i>الأصناف</a>
+                                </li>
+                                <li>
+                                    <a href="/Warehouse"><i class="fa fa-caret-left"></i> المخازن</a>
+                                </li>
+                                <li>
+                                    <a href="/PurchaseInvoice"><i class="fa fa-caret-left"></i> فواتير الشراء</a>
+                                </li>
+                                <li>
+                                    <a href="/PurchaseReturn" pv="/PurchaseReturn"><i class="fa fa-caret-left"></i>مرتجع الشراء</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="javascript: void(0);" class="waves-effect">
+                                <i class="remixicon-pages-line"></i>
+                                <span>   المبيعات </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <ul class="nav-second-level" aria-expanded="false">
+                                <li>
+                                    <a href="/SalesInvoice" pv="/SalesInvoice"><i class="fa  fa-caret-left"></i>فواتير البيع</a>
+                                </li>
+                                <li>
+                                    <a href="/SalesReturn" pv="/SalesReturn"><i class="fa  fa-caret-left"></i>مرتجع البيع</a>
+                                </li>
+                                <li>
+                                    <a href="/SalesOrder" pv="/SalesOrder">
+                                        <i class="fa  fa-caret-left"></i>
+                                        الطلبات
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="javascript: void(0);" class="waves-effect">
+                                <i class="remixicon-vip-diamond-line"></i>
+                                <span> الإعدادات  </span>
+                                <span class="menu-arrow"></span>
+                            </a>
+                            <ul class="nav-second-level" aria-expanded="false">
+                                <li>
+                                    <a href="/Employee"><i class="fa  fa-caret-left"></i> الموظفين</a>
+                                </li>
+                                <li>
+                                    <a href="/Country"><i class="fa  fa-caret-left"></i>الدول</a>
+                                </li>
+                                <li>
+                                    <a href="/City"><i class="fa  fa-caret-left"></i>المدن</a>
+                                </li>
+                                <li>
+                                    <a href="/Area"><i class="fa  fa-caret-left"></i>المناطق</a>
+                                </li>
+
+                                <li>
+                                    <a href="/Coupon" pv="/Coupon"><i class="fa  fa-caret-left"></i>كوبانات الخصم</a>
+                                </li>
+                                <li>
+                                    <a href="/Slider" pv="/Slider"><i class="fa  fa-caret-left"></i> الشريط الاعلانى </a>
+                                </li>
+                                <li>
+                                    <a href="/ERPUsers" pv="/ERPUsers">
+                                        <i class="fa  fa-caret-left"></i>
+                                        المستخدمين
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/UserPrivilege" pv="/UserPrivilege">
+                                        <i class="fa  fa-caret-left"></i>
+                                        صلاحيات المستخدمين
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="/LogIn/ResetPassword" pv="/LogIn/ResetPassword">
+                                        <i class="fa  fa-caret-left"></i>
+                                        تغيير كلمة المرور
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <a href="/LogOut" class="waves-effect">
+                                <i class="remixicon-logout-circle-line"></i>
+                                <span> تسجيل خروج</span>
+                            </a>
+
+                        </li>
+
+                    </ul>
+                </div>
+                <!-- End Sidebar -->
+
+                <div class="clearfix"></div>
+
+            </div>
+            <!-- Sidebar -left -->
+
+        </div>
+        <!-- Left Sidebar End -->
+        <!-- ============================================================== -->
+        <!-- Start Page Content here -->
+        <!-- ============================================================== -->
+
+        <div class="content-page">
+            <div class="content">
+
+                <!-- Start Content-->
+                <div class="container-fluid">
+
+                    @RenderBody()
+
+                </div> <!-- container -->
+
+            </div> <!-- content -->
+            <!-- Footer Start -->
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-6">
+                            @*@if (System.Web.Configuration.WebConfigurationManager.AppSettings["OwnerName"] == "MySoft")
+                            {
+                                <div class="copyright">
+                                    <p>© 2019   All Rights Reserved . Developed by <a href="http://mysoft-eg.com/" target="_blank">MySoft</a></p>
+                                </div>
+
+                            }*@
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- end Footer -->
+
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- End Page content -->
+        <!-- ============================================================== -->
+
+
+    </div>
+    <!-- END wrapper -->
+    <!-- Right bar overlay-->
+    <div class="rightbar-overlay"></div>
+
+
+
+    <script src="~/assets/libs/jquery-knob/jquery.knob.min.js"></script>
+    <script src="~/assets/libs/peity/jquery.peity.min.js"></script>
+
+    <!-- Plugins js -->
+    <script src="~/assets/libs/moment/moment.min.js"></script>
+    <script src="~/assets/libs/x-editable/bootstrap-editable.min.js"></script>
+    <script src="~/assets/libs/twitter-bootstrap-wizard/jquery.bootstrap.wizard.min.js"></script>
+    <script src="~/assets/js/inputmask.min.js"></script>
+    <script src="~/assets/js/jquery.inputmask.min.js"></script>
+    <script src="~/assets/js/inputmask.numeric.extensions.min.js"></script>
+    <script src="~/assets/libs/switchery/switchery.min.js"></script>
+
+    <script src="~/assets/js/select2.min.js"></script>
+    <!-- Validation js (Parsleyjs) -->
+    <script src="~/assets/libs/parsleyjs/parsley.min.js"></script>
+
+    <!-- validation init -->
+    <script src="~/assets/js/pages/form-validation.init.js"></script>
+
+    <!-- Summernote js -->
+    <script src="~/assets/libs/summernote/summernote-bs4.min.js"></script>
+    @*<script src="~/assets/libs/jquery-ui/jquery-ui.min.js"></script>*@
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+            crossorigin="anonymous"></script>
+    @*<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-migrate/3.0.1/jquery-migrate.min.js"></script>*@
+
+    <!-- Sparkline charts -->
+    <script src="~/assets/libs/jquery-sparkline/jquery.sparkline.min.js"></script>
+    <!-- Responsive Table js -->
+    <script src="~/assets/libs/rwd-table/rwd-table.min.js"></script>
+    <!-- init js -->
+    <script src="~/assets/js/pages/dashboard-1.init.js"></script>
+    <script src="~/assets/js/pages/form-summernote.init.js"></script>
+    <script src="~/assets/js/pages/responsive-table.init.js"></script>
+    <script>
+        function searchSideMenu() {
+            var name = $('#side-menu-search').val();
+
+            $('#side-menu > li > a').each(function () {
+                if ($(this).text().indexOf(name.trim()) > -1) {
+                    $(this).show();
+
+                } else {
+                    $(this).hide();
+                }
+            });
+            $('#side-menu > li > ul > li >  a').each(function () {
+                if ($(this).text().indexOf(name.trim()) > -1) {
+                    $(this).show();
+                    $(this).closest('#find > li').find('a:first').show();
+                } else {
+                    $(this).hide();
+                }
+
+            });
+            $('#side-menu > li > ul > li > ul > li > a').each(function () {
+                if ($(this).text().indexOf(name.trim()) > -1) {
+                    $(this).show();
+                    $(this).closest('#side-menu > li > ul > li').find('a:first').show();
+                    $(this).closest('#side-menu > li').find('a:first').show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+
+        function matchCustom(params, data) {
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+
+            var termCount = params.term.trim().split(' ').length;
+            var matchCount = 0;
+            for (var i = 0; i < termCount; i++) {
+                var term = params.term.trim().split(' ')[i];
+                for (var j = 0; j < data.text.trim().split(' ').length; j++) {
+                    if (data.text.trim().split(' ')[j].toUpperCase().indexOf(term.toUpperCase()) > -1) {
+                        matchCount++;
+                        if (matchCount == termCount)
+                            return data;
+                    }
+                }
+            }
+            return null;
+        }
+        $('[data-plugin="switchery"]').each(function (t, e) { new Switchery($(this)[0], $(this).data()) });
+        $("select:not(#ShowByPage):not(#pagination)").select2({
+            matcher: matchCustom
+        });
+
+        //$('select').on('change', function () {
+        //    $(this).trigger('blur');
+        //});
+        //$(document).on('change', 'select', function () {
+        //    console.log($(this).val());
+        //});
+        $('.money').inputmask({
+            alias: 'numeric', groupSeparator: ',', autoGroup: true, digits: 2, 'allowMinus': false, digitsOptional: false, 'placeholder': '0'
+        });
+
+        $("form button[type|='submit']:not(.search)").on('click', function () {
+            let form = $(this).closest('form');
+            if (form.find('input:invalid, select:invalid').length == 0)
+                if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+                    return true;
+                    $('#preloader, #status').fadeIn();
+                } else {
+                    return false;
+                }
+            else
+                $('html, body').animate({
+                    scrollTop: form.find(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+        });
+        $("form").submit(function () {
+            $('.money').each(function () {
+                var val = $(this).inputmask('unmaskedvalue');
+                $(this).inputmask('remove');
+                $(this).val(val);
+            });
+
+        });
+
+        $(document).on('focus', 'input[type=number]', function (e) {
+            $(this).on('mousewheel.disableScroll', function (e) {
+                e.preventDefault()
+            })
+        });
+        $(document).on('blur', 'input[type=number]', function (e) {
+            $(this).off('mousewheel.disableScroll')
+        });
+
+        //mask for input type number
+        $('input[type=number]').not('#IdentityNumber').not('#InstallmentPaymentCount').not('#txtPoints').not('#servicesPrice').removeProp('oninput').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        $('input.small-number').not('#InstallmentPaymentCount').not('#txtPoints').not('#servicesPrice').removeProp('oninput').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 4, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        });
+        //observe document change to apply mask for input type number
+        //var config = { attributes: false, childList: true, subtree: true };
+        //var observer = new MutationObserver(function (mutationsList, observer) {
+        //    $('input[type=number]').not('#InstallmentPaymentCount').not('#txtPoints').not('#servicesPrice').removeProp('oninput').prop('type', 'text').inputmask({
+        //        alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': false, 'placeholder': '0'
+        //    });
+        //});
+        //observer.observe(document, config);
+
+        setInterval(function () {
+            getNotifications();
+        }, 5000);
+
+        function getNotifications() {
+            $.get('/OccuredNotifications/Notifications').done(function (r) {
+                $('#user-notifications').empty().append(r.notifications);
+                if (r.count * 1 > 0)
+                    $('#user-notifications').closest('li').find('.noti-icon-badge').text(r.count).show();
+                $('#user-notifications').height(68 * r.count);
+            });
+        }
+        getNotifications();
+
+        function notificationRead(id) {
+            $.post('/OccuredNotifications/NotificationRead/' + id);
+            getNotifications();
+        }
+
+        //$(document).ready(() => {
+        //    let OneSignal = window.OneSignal || [];
+        //    OneSignal.push(function () {
+        //        OneSignal.init({
+        //            appId: "cbf18993-898a-4b6b-87ff-e51ec31735d5",
+        //        });
+        //    });
+        //    $.get('https://app.onesignal.com/login').fail(() => {
+        //        OneSignal.getUserId(function (id) {
+        //            if (id.length)
+        //                $.get('/Helper/UpdatePlayerCurrentUser?playerId=' + id);
+        //        });
+        //    });
+        //});
+        ////adjust paging appearance
+        $('.pagination').css("display", "flex");
+        $('.pagination').css("flex-wrap", "wrap");
+    </script>
+    <!-- App js -->
+    <script src="~/assets/js/app.min.js"></script>
+</body>
+</html>

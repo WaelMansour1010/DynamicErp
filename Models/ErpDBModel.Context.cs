@@ -1674,7 +1674,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PurchaseInvoice_Delete", idParameter, userIdParameter);
         }
     
-        public virtual int PurchaseInvoice_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> warehouseId, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> vendorOrCustomerId, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> total, Nullable<decimal> totalItemsDiscount, Nullable<decimal> salesTaxes, Nullable<decimal> totalAfterTaxes, Nullable<decimal> voucherDiscountValue, Nullable<double> voucherDiscountPercentage, Nullable<decimal> netTotal, Nullable<decimal> paid, Nullable<double> validityPeriod, Nullable<double> deliveryPeriod, Nullable<int> costCenterId, Nullable<double> currentQuantity, Nullable<int> destinationWarehouseId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<decimal> totalCostPrice, Nullable<decimal> totalItemDirectExpenses, Nullable<decimal> commercialRevenueTax, Nullable<double> addedPrecentageCost, Nullable<bool> isDelivered, Nullable<bool> isAccepted, Nullable<bool> isLinked, Nullable<bool> isCompleted, Nullable<bool> isPosted, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> autoCreated, string notes, string image, Nullable<int> updatedId, string details, string paymentMethods, string directExpenses, string serialNumbers, Nullable<bool> alterPrices, string alteredPrices, Nullable<bool> distributeItems, string patchDetails, Nullable<System.DateTime> dueDate, string vendorInvoiceNumber, Nullable<int> paymentType)
+        public virtual int PurchaseInvoice_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> warehouseId, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> vendorOrCustomerId, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> total, Nullable<decimal> totalItemsDiscount, Nullable<decimal> salesTaxes, Nullable<decimal> totalAfterTaxes, Nullable<decimal> voucherDiscountValue, Nullable<double> voucherDiscountPercentage, Nullable<decimal> netTotal, Nullable<decimal> paid, Nullable<double> validityPeriod, Nullable<double> deliveryPeriod, Nullable<int> costCenterId, Nullable<double> currentQuantity, Nullable<int> destinationWarehouseId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<decimal> totalCostPrice, Nullable<decimal> totalItemDirectExpenses, Nullable<decimal> commercialRevenueTax, Nullable<double> addedPrecentageCost, Nullable<bool> isDelivered, Nullable<bool> isAccepted, Nullable<bool> isLinked, Nullable<bool> isCompleted, Nullable<bool> isPosted, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> autoCreated, string notes, string image, Nullable<int> updatedId, string details, string paymentMethods, string directExpenses, string serialNumbers, Nullable<bool> alterPrices, string alteredPrices, Nullable<bool> distributeItems, string patchDetails, Nullable<System.DateTime> dueDate, string vendorInvoiceNumber)
         {
             var branchIdParameter = branchId.HasValue ?
                 new ObjectParameter("BranchId", branchId) :
@@ -1867,15 +1867,11 @@ namespace MyERP.Models
             var vendorInvoiceNumberParameter = vendorInvoiceNumber != null ?
                 new ObjectParameter("VendorInvoiceNumber", vendorInvoiceNumber) :
                 new ObjectParameter("VendorInvoiceNumber", typeof(string));
-
-            var paymentTypeParameter = paymentType.HasValue ?
-                new ObjectParameter("PaymentType", paymentType) :
-                new ObjectParameter("PaymentType", typeof(int));
-
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PurchaseInvoice_Insert", id, branchIdParameter, warehouseIdParameter, departmentIdParameter, voucherDateParameter, vendorOrCustomerIdParameter, currencyIdParameter, currencyEquivalentParameter, totalParameter, totalItemsDiscountParameter, salesTaxesParameter, totalAfterTaxesParameter, voucherDiscountValueParameter, voucherDiscountPercentageParameter, netTotalParameter, paidParameter, validityPeriodParameter, deliveryPeriodParameter, costCenterIdParameter, currentQuantityParameter, destinationWarehouseIdParameter, systemPageIdParameter, selectedIdParameter, totalCostPriceParameter, totalItemDirectExpensesParameter, commercialRevenueTaxParameter, addedPrecentageCostParameter, isDeliveredParameter, isAcceptedParameter, isLinkedParameter, isCompletedParameter, isPostedParameter, userIdParameter, isActiveParameter, isDeletedParameter, autoCreatedParameter, notesParameter, imageParameter, updatedIdParameter, detailsParameter, paymentMethodsParameter, directExpensesParameter, serialNumbersParameter, alterPricesParameter, alteredPricesParameter, distributeItemsParameter, patchDetailsParameter, dueDateParameter, vendorInvoiceNumberParameter, paymentTypeParameter);
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PurchaseInvoice_Insert", id, branchIdParameter, warehouseIdParameter, departmentIdParameter, voucherDateParameter, vendorOrCustomerIdParameter, currencyIdParameter, currencyEquivalentParameter, totalParameter, totalItemsDiscountParameter, salesTaxesParameter, totalAfterTaxesParameter, voucherDiscountValueParameter, voucherDiscountPercentageParameter, netTotalParameter, paidParameter, validityPeriodParameter, deliveryPeriodParameter, costCenterIdParameter, currentQuantityParameter, destinationWarehouseIdParameter, systemPageIdParameter, selectedIdParameter, totalCostPriceParameter, totalItemDirectExpensesParameter, commercialRevenueTaxParameter, addedPrecentageCostParameter, isDeliveredParameter, isAcceptedParameter, isLinkedParameter, isCompletedParameter, isPostedParameter, userIdParameter, isActiveParameter, isDeletedParameter, autoCreatedParameter, notesParameter, imageParameter, updatedIdParameter, detailsParameter, paymentMethodsParameter, directExpensesParameter, serialNumbersParameter, alterPricesParameter, alteredPricesParameter, distributeItemsParameter, patchDetailsParameter, dueDateParameter, vendorInvoiceNumberParameter);
         }
     
-        public virtual int PurchaseInvoice_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<int> warehouseId, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> vendorOrCustomerId, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> total, Nullable<decimal> totalItemsDiscount, Nullable<decimal> salesTaxes, Nullable<decimal> totalAfterTaxes, Nullable<decimal> voucherDiscountValue, Nullable<double> voucherDiscountPercentage, Nullable<decimal> netTotal, Nullable<decimal> paid, Nullable<double> validityPeriod, Nullable<double> deliveryPeriod, Nullable<int> costCenterId, Nullable<double> currentQuantity, Nullable<int> destinationWarehouseId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<decimal> totalCostPrice, Nullable<decimal> commercialRevenueTax, Nullable<decimal> totalItemDirectExpenses, Nullable<double> addedPrecentageCost, Nullable<bool> isDelivered, Nullable<bool> isAccepted, Nullable<bool> isLinked, Nullable<bool> isCompleted, Nullable<bool> isPosted, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> autoCreated, string notes, string image, Nullable<int> updatedId, string details, string paymentMethods, string directExpenses, string serialNumbers, Nullable<bool> alterPrices, string alteredPrices, Nullable<bool> distributeItems, string patchDetails, Nullable<System.DateTime> dueDate, string vendorInvoiceNumber, Nullable<int> paymentType)
+        public virtual int PurchaseInvoice_Update(Nullable<int> id, string documentNumber, Nullable<int> branchId, Nullable<int> warehouseId, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> vendorOrCustomerId, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> total, Nullable<decimal> totalItemsDiscount, Nullable<decimal> salesTaxes, Nullable<decimal> totalAfterTaxes, Nullable<decimal> voucherDiscountValue, Nullable<double> voucherDiscountPercentage, Nullable<decimal> netTotal, Nullable<decimal> paid, Nullable<double> validityPeriod, Nullable<double> deliveryPeriod, Nullable<int> costCenterId, Nullable<double> currentQuantity, Nullable<int> destinationWarehouseId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<decimal> totalCostPrice, Nullable<decimal> commercialRevenueTax, Nullable<decimal> totalItemDirectExpenses, Nullable<double> addedPrecentageCost, Nullable<bool> isDelivered, Nullable<bool> isAccepted, Nullable<bool> isLinked, Nullable<bool> isCompleted, Nullable<bool> isPosted, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> autoCreated, string notes, string image, Nullable<int> updatedId, string details, string paymentMethods, string directExpenses, string serialNumbers, Nullable<bool> alterPrices, string alteredPrices, Nullable<bool> distributeItems, string patchDetails, Nullable<System.DateTime> dueDate, string vendorInvoiceNumber)
         {
             var idParameter = id.HasValue ?
                 new ObjectParameter("Id", id) :
@@ -2076,12 +2072,8 @@ namespace MyERP.Models
             var vendorInvoiceNumberParameter = vendorInvoiceNumber != null ?
                 new ObjectParameter("VendorInvoiceNumber", vendorInvoiceNumber) :
                 new ObjectParameter("VendorInvoiceNumber", typeof(string));
-
-            var paymentTypeParameter = paymentType.HasValue ?
-                new ObjectParameter("PaymentType", paymentType) :
-                new ObjectParameter("PaymentType", typeof(int));
-
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PurchaseInvoice_Update", idParameter, documentNumberParameter, branchIdParameter, warehouseIdParameter, departmentIdParameter, voucherDateParameter, vendorOrCustomerIdParameter, currencyIdParameter, currencyEquivalentParameter, totalParameter, totalItemsDiscountParameter, salesTaxesParameter, totalAfterTaxesParameter, voucherDiscountValueParameter, voucherDiscountPercentageParameter, netTotalParameter, paidParameter, validityPeriodParameter, deliveryPeriodParameter, costCenterIdParameter, currentQuantityParameter, destinationWarehouseIdParameter, systemPageIdParameter, selectedIdParameter, totalCostPriceParameter, commercialRevenueTaxParameter, totalItemDirectExpensesParameter, addedPrecentageCostParameter, isDeliveredParameter, isAcceptedParameter, isLinkedParameter, isCompletedParameter, isPostedParameter, userIdParameter, isActiveParameter, isDeletedParameter, autoCreatedParameter, notesParameter, imageParameter, updatedIdParameter, detailsParameter, paymentMethodsParameter, directExpensesParameter, serialNumbersParameter, alterPricesParameter, alteredPricesParameter, distributeItemsParameter, patchDetailsParameter, dueDateParameter, vendorInvoiceNumberParameter, paymentTypeParameter);
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("PurchaseInvoice_Update", idParameter, documentNumberParameter, branchIdParameter, warehouseIdParameter, departmentIdParameter, voucherDateParameter, vendorOrCustomerIdParameter, currencyIdParameter, currencyEquivalentParameter, totalParameter, totalItemsDiscountParameter, salesTaxesParameter, totalAfterTaxesParameter, voucherDiscountValueParameter, voucherDiscountPercentageParameter, netTotalParameter, paidParameter, validityPeriodParameter, deliveryPeriodParameter, costCenterIdParameter, currentQuantityParameter, destinationWarehouseIdParameter, systemPageIdParameter, selectedIdParameter, totalCostPriceParameter, commercialRevenueTaxParameter, totalItemDirectExpensesParameter, addedPrecentageCostParameter, isDeliveredParameter, isAcceptedParameter, isLinkedParameter, isCompletedParameter, isPostedParameter, userIdParameter, isActiveParameter, isDeletedParameter, autoCreatedParameter, notesParameter, imageParameter, updatedIdParameter, detailsParameter, paymentMethodsParameter, directExpensesParameter, serialNumbersParameter, alterPricesParameter, alteredPricesParameter, distributeItemsParameter, patchDetailsParameter, dueDateParameter, vendorInvoiceNumberParameter);
         }
     
         public virtual int PurchaseOrder_Insert(ObjectParameter id, Nullable<int> branchId, Nullable<int> warehouseId, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<int> vendorOrCustomerId, Nullable<int> currencyId, Nullable<double> currencyEquivalent, Nullable<decimal> total, Nullable<decimal> totalItemsDiscount, Nullable<decimal> salesTaxes, Nullable<decimal> totalAfterTaxes, Nullable<decimal> voucherDiscountValue, Nullable<double> voucherDiscountPercentage, Nullable<decimal> netTotal, Nullable<decimal> paid, Nullable<double> validityPeriod, Nullable<double> deliveryPeriod, Nullable<int> costPriceId, Nullable<double> currentQuantity, Nullable<int> destinationWarehouseId, Nullable<int> systemPageId, Nullable<int> selectedId, Nullable<decimal> totalCostPrice, Nullable<decimal> totalItemDirectExpenses, Nullable<bool> isDelivered, Nullable<bool> isAccepted, Nullable<bool> isLinked, Nullable<bool> isCompleted, Nullable<bool> isPosted, Nullable<int> userId, Nullable<bool> isActive, Nullable<bool> isDeleted, Nullable<bool> autoCreated, string notes, string image, Nullable<int> updatedId, Nullable<decimal> commercialRevenueTax, string details)
@@ -15444,7 +15436,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPrintItemsBarcode_Result>("GetPrintItemsBarcode", idParameter);
         }
     
-        public virtual ObjectResult<GetPropertyDueBatchDetails_Result> GetPropertyDueBatchDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate)
+        public virtual ObjectResult<GetPropertyDueBatchDetails_Result> GetPropertyDueBatchDetails(Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<int> departmentId)
         {
             var fromDateParameter = fromDate.HasValue ?
                 new ObjectParameter("FromDate", fromDate) :
@@ -15454,7 +15446,11 @@ namespace MyERP.Models
                 new ObjectParameter("ToDate", toDate) :
                 new ObjectParameter("ToDate", typeof(System.DateTime));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyDueBatchDetails_Result>("GetPropertyDueBatchDetails", fromDateParameter, toDateParameter);
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPropertyDueBatchDetails_Result>("GetPropertyDueBatchDetails", fromDateParameter, toDateParameter, departmentIdParameter);
         }
     
         public virtual int PropertyDueBatch_Insert(ObjectParameter id, Nullable<int> departmentId, Nullable<System.DateTime> voucherDate, Nullable<System.DateTime> fromDate, Nullable<System.DateTime> toDate, Nullable<bool> isDeleted, Nullable<int> userId, string notes, string image, string details)
@@ -16624,7 +16620,7 @@ namespace MyERP.Models
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("IssueAnalysis_Insert", idParameter, cashIssueVoucherIdParameter, valueParameter, reasonParameter, accountIdParameter, notesParameter, isDeletedParameter, totalParameter, taxesParameter, taxesPrecentageParameter, netTotalParameter, vendorIdParameter, vendorArNameParameter, taxNumberParameter, vATNumberParameter, invoiceNoParameter, issueAnalysisDetailsParameter);
         }
     
-        public virtual int IssueAnalysis_Update(Nullable<int> id, Nullable<int> cashIssueVoucherId, Nullable<decimal> value, string reason, Nullable<int> accountId, string notes, Nullable<bool> isDeleted, Nullable<decimal> total, Nullable<decimal> taxes, Nullable<double> taxesPrecentage, Nullable<decimal> netTotal, Nullable<int> vendorId, string vendorArName, string taxNumber, string vATNumber, string invoiceNo, string issueAnalysisDetail)
+        public virtual int IssueAnalysis_Update(Nullable<int> id, Nullable<int> cashIssueVoucherId, Nullable<decimal> value, string reason, Nullable<int> accountId, Nullable<int> departmentId, string notes, Nullable<bool> isDeleted, Nullable<decimal> total, Nullable<decimal> taxes, Nullable<double> taxesPrecentage, Nullable<decimal> netTotal, Nullable<int> vendorId, string vendorArName, string taxNumber, string vATNumber, string invoiceNo, string issueAnalysisDetail)
         {
             var idParameter = id.HasValue ?
                 new ObjectParameter("Id", id) :
@@ -16645,6 +16641,10 @@ namespace MyERP.Models
             var accountIdParameter = accountId.HasValue ?
                 new ObjectParameter("AccountId", accountId) :
                 new ObjectParameter("AccountId", typeof(int));
+    
+            var departmentIdParameter = departmentId.HasValue ?
+                new ObjectParameter("DepartmentId", departmentId) :
+                new ObjectParameter("DepartmentId", typeof(int));
     
             var notesParameter = notes != null ?
                 new ObjectParameter("Notes", notes) :
@@ -16694,7 +16694,7 @@ namespace MyERP.Models
                 new ObjectParameter("IssueAnalysisDetail", issueAnalysisDetail) :
                 new ObjectParameter("IssueAnalysisDetail", typeof(string));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("IssueAnalysis_Update", idParameter, cashIssueVoucherIdParameter, valueParameter, reasonParameter, accountIdParameter, notesParameter, isDeletedParameter, totalParameter, taxesParameter, taxesPrecentageParameter, netTotalParameter, vendorIdParameter, vendorArNameParameter, taxNumberParameter, vATNumberParameter, invoiceNoParameter, issueAnalysisDetailParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("IssueAnalysis_Update", idParameter, cashIssueVoucherIdParameter, valueParameter, reasonParameter, accountIdParameter, departmentIdParameter, notesParameter, isDeletedParameter, totalParameter, taxesParameter, taxesPrecentageParameter, netTotalParameter, vendorIdParameter, vendorArNameParameter, taxNumberParameter, vATNumberParameter, invoiceNoParameter, issueAnalysisDetailParameter);
         }
     
         public virtual ObjectResult<Area_Get_Result> Area_Get()

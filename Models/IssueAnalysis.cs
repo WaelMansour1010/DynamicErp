@@ -25,6 +25,7 @@ namespace MyERP.Models
         public Nullable<decimal> Value { get; set; }
         public string Reason { get; set; }
         public Nullable<int> AccountId { get; set; }
+        public Nullable<int> DepartmentId { get; set; }
         public string Notes { get; set; }
         public bool IsDeleted { get; set; }
         public Nullable<decimal> Total { get; set; }

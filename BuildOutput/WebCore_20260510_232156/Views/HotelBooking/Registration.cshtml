@@ -1,0 +1,676 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.CompleteRegistration;
+    Layout = null;// "~/Views/Shared/_HotelBookingLayout.cshtml";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> @MyERP.Properties.Resources.CompleteRegistration </title>
+
+    <!-- Font Icon -->
+    <link rel="stylesheet" href="~/assets/fonts/Registration/material-icon/css/material-design-iconic-font.min.css">
+
+    <!-- Main css -->
+    <link rel="stylesheet" href="~/assets/css/Registration/css/style.css">
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="~/assets/images/favicon.ico">
+    <link href="~/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" id="bs-default-stylesheet" />
+
+    <style>
+        .was-validated select.form-control:invalid + .select2 .selection .select2-selection {
+            border: 1px solid #f1556c;
+        }
+
+        .was-validated select.form-control:valid + .select2 .selection .select2-selection {
+            border: 1px solid #1abc9c;
+        }
+    </style>
+
+    <!------------------ PayPal Payment --------------------->
+    <!-- Replace "test" with your own sandbox Business account app client ID -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AbDt4yBG-U0xVShFDPvil36GCPCzSkJ0WezVcFOJZ209p6cBCSHaONxqcFuhMT0SUTemwJKFF0jD0Ch5"></script>
+    <!------------------ End Of PayPal Payment --------------------->
+
+
+</head>
+<body>
+
+    <div class="main">
+        <section class="signup">
+            @*<img src="../../assets/images/Hotel/images/bg_4.jpg" alt="">*@
+            <div class="container">
+                <div class="signup-content">
+
+                    @*<form method="POST" id="signup-form" class="signup-form">*@
+                    <div class="form-horizontal needs-validation" role="form" style="text-align: -webkit-center;">
+                        <h2 class="form-title" style="color:cornflowerblue;">@MyERP.Properties.Resources.CompleteRegistration</h2>
+                        <div class="col-8">
+                            <div class="card-box" style="text-align-last: right;">
+                                <div class="form-group col-sm-10">
+                                    <input hidden id="RoomTypeId" value="@ViewBag.RoomTypeId" />
+                                    <input hidden id="From" value="@ViewBag.From" />
+                                    <input hidden id="To" value="@ViewBag.To" />
+                                    <input hidden id="CustomerId" />
+                                    <input hidden id="RoomBookingId" />
+                                    <input hidden id="OnlinePaymentId" />
+
+                                    <input type="text" required class="form-control" name="name" id="FirstName" placeholder="@MyERP.Properties.Resources.FirstName" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="text" required class="form-control" name="name" id="LastName" placeholder="@MyERP.Properties.Resources.LastName" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="text" required class="form-control" name="name" id="NationalId" placeholder="@MyERP.Properties.Resources.NationalID" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="text" required class="form-control" name="name" id="Mobile" placeholder="@MyERP.Properties.Resources.Mobile" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+                                <div class="form-group col-sm-10">
+                                    <input type="email" required class="form-control" name="email" id="Email" placeholder="@MyERP.Properties.Resources.Email" />
+                                    <div class="invalid-feedback">
+                                        @MyERP.Properties.Resources.Required
+                                    </div>
+                                </div>
+
+                                <!----------------- Booking Details ----------------->
+                                <div class="card">
+                                    <div class="card-body" id="BookingDetailsDiv">
+                                    </div>
+                                </div>
+                                <!----------------- End of Booking Details ----------------->
+
+
+                                <div class="form-group col-sm-10">
+                                    <div class="form-group row">
+                                        <input hidden id="PaymentMethodId" />
+                                        <div class="col-sm-4">
+                                            <label for="vacation">
+                                                @MyERP.Properties.Resources.EPay
+                                            </label>
+                                            <input type="radio" id="EPay" name="PaymentMethod" value="2" />                                            <label for="vacation">
+                                                <br>
+                                        </div>
+                                        <div class="col-sm-4">
+                                            <label for="vacation">
+                                                @MyERP.Properties.Resources.Cash
+                                            </label>
+                                            <input type="radio" id="Cash" name="PaymentMethod" value="1" checked="checked" />
+                                            <br>
+                                        </div>
+                                        <label for="PaymentMethod" class="col-sm-4 control-label">@MyERP.Properties.Resources.PaymentMethod </label>
+                                    </div>
+                                </div>
+
+                                <!------------------ PayPal Payment --------------------->
+                                <div class="card" id="VisaDiv" style="display:none;">
+                                    <div class="card-body">
+                                        <!-- Set up a container element for the button -->
+                                        <div id="paypal-button-container"></div>
+                                        <!------------------ End Of PayPal Payment --------------------->
+                                    </div>
+                                </div>
+
+                                <div class="form-group col-sm-4" style="text-align-last: center; display:none;" id="AddCustomerBtnDiv">
+                                    <input type="button" name="submit" onclick="AddCustomer()" class="form-submit" value="@MyERP.Properties.Resources.Reserve" />
+                                </div>
+                                <div class="form-group col-sm-4" style="text-align-last: center; display:none;" id="SpinnerDiv">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </div>
+                                @*</form>*@
+                            </div>
+
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- JS -->
+    @*<script src="vendor/jquery/jquery.min.js"></script>*@
+    <script src="~/assets/js/Hotel/js/jquery.min.js"></script>
+
+    @*<script src="js/main.js"></script>*@
+    <!-- App js -->
+</body>
+</html>
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+    var Booking = [];
+    let posCustomers = [];
+    var OnlinePaymentId;
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        showBookingDetails();
+        getPosCustomers();
+        $('#AddCustomerBtnDiv').show();
+        $('#PaymentMethodId').val(1);
+       // StoreOnlinePaymentFile();
+        ChangeCurrency();
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $("input[name='PaymentMethod']").on('change', function () {
+        if ($("input[name='PaymentMethod']:checked").val() == 2) {
+            $('#VisaDiv').show();
+            $('#AddCustomerBtnDiv').hide();
+            $('#PaymentMethodId').val(4);
+            $('#SpinnerDiv').hide();
+        }
+        else {
+            $('#VisaDiv').hide();
+            $('#AddCustomerBtnDiv').show();
+            $('#PaymentMethodId').val(1);
+            $('#SpinnerDiv').hide();
+        }
+    });
+
+    (function ($) {
+        $(".toggle-password").click(function () {
+            $(this).toggleClass("zmdi-eye zmdi-eye-off");
+            var input = $($(this).attr("toggle"));
+            if (input.attr("type") == "password") {
+                input.attr("type", "text");
+            } else {
+                input.attr("type", "password");
+            }
+        });
+    })(jQuery);
+
+    //*********************************************************//
+    //--------------- Other Functions -------------------//
+
+    function ChangeCurrency() {
+        fetch("https://api.currencyfreaks.com/latest?apikey=d92bccc883f64bde8f65ddef4f11329c")
+            .then((result) => {
+                let myData = result.json();
+                return myData;
+            })
+            .then((currency) => {
+                let amount = Booking.Remain;
+                var CurrencyRateInSAR = parseFloat(currency.rates["SAR"]);
+                CurrencyRateInSAR = CurrencyRateInSAR.toFixed(2);
+                var CurrencyInSAR = Math.round(amount / CurrencyRateInSAR);
+                Booking.Remain = CurrencyInSAR;
+                //console.log("CurrencyRateInSAR : ", CurrencyRateInSAR, " ,CurrencyInSAR : ", CurrencyInSAR);
+               // console.log("Booking.Remain : ", Booking.Remain);
+
+            });
+    }
+
+    //function StoreOnlinePaymentFile() {
+
+    //    var Data = {
+    //        "id": "6B795538R6943372X",
+    //        "intent": "CAPTURE",
+    //        "status": "COMPLETED",
+    //        "purchase_units": [
+    //            {
+    //                "reference_id": "PUHF",
+    //                "amount": {
+    //                    "currency_code": "USD",
+    //                    "value": "1380.00",
+    //                    "breakdown": {
+    //                        "item_total": {
+    //                            "currency_code": "USD",
+    //                            "value": "1380.00"
+    //                        },
+    //                        "shipping": {
+    //                            "currency_code": "USD",
+    //                            "value": "0.00"
+    //                        },
+    //                        "handling": {
+    //                            "currency_code": "USD",
+    //                            "value": "0.00"
+    //                        },
+    //                        "tax_total": {
+    //                            "currency_code": "USD",
+    //                            "value": "0.00"
+    //                        },
+    //                        "insurance": {
+    //                            "currency_code": "USD",
+    //                            "value": "0.00"
+    //                        },
+    //                        "shipping_discount": {
+    //                            "currency_code": "USD",
+    //                            "value": "0.00"
+    //                        }
+    //                    }
+    //                },
+    //                "payee": {
+    //                    "email_address": "sb-rzja520460704@business.example.com",
+    //                    "merchant_id": "HU452KT3MT8YU"
+    //                },
+    //                "description": "Fun Time Chalets",
+    //                "custom_id": "CUST-FuntimeChalets",
+    //                "soft_descriptor": "PAYPAL *TEST STORE FUN",
+    //                "items": [
+    //                    {
+    //                        "name": "3 - شاليه فرعى",
+    //                        "unit_amount": {
+    //                            "currency_code": "USD",
+    //                            "value": "1380.00"
+    //                        },
+    //                        "tax": {
+    //                            "currency_code": "USD",
+    //                            "value": "0.00"
+    //                        },
+    //                        "quantity": "1",
+    //                        "description": "Green XL",
+    //                        "sku": "sku01"
+    //                    }
+    //                ],
+    //                "shipping": {
+    //                    "name": {
+    //                        "full_name": "John Doe"
+    //                    },
+    //                    "address": {
+    //                        "address_line_1": "123 Townsend St",
+    //                        "address_line_2": "Floor 6",
+    //                        "admin_area_2": "San Francisco",
+    //                        "admin_area_1": "CA",
+    //                        "postal_code": "94107",
+    //                        "country_code": "US"
+    //                    }
+    //                },
+    //                "payments": {
+    //                    "captures": [
+    //                        {
+    //                            "id": "1H289520SN261641N",
+    //                            "status": "COMPLETED",
+    //                            "amount": {
+    //                                "currency_code": "USD",
+    //                                "value": "1380.00"
+    //                            },
+    //                            "final_capture": true,
+    //                            "seller_protection": {
+    //                                "status": "ELIGIBLE",
+    //                                "dispute_categories": [
+    //                                    "ITEM_NOT_RECEIVED",
+    //                                    "UNAUTHORIZED_TRANSACTION"
+    //                                ]
+    //                            },
+    //                            "create_time": "2022-11-23T13:47:57Z",
+    //                            "update_time": "2022-11-23T13:47:57Z"
+    //                        }
+    //                    ]
+    //                }
+    //            }
+    //        ],
+    //        "payer": {
+    //            "name": {
+    //                "given_name": "John",
+    //                "surname": "Doe"
+    //            },
+    //            "email_address": "sb-zl44h22210451@personal.example.com",
+    //            "payer_id": "6TX2PB339WBUS",
+    //            "address": {
+    //                "country_code": "EG"
+    //            }
+    //        },
+    //        "create_time": "2022-11-23T13:47:41Z",
+    //        "update_time": "2022-11-23T13:47:57Z",
+    //        "links": [
+    //            {
+    //                "href": "https://api.sandbox.paypal.com/v2/checkout/orders/6B795538R6943372X",
+    //                "rel": "self",
+    //                "method": "GET"
+    //            }
+    //        ]
+    //    }
+
+
+    //    $.ajax({
+    //        type: "POST",
+    //       // contentType: "application/json",
+    //        url: "/HotelBooking/StoreOnlinePaymentFile",
+    //        dataType: 'JSON',
+    //        data: { jsonObj: JSON.stringify(Data),id:Data.id },
+    //        //data: Data,
+    //        success: function (r) {
+    //            OnlinePaymentId = r;
+    //            $('#OnlinePaymentId').val(r);
+    //            //if (r.success == true) {
+    //            //}
+    //            //else {
+    //            //    alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+    //            //}
+    //            //$('#preloader, #status').fadeOut();
+    //        },
+    //        error: function (r) {
+    //            alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+    //            $('#preloader, #status').fadeOut();
+    //        }
+    //    });
+
+    //}
+
+
+    function getPosCustomers() {
+        $.get('/Helper/GetCustomers').done(function (r) {
+            posCustomers = r;
+        });
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+    }
+    function showBookingDetails() {
+        $.get('/HotelBooking/showBookingDetails?RoomTypeId=' + $("#RoomTypeId").val() + '&From=' + $("#From").val() + '&To=' + $("#To").val()).done(function (r) {
+            if (r) {
+                r.RegistrationDate = r.RegistrationDate != null ? convertToJavaScriptDate(r.RegistrationDate) : null;
+                r.BookingStartDate = r.BookingStartDate != null ? convertToJavaScriptDate(r.BookingStartDate) : null;
+                r.BookingEndDate = r.BookingEndDate != null ? convertToJavaScriptDate(r.BookingEndDate) : null;
+                r.RoomTypeArName = r.RoomTypeArName != null ? r.RoomTypeArName : "";
+                r.RequiredAmount = r.RequiredAmount != null ? r.RequiredAmount : "";
+                r.DocumentNumber = r.DocumentNumber != null ? r.DocumentNumber.replaceAll("-",'') : "";
+                r.Notes = r.Notes != null ? r.Notes : "";
+                Booking = r;
+
+                let Div = ' <div class="form-group row"><div class="col-sm-3"><label id="Price">'+
+                                                r.Price +'</label></div > <label class="col-sm-3"> : @MyERP.Properties.Resources.Price  </label><div class="col-sm-3"><label id="RoomCode">'+
+                                                r.RoomTypeArName +'</label></div > <label class="col-sm-3"> : @MyERP.Properties.Resources.Room  </label></div><div class="form-group row" > <div class="col-sm-3"><label id="BookingEndDate">' +
+                                            r.BookingEndDate+ '</label></div> <label class="col-sm-3">: @MyERP.Properties.Resources.To</label><div class="col-sm-3"><label id = "BookingStartDate" > ' +
+                r.BookingStartDate + ' </label></div><label class="col-sm-3">: @MyERP.Properties.Resources.From</label></div><div class="form-group row"><div class="col-sm-3"><label id="RequiredAmount">'+
+                    r.Total + '  </label></div><label class="col-sm-3"> : @MyERP.Properties.Resources.Total </label><div class="col-sm-3"><label id="NightsNumber">' +
+                    r.NightsNumber + '  </label></div><label class="col-sm-3">: @MyERP.Properties.Resources.NightsNumber</label></div><div class="form-group row" ><div class="col-sm-2"><label id="Remain"> ' +
+                    r.RequiredAmount + ' </label></div><label class="col-sm-4">: @MyERP.Properties.Resources.TotalAfterTaxes </label> <div class="col-sm-3"><label id="Tax">' +
+                    r.Tax + '</label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Tax</label> </div><div class="form-group row" ><div class="col-sm-3"><label id="Paid">'+
+                    r.Paid + '</label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Paid</label><div class="col-sm-3"><label id="Remain"> ' + r.Remain + ' </label></div><label class="col-sm-3">: @MyERP.Properties.Resources.Remain </label> </div>';
+                $('#BookingDetailsDiv').append(Div)
+            }
+        });
+
+    }
+    function AddCustomer(onlinePaymentId) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+            $('#AddCustomerBtnDiv').hide();
+            $('#SpinnerDiv').show();
+
+            $('#preloader, #status').fadeIn();
+            let customer = posCustomers.filter(function (i) { return i.NationalId == $('#NationalId').val() })[0];
+            if (customer != null) {
+               // alert("العميل موجود من قبل")
+                var CustomerId = customer.Id;
+                var ArName = customer.ArName.split(/ (.*)/s)[0]
+                var LastName = customer.ArName.split(/ (.*)/s)[1]
+                $("#FirstName").val(ArName)
+                $("#LastName").val(LastName)
+                //if (customer.Email != null) {
+                //    $('#Email').val(customer.Email)
+                //}
+                $('#CustomerId').val(CustomerId)
+                $('#Mobile').val(customer.Mobile)
+                $('#NationalId').val(customer.NationalId)
+                if (valid /*& confirm('استكمال التسجيل ؟')*/) {
+                    $.get('/HotelBooking/CompleteRegistration?CustomerId=' + $('#CustomerId').val() + '&RoomTypeId=' + $("#RoomTypeId").val() + '&From=' + $("#From").val() + '&To=' + $("#To").val() + '&Email=' + $("#Email").val() + '&PaymentMethodId=' + $("#PaymentMethodId").val() + '&OnlinePaymentId=' + onlinePaymentId).done(function (roomBooking) {
+                        if (roomBooking != null) {
+                            roomBooking.RegistrationDate = roomBooking.RegistrationDate != null ? convertToJavaScriptDate(roomBooking.RegistrationDate) : null;
+                            roomBooking.BookingStartDate = roomBooking.BookingStartDate != null ? convertToJavaScriptDate(roomBooking.BookingStartDate) : null;
+                            roomBooking.BookingEndDate = roomBooking.BookingEndDate != null ? convertToJavaScriptDate(roomBooking.BookingEndDate) : null;
+                            $.ajax({
+                                type: "POST", contentType: "application/json",
+                                url: "/RoomBooking/AddEdit",
+                                data: JSON.stringify(roomBooking),
+                                success: function (r) {
+                                    if (r.success == true) {
+                                            alert('تم الحجز بنجاح , سيتم التواصل معكم')
+                                            window.location.replace("/HotelBooking");
+                                    }
+                                    else {
+                                        alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                    }
+                                    $('#preloader, #status').fadeOut();
+                                },
+                                error: function (r) {
+                                    alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                    $('#preloader, #status').fadeOut();
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+            else {
+                if (valid) {
+                    $.ajax(
+                        {
+                            url: '/Customers/AddEdit', contentType: "application/json",
+                            type: 'POST',
+                            data: JSON.stringify({
+                                Id: 0,
+                                Code: 1,
+                                ArName: $("#FirstName").val() + " " + $("#LastName").val(),
+                                EnName: $('#PosCustomerEnName').val(),
+                                Email: $('#Email').val(),
+                                Mobile: $('#Mobile').val(),
+                                NationalId: $('#NationalId').val(),
+                                CustomersGroupId: 1,
+                            }),
+                            error: function (e) {
+                                $('#preloader, #status').fadeOut();
+                            },
+                            success: function (customer) {
+                                if (valid/* & confirm('استكمال التسجيل ؟')*/) {
+                                    $.get('/HotelBooking/CompleteRegistration?CustomerId=' + customer.Id + '&RoomTypeId=' + $("#RoomTypeId").val() + '&From=' + $("#From").val() + '&To=' + $("#To").val() + '&Email=' + $("#Email").val() + '&PaymentMethodId=' + $("#PaymentMethodId").val() + '&OnlinePaymentId=' + onlinePaymentId).done(function (roomBooking) {
+                                        if (roomBooking != null) {
+                                            roomBooking.RegistrationDate = roomBooking.RegistrationDate != null ? convertToJavaScriptDate(roomBooking.RegistrationDate) : null;
+                                            roomBooking.BookingStartDate = roomBooking.BookingStartDate != null ? convertToJavaScriptDate(roomBooking.BookingStartDate) : null;
+                                            roomBooking.BookingEndDate = roomBooking.BookingEndDate != null ? convertToJavaScriptDate(roomBooking.BookingEndDate) : null;
+                                            $.ajax({
+                                                type: "POST", contentType: "application/json",
+                                                url: "/RoomBooking/AddEdit",
+                                                data: JSON.stringify(roomBooking),
+                                                success: function (r) {
+                                                    if (r.success == true) {
+                                                    alert('تم الحجز بنجاح , سيتم التواصل معكم')
+                                               window.location.replace("/HotelBooking");
+                                                    }
+                                                    else {
+                                                        alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                                    }
+                                                    $('#preloader, #status').fadeOut();
+                                                },
+                                                error: function (r) {
+                                                    alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                                                    $('#preloader, #status').fadeOut();
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+
+                                $('#preloader, #status').fadeOut();
+
+                            }
+                        });
+                }
+            }
+        }
+    }
+
+    /*----------------- PayPal Payment---------------------*/
+    paypal.Buttons({
+        style: {
+            layout: 'vertical',
+            color: 'silver',
+            shape: 'rect',
+            label: 'paypal'
+        },
+
+        createOrder: function (data, actions) {
+            let valid = true;
+            if ($(".form-control:invalid").length > 0) {
+                console.log($(".form-control:invalid"));
+                $('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+                valid = false;
+            }
+            else {
+                return actions.order.create({
+                    "intent": "CAPTURE",
+                    purchase_units: [{
+                        //reference_id string
+                        //The API caller- provided external ID for the purchase unit.
+                        //Required for multiple purchase units when you must update the order through PATCH.
+                        //If you omit this value and the order contains only one purchase unit,
+                        //PayPal sets this value to default.
+                        reference_id: "PUHF",
+                        description: "Fun Time Chalets",
+                        custom_id: "CUST-FuntimeChalets",
+                        soft_descriptor: "FuntimeChalets",
+                        amount: {
+                            currency_code: "USD",
+                            value: Booking.Remain,
+                            breakdown: {
+                                item_total: {
+                                    currency_code: "USD",
+                                    value: Booking.Remain
+                                },
+                                shipping: {
+                                    currency_code: "USD",
+                                    value: "00.00"
+                                },
+                                handling: {
+                                    currency_code: "USD",
+                                    value: "00.00"
+                                },
+                                tax_total: {
+                                    currency_code: "USD",
+                                    value: "00.00"
+                                },
+                                shipping_discount: {
+                                    currency_code: "USD",
+                                    value: "00"
+                                }
+                            }
+                        },
+                        items: [{
+                            name: Booking.RoomTypeArName,
+                            description: "Fun Time Chalets" /*"Green XL"*/,
+                            sku: "sku01",//The stock keeping unit (SKU) for the item.
+                            unit_amount: {
+                                currency_code: "USD",
+                                value: Booking.Remain
+                            },
+                            tax: {
+                                currency_code: "USD",
+                                value: "00.00"
+                            },
+                            quantity: "1",
+                            category: "PHYSICAL_GOODS"
+                        }],
+                        shipping: {
+                            method: "United States Postal Service",
+                            address: {
+                                name: {
+                                    full_name: "John",
+                                    surname: "Doe"
+                                },
+                                address_line_1: "123 Townsend St",
+                                address_line_2: "Floor 6",
+                                admin_area_2: "San Francisco",
+                                admin_area_1: "CA",
+                                postal_code: "94107",
+                                country_code: "US"
+                            }
+                        }
+                    }]
+                })
+            }
+        },
+        onApprove: function (data, actions) {
+            let valid = true;
+            if ($(".form-control:invalid").length > 0) {
+                console.log($(".form-control:invalid"));
+                $('.form-horizontal').addClass('was-validated');
+                $('html, body').animate({
+                    scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+                }, 500);
+                valid = false;
+            }
+            else {
+                return actions.order.capture().then(function (details) {
+                   // alert('Transaction completed by ' + details.payer.name.given_name)
+                  //  console.log('Capture result', details, JSON.stringify(details, null, 2));
+
+                    $.ajax({
+                        type: "POST",
+                        // contentType: "application/json",
+                        url: "/HotelBooking/StoreOnlinePaymentFile",
+                        dataType: 'JSON',
+                        data: { jsonObj: JSON.stringify(details), id: details.id },
+                        success: function (r) {
+                            AddCustomer(r);
+                            //if (r.success == true) {
+                            //}
+                            //else {
+                            //    alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                            //}
+                            //$('#preloader, #status').fadeOut();
+                        },
+                        error: function (r) {
+                            alert('لم يتم استكمال الحجز , برجاء المحاولة مرة اخري')
+                            //$('#preloader, #status').fadeOut();
+                        }
+                    });
+                    // Call your server to save the transaction
+
+
+                    //return fetch('/api/paypal-transaction-complete', {
+                    //    method: 'post',
+                    //    headers: {
+                    //        'content-type': 'application/json'
+                    //    },
+                    //    body: JSON.stringify({
+                    //        orderID: data.orderID
+                    //    })
+                    //})
+                })
+            }
+        }
+    }).render('#paypal-button-container');
+    /*----------------- End Of PayPal Payment ---------------------*/
+
+    //*********************************************************//
+</script>
+

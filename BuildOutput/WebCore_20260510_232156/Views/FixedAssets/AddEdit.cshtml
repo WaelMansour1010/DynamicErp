@@ -1,0 +1,539 @@
+﻿@model MyERP.Models.FixedAsset
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.FixedAssets;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+
+
+                @if (Model != null && Model.Id > 0)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.FixedAssetsData</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/FixedAssets/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.UserId)
+                                }
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                            <div class="form-group row">
+                                    <label for="Code" class=" col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-2">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", required = "required" } })
+                                        @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+                                    </div>
+                                    <div class="col-sm-2">
+                                        @Html.DropDownList("FieldsCodingId", null, null, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                <label for="PurchaseDate" class=" col-sm-2 control-label">@MyERP.Properties.Resources.PurchaseDate</label>
+                                <div class="col-sm-4">
+                                    @Html.EditorFor(model => model.PurchaseDate, new { htmlAttributes = new { @class = "form-control", type = "date", required = "required" } })
+                                    @Html.ValidationMessageFor(model => model.PurchaseDate, "", new { @class = "text-danger" })
+                                </div>
+
+                            </div>
+
+                                <div class="form-group row">
+                                    <label for="ArName" class=" col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        @Html.ValidationMessageFor(model => model.ArName, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="EnName" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                        @Html.ValidationMessageFor(model => model.EnName, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class=" col-sm-2 control-label">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        @Html.ValidationMessageFor(model => model.DepartmentId, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="FixedAssetsGroupId" class=" col-sm-2 control-label">@MyERP.Properties.Resources.AssetsGroup</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("FixedAssetsGroupId", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        @Html.ValidationMessageFor(model => model.FixedAssetsGroupId, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="ValueOfAsset" class=" col-sm-2 control-label">@MyERP.Properties.Resources.AssetValue</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ValueOfAsset, new { htmlAttributes = new { @class = "form-control money", required = "required" } })
+                                        @Html.ValidationMessageFor(model => model.ValueOfAsset, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="HistoricalValueOfAsset" class=" col-sm-2 control-label">@MyERP.Properties.Resources.AssetFinalValue</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.HistoricalValueOfAsset, new { htmlAttributes = new { @class = "form-control money", required = "required" } })
+                                        @Html.ValidationMessageFor(model => model.HistoricalValueOfAsset, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="EmployeeId" class=" col-sm-2 control-label">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+
+                                    <label for="FixedAssetStatusId" class="control-label col-sm-2">@MyERP.Properties.Resources.AssetCondition</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("FixedAssetStatusId", null, htmlAttributes: new { @class = "form-control" })
+
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="FixedAssetTypeId" class=" col-sm-2 control-label">@MyERP.Properties.Resources.FixedAssetType</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("FixedAssetTypeId", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="col-sm-4">
+                                            <input type="checkbox" value="true" name="IsNew" @Html.Raw(Model != null && Model.IsNew == true ? "checked disabled" : "") id="IsNew" />
+                                            <label class="col-sm-10 control-label" for="IsNew">
+                                                @MyERP.Properties.Resources.NewAsset
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="header-title"><h4 class="panel-title">@MyERP.Properties.Resources.DepreciationInformation</h4></div>
+                                <div class="form-group row">
+                                    <label for="StartDepraciationDate" class=" col-sm-2 control-label">@MyERP.Properties.Resources.DateOnWhichAssetBeganToBeUsed</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.StartDepraciationDate, new { htmlAttributes = new { @class = "form-control", type = "date", required = "required" } })
+                                    </div>
+
+                                    <label for="TotalDepracaition" class=" col-sm-2 control-label">@MyERP.Properties.Resources.TotalDepreciation</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TotalDepracaition, new
+                                        {
+                                            htmlAttributes = new
+                                            {
+                                                @class = "form-control money",
+                                                required = "required",
+                                       @Value =Model!=null&&Model.TotalDepracaition.ToString()!=null?Model.TotalDepracaition.ToString():"0.00"
+                                   }
+                                   })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="ValueOfInstallment" class=" col-sm-2 control-label">@MyERP.Properties.Resources.InstallmentValue</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ValueOfInstallment, new { htmlAttributes = new { @class = "form-control money" } })
+                                    </div>
+
+                                    <label for="DepraciationRate" class=" col-sm-2 control-label AccountDiv" style="display:none;">@MyERP.Properties.Resources.DepreciationPercentage</label>
+                                    <div class="col-sm-4 AccountDiv" style="display:none;">
+                                        @Html.EditorFor(model => model.DepraciationRate, new { htmlAttributes = new { @class = "form-control", type = "number", required = "required" } })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="NumberOfYears" class=" col-sm-2 control-label">@MyERP.Properties.Resources.NoOfYears</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NumberOfYears, new { htmlAttributes = new { @class = "form-control", type = "number", @readonly = "readonly" } })
+                                    </div>
+
+                                    <label for="DepreciationMethod" class="control-label col-sm-2 AccountDiv" style="display:none;">@MyERP.Properties.Resources.CalculatingDepreciationMethod</label>
+                                    <div class="col-sm-4 AccountDiv" style="display:none;">
+                                        @Html.DropDownList("DepreciationMethod", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="NumberOfMonths" class=" col-sm-2 control-label">@MyERP.Properties.Resources.NoOfMonths</label>
+                                    <div class="col-sm-4">
+                                        <input type="number" step="any" class="form-control" id="NumberOfMonths" readonly="readonly" />
+                                        @*@Html.EditorFor(model => model.NumberOfYears, new { htmlAttributes = new { @class = "form-control", type = "number", @readonly = "readonly" } })*@
+                                    </div>
+
+
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="panel-title">
+                                            @MyERP.Properties.Resources.Accounts
+                                        </h4>
+
+                                        <div class="form-group row">
+                                            <label for="ChartOfAccountsIdOriginalAccounts" class="col-sm-2 control-label">@MyERP.Properties.Resources.AssetAccount</label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownList("ChartOfAccountsIdOriginalAccounts", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                @Html.ValidationMessageFor(model => model.ChartOfAccountsIdOriginalAccounts, "", new { @class = "text-danger" })
+                                            </div>
+
+                                            <label for="ChartOfAccountsIdDepracition" class="col-sm-2 control-label AccountDiv" style="display:none;">@MyERP.Properties.Resources.DepreciationExpenseAccount</label>
+                                            <div class="col-sm-4 AccountDiv" style="display:none;">
+                                                @Html.DropDownList("ChartOfAccountsIdDepracition", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                @Html.ValidationMessageFor(model => model.ChartOfAccountsIdDepracition, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row AccountDiv" style="display:none;">
+                                            <label for="ChartOfAccountsIdTotalDepracition" class="col-sm-2 control-label">@MyERP.Properties.Resources.TotalDepreciationAccount</label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownList("ChartOfAccountsIdTotalDepracition", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                @Html.ValidationMessageFor(model => model.ChartOfAccountsIdTotalDepracition, "", new { @class = "text-danger" })
+                                            </div>
+
+                                            <label for="CapitalGainsAccounts" class="col-sm-2 control-label">@MyERP.Properties.Resources.CapitalGainsAccount</label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownList("CapitalGainsAccounts", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                @Html.ValidationMessageFor(model => model.CapitalGainsAccounts, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <label for="CapitalLossesAccounts AccountDiv" style="display:none;" class="col-sm-2 control-label AccountDiv" style="display:none;">@MyERP.Properties.Resources.CapitalLossesAccount</label>
+                                            <div class="col-sm-4 AccountDiv" style="display:none;">
+                                                @Html.DropDownList("CapitalLossesAccounts", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                                @Html.ValidationMessageFor(model => model.CapitalLossesAccounts, "", new { @class = "text-danger" })
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="col-sm-4">
+                                                <input type="checkbox" name="IsHasNoDepreciation"  @Html.Raw(Model != null && Model.IsHasNoDepreciation == true ? "checked" : "") id="IsHasNoDepreciation" />
+                                                <label class="col-sm-10 control-label" for="IsHasNoDepreciation">
+                                                    @MyERP.Properties.Resources.HasNoDepreciation
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="float:left">
+                            @if (Model == null)
+                            {
+                                <input id="new" name="newBtn" hidden />
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button type="submit" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <a class="btn btn-danger" onclick="Delete(@Model.Id)" href="javascript:void(0);" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                }
+                            }
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    let DepreciationMethodId = $('#DepreciationMethod').val();
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+        $(document).ready(function () {
+            if (!$('#Id').val()) {
+                setCodeNum();
+                var d = new Date();
+                $('#PurchaseDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()));
+                $('#StartDepraciationDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()));
+            }
+            else {
+                $('#FieldsCodingId').prop('disabled', true);
+                $('#PurchaseDate').val('@ViewBag.PurchaseDate');
+                $('#StartDepraciationDate').val('@ViewBag.StartDepraciationDate');
+                if ($('#DepreciationMethod').val() == 1) {
+                    $('#ValueOfInstallment').prop('readonly', 'readonly');
+                }
+                $('#NumberOfMonths').val($('#NumberOfYears').val() * 12);
+            }
+            $('#FixedAssetsGroupId').trigger('change');
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    // disable gives Null with form Submit so we have to reverse it in submin
+    $("form").submit(function () {
+        $("#FieldsCodingId").prop('disabled', false);
+    });
+    //$(document).on('change', '#DepreciationMethod', function () {
+    //    setCodeNum();
+    //});
+
+    //0 meaning قسط ثابت
+    //1 meaning قسط متناقص
+    $(document).on('change', '#DepreciationMethod', function () {
+       // setCodeNum();
+        if ($(this).val() == 0) {
+            $('#ValueOfInstallment').removeProp('readonly');
+        } else if ($(this).val() == 1) {
+            $('#ValueOfInstallment').prop('readonly', 'readonly');
+        }
+        $('#ValueOfInstallment').val(0);
+        $('#NumberOfYears').val(0);
+        calculateNumberOfYears();
+    });
+    $(document).on('change', '#ValueOfInstallment', function () {
+        let DepraciationRate = $('#ValueOfInstallment').inputmask('unmaskedvalue') / $('#ValueOfAsset').inputmask('unmaskedvalue');
+        $('#DepraciationRate').val(DepraciationRate * 100);
+        calculateNumberOfYears();
+    });
+    $(document).on('change', '#DepraciationRate, #HistoricalValueOfAsset, #ValueOfAsset, #TotalDepracaition', function () {
+        calculateNumberOfYears();
+    });
+    $(document).on('change', '#FixedAssetsGroupId', function () {
+        GetAccountOfFixedAssetsGroup();
+    });
+
+    $(document).on('change', '#IsHasNoDepreciation', function () {
+        if ($('#IsHasNoDepreciation').prop('checked') == true) {
+            $('.AccountDiv').hide();
+            $('#CapitalGainsAccounts').attr('required', false);
+            $('#CapitalLossesAccounts').attr('required', false);
+            $('#ChartOfAccountsIdDepracition').val(0).attr('required', false);
+            $('#ChartOfAccountsIdOriginalAccounts').attr('required', true);
+            $('#ChartOfAccountsIdTotalDepracition').val(0).attr('required', false);
+            $('#DepreciationMethod').attr('required', false)
+        }
+        else {
+            $('.AccountDiv').show();
+            $('#CapitalGainsAccounts').attr('required', true);
+            $('#CapitalLossesAccounts').attr('required', true);
+            $('#ChartOfAccountsIdDepracition').attr('required', true);
+            $('#ChartOfAccountsIdOriginalAccounts').attr('required', true);
+            $('#ChartOfAccountsIdTotalDepracition').attr('required', true);
+            $('#DepreciationMethod').attr('required', true)
+        }
+    });
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            setCodeNum();
+        }
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function setCodeNum() {
+        $.get('/FixedAssets/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function calculateNumberOfYears() {
+       var valid = true
+        let HistoricalValueOfAsset = $('#HistoricalValueOfAsset').inputmask('unmaskedvalue') * 1;
+        let ValueOfAsset = $('#ValueOfAsset').inputmask('unmaskedvalue') - $('#TotalDepracaition').inputmask('unmaskedvalue');
+        let DepraciationRate = $('#DepraciationRate').inputmask('unmaskedvalue') / 100;
+        if ($('#DepreciationMethod').val() == 0) { // ثابت
+            let ValueOfInstallment = (ValueOfAsset + $('#TotalDepracaition').inputmask('unmaskedvalue') * 1) * DepraciationRate;
+            $('#ValueOfInstallment').val(ValueOfInstallment);
+            let NumberOfYears = (ValueOfAsset - HistoricalValueOfAsset) / ValueOfInstallment;
+            $('#NumberOfYears').val(NumberOfYears);
+        } else if ($('#DepreciationMethod').val() == 1) { //متناقص
+            $('#ValueOfInstallment').val(0);
+            let NumberOfYears = 0;
+            if (ValueOfAsset && HistoricalValueOfAsset && DepraciationRate) {
+                while (ValueOfAsset >= HistoricalValueOfAsset) {
+                    ValueOfAsset -= (ValueOfAsset * DepraciationRate);
+                    NumberOfYears++;
+                }
+                $('#ValueOfInstallment').val(ValueOfAsset);
+            }
+            else {
+                alert('@MyERP.Properties.Resources.MakeSureToEnterInEachOfTheAssetValueFinalAssetValueAndDepreciationRate');
+                $('#DepreciationMethod').val(DepreciationMethodId);
+                $('#DepreciationMethod').select2();
+            }
+
+            $('#NumberOfYears').val(NumberOfYears);
+        }
+        $('#NumberOfMonths').val($('#NumberOfYears').val() * 12);
+    }
+    function GetAccountOfFixedAssetsGroup() {
+        $.get('/Helper/GetAccountOfFixedAssetsGroup?FixedAssetsGroupId=' + $('#FixedAssetsGroupId').val()).done(function (r) {
+            if (r[0].CapitalGainsAccounts != null) {
+                $('#CapitalGainsAccounts').val(r[0].CapitalGainsAccounts)
+                $('#CapitalGainsAccounts option:selected').text(r[0].CapitalGainsAccountsName[0].ArName)
+                $('#CapitalGainsAccounts').select2();
+            }
+            else {
+                $('#CapitalGainsAccounts').prop('selectedIndex', 0);
+                $('#CapitalGainsAccounts').select2();
+            }
+
+            if (r[0].CapitalLossesAccounts != null) {
+                $('#CapitalLossesAccounts').val(r[0].CapitalLossesAccounts)
+                $('#CapitalLossesAccounts option:selected').text(r[0].CapitalLossesAccountsName[0].ArName)
+                $('#CapitalLossesAccounts').select2();
+            }
+            else {
+                $('#CapitalLossesAccounts').prop('selectedIndex', 0)
+                $('#CapitalLossesAccounts').select2();
+            }
+            if (r[0].ChartOfAccountsIdDepracition != null) {
+                $('#ChartOfAccountsIdDepracition').val(r[0].ChartOfAccountsIdDepracition)
+                $('#ChartOfAccountsIdDepracition option:selected').text(r[0].ChartOfAccountsIdDepracitionName[0].ArName)
+                $('#ChartOfAccountsIdDepracition').select2();
+            }
+            else {
+                $('#ChartOfAccountsIdDepracition').prop('selectedIndex', 0)
+                $('#ChartOfAccountsIdDepracition').select2();
+            }
+            if (r[0].ChartOfAccountsIdOriginalAccounts != null) {
+                $('#ChartOfAccountsIdOriginalAccounts').val(r[0].ChartOfAccountsIdOriginalAccounts)
+                $('#ChartOfAccountsIdOriginalAccounts option:selected').text(r[0].ChartOfAccountsIdOriginalAccountsName[0].ArName)
+                $('#ChartOfAccountsIdOriginalAccounts').select2();
+            }
+            else {
+                $('#ChartOfAccountsIdOriginalAccounts').prop('selectedIndex', 0)
+                $('#ChartOfAccountsIdOriginalAccounts').select2();
+            }
+            if (r[0].ChartOfAccountsIdTotalDepracition != null) {
+                $('#ChartOfAccountsIdTotalDepracition').val(r[0].ChartOfAccountsIdTotalDepracition)
+                $('#ChartOfAccountsIdTotalDepracitionoption option:selected').text(r[0].ChartOfAccountsIdTotalDepracitionName)
+                $('#ChartOfAccountsIdTotalDepracition').select2();
+            }
+            else {
+                $('#ChartOfAccountsIdTotalDepracition').prop('selectedIndex', 0)
+                $('#ChartOfAccountsIdTotalDepracition').select2();
+            }
+            if (r[0].DepreciationMethod != null) {
+                $('#DepreciationMethod').val(r[0].DepreciationMethod);
+                $('#DepreciationMethod option:selected').text(r[0].DepreciationMethodName);
+                $('#DepreciationMethod').select2();
+            }
+            else {
+                $('#DepreciationMethod').prop('selectedIndex', 0)
+                $('#DepreciationMethod').select2();
+            }
+            if (r[0].DepraciationRate != null) {
+                $('#DepraciationRate').val(r[0].DepraciationRate);
+                $('#DepraciationRate').trigger('change');
+            }
+            if (r[0].IsHasNoDepreciation == true) {
+                $('#IsHasNoDepreciation').prop('checked', true);
+                $('#IsHasNoDepreciation').val($('#IsHasNoDepreciation').prop('checked'));
+                $('#CapitalGainsAccounts').attr('required', false);
+                $('#CapitalLossesAccounts').attr('required', false);
+                $('#ChartOfAccountsIdDepracition').val(0).attr('required', false);
+                $('#ChartOfAccountsIdOriginalAccounts').attr('required', true);
+                $('#ChartOfAccountsIdTotalDepracition').val(0).attr('required', false);
+                $('#DepreciationMethod').attr('required', false)
+            }
+            else {
+                $('.AccountDiv').show();
+                $('#IsHasNoDepreciation').prop('checked', false);
+                $('#IsHasNoDepreciation').val($('#IsHasNoDepreciation').prop('checked'));
+                $('#CapitalGainsAccounts').attr('required', true);
+                $('#CapitalLossesAccounts').attr('required', true);
+                $('#ChartOfAccountsIdDepracition').attr('required', true);
+                $('#ChartOfAccountsIdOriginalAccounts').attr('required', true);
+                $('#ChartOfAccountsIdTotalDepracition').attr('required', true);
+                $('#DepreciationMethod').attr('required', true)
+            }
+        });
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/FixedAssets/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/FixedAssets');
+                        }
+                        else if (r == 'False') {
+                            $('#preloader, #status').fadeOut();
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceededBecauseFixedAssetUsedInOtherTransactions');
+                        }
+                    }
+                });
+        }
+    }
+
+    //*********************************************************//
+</script>

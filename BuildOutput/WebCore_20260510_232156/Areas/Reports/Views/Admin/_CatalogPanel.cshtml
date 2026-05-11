@@ -1,0 +1,26 @@
+<div class="dr-panel" id="drCatalogPanel" aria-live="polite">
+    <div class="dr-panel-head">
+        <h2>كتالوج مصادر التقارير</h2>
+        <span class="dr-muted">الاكتشاف يقرأ تعريفات dbo فقط، ولا ينفذ أي Stored Procedure.</span>
+    </div>
+
+    <div class="dr-perm-toolbar">
+        <button type="button" class="dr-button" id="drCatalogDiscover">اكتشاف المصادر الآن</button>
+        <div class="dr-field">
+            <label>الحالة</label>
+            <select id="drCatalogStatus">
+                <option value="">الكل</option>
+                <option value="Approved">Approved</option>
+                <option value="Pending">Pending</option>
+                <option value="Risky">Risky</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Imported">Imported</option>
+            </select>
+        </div>
+        <button type="button" class="dr-button secondary" id="drCatalogRefresh">تحديث القائمة</button>
+    </div>
+
+    <div class="dr-message" id="drCatalogMessage" role="status"></div>
+    <div class="dr-catalog-grid" id="drCatalogRows"></div>
+    <div class="dr-catalog-detail-pane" id="drCatalogDetail"></div>
+</div>

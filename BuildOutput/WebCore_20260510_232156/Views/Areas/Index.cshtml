@@ -1,0 +1,249 @@
+﻿@model IEnumerable<MyERP.Models.Area>
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Areas;
+}
+
+<div style="text-align: left;padding-bottom: 23px;">
+</div>
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <div class="form-title">
+                        <a class="btn btn-info" href="@Url.Action("AddEdit")" role="button" style="float:left;">إضافة جديد</a>
+
+                        <div class="hed">@MyERP.Properties.Resources.Areas</div>
+                    </div>
+                    <div class="form-body">
+
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder="بحث">
+                                    <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-info btnSearch" onclick="pageNo = 1; searchWord=''; paging();">
+                                        <i class="fa fa-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    الكود
+                                </th>
+                                <th>
+                                    الاسم باللغة العربية
+                                </th>
+
+                                <th>
+                                    الاسم باللغة الإنجليزية
+                                </th>
+                                <th>
+                                    الدولة
+                                </th>
+                                <th>
+                                    المدينة
+                                </th>
+
+
+                                <th>
+                                    نشط
+                                </th>
+                                <th>
+                                    تعديل
+                                </th>
+                                <th>
+                                    حذف
+                                </th>
+                            </tr>
+                        </thead>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Code)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ArName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.EnName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Country.ArName)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.City.ArName)
+                                </td>
+
+                                <td>
+                                    <label class="switch">
+                                        @if (item.IsActive == true)
+                                        {
+                                            <input class="switch-input" type="checkbox" checked="checked" onclick="ActivateAndDeactivate(@item.Id)" />
+                                        }
+                                        else
+                                        {
+                                            <input class="switch-input" type="checkbox" onclick="ActivateAndDeactivate(@item.Id)" />
+                                        }
+
+                                        <span class="switch-label" data-on="نشط" data-off="غير نشط"></span>
+                                        <span class="switch-handle"></span>
+                                    </label>
+
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("AddEdit","Areas",new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="javascript:void(0);" onclick="Delete(@item.Id)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+
+                                </td>
+
+
+                            </tr>
+                        }
+
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<div style="text-align:center;margin-bottom: 50px;">
+
+    <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+        <option value="10">10</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="200">200</option>
+        <option value="@ViewBag.Count">الكل</option>
+    </select>
+
+    <ul class="pagination" style="margin: 0px;"></ul>
+
+    <span style="font-size:12px;float:right;"> عدد النتائج : <span id="RowsCount">@ViewBag.Count</span></span>
+</div>*@
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">الكل</option>
+            </select>
+            <span style="font-size:12px;float:right;"> عدد النتائج : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> رقم الصفحة: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+
+</div>
+
+<script>
+   var pageNo = 1;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function paging() {
+        var link = '/Areas/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord;
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+      //      $('.pagination').append('<li class="pageNo" id="pg' + (i + 1) + '"><a href="javascript:void(0);" onclick="pageNo=' + (i + 1) + '; paging();">' + (i + 1) + '</a></li>');
+            $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+
+            }
+
+    setPages();
+
+$('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+    })
+    function Delete(id) {
+        if (confirm('هل تريد الحذف؟')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+
+                    url: '/Areas/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.reload();
+                        }
+                    }
+                });
+        }
+    }
+
+    function ActivateAndDeactivate(id) {
+        $.ajax({
+            url: '/Areas/ActivateDeactivate',
+            type: 'POST',
+            data: {
+                "Id": id,
+            },
+            error: function (e) {
+
+            },
+            success: function (r) {
+                if (r == 'true') {
+                    alert('تم تغير حالة التنشيط!')
+                }
+            }
+        });
+    }
+</script>

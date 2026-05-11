@@ -1,0 +1,53 @@
+@model MyERP.Areas.Sync.ViewModels.QueueViewModel
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "قائمة الانتظار";
+}
+<form method="get" class="sync-card sticky-filter">
+    <div class="filter-grid">
+        <input name="SyncKey" value="@Model.Filter.SyncKey" placeholder="SyncKey" />
+        <input name="BranchId" value="@Model.Filter.BranchId" placeholder="BranchId" />
+        <input name="OldTransactionId" value="@Model.Filter.OldTransactionId" placeholder="OldTransaction_ID" />
+        <input name="Status" value="@Model.Filter.Status" placeholder="الحالة" />
+        <input name="ProfileName" value="@Model.Filter.ProfileName" placeholder="الملف التعريفي" />
+        <input name="PayloadHash" value="@Model.Filter.PayloadHash" placeholder="PayloadHash" />
+        <input type="date" name="FromDate" value="@(Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
+        <input type="date" name="ToDate" value="@(Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("yyyy-MM-dd") : "")" />
+        <button type="submit" class="btn btn-primary"><i class="remixicon-search-line"></i> بحث</button>
+        <a class="btn btn-light" href="/sync/Exports/QueueCsv?SyncKey=@Url.Encode(Model.Filter.SyncKey)&BranchId=@Url.Encode(Model.Filter.BranchId)&OldTransactionId=@Url.Encode(Model.Filter.OldTransactionId)&Status=@Url.Encode(Model.Filter.Status)&ProfileName=@Url.Encode(Model.Filter.ProfileName)&PayloadHash=@Url.Encode(Model.Filter.PayloadHash)">تصدير CSV</a>
+    </div>
+</form>
+<div class="sync-card">
+    <div class="card-title">العناصر (@Model.TotalRows)</div>
+    <div class="sync-table-wrap">
+        <table class="sync-table modern">
+            <thead><tr><th>SyncKey</th><th>Branch</th><th>Invoice</th><th>Profile</th><th>Status</th><th>Hash</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    <td class="mono">@row.SyncKey</td>
+                    <td>@row.BranchId</td>
+                    <td>@row.OldTransactionId</td>
+                    <td>@row.ProfileName</td>
+                    <td><span class="status @row.Status">@row.Status</span></td>
+                    <td class="hash">@row.PayloadHash</td>
+                    <td>@(row.CreatedAt.HasValue ? row.CreatedAt.Value.ToString("yyyy-MM-dd HH:mm") : "")</td>
+                    <td class="row-actions">
+                        <a href="/sync/Diagnostics?syncKey=@Url.Encode(row.SyncKey)">تشخيص</a>
+                        <a href="/sync/Diagnostics?syncKey=@Url.Encode(row.SyncKey)">مقارنة</a>
+                        <a href="/sync/Apply?syncKey=@Url.Encode(row.SyncKey)">استعداد فقط</a>
+                        <span class="disabled-action">Retry Shadow</span>
+                        <span class="disabled-action">فتح المصدر</span>
+                        <span class="disabled-action">فتح الهدف</span>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        @if (!Model.Rows.Any())
+        {
+            <div class="empty-state">لا توجد عناصر مطابقة للفلاتر الحالية.</div>
+        }
+    </div>
+</div>

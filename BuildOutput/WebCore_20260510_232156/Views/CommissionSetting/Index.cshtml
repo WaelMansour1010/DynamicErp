@@ -1,0 +1,291 @@
+﻿@model  IEnumerable<MyERP.Models.CommissionSetting>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.CommissionSettingsSalesAndCollection;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <h4 class="page-title">@MyERP.Properties.Resources.CommissionSettingsSalesAndCollection</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-centered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @MyERP.Properties.Resources.MoneyAmount  @MyERP.Properties.Resources.From
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.MoneyAmount  @MyERP.Properties.Resources.To
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.SalesCommissionPerc
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.CollectionCommissionIn15days
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.CollectionCommissionInLessThanMonth
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.CollectionCommissionInLessThan2Months
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.CollectionCommissionInLessThan3Months
+                                        </th>
+                                        <th>
+                                            @MyERP.Properties.Resources.CollectionCommissionInMoreThan3Months
+                                        </th>
+                                        <th> @MyERP.Properties.Resources.Add</th>
+                                        <th> @MyERP.Properties.Resources.Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="CommissionSetting">
+                                    @if (Model != null)
+                                    {
+                                        foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input class="Id col-sm-12 form-control" value="@item.Id" hidden />
+                                                    <input class="MoneyAmountFrom col-sm-12 form-control" required value="@item.MoneyAmountFrom" />
+                                                </td>
+                                                <td>
+                                                    <input class="MoneyAmountTo col-sm-12 form-control" required value="@item.MoneyAmountTo" />
+                                                </td>
+                                                <td>
+                                                    <input class="CommissionPercentage col-sm-12 form-control" required value="@item.CommissionPercentage" />
+                                                </td>
+                                                <td>
+                                                    <input class="CommissionFifteenDays col-sm-12 form-control" required value="@item.CommissionFifteenDays" />
+                                                </td>
+                                                <td>
+                                                    <input class="CommissionMonth col-sm-12 form-control" required value="@item.CommissionMonth" />
+                                                </td>
+                                                <td>
+                                                    <input class="CommissionTwoMonths col-sm-12 form-control" required value="@item.CommissionTwoMonths" />
+                                                </td>
+                                                <td>
+                                                    <input class="CommissionThreeMonths col-sm-12 form-control" required value="@item.CommissionThreeMonths" />
+                                                </td>
+                                                <td>
+                                                    <input class="CommissionMoreThanThreeMonths col-sm-12 form-control" required value="@item.CommissionMoreThanThreeMonths" />
+                                                </td>
+                                                <td>
+                                                    <span class="Add-Button" style="font-size: 25px; color: limegreen;" onclick="AddRow(this)"><i class="fas fa-plus"></i></span>
+                                                </td>
+                                                <td>
+                                                    <a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input class="Id col-sm-12 form-control" hidden />
+                                                <input class="MoneyAmountFrom col-sm-12 form-control" required />
+                                            </td>
+                                            <td><input class="MoneyAmountTo col-sm-12 form-control" required /></td>
+                                            <td><input class="CommissionPercentage col-sm-12 form-control" required /></td>
+                                            <td><input class="CommissionFifteenDays col-sm-12 form-control" required /></td>
+                                            <td><input class="CommissionMonth col-sm-12 form-control" required /></td>
+                                            <td><input class="CommissionTwoMonths col-sm-12 form-control" required /></td>
+                                            <td><input class="CommissionThreeMonths col-sm-12 form-control" required /></td>
+                                            <td><input class="CommissionMoreThanThreeMonths col-sm-12 form-control" required /></td>
+                                            <td><span class="Add-Button" style="font-size: 25px; color: limegreen;" onclick="AddRow(this)"><i class="fas fa-plus"></i></span></td>
+                                            <td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div style="float:left;">
+                        @if (Model == null)
+                        {
+                            <button onclick="addEdit()" class="btn btn-success">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index","Home")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else
+                        {
+                            <button onclick="addEdit()" class="btn btn-success">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index","Home")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function AddRow(e) {
+        if ($('.MoneyAmountTo').last().val()>0 )
+            $('#CommissionSetting').find('.MoneyAmountFrom, .MoneyAmountTo, .CommissionPercentage, .CommissionFifteenDays, .CommissionMonth,.CommissionTwoMonths,.CommissionThreeMonths,.CommissionMoreThanThreeMonths').prop('required', 'required');
+        if ($('#CommissionSetting .form-control:invalid').length > 0) {
+            $('#CommissionSetting').closest('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $("#CommissionSetting").find(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+        }
+        else if($(e).closest("tr").is(":last-child") && $(e).closest("tr").find('.MoneyAmountTo').val() > 0 && $(e).closest("tr").find('.CommissionPercentage').val() > 0) {
+            let tr = '<tr><td><input class="Id col-sm-12 form-control" hidden /><input class="MoneyAmountFrom col-sm-12 form-control"/></td><td><input class="MoneyAmountTo col-sm-12 form-control"/></td><td><input class="CommissionPercentage col-sm-12 form-control"/></td><td><input class="CommissionFifteenDays col-sm-12 form-control"/></td><td><input class="CommissionMonth col-sm-12 form-control"/></td><td><input class="CommissionTwoMonths col-sm-12 form-control"/></td><td><input class="CommissionThreeMonths col-sm-12 form-control"/></td><td><input class="CommissionMoreThanThreeMonths col-sm-12 form-control"/></td><td><span class="Add-Button" style="font-size: 25px; color: limegreen;" onclick="AddRow(this)"><i class="fas fa-plus"></i></span></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            $('#CommissionSetting').append(tr);
+        }
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+            $(tr).find('.Add-Button').prop('hidden', false);
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+        }
+        else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+            e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+            $(tr).find("input").val('');
+            $(tr).find("label").text('');
+            $(tr).find('input, select').removeAttr('required');
+            $(tr).find('select').empty();
+            $(tr).find('.Add-Button').prop('hidden', false);
+        }
+    }
+    function addEdit(n) {
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        }
+        else {
+            var CommissionSettings = [];
+            $('#CommissionSetting tr').each(function () {
+                var td = $(this);
+                if (td.find('.MoneyAmountTo').val() > 0 && td.find('.CommissionPercentage').val() > 0) {
+                    var CommissionSetting = {
+                        //Id: td.find('.Id').val(),
+                        MoneyAmountFrom: td.find('.MoneyAmountFrom').val(),
+                        MoneyAmountTo: td.find('.MoneyAmountTo').val(),
+                        CommissionPercentage: td.find('.CommissionPercentage').val(),
+                        CommissionFifteenDays: td.find('.CommissionFifteenDays').val(),
+                        CommissionMonth: td.find('.CommissionMonth').val(),
+                        CommissionTwoMonths: td.find('.CommissionTwoMonths').val(),
+                        CommissionThreeMonths: td.find('.CommissionThreeMonths').val(),
+                        CommissionMoreThanThreeMonths: td.find('.CommissionMoreThanThreeMonths').val()
+                    };
+                    CommissionSettings.push(CommissionSetting);
+                }
+            });
+
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "POST",
+                        contentType: "application/json",
+                        url: "/CommissionSetting/Index",
+                        data: JSON.stringify({
+                            commissionSettings: CommissionSettings
+                        }),
+                        success: function (r) {
+                            if (r.success == "true") {
+                                Swal.fire(
+                                    {
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    }); window.location.reload();
+                            }
+                            else
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            }); $('#preloader, #status').fadeOut();
+                        }
+                    });
+
+                }
+                else { result.dismiss; }
+            });
+
+
+            @*if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "/CommissionSetting/Index",
+                    data: JSON.stringify({
+                        commissionSettings: CommissionSettings
+                    }),
+                    success: function (r) {
+                        if (r.success == "true") {
+                            alert('@MyERP.Properties.Resources.Saved');
+                            window.location.reload();
+                        }
+                        else
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    }
+                });*@
+        }
+    }
+
+</script>

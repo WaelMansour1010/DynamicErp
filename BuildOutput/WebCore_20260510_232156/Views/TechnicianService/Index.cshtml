@@ -1,0 +1,95 @@
+﻿@model IEnumerable<MyERP.Models.TechanicianService>
+@{
+                /**/
+
+                ViewBag.title = "تخصص الفنيين";
+}
+<div style="text-align: left;padding-bottom: 23px;">
+</div>
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <div class="form-title">
+
+
+                        <h4>تخصص الفنيين :</h4>
+                    </div>
+
+                    <div class="form-body">
+
+                        <form class="form-horizontal">
+                            <div class="form-group">
+                                <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder="بحث">
+                                <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                                <button type="button" class="btn btn-info btnSearch" onclick="pageNo = 1; searchWord=''; paging();">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+
+                <div class="panel-body">
+                    <label for="inputtext3" class="col-sm-3">الفنى</label>
+                    <div class="col-sm-9">
+
+                        <select id="ddlTechId" name="ddlTechId" class="form-control"></select>
+
+                    </div>
+
+                    <table class="table" id="servTable">
+                        <thead>
+                            <tr>
+
+                                <th>الاسم الخدمة </th>
+
+                                <th>اختر الكل <span><input id="check-all" type="checkbox" /></span></th>
+
+
+                            </tr>
+                        </thead>
+                        <tbody id="detailsBody"></tbody>
+                    </table>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+<div style="padding:10px 0; text-align:right">
+    <input id="btnSubmit" type="button" value="حفظ " class="btn btn-success" style="padding:10px 20px" onclick="saveBtn()" />
+
+</div>
+
+
+
+<script>
+    FillTechanicianDDL();
+
+    $(document).ready(function () {
+        $('#check-all').click(function () {
+            $(".Choosen").attr('checked', true);
+        });
+        $('#uncheck-all').click(function () {
+            $("input:checkbox").attr('checked', false);
+        });
+    });
+</script>

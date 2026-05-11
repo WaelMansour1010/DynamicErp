@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Data.Entity;
 using System.Data.Entity.Core.Objects;
 using System.Data.Entity.SqlServer;
@@ -937,8 +938,16 @@ namespace MyERP.Controllers
         [SkipERPAuthorize]
         public JsonResult GetCustomerSalesInvoices(int? id, int? cashReceiptVoucherId, int? DepartmentId)
         {
-            var customers = db.GetSalesInvoiceActualPayment(id, cashReceiptVoucherId, DepartmentId);
-            return Json(customers.ToList(), JsonRequestBehavior.AllowGet);
+            var customerId = new SqlParameter("@VendorOrCustomerId", (object)id ?? DBNull.Value);
+            var voucherId = new SqlParameter("@CashReceiptVoucherId", (object)cashReceiptVoucherId ?? DBNull.Value);
+            var departmentId = new SqlParameter("@DepartmentId", (object)DepartmentId ?? DBNull.Value);
+            var invoices = db.Database.SqlQuery<CustomerInvoiceActualPaymentRow>(
+                "EXEC dbo.GetSalesInvoiceActualPayment @VendorOrCustomerId, @CashReceiptVoucherId, @DepartmentId",
+                customerId,
+                voucherId,
+                departmentId).ToList();
+
+            return Json(invoices, JsonRequestBehavior.AllowGet);
             //return Json(db.SalesInvoices.Where(s => s.VendorOrCustomerId == id && s.IsActive == true && s.IsDeleted == false).Select(s => new
             //{
             //    s.Id,
@@ -948,6 +957,26 @@ namespace MyERP.Controllers
             //    s.Paid,
             //    s.VoucherDate
             //}).Take(5).ToList(), JsonRequestBehavior.AllowGet);
+        }
+
+        private class CustomerInvoiceActualPaymentRow
+        {
+            public int Id { get; set; }
+            public string DocumentNumber { get; set; }
+            public DateTime VoucherDate { get; set; }
+            public DateTime? DueDate { get; set; }
+            public int DepartmentId { get; set; }
+            public string DepartmentArName { get; set; }
+            public decimal? TotalAfterTaxes { get; set; }
+            public decimal Paid { get; set; }
+            public decimal? Amount { get; set; }
+            public decimal PaidAmount { get; set; }
+            public decimal PaidInTransaction { get; set; }
+            public decimal RemainAmount { get; set; }
+            public string InvoiceSourceType { get; set; }
+            public string InvoiceSourceName { get; set; }
+            public int? SalesInvoiceId { get; set; }
+            public int? ServiceInvoiceId { get; set; }
         }
 
         public JsonResult GetPurchaseInvoiceActualPayment(int? VendorId, int? CashIssueVoucherId, int? DepartmentId)

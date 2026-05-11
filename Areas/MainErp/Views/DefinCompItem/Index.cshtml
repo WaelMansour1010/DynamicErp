@@ -1,0 +1,310 @@
+﻿@model MyERP.Areas.MainErp.ViewModels.DefinCompItem.DefinCompItemIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "ط³ظ†ط¯ ط§ظ„طھط¬ظ…ظٹط¹";
+    var canAdd = Model != null && Model.Permissions != null && Model.Permissions.CanAdd;
+    var canEdit = Model != null && Model.Permissions != null && Model.Permissions.CanEdit;
+    var canDelete = Model != null && Model.Permissions != null && Model.Permissions.CanDelete;
+    var selected = Model.Selected ?? new MyERP.Areas.MainErp.ViewModels.DefinCompItem.DefinCompItemDetailsViewModel();
+}
+
+<section class="main-erp-panel defin-comp-item-page" dir="rtl" id="definCompPage"
+         data-lookup-items-url="@Url.Action("LookupItems", "DefinCompItem", new { area = "MainErp" })"
+         data-lookup-units-url="@Url.Action("LookupUnits", "DefinCompItem", new { area = "MainErp" })"
+         data-save-url="@Url.Action("Save", "DefinCompItem", new { area = "MainErp" })"
+         data-rebuild-url="@Url.Action("Rebuild", "DefinCompItem", new { area = "MainErp" })"
+         data-delete-url="@Url.Action("Delete", "DefinCompItem", new { area = "MainErp" })"
+         data-details-url="@Url.Action("Details", "DefinCompItem", new { area = "MainErp" })">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>ط³ظ†ط¯ ط§ظ„طھط¬ظ…ظٹط¹</h3>
+            <p>ط´ط§ط´ط© MainErp ظ„طھظ†ظپظٹط° ط­ظپط¸/طھط¹ط¯ظٹظ„/ط¥ظ„ط؛ط§ط، ط³ظ†ط¯ط§طھ ط§ظ„طھط¬ظ…ظٹط¹ ظ…ط¹ ط¥ظ†ط´ط§ط، ط§ظ„ط­ط±ظƒط§طھ ط§ظ„ظ…ط§ظ„ظٹط© ظˆط­ط±ظƒط§طھ ط§ظ„ظ…ط®ط²ظˆظ† ط§ظ„ظ…ط±طھط¨ط·ط© ط¨ظ‡ط§.</p>
+        </div>
+        <div class="defin-comp-actions">
+            <button type="button" class="main-erp-button secondary" id="definCompNewBtn" @(canAdd ? "" : "disabled")>ط³ظ†ط¯ ط¬ط¯ظٹط¯</button>
+            <button type="button" class="main-erp-button" id="definCompSaveBtn" @((canAdd || canEdit) ? "" : "disabled")>ط­ظپط¸</button>
+            <button type="button" class="main-erp-button secondary" id="definCompRebuildBtn" @(canEdit ? "" : "disabled")>ط¥ط¹ط§ط¯ط© طھظˆظ„ظٹط¯</button>
+            <button type="button" class="main-erp-button danger" id="definCompDeleteBtn" @(canDelete ? "" : "disabled")>ط¥ظ„ط؛ط§ط،</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="main-erp-warning">@Model.Message</div>
+    }
+
+    @Html.AntiForgeryToken()
+
+    <div id="definCompStatus" class="defin-comp-status" role="status" aria-live="polite" hidden></div>
+
+    <div class="defin-comp-layout">
+        <section class="defin-comp-card defin-comp-search-card">
+            <form method="get" action="@Url.Action("Index", "DefinCompItem", new { area = "MainErp" })" class="main-erp-filter-bar">
+                <label>ط¨ط­ط«
+                    <input type="text" name="searchText" value="@Model.SearchText" placeholder="ط±ظ‚ظ… ط§ظ„ط³ظ†ط¯ / ط±ظ‚ظ… ط§ظ„ط·ظ„ط¨ / ط§ظ„طµظ†ظپ / ط§ظ„ط¨ط§ط±ظƒظˆط¯" />
+                </label>
+                <label>ظ…ظ† طھط§ط±ظٹط®
+                    <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+                </label>
+                <label>ط¥ظ„ظ‰ طھط§ط±ظٹط®
+                    <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" />
+                </label>
+                <label>ط§ظ„ظپط±ط¹
+                    <select name="branchId">
+                        <option value="">ط§ظ„ظƒظ„</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.Id" @(Model.BranchId.HasValue && Model.BranchId.Value.ToString() == branch.Id ? "selected" : "")>@branch.Text</option>
+                        }
+                    </select>
+                </label>
+                <label>ط§ظ„ظ…ط®ط²ظ†
+                    <select name="storeId">
+                        <option value="">ط§ظ„ظƒظ„</option>
+                        @foreach (var store in Model.Stores)
+                        {
+                            <option value="@store.Id" @(Model.StoreId.HasValue && Model.StoreId.Value.ToString() == store.Id ? "selected" : "")>@store.Text</option>
+                        }
+                    </select>
+                </label>
+                <button type="submit">ط¨ط­ط«</button>
+            </form>
+
+            <div class="main-erp-table-wrap defin-comp-results">
+                <table class="main-erp-table" id="definCompResultsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>ط§ظ„طھط§ط±ظٹط®</th>
+                            <th>ط±ظ‚ظ… ط§ظ„ط³ظ†ط¯</th>
+                            <th>ط§ظ„ط§ط³ظ…</th>
+                            <th>ط§ظ„ظپط±ط¹</th>
+                            <th>ط§ظ„ظ…ط®ط²ظ†</th>
+                            <th>طµط§ظپظٹ</th>
+                            <th>ط§ظ„ظپط±ظ‚</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Results)
+                        {
+                            <tr data-id="@row.Id">
+                                <td>@row.Id</td>
+                                <td>@(row.RecordDate.HasValue ? row.RecordDate.Value.ToString("yyyy-MM-dd") : string.Empty)</td>
+                                <td>@row.MaxNo</td>
+                                <td>@row.ItemName</td>
+                                <td>@row.BranchName</td>
+                                <td>@row.StoreName</td>
+                                <td>@String.Format("{0:n2}", row.Net)</td>
+                                <td>@String.Format("{0:n2}", row.Vat2)</td>
+                                <td><button type="button" class="main-erp-link-btn js-load-defin-item" data-id="@row.Id">ظپطھط­</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="defin-comp-card defin-comp-editor-card">
+            <div class="defin-comp-summary-grid">
+                <article><span>ط¥ط¬ظ…ط§ظ„ظٹ ظ…ظƒظˆظ†ط§طھ</span><strong id="componentQtyTotal">@String.Format("{0:n2}", selected.ComponentQtyTotal)</strong><small>ظƒظ…ظٹط©</small></article>
+                <article><span>طھظƒظ„ظپط© ط§ظ„ظ…ظƒظˆظ†ط§طھ</span><strong id="componentCostTotal">@String.Format("{0:n2}", selected.ComponentCostTotal)</strong><small>ظ‚ظٹظ…ط©</small></article>
+                <article><span>ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ظ†طھط¬ط§طھ</span><strong id="outputQtyTotal">@String.Format("{0:n2}", selected.OutputQtyTotal)</strong><small>ظƒظ…ظٹط©</small></article>
+                <article><span>طھظƒظ„ظپط© ط§ظ„ظ…ظ†طھط¬ط§طھ</span><strong id="outputCostTotal">@String.Format("{0:n2}", selected.OutputCostTotal)</strong><small>ظ‚ظٹظ…ط©</small></article>
+                <article><span>ط§ظ„ظپط±ظ‚</span><strong id="differenceTotal">@String.Format("{0:n2}", selected.Difference)</strong><small>طھظƒظ„ظپط© ط§ظ„ظ…ظ†طھط¬ط§طھ - ط§ظ„ظ…ظƒظˆظ†ط§طھ</small></article>
+            </div>
+
+            <div class="defin-comp-linked-strip">
+                <article class="defin-comp-linked-card issue">
+                    <span>سند الصرف</span>
+                    <strong>@(selected.TransactionId1.HasValue ? selected.TransactionId1.Value.ToString() : "غير منشأ")</strong>
+                    <small>@(string.IsNullOrWhiteSpace(selected.NoteSerial11) ? "Transaction Type 27" : selected.NoteSerial11)</small>
+                </article>
+                <article class="defin-comp-linked-card receipt">
+                    <span>سند الاستلام</span>
+                    <strong>@(selected.TransactionId2.HasValue ? selected.TransactionId2.Value.ToString() : "غير منشأ")</strong>
+                    <small>@(string.IsNullOrWhiteSpace(selected.NoteSerial12) ? "Transaction Type 28" : selected.NoteSerial12)</small>
+                </article>
+            </div>
+
+            @if (selected.Warnings != null && selected.Warnings.Count > 0)
+            {
+                <div class="defin-comp-warning-list">
+                    @foreach (var warning in selected.Warnings)
+                    {
+                        <div class="defin-comp-warning-item">@warning</div>
+                    }
+                </div>
+            }
+            <input type="hidden" id="definCompId" value="@selected.Id" />
+            <input type="hidden" id="definCompMode" value="@(selected.Id > 0 ? "E" : "N")" />
+
+            <div class="defin-comp-form-grid">
+                <label>ط§ظ„طھط§ط±ظٹط®<input type="date" id="recordDate" value="@(selected.RecordDate.HasValue ? selected.RecordDate.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))" /></label>
+                <label>ط§ظ„ظپط±ط¹<select id="branchId"><option value="">ط§ط®طھط±</option>@foreach (var branch in Model.Branches) { <option value="@branch.Id" @(selected.BranchId.HasValue && selected.BranchId.Value.ToString() == branch.Id ? "selected" : "")>@branch.Text</option> }</select></label>
+                <label>ط§ظ„ظ…ط®ط²ظ†<select id="storeId"><option value="">ط§ط®طھط±</option>@foreach (var store in Model.Stores) { <option value="@store.Id" @(selected.StoreId.HasValue && selected.StoreId.Value.ToString() == store.Id ? "selected" : "")>@store.Text</option> }</select></label>
+                <label>ط§ظ„ظ…ط®ط²ظ† 2<select id="storeId2"><option value="">ط§ط®طھط±</option>@foreach (var store in Model.Stores) { <option value="@store.Id" @(selected.StoreId2.HasValue && selected.StoreId2.Value.ToString() == store.Id ? "selected" : "")>@store.Text</option> }</select></label>
+                <label>ط§ظ„ظ…ط®ط²ظ† 3<select id="storeId3"><option value="">ط§ط®طھط±</option>@foreach (var store in Model.Stores) { <option value="@store.Id" @(selected.StoreId3.HasValue && selected.StoreId3.Value.ToString() == store.Id ? "selected" : "")>@store.Text</option> }</select></label>
+                <label>ط§ظ„ط¹ظ…ظٹظ„<select id="cusId"><option value="">ط§ط®طھظٹط§ط±ظٹ</option>@foreach (var customer in Model.Customers) { <option value="@customer.Id" @(selected.CusId.HasValue && selected.CusId.Value.ToString() == customer.Id ? "selected" : "")>@customer.Text</option> }</select></label>
+                <label>ط§ظ„طµظ†ظپ ط§ظ„ظ†ظ‡ط§ط¦ظٹ<input type="text" id="itemNameSearch" value="@selected.ItemName" data-item-id="@(selected.ItemNameId.HasValue ? selected.ItemNameId.Value.ToString() : "")" placeholder="ط§ط¨ط­ط« ط¹ظ† ط§ظ„طµظ†ظپ ط§ظ„ظ†ظ‡ط§ط¦ظٹ" /></label>
+                <label>ط±ظ‚ظ… ط§ظ„ط³ظ†ط¯<input type="text" id="maxNo" value="@selected.MaxNo" /></label>
+                <label>ط§ط³ظ… ط§ظ„ط³ظ†ط¯<input type="text" id="maxName" value="@selected.MaxName" /></label>
+                <label>ط±ظ‚ظ… ط§ظ„ط·ظ„ط¨<input type="text" id="orderNo" value="@selected.OrderNo" /></label>
+                <label>ط§ظ„ظ…ط¬ظ…ظˆط¹ط©<input type="number" id="groupId" value="@(selected.GroupId.HasValue ? selected.GroupId.Value.ToString() : string.Empty)" /></label>
+                <label>ظ†ظˆط¹ ط§ظ„ط¯ظپط¹<input type="number" id="paymentType" value="@(selected.PaymentType.HasValue ? selected.PaymentType.Value.ToString() : string.Empty)" /></label>
+                <label>ط§ظ„ظ…ظˆط¸ظپ<input type="number" id="empId" value="@(selected.EmpId.HasValue ? selected.EmpId.Value.ToString() : string.Empty)" /></label>
+                <label>ط§ظ„طµظ†ط¯ظˆظ‚<input type="number" id="boxId" value="@(selected.BoxId.HasValue ? selected.BoxId.Value.ToString() : string.Empty)" /></label>
+                <label>ط§ظ„ظپطھط±ط©<input type="number" step="0.01" id="period" value="@(selected.Period.HasValue ? selected.Period.Value.ToString() : string.Empty)" /></label>
+                <label>Qty1<input type="number" step="0.01" id="qty1" value="@selected.Qty1" /></label>
+                <label>Price<input type="number" step="0.01" id="price" value="@selected.Price" /></label>
+                <label>Total Add<input type="number" step="0.01" id="totalAdd" value="@selected.TotalAdd" /></label>
+                <label>Total Disc<input type="number" step="0.01" id="totalDisc" value="@selected.TotalDisc" /></label>
+                <label>Net<input type="number" step="0.01" id="net" value="@selected.Net" /></label>
+                <label>Total With VAT<input type="number" step="0.01" id="totalWithVat" value="@selected.TotalWithVat" /></label>
+                <label>VAT<input type="number" step="0.01" id="vat2" value="@selected.Vat2" /></label>
+            </div>
+
+            <div class="defin-comp-grid-section">
+                <div class="main-erp-section-header">
+                    <h4>ط§ظ„ظ…ظƒظˆظ†ط§طھ</h4>
+                    <button type="button" class="main-erp-button secondary" id="addComponentRowBtn">ط¥ط¶ط§ظپط© ظ…ظƒظˆظ†</button>
+                </div>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table defin-comp-lines-table" id="componentsTable">
+                        <thead>
+                            <tr>
+                                <th>ط§ظ„طµظ†ظپ</th>
+                                <th>ط§ظ„ظˆط­ط¯ط©</th>
+                                <th>ط§ظ„ظƒظ…ظٹط©</th>
+                                <th>ط§ظ„طھظƒظ„ظپط©</th>
+                                <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
+                                <th>ظ…ظ„ط§ط­ط¸ط§طھ</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (selected.Components.Count == 0)
+                            {
+                                <tr class="defin-comp-empty-row"><td colspan="7">ط£ط¶ظپ ط£ظˆظ„ ظ…ظƒظˆظ† ظ‡ظ†ط§.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var row in selected.Components)
+                                {
+                                    <tr class="defin-comp-line" data-kind="component">
+                                        <td><input type="text" class="item-text" value="@row.ItemName" data-item-id="@(row.ItemId.HasValue ? row.ItemId.Value.ToString() : "")" placeholder="ط§ط¨ط­ط« ط¹ظ† ط§ظ„طµظ†ظپ" /></td>
+                                        <td><select class="unit-id"><option value="">ط§ط®طھط±</option>@if (row.UnitId.HasValue) { <option value="@row.UnitId" selected="selected">@row.UnitName</option> }</select></td>
+                                        <td><input type="number" step="0.01" class="qty" value="@(row.Qty.HasValue ? row.Qty.Value.ToString() : string.Empty)" /></td>
+                                        <td><input type="number" step="0.01" class="cost" value="@(row.Cost.HasValue ? row.Cost.Value.ToString() : string.Empty)" /></td>
+                                        <td><input type="number" step="0.01" class="line-total" value="@(row.Total.HasValue ? row.Total.Value.ToString() : string.Empty)" readonly="readonly" /></td>
+                                        <td><input type="text" class="remark" value="@row.Remark" /></td>
+                                        <td><button type="button" class="main-erp-link-btn js-remove-line">ط­ط°ظپ</button></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="defin-comp-grid-section">
+                <div class="main-erp-section-header">
+                    <h4>ط§ظ„ظ…ظ†طھط¬ط§طھ ط§ظ„ظ†ظ‡ط§ط¦ظٹط©</h4>
+                    <button type="button" class="main-erp-button secondary" id="addOutputRowBtn">ط¥ط¶ط§ظپط© ظ…ظ†طھط¬</button>
+                </div>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table defin-comp-lines-table" id="outputsTable">
+                        <thead>
+                            <tr>
+                                <th>ط§ظ„طµظ†ظپ</th>
+                                <th>ط§ظ„ظˆط­ط¯ط©</th>
+                                <th>ط§ظ„ظƒظ…ظٹط©</th>
+                                <th>ط§ظ„طھظƒظ„ظپط©</th>
+                                <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
+                                <th>ظ…ظ„ط§ط­ط¸ط§طھ</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (selected.Outputs.Count == 0)
+                            {
+                                <tr class="defin-comp-empty-row"><td colspan="7">ط£ط¶ظپ ط£ظˆظ„ ظ…ظ†طھط¬ ظ‡ظ†ط§.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var row in selected.Outputs)
+                                {
+                                    <tr class="defin-comp-line" data-kind="output">
+                                        <td><input type="text" class="item-text" value="@row.ItemName" data-item-id="@(row.ItemId.HasValue ? row.ItemId.Value.ToString() : "")" placeholder="ط§ط¨ط­ط« ط¹ظ† ط§ظ„طµظ†ظپ" /></td>
+                                        <td><select class="unit-id"><option value="">ط§ط®طھط±</option>@if (row.UnitId.HasValue) { <option value="@row.UnitId" selected="selected">@row.UnitName</option> }</select></td>
+                                        <td><input type="number" step="0.01" class="qty" value="@(row.Qty.HasValue ? row.Qty.Value.ToString() : string.Empty)" /></td>
+                                        <td><input type="number" step="0.01" class="cost" value="@(row.Cost.HasValue ? row.Cost.Value.ToString() : string.Empty)" /></td>
+                                        <td><input type="number" step="0.01" class="line-total" value="@(row.Total.HasValue ? row.Total.Value.ToString() : string.Empty)" readonly="readonly" /></td>
+                                        <td><input type="text" class="remark" value="@row.Remark" /></td>
+                                        <td><button type="button" class="main-erp-link-btn js-remove-line">ط­ط°ظپ</button></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="defin-comp-grid-section">
+                <div class="main-erp-section-header">
+                    <h4>ط§ظ„ط­ط±ظƒط§طھ ط§ظ„ظ…ط±طھط¨ط·ط©</h4>
+                </div>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>ط§ظ„ظ†ظˆط¹</th>
+                                <th>ط§ظ„ط±ظ‚ظ…</th>
+                                <th>ط§ظ„ظ…ط±ط¬ط¹</th>
+                                <th>ط§ظ„طھط§ط±ظٹط®</th>
+                                <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
+                                <th>ط§ظ„ط±ظ‚ظ… ط§ظ„ط³ظ†ط¯ظٹ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkedTransactionsBody">
+                            @if (selected.LinkedTransactions.Count == 0)
+                            {
+                                <tr><td colspan="6">ظ„ظ… ظٹطھظ… ط¥ظ†ط´ط§ط، ط­ط±ظƒط§طھ ط¨ط¹ط¯.</td></tr>
+                            }
+                            else
+                            {
+                                foreach (var tx in selected.LinkedTransactions)
+                                {
+                                    <tr>
+                                        <td>@tx.TransactionType</td>
+                                        <td>@tx.TransactionId</td>
+                                        <td>@tx.TransactionSerial</td>
+                                        <td>@(tx.TransactionDate.HasValue ? tx.TransactionDate.Value.ToString("yyyy-MM-dd") : string.Empty)</td>
+                                        <td>@String.Format("{0:n2}", tx.Total)</td>
+                                        <td>@tx.NoteSerial1</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <template id="lineTemplate">
+                <tr class="defin-comp-line">
+                    <td><input type="text" class="item-text" data-item-id="" placeholder="ط§ط¨ط­ط« ط¹ظ† ط§ظ„طµظ†ظپ" /></td>
+                    <td><select class="unit-id"><option value="">ط§ط®طھط±</option></select></td>
+                    <td><input type="number" step="0.01" class="qty" value="1" /></td>
+                    <td><input type="number" step="0.01" class="cost" value="0" /></td>
+                    <td><input type="number" step="0.01" class="line-total" value="0" readonly="readonly" /></td>
+                    <td><input type="text" class="remark" value="" /></td>
+                    <td><button type="button" class="main-erp-link-btn js-remove-line">ط­ط°ظپ</button></td>
+                </tr>
+            </template>
+        </section>
+    </div>
+</section>
+
+<script src="@Url.Content("~/Areas/MainErp/Scripts/defin-comp-item.js")"></script>
+<link rel="stylesheet" href="@Url.Content("~/Areas/MainErp/Content/defin-comp-item.css")" />
+

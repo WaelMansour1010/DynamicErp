@@ -276,7 +276,7 @@ namespace MyERP.Controllers
                     new { Id=1, ArName= session == "en" ? "Cash" : "نقدى"},
                     new { Id = 2, ArName = session == "en" ? "Credit" : "آجل" },
                     new { Id=3, ArName= session == "en" ? "Multiple" : "متعدد"}
-                }, "Id", "ArName", purchaseInvoice.PaymentType);
+                }, "Id", "ArName", GetPurchaseInvoicePaymentType(purchaseInvoice));
             //---------------------------------------------------------------------------------------------------//
 
             ViewBag.Next = QueryHelper.Next((int)id, "PurchaseInvoice");
@@ -381,7 +381,7 @@ namespace MyERP.Controllers
                     var AlteredPricesXML = MyXML.GetXML(AlteredPrices);
                     MyXML.xPathName = "DirectExpenses";
                     var DirectExpenses = MyXML.GetXML(purchaseInvoice.PurchaseInvoiceDirectExpenses);
-                    db.PurchaseInvoice_Update(purchaseInvoice.Id, purchaseInvoice.DocumentNumber, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, purchaseInvoice.IsPosted, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber, purchaseInvoice.PaymentType);
+                    db.PurchaseInvoice_Update(purchaseInvoice.Id, purchaseInvoice.DocumentNumber, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, purchaseInvoice.IsPosted, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
                     Notification.GetNotification("PurchaseInvoice", "Edit", "AddEdit", id, null, " فواتير المشتريات");
                 }
                 else
@@ -407,7 +407,7 @@ namespace MyERP.Controllers
 
 
 
-                    db.PurchaseInvoice_Insert(idResult, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, false, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber, purchaseInvoice.PaymentType);
+                    db.PurchaseInvoice_Insert(idResult, purchaseInvoice.BranchId, purchaseInvoice.WarehouseId, purchaseInvoice.DepartmentId, purchaseInvoice.VoucherDate, purchaseInvoice.VendorOrCustomerId, purchaseInvoice.CurrencyId, purchaseInvoice.CurrencyEquivalent, purchaseInvoice.Total, purchaseInvoice.TotalItemsDiscount, purchaseInvoice.SalesTaxes, purchaseInvoice.TotalAfterTaxes, purchaseInvoice.VoucherDiscountValue, purchaseInvoice.VoucherDiscountPercentage, purchaseInvoice.NetTotal, purchaseInvoice.Paid, purchaseInvoice.ValidityPeriod, purchaseInvoice.DeliveryPeriod, purchaseInvoice.CostCenterId, purchaseInvoice.CurrentQuantity, purchaseInvoice.DestinationWarehouseId, purchaseInvoice.SystemPageId, purchaseInvoice.SelectedId, purchaseInvoice.TotalCostPrice, purchaseInvoice.TotalItemDirectExpenses, purchaseInvoice.CommercialRevenueTaxAmount, purchaseInvoice.AddedPrecentageCost, purchaseInvoice.IsDelivered, purchaseInvoice.IsAccepted, purchaseInvoice.IsLinked, purchaseInvoice.IsCompleted, false, purchaseInvoice.UserId, purchaseInvoice.IsActive, purchaseInvoice.IsDeleted, purchaseInvoice.AutoCreated, purchaseInvoice.Notes, purchaseInvoice.Image, purchaseInvoice.UpdatedId, PurchaseInvoiceDetails, InvoicePaymentMethods, DirectExpenses, SerialNumbersXML, alterPrices, AlteredPricesXML, distributeItemsOnWarehouses, purchaseInvoicePatchDetails, purchaseInvoice.DueDate, purchaseInvoice.VendorInvoiceNumber);
 
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("PurchaseInvoice", "Add", "AddEdit", id, null, " فواتير المشتريات");
@@ -1023,6 +1023,26 @@ namespace MyERP.Controllers
                 return Json(errors);
             }
         }
+
+        private static int GetPurchaseInvoicePaymentType(PurchaseInvoice purchaseInvoice)
+        {
+            if (purchaseInvoice == null)
+            {
+                return 2;
+            }
+
+            var paidMethodsCount = purchaseInvoice.PurchaseInvoicePaymentMethods == null
+                ? 0
+                : purchaseInvoice.PurchaseInvoicePaymentMethods.Count(m => m.Amount > 0);
+
+            if (paidMethodsCount > 1)
+            {
+                return 3;
+            }
+
+            return purchaseInvoice.Paid.GetValueOrDefault() > 0 ? 1 : 2;
+        }
+
         [SkipERPAuthorize]
         public async Task<ActionResult> SalesInvoicesByDepartment(int id)
         {

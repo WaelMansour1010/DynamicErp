@@ -42,7 +42,6 @@ namespace MyERP.Models
             this.SalesQuotations = new HashSet<SalesQuotation>();
             this.PosReceiptVouchers = new HashSet<PosReceiptVoucher>();
             this.CashReceiptVouchers = new HashSet<CashReceiptVoucher>();
-            this.AssemblyVouchers = new HashSet<AssemblyVoucher>();
             this.FragmentationVouchers = new HashSet<FragmentationVoucher>();
             this.PurchaseRequests = new HashSet<PurchaseRequest>();
             this.Customers = new HashSet<Customer>();
@@ -124,7 +123,6 @@ namespace MyERP.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<CashReceiptVoucher> CashReceiptVouchers { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<AssemblyVoucher> AssemblyVouchers { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<FragmentationVoucher> FragmentationVouchers { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

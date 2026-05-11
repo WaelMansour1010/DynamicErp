@@ -1,0 +1,43 @@
+@model MyERP.Areas.Sync.ViewModels.DiagnosticViewModel
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "التشخيص والمراجعة";
+}
+<form method="get" class="sync-card sticky-filter compact">
+    <input name="syncKey" value="@Model.SyncKey" placeholder="SyncKey" />
+    <button class="btn btn-primary" type="submit">تشخيص</button>
+</form>
+<div class="sync-grid two">
+    <div class="sync-card">
+        <div class="card-title">ملخص العنصر</div>
+        @if (Model.QueueRow == null)
+        {
+            <div class="empty-state">اختر SyncKey لعرض التشخيص.</div>
+        }
+        else
+        {
+            <dl class="details-list">
+                <dt>SyncKey</dt><dd class="mono">@Model.QueueRow.SyncKey</dd>
+                <dt>الحالة</dt><dd><span class="status @Model.QueueRow.Status">@Model.QueueRow.Status</span></dd>
+                <dt>الفرع</dt><dd>@Model.QueueRow.BranchId</dd>
+                <dt>PayloadHash</dt><dd class="hash">@Model.QueueRow.PayloadHash</dd>
+            </dl>
+        }
+    </div>
+    <div class="sync-card">
+        <div class="card-title">فحوصات السلامة</div>
+        @foreach (var check in Model.Checks)
+        {
+            <div class="check-row @(check.IsHardBlocker ? "hard" : "")"><strong>@check.CheckName</strong><span>@check.Status</span><p>@check.Message</p></div>
+        }
+    </div>
+</div>
+<div class="sync-card">
+    <div class="card-title">Object Map</div>
+    <table class="sync-table"><thead><tr><th>Source</th><th>Destination</th><th>SyncKey</th><th>Hash</th></tr></thead><tbody>
+    @foreach (var row in Model.ObjectMapRows)
+    {
+        <tr><td>@row.SourceObjectType / @row.SourceObjectKey</td><td>@row.DestinationObjectType / @row.DestinationObjectKey</td><td class="mono">@row.SyncKey</td><td class="hash">@row.PayloadHash</td></tr>
+    }
+    </tbody></table>
+</div>

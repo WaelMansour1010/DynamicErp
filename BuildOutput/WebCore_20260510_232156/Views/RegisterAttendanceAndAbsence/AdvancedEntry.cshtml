@@ -1,0 +1,241 @@
+﻿@{
+    Layout = "~/Views/Shared/_blankLayout.cshtml";
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.AdvancedEntry;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link href="~/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div>
+        <input class="form-control" id="Date" hidden value="@ViewBag.Date" />
+        <input class="form-control" id="LessonId" hidden value="@ViewBag.LessonId" />
+        <input class="form-control" id="SubjectId" hidden value="@ViewBag.SubjectId" />
+        <input class="form-control" id="Id" hidden value="@ViewBag.Id" />
+        <input class="form-control" id="Code" hidden value="@ViewBag.Code" />
+        <input class="form-control" id="MasterCode" hidden value="@ViewBag.MasterCode" />
+
+        <div class="account-pages mt-5 mb-5">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6 col-xl-5">
+                        <div class="card">
+                            <div class="card-body p-4">
+
+                                <div class="form-group">
+                                    <img id="Logo" src="@ViewBag.logo" alt="Logo" style="width: 50%;background-color: #2494be;margin-right: 25%;/*border-radius: 50%;*/">
+                                </div>
+
+                                <div class="card text-center">
+                                    <div class="card-body">
+
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-4">@MyERP.Properties.Resources.EnterQrcode</label>
+                                            <div class="col-sm-8">
+                                                <input class="form-control" id="Barcode" />
+                                            </div>
+                                        </div>
+                                        @*<div class="form-group">
+                    <img id="Logo" src="~/assets/images/ScanToRegister.png" alt="Scan" style="width:35%;">
+                </div>*@
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-4">@MyERP.Properties.Resources.Name : </label>
+                                            <div class="col-sm-8">
+                                                <label class="control-label" id="Name"> </label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-4">@MyERP.Properties.Resources.Service : </label>
+                                            <div class="col-sm-8">
+                                                <label class="control-label" id="Service"> </label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row" style="justify-content:center;">
+                                            <label class="control-label" id="Msg"></label>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- end card-body -->
+                        </div>
+                        <!-- end card -->
+                        <!-- end row -->
+
+                    </div> <!-- end col -->
+                </div>
+                <!-- end row -->
+            </div>
+            <!-- end container -->
+        </div>
+
+
+
+
+
+    </div>
+</body>
+</html>
+<script src="~/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#Barcode').focus();
+    });
+    $(document).on('keydown', '#Barcode', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            $.get('/RegisterAttendanceAndAbsence/SearchStudentByBarcode?Barcode=' + $(this).val()).done(function (r) {
+                r = r.Student;
+                if (r!=null) {
+                    AddEditDetail(r.Id,r.ArName,r.Service);
+                }
+                else {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.QrcodeNotCorrect !',
+                        text: " ",
+                        icon: 'error',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    $('#Barcode').val('');
+                }
+            });
+        }
+    });
+
+    function AddEditDetail(id, Name, Service) {
+        var Date = $('#Date').val();
+        var LessonId = $('#LessonId').val();
+        var SubjectId = $('#SubjectId').val();
+        var MasterCode = $('#MasterCode').val();
+       // var Id= $('#Id').val();
+
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+            var Detail = {
+                MainDocId: $('#Id').val(),
+                Code: $('#Code').val(),
+                AttendDate: $('#Date').val(),
+                SubjectId: $('#SubjectId').val(),
+                LessonId: $('#LessonId').val(),
+                StudentId: id,
+                IsAttended: true,
+                IsDeleted: false,
+                IsActive:true,
+                UserId: $('#UserId').val(),
+            }
+        var RegisterAttendanceAndAbsence = {
+            Id: $('#Id').val(),
+            Code: $('#MasterCode').val(),
+            Date: $('#Date').val(),
+            SubjectId: $('#SubjectId').val(),
+            LessonId: $('#LessonId').val(),
+            UserId: $('#UserId').val(),
+            IsDeleted: false,
+            IsActive: true,
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+        }
+            if (valid) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    type: "POST", contentType: "application/json",
+                    url: "/RegisterAttendanceAndAbsence/AddEditDetail",
+                    data: JSON.stringify({ RegisterAttendanceAndAbsence, Detail }),
+                    success: function (r) {
+                        Service = Service != null ? Service : "";
+
+                        if (r.success == true) {
+                            //window.location.replace("/RegisterAttendanceAndAbsence/AddEdit?id=" + r.Id);
+                            $('#RegisterDiv').show();
+                            $('#Name').text(Name);
+                            $('#Service').text(Service);
+                            $('#Msg').text('@MyERP.Properties.Resources.Registered');
+                            $('#Msg').css('color','limegreen');
+                            setTimeout(() => {
+                               $('#Name').text('');
+                            $('#Service').text('');
+                            $('#Msg').text('');
+                            }, "2000");
+                             @*Swal.fire({
+                                 title: '@MyERP.Properties.Resources.Welcome , ' + Name+" " + Service,
+                                text: " ",
+                                icon: 'success',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                             });*@
+                            $('#Barcode').val('').focus();
+                            // window.location.reload();
+                            $.get('/RegisterAttendanceAndAbsence/SetDetailCodeNum?Id=' + r.Id).done(function (c) {
+                                Code = c;
+                                $('#Code').val(c);
+                                $('#Id').val(r.Id);
+                           //     window.location.replace('/RegisterAttendanceAndAbsence/AdvancedEntry?Date=' + Date + '&LessonId=' + LessonId + '&SubjectId=' + SubjectId + '&Id=' + r.Id + '&Code=' + Code + '&MasterCode=' + MasterCode);
+                            });
+                        }
+                        else if (r.success == "Exist") {
+                            $('#RegisterDiv').show();
+                            $('#Name').text(Name);
+                            $('#Service').text(Service);
+                            $('#Msg').text('@MyERP.Properties.Resources.RegisteredBefore');
+                            $('#Msg').css('color', 'orangered');
+
+                            setTimeout(() => {
+                                $('#Name').text('');
+                                $('#Service').text('');
+                                $('#Msg').text('');
+                            }, "2000");
+                            @*Swal.fire({
+                                title: '@MyERP.Properties.Resources.StudentExistsBefore',
+                                text: " ",
+                                icon: 'info',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });*@
+                            $('#Barcode').val('').focus();
+                        }
+                        else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.AnErrorOccurredTryAgain !',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        }); $('#preloader, #status').fadeOut();
+                    }
+                });
+            }
+    }
+
+</script>

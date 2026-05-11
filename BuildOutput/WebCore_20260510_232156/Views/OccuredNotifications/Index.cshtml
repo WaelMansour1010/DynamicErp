@@ -1,0 +1,98 @@
+﻿@model IEnumerable<MyERP.Models.OccuredNotification>
+
+@{
+    ViewBag.Title = "الإشعارات";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="hed page-title"> الإشعارات</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0" id="noti-table">
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (@item.PageAction.Action == "ActivateDeactivate" || @item.PageAction.Action == "Delete")
+                                        {
+                                            <a href="@Url.Action("AddEdit",item.SystemPage.ControllerName,new { id=item.SelectedItem})" target="_blank">
+                                                <i class="fe-bell noti-icon"></i>
+                                                @Html.DisplayFor(modelItem => item.Notification)
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Action(item.PageAction.Action,item.SystemPage.ControllerName,new { id=item.SelectedItem})" target="_blank">
+                                                <i class="fe-bell noti-icon"></i>
+                                                @Html.DisplayFor(modelItem => item.Notification)
+                                            </a>
+                                        }
+
+                                    </td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="text-align:center;margin-bottom: 50px;">
+    <div class="form-group row">
+
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> رقم الصفحة: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+        @*<ul class="pagination pagination-rounded justify-content-center" ></ul>*@
+    </div>
+</div>
+<script>
+    function allNotificationRead() {
+        $.post('/OccuredNotifications/AllNotificationRead');
+    }
+
+    allNotificationRead();
+
+    var pageNo = 1;
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / 50); i++)
+          //  $('.pagination').append('<li class="pageNo page-item" id="pg' + (i + 1) + '"><a class="page-link" href="javascript:void(0);" onclick="pageNo=' + (i + 1) + '; paging();">' + (i + 1) + '</a></li>');
+            $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+            }
+    setPages();
+
+    $('#pg1').attr('selected', 'selected');
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+        paging();
+    })
+   // $('#pg1').addClass('disabled');
+
+    function paging() {
+        $('#preloader, #status').fadeIn();
+        let link = '/OccuredNotifications/_index?pageIndex=' + pageNo;
+        $.get(link).done(function (r) {
+            $('#noti-table').empty().append(r);
+            $('.pageNo').removeClass('disabled');
+            $('#pg' + pageNo).addClass('disabled');
+            $('#preloader, #status').fadeOut();
+        });
+    }
+</script>

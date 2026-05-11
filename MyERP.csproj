@@ -426,6 +426,7 @@
     <Compile Include="Areas\MainErp\Controllers\MainErpControllerBase.cs" />
     <Compile Include="Areas\MainErp\Controllers\PaymentsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\CashingController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\DefinCompItemController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectExtractsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\PumpSalesController.cs" />
@@ -458,6 +459,7 @@
     <Compile Include="Areas\MainErp\Models\Accounting\VoucherEntryType.cs" />
     <Compile Include="Areas\MainErp\Models\Security\MainErpUserContext.cs" />
     <Compile Include="Areas\MainErp\Repositories\Accounting\VoucherRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\DefinCompItem\DefinCompItemRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Payments\PaymentVoucherReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Payments\PaymentVoucherWriteRepository.cs" />
@@ -473,6 +475,7 @@
     <Compile Include="Areas\MainErp\Services\Accounting\AuditLogger.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\ManualIdGenerator.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\NoteNumberingService.cs" />
+    <Compile Include="Areas\MainErp\Services\DefinCompItem\DefinCompItemService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\PostingPreviewService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\VoucherPostingService.cs" />
     <Compile Include="Areas\MainErp\Services\AccountCharts\AccountChartsService.cs" />
@@ -502,6 +505,7 @@
     <Compile Include="Areas\Reports\Services\ReportValidationService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\AccountCharts\AccountChartsViewModels.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\DefinCompItem\DefinCompItemViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Payments\PaymentVoucherViewModels.cs" />
@@ -2664,6 +2668,7 @@
     <Compile Include="Models\SalesInvoiceActualPayment.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
+    <Compile Include="Models\SalesInvoiceActualPaymentExtensions.cs" />
     <Compile Include="Models\SalesInvoiceDepartmentQty_Result.cs">
       <DependentUpon>ErpDBModel.tt</DependentUpon>
     </Compile>
@@ -4130,8 +4135,10 @@
     <Content Include="Areas\MainErp\Content\account-charts.css" />
     <Content Include="Areas\MainErp\Content\enterprise-ui.css" />
     <Content Include="Areas\MainErp\Content\mainerp\mainerp.css" />
+    <Content Include="Areas\MainErp\Content\defin-comp-item.css" />
     <Content Include="Areas\MainErp\Scripts\enterprise-ui.js" />
     <Content Include="Areas\MainErp\Scripts\account-charts.js" />
+    <Content Include="Areas\MainErp\Scripts\defin-comp-item.js" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.ar.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.en.resx" />
@@ -4153,6 +4160,7 @@
     <Content Include="Areas\MainErp\Views\DatabaseMigration\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DatabaseMigration\PreviewScript.cshtml" />
     <Content Include="Areas\MainErp\Views\Dashboard\Index.cshtml" />
+    <Content Include="Areas\MainErp\Views\DefinCompItem\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DiscountNotifications\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\JournalEntries\Details.cshtml" />
@@ -4523,6 +4531,7 @@
     <Content Include="Content\bootstrap-theme.css.map" />
     <Content Include="Database\Create_DatabaseMigrationHistory.sql" />
     <Content Include="Database\Migrations\MainErp\0003_MainErp_Example_DataFix.sql" />
+    <Content Include="Database\Migrations\MainErp\0004_ServiceInvoice_CashReceiptVoucher.sql" />
     <Content Include="Database\Migrations\POS\0002_POS_Example_StoredProcedure.sql" />
     <Content Include="Database\Migrations\Shared\0001_Shared_Example_AddColumn.sql" />
     <Content Include="Docs\Database_Migration_Audit.md" />

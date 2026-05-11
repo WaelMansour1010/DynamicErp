@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
@@ -856,6 +857,7 @@ namespace MyERP.Controllers.AccountSettings
         public async Task<ActionResult> AddEdit(CashReceiptVoucher cashReceiptVoucher)
         {
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+            var serviceInvoiceActualPayments = ExtractServiceInvoiceActualPayments(cashReceiptVoucher);
 
             /*--- Document Coding ---*/
             var DocumentCoding = "";
@@ -1081,6 +1083,8 @@ namespace MyERP.Controllers.AccountSettings
                         cashReceiptVoucher.GasBillValue,
                         cashReceiptVoucher.ViolationBillValue,
                         CashReceiptVoucherPropertyContractBatches, cashReceiptVoucher.PropertyContractTerminationId);
+                    SaveServiceInvoiceActualPayments(cashReceiptVoucher.Id, serviceInvoiceActualPayments, userId);
+                    EnsureCashReceiptCustomerParty(cashReceiptVoucher.Id);
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashReceiptVoucher", "Edit", "AddEdit", id, null, " سند القبض");
                     ////////////////-----------------------------------------------------------------------
@@ -1145,6 +1149,8 @@ namespace MyERP.Controllers.AccountSettings
                         throw;
                     }
                     id = (int)idResult.Value;
+                    SaveServiceInvoiceActualPayments(id, serviceInvoiceActualPayments, userId);
+                    EnsureCashReceiptCustomerParty(id);
 
                     ////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashReceiptVoucher", "Add", "AddEdit", cashReceiptVoucher.Id, null, "سند القبض");
@@ -1819,6 +1825,55 @@ namespace MyERP.Controllers.AccountSettings
             }
             return cashReceiptJEDetails;
 
+        }
+
+        private List<SalesInvoiceActualPayment> ExtractServiceInvoiceActualPayments(CashReceiptVoucher cashReceiptVoucher)
+        {
+            var allPayments = (cashReceiptVoucher.SalesInvoiceActualPayments ?? new List<SalesInvoiceActualPayment>()).ToList();
+            var servicePayments = allPayments
+                .Where(p => p.ServiceInvoiceId.HasValue || string.Equals(p.InvoiceSourceType, "ServiceInvoice", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            cashReceiptVoucher.SalesInvoiceActualPayments = allPayments
+                .Where(p => !p.ServiceInvoiceId.HasValue && !string.Equals(p.InvoiceSourceType, "ServiceInvoice", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            return servicePayments;
+        }
+
+        private void EnsureCashReceiptCustomerParty(int cashReceiptVoucherId)
+        {
+            db.Database.ExecuteSqlCommand(@"
+UPDATE jed
+SET jed.PartyType = 1,
+    jed.PartyId = crv.CustomerId
+FROM dbo.JournalEntryDetail jed
+INNER JOIN dbo.JournalEntry je
+    ON je.Id = jed.JournalEntryId
+INNER JOIN dbo.CashReceiptVoucher crv
+    ON crv.Id = je.SourceId
+INNER JOIN dbo.Department dep
+    ON dep.Id = crv.DepartmentId
+WHERE je.SourceId = @CashReceiptVoucherId
+  AND je.SourcePageId = (SELECT TOP 1 Id FROM dbo.SystemPage WHERE ControllerName = 'CashReceiptVoucher' OR TableName = 'CashReceiptVoucher')
+  AND crv.SourceTypeId = 1
+  AND ISNULL(je.IsDeleted, 0) = 0
+  AND ISNULL(jed.IsDeleted, 0) = 0
+  AND ISNULL(crv.IsDeleted, 0) = 0
+  AND crv.CustomerId IS NOT NULL
+  AND jed.AccountId = dep.CustomersAccountId
+  AND ISNULL(jed.Credit, 0) > 0;",
+                new SqlParameter("@CashReceiptVoucherId", cashReceiptVoucherId));
+        }
+
+        private void SaveServiceInvoiceActualPayments(int cashReceiptVoucherId, List<SalesInvoiceActualPayment> servicePayments, int userId)
+        {
+            MyXML.xPathName = "SalesInvoiceActualPayment";
+            db.Database.ExecuteSqlCommand(
+                "EXEC dbo.ServiceInvoiceActualPayment_SaveForCashReceipt @CashReceiptVoucherId, @Payments, @UserId",
+                new SqlParameter("@CashReceiptVoucherId", cashReceiptVoucherId),
+                new SqlParameter("@Payments", MyXML.GetXML(servicePayments ?? new List<SalesInvoiceActualPayment>())),
+                new SqlParameter("@UserId", userId));
         }
 
         /// <summary>

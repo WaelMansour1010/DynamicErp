@@ -1,0 +1,1144 @@
+﻿@model MyERP.Models.EmployeePayrollIssue
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.EmployeePayrollIssue;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.EmployeePayrollIssue:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div role="form" class="form-horizontal needs-validation" method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                }
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo </label>
+                                    <div class="col-sm-5">
+                                        @*<input type="text" class="form-control" name="DocumentNumber" readonly id="DocumentNumber" value="@ViewBag.DocumentNumber" />*@
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.DocNo required readonly />
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="DepartmentId">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("DepartmentId", null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control",@required="Required" })
+                                    </div>
+                                    <label for="VoucherDate" class="control-label col-sm-1">@MyERP.Properties.Resources.DocumentDate </label>
+                                    <div class="col-sm-5">
+                                        <input id="VoucherDate" name="VoucherDate" class="form-control" type="datetime-local" value="@ViewBag.VoucherDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="HrDepartmentId">@MyERP.Properties.Resources.HrDepartment</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("HrDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                    <label class=" col-sm-1 control-label" for="AdministrativeDepartmentId">@MyERP.Properties.Resources.AdministrativeDepartment</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("AdministrativeDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="Year">@MyERP.Properties.Resources.Year</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("Year", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+                                    <label class=" col-sm-1 control-label" for="Month">@MyERP.Properties.Resources.Month</label>
+                                    <div class="col-sm-5">
+                                        @Html.DropDownList("Month", null, htmlAttributes: new { @class = "form-control", required = "required" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="">@MyERP.Properties.Resources.SpecifiedEmployee</label>
+                                    <div class="col-sm-4">
+                                        <input type="checkbox" class="form-control" id="SelectEmp" name="SelectEmp" style="width:15px;" onclick="showEmps(this)">
+                                    </div>
+                                    <label style="display:none;" class="col-sm-1 control-label IsEmpSelected" for="EmployeeId">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-5 IsEmpSelected" style="display:none;">
+                                        @Html.DropDownList("EmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+
+                                </div>
+
+
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-offset-2">
+                        @if (Model == null)
+                        {
+                            <input id="new" name="newBtn" hidden />
+                            <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                                @MyERP.Properties.Resources.SaveAndNew
+                            </button>
+                            <button onclick="addEdit();" class="btn btn-success" id="save">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                        }
+                        else if (Model.IsDeleted == false)
+                        {
+                            <button onclick="addEdit();" class="btn btn-success" id="save">
+                                @MyERP.Properties.Resources.Save
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-striped table-centered mb-0" id="DetailsTable" style="overflow-x:scroll;">
+                <thead id="DetailsHead">
+                    @*<tr>
+                        <th> @MyERP.Properties.Resources.EmployeeName</th>
+                        <th>
+                            @MyERP.Properties.Resources.HrDepartment
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.Nationality
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.Job
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.WorkingFirstDate
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.WorkingLastDate
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.NoOfWorkingDays
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.AbsenceDays
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.RemainingDays
+                        </th>
+                        <!-- SalaryItems -->
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="1">
+                            @MyERP.Properties.Resources.BasicSalary
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="2">
+                            @MyERP.Properties.Resources.AccommodationAllowance
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="3">
+                            @MyERP.Properties.Resources.TaxIncome
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="4">
+                            @MyERP.Properties.Resources.Item1 1
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="5">
+                            @MyERP.Properties.Resources.Item1 2
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="6">
+                            @MyERP.Properties.Resources.Item1 3
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="7">
+                            @MyERP.Properties.Resources.Item1 4
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="8">
+                            @MyERP.Properties.Resources.Item1 5
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="9">
+                            @MyERP.Properties.Resources.Item1 6
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="10">
+                            @MyERP.Properties.Resources.Item1 7
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="11">
+                            @MyERP.Properties.Resources.Item1 8
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="12">
+                            @MyERP.Properties.Resources.Item1 9
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="13">
+                            @MyERP.Properties.Resources.Item1 10
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="14">
+                            @MyERP.Properties.Resources.Item1 11
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="15">
+                            @MyERP.Properties.Resources.Item1 12
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="16">
+                            @MyERP.Properties.Resources.Item1 13
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="17">
+                            @MyERP.Properties.Resources.Item1 14
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="18">
+                            @MyERP.Properties.Resources.Item1 15
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="19">
+                            @MyERP.Properties.Resources.Item1 16
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="20">
+                            @MyERP.Properties.Resources.Item1 17
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="21">
+                            @MyERP.Properties.Resources.Item1 18
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="22">
+                            @MyERP.Properties.Resources.Item1 19
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="23">
+                            @MyERP.Properties.Resources.Item1 20
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="24">
+                            @MyERP.Properties.Resources.Item1 21
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="25">
+                            @MyERP.Properties.Resources.Item1 22
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="26">
+                            @MyERP.Properties.Resources.Item1 23
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="27">
+                            @MyERP.Properties.Resources.Item1 24
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="28">
+                            @MyERP.Properties.Resources.Item1 25
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="29">
+                            @MyERP.Properties.Resources.Item1 26
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="30">
+                            @MyERP.Properties.Resources.Item1 27
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="31">
+                            @MyERP.Properties.Resources.Item1 28
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="32">
+                            @MyERP.Properties.Resources.Item1 29
+                        </th>
+                        <th class="SalaryItemId" style="display:none" SalaryItemId="33">
+                            @MyERP.Properties.Resources.Item1 30
+                        </th>
+                        <!-- End Of SalaryItems -->
+                        <th>
+                            @MyERP.Properties.Resources.AdvancedExpences
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.OverTime
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.Rewards
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.Penalties
+                        </th>
+                        <th> @MyERP.Properties.Resources.BorrowValue </th>
+                        <th>
+                            @MyERP.Properties.Resources.TotalDues
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.TotalDeduction
+                        </th>
+                        <th>
+                            @MyERP.Properties.Resources.Net
+                        </th>
+                        <th> @MyERP.Properties.Resources.IsIssued </th>
+                    </tr>*@
+                </thead>
+                <tbody id="EmployeePayrollIssueDetails">
+                    @if (Model != null)
+                    {
+                        if (Model.EmployeePayrollIssueDetails.Count > 0)
+                        {
+                            foreach (var item in Model.EmployeePayrollIssueDetails)
+                            {
+                    <tr>
+                        <td>
+                            <input hidden class="EmployeeId" value="@item.EmployeeId" />
+                            <label class="control-label"> @item.Employee.Code - @item.Employee.ArName </label>
+                        </td>
+                        <td>
+                            <input hidden class="HrDepartmentId" value="@item.HrDepartmentId" />
+                            @if (item.HrDepartment != null)
+                            {
+                                <label class="control-label">@item.HrDepartment.Code - @item.HrDepartment.ArName </label>
+                            }
+                            else
+                            {
+                                <label class="control-label">  </label>
+                            }
+                        </td>
+                        <td>
+                            <input hidden class="NationalityId" value="@item.NationalityId" />
+                            @if (item.Nationality != null)
+                            {
+                                <label class="control-label"> @item.Nationality.Code - @item.Nationality.ArName </label>
+                            }
+                            else
+                            {
+                                <label class="control-label">  </label>
+                            }
+                        </td>
+                        <td>
+                            <input hidden class="JobId" value="@item.JobId" />
+                            @if (item.Job != null)
+                            {
+                                <label class="control-label"> @item.Job.Code - @item.Job.ArName </label>
+                            }
+                            else
+                            {
+                                <label class="control-label">  </label>
+                            }
+                        </td>
+                        <td>
+                            <input type="hidden" class="FirstWorkDateVal"
+                                   value="@(item.FirstWorkDate.HasValue ? item.FirstWorkDate.Value.ToString("yyyy-MM-dd") : "")" />
+
+                            <label class="FirstWorkDateTxt control-label">
+                                @(item.FirstWorkDate.HasValue ? item.FirstWorkDate.Value.ToString("dd/MM/yyyy") : "")
+                            </label>
+
+
+                        </td>
+                        <td>
+                            <label class="LastWorkDate control-label"> @item.LastWorkDate </label>
+                        </td>
+                        <td>
+                            <label class="NoOfWorkingDays control-label"> @item.NoOfWorkingDays </label>
+                        </td>
+                        <td>
+                            <label class="AbsenceDays control-label"> @item.AbsenceDays </label>
+                        </td>
+                        <td>
+                            <label class="RemainingDays control-label"> @item.RemainingDays </label>
+                        </td>
+                        <!-- SalaryItems -->
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="1">
+                            <label class="SalaryItem1 control-label SalaryItemId" style="display:none" SalaryItemId="1"> @item.SalaryItem1.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="2">
+                            <label class="SalaryItem2 control-label SalaryItemId" style="display:none" SalaryItemId="2"> @item.SalaryItem2.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="3">
+                            <label class="SalaryItem3 control-label SalaryItemId" style="display:none" SalaryItemId="3"> @item.SalaryItem3.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="4">
+                            <label class="SalaryItem4 control-label SalaryItemId" style="display:none" SalaryItemId="4"> @item.SalaryItem4.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="5">
+                            <label class="SalaryItem5 control-label SalaryItemId" style="display:none" SalaryItemId="5"> @item.SalaryItem5.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="6">
+                            <label class="SalaryItem6 control-label SalaryItemId" style="display:none" SalaryItemId="6"> @item.SalaryItem6.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="7">
+                            <label class="SalaryItem7 control-label SalaryItemId" style="display:none" SalaryItemId="7"> @item.SalaryItem7.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="8">
+                            <label class="SalaryItem8 control-label SalaryItemId" style="display:none" SalaryItemId="8"> @item.SalaryItem8.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="9">
+                            <label class="SalaryItem9 control-label SalaryItemId" style="display:none" SalaryItemId="9"> @item.SalaryItem9.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="10">
+                            <label class="SalaryItem10 control-label SalaryItemId" style="display:none" SalaryItemId="10"> @item.SalaryItem10.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="11">
+                            <label class="SalaryItem11 control-label SalaryItemId" style="display:none" SalaryItemId="11"> @item.SalaryItem11.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="12">
+                            <label class="SalaryItem12 control-label SalaryItemId" style="display:none" SalaryItemId="12"> @item.SalaryItem12.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="13">
+                            <label class="SalaryItem13 control-label SalaryItemId" style="display:none" SalaryItemId="13"> @item.SalaryItem13.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="14">
+                            <label class="SalaryItem14 control-label SalaryItemId" style="display:none" SalaryItemId="14"> @item.SalaryItem14.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="15">
+                            <label class="SalaryItem15 control-label SalaryItemId" style="display:none" SalaryItemId="15"> @item.SalaryItem15.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="16">
+                            <label class="SalaryItem16 control-label SalaryItemId" style="display:none" SalaryItemId="16"> @item.SalaryItem16.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="17">
+                            <label class="SalaryItem17 control-label SalaryItemId" style="display:none" SalaryItemId="17"> @item.SalaryItem17.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="18">
+                            <label class="SalaryItem18 control-label SalaryItemId" style="display:none" SalaryItemId="18"> @item.SalaryItem18.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="19">
+                            <label class="SalaryItem19 control-label SalaryItemId" style="display:none" SalaryItemId="19"> @item.SalaryItem19.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="20">
+                            <label class="SalaryItem20 control-label SalaryItemId" style="display:none" SalaryItemId="20"> @item.SalaryItem20.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="21">
+                            <label class="SalaryItem21 control-label SalaryItemId" style="display:none" SalaryItemId="21"> @item.SalaryItem21.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="22">
+                            <label class="SalaryItem22 control-label SalaryItemId" style="display:none" SalaryItemId="22"> @item.SalaryItem22.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="23">
+                            <label class="SalaryItem23 control-label SalaryItemId" style="display:none" SalaryItemId="23"> @item.SalaryItem23.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="24">
+                            <label class="SalaryItem24 control-label SalaryItemId" style="display:none" SalaryItemId="24"> @item.SalaryItem24.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="25">
+                            <label class="SalaryItem25 control-label SalaryItemId" style="display:none" SalaryItemId="25"> @item.SalaryItem25.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="26">
+                            <label class="SalaryItem26 control-label SalaryItemId" style="display:none" SalaryItemId="26"> @item.SalaryItem26.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="27">
+                            <label class="SalaryItem27 control-label SalaryItemId" style="display:none" SalaryItemId="27"> @item.SalaryItem27.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="28">
+                            <label class="SalaryItem28 control-label SalaryItemId" style="display:none" SalaryItemId="28"> @item.SalaryItem28.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="29">
+                            <label class="SalaryItem29 control-label SalaryItemId" style="display:none" SalaryItemId="29"> @item.SalaryItem29.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="30">
+                            <label class="SalaryItem30 control-label SalaryItemId" style="display:none" SalaryItemId="30"> @item.SalaryItem30.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="31">
+                            <label class="SalaryItem31 control-label SalaryItemId" style="display:none" SalaryItemId="31"> @item.SalaryItem31.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="32">
+                            <label class="SalaryItem32 control-label SalaryItemId" style="display:none" SalaryItemId="32"> @item.SalaryItem32.Value.ToString("0.00") </label>
+                        </td>
+                        <td class="SalaryItemId" style="display:none" SalaryItemId="33">
+                            <label class="SalaryItem33 control-label SalaryItemId" style="display:none" SalaryItemId="33"> @item.SalaryItem33.Value.ToString("0.00") </label>
+                        </td>
+                        <!--End Of SalaryItems -->
+                        <td>
+                            <label class="AdvancedExpenses control-label"> @item.AdvancedExpenses.Value.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <label class="TotalOvertime control-label"> @item.TotalOvertime.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <label class="TotalReward control-label"> @item.TotalReward.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <label class="TotalPenalty control-label"> @item.TotalPenalty.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <label class="BorrowValue control-label"> @item.BorrowValue </label>
+                        </td>
+                        <td>
+                            <label class="TotalDueItems control-label"> @item.TotalDueItems.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <label class="TotalDeductionItems control-label"> @item.TotalDeductionItems.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <label class="NetSalary control-label"> @item.NetSalary.ToString("0.00") </label>
+                        </td>
+                        <td>
+                            <input type="checkbox" class="IsIssued" disabled @Html.Raw(Model != null && item.IsIssued == true ? "checked" : "") />
+                        </td>
+
+                    </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+
+@if (Model != null)
+{
+    if (ViewBag.JE != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntrie</h5>
+                <div class="form-horizontal">
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.JournalEntrieNo</label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.JournalEntrieNo disabled>
+
+                        </div>
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Date </label>
+                        <div class="col-sm-5">
+                            <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.VoucherDate" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Department</label>
+                        <div class="col-sm-5">
+                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Notes</label>
+                        <div class="col-sm-11">
+                            <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
+                        </div>
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.CarriedOver</label>
+                        <div class="col-sm-5">
+                            @if (Model.IsPosted == true)
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" checked disabled>
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" disabled>
+                            }
+
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>@MyERP.Properties.Resources.Debit</th>
+                                            <th>@MyERP.Properties.Resources.Credit</th>
+                                            <th>@MyERP.Properties.Resources.Account</th>
+                                            <th>@MyERP.Properties.Resources.CostCenter </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Id != 0)
+                                        {
+
+                                            foreach (var jED in ViewBag.JEDetails)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <label>@jED.Debit</label>
+                                                        <input type='text' class='txtDebit' value="@jED.Debit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Credit</label>
+                                                        <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        @if (jED.AccountId != null)
+                                                        {
+                                                            <label>@jED.ChartOfAccount.ArName</label>
+                                                            <input type='number' class='AccountId' value="@jED.AccountId" hidden>
+                                                        }
+
+                                                    </td>
+                                                    <td>
+                                                        @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<script>
+    //--------------- Variables Declarations -------------------//
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            $('#Year, #Month, #DepartmentId,#EmployeeId,#HrDepartmentId,#AdministrativeDepartmentId').attr('disabled', 'disabled');
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#VoucherDate").prop('disabled', true);
+        }
+        else {
+            GetEmployeeContractDetailsByDepartmentId();
+            setDocNum();
+        }
+        GetAppearInPayRollSalaryItem();
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $(document).on('change', '#DepartmentId', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+        }
+        GetEmployeeContractDetailsByDepartmentId();
+    });
+    $(document).on('change', '#VoucherDate', function () {
+        if ($('#DepartmentId').val()) {
+            setDocNum();
+        }
+    });
+    $('#Year').on('change', function () {
+        //getPreviousPayrollMonths();
+        GetEmployeeContractDetailsByDepartmentId();
+    });
+
+    $('#Month').on('change', function () {
+        //getPreviousPayrollMonths();
+        GetEmployeeContractDetailsByDepartmentId();
+
+    });
+    $('#EmployeeId').on('change', function () {
+        //getPreviousPayrollMonths();
+        GetEmployeeContractDetailsByDepartmentId();
+
+    });
+    $('#HrDepartmentId').on('change', function () {
+        //getPreviousPayrollMonths();
+        GetEmployeeContractDetailsByDepartmentId();
+        //GetAppearInPayRollSalaryItem();
+
+    });
+    $('#AdministrativeDepartmentId').on('change', function () {
+        //getPreviousPayrollMonths();
+        GetEmployeeContractDetailsByDepartmentId();
+
+    });
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setDocNum() {
+        if ($('#DepartmentId').val()) {
+            $.get('/EmployeePayrollIssue/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#VoucherDate').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+        }
+    }
+
+    function GetEmployeeContractDetailsByDepartmentId() {
+        $('#EmployeePayrollIssueDetails').empty();
+        $.get('/EmployeePayrollIssue/GetEmployeeContractDetailsByDepartmentId?DepartmentId=' + $('#DepartmentId').val() + '&month=' + $('#Month').val() + '&year=' + $('#Year').val() + '&EmployeeId=' + $('#EmployeeId').val() + '&HrDepartmentId=' + $('#HrDepartmentId').val() + '&AdministrativeDepartmentId=' + $('#AdministrativeDepartmentId').val()).done(function (r) {
+            for (var i = 0; i < r.length; i++) {
+                if (r[i].LastWorkDate == null) {
+                    r[i].LastWorkDate = "";
+                }
+                else {
+                    r[i].LastWorkDate = r[i].LastWorkDate;
+                }
+                r[i].NationalityName = r[i].NationalityName == null ? "" : r[i].NationalityName;
+                r[i].HrDepartmentName = r[i].HrDepartmentName == null ? "" : r[i].HrDepartmentName;
+                r[i].JobName = r[i].JobName == null ? "" : r[i].JobName;
+
+                r[i].NationalityId = r[i].NationalityId == null ? null : r[i].NationalityId;
+                r[i].HrDepartmentId = r[i].HrDepartmentId == null ? null : r[i].HrDepartmentId;
+                r[i].JobId = r[i].JobId == null ? null : r[i].JobId;
+
+                let tr = '<tr><td><input hidden class="EmployeeId" value="' + r[i].EmployeeId + '"/><label class="control-label"> ' +
+                    r[i].EmployeeName + '</label></td><td><input hidden type="number" step="any" class="HrDepartmentId" value="' +
+                    r[i].HrDepartmentId + '" /><label class="control-label"> ' + r[i].HrDepartmentName + ' </label></td><td><input hidden class="NationalityId" type="number" step="any" value="' +
+                    r[i].NationalityId + '" /><label class="control-label">' + r[i].NationalityName + '</label></td><td><input hidden class="JobId" type="number" step="any" value="' +
+                    r[i].JobId + '" /><label class="control-label"> ' + r[i].JobName + ' </label></td><td><label class="FirstWorkDate control-label">' +
+                    convertToJavaScriptDate(r[i].FirstWorkDate) + '</label></td><td><label class="LastWorkDate control-label">' +
+                    r[i].LastWorkDate + '</label></td><td><label class="NoOfWorkingDays control-label"> ' +
+                    r[i].NoOfWorkingDays + ' </label></td><td><label class="AbsenceDays control-label">' + r[i].AbsenceDays + '</label></td><td><label class="RemainingDays control-label"> ' +
+                    r[i].RemainingDays + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="1"><label class="SalaryItem1 control-label SalaryItemId" style="display:none" SalaryItemId="1"> ' +
+                    Math.abs(r[i].SalaryItem1).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="2"><label class="SalaryItem2 control-label SalaryItemId" style="display:none" SalaryItemId="2"> ' +
+                    Math.abs(r[i].SalaryItem2).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="3"><label class="SalaryItem3 control-label SalaryItemId" style="display:none" SalaryItemId="3"> ' +
+                    Math.abs(r[i].SalaryItem3).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="4"><label class="SalaryItem4 control-label SalaryItemId" style="display:none" SalaryItemId="4"> ' +
+                    Math.abs(r[i].SalaryItem4).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="5"><label class="SalaryItem5 control-label SalaryItemId" style="display:none" SalaryItemId="5"> ' +
+                    Math.abs(r[i].SalaryItem5).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="6"><label class="SalaryItem6 control-label SalaryItemId" style="display:none" SalaryItemId="6"> ' +
+                    Math.abs(r[i].SalaryItem6).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="7"><label class="SalaryItem7 control-label SalaryItemId" style="display:none" SalaryItemId="7"> ' +
+                    Math.abs(r[i].SalaryItem7).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="8"><label class="SalaryItem8 control-label SalaryItemId" style="display:none" SalaryItemId="8"> ' +
+                    Math.abs(r[i].SalaryItem8).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="9"><label class="SalaryItem9 control-label SalaryItemId" style="display:none" SalaryItemId="9"> ' +
+                    Math.abs(r[i].SalaryItem9).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="10"><label class="SalaryItem10 control-label SalaryItemId" style="display:none" SalaryItemId="10">' +
+                    Math.abs(r[i].SalaryItem10).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="11"><label class="SalaryItem11 control-label SalaryItemId" style="display:none" SalaryItemId="11">' +
+                    Math.abs(r[i].SalaryItem11).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="12"><label class="SalaryItem12 control-label SalaryItemId" style="display:none" SalaryItemId="12">' +
+                    Math.abs(r[i].SalaryItem12).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="13"><label class="SalaryItem13 control-label SalaryItemId" style="display:none" SalaryItemId="13">' +
+                    Math.abs(r[i].SalaryItem13).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="14"><label class="SalaryItem14 control-label SalaryItemId" style="display:none" SalaryItemId="14">' +
+                    Math.abs(r[i].SalaryItem14).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="15"><label class="SalaryItem15 control-label SalaryItemId" style="display:none" SalaryItemId="15">' +
+                    Math.abs(r[i].SalaryItem15).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="16"><label class="SalaryItem16 control-label SalaryItemId" style="display:none" SalaryItemId="16">' +
+                    Math.abs(r[i].SalaryItem16).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="17"><label class="SalaryItem17 control-label SalaryItemId" style="display:none" SalaryItemId="17">' +
+                    Math.abs(r[i].SalaryItem17).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="18"><label class="SalaryItem18 control-label SalaryItemId" style="display:none" SalaryItemId="18">' +
+                    Math.abs(r[i].SalaryItem18).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="19"><label class="SalaryItem19 control-label SalaryItemId" style="display:none" SalaryItemId="19">' +
+                    Math.abs(r[i].SalaryItem19).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="20"><label class="SalaryItem20 control-label SalaryItemId" style="display:none" SalaryItemId="20">' +
+                    Math.abs(r[i].SalaryItem20).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="21"><label class="SalaryItem21 control-label SalaryItemId" style="display:none" SalaryItemId="21">' +
+                    Math.abs(r[i].SalaryItem21).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="22"><label class="SalaryItem22 control-label SalaryItemId" style="display:none" SalaryItemId="22">' +
+                    Math.abs(r[i].SalaryItem22).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="23"><label class="SalaryItem23 control-label SalaryItemId" style="display:none" SalaryItemId="23">' +
+                    Math.abs(r[i].SalaryItem23).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="24"><label class="SalaryItem24 control-label SalaryItemId" style="display:none" SalaryItemId="24">' +
+                    Math.abs(r[i].SalaryItem24).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="25"><label class="SalaryItem25 control-label SalaryItemId" style="display:none" SalaryItemId="25">' +
+                    Math.abs(r[i].SalaryItem25).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="26"><label class="SalaryItem26 control-label SalaryItemId" style="display:none" SalaryItemId="26">' +
+                    Math.abs(r[i].SalaryItem26).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="27"><label class="SalaryItem27 control-label SalaryItemId" style="display:none" SalaryItemId="27">' +
+                    Math.abs(r[i].SalaryItem27).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="28"><label class="SalaryItem28 control-label SalaryItemId" style="display:none" SalaryItemId="28">' +
+                    Math.abs(r[i].SalaryItem28).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="29"><label class="SalaryItem29 control-label SalaryItemId" style="display:none" SalaryItemId="29">' +
+                    Math.abs(r[i].SalaryItem29).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="30"><label class="SalaryItem30 control-label SalaryItemId" style="display:none" SalaryItemId="30">' +
+                    Math.abs(r[i].SalaryItem30).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="31"><label class="SalaryItem31 control-label SalaryItemId" style="display:none" SalaryItemId="31">' +
+                    Math.abs(r[i].SalaryItem31).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="32"><label class="SalaryItem32 control-label SalaryItemId" style="display:none" SalaryItemId="32">' +
+                    Math.abs(r[i].SalaryItem32).toFixed(2) + ' </label></td><td class="SalaryItemId" style="display:none" SalaryItemId="33"><label class="SalaryItem33 control-label SalaryItemId" style="display:none" SalaryItemId="33">' +
+                    Math.abs(r[i].SalaryItem33).toFixed(2) + ' </label></td><td><label class="AdvancedExpenses control-label"> ' +
+                    Math.abs(r[i].AdvancedExpenses).toFixed(2) + ' </label></td><td><label class="TotalOvertime control-label">' +
+                    Math.abs(r[i].TotalOvertime).toFixed(2) + ' </label></td><td><label class="TotalReward control-label"> ' +
+                    Math.abs(r[i].TotalReward).toFixed(2) + ' </label></td><td><label class="TotalPenalty control-label">' +
+                    Math.abs(r[i].TotalPenalty).toFixed(2) + ' </label></td><td><label class="BorrowValue control-label" >' +
+                    r[i].BorrowValue + '</label></td><td><label class="TotalDueItems control-label"> ' +
+                    Math.abs(r[i].TotalDueItems).toFixed(2) + ' </label></td><td><label class="TotalDeductionItems control-label"> ' +
+                    Math.abs(r[i].TotalDeductionItems).toFixed(2) + ' </label></td><td><label class="NetSalary control-label"> ' +
+                    Math.abs(r[i].NetSalary).toFixed(2) + ' </label></td></tr>';
+                $('#EmployeePayrollIssueDetails').append(tr);
+            }
+        }).done(function () {
+            GetAppearInPayRollSalaryItem();
+        });
+    }
+
+    function GetAppearInPayRollSalaryItem() {
+
+        $.get('/EmployeePayrollIssue/GetAppearInPayRollSalaryItem?HrDepartmentId=' + $('#HrDepartmentId').val()).done(function (r) {
+            $('#DetailsHead').empty();
+         
+                var trHead = '<tr><th>' +
+                        '@MyERP.Properties.Resources.EmployeeName' + '</th><th>' +
+                        '@MyERP.Properties.Resources.HrDepartment' + '</th><th>' +
+                        '@MyERP.Properties.Resources.Nationality'+'</th> <th>'+
+                        '@MyERP.Properties.Resources.Job'+'</th><th>'+
+                        '@MyERP.Properties.Resources.WorkingFirstDate'+'</th><th>'+
+                        '@MyERP.Properties.Resources.WorkingLastDate'+'</th><th>' +
+                        '@MyERP.Properties.Resources.NoOfWorkingDays' + '</th><th>' +
+                        '@MyERP.Properties.Resources.AbsenceDays' + '</th><th>' +
+                        '@MyERP.Properties.Resources.RemainingDays' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="1">' +
+                        '@MyERP.Properties.Resources.BasicSalary' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="2">' +
+                        '@MyERP.Properties.Resources.AccommodationAllowance' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="3">' +
+                        '@MyERP.Properties.Resources.TaxIncome' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="4">' +
+                        '@MyERP.Properties.Resources.Item1 1' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="5">' +
+                        '@MyERP.Properties.Resources.Item1 2' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="6">' +
+                        '@MyERP.Properties.Resources.Item1 3' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="7">' +
+                        '@MyERP.Properties.Resources.Item1 4' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="8">' +
+                        '@MyERP.Properties.Resources.Item1 5' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="9">' +
+                        '@MyERP.Properties.Resources.Item1 6' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="10">' +
+                        '@MyERP.Properties.Resources.Item1 7' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="11">' +
+                        '@MyERP.Properties.Resources.Item1 8' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="12">' +
+                        '@MyERP.Properties.Resources.Item1 9' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="13">' +
+                        '@MyERP.Properties.Resources.Item1 10' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="14" ' +
+                        '@MyERP.Properties.Resources.Item1 11' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="15" ' +
+                        '@MyERP.Properties.Resources.Item1 12' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="16" ' +
+                        '@MyERP.Properties.Resources.Item1 13' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="17" ' +
+                        '@MyERP.Properties.Resources.Item1 14' + '</th><th class="SalaryItemId" style="display:none" SalaryItemId="18" ' +
+                        '@MyERP.Properties.Resources.Item1 15' +'</th><th class="SalaryItemId" style="display:none" SalaryItemId="19" '+
+                        '@MyERP.Properties.Resources.Item1 16'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="20" '+
+                        '@MyERP.Properties.Resources.Item1 17'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="21" '+
+                        '@MyERP.Properties.Resources.Item1 18'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="22" '+
+                        '@MyERP.Properties.Resources.Item1 19'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="23" '+
+                        '@MyERP.Properties.Resources.Item1 20'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="24">'+
+                        '@MyERP.Properties.Resources.Item1 21'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="25">'+
+                        '@MyERP.Properties.Resources.Item1 22'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="26">'+
+                        '@MyERP.Properties.Resources.Item1 23'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="27">'+
+                        '@MyERP.Properties.Resources.Item1 24'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="28">'+
+                        '@MyERP.Properties.Resources.Item1 25'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="29">'+
+                        '@MyERP.Properties.Resources.Item1 26'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="30">'+
+                        '@MyERP.Properties.Resources.Item1 27'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="31">'+
+                        '@MyERP.Properties.Resources.Item1 28'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="32">'+
+                        '@MyERP.Properties.Resources.Item1 29'+'</th><th class="SalaryItemId" style="display:none" SalaryItemId="33">'+
+                        '@MyERP.Properties.Resources.Item1 30' + '</th><th>' +
+                        '@MyERP.Properties.Resources.AdvancedExpences'+'</th><th>' +
+                        '@MyERP.Properties.Resources.OverTime'+'</th><th>'+
+                        '@MyERP.Properties.Resources.Rewards'+'</th><th>'+
+                        '@MyERP.Properties.Resources.Penalties' + '</th><th> ' +
+                        '@MyERP.Properties.Resources.BorrowValue'+'</th><th>' +
+                        '@MyERP.Properties.Resources.TotalDues'+'</th><th>'+
+                        '@MyERP.Properties.Resources.TotalDeduction' + '</th><th>' +
+                        '@MyERP.Properties.Resources.Net' + '</th><th>' +
+                        '@MyERP.Properties.Resources.IsIssued' + '</th></tr>';
+                $('#DetailsHead').append(trHead);
+
+
+
+            for (var x = 0; x < r.length; x++) {
+                $('.SalaryItemId').each(function () {
+                    let td = $(this);
+                    if (r[x].Id == td.attr("SalaryItemId")) {
+                        td.show();
+                    }
+                    //else {
+                    //}
+                });
+                // to append text according to lang
+                var lang = '@Session["lang"]';// != null ? 'Session["lang"].ToString()' : "ar";
+                lang = lang != null || lang != "" ? lang.toString() : "ar";
+                $('#DetailsHead .SalaryItemId').each(function () {
+                    let td = $(this);
+                    if (r[x].Id == td.attr("SalaryItemId")) {
+                        var txt = lang == 'ar' ? r[x].ArName : r[x].EnName;
+                        td.empty();
+                        td.text(txt);
+                    }
+                });
+            }
+
+            //$('.SalaryItemId').each(function () {
+            //    let td = $(this);
+            //let it = r.filter(function (i) { return i.Id == td.attr("SalaryItemId") })[0];
+            //});
+
+        });
+    }
+
+    function convertToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return (dt.getMonth() + 1) + "/" + dt.getDate() + "/" + dt.getFullYear();
+    }
+
+    function toISODate(val) {
+        if (!val) return "";
+        // لو val جاي من .NET /Date(123)/ أو ISO… عدل حسب حالتك
+        var d = new Date(val);
+        if (isNaN(d.getTime())) return "";
+
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var dd = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '-' + mm + '-' + dd;
+    }
+
+    function showEmps(e) {
+        if ($(e).prop('checked') == true) {
+            $('.IsEmpSelected').show();
+        }
+        else {
+            $('.IsEmpSelected').hide();
+            $('#EmployeeId').prop('selectedIndex',0).select2();
+        }
+    }
+
+    //*********************************************************//
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax(
+                    {
+                        url: '/EmployeePayrollIssue/Delete',
+                        type: 'POST',
+                        data: {
+                            "Id": id,
+                        },
+                        error: function (e) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        },
+                        success: function (r) {
+                            if (r == 'true') {
+                                window.location.replace('/EmployeePayrollIssue');
+                            } else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                $('#preloader, #status').fadeOut();
+                            }
+                        }
+                    });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+            if ($('#EmployeePayrollIssueDetails').find('.IsIssued').prop('checked') == true) {
+                valid = false;
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.CantEditBecauseIsIssued',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+            if ($('#EmployeePayrollIssueDetails tr').length > 0) {
+                var employeePayrollIssueDetails = [];
+                $('#EmployeePayrollIssueDetails tr').each(function () {
+                    let td = $(this);
+                    let employeePayrollIssueDetail = {
+                        EmployeeId: td.find('.EmployeeId').val(),
+                        HrDepartmentId: td.find('.HrDepartmentId').val() || null,
+                        NationalityId: td.find('.NationalityId').val() || null,
+                        JobId: td.find('.JobId').val() || null,
+                        TotalPenalty: td.find('.TotalPenalty').text(),
+                        TotalDeductionItems: td.find('.TotalDeductionItems').text(),
+                        TotalReward: td.find('.TotalReward').text(),
+                        TotalOvertime: td.find('.TotalOvertime').text(),
+                        TotalDueItems: td.find('.TotalDueItems').text(),
+                        NetSalary: td.find('.NetSalary').text(),
+                        AbsenceDays: td.find('.AbsenceDays').text(),
+                        AdvancedExpenses: td.find('.AdvancedExpenses').text(),                        
+                        FirstWorkDate:/* td.find('.FirstWorkDate').text() || */'1/1/2021',
+                        LastWorkDate: /*td.find('.LastWorkDate').text()*/ '1/1/2021',
+                        NoOfWorkingDays: td.find('.NoOfWorkingDays').text(),
+                        SalaryItem1: td.find('.SalaryItem1').text(),
+                        SalaryItem2: td.find('.SalaryItem2').text(),
+                        SalaryItem3: td.find('.SalaryItem3').text(),
+                        SalaryItem4: td.find('.SalaryItem4').text(),
+                        SalaryItem5: td.find('.SalaryItem5').text(),
+                        SalaryItem6: td.find('.SalaryItem6').text(),
+                        SalaryItem7: td.find('.SalaryItem7').text(),
+                        SalaryItem8: td.find('.SalaryItem8').text(),
+                        SalaryItem9: td.find('.SalaryItem9').text(),
+                        SalaryItem10: td.find('.SalaryItem10').text(),
+                        SalaryItem11: td.find('.SalaryItem11').text(),
+                        SalaryItem12: td.find('.SalaryItem12').text(),
+                        SalaryItem13: td.find('.SalaryItem13').text(),
+                        SalaryItem14: td.find('.SalaryItem14').text(),
+                        SalaryItem15: td.find('.SalaryItem15').text(),
+                        SalaryItem16: td.find('.SalaryItem16').text(),
+                        SalaryItem17: td.find('.SalaryItem17').text(),
+                        SalaryItem18: td.find('.SalaryItem18').text(),
+                        SalaryItem19: td.find('.SalaryItem19').text(),
+                        SalaryItem20: td.find('.SalaryItem20').text(),
+                        SalaryItem21: td.find('.SalaryItem21').text(),
+                        SalaryItem22: td.find('.SalaryItem22').text(),
+                        SalaryItem23: td.find('.SalaryItem23').text(),
+                        SalaryItem24: td.find('.SalaryItem24').text(),
+                        SalaryItem25: td.find('.SalaryItem25').text(),
+                        SalaryItem26: td.find('.SalaryItem26').text(),
+                        SalaryItem27: td.find('.SalaryItem27').text(),
+                        SalaryItem28: td.find('.SalaryItem28').text(),
+                        SalaryItem29: td.find('.SalaryItem29').text(),
+                        SalaryItem30: td.find('.SalaryItem30').text(),
+                        SalaryItem31: td.find('.SalaryItem31').text(),
+                        SalaryItem32: td.find('.SalaryItem32').text(),
+                        SalaryItem33: td.find('.SalaryItem33').text(),
+                        BorrowValue: td.find('.BorrowValue').text(),
+                        IsActive: true,
+                        IsDeleted: false,
+                        IsPaid: false,
+                        IsIssued: td.find('.IsIssued').prop('checked'),
+                        RemainingDays: td.find('.RemainingDays').text()
+                    };
+                    employeePayrollIssueDetails.push(employeePayrollIssueDetail)
+                });
+            }
+            else {
+                valid = false;
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: false,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+
+            if (valid == true) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#preloader, #status').fadeIn();
+                        $('#newbtn').prop('disabled', true);
+                        $('#save').prop('disabled', true);
+                        $.ajax({
+                            type: "POST", contentType: "application/json",
+                            url: "/EmployeePayrollIssue/AddEdit",
+                            data: JSON.stringify({
+                                Id: $('#Id').val(),
+                                DocumentNumber: $('#DocumentNumber').val(),
+                                VoucherDate: $('#VoucherDate').val(),
+                                DepartmentId: $('#DepartmentId').val(),
+                                Month: $('#Month').val(),
+                                Year: $('#Year').val(),
+                                Status: $('#Status').prop('checked'),
+                                EmployeeId: $('#EmployeeId').val(),
+                                HrDepartmentId: $('#HrDepartmentId').val(),
+                                AdministrativeDepartmentId: $('#AdministrativeDepartmentId').val(),
+                                EmployeePayrollIssueDetails: employeePayrollIssueDetails
+                            }),
+                            success: function (r) {
+                                if (r.success == true) {
+                                    if (n == "new") {
+                                        window.location.replace("/EmployeePayrollIssue/AddEdit");
+                                    } else {
+                                        window.location.replace("/EmployeePayrollIssue");
+                                    }
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.Saved',
+                                        text: " ",
+                                        icon: 'success',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    });
+                                } else
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.NotSaved !',
+                                        text: " ",
+                                        icon: 'error',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    }); $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                            },
+                            error: function (r) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                                $('#newbtn').prop('disabled', false);
+                                $('#save').prop('disabled', false);
+                            }
+                        });
+                    }
+                    else { result.dismiss; }
+                });
+            }
+        }
+    }
+
+
+    //function refreshDetails() {
+    //    $('#preloader, #status').fadeIn();
+
+    //    getPayrollDetails().done(function (r) {
+    //        $('#TotalPenalty').val(r.penalty);
+    //        $('#TotalDeductionItems').val(r.deduction);
+    //        $('#TotalReward').val(r.reward);
+    //        $('#TotalOvertime').val(r.overtime);
+    //        $('#TotalDueItems').val(r.due);
+    //        calculateNetSalary();
+    //        $('#preloader, #status').fadeOut();
+    //    });
+    //}
+
+    //function getPayrollDetails() {
+    //    return $.get('/EmployeePayrollIssue/PayrollDetails?employeeId=' + $('#EmployeeId').val() + '&month=' + $('#Month').val() + '&year=' + $('#Year').val());
+    //}
+
+    //function calculateNetSalary() {
+    //    let due = $('#TotalDueItems').inputmask('unmaskedvalue') * 1 + $('#TotalReward').inputmask('unmaskedvalue') * 1 + $('#TotalOvertime').inputmask('unmaskedvalue') * 1;
+    //    let deduction = $('#TotalDeductionItems').inputmask('unmaskedvalue') * 1 + $('#TotalPenalty').inputmask('unmaskedvalue') * 1;
+    //    $('#Due').val(due);
+    //    $('#Deduction').val(deduction);
+    //    $('#NetSalary').val(due - deduction);
+    //}
+
+    //function getPreviousPayrollMonths() {
+    //    if ($('#EmployeeId').val()) {
+    //        $('#preloader, #status').fadeIn();
+    //        $('#Month').find('option').removeAttr('disabled').select2();
+    //        $.get('/EmployeePayrollIssue/PreviousPayrollMonths?employeeId=' + $('#EmployeeId').val() + '&year=' + $('#Year').val()).done(function (r) {
+    //            for (var i = 0; i < r.length; i++) {
+    //                $('#Month').find('option').eq(r[i] - 1).attr('disabled', 'disabled');
+    //            }
+    //            let firstAvailableMonth = $('#Month').find('option').not(':disabled').eq(0).text();
+    //            $('#Month').val(firstAvailableMonth).select2();
+    //            refreshDetails();
+    //            $('#preloader, #status').fadeOut();
+    //        });
+    //    }
+    //}
+
+</script>

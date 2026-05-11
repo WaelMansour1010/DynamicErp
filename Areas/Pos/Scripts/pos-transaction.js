@@ -56,6 +56,7 @@
     var amountWarningLimit = 20000;
     var maxRechargeValue = 100000;
     var pendingSaveConfirmation = false;
+    var loadedInvoiceIsCancelled = false;
 
     function byId(id) { return document.getElementById(id); }
     try {
@@ -121,6 +122,24 @@
         var button = byId("deleteCurrentInvoiceBtn");
         if (!button) { return; }
         button.disabled = !(savedTransactionId() > 0 && currentContext && currentContext.CanAdminDeleteInvoice === true);
+    }
+    function isCurrentInvoiceSameDay() {
+        var value = currentTransactionDate();
+        return !!value && value === localIsoDate();
+    }
+    function enableCancelIfAllowed() {
+        var button = byId("cancelInvoiceBtn");
+        if (!button) { return; }
+        var mode = byId("transactionType").value;
+        var allowedMode = mode === "cash-in" || mode === "cash-out";
+        var canCancel = savedTransactionId() > 0
+            && currentContext
+            && currentContext.CanCancelInvoice === true
+            && allowedMode
+            && !loadedInvoiceIsCancelled
+            && isCurrentInvoiceSameDay();
+        button.style.display = canCancel ? "" : "none";
+        button.disabled = !canCancel;
     }
     function savedKycCustomerId() {
         var element = byId("cashCustomerId");
@@ -304,6 +323,7 @@
             CanEditKyc: readBool(data.CanEditKyc),
             CanTeller: readBool(data.CanTeller),
             CanEditInvoice: readBool(data.CanEditInvoice),
+            CanCancelInvoice: readBool(data.CanCancelInvoice),
             CanAdminDeleteInvoice: readBool(data.CanAdminDeleteInvoice) || readBool(data.IsFullAccess),
             IsFullAccess: readBool(data.IsFullAccess),
             CanChangeDefaults: readBool(data.CanChangeDefaults)
@@ -334,6 +354,7 @@
             CanEditKyc: getPageValue("data-can-edit-kyc"),
             CanTeller: getPageValue("data-can-teller"),
             CanEditInvoice: getPageValue("data-can-edit-invoice"),
+            CanCancelInvoice: getPageValue("data-can-cancel-invoice"),
             CanAdminDeleteInvoice: getPageValue("data-can-admin-delete-invoice"),
             IsFullAccess: getPageValue("data-is-full-access"),
             CanChangeDefaults: getPageValue("data-can-change-defaults")
@@ -925,7 +946,7 @@
     function uxContextAllowsSave() {
         var canEditLoadedInvoice = reviewMode && currentContext
             && (currentContext.CanEditInvoice === true || (loadedInvoiceCreatedUserId && loadedInvoiceCreatedUserId === currentContext.UserId && currentContext.CanAdd === true));
-        return !(reviewMode && !canEditLoadedInvoice) && !saveDisabledByContext(byId("transactionType").value);
+        return !(reviewMode && !canEditLoadedInvoice) && !loadedInvoiceIsCancelled && !saveDisabledByContext(byId("transactionType").value);
     }
 
     function uxIsSaveReady() {
@@ -1679,6 +1700,9 @@
         return null;
     }
 
+    // Legacy POS mapping:
+    // UI field "ID" is stored in request.IPN and Transactions.IPN.
+    // UI field "IPN" is stored in request.ManualNO and Transactions.ManualNO.
     function buildRequest() {
         var items = [];
         var rows = byId("itemsTable").querySelectorAll("tbody tr");
@@ -1911,6 +1935,7 @@
                     if (byId("invoiceNumber")) { byId("invoiceNumber").value = data.noteSerial1 || ""; }
                     enablePrintIfAllowed();
                     enableDeleteIfAllowed();
+                    enableCancelIfAllowed();
                     loadEmployeeBalances();
                     loadTodayInvoices();
                     byId("saveResult").innerHTML = successMessage;
@@ -1992,6 +2017,9 @@
         var operationType = typeFilter ? typeFilter.value : "";
         var trimmedTerm = (term || "").trim();
         var list = byId("todayInvoicesList");
+        var dateRangeEnabled = byId("todayDateRangeEnabled") && byId("todayDateRangeEnabled").checked;
+        var fromDate = dateRangeEnabled && byId("todayFromDate") ? byId("todayFromDate").value : "";
+        var toDate = dateRangeEnabled && byId("todayToDate") ? byId("todayToDate").value : "";
         if (trimmedTerm && trimmedTerm.length < 2) {
             if (list) { list.innerText = "اكتب حرفين على الأقل للبحث في الفواتير."; }
             byId("todayInvoiceSummary").innerHTML = "";
@@ -2000,7 +2028,7 @@
 
         if (list) { list.innerText = "جاري البحث..."; }
         var excelOnly = byId("todayExcelOnly") && byId("todayExcelOnly").checked;
-        requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || "") + "&excelOnly=" + encodeURIComponent(excelOnly ? "true" : "false"), null, function (status, data) {
+        requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || "") + "&excelOnly=" + encodeURIComponent(excelOnly ? "true" : "false") + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate), null, function (status, data) {
             if (status < 200 || status >= 300 || !data) {
                 byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
                 return;
@@ -2029,7 +2057,7 @@
             item.setAttribute("data-transaction-id", invoices[i].Transaction_ID || "");
             item.innerHTML =
                 '<strong>' + escapeHtml(invoices[i].NoteSerial1 || invoices[i].Transaction_ID) + '</strong>' +
-                '<span>' + escapeHtml(invoices[i].ServiceType || "") + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + (invoices[i].IsExcelImported ? ' | Excel' : '') + '</span>' +
+                '<span>' + escapeHtml(invoices[i].ServiceType || "") + (invoices[i].IsCancelled ? ' | ملغاة' : '') + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + (invoices[i].IsExcelImported ? ' | Excel' : '') + '</span>' +
                 '<span>' + escapeHtml(invoices[i].CustomerName || "") + ' - ' + escapeHtml(invoices[i].CustomerPhone || "") + '</span>' +
                 '<span>الصافي: ' + escapeHtml(decimalText(invoices[i].NetValue || invoices[i].PayedValue || 0)) + '</span>';
             container.appendChild(item);
@@ -2044,6 +2072,7 @@
             '<div><strong>رقم الفاتورة:</strong> ' + escapeHtml(invoice.NoteSerial1 || "") + '</div>' +
             '<div><strong>رقم الحركة:</strong> ' + escapeHtml(invoice.Transaction_ID || "") + '</div>' +
             '<div><strong>النوع:</strong> ' + escapeHtml(invoice.ServiceType || "") + '</div>' +
+            '<div><strong>الحالة:</strong> ' + (invoice.IsCancelled ? "ملغاة" : "سارية") + '</div>' +
             '<div><strong>المصدر:</strong> ' + (invoice.IsExcelImported ? "Excel" : "إدخال يدوي") + '</div>' +
             '<div><strong>العميل:</strong> ' + escapeHtml(invoice.CustomerName || "") + '</div>' +
             '<div><strong>التليفون:</strong> ' + escapeHtml(invoice.CustomerPhone || "") + '</div>' +
@@ -2167,7 +2196,7 @@
         }
 
         var html = '<div class="responsive-table"><table class="pos-table sales-index-table"><thead><tr>' +
-            '<th>رقم الفاتورة</th><th>رقم الحركة</th><th>النوع</th><th>المصدر</th><th>التاريخ</th><th>الوقت</th><th>العميل</th><th>الهاتف</th><th>الصافي</th><th>إجراء</th>' +
+            '<th>رقم الفاتورة</th><th>رقم الحركة</th><th>النوع</th><th>الحالة</th><th>المصدر</th><th>التاريخ</th><th>الوقت</th><th>العميل</th><th>الهاتف</th><th>الصافي</th><th>إجراء</th>' +
             '</tr></thead><tbody>';
         for (var i = 0; i < invoices.length; i++) {
             var invoice = invoices[i] || {};
@@ -2175,6 +2204,7 @@
                 '<td>' + escapeHtml(invoice.NoteSerial1 || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.Transaction_ID || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.ServiceType || "") + '</td>' +
+                '<td>' + (invoice.IsCancelled ? '<span class="manual-badge">ملغاة</span>' : '<span class="manual-badge">سارية</span>') + '</td>' +
                 '<td>' + (invoice.IsExcelImported ? '<span class="excel-badge">Excel</span>' : '<span class="manual-badge">يدوي</span>') + '</td>' +
                 '<td>' + escapeHtml(invoice.TransactionDate || "") + '</td>' +
                 '<td>' + escapeHtml(invoice.TransactionTime || "") + '</td>' +
@@ -2262,6 +2292,36 @@
             loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
             if (salesIndexFirst()) { loadSalesIndexInvoices(); }
         }, "جاري حذف الفاتورة...");
+    }
+
+    function cancelInvoice(transactionId) {
+        transactionId = parseInt(transactionId, 10) || 0;
+        if (!transactionId || !currentContext || currentContext.CanCancelInvoice !== true) {
+            return;
+        }
+
+        var password = window.prompt("أدخل كلمة مرور المستخدم الحالي لتأكيد الإلغاء");
+        if (!password) {
+            byId("validationSummary").innerText = "لم يتم الإلغاء: كلمة المرور مطلوبة.";
+            return;
+        }
+
+        var reason = window.prompt("سبب الإلغاء (اختياري)");
+        requestJsonWithLoading("POST", getUrl("data-cancel-invoice-url"), {
+            TransactionId: transactionId,
+            Password: password,
+            CancelReason: reason || ""
+        }, function (status, data) {
+            if (status < 200 || status >= 300 || !data || data.success === false) {
+                byId("validationSummary").innerText = (data && data.message) || "تعذر إلغاء الفاتورة.";
+                return;
+            }
+
+            byId("saveResult").innerText = data.message || "تم إلغاء الفاتورة.";
+            loadInvoiceForReview(transactionId);
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            if (salesIndexFirst()) { loadSalesIndexInvoices(); }
+        }, "جاري إلغاء الفاتورة...");
     }
 
     function deleteExcelInvoicesForRange() {
@@ -2482,6 +2542,9 @@
     function setInvoiceIdentityFields(data) {
         if (!data) { return; }
 
+        // Legacy POS mapping:
+        // Transactions.IPN is shown in the UI as "ID".
+        // Transactions.ManualNO is shown in the UI as "IPN".
         byId("ipn").value = firstTextValue(data.IPN, data.Ipn, data.ID, data.Id, data.NoID);
         byId("manualNo").value = firstTextValue(data.ManualNO, data.ManualNo, data.ManualNumber, data.IPNManual);
     }
@@ -2496,6 +2559,7 @@
             }
 
             lastSavedTransactionId = parseInt(data.Transaction_ID || transactionId, 10) || null;
+            loadedInvoiceIsCancelled = data.IsCancelled === true;
             loadedInvoiceCreatedUserId = parseInt(data.CreatedUserId, 10) || null;
             loadedInvoiceBranchId = parseInt(data.BranchId, 10) || null;
             loadedInvoiceStoreId = parseInt(data.StoreID, 10) || null;
@@ -2561,8 +2625,10 @@
             setInvoiceIdentityFields(data);
             updateSaveButtonState();
             byId("saveResult").innerHTML = "وضع مراجعة فقط - رقم الفاتورة: " + escapeHtml(data.NoteSerial1 || "") + "<br />رقم الحركة: " + escapeHtml(data.Transaction_ID || "");
+            byId("cancelledBanner").style.display = loadedInvoiceIsCancelled ? "" : "none";
             enablePrintIfAllowed();
             enableDeleteIfAllowed();
+            enableCancelIfAllowed();
             loadJournalEntry(lastSavedTransactionId);
             updateCashOutMachineDisplay();
             updateBottomSummary();
@@ -3840,8 +3906,11 @@
         loadedInvoiceStoreId = null;
         loadedInvoiceBoxId = null;
         loadedInvoiceEmpId = null;
+        loadedInvoiceIsCancelled = false;
         byId("printBtn").disabled = true;
+        if (byId("cancelledBanner")) { byId("cancelledBanner").style.display = "none"; }
         enableDeleteIfAllowed();
+        enableCancelIfAllowed();
         reviewMode = false;
         clearJournalEntry();
         clearMessages();
@@ -3893,6 +3962,7 @@
         calculateTotals();
         enablePrintIfAllowed();
         enableDeleteIfAllowed();
+        enableCancelIfAllowed();
     }
 
     function reloadContextAndReset(messageHtml) {
@@ -3911,6 +3981,7 @@
             }
             enablePrintIfAllowed();
             enableDeleteIfAllowed();
+            enableCancelIfAllowed();
         });
     }
 
@@ -3918,6 +3989,7 @@
         updateSaveButtonState();
         enablePrintIfAllowed();
         enableDeleteIfAllowed();
+        enableCancelIfAllowed();
         byId("returnLaterBtn").disabled = !currentContext || currentContext.CanReturn !== true || byId("transactionType").value === "violations";
         byId("saveCashCustomerBtn").disabled = !currentContext || currentContext.CanEditKyc !== true;
         byId("boxId").disabled = true;
@@ -3972,6 +4044,9 @@
         }
         if (event.target.id === "deleteCurrentInvoiceBtn") {
             deleteInvoice(savedTransactionId());
+        }
+        if (event.target.id === "cancelInvoiceBtn") {
+            cancelInvoice(savedTransactionId());
         }
         if (event.target.id === "deleteExcelRangeBtn") {
             deleteExcelInvoicesForRange();
@@ -4049,6 +4124,9 @@
         if (event.target.id === "clearTodayInvoiceSearchBtn") {
             if (byId("todayInvoiceSearch")) { byId("todayInvoiceSearch").value = ""; }
             if (byId("todayInvoiceTypeFilter")) { byId("todayInvoiceTypeFilter").value = ""; }
+            if (byId("todayDateRangeEnabled")) { byId("todayDateRangeEnabled").checked = false; }
+            if (byId("todayFromDate")) { byId("todayFromDate").value = ""; }
+            if (byId("todayToDate")) { byId("todayToDate").value = ""; }
             if (byId("todayExcelOnly")) { byId("todayExcelOnly").checked = false; }
             todayInvoicesCache = [];
             byId("todayInvoicesList").innerText = "اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.";
@@ -4264,6 +4342,18 @@
             setMode(byId("transactionType").value);
         }
         if (event.target.id === "todayInvoiceTypeFilter") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }
+        if (event.target.id === "todayDateRangeEnabled") {
+            if (event.target.checked) {
+                var today = localIsoDate();
+                if (byId("todayFromDate") && !byId("todayFromDate").value) { byId("todayFromDate").value = today; }
+                if (byId("todayToDate") && !byId("todayToDate").value) { byId("todayToDate").value = today; }
+            }
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+        }
+        if (event.target.id === "todayFromDate" || event.target.id === "todayToDate") {
+            if (byId("todayDateRangeEnabled")) { byId("todayDateRangeEnabled").checked = true; }
             loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
         }
         if (event.target.id === "todayExcelOnly") {

@@ -40,7 +40,9 @@
   <ItemGroup>
     <Compile Include="Agent\AgentRunner.cs" />
     <Compile Include="Agent\BranchAgentOptions.cs" />
-    <Compile Include="Agent\BranchSyncWindowsService.cs" />
+    <Compile Include="Agent\BranchSyncWindowsService.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Agent\CentralSyncApiClient.cs" />
     <Compile Include="Agent\FileLogger.cs" />
     <Compile Include="Agent\LocalInvoiceScanner.cs" />

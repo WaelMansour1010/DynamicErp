@@ -29,6 +29,14 @@ namespace MyERP
             );
             rootRoute.DataTokens["UseNamespaceFallback"] = false;
 
+            var reportRoute = routes.MapRoute(
+                name: "Report",
+                url: "Report/{action}/{id}",
+                defaults: new { controller = "Report", action = "Index", id = UrlParameter.Optional },
+                namespaces: new[] { "MyERP.Reporting" }
+            );
+            reportRoute.DataTokens["UseNamespaceFallback"] = false;
+
             var defaultRoute = routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",

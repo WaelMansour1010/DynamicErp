@@ -113,6 +113,8 @@ namespace MyERP.Models
         public Nullable<int> IssueMethodId { get; set; }
         public Nullable<decimal> SmokingTax { get; set; }
         public Nullable<int> WaiterId { get; set; }
+        public Nullable<int> LastModifiedByUserId { get; set; }
+        public Nullable<System.DateTime> LastModifiedDate { get; set; }
     
         public virtual Area Area { get; set; }
         public virtual Branch Branch { get; set; }

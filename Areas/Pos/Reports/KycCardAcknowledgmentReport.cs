@@ -33,7 +33,7 @@ namespace MyERP.Areas.Pos.Reports
             }
 
             RightToLeft = RightToLeft.Yes;
-            RightToLeftLayout = RightToLeftLayout.Yes;
+            RightToLeftLayout = RightToLeftLayout.No;
             PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
             Landscape = false;
             Margins = new Margins(70, 70, 60, 60);
@@ -50,6 +50,7 @@ namespace MyERP.Areas.Pos.Reports
         {
             string customerName = FirstNonEmpty(customer.CustomerName, customer.Name, customer.ArabicName0);
             string tokenValue = FirstNonEmpty(customer.CardNo, customer.CardId);
+            string cardIssuerText = GetCardIssuerText(tokenValue);
             string date = issuedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
             string time = FormatArabicTime(issuedAt);
 
@@ -59,7 +60,7 @@ namespace MyERP.Areas.Pos.Reports
             band.Controls.Add(new XRLabel
             {
                 BoundsF = new RectangleF(0, titleY, width, 28),
-                Text = "إقرار استلام بطاقة بنك مصر - Easy Cash ميزة المدفوعة مقدما",
+                Text = "إقرار استلام " + cardIssuerText + " ميزة المدفوعة مقدما",
                 Font = _titleFont,
                 TextAlignment = TextAlignment.MiddleCenter,
                 RightToLeft = RightToLeft.Yes
@@ -97,7 +98,7 @@ namespace MyERP.Areas.Pos.Reports
             const float labelHeight = 22F;
 
             // Line 1 (RTL reading order):
-            //   [أقر أنا] [customerName underlined] [الموقع أدناه بأني إستلمت بطاقة بنك مصر - Easy Cash]
+            //   [أقر أنا] [customerName underlined] [الموقع أدناه بأني إستلمت cardIssuerText]
             float rightPrefixWidth = 60F;
             float leftSuffixWidth = width * 0.55F;
             float namePartWidth = width - rightPrefixWidth - leftSuffixWidth - 8F;
@@ -127,7 +128,7 @@ namespace MyERP.Areas.Pos.Reports
             band.Controls.Add(new XRLabel
             {
                 BoundsF = new RectangleF(0, lineY, leftSuffixWidth, labelHeight),
-                Text = "الموقع أدناه بأني إستلمت بطاقة بنك مصر - Easy Cash",
+                Text = "الموقع أدناه بأني إستلمت " + cardIssuerText,
                 Font = _bodyFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
@@ -301,7 +302,7 @@ namespace MyERP.Areas.Pos.Reports
             {
                 band.Controls.Add(new XRPictureBox
                 {
-                    BoundsF = new RectangleF(0, y, logoBoxWidth, logoBoxHeight),
+                    BoundsF = new RectangleF(width - logoBoxWidth, y, logoBoxWidth, logoBoxHeight),
                     Image = misrLogo,
                     Sizing = ImageSizeMode.ZoomImage
                 });
@@ -310,7 +311,7 @@ namespace MyERP.Areas.Pos.Reports
             {
                 band.Controls.Add(new XRLabel
                 {
-                    BoundsF = new RectangleF(0, y + 25F, logoBoxWidth, 30F),
+                    BoundsF = new RectangleF(width - logoBoxWidth, y + 25F, logoBoxWidth, 30F),
                     Text = "بنك مصر",
                     Font = new Font("Tahoma", 14F, FontStyle.Bold),
                     TextAlignment = TextAlignment.MiddleCenter,
@@ -322,7 +323,7 @@ namespace MyERP.Areas.Pos.Reports
             {
                 band.Controls.Add(new XRPictureBox
                 {
-                    BoundsF = new RectangleF(width - logoBoxWidth, y, logoBoxWidth, logoBoxHeight),
+                    BoundsF = new RectangleF(0, y, logoBoxWidth, logoBoxHeight),
                     Image = easyLogo,
                     Sizing = ImageSizeMode.ZoomImage
                 });
@@ -331,7 +332,7 @@ namespace MyERP.Areas.Pos.Reports
             {
                 band.Controls.Add(new XRLabel
                 {
-                    BoundsF = new RectangleF(width - logoBoxWidth, y + 25F, logoBoxWidth, 30F),
+                    BoundsF = new RectangleF(0, y + 25F, logoBoxWidth, 30F),
                     Text = "easycash",
                     Font = new Font("Tahoma", 14F, FontStyle.Bold),
                     ForeColor = Color.FromArgb(54, 133, 72),
@@ -414,6 +415,12 @@ namespace MyERP.Areas.Pos.Reports
             }
 
             return string.Empty;
+        }
+
+        private static string GetCardIssuerText(string tokenValue)
+        {
+            string token = string.IsNullOrWhiteSpace(tokenValue) ? string.Empty : tokenValue.Trim();
+            return token.Length == 18 ? "بطاقة كارت مصر" : "بطاقة البنك الاهلى";
         }
     }
 }

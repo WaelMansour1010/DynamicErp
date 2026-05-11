@@ -369,6 +369,7 @@ WHERE User_ID = @userId
                 context.CanEditPayments = true;
                 context.CanTeller = true;
                 context.CanCancelOrReturn = true;
+                context.CanCancelInvoice = true;
                 context.CanEditKyc = true;
                 context.CustomerService = true;
                 context.IsFullAccessCustomerService = true;
@@ -430,6 +431,7 @@ WHERE User_ID = @userId
             context.CanEditJournalEntry = context.CanEditJournalEntry || IsTemporaryAllowed(permissions, "CanEditJournalEntry");
             context.CanDeleteJournalEntry = context.CanDeleteJournalEntry || IsTemporaryAllowed(permissions, "CanDeleteJournalEntry");
             context.CanImportExcel = IsTemporaryAllowed(permissions, "CanImportExcel");
+            context.CanCancelInvoice = IsTemporaryAllowed(permissions, "CanCancelInvoice");
         }
 
         private static bool IsTemporaryAllowed(IDictionary<string, bool> permissions, string key)
@@ -4001,6 +4003,10 @@ SELECT
                 AddString(command, "@CashCustomerName", SqlDbType.NVarChar, 255, request.CashCustomerName);
                 AddString(command, "@CashCustomerPhone", SqlDbType.NVarChar, 255, request.CashCustomerPhone);
                 AddString(command, "@Phone2", SqlDbType.NVarChar, 255, request.Phone2);
+
+                // Legacy POS mapping:
+                // request.IPN is the UI "ID" field and must persist to Transactions.IPN.
+                // request.ManualNO is the UI "IPN" field and must persist to Transactions.ManualNO.
                 AddString(command, "@IPN", SqlDbType.NVarChar, 255, request.IPN);
                 AddString(command, "@ManualNO", SqlDbType.NVarChar, 255, request.ManualNO);
                 AddString(command, "@NoID", SqlDbType.VarChar, 255, request.NoID);
@@ -5033,7 +5039,8 @@ SELECT TOP (50)
         ELSE N'كاش إن'
     END AS ServiceType,
     CASE WHEN excelRow.RowId IS NULL THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END AS IsExcelImported,
-    excelRow.BatchId AS ExcelImportBatchId
+    excelRow.BatchId AS ExcelImportBatchId,
+    CAST(ISNULL(t.IsCancelled, 0) AS BIT) AS IsCancelled
 FROM dbo.Transactions t
 OUTER APPLY
 (
@@ -5119,7 +5126,8 @@ ORDER BY t.Transaction_ID DESC;";
                             NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
                             ServiceType = ReadString(reader, "ServiceType"),
                             IsExcelImported = ReadBoolean(reader, "IsExcelImported"),
-                            ExcelImportBatchId = ReadLong(reader, "ExcelImportBatchId")
+                            ExcelImportBatchId = ReadLong(reader, "ExcelImportBatchId"),
+                            IsCancelled = ReadBoolean(reader, "IsCancelled")
                         });
                     }
                 }
@@ -5403,6 +5411,7 @@ SELECT
     CAST(SUM(ISNULL(t.PayedValue, 0)) AS DECIMAL(18, 2)) AS PayedValue
 FROM dbo.Transactions t
 WHERE t.Transaction_Type = 21
+  AND ISNULL(t.IsCancelled, 0) = 0
   AND t.Transaction_Date >= CONVERT(DATE, GETDATE())
   AND t.Transaction_Date < DATEADD(DAY, 1, CONVERT(DATE, GETDATE()))
   AND (@branchId IS NULL OR t.BranchId = @branchId)
@@ -5858,6 +5867,10 @@ SELECT TOP (1)
         WHEN t.Tet_NumPoket IS NULL THEN NULL
         ELSE CONVERT(NVARCHAR(100), CONVERT(DECIMAL(38, 0), t.Tet_NumPoket))
     END AS Tet_NumPoket,
+    CAST(ISNULL(t.IsCancelled, 0) AS BIT) AS IsCancelled,
+    t.CancelledBy,
+    t.CancelledDate,
+    t.CancelReason,
     CASE
         WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
         WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
@@ -5951,7 +5964,11 @@ ORDER BY d.Item_ID;";
                             ItemIDServiceName = ReadString(reader, "ItemIDServiceName"),
                             ItemIDService2Name = ReadString(reader, "ItemIDService2Name"),
                             ViolationsValue = ReadDecimal(reader, "ViolationsValue"),
-                            Tet_NumPoket = ReadString(reader, "Tet_NumPoket")
+                            Tet_NumPoket = ReadString(reader, "Tet_NumPoket"),
+                            IsCancelled = ReadBoolean(reader, "IsCancelled"),
+                            CancelledBy = ReadInt(reader, "CancelledBy"),
+                            CancelledDate = ReadDateTime(reader, "CancelledDate"),
+                            CancelReason = ReadString(reader, "CancelReason")
                         };
                     }
                 }
@@ -8439,6 +8456,7 @@ SELECT ISNULL(@AffectedUsers, 0) AS AffectedUsers, ISNULL(@UpdatedRows, 0) AS Up
                 new PosPermissionItemDto { Key = "CanSaveInvoice", Title = "حفظ فواتير البيع" },
                 new PosPermissionItemDto { Key = "CanEditInvoice", Title = "تعديل فواتير البيع السابقة" },
                 new PosPermissionItemDto { Key = "CanImportExcel", Title = "استيراد العمليات من Excel" },
+                new PosPermissionItemDto { Key = "CanCancelInvoice", Title = "إلغاء فواتير Cash In / Cash Out" },
                 new PosPermissionItemDto { Key = "CanOpenPayments", Title = "فتح شاشة التمويل والاستعاضة" },
                 new PosPermissionItemDto { Key = "CanExecutePayments", Title = "تنفيذ التمويل والاستعاضة" },
                 new PosPermissionItemDto { Key = "CanEditPayments", Title = "تعديل حركات التمويل والاستعاضة السابقة" },
@@ -8723,6 +8741,52 @@ WHERE Transaction_ID = @transactionId
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
                 connection.Open();
                 return command.ExecuteScalar() != null;
+            }
+        }
+
+        public bool HasPosPermission(int userId, string permissionKey)
+        {
+            if (string.IsNullOrWhiteSpace(permissionKey))
+            {
+                return false;
+            }
+
+            const string sql = @"
+IF OBJECT_ID(N'dbo.POS_UserPermissions', N'U') IS NULL
+BEGIN
+    SELECT CAST(NULL AS INT) AS Allowed;
+END
+ELSE
+BEGIN
+    SELECT TOP (1) 1 AS Allowed
+    FROM dbo.POS_UserPermissions
+    WHERE UserID = @userId
+      AND PermissionKey = @permissionKey
+      AND ISNULL(IsAllowed, 0) = 1;
+END";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@permissionKey", SqlDbType.NVarChar, 100).Value = permissionKey.Trim();
+                connection.Open();
+                var value = command.ExecuteScalar();
+                return value != null && value != DBNull.Value && Convert.ToInt32(value, CultureInfo.InvariantCulture) == 1;
+            }
+        }
+
+        public void CancelPosInvoice(int transactionId, int userId, string cancelReason)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_CancelInvoice", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@TransactionId", SqlDbType.Int).Value = transactionId;
+                command.Parameters.Add("@CancelledBy", SqlDbType.Int).Value = userId;
+                AddString(command, "@CancelReason", SqlDbType.NVarChar, 500, cancelReason);
+                connection.Open();
+                command.ExecuteNonQuery();
             }
         }
 

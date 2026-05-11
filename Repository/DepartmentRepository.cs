@@ -22,12 +22,14 @@ namespace MyERP.Repository
                 return ts.Where(d => d.IsActive == true && d.IsDeleted == false).Select(b => new
                 {
                     b.Id,
+                    b.Code,
                     ArName = lang == "en" && b.EnName != null ? b.Code + " - " + b.EnName : b.Code + " - " + b.ArName
                 });
             else
                 return _db.UserDepartments.Where(d => d.UserId == userId && d.Department.IsDeleted == false && d.Department.IsActive == true && d.Privilege == true).Select(b => new
                 {
                     Id = b.DepartmentId,
+                    Code = b.Department.Code,
                     ArName = lang == "en" && b.Department.EnName != null ? b.Department.Code + " - " + b.Department.EnName : b.Department.Code + " - " + b.Department.ArName
                 });
         }

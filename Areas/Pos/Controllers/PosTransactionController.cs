@@ -409,6 +409,7 @@ namespace MyERP.Areas.Pos.Controllers
                 CanExecutePayments = context.CanExecutePayments,
                 CanEditInvoice = context.CanEditInvoice,
                 CanAdminDeleteInvoice = IsAdmin(context),
+                CanCancelInvoice = context.CanCancelInvoice,
                 IsFullAccess = context.IsFullAccess,
                 CanChangeDefaults = context.CanChangeDefaults,
                 CanManagePrintTemplates = context.CanManagePrintTemplates
@@ -447,6 +448,51 @@ namespace MyERP.Areas.Pos.Controllers
                 PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "GetTodayInvoices", operationType, null, ex.Message, ex, "termLength=" + ((term ?? string.Empty).Length.ToString(CultureInfo.InvariantCulture)), "Error", "Exception");
                 SetJsonErrorStatus(500);
                 return Json(Fail("تعذر تحميل فواتير اليوم", ex.Message), JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult CancelInvoice(PosCancelInvoiceRequest request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
+            }
+
+            if (request == null || request.TransactionId <= 0)
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("رقم الفاتورة غير صحيح", "TransactionId is required."));
+            }
+
+            if (!context.CanCancelInvoice || !_repository.HasPosPermission(context.UserId, "CanCancelInvoice"))
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("ليست لديك صلاحية إلغاء الفاتورة", "Missing CanCancelInvoice permission."));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Password) || !_repository.ValidatePosUserPassword(context.UserId, request.Password))
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("كلمة المرور غير صحيحة", "Password validation failed."));
+            }
+
+            try
+            {
+                _repository.CancelPosInvoice(request.TransactionId, context.UserId, request.CancelReason);
+                return Json(new { success = true, message = "تم إلغاء الفاتورة بنجاح." });
+            }
+            catch (SqlException ex)
+            {
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر إلغاء الفاتورة", ex.Message));
+            }
+            catch (Exception ex)
+            {
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر إلغاء الفاتورة", ex.Message));
             }
         }
 
@@ -1009,6 +1055,9 @@ namespace MyERP.Areas.Pos.Controllers
                 request.DefaultCustomerId = 2;
                 request.CustomerID = 2;
 
+                // Legacy POS mapping:
+                // request.IPN is the UI "ID" field.
+                // request.ManualNO is the UI "IPN" field.
                 var result = _repository.SaveTransaction(request);
                 if (result == null || result.Transaction_ID <= 0 || !_repository.TransactionExists(result.Transaction_ID))
                 {

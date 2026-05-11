@@ -797,6 +797,7 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 
 .check-field,
 .today-excel-filter,
+.today-date-toggle,
 .pos-grid label.check-field,
 .pos-grid label.today-excel-filter {
     align-items: center;
@@ -808,6 +809,7 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 
 .check-field input[type="checkbox"],
 .today-excel-filter input[type="checkbox"],
+.today-date-toggle input[type="checkbox"],
 .pos-grid input[type="checkbox"] {
     flex: 0 0 auto;
     height: 16px;
@@ -839,7 +841,8 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 }
 
 .today-search,
-.today-type-filter {
+.today-type-filter,
+.today-date-range input {
     border: 1px solid #cbd5df;
     direction: rtl;
     font-family: "Tahoma", "Arial", sans-serif;
@@ -853,6 +856,24 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .today-type-filter {
     background: #fff;
     margin-top: 8px;
+}
+
+.today-date-toggle {
+    margin-top: 8px;
+}
+
+.today-date-range {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 8px;
+}
+
+.today-date-range label {
+    color: #5f6f82;
+    display: grid;
+    font-size: 12px;
+    gap: 4px;
 }
 
 .today-clear-search {
@@ -3825,7 +3846,8 @@ button.kyc-only.is-visible { display: inline-flex !important; }
 .pos-grid input:focus,
 .pos-grid select:focus,
 .today-search:focus,
-.today-type-filter:focus {
+.today-type-filter:focus,
+.today-date-range input:focus {
     border-color: var(--mode-color);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
     outline: 0;

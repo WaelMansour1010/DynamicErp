@@ -1,0 +1,254 @@
+﻿@model MyERP.Models.Service
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+
+
+
+@{ 
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = "الخدمات";
+    List<SelectListItem> TypesItems = new List<SelectListItem>();
+    TypesItems.Add(new SelectListItem
+    {
+        Text = "رئيسي",
+        Value = "1"
+    });
+    TypesItems.Add(new SelectListItem
+    {
+        Text = "وسيط",
+        Value = "2"
+
+    });
+    TypesItems.Add(new SelectListItem
+    {
+        Text = "فرعى",
+        Value = "3"
+
+    });
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title">   بيانات الخدمة : </h4>
+        </div>
+    </div>
+</div>
+
+
+
+
+               
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Service/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @*@Html.HiddenFor(model => model.Type)*@
+                        @Html.AntiForgeryToken()
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">الكود</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = "الكود", @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الاسم العربى</label>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" value="@Model.ArServiceName" name="ArServiceName" id="txtArServiceName" placeholder="الاسم العربى" required>
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الاسم انجليزى</label>
+                                    <div class="col-md-4">
+                                        <input type="text" class="form-control" name="EnServiceName" value="@Model.EnServiceName" id="txtEnServiceName" placeholder="الاسم انجليزى">
+                                        @Html.ValidationMessageFor(model => model.EnServiceName, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label">نوع المجموعة </label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownListFor(model => model.Type, TypesItems, "-- اختر  النوع --", new { @class = "form-control"@*, id = "type1"*@, @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row" id="ParentDiv" style="display:none;">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الفئة الرئيسية  </label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownList("TypeId", null, "اختر المجموعة الرئيسية ", htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row PointsDiv" style="display:none;">
+                                    <label class="col-sm-2 control-label">عدد النقاط </label>
+                                    <div class="col-md-4">
+                                        <input type="number" step="any" class="form-control" name="Points" value="@Model.Points" id="txtPoints">
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row CompanyFeesDiv" style="display:none;">
+                                    <label class="col-sm-2 control-label">نسبة الشركة </label>
+                                    <div class="col-md-3">
+                                        <input type="number" step="any" class="form-control" value="@Model.CompanyPercentage" name="CompanyPercentage" id="CompanyPercentage">
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <span class="control-label"> % </span>
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class="col-sm-2 control-label">ملاحظات </label>
+                                        <div class="col-md-4">
+                                            <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="3">@if (Model != null){@Model.Notes; }</textarea>                                    @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                        </div>
+                                    </div>
+
+                                    <input id="new" name="newBtn" hidden />
+                                    <div class="col-sm-offset-2">
+                                        @if (Model.Id == 0)
+                                        {
+                                            <button type="submit" id="newbtn" class="btn btn-success">
+                                                حفظ و جديد
+                                            </button>
+                                            <button type="submit" class="btn btn-success">
+                                                حفظ
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                        }
+                                        else
+                                        {
+                                            if (Model.IsDeleted == false)
+                                            {
+                                                <button type="submit" class="btn btn-success">
+                                                    حفظ
+                                                </button>
+                                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                                <a class="btn btn-danger" onclick="Delete(@Model.Id,'Service')" role="button">حذف</a>
+
+                                            }
+                                        }
+
+                                    </div>
+                                </div>
+
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $('#txtPoints').prop('type', 'text').inputmask({
+            alias: 'numeric', autoGroup: true, digits: 2, digitsOptional: false, 'allowMinus': true, 'placeholder': '0'
+        });
+    });
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    if ($('#Id').val() == 0) {
+        function setCodeNum() {
+            var doc = $.get('/Service/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+    else {
+        if ($('#Type').val() == 2)
+        {
+            $('#ParentDiv').show();
+            $('#TypeId').attr('required', true);
+        }
+        else if ($('#Type').val() == 3)
+        {
+            $('#ParentDiv').show();
+            $('.PointsDiv').show();
+            $('.CompanyFeesDiv').show();
+            $('#TypeId').attr('required', true);
+            $('#txtPoints').attr('required', true);
+
+        }
+
+    }
+    $(document).on('change', '#Type', function () {
+        var id = $('#Type').val();
+        $('#txtPoints').val('');
+        $('#CompanyPercentage').val('');
+        if (id == 1) {
+
+            $('#ParentDiv').hide();
+            $('.PointsDiv').hide();
+            $('.CompanyFeesDiv').hide();
+            $('#TypeId').attr('required', false);
+            $('#txtPoints').attr('required', false);
+        }
+        else if (id == 2) {
+            $('#ParentDiv').show();
+            $('.PointsDiv').hide();
+            $('.CompanyFeesDiv').hide();
+            $('#TypeId').attr('required', true);
+            $('#txtPoints').attr('required', false);
+        }
+        else if (id == 3) {
+            $('#ParentDiv').show();
+            $('.PointsDiv').show();
+            $('.CompanyFeesDiv').show();
+            $('#TypeId').attr('required', true);
+            $('#txtPoints').attr('required', true);
+        }
+    });
+</script>

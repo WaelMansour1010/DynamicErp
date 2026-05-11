@@ -1,0 +1,23 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoiceInstallmentActualPayment>
+
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @item.Date.ToString("yyyy-MM-dd")
+            <input type="hidden" class="InstallmentActualPaymentId" value="@item.Id"/>
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Amount)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.CashBox.ArName)
+        </td>
+       <td><button class="btn btn-danger InstallmentActualPaymentDelete disabled" disabled onclick="DeleteInstallmentActualPayment(@item.Id)">حذف</button></td>
+    </tr>
+}
+
+<script>
+            $('.InstallmentActualPaymentDelete').last().removeClass('disabled').removeProp('disabled');
+
+</script>

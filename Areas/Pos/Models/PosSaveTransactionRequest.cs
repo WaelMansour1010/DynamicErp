@@ -32,7 +32,12 @@ namespace MyERP.Areas.Pos.Models
         public string CashCustomerName { get; set; }
         public string CashCustomerPhone { get; set; }
         public string Phone2 { get; set; }
+        // Legacy POS mapping:
+        // UI field "ID" binds here and persists to Transactions.IPN.
         public string IPN { get; set; }
+
+        // Legacy POS mapping:
+        // UI field "IPN" binds here and persists to Transactions.ManualNO.
         public string ManualNO { get; set; }
         public string NoID { get; set; }
         public string ManualNo2 { get; set; }
@@ -139,6 +144,7 @@ namespace MyERP.Areas.Pos.Models
         public bool CanChangeDefaults { get; set; }
         public bool CanManagePrintTemplates { get; set; }
         public bool CanImportExcel { get; set; }
+        public bool CanCancelInvoice { get; set; }
         public PosSystemOptionsDto SystemOptions { get; set; }
     }
 
@@ -544,6 +550,14 @@ namespace MyERP.Areas.Pos.Models
         public string ServiceType { get; set; }
         public bool IsExcelImported { get; set; }
         public long? ExcelImportBatchId { get; set; }
+        public bool IsCancelled { get; set; }
+    }
+
+    public class PosCancelInvoiceRequest
+    {
+        public int TransactionId { get; set; }
+        public string Password { get; set; }
+        public string CancelReason { get; set; }
     }
 
     public class PosDeleteInvoiceRequest
@@ -613,6 +627,10 @@ namespace MyERP.Areas.Pos.Models
         public string ItemIDService2Name { get; set; }
         public decimal? ViolationsValue { get; set; }
         public string Tet_NumPoket { get; set; }
+        public bool IsCancelled { get; set; }
+        public int? CancelledBy { get; set; }
+        public DateTime? CancelledDate { get; set; }
+        public string CancelReason { get; set; }
         public IList<PosTransactionItemDto> Items { get; set; }
         public PosCustomerLookupDto KycCustomer { get; set; }
 

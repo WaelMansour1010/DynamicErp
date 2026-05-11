@@ -1,0 +1,583 @@
+﻿@model MyERP.Models.ChequeReceipt
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.ChequeReceipt;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.ChequeReceipt :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ChequeReceipt/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.IsLinked)
+                                    @Html.HiddenFor(model => model.IsPosted)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.Image)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                }
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                <div class="form-group row">
+                                    <label class=" col-sm-1 control-label" for="DocumentNumber">@MyERP.Properties.Resources.DocNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.DocNo, hidden = "hidden" } })
+                                        <input id="DocumentNumbers" class="form-control" placeholder=@MyERP.Properties.Resources.Code required readonly />
+                                        @Html.ValidationMessageFor(model => model.DocumentNumber, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="DepartmentId" class="control-label col-sm-1">@MyERP.Properties.Resources.Branch</label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-1 control-label " for="Date">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+                                        <input type="datetime-local" name="Date" id="Date" class="form-control" value="@ViewBag.Date" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                    <label for="DueDate" class="control-label col-sm-1">@MyERP.Properties.Resources.DueDate</label>
+                                    <div class="col-sm-4">
+                                        <input type="datetime-local" name="DueDate" id="DueDate" class="form-control" value="@ViewBag.DueDate" required />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="ChequeNumber" class="control-label col-sm-1">@MyERP.Properties.Resources.ChequeNo</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ChequeNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ChequeNo, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ChequeValue" class="control-label col-sm-1">@MyERP.Properties.Resources.Value</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ChequeValue, new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Value, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+
+                                    <label for="DebitBankId" class="control-label col-sm-1">@MyERP.Properties.Resources.DepositBank</label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownList("DebitBankId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+
+                                    <label class="control-label col-sm-1" for="DebitBankAccountId">@MyERP.Properties.Resources.DepositBankAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DebitBankAccountId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                                <div class="form-group row">
+                                    <label for="SourceTypeId" class="control-label col-sm-1">@MyERP.Properties.Resources.Source</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SourceTypeId", null, htmlAttributes: new { @class = "form-control" })
+                                        @Html.ValidationMessageFor(model => model.SourceTypeId, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="ChequeStatusId" class="control-label col-sm-1">@MyERP.Properties.Resources.Status</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ChequeStatusId", null, htmlAttributes: new { @class = "form-control" })
+                                        @Html.ValidationMessageFor(model => model.ChequeStatusId, "", new { @class = "text-danger" })
+                                    </div>
+
+                                </div>
+
+
+                                <div class="CustomerId form-group row">
+                                    <label for="CustomerId" class="CustomerId control-label col-sm-1">@MyERP.Properties.Resources.Customer</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CustomerId", null, htmlAttributes: new { @class = "form-control" })
+
+                                    </div>
+                                </div>
+
+                                <div class="VendorId form-group row">
+                                    <label for="VendorId" class="control-label col-sm-1">@MyERP.Properties.Resources.Supplier</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("VendorId", null, htmlAttributes: new { @class = "form-control" })
+
+                                    </div>
+                                </div>
+
+                                <div class="EmployeeId form-group row">
+                                    <label for="EmployeeId" class="control-label col-sm-1">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+                                <div class="ShareholderId form-group row">
+                                    <label for="ShareholderId" class="ShareholderId control-label col-sm-1">@MyERP.Properties.Resources.Contributor</label>
+                                    <div class="ShareholderId col-sm-4">
+                                        @Html.DropDownList("ShareholderId", null, htmlAttributes: new { @class = "ShareholderId form-control" })
+                                        @Html.ValidationMessageFor(model => model.ShareholderId, "", new { @class = "text-danger" })
+
+                                    </div>
+                                </div>
+                                <div class="DirectExpensesId form-group row">
+                                    <label for="DirectExpensesId" class="DirectExpensesId control-label col-sm-1">@MyERP.Properties.Resources.DirectExpenses</label>
+                                    <div class="DirectExpensesId col-sm-4">
+                                        @Html.DropDownList("DirectExpensesId", null, htmlAttributes: new { @class = "DirectExpensesId form-control" })
+                                        @Html.ValidationMessageFor(model => model.DirectExpensesId, "", new { @class = "text-danger" })
+
+                                    </div>
+                                </div>
+
+                                <div class="DirectRevenueId form-group row">
+                                    <label for="DirectRevenueId" class="DirectRevenueId control-label col-sm-1">@MyERP.Properties.Resources.DirectRevenue</label>
+                                    <div class="DirectRevenueId col-sm-4">
+                                        @Html.DropDownList("DirectRevenueId", null, htmlAttributes: new { @class = "DirectRevenueId form-control" })
+                                        @Html.ValidationMessageFor(model => model.DirectRevenueId, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-1" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null)
+                                    { @Model.Notes;}</textarea>
+                                    </div>
+
+                                    @if (ViewBag.UseCostCenter == true)
+                                    {
+                                <label for="CostCenterId" class="control-label col-sm-1">@MyERP.Properties.Resources.CostCenter </label>
+
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("CostCenterId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        </div>
+                                    }
+                                </div>
+
+                                <div style="float:left;">
+                                    <input id="new" name="newBtn" hidden />
+                                    @if (Model != null)
+                                    {
+                                        if (Model.IsDeleted == true)
+                                        {
+                                <a class="btn btn-danger" href="@Url.Action("Index", "DeletedTransaction", new { table = "ChequeReceipt" })" role="button">@MyERP.Properties.Resources.Back</a>
+                                        }
+                                        else if (Model.IsDeleted == false)
+                                        {
+                                <button type="submit" id="Report" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndPrint
+                                </button>
+                                <button type="submit" class="btn btn-success" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-success" target="_blank" href="@Url.Action("ChequeReceiptDetails", "Report", new { id = Model.Id })" role="button">@MyERP.Properties.Resources.Print</a>
+
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                <button class="btn btn-danger" type="button" onclick="Delete(@Model.Id)">@MyERP.Properties.Resources.Delete</button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                <button type="submit" id="Report" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndPrint
+                                </button>
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button type="submit" class="btn btn-success" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@if (Model != null)
+{
+    if (ViewBag.JE != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="header-title">@MyERP.Properties.Resources.JournalEntries</h5>
+                <div class="form-horizontal">
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.VoucherNo</label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" name="txtDocNo" value="@ViewBag.JE.DocumentNumber" id="txtDocNo" placeholder=@MyERP.Properties.Resources.VoucherNo disabled>
+
+                        </div>
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Date </label>
+                        <div class="col-sm-5">
+                            <input type="datetime-local" class="form-control" name="dtDate" value="@ViewBag.Date" id="dtDate" placeholder=@MyERP.Properties.Resources.ReleaseDate required disabled>
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Branch</label>
+                        <div class="col-sm-5">
+                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", id = "DepartmentId", @required = "required", @disabled = "disabled" })
+                        </div>
+
+                    </div>
+                    <div class="form-group row">
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Notes</label>
+                        <div class="col-sm-11">
+                            <textarea type="text" class="form-control validate[required]" id="txtNotes" value="@ViewBag.JE.Notes" name="txtNotes" placeholder=@MyERP.Properties.Resources.Notes disabled></textarea>
+                        </div>
+                        <label for="inputtext3" class="col-sm-1 control-label">@MyERP.Properties.Resources.Deported</label>
+                        <div class="col-sm-5">
+                            @if (Model.IsPosted == true)
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" checked disabled>
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="form-control" id="chkIsPosted" name="chkIsPosted" style="width:15px;" disabled>
+                            }
+
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="header-title"> @MyERP.Properties.Resources.JournalEntryDetails</h5>
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>@MyERP.Properties.Resources.Debit</th>
+                                            <th>@MyERP.Properties.Resources.Credit</th>
+                                            <th>@MyERP.Properties.Resources.Account</th>
+                                            <th>@MyERP.Properties.Resources.CostCenter</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Model.Id != 0)
+                                        {
+
+                                            foreach (var jED in ViewBag.JEDetails)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        <label>@jED.Debit</label>
+                                                        <input type='text' class='txtDebit' value="@jED.Debit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        <label>@jED.Credit</label>
+                                                        <input type='text' class='txtCredit ' value="@jED.Credit" hidden>
+                                                    </td>
+                                                    <td>
+                                                        @if (jED.AccountId != null)
+                                                        {
+                                                            <label>@jED.ChartOfAccount.ArName</label>
+                                                            <input type='number' class='AccountId' value="@jED.AccountId" hidden>
+                                                        }
+
+                                                    </td>
+                                                    <td>
+                                                        @Html.Raw(jED.CostCenter != null ? jED.CostCenter.ArName : null)
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+<script>
+    if ($('#SourceTypeId').val() == 3) {
+        $('.VendorId').hide();
+        $('.CustomerId').hide();
+        $('.EmployeeId').show();
+        $('.DirectRevenueId').hide();
+        $('.ShareholderId').hide();
+        $('.DirectExpensesId').hide();
+    } else if ($('#SourceTypeId').val() == 6) {
+        $('.DirectExpensesId').show();
+        $('.CustomerId').hide();
+        $('.EmployeeId').hide();
+        $('.DirectRevenueId').hide();
+        $('.ShareholderId').hide();
+        $('.VendorId').hide();
+
+    }
+    else if ($('#SourceTypeId').val() == 2) {
+        $('.VendorId').show();
+        $('.CustomerId').hide();
+        $('.EmployeeId').hide();
+        $('.DirectRevenueId').hide();
+        $('.ShareholderId').hide();
+        $('.DirectExpensesId').hide();
+    } else if ($('#SourceTypeId').val() == 1) {
+        $('.VendorId').hide();
+        $('.CustomerId').show();
+        $('.EmployeeId').hide();
+        $('.DirectRevenueId').hide();
+        $('.ShareholderId').hide();
+        $('.DirectExpensesId').hide();
+    }
+    else if ($('#SourceTypeId').val() == 4) {
+        $('.VendorId').hide();
+        $('.CustomerId').hide();
+        $('.EmployeeId').hide();
+        $('.DirectRevenueId').show();
+        $('.ShareholderId').hide();
+        $('.DirectExpensesId').hide();
+    }
+    else if ($('#SourceTypeId').val() == 5) {
+        $('.VendorId').hide();
+        $('.CustomerId').hide();
+        $('.EmployeeId').hide();
+        $('.DirectRevenueId').hide();
+        $('.ShareholderId').show();
+        $('.DirectExpensesId').hide();
+    }
+    $('#SourceTypeId').on('change', function () {
+        if ($('#SourceTypeId').val() == 3) {
+            $('.VendorId').hide();
+            $('.CustomerId').hide();
+            $('.EmployeeId').show();
+            $('.ShareholderId').hide();
+            $('.DirectRevenueId').hide();
+            $('.DirectExpensesId').hide();
+        } else if ($('#SourceTypeId').val() == 2) {
+            $('.VendorId').show();
+            $('.CustomerId').hide();
+            $('.EmployeeId').hide();
+            $('.DirectRevenueId').hide();
+            $('.ShareholderId').hide();
+            $('.DirectExpensesId').hide();
+        } else if ($('#SourceTypeId').val() == 1) {
+            $('.VendorId').hide();
+            $('.CustomerId').show();
+            $('.EmployeeId').hide();
+            $('.DirectRevenueId').hide();
+            $('.ShareholderId').hide();
+            $('.DirectExpensesId').hide();
+        }
+        else if ($('#SourceTypeId').val() == 4) {
+            $('.VendorId').hide();
+            $('.CustomerId').hide();
+            $('.EmployeeId').hide();
+            $('.DirectRevenueId').show();
+            $('.ShareholderId').hide();
+            $('.DirectExpensesId').hide();
+        }
+        else if ($('#SourceTypeId').val() == 5) {
+            $('.VendorId').hide();
+            $('.CustomerId').hide();
+            $('.EmployeeId').hide();
+            $('.DirectRevenueId').hide();
+            $('.ShareholderId').show();
+            $('.DirectExpensesId').hide();
+        }
+        else if ($('#SourceTypeId').val() == 6) {
+            $('.VendorId').hide();
+            $('.CustomerId').hide();
+            $('.EmployeeId').hide();
+            $('.DirectRevenueId').hide();
+            $('.ShareholderId').hide();
+            $('.DirectExpensesId').show();
+        }
+    });
+
+    
+
+    function setDocNum() {
+        if ($('#DepartmentId').val()) {
+            var doc = $.get('/ChequeReceipt/SetDocNum?id=' + $('#DepartmentId').val() + '&VoucherDate=' + $('#Date').val()).done(function (r) {
+                $('#DocumentNumber').val(r);
+                $('#DocumentNumbers').val(r.replaceAll("-", ""));
+            });
+        }
+    }
+
+    $('#DepartmentId').on('change', function () {
+        setDocNum();
+    });
+
+    $('#Date').on('change', function () {
+        setDocNum();
+    });
+
+    $(document).ready(function () {
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        if (!$('#Id').val() > 0) {
+            setDocNum();
+        }
+        else {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+            $("#DepartmentId").prop('disabled', true);
+            $("#Date").prop('disabled', true);
+        }
+    });
+
+    function BankAccountsByBankId() {
+        var bankAccount = $('#DebitBankAccountId').val();
+        $('#DebitBankAccountId').empty();
+        var accounts = $.get('/ChequeReceipt/BankAccountsByBankId?id=' + $('#DebitBankId').val())
+            .done(function () {
+                accounts = accounts.responseJSON;
+                $('#DebitBankAccountId').append($('<option>', {
+                    value: '',
+                    text: '@MyERP.Properties.Resources.Select'
+                }));
+                for (var i = 0; i < accounts.length; i++) {
+
+                    $('#DebitBankAccountId').append($('<option>', {
+                        value: accounts[i].Id,
+                        text: accounts[i].AccountNumber
+                    }));
+                }
+                bankAccount ? $('#DebitBankAccountId').val(bankAccount).trigger('change') : null;
+                $('#DebitBankAccountId').val() ? $('#DebitBankAccountId').val(bankAccount) : document.getElementById('DebitBankAccountId').selectedIndex = 0;
+                $('#DebitBankAccountId').trigger('change');
+            });
+    }
+
+    BankAccountsByBankId();
+
+    $('#DebitBankId').on('change', function () {
+        BankAccountsByBankId();
+    });
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#preloader, #status').fadeIn();
+                $.ajax({
+                    url: '/ChequeReceipt/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/ChequeReceipt');
+                        } else {
+                            $('#preloader, #status').fadeOut();
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+
+    $('form').submit(function () {
+        $("#DepartmentId").prop('disabled', false);
+        $("#Date").prop('disabled', false);
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+        } else {
+            $(this).find("button[id='newbtn']").prop('disabled', true);
+            $(this).find("button[id='save']").prop('disabled', true);
+        }
+    });
+
+</script>

@@ -189,6 +189,14 @@ namespace MyERP
             TimeZoneInfo info = TimeZoneInfo.FindSystemTimeZoneById("Egypt Standard Time");
             DateTime cTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, info);
             log.LogDate = cTime;
+            if (!string.IsNullOrEmpty(log.ArAction) && log.ArAction.Length > 50)
+            {
+                log.ArAction = log.ArAction.Substring(0, 50);
+            }
+            if (!string.IsNullOrEmpty(log.EnAction) && log.EnAction.Length > 50)
+            {
+                log.EnAction = log.EnAction.Substring(0, 50);
+            }
             db.MyLogs.Add(log);
             db.SaveChanges();
         }

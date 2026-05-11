@@ -5,6 +5,7 @@ using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Net;
+using System.Data.SqlClient;
 using System.Web;
 using System.Web.Mvc;
 using MyERP.Models;
@@ -238,6 +239,7 @@ namespace MyERP.Controllers.AccountSettings
                         serviceInvoice.DueDate,
                         ServiceInvoiceDetails,
                         ServiceInvoicePaymentMethods);
+                    EnsureServiceInvoiceCustomerParty(serviceInvoice.Id);
                 }
                 else
                 {
@@ -271,6 +273,7 @@ namespace MyERP.Controllers.AccountSettings
                         ServiceInvoiceDetails,
                         ServiceInvoicePaymentMethods);
                     id = (int)idResult.Value;
+                    EnsureServiceInvoiceCustomerParty(id);
                     //-------------------- Notification-------------------------////
                     Notification.GetNotification("ServiceInvoice", "Add", "AddEdit", id, null, "فاتورة خدمات");
                 }
@@ -294,6 +297,30 @@ namespace MyERP.Controllers.AccountSettings
                     .Select(x => new { x.Key, x.Value.Errors })
                     .ToArray();
             return Json(new { success = "false", errors });
+        }
+
+        private void EnsureServiceInvoiceCustomerParty(int serviceInvoiceId)
+        {
+            db.Database.ExecuteSqlCommand(@"
+UPDATE jed
+SET jed.PartyType = 1,
+    jed.PartyId = si.CustomerId
+FROM dbo.JournalEntryDetail jed
+INNER JOIN dbo.JournalEntry je
+    ON je.Id = jed.JournalEntryId
+INNER JOIN dbo.ServiceInvoice si
+    ON si.Id = je.SourceId
+INNER JOIN dbo.Department dep
+    ON dep.Id = si.DepartmentId
+WHERE je.SourceId = @ServiceInvoiceId
+  AND je.SourcePageId = (SELECT TOP 1 Id FROM dbo.SystemPage WHERE ControllerName = 'ServiceInvoice' OR TableName = 'ServiceInvoice')
+  AND ISNULL(je.IsDeleted, 0) = 0
+  AND ISNULL(jed.IsDeleted, 0) = 0
+  AND ISNULL(si.IsDeleted, 0) = 0
+  AND si.CustomerId IS NOT NULL
+  AND jed.AccountId = dep.CustomersAccountId
+  AND ISNULL(jed.Debit, 0) > 0;",
+                new SqlParameter("@ServiceInvoiceId", serviceInvoiceId));
         }
 
         [SkipERPAuthorize]

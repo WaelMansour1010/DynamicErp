@@ -8,7 +8,7 @@
     var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "account-charts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing", "dynamic-reports", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
     var salesOpen = sectionActive(new[] { "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
     var purchasesOpen = sectionActive(new[] { "purchases" });
-    var inventoryOpen = sectionActive(new[] { "stock-transfers" });
+    var inventoryOpen = sectionActive(new[] { "stock-transfers", "defin-comp-item" });
     var projectsOpen = sectionActive(new[] { "projects", "project-extracts" });
     var lcOpen = sectionActive(new[] { "lc" });
     var adminOpen = sectionActive(new[] { "database-migration" });
@@ -85,7 +85,10 @@
 
         <section class="pos-nav-section @(inventoryOpen ? "is-open" : "")">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="@T("Inventory")"><span><i class="fas fa-boxes"></i><b>@T("Inventory")</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
-            <div class="pos-nav-submenu"><a class="pos-nav-link main-erp-nav-link @(isActive("stock-transfers") ? "active" : "")" href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })"><i class="fas fa-random"></i><span>@T("StockTransfers")</span></a></div>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link main-erp-nav-link @(isActive("stock-transfers") ? "active" : "")" href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })"><i class="fas fa-random"></i><span>@T("StockTransfers")</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("defin-comp-item") ? "active" : "")" href="@Url.Action("Index", "DefinCompItem", new { area = "MainErp" })" title="سند التجميع"><i class="fas fa-layer-group"></i><span>سند التجميع</span></a>
+            </div>
         </section>
 
         <section class="pos-nav-section @(projectsOpen ? "is-open" : "")">

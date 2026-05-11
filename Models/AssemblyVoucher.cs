@@ -45,7 +45,6 @@ namespace MyERP.Models
         public Nullable<bool> AutoCreated { get; set; }
         public Nullable<int> UpdatedId { get; set; }
         public Nullable<bool> IsClosed { get; set; }
-        public Nullable<int> BranchId { get; set; }
         public Nullable<int> VendorOrCustomerId { get; set; }
         public Nullable<decimal> Total { get; set; }
         public Nullable<decimal> TotalItemsDiscount { get; set; }
@@ -71,7 +70,6 @@ namespace MyERP.Models
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<AssemblyVoucherDetail> AssemblyVoucherDetails { get; set; }
         public virtual Currency Currency { get; set; }
-        public virtual Branch Branch { get; set; }
         public virtual SystemPage SystemPage { get; set; }
     }
 }

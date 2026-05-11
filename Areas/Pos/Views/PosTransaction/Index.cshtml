@@ -51,6 +51,7 @@
      data-today-summary-url="@Url.Action("TodaySummary", "PosTransaction", new { area = "Pos" })"
       data-today-invoices-url="@Url.Action("GetTodayInvoices", "PosTransaction", new { area = "Pos" })"
       data-delete-invoice-url="@Url.Action("DeleteInvoice", "PosTransaction", new { area = "Pos" })"
+      data-cancel-invoice-url="@Url.Action("CancelInvoice", "PosTransaction", new { area = "Pos" })"
       data-delete-excel-invoices-url="@Url.Action("DeleteExcelInvoices", "PosTransaction", new { area = "Pos" })"
       data-invoice-url="@Url.Action("GetInvoice", "PosTransaction", new { area = "Pos" })"
      data-journal-url="@Url.Action("GetJournalEntry", "PosTransaction", new { area = "Pos" })"
@@ -79,6 +80,7 @@
      data-can-edit-kyc="@(posContext != null && posContext.CanEditKyc ? "true" : "false")"
       data-can-edit-invoice="@(posContext != null && posContext.CanEditInvoice ? "true" : "false")"
       data-can-admin-delete-invoice="@(posContext != null && (posContext.IsFullAccess || posContext.UserType.GetValueOrDefault(-1) == 0) ? "true" : "false")"
+      data-can-cancel-invoice="@(posContext != null && posContext.CanCancelInvoice ? "true" : "false")"
       data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
      data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")"
      data-can-teller="@(posContext != null && posContext.CanTeller ? "true" : "false")"
@@ -407,11 +409,13 @@
             </section>
 
             <div class="pos-validation" id="validationSummary"></div>
+            <div class="pos-validation" id="cancelledBanner" style="display:none;font-weight:700;color:#9a1f1f;">فاتورة ملغاة</div>
             <div class="pos-save-result" id="saveResult"></div>
 
             <footer class="pos-actions">
                 <button type="button" class="secondary-action" id="newBtn">جديد</button>
                 <button type="button" class="secondary-action" id="printBtn" disabled>طباعة</button>
+                <button type="button" class="danger-action" id="cancelInvoiceBtn" style="display:none;" disabled>إلغاء</button>
                 <button type="button" class="secondary-action" id="returnLaterBtn">مرتجع لاحقًا</button>
                 @if (posContext != null && (posContext.IsFullAccess || posContext.UserType.GetValueOrDefault(-1) == 0))
                 {
@@ -434,6 +438,11 @@
                     <option value="card">كارت كيشني / KYC</option>
                     <option value="violations">مخالفات</option>
                 </select>
+                <label class="today-date-toggle"><input type="checkbox" id="todayDateRangeEnabled" /> بحث بتاريخ</label>
+                <div class="today-date-range" id="todayDateRangeFields">
+                    <label>من<input type="date" id="todayFromDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label>إلى<input type="date" id="todayToDate" min="1753-01-01" max="9999-12-31" /></label>
+                </div>
                 <label class="today-excel-filter"><input type="checkbox" id="todayExcelOnly" /> Excel فقط</label>
                 <button type="button" class="secondary-action compact-action today-clear-search" id="clearTodayInvoiceSearchBtn">مسح البحث</button>
                 <div id="todayInvoicesList" class="today-invoices-list">اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.</div>
@@ -465,4 +474,4 @@
     </div>
 </div>
 
-<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260510-kyc-created-info")"></script>
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260510-today-range-print-rtl")"></script>

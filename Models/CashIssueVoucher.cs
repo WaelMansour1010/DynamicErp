@@ -24,7 +24,6 @@ namespace MyERP.Models
     
         public int Id { get; set; }
         public string DocumentNumber { get; set; }
-        public Nullable<int> BranchId { get; set; }
         public decimal MoneyAmount { get; set; }
         public Nullable<int> SourceTypeId { get; set; }
         public Nullable<int> DirectExpensesId { get; set; }

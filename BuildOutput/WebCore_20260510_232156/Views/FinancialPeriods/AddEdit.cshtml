@@ -1,0 +1,614 @@
+﻿@model MyERP.Models.FinancialPeriodMaster
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.FinancialPeriods;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new {id= ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit",new { id=ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit",new {id=ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.FinancialPeriods :</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/FinancialPeriods/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data" id="FormId">*@
+            <div class="form-horizontal needs-validation" role="form" novalidate>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                        @Html.HiddenFor(model => model.PostingStatus)
+                                        @Html.HiddenFor(model => model.LockStatus)
+                                        @Html.HiddenFor(model => model.Opened)
+                                        @Html.HiddenFor(model => model.Closed)
+                                        @Html.HiddenFor(model => model.Status)
+                                    }
+
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label"> @MyERP.Properties.Resources.PeriodStart</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null && Model.PeriodStart != null)
+                                        {
+                                            <input id="PeriodStart" name="PeriodStart" class="form-control" type="datetime-local" value="@ViewBag.PeriodStart" required />
+                                        }
+                                        else
+                                        {
+                                            @*@Html.EditorFor(model => model.PeriodStart, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", required = "required" } })*@
+                                            <input id="PeriodStart" name="PeriodStart" class="form-control" type="datetime-local" required />
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="inputtext3" class="col-sm-2 control-label">@MyERP.Properties.Resources.PeriodEnd</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null && Model.PeriodEnd != null)
+                                        {
+                                            <input id="PeriodEnd" name="PeriodEnd" class="form-control" type="datetime-local" value="@ViewBag.PeriodEnd" required />
+                                        }
+                                        else
+                                        {
+                                            @*@Html.EditorFor(model => model.PeriodEnd, new { htmlAttributes = new { @class = "form-control", @type = "datetime-local", required = "required" } })*@
+                                            <input id="PeriodEnd" name="PeriodEnd" class="form-control" type="datetime-local" required />
+                                        }
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="row">
+                                    <div class="col-sm-offset-2">
+                                        <button type="button" onclick="ShowDetails()" class="btn btn-success">
+                                            @MyERP.Properties.Resources.View
+                                        </button>
+                                        @if (Model != null)
+                                        {
+                                            if (Model.Closed == null || Model.Opened == null || Model.Status == null)
+                                            {
+                                                <button type="button" onclick="ClosePeriod(null,@Model.Id)" class="btn btn-primary">
+                                                    @MyERP.Properties.Resources.GeneralClosure
+                                                </button>
+                                            }
+                                            else if (Model.IsActive == true)
+                                            {
+
+                                                <button type="button" class="btn btn-success opened" onclick="OpenPeriod(null,@Model.Id)" disabled>
+                                                    @MyERP.Properties.Resources.OpenPeriod
+                                                </button>
+                                                <button type="button" class="btn btn-danger closeed" onclick="ClosePeriod(null,@Model.Id)">
+                                                    @MyERP.Properties.Resources.ClosePeriod
+                                                </button>
+                                            }
+                                            else if (Model.LockStatus == true)
+                                            {
+                                                <button type="button" class="btn btn-success opened" onclick="OpenPeriod(null,@Model.Id)" disabled>
+                                                    @MyERP.Properties.Resources.OpenPeriod
+                                                </button>
+                                                <button type="button" class="btn btn-danger closeed" onclick="Cancel(null,@Model.Id)">
+                                                    @MyERP.Properties.Resources.ClosePeriod
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-success opened" onclick="OpenPeriod(null,@Model.Id)">
+                                                    @MyERP.Properties.Resources.OpenPeriod
+                                                </button>
+                                                <button type="button" class="btn btn-danger closed" onclick="ClosePeriod(null,@Model.Id)" disabled>
+                                                    @MyERP.Properties.Resources.Closed
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr style="background-color:white">
+                                    <th>
+                                        @MyERP.Properties.Resources.Sequence
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.PeriodStart
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.PeriodEnd
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.OpenPeriod
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.ClosePeriod
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="FinancialPeriods">
+                                @if (Model != null && Model.FinancialPeriods.Count() > 0)
+                                {
+                                    foreach (var item in Model.FinancialPeriods)
+                                    {
+                                        if (item.IsActive == true)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input hidden class="PostingStatus" type="checkbox" @Html.Raw(item.PostingStatus == true ? "checked" : "") @*value="@item.PostingStatus"*@ />
+                                                    <input hidden class="LockStatus" type="checkbox" @Html.Raw(item.LockStatus == true ? "checked" : "") @*value="@item.LockStatus"*@ />
+                                                    <input hidden class="Opened" type="checkbox" @Html.Raw(item.Opened == true ? "checked" : "") @*value="@item.Opened"*@ />
+                                                    <input hidden class="Closed" type="checkbox" @Html.Raw(item.Closed == true ? "checked" : "") @*value="@item.Closed"*@ />
+                                                    <input hidden class="Status" value="@item.Status" />
+                                                    <input hidden class="IsActive" type="checkbox" @Html.Raw(item.IsActive == true ? "checked" : "") @*value="@item.IsActive"*@ />
+                                                    <label class="PeriodNo control-label">@item.PeriodNo</label>
+                                                </td>
+
+                                                <td>
+                                                    <label class="PeriodStart control-label">@item.PeriodStart</label>
+                                                </td>
+                                                <td>
+                                                    <label class="PeriodEnd control-label">@item.PeriodEnd</label>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id,@Model.Id)" @Html.Raw(item.Opened == true ? "disabled" : "")>
+                                                        @MyERP.Properties.Resources.OpenPeriod
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger closeed" onclick="ClosePeriod(@item.Id,@Model.Id)">
+                                                        @MyERP.Properties.Resources.ClosePeriod
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else if (item.LockStatus == true)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input hidden class="PostingStatus" type="checkbox" @Html.Raw(item.PostingStatus == true ? "checked" : "") @*value="@item.PostingStatus"*@ />
+                                                    <input hidden class="LockStatus" type="checkbox" @Html.Raw(item.LockStatus == true ? "checked" : "") @*value="@item.LockStatus"*@ />
+                                                    <input hidden class="Opened" type="checkbox" @Html.Raw(item.Opened == true ? "checked" : "") @*value="@item.Opened"*@ />
+                                                    <input hidden class="Closed" type="checkbox" @Html.Raw(item.Closed == true ? "checked" : "") @*value="@item.Closed"*@ />
+                                                    <input hidden class="Status" value="@item.Status" />
+                                                    <input hidden class="IsActive" type="checkbox" @Html.Raw(item.IsActive == true ? "checked" : "") @*value="@item.IsActive"*@ />
+                                                    <label class="PeriodNo control-label">@item.PeriodNo</label>
+                                                </td>
+
+                                                <td>
+                                                    <label class="PeriodStart control-label">@item.PeriodStart</label>
+                                                </td>
+                                                <td>
+                                                    <label class="PeriodEnd control-label">@item.PeriodEnd</label>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id,@Model.Id)" @Html.Raw(item.Opened == true ? "disabled" : "")>
+                                                        @MyERP.Properties.Resources.OpenPeriod
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger closeed" onclick="Cancel(@item.Id,@Model.Id)">
+                                                        @MyERP.Properties.Resources.ClosePeriod
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <input hidden class="PostingStatus" type="checkbox" @Html.Raw(item.PostingStatus == true ? "checked" : "") @*value="@item.PostingStatus"*@ />
+                                                    <input hidden class="LockStatus" type="checkbox" @Html.Raw(item.LockStatus == true ? "checked" : "") @*value="@item.LockStatus"*@ />
+                                                    <input hidden class="Opened" type="checkbox" @Html.Raw(item.Opened == true ? "checked" : "") @*value="@item.Opened"*@ />
+                                                    <input hidden class="Closed" type="checkbox" @Html.Raw(item.Closed == true ? "checked" : "") @*value="@item.Closed"*@ />
+                                                    <input hidden class="Status" value="@item.Status" />
+                                                    <input hidden class="IsActive" type="checkbox" @Html.Raw(item.IsActive == true ? "checked" : "") @*value="@item.IsActive"*@ />
+                                                    <label class="PeriodNo control-label">@item.PeriodNo</label>
+                                                </td>
+
+                                                <td>
+                                                    <label class="PeriodStart control-label">@item.PeriodStart</label>
+                                                </td>
+                                                <td>
+                                                    <label class="PeriodEnd control-label">@item.PeriodEnd</label>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id,@Model.Id)">
+                                                        @MyERP.Properties.Resources.OpenPeriod
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger closed" onclick="ClosePeriod(@item.Id,@Model.Id)" @Html.Raw(item.Closed == true ? "disabled" : "")>
+                                                        @MyERP.Properties.Resources.Closed
+                                                    </button>
+                                                </td>
+                                                @*@if (item.IsActive == true)
+                                                    {
+                                                        <td>
+                                                            <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id,@Model.Id)">
+                                                                @MyERP.Properties.Resources.OpenPeriod
+                                                            </button>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger closed" onclick="ClosePeriod(@item.Id,@Model.Id)" disabled>
+                                                                @MyERP.Properties.Resources.Closed
+                                                            </button>
+                                                        </td>
+                                                    }
+                                                    else if (item.LockStatus == true)
+                                                    {
+                                                        <td>
+                                                            <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id,@Model.Id)" disabled>
+                                                                @MyERP.Properties.Resources.OpenPeriod
+                                                            </button>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger closeed" onclick="Cancel(@item.Id,@Model.Id)">
+                                                                @MyERP.Properties.Resources.ClosePeriod
+                                                            </button>
+                                                        </td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td>
+                                                            <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id,@Model.Id)">
+                                                                @MyERP.Properties.Resources.OpenPeriod
+                                                            </button>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger closed" onclick="ClosePeriod(@item.Id,@Model.Id)" disabled>
+                                                                @MyERP.Properties.Resources.Closed
+                                                            </button>
+                                                        </td>
+                                                    }*@
+                                            </tr>
+                                        }
+
+                                        @*<tr>
+                                                <td>
+                                                    <input hidden class="Id"  value="@item.Id"/>
+                                                    <label class="PeriodNo control-label">@item.PeriodNo</label>
+                                                </td>
+
+                                                <td>
+                                                    <label class="PeriodStart control-label">@item.PeriodStart</label>
+                                                </td>
+                                                <td>
+                                                    <label class="PeriodEnd control-label">@item.PeriodEnd</label>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-success opened" onclick="OpenPeriod(@item.Id)" disabled>
+                                                        @MyERP.Properties.Resources.OpenPeriod
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-danger closeed" onclick="ClosePeriod(@item.Id)">
+                                                        @MyERP.Properties.Resources.ClosePeriod
+                                                    </button>
+                                                </td>
+                                            </tr>*@
+                                    }
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-sm-offset-2">
+                            @if (Model == null)
+                            {
+
+
+                                <button type="button" onclick="addEdit('new')" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button class="btn btn-success" onclick="addEdit()">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else if (Model.IsDeleted == false)
+                            {
+
+
+                                <button class="btn btn-success" onclick="addEdit()">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+
+
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @*</form>*@
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+            //--------------- Variables Declarations -------------------//
+            //*********************************************************//
+            //--------------- Ready Function -------------------//
+            //*********************************************************//
+            //--------------- Event Functions -------------------//
+            //*********************************************************//
+            //--------------- Other Functions -------------------//
+    function getDays(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    function ShowDetails() {
+        if ($('#PeriodStart').val() && $('#PeriodEnd').val()) {
+            $('#FinancialPeriods').empty();
+            var PeriodStartDate = new Date($('#PeriodStart').val());
+            var PeriodEndDate = new Date($('#PeriodEnd').val());
+            var months;
+                months = (PeriodEndDate.getFullYear() - PeriodStartDate.getFullYear()) * 12;
+                months += PeriodStartDate.getMonth();
+                months += PeriodEndDate.getMonth();
+                months = months <= 0 ? 0 : months;
+            var Start;
+            var End;
+            for (var i = 0; i <= months; i++) {
+                PeriodStartDate.setMonth(PeriodStartDate.getMonth() + 1);
+                PeriodEndDate.setMonth(PeriodStartDate.getMonth() + 1);
+                PeriodEndDate.setFullYear(PeriodStartDate.getFullYear());
+                if (PeriodStartDate.getMonth() == 0) {
+                    Start = (PeriodStartDate.getFullYear()-1) + "-" + "12" + "-" + zeroPadded(PeriodStartDate.getDate());
+                    End = (PeriodStartDate.getFullYear()-1) + "-" + "12" + "-" + getDays(PeriodStartDate.getFullYear(), PeriodStartDate.getMonth() + 1) /*zeroPadded(PeriodEndDate.getDate())*/;
+                }
+                else if (PeriodStartDate.getMonth() < 12) {
+
+                    Start = PeriodStartDate.getFullYear() + "-" + zeroPadded(PeriodStartDate.getMonth()) + "-" + zeroPadded(PeriodStartDate.getDate());
+                    End = PeriodStartDate.getFullYear() + "-" + zeroPadded(PeriodStartDate.getMonth()) + "-" + getDays(PeriodStartDate.getFullYear(), PeriodStartDate.getMonth())/*zeroPadded(PeriodEndDate.getDate())*/;
+                }
+                let tr = '<tr><td><input hidden class="PostingStatus" type="checkbox"/><input hidden class="LockStatus" type="checkbox" /><input hidden  class="Opened" type="checkbox" /><input hidden class="Closed" type="checkbox" /><input hidden class="Status"/><input hidden class="IsActive" type="checkbox"/>'+
+                    (i + 1) + '</label></td><td><label class="PeriodStart control-label">' +
+                    Start + '</label> </td><td><label class="PeriodEnd control-label">' +
+                    End + '</label></td><td><button type="button" class="btn btn-success opened" onclick="OpenPeriod(null)" disabled>@MyERP.Properties.Resources.OpenPeriod</button></td><td><button type="button" class="btn btn-danger closeed" onclick="ClosePeriod(null)" disabled>@MyERP.Properties.Resources.ClosePeriod</button></td></tr>';
+                $('#FinancialPeriods').append(tr);
+            }
+        }
+        else {
+            alert('@MyERP.Properties.Resources.PeriodStart & @MyERP.Properties.Resources.PeriodEnd @MyERP.Properties.Resources.Required !')
+        }
+    }
+
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+    }
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    function ClosePeriod(id, MainId) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToClosePeriod')) {
+            $('.closeed').closest("tr").find('.opend').prop("disabled", true);
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/FinancialPeriods/ClosePeriod',
+                    type: 'POST',
+                    data: {
+                        "DetailsId": id,
+                        "MainId": MainId
+                    },
+                    error: function (e) {
+                    },
+                    success: function (r) {
+                        if (r == 'True') {
+                            window.location.reload();
+                            $('#preloader, #status').fadeOut();
+                        }
+                        else {
+                            alert("@MyERP.Properties.Resources.YouShouldClosePreviousPeriodFirst");
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+        }
+    }
+
+    function Cancel(id, MainId) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToCanclePeriodClosing')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/FinancialPeriods/ReOpen',
+                    type: 'POST',
+                    data: {
+                        "DetailsId": id,
+                        "MainId": MainId
+                    },
+                    error: function (e) {
+                    },
+                    success: function (r) {
+                       // console.log(r)
+                        if (r == 'True') {
+                            window.location.reload();
+                            $('#preloader, #status').fadeOut();
+                        }
+                        else {
+                            alert("@MyERP.Properties.Resources.YouShouldCancelPeriodClosingNextPeriodFirst");
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+        }
+    }
+
+    function OpenPeriod(id, MainId) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToOpenPeriod')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/FinancialPeriods/OpenPeriod',
+                    type: 'POST',
+                    data: {
+                        "DetailsId": id,
+                        "MainId": MainId
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                       // console.log(r)
+                        if (r == 'True') {
+                            window.location.reload();
+                            $('#preloader, #status').fadeOut();
+
+                        }
+                        else {
+                            alert("@MyERP.Properties.Resources.YouShouldOpenPreviousPeriodFirst");
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+        }
+    }
+//*****************************************************************************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+            var FinancialPeriods = [];
+            $('#FinancialPeriods tr').each(function () {
+                var td = $(this);
+                var FinancialPeriod = {
+                    FinancialPeriodMasterId: $('#Id').val(),
+                    PeriodNo: td.find('.PeriodNo').text(),
+                    PeriodStart: td.find('.PeriodStart').text(),
+                    PeriodEnd: td.find('.PeriodEnd').text(),
+                    IsActive: td.find('.IsActive').prop('checked'),
+                    PostingStatus: td.find('.PostingStatus').prop('checked'),
+                    LockStatus: td.find('.LockStatus').prop('checked'),
+                    Opened: td.find('.Opened').prop('checked'),
+                    Closed: $('#Id').val() > 0 ? td.find('.Closed').prop('checked') : null,
+                    Status: td.find('.Status').val() == null || td.find('.Status').val() == "" ? "NotActive" : td.find('.Status').val(),
+                };
+                FinancialPeriods.push(FinancialPeriod);
+            });
+            //-------------------------------------------//
+            var FinancialPeriodMaster =
+            {
+                Id: $('#Id').val(),
+                ArName: $('#ArName').val(),
+                EnName: $('#EnName').val(),
+                PeriodStart: $('#PeriodStart').val(),
+                PeriodEnd: $('#PeriodEnd').val(),
+                UserId: $('#UserId').val(),
+                IsActive: $('#IsActive').val(),
+                IsDeleted: $('#IsDeleted').val(),
+                PostingStatus: $('#PostingStatus').val(),
+                LockStatus: $('#LockStatus').val(),
+                Opened: $('#Opened').val(),
+                Closed: $('#Closed').val(),
+                Status: $('#Status').val(),
+                FinancialPeriods: FinancialPeriods,
+            };
+            if ($('#FinancialPeriods tr').length == 0) {
+                valid = false;
+                alert('@MyERP.Properties.Resources.AllDetailsRequired');
+            }
+            if (valid == true && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+                $.ajax({
+                    type: "POST",
+                    url: "/FinancialPeriods/AddEdit",
+                    data: FinancialPeriodMaster,
+                    success: function (r) {
+                        if (r.success == "true") {
+                            if (n == "new") {
+                                window.location.replace("/FinancialPeriods/AddEdit");
+                            } else {
+                                window.location.replace("/FinancialPeriods");
+                            }
+                        }
+                        else
+                            alert('@MyERP.Properties.Resources.NotSaved');
+                        $('#preloader, #status').fadeOut();
+                    },
+                    error: function (r) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.NotSaved');
+                    }
+                });
+        }
+    }
+
+
+</script>
+

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Script.Serialization;
 using MyERP.Models;
 using System.Security.Claims;
 using MyERP.Repository;
@@ -145,6 +146,10 @@ namespace MyERP.Controllers.AccountSettings
                 ArName = b.Code + " - " + b.ArName
             }).ToList();
             ViewBag.IssueAnalysisAccountId = new SelectList(subAccounts, "Id", "ArName");
+            ViewBag.DepartmentsJson = new JavaScriptSerializer().Serialize(db.Departments
+                .Where(d => d.IsActive == true && d.IsDeleted == false)
+                .Select(d => new { d.Id, d.Code, d.ArName })
+                .ToList());
 
             //ToDO: Add changes here too
             if (id == null)
@@ -311,11 +316,6 @@ namespace MyERP.Controllers.AccountSettings
             ViewBag.PropertyUnitList = new SelectList(new List<KeyValuePair<int, string>>(), "Id", "ArName", null);
 
             ViewBag.Accounts = new SelectList(db.ChartOfAccounts.Where(a => a.ClassificationId == 3 && a.IsActive == true && a.IsDeleted == false), "Id", "ArName");
-            ViewBag.BranchId = new SelectList(db.Branches.Where(b => b.IsDeleted == false && b.IsActive == true).Select(b => new
-            {
-                b.Id,
-                ArName = b.Code + " - " + b.ArName
-            }), "Id", "ArName", cashIssueVoucher.BranchId);
             ViewBag.AccountId = new SelectList(db.ChartOfAccounts.Where(c => c.IsDeleted == false && c.IsActive == true && c.ClassificationId == 3).Select(b => new
             {
                 b.Id,
@@ -449,6 +449,10 @@ namespace MyERP.Controllers.AccountSettings
                 ArName = b.Code + " - " + b.ArName
             }).ToList();
             ViewBag.IssueAnalysisAccountId = new SelectList(subAccounts, "Id", "ArName");
+            ViewBag.DepartmentsJson = new JavaScriptSerializer().Serialize(db.Departments
+                .Where(d => d.IsActive == true && d.IsDeleted == false)
+                .Select(d => new { d.Id, d.Code, d.ArName })
+                .ToList());
 
             if (ModelState.IsValid)
             {
@@ -727,7 +731,7 @@ namespace MyERP.Controllers.AccountSettings
                     }
                     MyXML.xPathName = "IssueAnalysis";
                     var IssueAnalysisWithoutDetails = updatedIssueAnalysis.Select(o => new
-                    { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
+                    { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.DepartmentId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
                     var IssueAnalysis = MyXML.GetXML(IssueAnalysisWithoutDetails);
                     //convert all records of IssueAnalysisDetails to xml
                     MyXML.xPathName = "IssueAnalysisDetails";
@@ -741,7 +745,7 @@ namespace MyERP.Controllers.AccountSettings
                         }))
                         .ToList();
                     var IssueAnalysisDetail = MyXML.GetXML(IssueAnalysisDetailRecords);
-                    db.CashIssueVoucher_Update(cashIssueVoucher.Id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.BranchId,
+                    db.CashIssueVoucher_Update(cashIssueVoucher.Id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.DepartmentId,
                         cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId,
                         cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked,
                         cashIssueVoucher.IsPosted, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
@@ -758,6 +762,9 @@ namespace MyERP.Controllers.AccountSettings
                         CashIssueVoucherEmployeePayrollIssue, IssueAnalysis, IssueAnalysisDetail,
                         cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId, cashIssueVoucher.PropertyId);
 
+                    UpdateIssueAnalysisDepartments(cashIssueVoucher.Id, updatedIssueAnalysis, cashIssueVoucher.DepartmentId);
+                    SyncIssueAnalysisJournalEntryDepartments(cashIssueVoucher.Id, cashIssueVoucher.DepartmentId);
+
                     //then loop for IssueAnalysis that has id =-1 
                     //call IssueAnalysis_Update SP to insert those new records
                     foreach (var newAnalysis in newIssueAnalysis)
@@ -771,6 +778,7 @@ namespace MyERP.Controllers.AccountSettings
                             newAnalysis.Value,
                             newAnalysis.Reason,
                             newAnalysis.AccountId,
+                            newAnalysis.DepartmentId,
                             newAnalysis.Notes,
                             false,
                             newAnalysis.Total,
@@ -785,6 +793,7 @@ namespace MyERP.Controllers.AccountSettings
                             newIssueAnalysisDetails);
 
                     }
+                    SyncIssueAnalysisJournalEntryDepartments(cashIssueVoucher.Id, cashIssueVoucher.DepartmentId);
                     //////-------------------- Notification-------------------------////
                     Notification.GetNotification("CashIssueVoucher", "Edit", "AddEdit", id, null, "سند الدفع");
                 }
@@ -800,7 +809,7 @@ namespace MyERP.Controllers.AccountSettings
                     var CashIssueVoucherEmployeePayrollIssue = MyXML.GetXML(cashIssueVoucher.CashIssueVoucherEmployeePayrollIssues);
                     MyXML.xPathName = "IssueAnalysis";
                     var IssueAnalysisWithoutDetails = cashIssueVoucher.IssueAnalysis.Select(o => new
-                        { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
+                        { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.DepartmentId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
                     var IssueAnalysis = MyXML.GetXML(IssueAnalysisWithoutDetails);
                     //var IssueAnalysis = MyXML.GetXML(cashIssueVoucher.IssueAnalysis);
 
@@ -865,7 +874,7 @@ namespace MyERP.Controllers.AccountSettings
 
                     try
                     {
-                        db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount,
+                        db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.DepartmentId, cashIssueVoucher.MoneyAmount,
                             cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date,
                             cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false,
                             cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
@@ -931,7 +940,7 @@ namespace MyERP.Controllers.AccountSettings
                     }
 
 
-                    //db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount,
+                    //db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.DepartmentId, cashIssueVoucher.MoneyAmount,
                     //    cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date,
                     //    cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false, 
                     //    cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId, cashIssueVoucher.Notes,
@@ -961,6 +970,7 @@ namespace MyERP.Controllers.AccountSettings
                             newAnalysis.Value,
                             newAnalysis.Reason,
                             newAnalysis.AccountId,
+                            newAnalysis.DepartmentId,
                             newAnalysis.Notes,
                             false,
                             newAnalysis.Total,
@@ -1015,7 +1025,7 @@ namespace MyERP.Controllers.AccountSettings
 
                         MyXML.xPathName = "IssueAnalysis";
                         var IssueAnalysisWithoutDetails2 = updatedIssueAnalysis.Select(o => new
-                        { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
+                        { o.Id, o.CashIssueVoucherId, o.Value, o.Reason, o.AccountId, o.DepartmentId, o.Notes, o.IsDeleted, o.Total, o.Taxes, o.TaxesPrecentage, o.NetTotal, o.VendorId, o.VendorArName, o.TaxNumber, o.VATNumber, o.InvoiceNo }).ToList();
                         var IssueAnalysis2 = MyXML.GetXML(IssueAnalysisWithoutDetails2);
                         //convert all records of IssueAnalysisDetails to xml
                         MyXML.xPathName = "IssueAnalysisDetails";
@@ -1029,7 +1039,7 @@ namespace MyERP.Controllers.AccountSettings
                             }))
                             .ToList();
                         var IssueAnalysisDetail = MyXML.GetXML(IssueAnalysisDetailRecords);
-                        db.CashIssueVoucher_Update(id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.BranchId,
+                        db.CashIssueVoucher_Update(id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.DepartmentId,
                             cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId,
                             cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked,
                             cashIssueVoucher.IsPosted, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
@@ -1046,6 +1056,8 @@ namespace MyERP.Controllers.AccountSettings
                             CashIssueVoucherEmployeePayrollIssue, IssueAnalysis2, IssueAnalysisDetail,
                             cashIssueVoucher.DoctorId, cashIssueVoucher.PrepaidExpenseDetailId, cashIssueVoucher.PropertyOwnerId, cashIssueVoucher.PropertyId);
 
+                        UpdateIssueAnalysisDepartments(id, updatedIssueAnalysis, cashIssueVoucher.DepartmentId);
+                        SyncIssueAnalysisJournalEntryDepartments(id, cashIssueVoucher.DepartmentId);
                         db.SaveChanges();
                     }
                     //-------------------------------//
@@ -1078,11 +1090,6 @@ namespace MyERP.Controllers.AccountSettings
             DepartmentRepository departmentRepository = new DepartmentRepository(db);
             CashboxReposistory cashboxReposistory = new CashboxReposistory(db);
             ViewBag.Accounts = new SelectList(db.ChartOfAccounts.Where(a => a.ClassificationId == 3 && a.IsActive == true && a.IsDeleted == false), "Id", "ArName");
-            ViewBag.BranchId = new SelectList(db.Branches.Where(b => b.IsDeleted == false && b.IsActive == true).Select(b => new
-            {
-                b.Id,
-                ArName = b.Code + " - " + b.ArName
-            }), "Id", "ArName", cashIssueVoucher.BranchId);
             ViewBag.AccountId = new SelectList(db.ChartOfAccounts.Where(c => c.IsDeleted == false && c.IsActive == true && c.ClassificationId == 3).Select(b => new
             {
                 b.Id,
@@ -1286,7 +1293,7 @@ namespace MyERP.Controllers.AccountSettings
                             // var idResult = new ObjectParameter("Id", typeof(Int32));
                             // MyXML.xPathName = "PurchaseInvoiceActualPayment";
                             // var PurchaseInvoiceActualPaymentsXml = MyXML.GetXML(Actualpayments);
-                            //onlineDb.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId, cashIssueVoucher.Notes, cashIssueVoucher.Image, cashIssueVoucher.CustomerId, cashIssueVoucher.VendorId, cashIssueVoucher.TechnicianId, cashIssueVoucher.EmployeeId, cashIssueVoucher.CurrencyEquivalent, cashIssueVoucher.DepartmentId, cashIssueVoucher.CashBoxId, cashIssueVoucher.ShareholderId, cashIssueVoucher.CostCenterId, cashIssueVoucher.PosId, cashIssueVoucher.CashierUserId, cashIssueVoucher.ShiftId, cashIssueVoucher.IsCollected, cashIssueVoucher.IsClosed, cashIssueVoucher.IsInvoiceSelected, PurchaseInvoiceActualPaymentsXml, cashIssueVoucher.BankAccountId, cashIssueVoucher.TransactionNo, cashIssueVoucher.TransactionDate, cashIssueVoucher.ChartOfAccountId, cashIssueVoucher.CashIssuePaymentMethodId, cashIssueVoucher.FeesAmount, cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, cashIssueVoucher.IsUpdateSynced,cashIssueVoucher.BorrowReceipt, cashIssueVoucher.BorrowRequestId, cashIssueVoucher.Month, cashIssueVoucher.Year);
+                            //onlineDb.CashIssueVoucher_Insert(idResult, cashIssueVoucher.DepartmentId, cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId, cashIssueVoucher.Notes, cashIssueVoucher.Image, cashIssueVoucher.CustomerId, cashIssueVoucher.VendorId, cashIssueVoucher.TechnicianId, cashIssueVoucher.EmployeeId, cashIssueVoucher.CurrencyEquivalent, cashIssueVoucher.DepartmentId, cashIssueVoucher.CashBoxId, cashIssueVoucher.ShareholderId, cashIssueVoucher.CostCenterId, cashIssueVoucher.PosId, cashIssueVoucher.CashierUserId, cashIssueVoucher.ShiftId, cashIssueVoucher.IsCollected, cashIssueVoucher.IsClosed, cashIssueVoucher.IsInvoiceSelected, PurchaseInvoiceActualPaymentsXml, cashIssueVoucher.BankAccountId, cashIssueVoucher.TransactionNo, cashIssueVoucher.TransactionDate, cashIssueVoucher.ChartOfAccountId, cashIssueVoucher.CashIssuePaymentMethodId, cashIssueVoucher.FeesAmount, cashIssueVoucher.ValueAddedTaxesAmount, cashIssueVoucher.IsSynced, cashIssueVoucher.IsUpdateSynced,cashIssueVoucher.BorrowReceipt, cashIssueVoucher.BorrowRequestId, cashIssueVoucher.Month, cashIssueVoucher.Year);
                             // cashIssueVoucher.IsSynced = true;
                             // cashIssueVoucher.IsUpdateSynced = true;
                             // db.Entry(cashIssueVoucher).State = EntityState.Modified;
@@ -1636,6 +1643,70 @@ namespace MyERP.Controllers.AccountSettings
                 Id = -1  // this is an indication for a new IssueAnalysis
             };
             return PartialView("_IssueAnalysis", model);
+        }
+
+        private void UpdateIssueAnalysisDepartments(int voucherId, IEnumerable<IssueAnalysis> issueAnalysis, int? defaultDepartmentId)
+        {
+            if (issueAnalysis == null)
+                return;
+
+            foreach (var item in issueAnalysis.Where(i => i.Id > 0))
+            {
+                var departmentId = item.DepartmentId.HasValue && item.DepartmentId.Value > 0
+                    ? item.DepartmentId.Value
+                    : (defaultDepartmentId ?? 0);
+
+                db.Database.ExecuteSqlCommand(
+                    @"UPDATE dbo.IssueAnalysis
+                      SET DepartmentId = @DepartmentId
+                      WHERE Id = @Id AND CashIssueVoucherId = @CashIssueVoucherId",
+                    new SqlParameter("@DepartmentId", departmentId == 0 ? (object)DBNull.Value : departmentId),
+                    new SqlParameter("@Id", item.Id),
+                    new SqlParameter("@CashIssueVoucherId", voucherId));
+            }
+        }
+
+        private void SyncIssueAnalysisJournalEntryDepartments(int voucherId, int? defaultDepartmentId)
+        {
+            db.Database.ExecuteSqlCommand(
+                @"DECLARE @SourcePageId int = (SELECT TOP (1) Id FROM dbo.SystemPage WHERE TableName = 'CashIssueVoucher');
+
+                  UPDATE jed
+                  SET DepartmentId = ISNULL(ia.DepartmentId, @DefaultDepartmentId)
+                  FROM dbo.JournalEntryDetail jed
+                  INNER JOIN dbo.JournalEntry je ON je.Id = jed.JournalEntryId
+                  INNER JOIN dbo.IssueAnalysis ia
+                      ON ia.CashIssueVoucherId = @CashIssueVoucherId
+                     AND ia.IsDeleted = 0
+                     AND jed.AccountId = ia.AccountId
+                     AND ISNULL(jed.Debit, 0) = ISNULL(ia.Value, 0)
+                  WHERE je.SourcePageId = @SourcePageId
+                    AND je.SourceId = @CashIssueVoucherId;
+
+                  UPDATE jed
+                  SET DepartmentId = ISNULL(ia.DepartmentId, @DefaultDepartmentId)
+                  FROM dbo.JournalEntryDetail jed
+                  INNER JOIN dbo.JournalEntry je ON je.Id = jed.JournalEntryId
+                  INNER JOIN dbo.IssueAnalysis ia
+                      ON ia.CashIssueVoucherId = @CashIssueVoucherId
+                     AND ia.IsDeleted = 0
+                  INNER JOIN dbo.CashIssueVoucher civ ON civ.Id = @CashIssueVoucherId
+                  INNER JOIN dbo.Department dep
+                      ON dep.Id = ISNULL(ia.DepartmentId, civ.DepartmentId)
+                     AND jed.AccountId = dep.DebitValueAddedTaxesAccountId
+                     AND ISNULL(jed.Debit, 0) = ISNULL(ia.Taxes, 0)
+                  WHERE je.SourcePageId = @SourcePageId
+                    AND je.SourceId = @CashIssueVoucherId;
+
+                  UPDATE jed
+                  SET DepartmentId = @DefaultDepartmentId
+                  FROM dbo.JournalEntryDetail jed
+                  INNER JOIN dbo.JournalEntry je ON je.Id = jed.JournalEntryId
+                  WHERE je.SourcePageId = @SourcePageId
+                    AND je.SourceId = @CashIssueVoucherId
+                    AND jed.DepartmentId IS NULL;",
+                new SqlParameter("@CashIssueVoucherId", voucherId),
+                new SqlParameter("@DefaultDepartmentId", (object)defaultDepartmentId ?? DBNull.Value));
         }
 
         protected override void Dispose(bool disposing)

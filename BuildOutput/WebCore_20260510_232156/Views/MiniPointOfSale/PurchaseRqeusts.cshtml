@@ -1,0 +1,28 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequest>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.DocumentNumber)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.VoucherDate)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Department.ArName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ItemGroup.ArName)
+        </td>
+        <td>
+            <a href="@Url.Action("AddEdit","PurchaseRequest",new { id=item.Id })" target="_blank">
+                <i class="fa fa-edit"></i>
+            </a>
+        </td>
+        <td>
+            <input type="checkbox" class="purchaseRequestId" value="@item.Id" doc-num="@item.DocumentNumber" />
+
+        </td>
+    </tr>
+}

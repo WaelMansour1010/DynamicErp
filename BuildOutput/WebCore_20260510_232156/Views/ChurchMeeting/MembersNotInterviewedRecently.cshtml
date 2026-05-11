@@ -1,0 +1,210 @@
+﻿@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.MembersNotInterviewedRecently;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> @MyERP.Properties.Resources.MembersNotInterviewedRecently </h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                              
+                                @*<h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>*@
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.NoOfDays</label>
+                                    <div class="col-sm-4">
+                                        <input class = "form-control" id="NoOfDays" placeholder="@MyERP.Properties.Resources.NoOfDays" />
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+
+                           
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                          
+                                            <th>
+                                                @MyERP.Properties.Resources.ArName
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Mobile
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Address
+                                            </th> 
+                                            <th>
+                                                @MyERP.Properties.Resources.Area
+                                            </th> 
+                                            <th>
+                                                @MyERP.Properties.Resources.Image
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="MeetingData">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-------------------------------------------------------------------------------------------------------->
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    //--------------- Variables Declarations -------------------//
+
+    //*********************************************************//
+
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+       
+    });
+    //*********************************************************//
+
+    //--------------- Event Functions -------------------//
+    $(document).on('keydown', '#NoOfDays', function (e) {
+        if (e.which == 13 || e.keyCode == 13) {
+            GetPreviousChurchMeeting();
+        }
+    });
+   
+
+    //*********************************************************//
+
+    //--------------- Other Functions -------------------//
+    function GetPreviousChurchMeeting() {
+        $.get('/ChurchMeeting/GetPreviousChurchMeeting?NoOfDays=' + $('#NoOfDays').val()).done(function (r) {
+            $('#MeetingData').empty();
+            if (r.length) {
+                for (var i = 0; i < r.length; i++) {
+                    r[i].Mobile = r[i].Mobile != null ? r[i].Mobile : "";
+                    r[i].Address = r[i].Address != null ? r[i].Address : "";
+                    r[i].ArName = r[i].ArName != null ? r[i].ArName : "";
+                    r[i].Area = r[i].Area != null ? r[i].Area : "";
+                    r[i].Image = r[i].Image != null ? "<img src ='" +
+                        r[i].Image + "' alt='' style='width:50px;height:50px;border-radius:50px;' />"
+                        : "<img src ='/assets/images/users/Avatar_User.png' alt='' style='width:50px;height:50px;border-radius: 50px;' />";
+
+                    let tr = '<tr><td>' +
+                        r[i].ArName + '</td><td>' +
+                        r[i].Mobile + '</td><td>' +
+                        r[i].Address + '</td><td>' +
+                        r[i].Area + '</td><td>' + r[i].Image +'</td></tr>';
+                    $('#MeetingData').append(tr);
+                }
+            }
+        });
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+    function convertToJavaScriptDate2(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day));
+
+        //2022 - 01 - 18T20: 23
+    }
+ 
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function ChangeDateFormat(value) {
+        if (value === null) {
+            return null;
+        }
+        //var dt = new Date(parseFloat(value));
+        var dt = new Date(value);
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) + "T" + strTime);
+
+        //2022 - 01 - 18T20: 23
+    }
+    //*********************************************************//
+</script>

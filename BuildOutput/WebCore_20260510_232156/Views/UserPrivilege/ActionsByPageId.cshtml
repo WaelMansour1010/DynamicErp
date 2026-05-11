@@ -1,0 +1,15 @@
+﻿@model IEnumerable<MyERP.Models.GetUserPrivileges_Result>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td class="col-sm-8">
+            <input class="ActionId" type="hidden" value="@item.ActionId" />
+            @Html.DisplayFor(modelItem => item.ArName)
+        </td>
+        <td class="col-sm-4">
+            <input type="checkbox" class="Privileged" @Html.Raw(item.Privileged == 1 ? "checked" : "") />
+        </td>
+
+    </tr>
+}

@@ -846,15 +846,21 @@ BEGIN
         END
         ELSE
         BEGIN
+            /*
+                Legacy POS mapping:
+                Transactions.IPN is displayed to users as "ID".
+                Transactions.ManualNO is displayed to users as "IPN".
+                Do not swap this back.
+            */
             SET @ServiceChargeAccount = dbo.get_account_code_branch(52, CONVERT(VARCHAR(50), @BranchId));
             SET @TaxAccount = dbo.get_account_code_branch(23, CONVERT(VARCHAR(50), @BranchId));
 
             INSERT INTO @AccountingLines (LineNumber, AccountCode, EntryValue, CreditOrDebit, EntryDescription)
             VALUES
-                (1, @UserBox2Account, @RechargeAmount, 0, N'العميل : ' + ISNULL(@CashCustomerName, N'') + N' IPN ' + ISNULL(@IPN, N'') + N' فرع ' + ISNULL(@BranchName, N'') + N' فاتورة رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1)),
-                (2, @BankAccount, @RechargeAmount, 1, N'العميل : ' + ISNULL(@CashCustomerName, N'') + N' IPN ' + ISNULL(@IPN, N'') + N' فرع ' + ISNULL(@BranchName, N'') + N' فاتورة رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1)),
+                (1, @UserBox2Account, @RechargeAmount, 0, N'العميل : ' + ISNULL(@CashCustomerName, N'') + N' IPN ' + ISNULL(@ManualNO, N'') + N' فرع ' + ISNULL(@BranchName, N'') + N' فاتورة رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1)),
+                (2, @BankAccount, @RechargeAmount, 1, N'العميل : ' + ISNULL(@CashCustomerName, N'') + N' IPN ' + ISNULL(@ManualNO, N'') + N' فرع ' + ISNULL(@BranchName, N'') + N' فاتورة رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1)),
                 (3, @ServiceChargeAccount, @BankCommissionAmount, 0, N''),
-                (4, @BankAccount, @BankCommissionAmount, 1, N'العميل : ' + ISNULL(@CashCustomerName, N'') + N' IPN ' + ISNULL(@IPN, N'') + N' فرع ' + ISNULL(@BranchName, N'') + N' فاتورة رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1)),
+                (4, @BankAccount, @BankCommissionAmount, 1, N'العميل : ' + ISNULL(@CashCustomerName, N'') + N' IPN ' + ISNULL(@ManualNO, N'') + N' فرع ' + ISNULL(@BranchName, N'') + N' فاتورة رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1)),
                 (5, @CardAccount, @LineGrossAmount, 0, @AccountingDescription),
                 (7, @TaxAccount, @LineNetAmount, 1, @AccountingDescription),
                 (8, @VatAccount, @VatAmount, 1, @AccountingDescription);

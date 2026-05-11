@@ -21,6 +21,7 @@ namespace MyERP.Models
         public Nullable<int> CurrencyId { get; set; }
         public Nullable<double> Equivalent { get; set; }
         public Nullable<int> AccountId { get; set; }
+        public Nullable<int> DepartmentId { get; set; }
         public Nullable<int> SourcePageId { get; set; }
         public Nullable<int> SourceId { get; set; }
         public string Notes { get; set; }

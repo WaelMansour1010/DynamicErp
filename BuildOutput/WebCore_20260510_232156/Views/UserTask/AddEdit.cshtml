@@ -1,0 +1,403 @@
+﻿@model MyERP.Models.UserTask
+
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Tasks;
+}
+<script src="~/Scripts/SaveAndNew.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+            <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>}
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Tasks</h4>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="form-horizontal needs-validation" role="form">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @Html.HiddenFor(model => model.CreatedDate)
+                        @Html.HiddenFor(model => model.FinishedDate)
+                        @Html.HiddenFor(model => model.IsAutoCreated)
+
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="header-title">
+                                    @MyERP.Properties.Resources.Add
+                                </h3>
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.Task</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Name, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                @*<div class="form-group row">
+                            <label class="col-sm-2 control-label" for="EnName">الاسم بالانجليزية</label>
+                            <div class="col-sm-4">
+                                @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = "الاسم بالانجليزية" } })
+                                <div class="invalid-feedback">
+                                    الاسم بالانجليزية مطلوب
+                                </div>
+                            </div>
+                        </div>*@
+
+
+
+
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.User</label>
+                                    <div class="col-sm-4">
+
+                                        @Html.DropDownListFor(model => model.AssignedTo, null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                         {
+                                              @class = "form-control",
+                                             required = "required"
+                                         })
+                                        @Html.ValidationMessageFor(model => model.AssignedTo, "", new { @class = "text-danger" })
+                                    </div>
+                                    <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Status</label>
+                                    <div class="col-sm-4">
+                                        @if (Model != null)
+                                        {
+                                            if (Model.StatusId == 5)
+                                            {
+                                                @Html.DropDownListFor(model => model.StatusId, null, htmlAttributes: new
+                                                 {
+                                                  @class = "form-control",
+                                                  required = "required",
+                                                  @disabled = "disabeld"
+                                                 })
+                                            }
+                                            else
+                                            {
+                                                @Html.DropDownListFor(model => model.StatusId, null, htmlAttributes: new
+                                                                                             {
+                                                                                                 @class = "form-control",
+                                                                                                 required = "required",
+
+                                                                                            })
+                                            }
+
+                                            @Html.ValidationMessageFor(model => model.StatusId, "", new { @class = "text-danger" })
+                                        }
+                                        else
+                                        {
+                                            @Html.DropDownListFor(model => model.StatusId, null, htmlAttributes: new
+                                             {
+                                                 @class = "form-control",
+                                                 required = "required",
+                                                 @disabled = "disabeld"
+                                             })
+                                        }
+                                    </div>
+                                </div>
+
+
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model != null)
+                {
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">@MyERP.Properties.Resources.Log</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th hidden>@MyERP.Properties.Resources.Code</th>
+                                                    <th>@MyERP.Properties.Resources.Status</th>
+                                                    <th>@MyERP.Properties.Resources.Date</th>
+                                                    <th>@MyERP.Properties.Resources.User</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @if (ViewBag.TaskLogs != null)
+                                                {
+                                                    foreach (var item in (List<MyERP.Models.TaskLog>)ViewBag.TaskLogs)
+                                                    {
+                                                        <tr>
+                                                            <td hidden>
+                                                                @item.Id
+                                                            </td>
+                                                            <td>@item.TaskStatu.ArName</td>
+                                                            <td>@item.Date</td>
+                                                            <td>@item.ERPUser.UserName</td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                    <button onclick="addEdit('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button class="btn btn-success" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else if (Model.IsDeleted == false)
+                                    {
+
+                                <button id="save_button" class="btn btn-success" onclick="addEdit()">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                        if (Model.StatusId != 5)
+                                        {
+                                <a id="cancel_button" class="btn btn-danger" onclick="CancelMode()" role="button">@MyERP.Properties.Resources.Cancel</a>
+                                        }
+
+                                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            var doc = $.get('/UserTask/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+
+    $(document).ready(function () {
+        if ($('#Id').val() > 0 && $('#StatusId').val() == 5)
+        {
+            $('#save_button').attr("disabled", true);
+            $('#cancel_button').attr("disabled", true);
+            $('#StatusId').attr("disabled", true);
+        }
+        if ($('#Id').val() > 0 && $('#IsAutoCreated').val() == 'True')
+        {
+            $('#ArName').attr('readonly', true);
+            $('#Notes').attr('readonly', true);
+            $('#AssignedTo').prop('disabled', true);
+        }
+    });
+
+
+    function CancelMode() {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToCancel')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/UserTask/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: $('#Id').val(),
+                        Code: $('#Code').val(),
+                        ArName: $('#ArName').val(),
+                        AssignedTo: $('#AssignedTo').val(),
+                        StatusId: 5,
+                        CreatedDate: $('#CreatedDate').val(),
+                        FinishedDate: $('#FinishedDate').val(),
+                        Notes: $('#Notes').val(),
+                        IsDeleted: false,
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+
+                        alert("@MyERP.Properties.Resources.Canceled");
+                        //    console.log(r);
+                        $('#preloader, #status').fadeOut();
+
+
+                        window.location.replace("/UserTask/Index");
+
+
+
+                    }
+                    else {
+                        $('#preloader, #status').fadeOut();
+                        alert("@MyERP.Properties.Resources.NotCanceled"+"!");
+                    }
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    alert("@MyERP.Properties.Resources.NotCanceled"+"!");
+                }
+            });
+            window.location.replace("/UserTask/index");
+
+        }
+    }
+
+    //-------------------------------------------------------------- add/edit ------------------------------------------//
+    function addEdit(n) {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+
+        if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave'))
+        {
+            $('#preloader, #status').fadeIn();
+
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/UserTask/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: $('#Id').val(),
+                        Code: $('#Code').val(),
+                        ArName: $('#ArName').val(),
+                        AssignedTo: $('#AssignedTo').val(),
+                        StatusId: $('#StatusId').val(),
+                        CreatedDate: $('#CreatedDate').val(),
+                        FinishedDate: $('#FinishedDate').val(),
+                        Notes: $('#Notes').val(),
+                        IsDeleted: false,
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+
+                        alert("@MyERP.Properties.Resources.Saved");
+                        $('#preloader, #status').fadeOut();
+                        if (n == "new") {
+                            window.location.replace("/UserTask/AddEdit");
+                        }
+                        else
+                        {
+                            window.location.replace("/UserTask/Index");
+                        }
+
+                    }
+                    else {
+                        $('#preloader, #status').fadeOut();
+                        alert("@MyERP.Properties.Resources.NotSaved"+"!");
+                    }
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    alert("@MyERP.Properties.Resources.NotSaved"+"!");
+                }
+            });
+        }
+
+    }
+
+
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/UserTask/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/UserTask');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    }
+                });
+        }
+    }
+</script>
+
+

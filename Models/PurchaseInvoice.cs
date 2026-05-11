@@ -67,7 +67,6 @@ namespace MyERP.Models
         public Nullable<decimal> CommercialRevenueTaxAmount { get; set; }
         public Nullable<System.DateTime> DueDate { get; set; }
         public string VendorInvoiceNumber { get; set; }
-        public Nullable<int> PaymentType { get; set; }
     
         public virtual Branch Branch { get; set; }
         public virtual CostCenter CostCenter { get; set; }

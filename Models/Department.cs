@@ -108,6 +108,8 @@ namespace MyERP.Models
             this.SystemSettings = new HashSet<SystemSetting>();
             this.Employees1 = new HashSet<Employee>();
             this.EmployeeVacationsRegistrations = new HashSet<EmployeeVacationsRegistration>();
+            this.IssueAnalysis = new HashSet<IssueAnalysis>();
+            this.JournalEntryDetails = new HashSet<JournalEntryDetail>();
         }
     
         public int Id { get; set; }
@@ -453,5 +455,9 @@ namespace MyERP.Models
         public virtual ICollection<EmployeeVacationsRegistration> EmployeeVacationsRegistrations { get; set; }
         public virtual ChartOfAccount ChartOfAccount521 { get; set; }
         public virtual ChartOfAccount ChartOfAccount53 { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<IssueAnalysis> IssueAnalysis { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<JournalEntryDetail> JournalEntryDetails { get; set; }
     }
 }
