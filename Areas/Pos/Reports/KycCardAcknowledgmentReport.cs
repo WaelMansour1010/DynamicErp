@@ -259,19 +259,6 @@ namespace MyERP.Areas.Pos.Reports
                 Padding = BodyPadding,
                 WordWrap = false
             });
-            y += 40F;
-
-            float footerWidth = 430F;
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(width - footerWidth, y, footerWidth, 28F),
-                Text = "التاريخ: " + date + "    الوقت: " + time,
-                Font = _lineBoldFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = BodyPadding,
-                WordWrap = false
-            });
 
             band.HeightF = 1080F;
         }
@@ -283,7 +270,13 @@ namespace MyERP.Areas.Pos.Reports
                 BoundsF = new RectangleF(x, y, lineWidth, 35F),
                 Text = text,
                 Font = bold ? _lineBoldFont : _lineFont,
-                TextAlignment = TextAlignment.MiddleRight,
+                // With RightToLeft = Yes the XRLabel treats TextAlignment
+                // logically ("start"/"end" of the line, in reading order).
+                // MiddleLeft therefore pins the text to the visual RIGHT
+                // edge of the bounds, which is what we want for every
+                // body paragraph so they all share the page's right
+                // margin.
+                TextAlignment = TextAlignment.MiddleLeft,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
                 WordWrap = false
