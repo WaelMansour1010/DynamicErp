@@ -90,7 +90,8 @@ namespace MyERP.Areas.Pos.Reports
 
             const float h = 30F;
             const float pad = 4F;
-            const float bodyX = 22F;
+            // Shift the whole declaration body to the right to match legacy paper alignment.
+            const float bodyX = 120F;
             float bodyW = width - bodyX;
             float bodyRight = bodyX + bodyW;
 
