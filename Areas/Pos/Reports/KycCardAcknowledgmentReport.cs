@@ -39,6 +39,11 @@ namespace MyERP.Areas.Pos.Reports
             BuildBody(detail, customer, issuedAt, width);
         }
 
+        // Right-hand padding applied to every body line so all right-aligned
+        // text shares the exact same right margin. Title and token block
+        // intentionally do NOT use this - they remain centered.
+        private static readonly PaddingInfo BodyPadding = new PaddingInfo(2, 2, 0, 0);
+
         private void BuildBody(DetailBand band, PosCustomerLookupDto customer, DateTime issuedAt, float width)
         {
             string customerName = FirstNonEmpty(customer.CustomerName, customer.Name, customer.ArabicName0, "........................");
@@ -104,6 +109,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             band.Controls.Add(new XRLabel
@@ -124,6 +130,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             y += h + 6F;
@@ -138,6 +145,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             band.Controls.Add(new XRLabel
@@ -168,6 +176,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             x -= dateW;
@@ -209,6 +218,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             y += h + 6F;
@@ -230,6 +240,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             y += 34F;
@@ -241,6 +252,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
             y += 40F;
@@ -253,6 +265,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = _lineBoldFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
+                Padding = BodyPadding,
                 WordWrap = false
             });
 
@@ -268,7 +281,7 @@ namespace MyERP.Areas.Pos.Reports
                 Font = bold ? _lineBoldFont : _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
                 RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(2, 2, 0, 0),
+                Padding = BodyPadding,
                 WordWrap = false
             });
             y += 40F;
