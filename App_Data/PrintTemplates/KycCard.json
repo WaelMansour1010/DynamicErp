@@ -12,9 +12,9 @@
     {
       "FieldKey": "Token",
       "Label": "رقم Token (فوق)",
-      "X": 40.8823433,
-      "Y": 206.176468,
-      "Width": 461.176483,
+      "X": 0.0,
+      "Y": 197.941177,
+      "Width": 154.117661,
       "Height": 14.3529415,
       "FontName": "Consolas",
       "FontSize": 7.0,
@@ -23,7 +23,7 @@
       "Direction": "LTR",
       "IsCellBased": true,
       "CellCount": 18,
-      "CellWidth": 25.6209164,
+      "CellWidth": 8.562092,
       "CharacterSpacing": 0.0,
       "CellDirection": "LTR"
     },

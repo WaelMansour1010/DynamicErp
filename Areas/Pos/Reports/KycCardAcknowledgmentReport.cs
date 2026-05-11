@@ -1,4 +1,4 @@
-using DevExpress.XtraPrinting;
+﻿using DevExpress.XtraPrinting;
 using DevExpress.XtraReports.UI;
 using MyERP.Areas.Pos.Models;
 using System;
@@ -11,19 +11,12 @@ using System.Web.Hosting;
 
 namespace MyERP.Areas.Pos.Reports
 {
-    // Layout target: Areas/Pos/Doc/repCashCustomer4.pdf - the Crystal
-    // acknowledgment form referenced by the legacy Cayshny screen.
-    // Customer is loaded strictly by TblCusCsh.Id through
-    // PosSqlRepository.GetKeshniCardCustomerById.
     public class KycCardAcknowledgmentReport : XtraReport
     {
-        private readonly Font _bodyFont = new Font("Tahoma", 11F, FontStyle.Regular);
-        private readonly Font _bodyBold = new Font("Tahoma", 11F, FontStyle.Bold);
-        private readonly Font _titleFont = new Font("Tahoma", 14F, FontStyle.Bold | FontStyle.Underline);
-        private readonly Font _tokenLabelFont = new Font("Tahoma", 12F, FontStyle.Bold);
-        private readonly Font _dynamicFont = new Font("Tahoma", 11F, FontStyle.Bold);
-
-        private readonly Color _underlineColor = Color.Black;
+        private readonly Font _titleFont = new Font("Tahoma", 16F, FontStyle.Bold | FontStyle.Underline);
+        private readonly Font _lineFont = new Font("Tahoma", 11F, FontStyle.Regular);
+        private readonly Font _lineBoldFont = new Font("Tahoma", 11F, FontStyle.Bold);
+        private readonly Font _tokenFont = new Font("Tahoma", 12F, FontStyle.Bold);
 
         public KycCardAcknowledgmentReport(PosCustomerLookupDto customer, DateTime issuedAt)
         {
@@ -36,253 +29,141 @@ namespace MyERP.Areas.Pos.Reports
             RightToLeftLayout = RightToLeftLayout.No;
             PaperKind = DevExpress.Drawing.Printing.DXPaperKind.A4;
             Landscape = false;
-            Margins = new Margins(70, 70, 60, 60);
+            Margins = new Margins(35, 35, 25, 25);
 
             var detail = new DetailBand();
             Bands.Add(detail);
 
             const float a4WidthHundredthInch = 827F;
-            float contentWidth = a4WidthHundredthInch - Margins.Left - Margins.Right;
-            BuildBody(detail, customer, issuedAt, contentWidth);
+            float width = a4WidthHundredthInch - Margins.Left - Margins.Right;
+            BuildBody(detail, customer, issuedAt, width);
         }
 
         private void BuildBody(DetailBand band, PosCustomerLookupDto customer, DateTime issuedAt, float width)
         {
-            string customerName = FirstNonEmpty(customer.CustomerName, customer.Name, customer.ArabicName0);
-            string tokenValue = FirstNonEmpty(customer.CardNo, customer.CardId);
-            string cardIssuerText = GetCardIssuerText(tokenValue);
+            string customerName = FirstNonEmpty(customer.CustomerName, customer.Name, customer.ArabicName0, "........................");
+            string tokenValue = FirstNonEmpty(customer.CardNo, customer.CardId, "........................");
             string date = issuedAt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
             string time = FormatArabicTime(issuedAt);
 
-            DrawHeaderLogos(band, 0F, width);
+            DrawHeaderLogos(band, width);
 
-            const float titleY = 130F;
+            float y = 78F;
+
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0, titleY, width, 28),
-                Text = "إقرار استلام " + cardIssuerText + " ميزة المدفوعة مقدما",
+                BoundsF = new RectangleF(0F, y, width, 36F),
+                Text = "إقرار استلام بطاقة بنك مصر - Easy Cash ميزة المدفوعة مقدمًا",
                 Font = _titleFont,
                 TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
             });
+            y += 56F;
 
-            const float tokenY = 195F;
-            const float tokenLineHeight = 22F;
-            float tokenLabelWidth = 110F;
-            float tokenValueWidth = 240F;
+            const float tokenLabelWidth = 145F;
+            const float tokenValueWidth = 300F;
             float tokenBlockWidth = tokenLabelWidth + tokenValueWidth + 8F;
-            float tokenStartX = (width - tokenBlockWidth) / 2F;
+            float tokenX = (width - tokenBlockWidth) / 2F;
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(tokenStartX + tokenValueWidth + 8F, tokenY, tokenLabelWidth, tokenLineHeight),
+                BoundsF = new RectangleF(tokenX + tokenValueWidth + 8F, y, tokenLabelWidth, 28F),
                 Text = "رقم Token :",
-                Font = _tokenLabelFont,
+                Font = _tokenFont,
                 TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
             });
+
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(tokenStartX, tokenY, tokenValueWidth, tokenLineHeight),
+                BoundsF = new RectangleF(tokenX, y, tokenValueWidth, 28F),
                 Text = tokenValue,
-                Font = _tokenLabelFont,
+                Font = _tokenFont,
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
-                BorderColor = _underlineColor,
-                BorderWidth = 0.6F,
+                BorderWidth = 0.8F,
+                WordWrap = false
+            });
+            y += 52F;
+
+            AddFullLine(band, width, ref y, "أقر أنا/ " + customerName + " الموقع أدناه بأنني استلمت بطاقة بنك مصر - Easy Cash ميزة المدفوعة مقدمًا المذكورة أعلاه");
+            AddFullLine(band, width, ref y, "وقد استلمت البطاقة بالرقم المرجعي لها (Token) الموضح أعلاه بعد مراجعة بياناتي كاملة.");
+            AddFullLine(band, width, ref y, "في يوم وتاريخ " + date + " الساعة " + time + " من السادة شركة إيزي كاش للدفع الإلكتروني.");
+            AddFullLine(band, width, ref y, "وأقر بصحة البيانات المدونة، وأتحمل مسؤولية استخدامها وفقًا للشروط المعتمدة.");
+            y += 12F;
+
+            AddFullLine(band, width, ref y, "المقر بما فيه ،،", true);
+            y += 8F;
+
+            AddFullLine(band, width, ref y, "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:");
+            y += 8F;
+
+            float sigWidth = 420F;
+            float sigX = width - sigWidth;
+
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(sigX, y, sigWidth, 28F),
+                Text = "اسم العميل: ...............................................",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            y += 34F;
+
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(sigX, y, sigWidth, 28F),
+                Text = "التوقيع: ...................................................",
+                Font = _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                WordWrap = false
+            });
+            y += 40F;
+
+            float footerWidth = 430F;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(width - footerWidth, y, footerWidth, 28F),
+                Text = "التاريخ: " + date + "    الوقت: " + time,
+                Font = _lineBoldFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
                 WordWrap = false
             });
 
-            float lineY = 270F;
-            const float lineHeight = 30F;
-            const float labelHeight = 22F;
-
-            // Line 1 (RTL reading order):
-            //   [أقر أنا] [customerName underlined] [الموقع أدناه بأني إستلمت cardIssuerText]
-            float rightPrefixWidth = 60F;
-            float leftSuffixWidth = width * 0.55F;
-            float namePartWidth = width - rightPrefixWidth - leftSuffixWidth - 8F;
-            float namePartX = leftSuffixWidth + 4F;
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(width - rightPrefixWidth, lineY, rightPrefixWidth, labelHeight),
-                Text = "أقر أنا",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(namePartX, lineY, namePartWidth, labelHeight),
-                Text = customerName,
-                Font = _dynamicFont,
-                TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes,
-                Borders = BorderSide.Bottom,
-                BorderColor = _underlineColor,
-                BorderWidth = 0.6F,
-                WordWrap = false
-            });
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(0, lineY, leftSuffixWidth, labelHeight),
-                Text = "الموقع أدناه بأني إستلمت " + cardIssuerText,
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-            lineY += lineHeight;
-
-            // Line 2 (RTL):
-            //   [ميزة المدفوعة مقدما المذكورة أعلاه بالرقم المرجعي لها] [tokenValue underlined]
-            float line2RightWidth = width * 0.55F;
-            float line2TokenWidth = width - line2RightWidth - 4F;
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(width - line2RightWidth, lineY, line2RightWidth, labelHeight),
-                Text = "ميزة المدفوعة مقدما المذكورة أعلاه بالرقم المرجعي لها",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(0, lineY, line2TokenWidth, labelHeight),
-                Text = tokenValue,
-                Font = _dynamicFont,
-                TextAlignment = TextAlignment.MiddleCenter,
-                Borders = BorderSide.Bottom,
-                BorderColor = _underlineColor,
-                BorderWidth = 0.6F,
-                WordWrap = false
-            });
-            lineY += lineHeight;
-
-            // Line 3 (RTL):
-            //   [في يوم وتاريخ] [date underlined] [الساعة] [time underlined]
-            //   [من السادة شركة أيزي كاش للدفع الإلكتروني]
-            float dateLabelW = 95F;
-            float dateValueW = 110F;
-            float timeLabelW = 55F;
-            float timeValueW = 90F;
-            float footerSuffixW = width - (dateLabelW + dateValueW + timeLabelW + timeValueW) - 4F;
-
-            float xRight = width;
-            xRight -= dateLabelW;
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(xRight, lineY, dateLabelW, labelHeight),
-                Text = "في يوم وتاريخ",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-
-            xRight -= dateValueW;
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(xRight, lineY, dateValueW, labelHeight),
-                Text = date,
-                Font = _dynamicFont,
-                TextAlignment = TextAlignment.MiddleCenter,
-                Borders = BorderSide.Bottom,
-                BorderColor = _underlineColor,
-                BorderWidth = 0.6F,
-                WordWrap = false
-            });
-
-            xRight -= timeLabelW;
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(xRight, lineY, timeLabelW, labelHeight),
-                Text = "الساعة",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleCenter,
-                RightToLeft = RightToLeft.Yes
-            });
-
-            xRight -= timeValueW;
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(xRight, lineY, timeValueW, labelHeight),
-                Text = time,
-                Font = _dynamicFont,
-                TextAlignment = TextAlignment.MiddleCenter,
-                Borders = BorderSide.Bottom,
-                BorderColor = _underlineColor,
-                BorderWidth = 0.6F,
-                WordWrap = false
-            });
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(0, lineY, footerSuffixW, labelHeight),
-                Text = "من السادة شركة أيزي كاش للدفع الإلكتروني",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-            lineY += lineHeight;
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(0, lineY, width, labelHeight),
-                Text = "المقر بما فيه ,,",
-                Font = _bodyBold,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-            lineY += lineHeight + 12F;
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(0, lineY, width, labelHeight),
-                Text = "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:",
-                Font = _bodyBold,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes,
-                Padding = new PaddingInfo(0, 4, 0, 0)
-            });
-            lineY += lineHeight;
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.55F, labelHeight),
-                Text = "إسم العميل: ..........................................",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
-            });
-            lineY += lineHeight;
-
-            band.Controls.Add(new XRLabel
-            {
-                BoundsF = new RectangleF(width * 0.05F, lineY, width * 0.55F, labelHeight),
-                Text = "التوقــــــيع: ..........................................",
-                Font = _bodyFont,
-                TextAlignment = TextAlignment.MiddleRight,
-                RightToLeft = RightToLeft.Yes
-            });
-            lineY += lineHeight;
-
-            band.HeightF = lineY + 80F;
+            band.HeightF = 1080F;
         }
 
-        private void DrawHeaderLogos(DetailBand band, float y, float width)
+        private void AddFullLine(DetailBand band, float width, ref float y, string text, bool bold = false)
         {
-            const float logoBoxWidth = 140F;
-            const float logoBoxHeight = 80F;
+            band.Controls.Add(new XRLabel
+            {
+                BoundsF = new RectangleF(0F, y, width, 31F),
+                Text = text,
+                Font = bold ? _lineBoldFont : _lineFont,
+                TextAlignment = TextAlignment.MiddleRight,
+                RightToLeft = RightToLeft.Yes,
+                Padding = new PaddingInfo(2, 2, 0, 0),
+                WordWrap = false
+            });
+            y += 34F;
+        }
+
+        private void DrawHeaderLogos(DetailBand band, float width)
+        {
+            const float y = 4F;
+            const float misrWidth = 175F;
+            const float easyWidth = 145F;
+            const float logoHeight = 62F;
 
             Image misrLogo = LoadImage(new[]
             {
+                "~/Areas/Pos/Content/images/kyc/banque-misr-logo.png",
                 "~/Areas/Pos/Doc/BanqueMisr.png",
                 "~/Areas/Pos/Doc/banque_misr.png",
                 "~/Areas/Pos/Doc/banque-misr.png",
@@ -291,6 +172,7 @@ namespace MyERP.Areas.Pos.Reports
 
             Image easyLogo = LoadImage(new[]
             {
+                "~/Areas/Pos/Content/images/kyc/easycash-logo.png",
                 "~/Areas/Pos/Doc/EasyCashLogo.png",
                 "~/Areas/Pos/Doc/easycash-logo.png",
                 "~/Areas/Pos/Content/easycash-logo.png",
@@ -298,45 +180,47 @@ namespace MyERP.Areas.Pos.Reports
                 "~/assets/images/logo.PNG"
             });
 
-            if (misrLogo != null)
-            {
-                band.Controls.Add(new XRPictureBox
-                {
-                    BoundsF = new RectangleF(width - logoBoxWidth, y, logoBoxWidth, logoBoxHeight),
-                    Image = misrLogo,
-                    Sizing = ImageSizeMode.ZoomImage
-                });
-            }
-            else
-            {
-                band.Controls.Add(new XRLabel
-                {
-                    BoundsF = new RectangleF(width - logoBoxWidth, y + 25F, logoBoxWidth, 30F),
-                    Text = "بنك مصر",
-                    Font = new Font("Tahoma", 14F, FontStyle.Bold),
-                    TextAlignment = TextAlignment.MiddleCenter,
-                    RightToLeft = RightToLeft.Yes
-                });
-            }
-
             if (easyLogo != null)
             {
                 band.Controls.Add(new XRPictureBox
                 {
-                    BoundsF = new RectangleF(0, y, logoBoxWidth, logoBoxHeight),
+                    BoundsF = new RectangleF(0F, y, easyWidth, logoHeight),
                     Image = easyLogo,
-                    Sizing = ImageSizeMode.ZoomImage
+                    Sizing = ImageSizeMode.ZoomImage,
+                    ImageAlignment = ImageAlignment.MiddleCenter
                 });
             }
             else
             {
                 band.Controls.Add(new XRLabel
                 {
-                    BoundsF = new RectangleF(0, y + 25F, logoBoxWidth, 30F),
+                    BoundsF = new RectangleF(0F, y + 18F, easyWidth, 24F),
                     Text = "easycash",
-                    Font = new Font("Tahoma", 14F, FontStyle.Bold),
-                    ForeColor = Color.FromArgb(54, 133, 72),
-                    TextAlignment = TextAlignment.MiddleCenter
+                    Font = new Font("Tahoma", 12F, FontStyle.Bold),
+                    TextAlignment = TextAlignment.MiddleLeft,
+                    ForeColor = Color.FromArgb(74, 63, 133)
+                });
+            }
+
+            if (misrLogo != null)
+            {
+                band.Controls.Add(new XRPictureBox
+                {
+                    BoundsF = new RectangleF(width - misrWidth, y, misrWidth, logoHeight),
+                    Image = misrLogo,
+                    Sizing = ImageSizeMode.ZoomImage,
+                    ImageAlignment = ImageAlignment.MiddleCenter
+                });
+            }
+            else
+            {
+                band.Controls.Add(new XRLabel
+                {
+                    BoundsF = new RectangleF(width - misrWidth, y + 18F, misrWidth, 24F),
+                    Text = "بنك مصر / BANQUE MISR",
+                    Font = new Font("Tahoma", 11F, FontStyle.Bold),
+                    TextAlignment = TextAlignment.MiddleRight,
+                    RightToLeft = RightToLeft.Yes
                 });
             }
         }
@@ -375,7 +259,14 @@ namespace MyERP.Areas.Pos.Reports
                 try
                 {
                     byte[] bytes = File.ReadAllBytes(path);
-                    return Image.FromStream(new MemoryStream(bytes));
+                    var image = Image.FromStream(new MemoryStream(bytes));
+                    if (image.Width < 40 || image.Height < 20)
+                    {
+                        image.Dispose();
+                        continue;
+                    }
+
+                    return image;
                 }
                 catch
                 {
@@ -391,7 +282,7 @@ namespace MyERP.Areas.Pos.Reports
             try
             {
                 var ar = CultureInfo.GetCultureInfo("ar-EG");
-                return value.ToString("tt hh:mm:ss", ar);
+                return value.ToString("HH:mm:ss", ar);
             }
             catch (CultureNotFoundException)
             {
@@ -415,12 +306,6 @@ namespace MyERP.Areas.Pos.Reports
             }
 
             return string.Empty;
-        }
-
-        private static string GetCardIssuerText(string tokenValue)
-        {
-            string token = string.IsNullOrWhiteSpace(tokenValue) ? string.Empty : tokenValue.Trim();
-            return token.Length == 18 ? "بطاقة كارت مصر" : "بطاقة البنك الاهلى";
         }
     }
 }
