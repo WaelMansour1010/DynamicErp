@@ -94,6 +94,7 @@ namespace MyERP.Areas.Pos.Reports
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
                 BorderWidth = 0.8F,
+                BorderDashStyle = BorderDashStyle.Dot,
                 WordWrap = false
             });
             y += 52F;
@@ -134,6 +135,7 @@ namespace MyERP.Areas.Pos.Reports
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
                 BorderWidth = 0.7F,
+                BorderDashStyle = BorderDashStyle.Dot,
                 RightToLeft = RightToLeft.Yes,
                 WordWrap = false
             });
@@ -170,6 +172,7 @@ namespace MyERP.Areas.Pos.Reports
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
                 BorderWidth = 0.7F,
+                BorderDashStyle = BorderDashStyle.Dot,
                 WordWrap = false
             });
             y += h + 6F;
@@ -202,6 +205,7 @@ namespace MyERP.Areas.Pos.Reports
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
                 BorderWidth = 0.7F,
+                BorderDashStyle = BorderDashStyle.Dot,
                 WordWrap = false
             });
             x -= timeLabelW;
@@ -223,6 +227,7 @@ namespace MyERP.Areas.Pos.Reports
                 TextAlignment = TextAlignment.MiddleCenter,
                 Borders = BorderSide.Bottom,
                 BorderWidth = 0.7F,
+                BorderDashStyle = BorderDashStyle.Dot,
                 WordWrap = false
             });
             band.Controls.Add(new XRLabel
@@ -240,8 +245,6 @@ namespace MyERP.Areas.Pos.Reports
             });
             y += h + 6F;
 
-            AddFullLine(band, bodyX, bodyW, ref y, "وأقر بصحة البيانات المدونة، وأتحمل مسؤولية استخدامها وفقًا للشروط المعتمدة.");
-            y += 8F;
             AddFullLine(band, bodyX, bodyW, ref y, "المقر بما فيه ،،", true);
             y += 6F;
             AddFullLine(band, bodyX, bodyW, ref y, "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:");
@@ -255,7 +258,9 @@ namespace MyERP.Areas.Pos.Reports
                 BoundsF = new RectangleF(sigX, y, sigWidth, 28F),
                 Text = "اسم العميل: ...............................................",
                 Font = _lineFont,
-                TextAlignment = TextAlignment.MiddleRight,
+                // MiddleLeft under RTL=Yes -> visual right of bounds; pins
+                // "اسم العميل" to the same right margin as the lines above.
+                TextAlignment = TextAlignment.MiddleLeft,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
                 WordWrap = false
@@ -267,7 +272,7 @@ namespace MyERP.Areas.Pos.Reports
                 BoundsF = new RectangleF(sigX, y, sigWidth, 28F),
                 Text = "التوقيع: ...................................................",
                 Font = _lineFont,
-                TextAlignment = TextAlignment.MiddleRight,
+                TextAlignment = TextAlignment.MiddleLeft,
                 RightToLeft = RightToLeft.Yes,
                 Padding = BodyPadding,
                 WordWrap = false
