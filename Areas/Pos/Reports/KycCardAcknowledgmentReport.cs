@@ -95,16 +95,20 @@ namespace MyERP.Areas.Pos.Reports
 
             const float h = 30F;
             const float pad = 4F;
+            // Shift the whole declaration body to the right to match legacy paper alignment.
+            const float bodyX = 120F;
+            float bodyW = width - bodyX;
+            float bodyRight = bodyX + bodyW;
 
             // سطر 1: [أقر أنا] [اسم العميل تحت خط] [الموقع أدناه بأنني استلمت بطاقة بنك مصر - Easy Cash]
             float rightPrefixW = 75F;
             float leftSuffixW = 360F;
-            float nameW = width - rightPrefixW - leftSuffixW - (pad * 2F);
-            float nameX = leftSuffixW + pad;
+            float nameW = bodyW - rightPrefixW - leftSuffixW - (pad * 2F);
+            float nameX = bodyX + leftSuffixW + pad;
 
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width - rightPrefixW, y, rightPrefixW, h),
+                BoundsF = new RectangleF(bodyRight - rightPrefixW, y, rightPrefixW, h),
                 Text = "أقر أنا",
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
@@ -125,7 +129,7 @@ namespace MyERP.Areas.Pos.Reports
             });
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0F, y, leftSuffixW, h),
+                BoundsF = new RectangleF(bodyX, y, leftSuffixW, h),
                 Text = "الموقع أدناه بأنني استلمت بطاقة بنك مصر - Easy Cash",
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
@@ -137,10 +141,10 @@ namespace MyERP.Areas.Pos.Reports
 
             // سطر 2: [ميزة ... بالرقم المرجعي لها] [Token تحت خط]
             float line2RightW = 420F;
-            float line2TokenW = width - line2RightW - pad;
+            float line2TokenW = bodyW - line2RightW - pad;
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(width - line2RightW, y, line2RightW, h),
+                BoundsF = new RectangleF(bodyRight - line2RightW, y, line2RightW, h),
                 Text = "ميزة المدفوعة مقدمًا المذكورة أعلاه بالرقم المرجعي لها (Token)",
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
@@ -150,7 +154,7 @@ namespace MyERP.Areas.Pos.Reports
             });
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0F, y, line2TokenW, h),
+                BoundsF = new RectangleF(bodyX, y, line2TokenW, h),
                 Text = tokenValue,
                 Font = _lineBoldFont,
                 TextAlignment = TextAlignment.MiddleCenter,
@@ -165,9 +169,9 @@ namespace MyERP.Areas.Pos.Reports
             float dateW = 120F;
             float timeLabelW = 62F;
             float timeW = 105F;
-            float suffixW = width - (dateLabelW + dateW + timeLabelW + timeW) - pad;
+            float suffixW = bodyW - (dateLabelW + dateW + timeLabelW + timeW) - pad;
 
-            float x = width;
+            float x = bodyRight;
             x -= dateLabelW;
             band.Controls.Add(new XRLabel
             {
@@ -213,7 +217,7 @@ namespace MyERP.Areas.Pos.Reports
             });
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0F, y, suffixW, h),
+                BoundsF = new RectangleF(bodyX, y, suffixW, h),
                 Text = "من السادة شركة إيزي كاش للدفع الإلكتروني",
                 Font = _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
@@ -223,15 +227,15 @@ namespace MyERP.Areas.Pos.Reports
             });
             y += h + 6F;
 
-            AddFullLine(band, width, ref y, "وأقر بصحة البيانات المدونة، وأتحمل مسؤولية استخدامها وفقًا للشروط المعتمدة.");
+            AddFullLine(band, bodyX, bodyW, ref y, "وأقر بصحة البيانات المدونة، وأتحمل مسؤولية استخدامها وفقًا للشروط المعتمدة.");
             y += 8F;
-            AddFullLine(band, width, ref y, "المقر بما فيه ،،", true);
+            AddFullLine(band, bodyX, bodyW, ref y, "المقر بما فيه ،،", true);
             y += 6F;
-            AddFullLine(band, width, ref y, "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:");
+            AddFullLine(band, bodyX, bodyW, ref y, "توقيع العميل بصحة بياناته المذكورة أعلاه واستلام البطاقة:");
             y += 8F;
 
             float sigWidth = 420F;
-            float sigX = width - sigWidth;
+            float sigX = bodyRight - sigWidth;
 
             band.Controls.Add(new XRLabel
             {
@@ -272,11 +276,11 @@ namespace MyERP.Areas.Pos.Reports
             band.HeightF = 1080F;
         }
 
-        private void AddFullLine(DetailBand band, float width, ref float y, string text, bool bold = false)
+        private void AddFullLine(DetailBand band, float x, float lineWidth, ref float y, string text, bool bold = false)
         {
             band.Controls.Add(new XRLabel
             {
-                BoundsF = new RectangleF(0F, y, width, 35F),
+                BoundsF = new RectangleF(x, y, lineWidth, 35F),
                 Text = text,
                 Font = bold ? _lineBoldFont : _lineFont,
                 TextAlignment = TextAlignment.MiddleRight,
