@@ -8,7 +8,20 @@ namespace MyERP.Areas.Pos.Models
     // A4 portrait is 827 x 1170.
     public class PrintTemplate
     {
+        // Bumped to 2 when the coordinate system switched from
+        // "X measured from the page's right edge" (the old RightToLeftLayout=Yes
+        // behaviour) to "X measured from the page's left edge". Templates
+        // saved with an older version are auto-migrated by
+        // PrintTemplateService.Load before they ever reach the designer
+        // or the report.
+        public const int CurrentVersion = 2;
+
         public string Name { get; set; }
+
+        // Layout coordinate-system version. 0/1 = legacy mirrored (X from
+        // right). 2 = LTR (X from left of page). Migration is performed on
+        // load and persisted on the next save.
+        public int TemplateVersion { get; set; }
 
         // Optional pre-printed scan rendered behind the canvas in the
         // designer. PrintBackground decides if it's also drawn into the

@@ -40,6 +40,7 @@ namespace MyERP.Areas.Pos.Services
                 {
                     template.Name = safeName;
                     template.Fields = template.Fields ?? new List<PrintTemplateField>();
+                    MigrateCoordinateSystem(template);
                 }
                 return template;
             }
@@ -47,6 +48,34 @@ namespace MyERP.Areas.Pos.Services
             {
                 return null;
             }
+        }
+
+        // Convert legacy templates (v0/v1) from the old mirrored coordinate
+        // system - where X was measured from the page's right edge because
+        // the report ran with RightToLeftLayout=Yes - to the new LTR system
+        // where X is the distance from the page's left edge. The transform
+        // preserves the visual position of every field:
+        //     newX = pageWidth - oldX - fieldWidth
+        // Run once; updates TemplateVersion so subsequent loads are no-ops.
+        private static void MigrateCoordinateSystem(PrintTemplate template)
+        {
+            if (template == null || template.TemplateVersion >= PrintTemplate.CurrentVersion)
+            {
+                return;
+            }
+
+            var pageWidth = template.PageWidth > 0 ? template.PageWidth : 827F;
+            foreach (var field in template.Fields)
+            {
+                if (field == null) { continue; }
+                field.X = pageWidth - field.X - field.Width;
+            }
+
+            // GlobalXShift was added on top of mirrored X, so its sign also
+            // flips when the axis flips. Preserve any printer calibration.
+            template.GlobalXShift = -template.GlobalXShift;
+
+            template.TemplateVersion = PrintTemplate.CurrentVersion;
         }
 
         public void Save(string name, PrintTemplate template)

@@ -225,6 +225,15 @@
             var prev = document.querySelector(".ptd-field.is-selected");
             if (prev) { prev.classList.remove("is-selected"); }
             node.classList.add("is-selected");
+            // Debug aid for the coordinate system: log the exact stored
+            // X/Y/W/H of the selected field. Page coords are LTR - X is
+            // the distance from the page's LEFT edge.
+            if (window.console && console.log) {
+                console.log("[PTD] selected field", field.FieldKey,
+                    "X=" + field.X, "Y=" + field.Y,
+                    "W=" + field.Width, "H=" + field.Height,
+                    "(LTR: X from page left)");
+            }
             renderPropertiesPanel();
             renderPalette();
         }
@@ -717,6 +726,14 @@
                 state.template = data;
                 state.template.Fields = state.template.Fields || [];
                 state.selectedFieldKey = null;
+                if (window.console && console.log) {
+                    console.log("[PTD] template loaded",
+                        "name=" + state.templateName,
+                        "version=" + (state.template.TemplateVersion || 0),
+                        "pageWidth=" + state.template.PageWidth,
+                        "pageHeight=" + state.template.PageHeight,
+                        "fields=" + state.template.Fields.length);
+                }
                 applyCanvasSize();
                 applyBackgroundSrc();
                 syncPageInputs();
