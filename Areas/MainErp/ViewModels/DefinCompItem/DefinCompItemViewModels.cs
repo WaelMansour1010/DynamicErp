@@ -72,6 +72,7 @@ namespace MyERP.Areas.MainErp.ViewModels.DefinCompItem
         {
             Components = new List<DefinCompItemComponentLineViewModel>();
             Outputs = new List<DefinCompItemOutputLineViewModel>();
+            OutputGroups = new List<DefinCompItemOutputGroupViewModel>();
             LinkedTransactions = new List<DefinCompItemLinkedTransactionViewModel>();
             Warnings = new List<string>();
         }
@@ -125,6 +126,7 @@ namespace MyERP.Areas.MainErp.ViewModels.DefinCompItem
         public decimal Difference { get; set; }
         public IList<DefinCompItemComponentLineViewModel> Components { get; set; }
         public IList<DefinCompItemOutputLineViewModel> Outputs { get; set; }
+        public IList<DefinCompItemOutputGroupViewModel> OutputGroups { get; set; }
         public IList<DefinCompItemLinkedTransactionViewModel> LinkedTransactions { get; set; }
         public IList<string> Warnings { get; set; }
     }
@@ -176,6 +178,31 @@ namespace MyERP.Areas.MainErp.ViewModels.DefinCompItem
         public int? LineId { get; set; }
         public double? QtyBySmallUnit { get; set; }
         public string Remark { get; set; }
+    }
+
+    public class DefinCompItemOutputGroupViewModel
+    {
+        public int Id { get; set; }
+        public int? ItemId { get; set; }
+        public string ItemCode { get; set; }
+        public string ItemName { get; set; }
+        public int? UnitId { get; set; }
+        public string UnitName { get; set; }
+        public double? Qty { get; set; }
+        public double? Cost { get; set; }
+        public double? Price { get; set; }
+        public double? Total { get; set; }
+        public int? TransactionId4 { get; set; }
+        public string NoteSerial14 { get; set; }
+        public int? LineId { get; set; }
+        public double? QtyBySmallUnit { get; set; }
+        public string Remark { get; set; }
+        public IList<DefinCompItemComponentLineViewModel> Components { get; set; }
+
+        public DefinCompItemOutputGroupViewModel()
+        {
+            Components = new List<DefinCompItemComponentLineViewModel>();
+        }
     }
 
     public class DefinCompItemLinkedTransactionViewModel
@@ -232,6 +259,7 @@ namespace MyERP.Areas.MainErp.ViewModels.DefinCompItem
         public bool ForceRebuild { get; set; }
         public IList<DefinCompItemLineRequest> Components { get; set; }
         public IList<DefinCompItemLineRequest> Outputs { get; set; }
+        public IList<DefinCompItemOutputGroupRequest> OutputGroups { get; set; }
     }
 
     public class DefinCompItemLineRequest
@@ -257,6 +285,16 @@ namespace MyERP.Areas.MainErp.ViewModels.DefinCompItem
         public double? Thickness { get; set; }
         public double? Diameter { get; set; }
         public string Remark { get; set; }
+    }
+
+    public class DefinCompItemOutputGroupRequest : DefinCompItemLineRequest
+    {
+        public DefinCompItemOutputGroupRequest()
+        {
+            Components = new List<DefinCompItemLineRequest>();
+        }
+
+        public IList<DefinCompItemLineRequest> Components { get; set; }
     }
 
     public class DefinCompItemSaveResult

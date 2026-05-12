@@ -19,7 +19,7 @@ namespace MyERP.Areas.Pos.Data
 
         private const int DeadlockSqlErrorNumber = 1205;
         private const decimal MaxCommissionRangeLookupValue = 100000m;
-        private static readonly int[] SaveDeadlockRetryDelaysMs = { 150, 300, 600 };
+        private static readonly int[] SaveDeadlockRetryDelaysMs = { 300, 750, 1500, 3000, 5000 };
         private static readonly object PosSystemErrorLogEnsureLock = new object();
         private static readonly object PosSaveAttemptLogEnsureLock = new object();
         private static bool _posSystemErrorLogEnsured;
@@ -3462,8 +3462,8 @@ WHERE T.Transaction_Type = 20
             LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
             LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) AS CardLength,
             MAX(t.Transaction_ID) AS LastTransactionId
-        FROM dbo.Transactions t WITH (READPAST)
-        INNER JOIN dbo.Transaction_Details td WITH (READPAST)
+        FROM dbo.Transactions t WITH (NOLOCK)
+        INNER JOIN dbo.Transaction_Details td WITH (NOLOCK)
             ON td.Transaction_ID = t.Transaction_ID
         WHERE t.StoreID = @StoreId
           AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
@@ -3482,8 +3482,8 @@ WHERE T.Transaction_Type = 20
             LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
             LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) AS CardLength,
             MAX(t.Transaction_ID) AS LastTransactionId
-        FROM dbo.Transactions t WITH (READPAST)
-        INNER JOIN dbo.Transaction_Details td WITH (READPAST)
+        FROM dbo.Transactions t WITH (NOLOCK)
+        INNER JOIN dbo.Transaction_Details td WITH (NOLOCK)
             ON td.Transaction_ID = t.Transaction_ID
         WHERE t.StoreID = @StoreId
           AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
@@ -3501,10 +3501,10 @@ AvailableSerials AS
         MAX(td.Item_ID) AS ItemId,
         SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty,
         MAX(t.Transaction_ID) AS LastTransactionId
-    FROM dbo.Transactions t WITH (READPAST)
-    INNER JOIN dbo.Transaction_Details td WITH (READPAST)
+    FROM dbo.Transactions t WITH (NOLOCK)
+    INNER JOIN dbo.Transaction_Details td WITH (NOLOCK)
         ON td.Transaction_ID = t.Transaction_ID
-    INNER JOIN dbo.TransactionTypes tt WITH (READPAST)
+    INNER JOIN dbo.TransactionTypes tt WITH (NOLOCK)
         ON tt.Transaction_Type = t.Transaction_Type
     INNER JOIN CandidateTokens ct
         ON ct.Token = LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
@@ -3525,8 +3525,8 @@ Filtered AS
     WHERE NOT EXISTS
       (
           SELECT 1
-          FROM dbo.Transactions issueTransaction WITH (READPAST)
-          INNER JOIN dbo.Transaction_Details issueDetail WITH (READPAST)
+          FROM dbo.Transactions issueTransaction WITH (NOLOCK)
+          INNER JOIN dbo.Transaction_Details issueDetail WITH (NOLOCK)
               ON issueDetail.Transaction_ID = issueTransaction.Transaction_ID
           WHERE issueTransaction.Transaction_Type = 19
             AND issueTransaction.StoreID = @StoreId
@@ -3535,7 +3535,7 @@ Filtered AS
       AND NOT EXISTS
       (
           SELECT 1
-          FROM dbo.Transactions saleTransaction WITH (READPAST)
+          FROM dbo.Transactions saleTransaction WITH (NOLOCK)
           WHERE saleTransaction.Transaction_Type = 21
             AND ISNULL(saleTransaction.IsCancelled, 0) = 0
             AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = av.Token
@@ -3543,7 +3543,7 @@ Filtered AS
       AND NOT EXISTS
       (
           SELECT 1
-          FROM dbo.TblCusCsh customer WITH (READPAST)
+          FROM dbo.TblCusCsh customer WITH (NOLOCK)
           WHERE ISNULL(customer.EasyCashType, 0) = 0
             AND
             (
@@ -4444,7 +4444,8 @@ SELECT
                 catch (SqlException ex)
                 {
                     var retryAttempt = attempt;
-                    if (!IsDeadlock(ex) || retryAttempt > SaveDeadlockRetryDelaysMs.Length)
+                    var isRetriableSaveSqlException = IsRetriableSaveSqlException(ex);
+                    if (!isRetriableSaveSqlException || retryAttempt > SaveDeadlockRetryDelaysMs.Length)
                     {
                         InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
                         {
@@ -4457,7 +4458,7 @@ SELECT
                             RetryAttempt = retryAttempt > SaveDeadlockRetryDelaysMs.Length ? SaveDeadlockRetryDelaysMs.Length : retryAttempt,
                             SqlErrorNumber = GetFirstSqlErrorNumber(ex),
                             DurationMs = SafeElapsedMilliseconds(stopwatch),
-                            Status = IsDeadlock(ex) && retryAttempt > SaveDeadlockRetryDelaysMs.Length ? "RetriedFailed" : "Failed",
+                            Status = isRetriableSaveSqlException && retryAttempt > SaveDeadlockRetryDelaysMs.Length ? "RetriedFailed" : "Failed",
                             Message = ex.Message,
                             RequestSummary = requestSummary
                         });
@@ -4469,13 +4470,13 @@ SELECT
                     InsertPosSaveAttemptLogSafe(new PosSaveAttemptLogWriteRequest
                     {
                         SaveAttemptId = saveAttemptId,
-                        EventName = "Save.Retry.Deadlock",
+                        EventName = IsDeadlock(ex) ? "Save.Retry.Deadlock" : "Save.Retry.TransientSql",
                         UserID = request.UserID,
                         EmpID = request.Emp_ID,
                         BranchId = request.BranchId,
                         TransactionType = NormalizeInvoiceOperationType(request.TransactionType),
                         RetryAttempt = retryAttempt,
-                        SqlErrorNumber = DeadlockSqlErrorNumber,
+                        SqlErrorNumber = GetFirstSqlErrorNumber(ex),
                         DelayMs = delayMs,
                         DurationMs = SafeElapsedMilliseconds(stopwatch),
                         Message = ex.Message,
@@ -4609,20 +4610,61 @@ SELECT
 
         private static bool IsDeadlock(SqlException exception)
         {
-            if (exception == null || exception.Errors == null)
+            if (exception == null)
             {
                 return false;
             }
 
-            foreach (SqlError error in exception.Errors)
+            if (exception.Errors != null)
             {
-                if (error != null && error.Number == DeadlockSqlErrorNumber)
+                foreach (SqlError error in exception.Errors)
                 {
-                    return true;
+                    if (error != null && error.Number == DeadlockSqlErrorNumber)
+                    {
+                        return true;
+                    }
                 }
             }
 
-            return false;
+            return IsDeadlockMessage(exception.Message);
+        }
+
+        private static bool IsRetriableSaveSqlException(SqlException exception)
+        {
+            if (IsDeadlock(exception))
+            {
+                return true;
+            }
+
+            return exception != null && IsSaveAllocationLockContention(exception.Message);
+        }
+
+        private static bool IsSaveAllocationLockContention(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
+            if (message.IndexOf("Unable to allocate invoice accounting DEV_Serial", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            if (message.IndexOf("sys.sp_getapplock", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                return false;
+            }
+
+            return message.IndexOf("LockResult=-1", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("LockResult=-2", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("LockResult=-3", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsDeadlockMessage(string message)
+        {
+            return !string.IsNullOrWhiteSpace(message)
+                && message.IndexOf("deadlocked on lock resources", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static void LogSaveDeadlockRetry(PosSaveTransactionRequest request, int retryAttempt, int delayMs, SqlException exception, int? transactionId)

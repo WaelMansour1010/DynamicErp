@@ -2086,6 +2086,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return "حدث تزاحم أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";
             }
 
+            if (message.IndexOf("deadlocked on lock resources", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "حدث تزاحم أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";
+            }
+
             if (message.IndexOf("Unable to allocate", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "تعذر تجهيز أرقام القيد المحاسبي أو الفاتورة أثناء الحفظ. برجاء المحاولة مرة أخرى، وتم تسجيل التفاصيل الفنية للدعم.";

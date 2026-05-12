@@ -38,6 +38,7 @@ namespace MyERP.Areas.Pos.Models
         public string StoredWorkbookPath { get; set; }
         public string WorkbookType { get; set; }
         public string DetectedBranchHint { get; set; }
+        public IList<string> WorkbookBranchHints { get; set; }
         public string TokenMatchingStrategy { get; set; }
         public IList<PosExcelImportSheetSummary> Sheets { get; set; }
         public IList<PosExcelImportRowPreview> Rows { get; set; }
@@ -64,6 +65,7 @@ namespace MyERP.Areas.Pos.Models
             TokenMatches = new List<PosExcelImportTokenMatchPreview>();
             PreflightItems = new List<PosExcelImportPreflightItem>();
             BranchCandidates = new List<PosExcelImportBranchCandidate>();
+            WorkbookBranchHints = new List<string>();
             Warnings = new List<string>();
             TokenMatchingStrategy = "Sequential";
         }

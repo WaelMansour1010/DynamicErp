@@ -1,32 +1,66 @@
-# DefinCompItem Test Plan
+# خطة الاختبار النهائية لسند التجميع
 
-## Functional checks
+## 1) فحوص واجهة الاستخدام (Run يدوي داخل MainErp)
 
-1. Open `MainErp/DefinCompItem/Index`.
-2. Verify filters and result list load.
-3. Create a new collection voucher.
-4. Add at least one component row.
-5. Add at least one finished-product row.
-6. Save and verify:
+1. فتح `MainErp/DefinCompItem/Index`.
+2. التأكد من:
+   - ظهوريّة الصفحة RTL.
+   - العنوان والعناصر الأساسية تظهر بالعربية بدون تشويه.
+3. تحميل القائمة الافتراضية ثم استخدام بحث السندات:
+   - بحث نصي.
+   - بحث بتاريخ + الفرع + المخزن.
+
+## 2) إنشاء وحفظ سند جديد
+
+1. الضغط على "جديد".
+2. إدخال:
+   - التاريخ.
+   - الفرع.
+   - المخزن (ورقم المخزن الفرعي إن وجد).
+   - الصنف المنتج النهائي + الوحدة + الكمية + التكلفة.
+   - مكونات الصرف (صنف + وحدة + كمية + تكلفة).
+3. الحفظ بالزر `حفظ`.
+4. التحقق من رسالة نجاح وظهور أرقام سندات:
+   - `رقم سند الصرف`.
+   - `رقم سند الإضافة`.
+
+## 3) التحقق من الأثر في قاعدة البيانات
+
+1. التأكد من وجود سجل جديد في:
    - `TblDefComItem`
    - `TblDefComItemDet`
    - `TblDefComItemData`
-   - `Transactions`
-   - `Transaction_Details`
+2. التأكد من توليد القيود:
+   - `Transactions` بالأنواع 27 و 28.
+   - `Transaction_Details` المرتبطة بهذه القيود.
+3. التأكد من القيود المحاسبية:
    - `Notes`
    - `DOUBLE_ENTREY_VOUCHERS`
-7. Re-open the voucher and confirm the linked transactions are shown.
-8. Modify quantities and save again.
-9. Confirm the previous linked transactions were removed before the new ones were generated.
-10. Delete the voucher if no posted documents exist.
-11. Search by serial and by date range.
-12. Verify server-side permission blocks:
-   - view
-   - add
-   - edit
-   - delete
 
-## Build checks
+## 4) تعديل وإعادة حفظ (Rebuild)
 
-- Compile the MVC project.
-- Verify the new controller, repository, service, viewmodels, JS, and CSS are included in the project file.
+1. فتح السند المحفوظ.
+2. تعديل كمية مكون أو تكلفة منتج.
+3. الضغط على زر `إعادة حفظ`.
+4. التحقق أن النظام أعاد إنشاء قيود 27 و 28:
+   - حذف القيود القديمة المرتبطة بنفس `InvoiceOrderNo` / `IDDefCIT`.
+   - إنشاء قيود جديدة بنفس `Order`.
+5. التأكد من أن القيد الجديد استبدل القديم ولا توجد نسخة مزدوجة في نفس المعرف.
+
+## 5) حذف وأذونات
+
+1. محاولة حذف سجل:
+   - يمر بنجاح بدون قيود معتمدة.
+   - يُرفض مع رسالة واضحة إذا مرتبطة بقيود معتمدة.
+2. محاكاة وصول المستخدم بدون صلاحية (view/add/edit/delete) والتأكد من رفض الطلب من السيرفر.
+
+## 6) Build/تجميع المشروع
+
+1. تشغيل compile للمشروع والتأكد من عدم وجود أخطاء C# / Razor / JS.
+2. تشغيل تدقيق سريع للـ endpoints المستعملة:
+   - `Index`
+   - `Save`
+   - `Rebuild`
+   - `Delete`
+   - `Details`
+   - Lookup APIs.

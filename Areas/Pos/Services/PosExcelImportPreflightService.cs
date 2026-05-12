@@ -43,10 +43,19 @@ namespace MyERP.Areas.Pos.Services
         private void ResolveBranch(PosExcelImportPreviewResult preview)
         {
             var fileToken = Path.GetFileNameWithoutExtension(preview.SourceFileName ?? string.Empty) ?? string.Empty;
-            preview.DetectedBranchHint = fileToken;
-
             var branches = _repository.GetBranches();
-            var candidates = MatchBranches(fileToken, branches);
+            var workbookHints = (preview.WorkbookBranchHints ?? new List<string>())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var hasWorkbookBranchHints = workbookHints.Count > 0;
+            var branchSourceText = hasWorkbookBranchHints ? string.Join(" | ", workbookHints) : fileToken;
+            preview.DetectedBranchHint = branchSourceText;
+
+            var candidates = hasWorkbookBranchHints
+                ? MatchBranchesFromHints(workbookHints, branches)
+                : MatchBranches(fileToken, branches);
             foreach (var candidate in candidates)
             {
                 preview.BranchCandidates.Add(candidate);
@@ -63,19 +72,19 @@ namespace MyERP.Areas.Pos.Services
                     MatchRule = branch.MatchRule
                 };
 
-                AddPreflight(preview, "Branch", "Mapped", FormatBranch(branch), "تم تحديد الفرع تلقائيا من اسم الملف.");
+                AddPreflight(preview, "Branch", "Mapped", FormatBranch(branch), hasWorkbookBranchHints ? "تم تحديد الفرع تلقائيا من بيانات الفرع داخل الشيت." : "تم تحديد الفرع تلقائيا من اسم الملف.");
                 return;
             }
 
             if (candidates.Count > 1)
             {
-                AddPreflight(preview, "Branch", "Required", string.Join(" | ", candidates.Select(FormatBranch)), "اسم الملف يطابق أكثر من فرع. أوقف الاستيراد وحدد قاعدة تسمية أدق للملف.");
-                RejectAll(preview, "تحديد الفرع غير حتمي بسبب تعدد الفروع المطابقة لاسم الملف.");
+                AddPreflight(preview, "Branch", "Required", string.Join(" | ", candidates.Select(FormatBranch)), hasWorkbookBranchHints ? "بيانات الفرع داخل الشيت تطابق أكثر من فرع. أوقف الاستيراد وصحح كود/اسم الفرع داخل الملف." : "اسم الملف يطابق أكثر من فرع. أوقف الاستيراد وحدد قاعدة تسمية أدق للملف.");
+                RejectAll(preview, hasWorkbookBranchHints ? "تحديد الفرع غير حتمي بسبب تعدد الفروع المطابقة لبيانات الشيت." : "تحديد الفرع غير حتمي بسبب تعدد الفروع المطابقة لاسم الملف.");
                 return;
             }
 
-            AddPreflight(preview, "Branch", "Required", fileToken, "تعذر تحديد الفرع من اسم الملف بالكود أو الاسم.");
-            RejectAll(preview, "تعذر تحديد الفرع من اسم الملف.");
+            AddPreflight(preview, "Branch", "Required", branchSourceText, hasWorkbookBranchHints ? "تعذر تحديد الفرع من كود/اسم الفرع المكتوب داخل الشيت." : "تعذر تحديد الفرع من اسم الملف بالكود أو الاسم.");
+            RejectAll(preview, hasWorkbookBranchHints ? "تعذر تحديد الفرع من بيانات الشيت." : "تعذر تحديد الفرع من اسم الملف.");
         }
 
         private void ResolveDefaults(PosExcelImportPreviewResult preview)
@@ -245,9 +254,19 @@ namespace MyERP.Areas.Pos.Services
 
         private static IList<PosExcelImportBranchCandidate> MatchBranches(string fileToken, IList<PosBranchDto> branches)
         {
+            branches = branches ?? new List<PosBranchDto>();
             var normalizedFile = NormalizeArabic(fileToken);
+            var normalizedEnglish = NormalizeEnglish(fileToken);
+            var codeTokens = GetBranchCodeTokens(fileToken);
             var exactCode = branches
-                .Where(x => !string.IsNullOrWhiteSpace(x.BranchCode) && string.Equals(NormalizeEnglish(x.BranchCode), NormalizeEnglish(fileToken), StringComparison.OrdinalIgnoreCase))
+                .Where(x =>
+                {
+                    var branchCode = NormalizeEnglish(x.BranchCode);
+                    return !string.IsNullOrWhiteSpace(branchCode)
+                        && (string.Equals(branchCode, normalizedEnglish, StringComparison.OrdinalIgnoreCase)
+                            || codeTokens.Contains(branchCode, StringComparer.OrdinalIgnoreCase)
+                            || (branchCode.Length >= 3 && normalizedEnglish.Contains(branchCode)));
+                })
                 .Select(x => ToCandidate(x, "Exact branch_Code"))
                 .ToList();
             if (exactCode.Count > 0)
@@ -279,6 +298,30 @@ namespace MyERP.Areas.Pos.Services
             return branches
                 .Where(x => !string.IsNullOrWhiteSpace(x.BranchName) && normalizedFile.Contains(NormalizeArabic(x.BranchName)))
                 .Select(x => ToCandidate(x, "filename contains branch_name"))
+                .ToList();
+        }
+
+        private static IList<PosExcelImportBranchCandidate> MatchBranchesFromHints(IList<string> hints, IList<PosBranchDto> branches)
+        {
+            return (hints ?? new List<string>())
+                .SelectMany(hint => MatchBranches(hint, branches))
+                .GroupBy(x => x.BranchId)
+                .Select(x =>
+                {
+                    var candidate = x.First();
+                    candidate.MatchRule = "workbook branch hint: " + candidate.MatchRule;
+                    return candidate;
+                })
+                .ToList();
+        }
+
+        private static IList<string> GetBranchCodeTokens(string value)
+        {
+            return Regex.Matches(value ?? string.Empty, @"[A-Za-z]{1,8}\s*[-_ ]?\s*\d{1,8}|[A-Za-z0-9]{3,20}")
+                .Cast<Match>()
+                .Select(x => NormalizeEnglish(x.Value))
+                .Where(x => x.Length >= 3)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 

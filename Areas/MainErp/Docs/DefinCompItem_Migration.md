@@ -1,33 +1,34 @@
-# DefinCompItem Migration
+# توثيق نقل/إعادة هيكلة شاشة `FrmDefinCompItem`
 
-This document summarizes the VB6 `FrmDefinCompItem` migration into `Areas/MainErp`.
+## ملخص المنطق المنقول من VB6
 
-## VB6 logic captured
+- جدول رأس المستند: `TblDefComItem`.
+- تفاصيل المكونات: `TblDefComItemDet`.
+- تفاصيل الصنف المنتج النهائي: `TblDefComItemData`.
+- عند الحفظ تُنشأ قيود مخزون بنوعي الحركة:
+  - `Transaction_Type = 27` (سند صرف)
+  - `Transaction_Type = 28` (سند إضافة)
+- في حالة إعادة الحفظ (`ReSave` في VB6):
+  - يتم تنظيف القيود السابقة المرتبطة بالـ header أولًا عبر `InvoiceOrderNo / IDDefCIT`.
+  - ثم يُعاد إنشاء قيود الصرف والإضافة للسند الحالي.
+- محاسبة الحركة:
+  - يتم إنشاء سجل في `Notes`.
+  - ثم يُنشأ الزوج القياسي في `DOUBLE_ENTREY_VOUCHERS`.
 
-- Header table: `TblDefComItem`
-- Component rows: `TblDefComItemDet`
-- Finished-product rows: `TblDefComItemData`
-- Inventory vouchers created on save:
-  - `Transaction_Type = 27` issue voucher
-  - `Transaction_Type = 28` receipt voucher
-- Re-save behavior:
-  - Existing linked vouchers are removed first using the collection header link and the generated transactions are recreated.
-- Accounting trace:
-  - A note row is inserted in `Notes`
-  - A double-entry pair is inserted in `DOUBLE_ENTREY_VOUCHERS`
+## مكونات MainErp المستخدمة في الشاشة
 
-## MainErp artifacts
+- الكنترولر: `Areas/MainErp/Controllers/DefinCompItemController.cs`
+- الريبو: `Areas/MainErp/Repositories/DefinCompItem/DefinCompItemRepository.cs`
+- الخدمة: `Areas/MainErp/Services/DefinCompItem/DefinCompItemService.cs`
+- نماذج العرض: `Areas/MainErp/ViewModels/DefinCompItem/DefinCompItemViewModels.cs`
+- الواجهة: `Areas/MainErp/Views/DefinCompItem/Index.cshtml`
+- JavaScript: `Areas/MainErp/Scripts/defin-comp-item.js`
+- الستايل: `Areas/MainErp/Content/defin-comp-item.css`
 
-- Controller: `Areas/MainErp/Controllers/DefinCompItemController.cs`
-- Repository: `Areas/MainErp/Repositories/DefinCompItem/DefinCompItemRepository.cs`
-- Service: `Areas/MainErp/Services/DefinCompItem/DefinCompItemService.cs`
-- ViewModels: `Areas/MainErp/ViewModels/DefinCompItem/DefinCompItemViewModels.cs`
-- View: `Areas/MainErp/Views/DefinCompItem/Index.cshtml`
-- JS: `Areas/MainErp/Scripts/defin-comp-item.js`
-- CSS: `Areas/MainErp/Content/defin-comp-item.css`
+## ملاحظات تنفيذية مهمة
 
-## Notes
-
-- The old VB6 helper procedures `CreateNotes`, `CREATE_VOUCHER_GE`, `CREATE_VOUCHER_GE1`, and `UpdateTransactionsCost` were not present in the target database.
-- The migration therefore writes the required journal and voucher rows directly, using the current MainErp schema and the current branch/store account codes.
-- The transaction link uses `InvoiceOrderNo = TblDefComItem.ID` and `IDDefCIT = TblDefComItem.ID` so rebuild and cancel operations can safely locate the generated movements.
+- الإجراءات المساعدة في VB6 مثل `CreateNotes` و `CREATE_VOUCHER_GE*` و `UpdateTransactionsCost` غير متاحة بصيغة جاهزة في هذا النظام، لذلك تم اعتماد تنفيذ مباشر داخل الريبو الحالي على جداول `Transactions` و `Transaction_Details` و `Notes` و`DOUBLE_ENTREY_VOUCHERS`.
+- الربط بين سند التجميع والقيود تتم عبر:
+  - `InvoiceOrderNo = TblDefComItem.ID`
+  - `IDDefCIT = TblDefComItem.ID`
+- تم اعتماد نمط الربط القديم في إعادة الحفظ (Delete → Insert) مع الحماية من تعديل قيود معتمدة بدون إعادة بناء صريحة.

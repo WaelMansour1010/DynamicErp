@@ -29,7 +29,7 @@ namespace MyERP.Areas.MainErp.Controllers
             var user = MainErpUserContext;
             if (!_permissionService.CanView(user, ScreenName))
             {
-                return new HttpUnauthorizedResult("لا تملك صلاحية عرض شاشة سند التجميع.");
+                return new HttpUnauthorizedResult("الصلاحية غير كافية لعرض شاشة سند التجميع.");
             }
 
             var model = _service.LoadIndex(searchText, fromDate, toDate, branchId, storeId, page, pageSize, user);
@@ -53,7 +53,7 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             if (!_permissionService.CanView(MainErpUserContext, ScreenName))
             {
-                return Json(new { success = false, message = "لا تملك صلاحية عرض البيانات." }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "الصلاحية غير كافية لعرض تفاصيل سند التجميع." }, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new { success = true, data = _service.GetDetails(id) }, JsonRequestBehavior.AllowGet);
@@ -64,7 +64,7 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             if (!_permissionService.CanView(MainErpUserContext, ScreenName))
             {
-                return Json(new { success = false, message = "لا تملك صلاحية العرض." }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "الصلاحية غير كافية لعرض الأصناف." }, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new { success = true, items = _service.SearchItems(term, 12) }, JsonRequestBehavior.AllowGet);
@@ -75,7 +75,7 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             if (!_permissionService.CanView(MainErpUserContext, ScreenName))
             {
-                return Json(new { success = false, message = "لا تملك صلاحية العرض." }, JsonRequestBehavior.AllowGet);
+                return Json(new { success = false, message = "الصلاحية غير كافية لعرض الوحدات." }, JsonRequestBehavior.AllowGet);
             }
 
             return Json(new { success = true, items = _service.SearchUnits(itemId) }, JsonRequestBehavior.AllowGet);
@@ -107,12 +107,12 @@ namespace MyERP.Areas.MainErp.Controllers
             {
                 if (!_permissionService.CanEdit(user, ScreenName))
                 {
-                    return Json(new DefinCompItemSaveResult { Success = false, Message = "لا تملك صلاحية تعديل سند التجميع." });
+                    return Json(new DefinCompItemSaveResult { Success = false, Message = "الصلاحية غير كافية لتعديل سند التجميع." });
                 }
             }
             else if (!_permissionService.CanAdd(user, ScreenName))
             {
-                return Json(new DefinCompItemSaveResult { Success = false, Message = "لا تملك صلاحية إضافة سند تجميع جديد." });
+                return Json(new DefinCompItemSaveResult { Success = false, Message = "الصلاحية غير كافية لإضافة سند تجميع جديد." });
             }
 
             return Json(_service.Save(request, user));
@@ -123,7 +123,7 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             if (!_permissionService.CanDelete(MainErpUserContext, ScreenName))
             {
-                return Json(new DefinCompItemSaveResult { Success = false, Message = "لا تملك صلاحية حذف أو إلغاء سند التجميع." });
+                return Json(new DefinCompItemSaveResult { Success = false, Message = "الصلاحية غير كافية لحذف سجل سند التجميع." });
             }
 
             return Json(_service.Delete(id, MainErpUserContext));
@@ -134,12 +134,12 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             if (!_permissionService.CanEdit(MainErpUserContext, ScreenName))
             {
-                return Json(new DefinCompItemSaveResult { Success = false, Message = "لا تملك صلاحية إعادة توليد السند." });
+                return Json(new DefinCompItemSaveResult { Success = false, Message = "الصلاحية غير كافية لإعادة إنشاء سند التجميع." });
             }
 
             if (request == null || !request.Id.HasValue)
             {
-                return Json(new DefinCompItemSaveResult { Success = false, Message = "يجب تحديد السند المراد إعادة توليده." });
+                return Json(new DefinCompItemSaveResult { Success = false, Message = "الرجاء تحديد السند أولاً ثم إعادة إنشائه." });
             }
 
             request.ForceRebuild = true;

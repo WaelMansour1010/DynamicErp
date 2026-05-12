@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.Models.Security;
 using MyERP.Areas.MainErp.ViewModels.DefinCompItem;
@@ -162,12 +163,13 @@ SELECT * FROM Rows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY RowNo;";
                 LoadHeader(connection, model, id);
                 if (model.Id == 0)
                 {
-                    model.Warnings.Add("السند غير موجود.");
+                    model.Warnings.Add("ط§ظ„ط³ظ†ط¯ ط؛ظٹط± ظ…ظˆط¬ظˆط¯.");
                     return model;
                 }
 
                 LoadComponents(connection, model, id);
                 LoadOutputs(connection, model, id);
+                BuildOutputGroups(model);
                 LoadTransactions(connection, model, id);
                 LoadTotals(model);
             }
@@ -349,6 +351,7 @@ ORDER BY StoreName;";
         public DefinCompItemSaveResult Save(DefinCompItemSaveRequest request, MainErpUserContext user)
         {
             var result = new DefinCompItemSaveResult();
+            NormalizeRequestForSave(request);
             var validation = ValidateRequest(request);
             if (validation != null)
             {
@@ -361,9 +364,11 @@ ORDER BY StoreName;";
             {
                 try
                 {
-                    if (request.Id.HasValue && request.Id.Value > 0 && HasPostedTransactions(connection, transaction, request.Id.Value))
+                    if (request.Id.HasValue && request.Id.Value > 0
+                        && !request.ForceRebuild
+                        && HasPostedTransactions(connection, transaction, request.Id.Value))
                     {
-                        result.Message = "لا يمكن تعديل هذا السند لأن هناك حركات مرتبطة به تم اعتمادها أو ترحيلها.";
+                        result.Message = "ظ„ط§ ظٹظ…ظƒظ† طھط¹ط¯ظٹظ„ ظ‡ط°ط§ ط§ظ„ط³ظ†ط¯ ظ„ط£ظ† ظ‡ظ†ط§ظƒ ط­ط±ظƒط§طھ ظ…ط±طھط¨ط·ط© ط¨ظ‡ طھظ… ط§ط¹طھظ…ط§ط¯ظ‡ط§ ط£ظˆ طھط±ط­ظٹظ„ظ‡ط§.";
                         transaction.Rollback();
                         return result;
                     }
@@ -381,7 +386,7 @@ ORDER BY StoreName;";
 
                     if (string.IsNullOrWhiteSpace(accounts.BranchAccount) || string.IsNullOrWhiteSpace(accounts.StoreAccount))
                     {
-                        result.Message = "لا يمكن الحفظ لأن حساب الفرع أو حساب المخزن غير معرّف.";
+                        result.Message = "ظ„ط§ ظٹظ…ظƒظ† ط§ظ„ط­ظپط¸ ظ„ط£ظ† ط­ط³ط§ط¨ ط§ظ„ظپط±ط¹ ط£ظˆ ط­ط³ط§ط¨ ط§ظ„ظ…ط®ط²ظ† ط؛ظٹط± ظ…ط¹ط±ظ‘ظپ.";
                         transaction.Rollback();
                         return result;
                     }
@@ -391,8 +396,8 @@ ORDER BY StoreName;";
 
                     var issueSerial = BuildSerial(header.MaxNo, header.Id, 27);
                     var receiptSerial = BuildSerial(header.MaxNo, header.Id, 28);
-                    var issueDesc = string.IsNullOrWhiteSpace(request.TransactionComment) ? "سند صرف بناء على تجميع رقم " + header.MaxNo : request.TransactionComment;
-                    var receiptDesc = "سند استلام بناء على تجميع رقم " + header.MaxNo;
+                    var issueDesc = string.IsNullOrWhiteSpace(request.TransactionComment) ? "ط³ظ†ط¯ طµط±ظپ ط¨ظ†ط§ط، ط¹ظ„ظ‰ طھط¬ظ…ظٹط¹ ط±ظ‚ظ… " + header.MaxNo : request.TransactionComment;
+                    var receiptDesc = "ط³ظ†ط¯ ط§ط³طھظ„ط§ظ… ط¨ظ†ط§ط، ط¹ظ„ظ‰ طھط¬ظ…ظٹط¹ ط±ظ‚ظ… " + header.MaxNo;
 
                     var issueTransactionId = InsertInventoryTransaction(connection, transaction, header, 27, issueSerial, componentTotals.Cost, user, issueDesc);
                     var receiptTransactionId = InsertInventoryTransaction(connection, transaction, header, 28, receiptSerial, outputTotals.Cost, user, receiptDesc);
@@ -419,7 +424,7 @@ ORDER BY StoreName;";
                     result.OutputQtyTotal = outputTotals.Qty;
                     result.OutputCostTotal = outputTotals.Cost;
                     result.Difference = outputTotals.Cost - componentTotals.Cost;
-                    result.Message = "تم حفظ سند التجميع بنجاح.";
+                    result.Message = "طھظ… ط­ظپط¸ ط³ظ†ط¯ ط§ظ„طھط¬ظ…ظٹط¹ ط¨ظ†ط¬ط§ط­.";
                     return result;
                 }
                 catch (Exception ex)
@@ -433,7 +438,7 @@ ORDER BY StoreName;";
                     }
 
                     Trace.TraceError("DefinCompItem save failed: " + ex);
-                    result.Message = "حدث خطأ أثناء الحفظ: " + NormalizeErrorMessage(ex);
+                    result.Message = "ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، ط§ظ„ط­ظپط¸: " + NormalizeErrorMessage(ex);
                     return result;
                 }
             }
@@ -450,14 +455,14 @@ ORDER BY StoreName;";
                     var exists = GetHeaderSnapshot(connection, transaction, id);
                     if (exists == null)
                     {
-                        result.Message = "السند المطلوب غير موجود.";
+                        result.Message = "ط§ظ„ط³ظ†ط¯ ط§ظ„ظ…ط·ظ„ظˆط¨ ط؛ظٹط± ظ…ظˆط¬ظˆط¯.";
                         transaction.Rollback();
                         return result;
                     }
 
                     if (HasPostedTransactions(connection, transaction, id))
                     {
-                        result.Message = "لا يمكن الحذف لأن هناك حركات مالية أو مخزنية تم اعتمادها.";
+                        result.Message = "ظ„ط§ ظٹظ…ظƒظ† ط§ظ„ط­ط°ظپ ظ„ط£ظ† ظ‡ظ†ط§ظƒ ط­ط±ظƒط§طھ ظ…ط§ظ„ظٹط© ط£ظˆ ظ…ط®ط²ظ†ظٹط© طھظ… ط§ط¹طھظ…ط§ط¯ظ‡ط§.";
                         transaction.Rollback();
                         return result;
                     }
@@ -476,7 +481,7 @@ ORDER BY StoreName;";
                     transaction.Commit();
                     result.Success = true;
                     result.Id = id;
-                    result.Message = "تم إلغاء سند التجميع بنجاح.";
+                    result.Message = "طھظ… ط¥ظ„ط؛ط§ط، ط³ظ†ط¯ ط§ظ„طھط¬ظ…ظٹط¹ ط¨ظ†ط¬ط§ط­.";
                     return result;
                 }
                 catch (Exception ex)
@@ -489,64 +494,306 @@ ORDER BY StoreName;";
                     {
                     }
 
-                    result.Message = "تعذر حذف السند: " + NormalizeErrorMessage(ex);
+                    result.Message = "طھط¹ط°ط± ط­ط°ظپ ط§ظ„ط³ظ†ط¯: " + NormalizeErrorMessage(ex);
                     return result;
                 }
             }
+        }
+
+        private static void NormalizeRequestForSave(DefinCompItemSaveRequest request)
+        {
+            if (request == null)
+            {
+                return;
+            }
+
+            request.Components = request.Components ?? new List<DefinCompItemLineRequest>();
+            request.Outputs = request.Outputs ?? new List<DefinCompItemLineRequest>();
+            request.OutputGroups = request.OutputGroups ?? new List<DefinCompItemOutputGroupRequest>();
+
+            var groups = BuildSaveGroups(request);
+
+            request.Outputs = new List<DefinCompItemLineRequest>();
+            request.Components = new List<DefinCompItemLineRequest>();
+
+            foreach (var group in groups)
+            {
+                request.Outputs.Add(group.Output);
+                if (group.Components != null)
+                {
+                    foreach (var component in group.Components)
+                    {
+                        request.Components.Add(component);
+                    }
+                }
+            }
+
+            if (!request.ItemNameId.HasValue && request.Outputs.Count > 0)
+            {
+                request.ItemNameId = request.Outputs[0].ItemId;
+            }
+
+            ApplyOutputCostFromComponents(request);
+        }
+
+        private static IList<DefinCompItemSaveGroup> BuildSaveGroups(DefinCompItemSaveRequest request)
+        {
+            var groups = new List<DefinCompItemSaveGroup>();
+            if (request == null)
+            {
+                return groups;
+            }
+
+            var usedLineIds = new HashSet<int>();
+            var nextLineId = 1;
+            if (request.OutputGroups.Count > 0)
+            {
+                for (var i = 0; i < request.OutputGroups.Count; i++)
+                {
+                    var group = request.OutputGroups[i];
+                    if (group == null)
+                    {
+                        continue;
+                    }
+
+                    var lineId = ResolveLineId(group.LineId, usedLineIds, ref nextLineId);
+
+                    var output = CloneLineRequest(group);
+                    output.LineId = lineId;
+
+                    var components = group.Components == null ? new List<DefinCompItemLineRequest>() : group.Components.Select(CloneLineRequest).ToList();
+                    for (var j = 0; j < components.Count; j++)
+                    {
+                        components[j].LineId = lineId;
+                        if (!components[j].ItemId2.HasValue)
+                        {
+                            components[j].ItemId2 = output.ItemId;
+                        }
+                    }
+
+                    groups.Add(new DefinCompItemSaveGroup { Output = output, Components = components });
+                }
+            }
+            else
+            {
+                var outputLines = request.Outputs
+                    .Where(line => line != null)
+                    .Select(CloneLineRequest)
+                    .ToList();
+
+                for (var i = 0; i < outputLines.Count; i++)
+                {
+                    outputLines[i].LineId = ResolveLineId(outputLines[i].LineId, usedLineIds, ref nextLineId);
+
+                    groups.Add(new DefinCompItemSaveGroup
+                    {
+                        Output = outputLines[i],
+                        Components = new List<DefinCompItemLineRequest>()
+                    });
+                }
+            }
+
+            var requestComponents = request.Components
+                .Where(c => c != null)
+                .Select(CloneLineRequest)
+                .ToList();
+
+            var groupedComponents = requestComponents
+                .Where(c => c.LineId.HasValue && c.LineId.Value > 0)
+                .GroupBy(c => c.LineId.Value)
+                .ToDictionary(g => g.Key, g => (IList<DefinCompItemLineRequest>)g.ToList());
+
+            var unassignedComponents = requestComponents
+                .Where(c => !c.LineId.HasValue || c.LineId.Value <= 0)
+                .ToList();
+
+            for (var i = 0; i < groups.Count; i++)
+            {
+                var lineId = groups[i].Output.LineId.Value;
+                if (groupedComponents.TryGetValue(lineId, out var componentsByLine))
+                {
+                    for (var j = 0; j < componentsByLine.Count; j++)
+                    {
+                        componentsByLine[j].LineId = lineId;
+                        if (!componentsByLine[j].ItemId2.HasValue)
+                        {
+                            componentsByLine[j].ItemId2 = groups[i].Output.ItemId;
+                        }
+
+                        groups[i].Components.Add(componentsByLine[j]);
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(groups[i].Output.Remark))
+                {
+                    continue;
+                }
+            }
+
+            foreach (var component in unassignedComponents)
+            {
+                var matched = groups.FirstOrDefault(g =>
+                    g.Output.ItemId.HasValue && g.Output.ItemId == component.ItemId2);
+                if (matched != null)
+                {
+                    component.LineId = matched.Output.LineId;
+                    component.ItemId2 = component.ItemId2 ?? matched.Output.ItemId;
+                    matched.Components.Add(component);
+                    continue;
+                }
+
+                if (groups.Count == 1)
+                {
+                    var single = groups[0];
+                    component.LineId = single.Output.LineId;
+                    if (!component.ItemId2.HasValue)
+                    {
+                        component.ItemId2 = single.Output.ItemId;
+                    }
+
+                    if (!single.Components.Contains(component))
+                    {
+                        single.Components.Add(component);
+                    }
+                }
+            }
+
+            return groups;
+        }
+
+        private static int ResolveLineId(int? candidateLineId, HashSet<int> usedLineIds, ref int nextLineId)
+        {
+            var lineId = candidateLineId.GetValueOrDefault(0);
+            if (lineId <= 0)
+            {
+                lineId = nextLineId;
+            }
+
+            while (usedLineIds.Contains(lineId))
+            {
+                lineId++;
+            }
+
+            usedLineIds.Add(lineId);
+            if (lineId >= nextLineId)
+            {
+                nextLineId = lineId + 1;
+            }
+
+            return lineId;
+        }
+
+        private sealed class DefinCompItemSaveGroup
+        {
+            public DefinCompItemLineRequest Output { get; set; }
+            public IList<DefinCompItemLineRequest> Components { get; set; }
+        }
+
+        private static DefinCompItemLineRequest CloneLineRequest(DefinCompItemLineRequest source)
+        {
+            if (source == null)
+            {
+                return new DefinCompItemLineRequest();
+            }
+
+            return new DefinCompItemLineRequest
+            {
+                Id = source.Id,
+                ItemId2 = source.ItemId2,
+                ItemId = source.ItemId,
+                UnitId = source.UnitId,
+                Qty = source.Qty,
+                Cost = source.Cost,
+                Price = source.Price,
+                Total = source.Total,
+                IsDeleted = source.IsDeleted,
+                IsAdd = source.IsAdd,
+                LineId = source.LineId,
+                SpecId1 = source.SpecId1,
+                SpecId2 = source.SpecId2,
+                SpecId3 = source.SpecId3,
+                SpecId4 = source.SpecId4,
+                Width = source.Width,
+                Height = source.Height,
+                Length = source.Length,
+                Thickness = source.Thickness,
+                Diameter = source.Diameter,
+                Remark = source.Remark
+            };
         }
 
         private static string ValidateRequest(DefinCompItemSaveRequest request)
         {
             if (request == null)
             {
-                return "بيانات الحفظ غير صالحة.";
+                return "لا يمكن إتمام الحفظ: بيانات فارغة.";
             }
 
             if (!request.RecordDate.HasValue)
             {
-                return "يجب تحديد تاريخ السند.";
+                return "الرجاء تحديد تاريخ السند.";
             }
 
             if (!request.BranchId.HasValue || request.BranchId.Value <= 0)
             {
-                return "يجب تحديد الفرع.";
+                return "الرجاء تحديد الفرع.";
             }
 
             if (!request.StoreId.HasValue || request.StoreId.Value <= 0)
             {
-                return "يجب تحديد المخزن.";
-            }
-
-            if (!request.ItemNameId.HasValue || request.ItemNameId.Value <= 0)
-            {
-                return "يجب تحديد الصنف النهائي.";
+                return "الرجاء تحديد المخزن.";
             }
 
             if (request.Components == null || request.Components.Count == 0)
             {
-                return "يجب إضافة مكونات التجميع.";
+                return "يجب إضافة مكونات على الأقل.";
             }
 
             if (request.Outputs == null || request.Outputs.Count == 0)
             {
-                return "يجب إضافة صنف نهائي واحد على الأقل.";
+                return "يجب إضافة منتج نهائي واحد على الأقل.";
             }
+
+            var outputsByLine = request.Outputs
+                .Where(line => line != null && line.LineId.HasValue && line.LineId.Value > 0)
+                .GroupBy(line => line.LineId.Value)
+                .ToDictionary(g => g.Key, g => (IList<DefinCompItemLineRequest>)g.ToList());
+
+            var componentsByLine = request.Components
+                .Where(line => line != null && line.LineId.HasValue && line.LineId.Value > 0)
+                .GroupBy(line => line.LineId.Value)
+                .ToDictionary(g => g.Key, g => (IList<DefinCompItemLineRequest>)g.ToList());
 
             foreach (var line in request.Components)
             {
                 if (line == null || !line.ItemId.HasValue || line.ItemId.Value <= 0)
                 {
-                    return "يوجد سطر مكون بدون صنف.";
+                    return "بند مكوّن غير صحيح: صنف غير محدد.";
                 }
 
                 if (!line.UnitId.HasValue || line.UnitId.Value <= 0)
                 {
-                    return "يوجد سطر مكون بدون وحدة.";
+                    return "بند مكوّن غير صحيح: وحدة قياس غير محددة.";
                 }
 
                 if (!line.Qty.HasValue || line.Qty.Value <= 0)
                 {
-                    return "كميات المكونات يجب أن تكون أكبر من الصفر.";
+                    return "كمية المكوّن يجب أن تكون أكبر من صفر.";
+                }
+
+                if (line.Cost.HasValue && line.Cost.Value < 0)
+                {
+                    return "تكلفة المكوّن لا يجوز أن تكون سالبة.";
+                }
+
+                if (!line.LineId.HasValue || line.LineId.Value <= 0)
+                {
+                    return "هناك مكون غير مرتبط بمنتج نهائي.";
+                }
+
+                if (!outputsByLine.ContainsKey(line.LineId.Value))
+                {
+                    return "هناك مكون مربوط بسطر منتج غير موجود.";
                 }
             }
 
@@ -554,23 +801,45 @@ ORDER BY StoreName;";
             {
                 if (line == null || !line.ItemId.HasValue || line.ItemId.Value <= 0)
                 {
-                    return "يوجد سطر منتج نهائي بدون صنف.";
+                    return "بند منتج نهائي غير صحيح: صنف غير محدد.";
                 }
 
                 if (!line.UnitId.HasValue || line.UnitId.Value <= 0)
                 {
-                    return "يوجد سطر منتج نهائي بدون وحدة.";
+                    return "بند منتج نهائي غير صحيح: وحدة قياس غير محددة.";
                 }
 
                 if (!line.Qty.HasValue || line.Qty.Value <= 0)
                 {
-                    return "كميات المنتجات النهائية يجب أن تكون أكبر من الصفر.";
+                    return "كمية المنتج النهائي يجب أن تكون أكبر من صفر.";
+                }
+
+                if (line.Cost.HasValue && line.Cost.Value < 0)
+                {
+                    return "تكلفة المنتج النهائي لا يجوز أن تكون سالبة.";
+                }
+
+                if (!line.LineId.HasValue || line.LineId.Value <= 0)
+                {
+                    return "هناك منتج نهائي غير مرتبط بسطر صالحة.";
+                }
+
+                if (!componentsByLine.ContainsKey(line.LineId.Value) || componentsByLine[line.LineId.Value].Count == 0)
+                {
+                    return "كل منتج نهائي يجب أن يحتوي على مكونات مرتبطة به.";
+                }
+            }
+
+            foreach (var output in outputsByLine.Values.SelectMany(g => g))
+            {
+                if (!componentsByLine.ContainsKey(output.LineId.Value))
+                {
+                    return "يوجد منتج نهائي بدون مكونات مرتبطة.";
                 }
             }
 
             return null;
         }
-
         private static DefinCompItemDetailsViewModel LoadHeader(SqlConnection connection, DefinCompItemDetailsViewModel model, int id)
         {
             using (var command = connection.CreateCommand())
@@ -846,6 +1115,96 @@ ORDER BY d.LineID, d.ID;";
                         });
                     }
                 }
+            }
+        }
+
+        private static void BuildOutputGroups(DefinCompItemDetailsViewModel model)
+        {
+            if (model == null)
+            {
+                return;
+            }
+
+            model.OutputGroups = new List<DefinCompItemOutputGroupViewModel>();
+            var componentsByLine = (model.Components ?? new List<DefinCompItemComponentLineViewModel>())
+                .GroupBy(c => c.LineId.GetValueOrDefault())
+                .ToDictionary(g => g.Key, g => (IList<DefinCompItemComponentLineViewModel>)g.ToList());
+
+            foreach (var output in model.Outputs ?? new List<DefinCompItemOutputLineViewModel>())
+            {
+                var lineId = output.LineId.GetValueOrDefault();
+                IList<DefinCompItemComponentLineViewModel> components;
+                if (!componentsByLine.TryGetValue(lineId, out components))
+                {
+                    components = new List<DefinCompItemComponentLineViewModel>();
+                }
+
+                model.OutputGroups.Add(new DefinCompItemOutputGroupViewModel
+                {
+                    Id = output.Id,
+                    ItemId = output.ItemId,
+                    ItemCode = output.ItemCode,
+                    ItemName = output.ItemName,
+                    UnitId = output.UnitId,
+                    UnitName = output.UnitName,
+                    Qty = output.Qty,
+                    Cost = output.Cost,
+                    Price = output.Price,
+                    Total = output.Total,
+                    TransactionId4 = output.TransactionId4,
+                    NoteSerial14 = output.NoteSerial14,
+                    LineId = output.LineId,
+                    QtyBySmallUnit = output.QtyBySmallUnit,
+                    Remark = output.Remark,
+                    Components = components
+                });
+            }
+        }
+
+
+        private static void ApplyOutputCostFromComponents(DefinCompItemSaveRequest request)
+        {
+            if (request == null || request.Outputs == null)
+            {
+                return;
+            }
+
+            request.Outputs = request.Outputs ?? new List<DefinCompItemLineRequest>();
+            request.Components = request.Components ?? new List<DefinCompItemLineRequest>();
+
+            var totalsByLine = request.Components
+                .Where(component => component != null && component.LineId.HasValue && component.LineId.Value > 0)
+                .GroupBy(component => component.LineId.Value)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Sum(component =>
+                    {
+                        var qty = Convert.ToDecimal(component.Qty.GetValueOrDefault(0d), CultureInfo.InvariantCulture);
+                        var cost = Convert.ToDecimal(component.Cost.GetValueOrDefault(0d), CultureInfo.InvariantCulture);
+                        return qty * cost;
+                    }));
+
+            foreach (var output in request.Outputs)
+            {
+                if (output == null || !output.LineId.HasValue || output.LineId.Value <= 0)
+                {
+                    continue;
+                }
+
+                var componentCost = totalsByLine.TryGetValue(output.LineId.Value, out var lineTotal)
+                    ? lineTotal
+                    : 0m;
+
+                var outputQty = Convert.ToDecimal(output.Qty.GetValueOrDefault(0d), CultureInfo.InvariantCulture);
+                output.Cost = outputQty > 0
+                    ? Convert.ToDouble(componentCost / outputQty, CultureInfo.InvariantCulture)
+                    : 0;
+
+                output.Price = output.Cost;
+                output.Total = Convert.ToDouble(componentCost, CultureInfo.InvariantCulture);
+                output.Cost = Math.Max(0, Convert.ToDouble(output.Cost.GetValueOrDefault(0d), CultureInfo.InvariantCulture));
+                output.Price = Math.Max(0, Convert.ToDouble(output.Price.GetValueOrDefault(0d), CultureInfo.InvariantCulture));
+                output.Total = Math.Max(0, Convert.ToDouble(output.Total.GetValueOrDefault(0d), CultureInfo.InvariantCulture));
             }
         }
 
@@ -1560,7 +1919,7 @@ ORDER BY Account_ID;";
             var creditAccount = codes.Count > 1 ? codes[1] : debitAccount;
             if (string.IsNullOrWhiteSpace(debitAccount) || string.IsNullOrWhiteSpace(creditAccount))
             {
-                throw new InvalidOperationException("لا يمكن إيجاد حسابات احتياطية صالحة لتسجيل القيد المحاسبي.");
+                throw new InvalidOperationException("ظ„ط§ ظٹظ…ظƒظ† ط¥ظٹط¬ط§ط¯ ط­ط³ط§ط¨ط§طھ ط§ط­طھظٹط§ط·ظٹط© طµط§ظ„ط­ط© ظ„طھط³ط¬ظٹظ„ ط§ظ„ظ‚ظٹط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹ.");
             }
 
             return new AccountingFallbackAccounts

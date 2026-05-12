@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MyERP.Areas.Pos.Services
 {
@@ -45,15 +46,23 @@ namespace MyERP.Areas.Pos.Services
                     }
                 });
 
+                var sheetCount = dataSet.Tables.Count;
                 foreach (DataTable sheet in dataSet.Tables)
                 {
-                    if (!IsDailySheet(sheet.TableName))
+                    CollectBranchHints(sheet, result);
+
+                    if (!ShouldParseSheet(sheet, sheetCount))
                     {
                         continue;
                     }
 
-                ParseDailySheet(sheet, result, mapping);
+                    ParseDailySheet(sheet, result, mapping);
                 }
+            }
+
+            if (result.WorkbookBranchHints.Count > 0)
+            {
+                result.DetectedBranchHint = string.Join(" | ", result.WorkbookBranchHints.Take(4));
             }
 
             MarkDuplicateTokens(result);
@@ -454,12 +463,107 @@ namespace MyERP.Areas.Pos.Services
                 && ReadText(sheet, HeaderRowIndex, 8).Contains("الخدمة");
         }
 
+        private static bool ShouldParseSheet(DataTable sheet, int workbookSheetCount)
+        {
+            if (sheet == null)
+            {
+                return false;
+            }
+
+            if (LooksLikeOperationalSheet(sheet))
+            {
+                return true;
+            }
+
+            if (IsDailySheet(sheet.TableName) || IsDefaultWorksheetName(sheet.TableName))
+            {
+                return true;
+            }
+
+            return workbookSheetCount == 1;
+        }
+
         private static bool IsDailySheet(string sheetName)
         {
             int day;
             return int.TryParse((sheetName ?? string.Empty).Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out day)
                 && day >= 1
                 && day <= 31;
+        }
+
+        private static bool IsDefaultWorksheetName(string sheetName)
+        {
+            var normalized = Regex.Replace((sheetName ?? string.Empty).Trim().ToLowerInvariant(), @"\s+", string.Empty);
+            return normalized == "sheet1"
+                || normalized == "sheet01"
+                || normalized == "ورقة1"
+                || normalized == "ورقه1";
+        }
+
+        private static void CollectBranchHints(DataTable sheet, PosExcelImportPreviewResult result)
+        {
+            if (sheet == null || result == null || sheet.Rows.Count == 0)
+            {
+                return;
+            }
+
+            var maxRow = Math.Min(sheet.Rows.Count - 1, HeaderRowIndex);
+            var maxColumn = Math.Min(sheet.Columns.Count - 1, 10);
+            for (var rowIndex = 0; rowIndex <= maxRow; rowIndex++)
+            {
+                var rowValues = new List<string>();
+                for (var columnIndex = 0; columnIndex <= maxColumn; columnIndex++)
+                {
+                    var text = ReadText(sheet, rowIndex, columnIndex);
+                    if (IsBranchHintCell(text))
+                    {
+                        AddBranchHint(result, text);
+                        rowValues.Add(text);
+                    }
+                }
+
+                if (rowValues.Count > 1)
+                {
+                    AddBranchHint(result, string.Join(" ", rowValues));
+                }
+            }
+        }
+
+        private static bool IsBranchHintCell(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var text = Regex.Replace(value.Trim(), @"\s+", " ");
+            if (text.Length < 2 || text.Length > 80 || Regex.IsMatch(text, @"^\d+([.,]\d+)?$"))
+            {
+                return false;
+            }
+
+            var normalized = NormalizeServiceText(text);
+            var blockedTokens = new[]
+            {
+                "ipn", "easycash", "ايزي", "كاش", "العميل", "الخدمه", "الخدمة", "التاريخ",
+                "الشحن", "الرسوم", "الاجمالي", "التليفون", "التوكن", "serial", "token"
+            };
+
+            return !blockedTokens.Any(token => normalized.Contains(token));
+        }
+
+        private static void AddBranchHint(PosExcelImportPreviewResult result, string hint)
+        {
+            hint = Regex.Replace((hint ?? string.Empty).Trim(), @"\s+", " ");
+            if (string.IsNullOrWhiteSpace(hint))
+            {
+                return;
+            }
+
+            if (!result.WorkbookBranchHints.Any(x => string.Equals(x, hint, StringComparison.OrdinalIgnoreCase)))
+            {
+                result.WorkbookBranchHints.Add(hint);
+            }
         }
 
         private static string ReadText(DataTable table, int rowIndex, int columnIndex)
