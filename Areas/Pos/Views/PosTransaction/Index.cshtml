@@ -243,7 +243,7 @@
                     <label>رقم الفاتورة<input type="text" id="invoiceNumber" readonly placeholder="يظهر بعد الحفظ" /></label>
                     <label class="employee-field is-hidden">المندوب / الموظف<input type="text" id="empName" value="@(posContext != null ? (posContext.EmpName + " - " + posContext.EmpId) : "")" readonly /><input type="hidden" id="empId" value="@(posContext != null && posContext.EmpId.HasValue ? posContext.EmpId.Value.ToString() : "")" /></label>
                     <label class="store-field is-hidden">المخزن<input type="text" id="storeName" value="@(posContext != null ? posContext.StoreName : "")" readonly /><input type="hidden" id="storeId" value="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")" /></label>
-                    <label>رقم التليفون<input type="text" id="cashCustomerPhone" class="required-field pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="cashCustomerPhone">0 / 11</span></label>
+                    <label class="phone-compact-field">رقم التليفون<span class="phone-inline-control"><input type="text" id="cashCustomerPhone" class="required-field pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="cashCustomerPhone">0 / 11</span></span></label>
                     <label>اسم العميل<input type="text" id="cashCustomerName" class="required-field" placeholder="اسم العميل" /></label>
                     <label class="id-ipn-field">ID<input type="text" id="ipn" class="required-field" placeholder="ID" /></label>
                     <label class="id-ipn-field">IPN<input type="text" id="manualNo" class="required-field" placeholder="IPN" /></label>
@@ -280,7 +280,7 @@
                 <div id="kycSearchResults" class="kyc-results"></div>
                 <div class="pos-grid four-cols kyc-compact-form">
                     <div class="kyc-inline-section-title">البيانات الأساسية</div>
-                    <label class="kyc-important-field">الموبايل الأساسي<input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></label>
+                    <label class="kyc-important-field phone-compact-field">الموبايل الأساسي<span class="phone-inline-control"><input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></span></label>
                     <label class="kyc-important-field">الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
                     <label class="kyc-important-field kyc-token-field">رقم الكارت / التوكن
                         <span class="kyc-token-picker">
