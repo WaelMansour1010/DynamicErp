@@ -1,79 +1,402 @@
-<main class="ep-page" data-screen="insurance-settings"
+<main class="ep-page ep-insurance-enterprise ep-ui-rescue" data-screen="insurance-settings"
       data-lookups-url="@Url.Action("Lookups", "EmployeePayroll")"
+      data-search-url="@Url.Action("Search", "EmployeePayroll")"
       data-providers-url="@Url.Action("Providers", "EmployeePayroll")"
       data-save-provider-url="@Url.Action("SaveProvider", "EmployeePayroll")"
       data-plans-url="@Url.Action("Plans", "EmployeePayroll")"
-      data-save-plan-url="@Url.Action("SavePlan", "EmployeePayroll")">
-    <header class="ep-header">
-        <div>
-            <h1>إعدادات التأمين الطبي</h1>
-            <p>تعريف شركات التأمين وخطط الاشتراك وقيم تحمل الموظف والشركة.</p>
+      data-save-plan-url="@Url.Action("SavePlan", "EmployeePayroll")"
+      data-subscriptions-url="@Url.Action("InsuranceSubscriptionReport", "EmployeePayroll")"
+      data-deductions-url="@Url.Action("InsuranceDeductionReport", "EmployeePayroll")">
+
+    <header class="ep-workspace-hero">
+        <div class="ep-plan-identity">
+            <div class="ep-breadcrumb">POS / HR & Payroll / Medical Insurance</div>
+            <div class="ep-plan-title-row">
+                <div>
+                    <h1 id="epHeroPlanName">إدارة التأمين الطبي</h1>
+                    <p id="epHeroProviderName">مساحة عمل منظمة لإدارة شركات التأمين والخطط وربطها بالمسير.</p>
+                </div>
+                <span class="ep-status-badge draft" id="epHeroLifecycleBadge">Draft</span>
+            </div>
+            <dl class="ep-plan-meta">
+                <div><dt>شركة التأمين</dt><dd id="epHeroProviderMeta">غير محدد</dd></div>
+                <div><dt>فترة السريان</dt><dd id="epHeroDateRange">غير محدد</dd></div>
+                <div><dt>الحالة</dt><dd id="epHeroActiveState">مسودة</dd></div>
+            </dl>
+            <nav class="ep-header-actions" aria-label="روابط موديول الموظفين">
+                <a class="ep-link" href="@Url.Action("Employees", "EmployeePayroll")"><i class="fas fa-users"></i> الموظفون</a>
+                <a class="ep-link" href="@Url.Action("SalaryRun", "EmployeePayroll")"><i class="fas fa-file-invoice-dollar"></i> مسير الرواتب</a>
+                <a class="ep-link" href="@Url.Action("MedicalInsuranceReports", "EmployeePayroll")"><i class="fas fa-chart-bar"></i> التقارير</a>
+            </nav>
         </div>
-        <nav class="ep-header-actions" aria-label="روابط موديول الموظفين">
-            <a class="ep-link" href="@Url.Action("Employees", "EmployeePayroll")"><i class="fas fa-users"></i> الموظفون</a>
-            <a class="ep-link" href="@Url.Action("SalaryRun", "EmployeePayroll")"><i class="fas fa-file-invoice-dollar"></i> مسير الرواتب</a>
-            <a class="ep-link" href="@Url.Action("MedicalInsuranceReports", "EmployeePayroll")"><i class="fas fa-chart-bar"></i> التقارير</a>
-        </nav>
+
+        <section class="ep-kpi-rescue" aria-label="ملخص التأمين الطبي">
+            <article class="blue">
+                <i class="fas fa-user-shield"></i>
+                <span>المؤمن عليهم</span>
+                <strong id="epStatCovered">0</strong>
+                <small>اشتراكات نشطة</small>
+            </article>
+            <article class="green">
+                <i class="fas fa-building"></i>
+                <span>تحمل الشركة</span>
+                <strong id="epStatCompanyCost">0.00</strong>
+                <small>شهريا</small>
+            </article>
+            <article class="mint">
+                <i class="fas fa-wallet"></i>
+                <span>تحمل الموظفين</span>
+                <strong id="epStatEmployeeCost">0.00</strong>
+                <small>شهريا</small>
+            </article>
+            <article class="slate">
+                <i class="fas fa-coins"></i>
+                <span>Monthly Cost</span>
+                <strong id="epHeroMonthlyCost">0.00</strong>
+                <small>SAR</small>
+            </article>
+            <article class="indigo">
+                <i class="fas fa-layer-group"></i>
+                <span>الخطط النشطة</span>
+                <strong id="epStatActivePlans">0</strong>
+                <small>جاهزة للربط</small>
+            </article>
+            <article class="amber">
+                <i class="fas fa-user-friends"></i>
+                <span>التابعون</span>
+                <strong id="epHeroDependents">0</strong>
+                <small>في المعاينة</small>
+            </article>
+        </section>
     </header>
 
-    <section class="ep-settings-grid">
-        <form class="ep-editor ep-form-card ep-provider-card" id="epProviderForm">
-            <input type="hidden" id="epProviderId" />
-            <div class="ep-card-title">
-                <h2>شركة تأمين</h2>
-                <label class="ep-switch"><input id="epProviderActive" type="checkbox" checked /> نشط</label>
-            </div>
-            <div class="ep-fields ep-provider-fields ep-form-grid">
-                <label>اسم عربي<input id="epProviderNameAr" required maxlength="200" /></label>
-                <label>اسم إنجليزي<input id="epProviderNameEn" maxlength="200" /></label>
-                <label>هاتف<input id="epProviderPhone" maxlength="50" /></label>
-                <label class="ep-span-all">ملاحظات<textarea id="epProviderNotes"></textarea></label>
-            </div>
-            <div class="ep-form-actions">
-                <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ الشركة</button>
-            </div>
-        </form>
+    <nav class="ep-main-tabs" aria-label="Medical insurance sections">
+        <button type="button" class="active" data-insurance-tab="providers"><i class="fas fa-hospital"></i> شركات التأمين</button>
+        <button type="button" data-insurance-tab="plans"><i class="fas fa-clipboard-list"></i> خطط التأمين</button>
+        <button type="button" data-insurance-tab="payroll"><i class="fas fa-file-invoice-dollar"></i> Payroll Integration</button>
+        <button type="button" data-insurance-tab="rules"><i class="fas fa-project-diagram"></i> Rules & Automation</button>
+        <button type="button" data-insurance-tab="employees"><i class="fas fa-users-cog"></i> Employees & Dependents</button>
+        <button type="button" data-insurance-tab="analytics"><i class="fas fa-chart-line"></i> Analytics</button>
+        <button type="button" data-insurance-tab="history"><i class="fas fa-history"></i> History</button>
+    </nav>
 
-        <form class="ep-editor ep-form-card ep-plan-card" id="epPlanForm">
-            <input type="hidden" id="epPlanId" />
-            <div class="ep-card-title">
-                <h2>خطة تأمين</h2>
-                <label class="ep-switch"><input id="epPlanActive" type="checkbox" checked /> نشط</label>
-            </div>
-            <div class="ep-fields ep-plan-fields ep-form-grid">
-                <label>شركة التأمين<select id="epPlanProvider" required><option value="">اختر الشركة</option></select></label>
-                <label>اسم الخطة عربي<input id="epPlanNameAr" required maxlength="200" /></label>
-                <label>اسم الخطة إنجليزي<input id="epPlanNameEn" maxlength="200" /></label>
-                <label>التكلفة الشهرية<input id="epPlanMonthlyCost" type="number" step="0.01" min="0" /></label>
-                <label>تحمل الموظف<select id="epPlanEmployeeShareType"><option value="Amount">مبلغ</option><option value="Percent">نسبة</option></select></label>
-                <label>قيمة تحمل الموظف<input id="epPlanEmployeeShareValue" type="number" step="0.01" min="0" /></label>
-                <label>تحمل الشركة<select id="epPlanCompanyShareType"><option value="AutoBalance">الباقي تلقائيا</option><option value="Amount">مبلغ</option><option value="Percent">نسبة</option></select></label>
-                <label>قيمة تحمل الشركة<input id="epPlanCompanyShareValue" type="number" step="0.01" min="0" /></label>
-                <label>حساب خصم الموظف<input id="epPlanEmployeeAccount" maxlength="110" /></label>
-                <label>حساب تكلفة الشركة<input id="epPlanCompanyAccount" maxlength="110" /></label>
-                <label class="ep-span-all">ملاحظات<textarea id="epPlanNotes"></textarea></label>
-            </div>
-            <div class="ep-form-actions">
-                <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ الخطة</button>
-            </div>
-        </form>
-    </section>
+    <section class="ep-tab-panel active" data-insurance-tab-panel="providers">
+        <div class="ep-rescue-layout">
+            <form class="ep-section-card ep-provider-card" id="epProviderForm">
+                <input type="hidden" id="epProviderId" />
+                <div class="ep-section-head">
+                    <div>
+                        <span>General Information</span>
+                        <h2>شركة التأمين</h2>
+                    </div>
+                    <label class="ep-switch ep-quiet-switch"><input id="epProviderActive" type="checkbox" checked /> نشط</label>
+                </div>
+                <div class="ep-form-grid rescue-grid-2">
+                    <label class="ep-field"><span>اسم عربي</span><input id="epProviderNameAr" required maxlength="200" placeholder="مثال: بوبا العربية" /><small>اسم الشركة كما يظهر في العقود والتقارير.</small></label>
+                    <label class="ep-field"><span>اسم إنجليزي</span><input id="epProviderNameEn" maxlength="200" placeholder="Provider legal name" /></label>
+                    <label class="ep-field"><span>هاتف</span><input id="epProviderPhone" maxlength="50" placeholder="+966..." /></label>
+                    <label class="ep-field ep-span-all"><span>ملاحظات</span><textarea id="epProviderNotes" placeholder="SLA, contact person, renewal notes"></textarea></label>
+                </div>
+                <div class="ep-form-actions">
+                    <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ الشركة</button>
+                </div>
+            </form>
 
-    <section class="ep-lists-grid">
-        <div class="ep-grid-wrap ep-table-card">
-            <div class="ep-card-title"><h2>شركات التأمين</h2></div>
-            <table class="ep-table ep-mini-table ep-provider-table">
-                <thead><tr><th>الشركة</th><th>الهاتف</th><th>الحالة</th><th class="ep-action-col"></th></tr></thead>
-                <tbody id="epProvidersRows"></tbody>
-            </table>
-        </div>
-        <div class="ep-grid-wrap ep-table-card">
-            <div class="ep-card-title"><h2>خطط التأمين</h2></div>
-            <table class="ep-table ep-mini-table ep-plan-table">
-                <thead><tr><th>الخطة</th><th>الشركة</th><th>التكلفة</th><th>الموظف</th><th>الشركة</th><th>الحالة</th><th class="ep-action-col"></th></tr></thead>
-                <tbody id="epPlansRows"></tbody>
-            </table>
+            <div class="ep-section-card ep-table-card">
+                <div class="ep-section-head">
+                    <div>
+                        <span>Directory</span>
+                        <h2>قائمة شركات التأمين</h2>
+                    </div>
+                </div>
+                <div class="ep-table-shell">
+                    <table class="ep-table ep-provider-table">
+                        <thead><tr><th>الشركة</th><th>الهاتف</th><th>الحالة</th><th class="ep-action-col"></th></tr></thead>
+                        <tbody id="epProvidersRows"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </section>
+
+    <form id="epPlanForm">
+        <input type="hidden" id="epPlanId" />
+
+        <section class="ep-tab-panel" data-insurance-tab-panel="plans">
+            <div class="ep-rescue-layout">
+                <div class="ep-section-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Plan Setup</span>
+                            <h2>معلومات الخطة</h2>
+                        </div>
+                        <span class="ep-status-badge draft" id="epLifecycleBadge">Draft</span>
+                    </div>
+                    <div class="ep-form-grid rescue-grid-3">
+                        <label class="ep-field"><span>شركة التأمين</span><select id="epPlanProvider" required><option value="">اختر الشركة</option></select></label>
+                        <label class="ep-field"><span>اسم الخطة عربي</span><input id="epPlanNameAr" required maxlength="200" placeholder="Premium Family" /></label>
+                        <label class="ep-field"><span>اسم الخطة إنجليزي</span><input id="epPlanNameEn" maxlength="200" /></label>
+                        <label class="ep-field"><span>الحالة</span><select id="epPlanLifecycleStatus"><option>Draft</option><option>Pending Approval</option><option>Active</option><option>Suspended</option><option>Expired</option><option>Cancelled</option></select><small>الحالة تتحكم في جاهزية الخطة للربط.</small></label>
+                        <label class="ep-switch ep-field-inline"><input id="epPlanActive" type="checkbox" checked /> متاح للربط بالموظفين</label>
+                    </div>
+                </div>
+
+                <div class="ep-section-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Effective Dates</span>
+                            <h2>تواريخ السريان</h2>
+                        </div>
+                    </div>
+                    <div class="ep-form-grid rescue-grid-3">
+                        <label class="ep-field"><span>تاريخ البداية</span><input id="epPlanStartDate" type="date" /></label>
+                        <label class="ep-field"><span>تاريخ النهاية</span><input id="epPlanEndDate" type="date" /></label>
+                        <label class="ep-field"><span>بداية الخصم بالمسير</span><input id="epPlanPayrollStartDate" type="date" /></label>
+                        <label class="ep-field"><span>تاريخ الإيقاف</span><input id="epPlanSuspensionDate" type="date" /></label>
+                        <label class="ep-field"><span>تاريخ الإلغاء</span><input id="epPlanCancellationDate" type="date" /></label>
+                    </div>
+                </div>
+
+                <div class="ep-section-card ep-table-card ep-span-all">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Plan Directory</span>
+                            <h2>قائمة خطط التأمين</h2>
+                        </div>
+                    </div>
+                    <div class="ep-table-shell">
+                        <table class="ep-table ep-plan-table">
+                            <thead><tr><th>الخطة</th><th>الشركة</th><th>التكلفة</th><th>الموظف</th><th>الشركة</th><th>Lifecycle</th><th>الحالة</th><th class="ep-action-col"></th></tr></thead>
+                            <tbody id="epPlansRows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ep-tab-panel" data-insurance-tab-panel="payroll">
+            <div class="ep-payroll-layout">
+                <div class="ep-section-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Financial Configuration</span>
+                            <h2>التكلفة والتحملات</h2>
+                        </div>
+                    </div>
+                    <div class="ep-form-grid rescue-grid-2">
+                        <label class="ep-field"><span>التكلفة الشهرية</span><input id="epPlanMonthlyCost" type="number" step="0.01" min="0" value="0" /></label>
+                        <label class="ep-field"><span>راتب المعاينة</span><input id="epPreviewSalary" type="number" step="0.01" min="0" value="8000" /></label>
+                        <label class="ep-field"><span>تحمل الموظف</span><select id="epPlanEmployeeShareType"><option value="Amount">مبلغ ثابت</option><option value="Percent">نسبة</option></select></label>
+                        <label class="ep-field"><span>قيمة تحمل الموظف</span><input id="epPlanEmployeeShareValue" type="number" step="0.01" min="0" value="0" /></label>
+                        <label class="ep-field"><span>تحمل الشركة</span><select id="epPlanCompanyShareType"><option value="AutoBalance">الباقي تلقائيا</option><option value="Amount">مبلغ ثابت</option><option value="Percent">نسبة</option></select></label>
+                        <label class="ep-field"><span>قيمة تحمل الشركة</span><input id="epPlanCompanyShareValue" type="number" step="0.01" min="0" value="0" /></label>
+                    </div>
+                </div>
+
+                <aside class="ep-financial-preview-card" aria-label="Payroll preview">
+                    <div class="ep-preview-title">Payroll Preview</div>
+                    <div class="ep-preview-main">
+                        <span>راتب الموظف</span>
+                        <strong><b id="epPreviewSalaryOut">8,000.00</b> SAR</strong>
+                    </div>
+                    <div class="ep-preview-lines">
+                        <div><span>تحمل الشركة</span><strong><b id="epPreviewCompanyOut">0.00</b> SAR</strong></div>
+                        <div><span>تحمل الموظف</span><strong><b id="epPreviewEmployeeOut">0.00</b> SAR</strong></div>
+                        <div><span>تكلفة التأمين</span><strong><b id="epPreviewCostOut">0.00</b> SAR</strong></div>
+                    </div>
+                    <div class="ep-preview-net">
+                        <span>صافي الراتب</span>
+                        <strong><b id="epPreviewNetOut">8,000.00</b> SAR</strong>
+                    </div>
+                </aside>
+
+                <div class="ep-section-card ep-span-all">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Accounting Integration</span>
+                            <h2>الربط المحاسبي وإعدادات المسير</h2>
+                        </div>
+                    </div>
+                    <div class="ep-form-grid rescue-grid-3">
+                        <label class="ep-field"><span>حساب خصم الموظف</span><input id="epPlanEmployeeAccount" maxlength="110" placeholder="Account code" /></label>
+                        <label class="ep-field"><span>حساب تكلفة الشركة</span><input id="epPlanCompanyAccount" maxlength="110" placeholder="Account code" /></label>
+                        <label class="ep-field"><span>مركز التكلفة</span><input id="epPlanCostCenter" maxlength="110" placeholder="Cost Center" /></label>
+                        <label class="ep-field"><span>نوع الخصم</span><select id="epPlanPayrollDeductionType"><option value="Fixed">Fixed</option><option value="Percentage">Percentage</option></select></label>
+                        <label class="ep-field"><span>المعالجة الضريبية</span><select id="epPlanTaxMode"><option value="AfterTax">بعد الضريبة</option><option value="BeforeTax">قبل الضريبة</option></select></label>
+                    </div>
+                    <details class="ep-advanced">
+                        <summary>إعدادات متقدمة</summary>
+                        <div class="ep-toggle-grid">
+                            <label class="ep-switch"><input id="epPlanIsMonthlyDeduction" type="checkbox" checked /> الخصم شهري</label>
+                            <label class="ep-switch"><input id="epPlanAutoStop" type="checkbox" checked /> إيقاف تلقائي عند انتهاء الخطة</label>
+                            <label class="ep-switch"><input id="epPlanShowInPayroll" type="checkbox" checked /> يظهر في المسير</label>
+                            <label class="ep-switch"><input id="epPlanDistributeDepartments" type="checkbox" /> توزيع على الإدارات</label>
+                            <label class="ep-switch"><input id="epPlanDistributeCostCenter" type="checkbox" /> توزيع حسب Cost Center</label>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <section class="ep-tab-panel" data-insurance-tab-panel="rules">
+            <div class="ep-rescue-layout">
+                <div class="ep-section-card ep-span-all">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Rule Builder</span>
+                            <h2>قواعد التحمل والأتمتة</h2>
+                        </div>
+                    </div>
+                    <div class="ep-rule-builder">
+                        <div class="ep-rule-word">IF</div>
+                        <label class="ep-field"><span>الشرط</span><select id="epRuleScope"><option value="JobGrade">الدرجة الوظيفية</option><option value="Branch">الفرع</option><option value="Department">القسم</option><option value="Job">الوظيفة</option></select></label>
+                        <label class="ep-field"><span>يساوي</span><input id="epRuleValue" placeholder="Sales / Manager / Grade A" /></label>
+                        <div class="ep-rule-word">THEN</div>
+                        <label class="ep-field"><span>تحمل الشركة %</span><input id="epRuleCompanyPercent" type="number" min="0" max="100" value="80" /></label>
+                    </div>
+                    <div class="ep-rules-toolbar">
+                        <button type="button" data-rule-template="Managers100">المديرين 100%</button>
+                        <button type="button" data-rule-template="Department80">الإدارة 80%</button>
+                        <button type="button" data-rule-template="NewHire50">الموظفون الجدد 50%</button>
+                    </div>
+                </div>
+
+                <div class="ep-section-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Enrollment Automation</span>
+                            <h2>الضم التلقائي</h2>
+                        </div>
+                    </div>
+                    <div class="ep-form-grid rescue-grid-2">
+                        <label class="ep-field"><span>ضم تلقائي بعد X يوم</span><input id="epAutoEnrollAfterDays" type="number" min="0" value="30" /></label>
+                        <label class="ep-field ep-span-all"><span>معايير الضم</span><textarea id="epAutoEnrollCriteria" placeholder="حسب الوظيفة / القسم / الفرع / الدرجة الوظيفية"></textarea></label>
+                    </div>
+                </div>
+
+                <div class="ep-section-card ep-table-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Rules Preview</span>
+                            <h2>القواعد المضافة</h2>
+                        </div>
+                    </div>
+                    <div class="ep-table-shell">
+                        <table class="ep-table ep-compact-table">
+                            <thead><tr><th>القاعدة</th><th>المعيار</th><th>تحمل الشركة</th><th>الأثر</th></tr></thead>
+                            <tbody id="epRulesRows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="ep-tab-panel" data-insurance-tab-panel="employees">
+            <div class="ep-rescue-layout">
+                <div class="ep-section-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Dependent Rules</span>
+                            <h2>قواعد التابعين</h2>
+                        </div>
+                    </div>
+                    <div class="ep-form-grid rescue-grid-2">
+                        <label class="ep-field"><span>أقصى عدد تابعين</span><input id="epMaxDependents" type="number" min="0" value="4" /></label>
+                        <label class="ep-field"><span>العمر الأقصى للأبناء</span><input id="epChildrenMaxAge" type="number" min="0" value="21" /></label>
+                        <label class="ep-field"><span>تكلفة الزوج/الزوجة</span><input id="epSpouseCost" type="number" step="0.01" min="0" value="0" /></label>
+                        <label class="ep-field"><span>تكلفة الطفل</span><input id="epChildCost" type="number" step="0.01" min="0" value="0" /></label>
+                        <label class="ep-field"><span>تكلفة الوالدين</span><input id="epParentCost" type="number" step="0.01" min="0" value="0" /></label>
+                        <label class="ep-field"><span>نسبة التغطية الافتراضية</span><input id="epDefaultCoveragePercent" type="number" min="0" max="100" value="100" /></label>
+                    </div>
+                </div>
+
+                <div class="ep-section-card ep-table-card">
+                    <div class="ep-section-head">
+                        <div>
+                            <span>Dependents</span>
+                            <h2>إضافة تابع</h2>
+                        </div>
+                    </div>
+                    <div class="ep-inline-add ep-dependent-add">
+                        <input id="epDependentName" placeholder="اسم التابع" />
+                        <select id="epDependentRelation"><option value="Spouse">زوجة/زوج</option><option value="Child">ابن/ابنة</option><option value="Parent">والد/والدة</option></select>
+                        <input id="epDependentBirthDate" type="date" />
+                        <button type="button" id="epAddDependent"><i class="fas fa-plus"></i> إضافة تابع</button>
+                    </div>
+                    <div class="ep-table-shell">
+                        <table class="ep-table ep-compact-table">
+                            <thead><tr><th>الاسم</th><th>العلاقة</th><th>العمر</th><th>نسبة التغطية</th><th>تكلفة إضافية</th><th></th></tr></thead>
+                            <tbody id="epDependentsRows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="ep-plan-footer">
+            <label class="ep-field"><span>ملاحظات الخطة</span><textarea id="epPlanNotes" placeholder="ملاحظات الاعتماد والتجديد والربط المحاسبي"></textarea></label>
+            <div class="ep-validation-list" id="epInsuranceValidation"></div>
+            <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ الخطة</button>
+        </div>
+    </form>
+
+    <section class="ep-tab-panel" data-insurance-tab-panel="analytics">
+        <div class="ep-section-card ep-financial-card">
+            <div class="ep-section-head">
+                <div>
+                    <span>Analytics & Financial Summary</span>
+                    <h2>الملخص المالي والتحليلات</h2>
+                </div>
+                <div class="ep-table-tools">
+                    <input id="epCoverageSearch" placeholder="بحث: موظف / رقم / شركة / خطة / هوية" />
+                    <select id="epCoverageStatus"><option value="">كل الحالات</option><option value="active">نشط</option><option value="expired">منتهي</option></select>
+                </div>
+            </div>
+            <div class="ep-analytics-grid">
+                <article><span>Monthly Cost</span><strong id="epAnalyticsMonthly">0.00</strong></article>
+                <article><span>Annual Cost</span><strong id="epAnalyticsAnnual">0.00</strong></article>
+                <article><span>Employee Contributions</span><strong id="epAnalyticsEmployee">0.00</strong></article>
+                <article><span>Company Contributions</span><strong id="epAnalyticsCompany">0.00</strong></article>
+            </div>
+            <div class="ep-table-shell">
+                <table class="ep-table">
+                    <thead><tr><th>الموظف</th><th>الشركة</th><th>الخطة</th><th>من</th><th>إلى</th><th>التكلفة</th><th>الموظف</th><th>الشركة</th><th>الحالة</th></tr></thead>
+                    <tbody id="epCoverageRows"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="ep-tab-panel" data-insurance-tab-panel="history">
+        <div class="ep-section-card ep-timeline-card">
+            <div class="ep-section-head">
+                <div>
+                    <span>History & Activity</span>
+                    <h2>سجل النشاط</h2>
+                </div>
+            </div>
+            <ol class="ep-timeline" id="epActivityTimeline">
+                <li><strong>Draft</strong><span>ابدأ بتعريف الشركة والخطة.</span></li>
+                <li><strong>Payroll Review</strong><span>راجع الخصم وصافي الراتب قبل التفعيل.</span></li>
+                <li><strong>Activation</strong><span>عند الحفظ بحالة Active تصبح الخطة جاهزة للربط بالموظفين.</span></li>
+            </ol>
+        </div>
+    </section>
+
+    <aside class="ep-sticky-actions" aria-label="إجراءات الخطة">
+        <div>
+            <strong>إجراءات الخطة</strong>
+            <span id="epActionHint">راجع البيانات ثم احفظ أو فعّل الخطة.</span>
+        </div>
+        <div class="ep-action-buttons">
+            <button type="button" class="ep-secondary" id="epCancelPlan"><i class="fas fa-times"></i> إلغاء</button>
+            <button type="button" class="ep-secondary" id="epPrintPlan"><i class="fas fa-print"></i> طباعة</button>
+            <button type="button" class="ep-secondary" id="epExportPlan"><i class="fas fa-file-export"></i> تصدير</button>
+            <button type="button" class="ep-secondary" id="epSaveDraftPlan"><i class="fas fa-archive"></i> حفظ مسودة</button>
+            <button type="button" class="ep-success" id="epActivatePlan"><i class="fas fa-check-circle"></i> تفعيل الخطة</button>
+            <button type="submit" form="epPlanForm" class="ep-primary"><i class="fas fa-save"></i> حفظ</button>
+        </div>
+    </aside>
+
     <div class="ep-message" id="epMessage"></div>
 </main>

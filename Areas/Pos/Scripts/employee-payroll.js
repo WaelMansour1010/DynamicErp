@@ -3,6 +3,9 @@
     var root = document.querySelector(".ep-page");
     if (!root) { return; }
     var screen = root.getAttribute("data-screen");
+    var enterpriseDependents = [];
+    var enterpriseRules = [];
+    var enterpriseCoverageRows = [];
 
     function byId(id) { return document.getElementById(id); }
     function money(v) { var n = parseFloat(v || 0); return isNaN(n) ? "0.00" : n.toFixed(2); }
@@ -227,6 +230,171 @@
         });
     }
 
+    function formatMoney(v) {
+        var n = number(v);
+        return n.toLocaleString ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : money(n);
+    }
+    function setText(id, value) {
+        var el = byId(id);
+        if (el) { el.textContent = value; }
+    }
+    function statusClass(value) {
+        return String(value || "Draft").toLowerCase().replace(/\s+/g, "-");
+    }
+    function updateLifecycleBadge() {
+        var status = byId("epPlanLifecycleStatus") ? byId("epPlanLifecycleStatus").value : "Draft";
+        var badge = byId("epLifecycleBadge");
+        var heroBadge = byId("epHeroLifecycleBadge");
+        if (badge) {
+            badge.textContent = status;
+            badge.className = "ep-status-badge " + statusClass(status);
+        }
+        if (heroBadge) {
+            heroBadge.textContent = status;
+            heroBadge.className = "ep-status-badge " + statusClass(status);
+        }
+        if (byId("epHeroActiveState")) {
+            byId("epHeroActiveState").textContent = byId("epPlanActive") && byId("epPlanActive").checked ? "متاحة للربط" : "غير متاحة";
+        }
+    }
+    function selectedText(select) {
+        if (!select || select.selectedIndex < 0) { return ""; }
+        return select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+    }
+    function updateHeroSummary() {
+        if (!byId("epHeroPlanName")) { return; }
+        var planName = byId("epPlanNameAr") ? byId("epPlanNameAr").value : "";
+        var providerName = selectedText(byId("epPlanProvider"));
+        var start = byId("epPlanStartDate") ? byId("epPlanStartDate").value : "";
+        var end = byId("epPlanEndDate") ? byId("epPlanEndDate").value : "";
+        byId("epHeroPlanName").textContent = planName || "إدارة التأمين الطبي";
+        byId("epHeroProviderName").textContent = providerName || "مساحة عمل منظمة لإدارة شركات التأمين والخطط وربطها بالمسير.";
+        byId("epHeroProviderMeta").textContent = providerName || "غير محدد";
+        byId("epHeroDateRange").textContent = start || end ? ((start || "غير محدد") + " - " + (end || "مفتوح")) : "غير محدد";
+        setText("epHeroMonthlyCost", formatMoney(byId("epPlanMonthlyCost") ? byId("epPlanMonthlyCost").value : 0));
+        setText("epHeroDependents", enterpriseDependents.length);
+        updateLifecycleBadge();
+    }
+    function calculatePlanPreview() {
+        if (!byId("epPreviewSalary")) { return; }
+        var salary = number(byId("epPreviewSalary").value);
+        var cost = number(byId("epPlanMonthlyCost").value);
+        var employee = calcShare(cost, byId("epPlanEmployeeShareType").value, number(byId("epPlanEmployeeShareValue").value));
+        employee = Math.max(0, Math.min(cost, employee || 0));
+        var company = calcShare(cost, byId("epPlanCompanyShareType").value, number(byId("epPlanCompanyShareValue").value));
+        if (company === null) { company = cost - employee; }
+        company = Math.max(0, Math.min(cost, company || 0));
+        if (employee + company > cost) { company = Math.max(0, cost - employee); }
+        setText("epPreviewSalaryOut", formatMoney(salary));
+        setText("epPreviewCostOut", formatMoney(cost));
+        setText("epPreviewEmployeeOut", formatMoney(employee));
+        setText("epPreviewCompanyOut", formatMoney(company));
+        setText("epPreviewNetOut", formatMoney(Math.max(0, salary - employee)));
+        updateHeroSummary();
+        validateEnterpriseInsurance();
+    }
+    function validateEnterpriseInsurance() {
+        var box = byId("epInsuranceValidation");
+        if (!box) { return true; }
+        var errors = [];
+        var start = byId("epPlanStartDate") ? byId("epPlanStartDate").value : "";
+        var end = byId("epPlanEndDate") ? byId("epPlanEndDate").value : "";
+        var status = byId("epPlanLifecycleStatus") ? byId("epPlanLifecycleStatus").value : "Draft";
+        var maxDependents = byId("epMaxDependents") ? parseInt(byId("epMaxDependents").value || "0", 10) : 0;
+        if (start && end && new Date(end) < new Date(start)) { errors.push("لا يمكن أن ينتهي التأمين قبل تاريخ البداية."); }
+        if (enterpriseDependents.length > maxDependents) { errors.push("عدد التابعين يتجاوز الحد الأقصى المحدد للخطة."); }
+        if (status === "Active" && (!byId("epPlanProvider").value || !byId("epPlanNameAr").value)) { errors.push("تفعيل الخطة يتطلب شركة تأمين واسم خطة."); }
+        if (number(byId("epPlanMonthlyCost") ? byId("epPlanMonthlyCost").value : 0) <= 0 && status === "Active") { errors.push("تفعيل الخطة يتطلب تكلفة شهرية أكبر من صفر."); }
+        box.innerHTML = errors.map(function (x) { return "<div>" + html(x) + "</div>"; }).join("");
+        return errors.length === 0;
+    }
+    function relationLabel(value) {
+        if (value === "Child") { return "ابن/ابنة"; }
+        if (value === "Parent") { return "والد/والدة"; }
+        return "زوجة/زوج";
+    }
+    function ageFromDate(value) {
+        if (!value) { return 0; }
+        var d = new Date(value);
+        if (isNaN(d.getTime())) { return 0; }
+        var now = new Date();
+        var age = now.getFullYear() - d.getFullYear();
+        if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) { age--; }
+        return Math.max(0, age);
+    }
+    function dependentCost(relation) {
+        if (relation === "Child") { return number(byId("epChildCost").value); }
+        if (relation === "Parent") { return number(byId("epParentCost").value); }
+        return number(byId("epSpouseCost").value);
+    }
+    function renderDependents() {
+        var tbody = byId("epDependentsRows");
+        if (!tbody) { return; }
+        tbody.innerHTML = "";
+        if (!enterpriseDependents.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="ep-empty-row">لا يوجد تابعون في المعاينة الحالية.</td></tr>';
+        }
+        enterpriseDependents.forEach(function (x, i) {
+            var age = ageFromDate(x.BirthDate);
+            var cost = dependentCost(x.Relation);
+            tbody.insertAdjacentHTML("beforeend", '<tr><td>' + html(x.Name) + '</td><td>' + html(relationLabel(x.Relation)) + '</td><td>' + age + '</td><td>' + html(x.CoveragePercent) + '%</td><td>' + formatMoney(cost) + '</td><td><button type="button" data-remove-dependent="' + i + '"><i class="fas fa-trash"></i></button></td></tr>');
+        });
+        setText("epHeroDependents", enterpriseDependents.length);
+        validateEnterpriseInsurance();
+    }
+    function renderRules() {
+        var tbody = byId("epRulesRows");
+        if (!tbody) { return; }
+        tbody.innerHTML = "";
+        if (!enterpriseRules.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="ep-empty-row">أضف قواعد تحمل ذكية حسب الوظيفة أو الإدارة أو الفرع.</td></tr>';
+        }
+        enterpriseRules.forEach(function (x) {
+            tbody.insertAdjacentHTML("beforeend", '<tr><td>' + html(x.Scope) + '</td><td>' + html(x.Value) + '</td><td>' + html(x.CompanyPercent) + '%</td><td>' + html(x.Description) + '</td></tr>');
+        });
+    }
+    function addRule(scope, value, percent, description) {
+        enterpriseRules.push({ Scope: scope, Value: value, CompanyPercent: percent, Description: description });
+        renderRules();
+    }
+    function renderCoverageRows(rows) {
+        var tbody = byId("epCoverageRows");
+        if (!tbody) { return; }
+        var term = (byId("epCoverageSearch") ? byId("epCoverageSearch").value : "").toLowerCase();
+        var status = byId("epCoverageStatus") ? byId("epCoverageStatus").value : "";
+        var monthly = 0, employee = 0, company = 0;
+        tbody.innerHTML = "";
+        (rows || []).filter(function (x) {
+            var haystack = [x.EmployeeCode, x.EmployeeName, x.ProviderName, x.PlanName].join(" ").toLowerCase();
+            var rowStatus = x.IsActive ? "active" : "expired";
+            return (!term || haystack.indexOf(term) >= 0) && (!status || status === rowStatus);
+        }).forEach(function (x) {
+            monthly += number(x.MonthlyCost);
+            employee += number(x.EmployeeMonthlyDeduction);
+            company += number(x.CompanyMonthlyCost);
+            tbody.insertAdjacentHTML("beforeend", '<tr><td>' + html(x.EmployeeCode) + ' - ' + html(x.EmployeeName) + '</td><td>' + html(x.ProviderName) + '</td><td>' + html(x.PlanName) + '</td><td>' + html(dateInput(x.StartDate)) + '</td><td>' + html(dateInput(x.EndDate)) + '</td><td>' + formatMoney(x.MonthlyCost) + '</td><td>' + formatMoney(x.EmployeeMonthlyDeduction) + '</td><td>' + formatMoney(x.CompanyMonthlyCost) + '</td><td><span class="ep-pill ' + (x.IsActive ? "" : "off") + '">' + (x.IsActive ? "Active" : "Expired") + '</span></td></tr>');
+        });
+        if (!tbody.innerHTML) { tbody.innerHTML = '<tr><td colspan="9" class="ep-empty-row">لا توجد بيانات تغطية مطابقة للفلاتر.</td></tr>'; }
+        setText("epAnalyticsMonthly", formatMoney(monthly));
+        setText("epAnalyticsAnnual", formatMoney(monthly * 12));
+        setText("epAnalyticsEmployee", formatMoney(employee));
+        setText("epAnalyticsCompany", formatMoney(company));
+    }
+    function loadCoverageAnalytics() {
+        var url = root.getAttribute("data-subscriptions-url");
+        if (!url) { return Promise.resolve(); }
+        return getJson(url + "?ActiveOnly=false").then(function (res) {
+            enterpriseCoverageRows = res.rows || [];
+            var activeRows = enterpriseCoverageRows.filter(function (x) { return x.IsActive; });
+            var expiredRows = enterpriseCoverageRows.filter(function (x) { return !x.IsActive; });
+            setText("epStatCovered", activeRows.length);
+            setText("epStatExpired", expiredRows.length);
+            setText("epStatEmployeeCost", formatMoney(activeRows.reduce(function (s, x) { return s + number(x.EmployeeMonthlyDeduction); }, 0)));
+            setText("epStatCompanyCost", formatMoney(activeRows.reduce(function (s, x) { return s + number(x.CompanyMonthlyCost); }, 0)));
+            renderCoverageRows(enterpriseCoverageRows);
+        });
+    }
+
     function collectProvider() {
         return {
             ProviderId: byId("epProviderId").value ? parseInt(byId("epProviderId").value, 10) : null,
@@ -250,6 +418,30 @@
             DefaultCompanyShareValue: number(byId("epPlanCompanyShareValue").value),
             EmployeeDeductionAccountCode: byId("epPlanEmployeeAccount").value,
             CompanyCostAccountCode: byId("epPlanCompanyAccount").value,
+            LifecycleStatus: byId("epPlanLifecycleStatus") ? byId("epPlanLifecycleStatus").value : "Draft",
+            StartDate: byId("epPlanStartDate") ? byId("epPlanStartDate").value || null : null,
+            EndDate: byId("epPlanEndDate") ? byId("epPlanEndDate").value || null : null,
+            PayrollStartDate: byId("epPlanPayrollStartDate") ? byId("epPlanPayrollStartDate").value || null : null,
+            SuspensionDate: byId("epPlanSuspensionDate") ? byId("epPlanSuspensionDate").value || null : null,
+            CancellationDate: byId("epPlanCancellationDate") ? byId("epPlanCancellationDate").value || null : null,
+            CostCenterCode: byId("epPlanCostCenter") ? byId("epPlanCostCenter").value : "",
+            PayrollDeductionType: byId("epPlanPayrollDeductionType") ? byId("epPlanPayrollDeductionType").value : "Fixed",
+            IsMonthlyDeduction: byId("epPlanIsMonthlyDeduction") ? byId("epPlanIsMonthlyDeduction").checked : true,
+            AutoStopAtEndDate: byId("epPlanAutoStop") ? byId("epPlanAutoStop").checked : true,
+            ShowInPayroll: byId("epPlanShowInPayroll") ? byId("epPlanShowInPayroll").checked : true,
+            DistributeByDepartment: byId("epPlanDistributeDepartments") ? byId("epPlanDistributeDepartments").checked : false,
+            DistributeByCostCenter: byId("epPlanDistributeCostCenter") ? byId("epPlanDistributeCostCenter").checked : false,
+            TaxMode: byId("epPlanTaxMode") ? byId("epPlanTaxMode").value : "AfterTax",
+            MaxDependents: byId("epMaxDependents") ? parseInt(byId("epMaxDependents").value || "0", 10) : 0,
+            ChildrenMaxAge: byId("epChildrenMaxAge") ? parseInt(byId("epChildrenMaxAge").value || "0", 10) : 0,
+            SpouseAdditionalCost: byId("epSpouseCost") ? number(byId("epSpouseCost").value) : 0,
+            ChildAdditionalCost: byId("epChildCost") ? number(byId("epChildCost").value) : 0,
+            ParentAdditionalCost: byId("epParentCost") ? number(byId("epParentCost").value) : 0,
+            DefaultCoveragePercent: byId("epDefaultCoveragePercent") ? number(byId("epDefaultCoveragePercent").value) : 100,
+            AutoEnrollAfterDays: byId("epAutoEnrollAfterDays") ? parseInt(byId("epAutoEnrollAfterDays").value || "0", 10) : 0,
+            AutoEnrollCriteria: byId("epAutoEnrollCriteria") ? byId("epAutoEnrollCriteria").value : "",
+            RulesJson: JSON.stringify(enterpriseRules),
+            DependentsTemplateJson: JSON.stringify(enterpriseDependents),
             IsActive: byId("epPlanActive").checked,
             Notes: byId("epPlanNotes").value
         };
@@ -274,8 +466,36 @@
         byId("epPlanCompanyShareValue").value = x.DefaultCompanyShareValue || 0;
         byId("epPlanEmployeeAccount").value = x.EmployeeDeductionAccountCode || "";
         byId("epPlanCompanyAccount").value = x.CompanyCostAccountCode || "";
+        if (byId("epPlanLifecycleStatus")) { byId("epPlanLifecycleStatus").value = x.LifecycleStatus || (x.IsActive ? "Active" : "Draft"); }
+        if (byId("epPlanStartDate")) { byId("epPlanStartDate").value = dateInput(x.StartDate); }
+        if (byId("epPlanEndDate")) { byId("epPlanEndDate").value = dateInput(x.EndDate); }
+        if (byId("epPlanPayrollStartDate")) { byId("epPlanPayrollStartDate").value = dateInput(x.PayrollStartDate); }
+        if (byId("epPlanSuspensionDate")) { byId("epPlanSuspensionDate").value = dateInput(x.SuspensionDate); }
+        if (byId("epPlanCancellationDate")) { byId("epPlanCancellationDate").value = dateInput(x.CancellationDate); }
+        if (byId("epPlanCostCenter")) { byId("epPlanCostCenter").value = x.CostCenterCode || ""; }
+        if (byId("epPlanPayrollDeductionType")) { byId("epPlanPayrollDeductionType").value = x.PayrollDeductionType || "Fixed"; }
+        if (byId("epPlanIsMonthlyDeduction")) { byId("epPlanIsMonthlyDeduction").checked = x.IsMonthlyDeduction !== false; }
+        if (byId("epPlanAutoStop")) { byId("epPlanAutoStop").checked = x.AutoStopAtEndDate !== false; }
+        if (byId("epPlanShowInPayroll")) { byId("epPlanShowInPayroll").checked = x.ShowInPayroll !== false; }
+        if (byId("epPlanDistributeDepartments")) { byId("epPlanDistributeDepartments").checked = !!x.DistributeByDepartment; }
+        if (byId("epPlanDistributeCostCenter")) { byId("epPlanDistributeCostCenter").checked = !!x.DistributeByCostCenter; }
+        if (byId("epPlanTaxMode")) { byId("epPlanTaxMode").value = x.TaxMode || "AfterTax"; }
+        if (byId("epMaxDependents")) { byId("epMaxDependents").value = x.MaxDependents || 4; }
+        if (byId("epChildrenMaxAge")) { byId("epChildrenMaxAge").value = x.ChildrenMaxAge || 21; }
+        if (byId("epSpouseCost")) { byId("epSpouseCost").value = x.SpouseAdditionalCost || 0; }
+        if (byId("epChildCost")) { byId("epChildCost").value = x.ChildAdditionalCost || 0; }
+        if (byId("epParentCost")) { byId("epParentCost").value = x.ParentAdditionalCost || 0; }
+        if (byId("epDefaultCoveragePercent")) { byId("epDefaultCoveragePercent").value = x.DefaultCoveragePercent || 100; }
+        if (byId("epAutoEnrollAfterDays")) { byId("epAutoEnrollAfterDays").value = x.AutoEnrollAfterDays || 30; }
+        if (byId("epAutoEnrollCriteria")) { byId("epAutoEnrollCriteria").value = x.AutoEnrollCriteria || ""; }
+        try { enterpriseRules = x.RulesJson ? JSON.parse(x.RulesJson) : []; } catch (ignoreRules) { enterpriseRules = []; }
+        try { enterpriseDependents = x.DependentsTemplateJson ? JSON.parse(x.DependentsTemplateJson) : []; } catch (ignoreDeps) { enterpriseDependents = []; }
         byId("epPlanActive").checked = x.IsActive !== false;
         byId("epPlanNotes").value = x.Notes || "";
+        renderRules();
+        renderDependents();
+        updateLifecycleBadge();
+        calculatePlanPreview();
     }
     function loadInsuranceSettings() {
         return Promise.all([
@@ -295,6 +515,35 @@
             });
             root._providers = providers;
             root._plans = plans;
+        });
+    }
+
+    function loadInsuranceSettings() {
+        return Promise.all([
+            getJson(root.getAttribute("data-providers-url")),
+            getJson(root.getAttribute("data-plans-url"))
+        ]).then(function (all) {
+            var providers = all[0].rows || [];
+            var plans = all[1].rows || [];
+            fillSelectFromRows(byId("epPlanProvider"), providers, "ProviderId", "ProviderNameAr", "اختر الشركة");
+            setText("epStatProviders", providers.length);
+            setText("epStatActivePlans", plans.filter(function (x) { return x.IsActive; }).length);
+            byId("epProvidersRows").innerHTML = "";
+            providers.forEach(function (x) {
+                byId("epProvidersRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.ProviderNameAr) + '</td><td>' + html(x.Phone) + '</td><td><span class="ep-pill ' + (x.IsActive ? "" : "off") + '">' + (x.IsActive ? "نشط" : "متوقف") + '</span></td><td><button type="button" title="تعديل" data-provider="' + x.ProviderId + '"><i class="fas fa-edit"></i></button></td></tr>');
+            });
+            byId("epPlansRows").innerHTML = "";
+            plans.forEach(function (x) {
+                var lifecycle = x.LifecycleStatus || (x.IsActive ? "Active" : "Draft");
+                byId("epPlansRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.PlanNameAr) + '</td><td>' + html(x.ProviderName) + '</td><td>' + formatMoney(x.DefaultMonthlyCost) + '</td><td>' + html(shareTypeLabel(x.DefaultEmployeeShareType)) + " " + money(x.DefaultEmployeeShareValue) + '</td><td>' + html(shareTypeLabel(x.DefaultCompanyShareType)) + " " + money(x.DefaultCompanyShareValue) + '</td><td><span class="ep-status-badge ' + statusClass(lifecycle) + '">' + html(lifecycle) + '</span></td><td><span class="ep-pill ' + (x.IsActive ? "" : "off") + '">' + (x.IsActive ? "نشط" : "متوقف") + '</span></td><td><button type="button" title="تعديل" data-plan="' + x.PlanId + '"><i class="fas fa-edit"></i></button></td></tr>');
+            });
+            root._providers = providers;
+            root._plans = plans;
+            renderRules();
+            renderDependents();
+            updateLifecycleBadge();
+            calculatePlanPreview();
+            return loadCoverageAnalytics();
         });
     }
 
@@ -360,6 +609,67 @@
             });
         }
         if (btn.id === "epLoadReports") { loadReports(); }
+        if (btn.id === "epSaveDraftPlan") {
+            if (byId("epPlanLifecycleStatus")) { byId("epPlanLifecycleStatus").value = "Draft"; }
+            updateHeroSummary();
+            byId("epPlanForm").dispatchEvent(new Event("submit", { cancelable: true }));
+        }
+        if (btn.id === "epActivatePlan") {
+            if (byId("epPlanLifecycleStatus")) { byId("epPlanLifecycleStatus").value = "Active"; }
+            if (byId("epPlanActive")) { byId("epPlanActive").checked = true; }
+            updateHeroSummary();
+            byId("epPlanForm").dispatchEvent(new Event("submit", { cancelable: true }));
+        }
+        if (btn.id === "epCancelPlan") {
+            byId("epPlanForm").reset();
+            byId("epPlanId").value = "";
+            enterpriseDependents = [];
+            enterpriseRules = [];
+            renderDependents();
+            renderRules();
+            updateHeroSummary();
+            message("تم إلغاء التعديلات غير المحفوظة");
+        }
+        if (btn.id === "epPrintPlan") { window.print(); }
+        if (btn.id === "epExportPlan") { message("يمكن استخدام تقارير التأمين للتصدير التفصيلي."); }
+        if (btn.id === "epAddDependent") {
+            var depName = byId("epDependentName").value;
+            var relation = byId("epDependentRelation").value;
+            var birthDate = byId("epDependentBirthDate").value;
+            var maxAge = parseInt(byId("epChildrenMaxAge").value || "0", 10);
+            if (!depName) { message("ادخل اسم التابع أولا", true); return; }
+            if (relation === "Child" && maxAge > 0 && ageFromDate(birthDate) > maxAge) { message("عمر الابن/الابنة يتجاوز حد الخطة", true); return; }
+            enterpriseDependents.push({ Name: depName, Relation: relation, BirthDate: birthDate, CoveragePercent: number(byId("epDefaultCoveragePercent").value) || 100 });
+            byId("epDependentName").value = "";
+            byId("epDependentBirthDate").value = "";
+            renderDependents();
+            calculatePlanPreview();
+        }
+        if (btn.hasAttribute("data-remove-dependent")) {
+            enterpriseDependents.splice(parseInt(btn.getAttribute("data-remove-dependent"), 10), 1);
+            renderDependents();
+        }
+        if (btn.hasAttribute("data-insurance-section")) {
+            root.querySelectorAll("[data-insurance-section]").forEach(function (x) { x.classList.toggle("active", x === btn); });
+            root.querySelectorAll("[data-insurance-panel]").forEach(function (x) { x.classList.toggle("active", x.getAttribute("data-insurance-panel") === btn.getAttribute("data-insurance-section")); });
+        }
+        if (btn.hasAttribute("data-insurance-tab")) {
+            var tabName = btn.getAttribute("data-insurance-tab");
+            root.querySelectorAll("[data-insurance-tab]").forEach(function (x) { x.classList.toggle("active", x === btn); });
+            root.querySelectorAll("[data-insurance-tab-panel]").forEach(function (x) { x.classList.toggle("active", x.getAttribute("data-insurance-tab-panel") === tabName); });
+            if (root.scrollIntoView) { root.scrollIntoView({ behavior: "smooth", block: "start" }); }
+        }
+        if (btn.hasAttribute("data-workflow-step")) {
+            root.querySelectorAll("[data-workflow-step]").forEach(function (x) { x.classList.toggle("active", x === btn); });
+            var panel = root.querySelector('[data-workflow-panel="' + btn.getAttribute("data-workflow-step") + '"]');
+            if (panel && panel.scrollIntoView) { panel.scrollIntoView({ behavior: "smooth", block: "start" }); }
+        }
+        if (btn.hasAttribute("data-rule-template")) {
+            var template = btn.getAttribute("data-rule-template");
+            if (template === "Managers100") { addRule("JobGrade", "Managers", 100, "الشركة تتحمل كامل تكلفة المديرين."); }
+            if (template === "Department80") { addRule("Department", "Administration", 80, "الشركة تتحمل 80% لموظفي الإدارة."); }
+            if (template === "NewHire50") { addRule("Hiring", "First 90 days", 50, "الموظفون الجدد يتحملون 50% حتى انتهاء فترة التجربة."); }
+        }
         if (btn.hasAttribute("data-edit")) {
             getJson(root.getAttribute("data-get-url") + "?id=" + encodeURIComponent(btn.getAttribute("data-edit"))).then(function (res) { openEditor(res.employee); });
         }
@@ -393,9 +703,23 @@
             });
         }
         if (e.target && e.target.closest("[data-tab-panel='insurance']")) { updateInsurancePreview(); }
+        if (screen === "insurance-settings" && e.target && e.target.closest("#epPlanForm")) {
+            updateLifecycleBadge();
+            calculatePlanPreview();
+        }
+        if (screen === "insurance-settings" && e.target && e.target.id === "epCoverageStatus") {
+            renderCoverageRows(enterpriseCoverageRows);
+        }
     });
     root.addEventListener("input", function (e) {
         if (e.target && e.target.closest("[data-tab-panel='insurance']")) { updateInsurancePreview(); }
+        if (screen === "insurance-settings" && e.target && e.target.closest("#epPlanForm")) {
+            calculatePlanPreview();
+            renderDependents();
+        }
+        if (screen === "insurance-settings" && e.target && e.target.id === "epCoverageSearch") {
+            renderCoverageRows(enterpriseCoverageRows);
+        }
     });
 
     if (screen === "employees") {
@@ -422,9 +746,19 @@
         });
         byId("epPlanForm").addEventListener("submit", function (e) {
             e.preventDefault();
+            if (!validateEnterpriseInsurance()) { message("راجع تنبيهات الخطة قبل الحفظ", true); return; }
             postJson(root.getAttribute("data-save-plan-url"), collectPlan()).then(function (res) {
                 message(res.message || "تم الحفظ", !res.success);
-                if (res.success) { byId("epPlanForm").reset(); byId("epPlanId").value = ""; loadInsuranceSettings(); }
+                if (res.success) {
+                    byId("epPlanForm").reset();
+                    byId("epPlanId").value = "";
+                    enterpriseDependents = [];
+                    enterpriseRules = [];
+                    renderDependents();
+                    renderRules();
+                    updateHeroSummary();
+                    loadInsuranceSettings();
+                }
             });
         });
     }

@@ -112,6 +112,30 @@ namespace MyERP.Common.EmployeePayroll
         public decimal DefaultCompanyShareValue { get; set; }
         public string EmployeeDeductionAccountCode { get; set; }
         public string CompanyCostAccountCode { get; set; }
+        public string LifecycleStatus { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public DateTime? PayrollStartDate { get; set; }
+        public DateTime? SuspensionDate { get; set; }
+        public DateTime? CancellationDate { get; set; }
+        public string CostCenterCode { get; set; }
+        public string PayrollDeductionType { get; set; }
+        public bool IsMonthlyDeduction { get; set; }
+        public bool AutoStopAtEndDate { get; set; }
+        public bool ShowInPayroll { get; set; }
+        public bool DistributeByDepartment { get; set; }
+        public bool DistributeByCostCenter { get; set; }
+        public string TaxMode { get; set; }
+        public int MaxDependents { get; set; }
+        public int ChildrenMaxAge { get; set; }
+        public decimal SpouseAdditionalCost { get; set; }
+        public decimal ChildAdditionalCost { get; set; }
+        public decimal ParentAdditionalCost { get; set; }
+        public decimal DefaultCoveragePercent { get; set; }
+        public int AutoEnrollAfterDays { get; set; }
+        public string AutoEnrollCriteria { get; set; }
+        public string RulesJson { get; set; }
+        public string DependentsTemplateJson { get; set; }
         public bool IsActive { get; set; }
         public string Notes { get; set; }
     }
@@ -134,6 +158,15 @@ namespace MyERP.Common.EmployeePayroll
         public decimal CompanyShareValue { get; set; }
         public decimal EmployeeMonthlyDeduction { get; set; }
         public decimal CompanyMonthlyCost { get; set; }
+        public string LifecycleStatus { get; set; }
+        public DateTime? PayrollStartDate { get; set; }
+        public DateTime? SuspensionDate { get; set; }
+        public DateTime? CancellationDate { get; set; }
+        public string CostCenterCode { get; set; }
+        public string PayrollDeductionType { get; set; }
+        public bool AutoStopAtEndDate { get; set; }
+        public bool ShowInPayroll { get; set; }
+        public string TaxMode { get; set; }
         public string Notes { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

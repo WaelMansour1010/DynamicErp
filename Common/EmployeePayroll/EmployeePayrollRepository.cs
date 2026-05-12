@@ -78,6 +78,11 @@ SELECT p.PlanId, p.ProviderId, pr.ProviderNameAr, p.PlanNameAr, p.PlanNameEn,
        p.DefaultMonthlyCost, p.DefaultEmployeeShareType, p.DefaultEmployeeShareValue,
        p.DefaultCompanyShareType, p.DefaultCompanyShareValue,
        p.EmployeeDeductionAccountCode, p.CompanyCostAccountCode,
+       p.LifecycleStatus, p.StartDate, p.EndDate, p.PayrollStartDate, p.SuspensionDate, p.CancellationDate,
+       p.CostCenterCode, p.PayrollDeductionType, p.IsMonthlyDeduction, p.AutoStopAtEndDate, p.ShowInPayroll,
+       p.DistributeByDepartment, p.DistributeByCostCenter, p.TaxMode, p.MaxDependents, p.ChildrenMaxAge,
+       p.SpouseAdditionalCost, p.ChildAdditionalCost, p.ParentAdditionalCost, p.DefaultCoveragePercent,
+       p.AutoEnrollAfterDays, p.AutoEnrollCriteria, p.RulesJson, p.DependentsTemplateJson,
        p.IsActive, p.Notes
 FROM dbo.MedicalInsurancePlans p WITH (NOLOCK)
 INNER JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = p.ProviderId
@@ -106,6 +111,11 @@ SELECT TOP (1) p.PlanId, p.ProviderId, pr.ProviderNameAr, p.PlanNameAr, p.PlanNa
        p.DefaultMonthlyCost, p.DefaultEmployeeShareType, p.DefaultEmployeeShareValue,
        p.DefaultCompanyShareType, p.DefaultCompanyShareValue,
        p.EmployeeDeductionAccountCode, p.CompanyCostAccountCode,
+       p.LifecycleStatus, p.StartDate, p.EndDate, p.PayrollStartDate, p.SuspensionDate, p.CancellationDate,
+       p.CostCenterCode, p.PayrollDeductionType, p.IsMonthlyDeduction, p.AutoStopAtEndDate, p.ShowInPayroll,
+       p.DistributeByDepartment, p.DistributeByCostCenter, p.TaxMode, p.MaxDependents, p.ChildrenMaxAge,
+       p.SpouseAdditionalCost, p.ChildAdditionalCost, p.ParentAdditionalCost, p.DefaultCoveragePercent,
+       p.AutoEnrollAfterDays, p.AutoEnrollCriteria, p.RulesJson, p.DependentsTemplateJson,
        p.IsActive, p.Notes
 FROM dbo.MedicalInsurancePlans p WITH (NOLOCK)
 INNER JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = p.ProviderId
@@ -172,6 +182,7 @@ WHERE ProviderId = @Id;"))
 
             ValidateShare("Employee", plan.DefaultMonthlyCost, plan.DefaultEmployeeShareType, plan.DefaultEmployeeShareValue);
             ValidateShare("Company", plan.DefaultMonthlyCost, plan.DefaultCompanyShareType, plan.DefaultCompanyShareValue);
+            ValidatePlanLifecycle(plan);
 
             using (var connection = OpenConnection())
             using (var transaction = connection.BeginTransaction())
@@ -186,12 +197,22 @@ INSERT INTO dbo.MedicalInsurancePlans
  DefaultEmployeeShareType, DefaultEmployeeShareValue,
  DefaultCompanyShareType, DefaultCompanyShareValue,
  EmployeeDeductionAccountCode, CompanyCostAccountCode,
+ LifecycleStatus, StartDate, EndDate, PayrollStartDate, SuspensionDate, CancellationDate,
+ CostCenterCode, PayrollDeductionType, IsMonthlyDeduction, AutoStopAtEndDate, ShowInPayroll,
+ DistributeByDepartment, DistributeByCostCenter, TaxMode, MaxDependents, ChildrenMaxAge,
+ SpouseAdditionalCost, ChildAdditionalCost, ParentAdditionalCost, DefaultCoveragePercent,
+ AutoEnrollAfterDays, AutoEnrollCriteria, RulesJson, DependentsTemplateJson,
  IsActive, Notes, CreatedAt, CreatedBy)
 VALUES
 (@Id, @ProviderId, @NameAr, @NameEn, @MonthlyCost,
  @EmployeeShareType, @EmployeeShareValue,
  @CompanyShareType, @CompanyShareValue,
  @EmployeeAccountCode, @CompanyAccountCode,
+ @LifecycleStatus, @StartDate, @EndDate, @PayrollStartDate, @SuspensionDate, @CancellationDate,
+ @CostCenterCode, @PayrollDeductionType, @IsMonthlyDeduction, @AutoStopAtEndDate, @ShowInPayroll,
+ @DistributeByDepartment, @DistributeByCostCenter, @TaxMode, @MaxDependents, @ChildrenMaxAge,
+ @SpouseAdditionalCost, @ChildAdditionalCost, @ParentAdditionalCost, @DefaultCoveragePercent,
+ @AutoEnrollAfterDays, @AutoEnrollCriteria, @RulesJson, @DependentsTemplateJson,
  @IsActive, @Notes, GETDATE(), @UserId);"))
                     {
                         AddPlanParameters(command, plan, id, userId);
@@ -212,6 +233,30 @@ SET ProviderId = @ProviderId,
     DefaultCompanyShareValue = @CompanyShareValue,
     EmployeeDeductionAccountCode = @EmployeeAccountCode,
     CompanyCostAccountCode = @CompanyAccountCode,
+    LifecycleStatus = @LifecycleStatus,
+    StartDate = @StartDate,
+    EndDate = @EndDate,
+    PayrollStartDate = @PayrollStartDate,
+    SuspensionDate = @SuspensionDate,
+    CancellationDate = @CancellationDate,
+    CostCenterCode = @CostCenterCode,
+    PayrollDeductionType = @PayrollDeductionType,
+    IsMonthlyDeduction = @IsMonthlyDeduction,
+    AutoStopAtEndDate = @AutoStopAtEndDate,
+    ShowInPayroll = @ShowInPayroll,
+    DistributeByDepartment = @DistributeByDepartment,
+    DistributeByCostCenter = @DistributeByCostCenter,
+    TaxMode = @TaxMode,
+    MaxDependents = @MaxDependents,
+    ChildrenMaxAge = @ChildrenMaxAge,
+    SpouseAdditionalCost = @SpouseAdditionalCost,
+    ChildAdditionalCost = @ChildAdditionalCost,
+    ParentAdditionalCost = @ParentAdditionalCost,
+    DefaultCoveragePercent = @DefaultCoveragePercent,
+    AutoEnrollAfterDays = @AutoEnrollAfterDays,
+    AutoEnrollCriteria = @AutoEnrollCriteria,
+    RulesJson = @RulesJson,
+    DependentsTemplateJson = @DependentsTemplateJson,
     IsActive = @IsActive,
     Notes = @Notes,
     UpdatedAt = GETDATE(),
@@ -1321,6 +1366,11 @@ SELECT TOP (1) p.PlanId, p.ProviderId, pr.ProviderNameAr, p.PlanNameAr, p.PlanNa
        p.DefaultMonthlyCost, p.DefaultEmployeeShareType, p.DefaultEmployeeShareValue,
        p.DefaultCompanyShareType, p.DefaultCompanyShareValue,
        p.EmployeeDeductionAccountCode, p.CompanyCostAccountCode,
+       p.LifecycleStatus, p.StartDate, p.EndDate, p.PayrollStartDate, p.SuspensionDate, p.CancellationDate,
+       p.CostCenterCode, p.PayrollDeductionType, p.IsMonthlyDeduction, p.AutoStopAtEndDate, p.ShowInPayroll,
+       p.DistributeByDepartment, p.DistributeByCostCenter, p.TaxMode, p.MaxDependents, p.ChildrenMaxAge,
+       p.SpouseAdditionalCost, p.ChildAdditionalCost, p.ParentAdditionalCost, p.DefaultCoveragePercent,
+       p.AutoEnrollAfterDays, p.AutoEnrollCriteria, p.RulesJson, p.DependentsTemplateJson,
        p.IsActive, p.Notes
 FROM dbo.MedicalInsurancePlans p
 INNER JOIN dbo.MedicalInsuranceProviders pr ON pr.ProviderId = p.ProviderId
@@ -1353,6 +1403,24 @@ WHERE p.PlanId = @PlanId;"))
             if (string.Equals(shareType, "Percent", StringComparison.OrdinalIgnoreCase) && shareValue > 100)
             {
                 throw new InvalidOperationException(label + " percent cannot exceed 100.");
+            }
+        }
+
+        private static void ValidatePlanLifecycle(MedicalInsurancePlan plan)
+        {
+            if (plan.StartDate.HasValue && plan.EndDate.HasValue && plan.EndDate.Value.Date < plan.StartDate.Value.Date)
+            {
+                throw new InvalidOperationException("Plan end date cannot be before start date.");
+            }
+
+            if (plan.MaxDependents < 0 || plan.ChildrenMaxAge < 0)
+            {
+                throw new InvalidOperationException("Dependent rules cannot contain negative values.");
+            }
+
+            if (plan.DefaultCoveragePercent < 0 || plan.DefaultCoveragePercent > 100)
+            {
+                throw new InvalidOperationException("Coverage percent must be between 0 and 100.");
             }
         }
 
@@ -1396,6 +1464,30 @@ WHERE p.PlanId = @PlanId;"))
             command.Parameters.Add("@CompanyShareValue", SqlDbType.Money).Value = plan.DefaultCompanyShareValue;
             AddNullable(command, "@EmployeeAccountCode", SqlDbType.NVarChar, plan.EmployeeDeductionAccountCode);
             AddNullable(command, "@CompanyAccountCode", SqlDbType.NVarChar, plan.CompanyCostAccountCode);
+            command.Parameters.Add("@LifecycleStatus", SqlDbType.NVarChar, 30).Value = NormalizeLifecycleStatus(plan.LifecycleStatus, plan.IsActive);
+            AddNullable(command, "@StartDate", SqlDbType.DateTime, plan.StartDate);
+            AddNullable(command, "@EndDate", SqlDbType.DateTime, plan.EndDate);
+            AddNullable(command, "@PayrollStartDate", SqlDbType.DateTime, plan.PayrollStartDate);
+            AddNullable(command, "@SuspensionDate", SqlDbType.DateTime, plan.SuspensionDate);
+            AddNullable(command, "@CancellationDate", SqlDbType.DateTime, plan.CancellationDate);
+            AddNullable(command, "@CostCenterCode", SqlDbType.NVarChar, plan.CostCenterCode);
+            command.Parameters.Add("@PayrollDeductionType", SqlDbType.NVarChar, 20).Value = string.IsNullOrWhiteSpace(plan.PayrollDeductionType) ? "Fixed" : plan.PayrollDeductionType;
+            command.Parameters.Add("@IsMonthlyDeduction", SqlDbType.Bit).Value = plan.IsMonthlyDeduction;
+            command.Parameters.Add("@AutoStopAtEndDate", SqlDbType.Bit).Value = plan.AutoStopAtEndDate;
+            command.Parameters.Add("@ShowInPayroll", SqlDbType.Bit).Value = plan.ShowInPayroll;
+            command.Parameters.Add("@DistributeByDepartment", SqlDbType.Bit).Value = plan.DistributeByDepartment;
+            command.Parameters.Add("@DistributeByCostCenter", SqlDbType.Bit).Value = plan.DistributeByCostCenter;
+            command.Parameters.Add("@TaxMode", SqlDbType.NVarChar, 20).Value = string.IsNullOrWhiteSpace(plan.TaxMode) ? "AfterTax" : plan.TaxMode;
+            command.Parameters.Add("@MaxDependents", SqlDbType.Int).Value = plan.MaxDependents;
+            command.Parameters.Add("@ChildrenMaxAge", SqlDbType.Int).Value = plan.ChildrenMaxAge;
+            command.Parameters.Add("@SpouseAdditionalCost", SqlDbType.Money).Value = plan.SpouseAdditionalCost;
+            command.Parameters.Add("@ChildAdditionalCost", SqlDbType.Money).Value = plan.ChildAdditionalCost;
+            command.Parameters.Add("@ParentAdditionalCost", SqlDbType.Money).Value = plan.ParentAdditionalCost;
+            command.Parameters.Add("@DefaultCoveragePercent", SqlDbType.Money).Value = plan.DefaultCoveragePercent;
+            command.Parameters.Add("@AutoEnrollAfterDays", SqlDbType.Int).Value = plan.AutoEnrollAfterDays;
+            AddNullable(command, "@AutoEnrollCriteria", SqlDbType.NVarChar, plan.AutoEnrollCriteria);
+            AddNullable(command, "@RulesJson", SqlDbType.NVarChar, plan.RulesJson);
+            AddNullable(command, "@DependentsTemplateJson", SqlDbType.NVarChar, plan.DependentsTemplateJson);
             command.Parameters.Add("@IsActive", SqlDbType.Bit).Value = plan.IsActive;
             AddNullable(command, "@Notes", SqlDbType.NVarChar, plan.Notes);
             command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
@@ -1483,6 +1575,22 @@ WHERE p.PlanId = @PlanId;"))
             return value;
         }
 
+        private static string NormalizeLifecycleStatus(string value, bool isActive)
+        {
+            value = string.IsNullOrWhiteSpace(value) ? (isActive ? "Active" : "Draft") : value.Trim();
+            if (string.Equals(value, "Draft", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Pending Approval", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Active", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Suspended", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Expired", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "Cancelled", StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+
+            return isActive ? "Active" : "Draft";
+        }
+
         private static EmployeeSummary ReadEmployee(IDataRecord reader)
         {
             return new EmployeeSummary
@@ -1524,6 +1632,30 @@ WHERE p.PlanId = @PlanId;"))
                 DefaultCompanyShareValue = ReadDecimal(reader, "DefaultCompanyShareValue"),
                 EmployeeDeductionAccountCode = ReadString(reader, "EmployeeDeductionAccountCode"),
                 CompanyCostAccountCode = ReadString(reader, "CompanyCostAccountCode"),
+                LifecycleStatus = ReadString(reader, "LifecycleStatus"),
+                StartDate = ReadNullableDate(reader, "StartDate"),
+                EndDate = ReadNullableDate(reader, "EndDate"),
+                PayrollStartDate = ReadNullableDate(reader, "PayrollStartDate"),
+                SuspensionDate = ReadNullableDate(reader, "SuspensionDate"),
+                CancellationDate = ReadNullableDate(reader, "CancellationDate"),
+                CostCenterCode = ReadString(reader, "CostCenterCode"),
+                PayrollDeductionType = ReadString(reader, "PayrollDeductionType"),
+                IsMonthlyDeduction = ReadBool(reader, "IsMonthlyDeduction"),
+                AutoStopAtEndDate = ReadBool(reader, "AutoStopAtEndDate"),
+                ShowInPayroll = ReadBool(reader, "ShowInPayroll"),
+                DistributeByDepartment = ReadBool(reader, "DistributeByDepartment"),
+                DistributeByCostCenter = ReadBool(reader, "DistributeByCostCenter"),
+                TaxMode = ReadString(reader, "TaxMode"),
+                MaxDependents = ReadInt(reader, "MaxDependents"),
+                ChildrenMaxAge = ReadInt(reader, "ChildrenMaxAge"),
+                SpouseAdditionalCost = ReadDecimal(reader, "SpouseAdditionalCost"),
+                ChildAdditionalCost = ReadDecimal(reader, "ChildAdditionalCost"),
+                ParentAdditionalCost = ReadDecimal(reader, "ParentAdditionalCost"),
+                DefaultCoveragePercent = ReadDecimal(reader, "DefaultCoveragePercent"),
+                AutoEnrollAfterDays = ReadInt(reader, "AutoEnrollAfterDays"),
+                AutoEnrollCriteria = ReadString(reader, "AutoEnrollCriteria"),
+                RulesJson = ReadString(reader, "RulesJson"),
+                DependentsTemplateJson = ReadString(reader, "DependentsTemplateJson"),
                 IsActive = ReadBool(reader, "IsActive"),
                 Notes = ReadString(reader, "Notes")
             };
