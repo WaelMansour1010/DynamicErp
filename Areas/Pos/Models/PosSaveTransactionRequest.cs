@@ -322,6 +322,7 @@ namespace MyERP.Areas.Pos.Models
         public string Tel { get; set; }
         public string Card { get; set; }
         public int? BranchId { get; set; }
+        public int? StoreId { get; set; }
         public int? UserId { get; set; }
     }
 

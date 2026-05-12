@@ -3454,33 +3454,34 @@ WHERE T.Transaction_Type = 20
             if (take > 100) { take = 100; }
 
             const string sql = @"
-;WITH StoreTokens AS
+;WITH AvailableSerials AS
 (
-    SELECT TOP (@CandidateTake)
+    SELECT
         LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
-        td.Item_ID AS ItemId,
-        ISNULL(td.Quantity, 0) AS Quantity,
-        t.Transaction_ID
+        MAX(td.Item_ID) AS ItemId,
+        SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty,
+        MAX(t.Transaction_ID) AS LastTransactionId
     FROM dbo.Transactions t WITH (READPAST)
     INNER JOIN dbo.Transaction_Details td WITH (READPAST)
         ON td.Transaction_ID = t.Transaction_ID
-    WHERE t.Transaction_Type = 20
-      AND t.StoreID = @StoreId
+    INNER JOIN dbo.TransactionTypes tt WITH (READPAST)
+        ON tt.Transaction_Type = t.Transaction_Type
+    WHERE t.StoreID = @StoreId
+      AND ISNULL(tt.StockEffect, 0) <> 0
       AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
       AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) IN (8, 18)
-      AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermLike)
-    ORDER BY
-      CASE WHEN ISNULL(@Term, N'') <> N'' AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermStartsWith THEN 0 ELSE 1 END,
-      t.Transaction_ID DESC
+      AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermStartsWith)
+    GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+    HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
 ),
 Filtered AS
 (
     SELECT TOP (@Take)
-        st.Token,
-        MAX(st.ItemId) AS ItemId,
-        SUM(st.Quantity) AS AvailableQty,
-        MAX(st.Transaction_ID) AS LastTransactionId
-    FROM StoreTokens st
+        av.Token,
+        av.ItemId,
+        av.AvailableQty,
+        av.LastTransactionId
+    FROM AvailableSerials av
     WHERE NOT EXISTS
       (
           SELECT 1
@@ -3489,7 +3490,7 @@ Filtered AS
               ON issueDetail.Transaction_ID = issueTransaction.Transaction_ID
           WHERE issueTransaction.Transaction_Type = 19
             AND issueTransaction.StoreID = @StoreId
-            AND LTRIM(RTRIM(ISNULL(issueDetail.ItemSerial, N''))) = st.Token
+            AND LTRIM(RTRIM(ISNULL(issueDetail.ItemSerial, N''))) = av.Token
       )
       AND NOT EXISTS
       (
@@ -3497,7 +3498,7 @@ Filtered AS
           FROM dbo.Transactions saleTransaction WITH (READPAST)
           WHERE saleTransaction.Transaction_Type = 21
             AND ISNULL(saleTransaction.IsCancelled, 0) = 0
-            AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = st.Token
+            AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = av.Token
       )
       AND NOT EXISTS
       (
@@ -3506,16 +3507,14 @@ Filtered AS
           WHERE ISNULL(customer.EasyCashType, 0) = 0
             AND
             (
-                LTRIM(RTRIM(ISNULL(customer.CardNo, N''))) = st.Token
-                OR LTRIM(RTRIM(ISNULL(customer.CardId, N''))) = st.Token
+                LTRIM(RTRIM(ISNULL(customer.CardNo, N''))) = av.Token
+                OR LTRIM(RTRIM(ISNULL(customer.CardId, N''))) = av.Token
             )
       )
-    GROUP BY st.Token
-    HAVING SUM(st.Quantity) > 0
     ORDER BY
-        CASE WHEN ISNULL(@Term, N'') <> N'' AND st.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
-        MAX(st.Transaction_ID) DESC,
-        st.Token
+        CASE WHEN ISNULL(@Term, N'') <> N'' AND av.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
+        av.LastTransactionId DESC,
+        av.Token
 )
 SELECT
     f.Token,
@@ -3534,12 +3533,8 @@ ORDER BY f.LastTransactionId DESC, f.Token;";
             {
                 command.CommandTimeout = 15;
                 Add(command, "@StoreId", SqlDbType.Int, storeId);
-                Add(command, "@BranchId", SqlDbType.Int, branchId);
-                Add(command, "@CanChangeDefaults", SqlDbType.Bit, canChangeDefaults);
                 Add(command, "@Take", SqlDbType.Int, take);
-                Add(command, "@CandidateTake", SqlDbType.Int, string.IsNullOrWhiteSpace(term) ? Math.Max(take * 20, 500) : Math.Max(take * 10, 200));
                 AddString(command, "@Term", SqlDbType.NVarChar, 255, string.IsNullOrWhiteSpace(term) ? null : term.Trim());
-                AddString(command, "@TermLike", SqlDbType.NVarChar, 260, string.IsNullOrWhiteSpace(term) ? null : "%" + term.Trim() + "%");
                 AddString(command, "@TermStartsWith", SqlDbType.NVarChar, 260, string.IsNullOrWhiteSpace(term) ? null : term.Trim() + "%");
                 connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -3564,7 +3559,7 @@ ORDER BY f.LastTransactionId DESC, f.Token;";
             return cards;
         }
 
-        public PosKycCardAvailabilityDto ValidateKeshniCardAvailability(string cardNo, string nationalId, string mobile, int? excludeCustomerId)
+        public PosKycCardAvailabilityDto ValidateKeshniCardAvailability(string cardNo, string nationalId, string mobile, int? excludeCustomerId, int? storeId)
         {
             var result = new PosKycCardAvailabilityDto
             {
@@ -3683,24 +3678,17 @@ BEGIN
 END;
 
 IF @SameExisting = 0
-   AND
+   AND NOT EXISTS
    (
-       NOT EXISTS
-       (
-           SELECT 1
-           FROM dbo.Transaction_Details td
-           INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
-           WHERE t.Transaction_Type = 20
-             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
-       )
-       OR EXISTS
-       (
-           SELECT 1
-           FROM dbo.Transaction_Details td
-           INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
-           WHERE t.Transaction_Type = 19
-             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
-       )
+       SELECT 1
+       FROM dbo.Transaction_Details td
+       INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+       INNER JOIN dbo.TransactionTypes tt ON tt.Transaction_Type = t.Transaction_Type
+       WHERE t.StoreID = @StoreId
+         AND ISNULL(tt.StockEffect, 0) <> 0
+         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
+       GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+       HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
    )
 BEGIN
     SELECT
@@ -3726,6 +3714,7 @@ SELECT
                 AddString(command, "@nationalId", SqlDbType.NVarChar, 255, nationalId);
                 AddString(command, "@mobile", SqlDbType.NVarChar, 50, mobile);
                 Add(command, "@excludeCustomerId", SqlDbType.Int, excludeCustomerId);
+                Add(command, "@StoreId", SqlDbType.Int, storeId);
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -3858,20 +3847,13 @@ IF @SameExisting = 0
        FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
        INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
            ON t.Transaction_ID = td.Transaction_ID
-       WHERE t.Transaction_Type = 20
+       INNER JOIN dbo.TransactionTypes tt
+           ON tt.Transaction_Type = t.Transaction_Type
+       WHERE t.StoreID = @StoreId
+         AND ISNULL(tt.StockEffect, 0) <> 0
          AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
-   )
-    RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);
-
-IF @SameExisting = 0
-   AND EXISTS
-   (
-       SELECT 1
-       FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
-       INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
-           ON t.Transaction_ID = td.Transaction_ID
-       WHERE t.Transaction_Type = 19
-         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
+       GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+       HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
    )
     RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);";
 
@@ -3881,6 +3863,7 @@ IF @SameExisting = 0
                 AddString(command, "@nationalId", SqlDbType.NVarChar, 255, request.Tet_NumPoket);
                 AddString(command, "@mobile", SqlDbType.NVarChar, 50, request.PhoneNo2);
                 Add(command, "@customerId", SqlDbType.Int, request.CustomerID);
+                Add(command, "@StoreId", SqlDbType.Int, request.StoreId);
                 command.ExecuteNonQuery();
             }
         }

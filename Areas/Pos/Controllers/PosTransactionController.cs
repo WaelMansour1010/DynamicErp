@@ -840,6 +840,7 @@ namespace MyERP.Areas.Pos.Controllers
 
                 request.UserId = context.UserId;
                 request.EmpId = context.EmpId;
+                request.StoreId = context.StoreId;
                 request.EasyCashType = 0;
                 request.OrderDate = request.OrderDate ?? DateTime.Today;
                 if (!context.CanChangeDefaults || !request.BranchId.HasValue)
@@ -1160,7 +1161,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("ليست لديك صلاحية تعديل بيانات KYC", "CanEditKyc is false."), JsonRequestBehavior.AllowGet);
             }
 
-            var result = _repository.ValidateKeshniCardAvailability(cardNo, nationalId, mobile, customerId);
+            var result = _repository.ValidateKeshniCardAvailability(cardNo, nationalId, mobile, customerId, context.StoreId);
             if (!result.Available)
             {
                 SetJsonErrorStatus(200);
@@ -1702,7 +1703,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (!string.IsNullOrWhiteSpace(request.CardNo))
             {
-                var availability = _repository.ValidateKeshniCardAvailability(request.CardNo, request.Tet_NumPoket, request.PhoneNo2, request.CustomerID);
+                var availability = _repository.ValidateKeshniCardAvailability(request.CardNo, request.Tet_NumPoket, request.PhoneNo2, request.CustomerID, context.StoreId);
                 if (availability != null && !availability.Available)
                 {
                     if (availability.ExistingCustomerId.HasValue)
