@@ -155,6 +155,40 @@ body {
     border-color: #86efac;
     color: #166534;
 }
+.ptd-field-palette button.ptd-palette-special {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+}
+.ptd-field-palette button.ptd-palette-special:hover { background: #fde68a; }
+.ptd-palette-separator {
+    margin: 10px 0 4px 0;
+    padding-top: 8px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 11px;
+    color: #6b7280;
+    text-align: start;
+    direction: rtl;
+}
+.ptd-field-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.ptd-field.is-special {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: #f59e0b;
+}
+.ptd-field.is-special.is-selected {
+    background: rgba(245, 158, 11, 0.25);
+    border-color: #b45309;
+}
 
 .ptd-canvas-wrap {
     overflow: auto;

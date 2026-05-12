@@ -203,9 +203,7 @@ namespace MyERP.Areas.Pos.Reports
                     continue;
                 }
 
-                string value;
-                _values.TryGetValue(field.FieldKey, out value);
-                value = value ?? string.Empty;
+                string value = ResolveFieldValue(field);
 
                 if (field.IsCellBased && field.CellCount > 0 && field.CellWidth > 0)
                 {
@@ -216,6 +214,31 @@ namespace MyERP.Areas.Pos.Reports
                     DrawText(band, value, field);
                 }
             }
+        }
+
+        // Pick the rendered text based on the field's type. Data fields
+        // read from the customer dictionary as before; check/cross/static
+        // fields ignore the dictionary and use a fixed glyph or the
+        // caption the user typed in the designer.
+        private string ResolveFieldValue(PrintTemplateField field)
+        {
+            var type = (field.FieldType ?? "Data").Trim();
+            if (string.Equals(type, "CheckMark", StringComparison.OrdinalIgnoreCase))
+            {
+                return "✓"; // ✓
+            }
+            if (string.Equals(type, "CrossMark", StringComparison.OrdinalIgnoreCase))
+            {
+                return "✗"; // ✗
+            }
+            if (string.Equals(type, "StaticText", StringComparison.OrdinalIgnoreCase))
+            {
+                return field.StaticContent ?? string.Empty;
+            }
+
+            string value;
+            _values.TryGetValue(field.FieldKey, out value);
+            return value ?? string.Empty;
         }
 
         private void DrawText(DetailBand band, string value, PrintTemplateField field)
@@ -348,7 +371,26 @@ namespace MyERP.Areas.Pos.Reports
                 { "ExpiryDate", FormatDate(customer.CardEndDate) },
                 { "Phone", phone },
                 { "SignatureName", FirstNonEmpty(JoinArabic(customer), customer.CustomerName, customer.Name) },
-                { "FooterDate", FormatArabicLongDate(issuedAt) }
+                { "FooterDate", FormatArabicLongDate(issuedAt) },
+
+                // Extra data keys exposed to the dynamic designer. They
+                // alias existing DTO properties so users can place them
+                // on the template without us touching the customer schema.
+                { "name", NullToEmpty(customer.Name) },
+                { "namee", NullToEmpty(customer.NameE) },
+                { "EnglishName5", NullToEmpty(customer.EnglishName5) },
+                { "EnglishName6", NullToEmpty(customer.EnglishName6) },
+                { "EnglishName7", NullToEmpty(customer.EnglishName7) },
+                { "CardDate", FormatDate(customer.CardDate) },
+                { "CardSource", FirstNonEmpty(customer.CardSource, customer.BranchName) },
+                { "CardEndDate", FormatDate(customer.CardEndDate) },
+                { "phoneNo", phone },
+                // jobName / WorkAddress / Email are not on the customer
+                // DTO yet - registered here so the designer accepts the
+                // keys; they print blank until the DTO is extended.
+                { "jobName", string.Empty },
+                { "WorkAddress", string.Empty },
+                { "Email", string.Empty }
             };
         }
 
