@@ -325,6 +325,18 @@ namespace MyERP.Areas.Pos.Models
         public int? UserId { get; set; }
     }
 
+    public class PosKycCardAvailabilityDto
+    {
+        public bool Success { get; set; }
+        public bool Available { get; set; }
+        public string Status { get; set; }
+        public string Message { get; set; }
+        public string CardType { get; set; }
+        public int TokenLength { get; set; }
+        public int? ExistingCustomerId { get; set; }
+        public string ExistingBranchName { get; set; }
+    }
+
     public class PosTransactionItemDto
     {
         public int? Item_ID { get; set; }
@@ -764,6 +776,7 @@ namespace MyERP.Areas.Pos.Models
     {
         public string NoteSerial { get; set; }
         public DateTime? RecordDate { get; set; }
+        public string RecordDateText { get; set; }
         public string AccountSerial { get; set; }
         public string AccountCode { get; set; }
         public string AccountName { get; set; }

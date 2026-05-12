@@ -859,7 +859,7 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(Fail(message, "Keshni Card KYC validation failed.", validationErrors, duplicateInfo.ExistingCustomerId, duplicateInfo.HasDuplicate, duplicateInfo.ExistingCustomer));
                 }
 
-                var saved = _repository.SaveCashCustomer(request);
+                var saved = _repository.SaveKeshniCardCustomer(request);
                 var attachmentSubject = PosSqlRepository.BuildKeshniAttachmentSubject(
                     saved.BranchName ?? context.BranchName,
                     saved.ArabicName0,
@@ -913,7 +913,7 @@ namespace MyERP.Areas.Pos.Controllers
             catch (SqlException ex)
             {
                 LogKycFailure("SaveKeshniCardCustomer.SqlException", request, ex, null);
-                SetJsonErrorStatus(500);
+                SetJsonErrorStatus(IsKeshniActivationValidationSqlError(ex) ? 400 : 500);
                 return Json(Fail(FriendlySqlKycMessage(ex), ex.ToString()));
             }
             catch (Exception ex)
@@ -1097,6 +1097,31 @@ namespace MyERP.Areas.Pos.Controllers
                 var visibleMessage = "تعذر حفظ الفاتورة. " + SafeExceptionMessage(ex);
                 return Json(Fail(visibleMessage, diagnostic));
             }
+        }
+
+        [HttpGet]
+        public JsonResult ValidateKeshniCardAvailability(string cardNo, string nationalId, string mobile, int? customerId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.CanEditKyc)
+            {
+                SetJsonErrorStatus(403);
+                return Json(Fail("ليست لديك صلاحية تعديل بيانات KYC", "CanEditKyc is false."), JsonRequestBehavior.AllowGet);
+            }
+
+            var result = _repository.ValidateKeshniCardAvailability(cardNo, nationalId, mobile, customerId);
+            if (!result.Available)
+            {
+                SetJsonErrorStatus(200);
+            }
+
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
         private static Dictionary<string, string> ValidateSaveRequest(PosSaveTransactionRequest request, PosUserContext context)
@@ -1611,26 +1636,37 @@ namespace MyERP.Areas.Pos.Controllers
             if (duplicateCustomerId.HasValue)
             {
                 duplicateIds.Add(duplicateCustomerId.Value);
-                errors["Tet_NumPoketDuplicate"] = "الرقم القومي مسجل من قبل لنفس نوع الكارت";
+                errors["Tet_NumPoketDuplicate"] = "هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.";
             }
 
-            var phoneDuplicateId = _repository.FindKeshniCardDuplicateId("PhoneNo2", request.PhoneNo2, request.CustomerID, cardLength > 0 ? (int?)cardLength : null);
+            var phoneDuplicateId = string.IsNullOrWhiteSpace(request.Tet_NumPoket)
+                ? _repository.FindKeshniCardDuplicateId("PhoneNo2", request.PhoneNo2, request.CustomerID, cardLength > 0 ? (int?)cardLength : null)
+                : null;
             if (phoneDuplicateId.HasValue)
             {
                 duplicateIds.Add(phoneDuplicateId.Value);
-                errors["PhoneNo2Duplicate"] = "رقم التليفون مسجل من قبل لنفس نوع الكارت";
+                errors["PhoneNo2Duplicate"] = "هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.";
             }
 
             var cardDuplicateId = _repository.FindKeshniCardDuplicateId("CardNo", request.CardNo, request.CustomerID);
             if (cardDuplicateId.HasValue)
             {
                 duplicateIds.Add(cardDuplicateId.Value);
-                errors["CardNoDuplicate"] = "رقم الكارت مسجل من قبل";
+                errors["CardNoDuplicate"] = "هذا الكارت/التوكن تم تفعيله من قبل ولا يمكن استخدامه مرة أخرى.";
             }
 
-            if (!string.IsNullOrWhiteSpace(request.CardNo) && !_repository.KeshniCardSerialExistsInIssuedCards(request.CardNo))
+            if (!string.IsNullOrWhiteSpace(request.CardNo))
             {
-                errors["CardNoNotIssued"] = "رقم الكارت غير موجود أو تم إدخاله بشكل خاطئ";
+                var availability = _repository.ValidateKeshniCardAvailability(request.CardNo, request.Tet_NumPoket, request.PhoneNo2, request.CustomerID);
+                if (availability != null && !availability.Available)
+                {
+                    if (availability.ExistingCustomerId.HasValue)
+                    {
+                        duplicateIds.Add(availability.ExistingCustomerId.Value);
+                    }
+
+                    errors["CardNoAvailability"] = availability.Message;
+                }
             }
 
             var distinctDuplicateIds = duplicateIds.Distinct().ToList();
@@ -1912,6 +1948,21 @@ namespace MyERP.Areas.Pos.Controllers
         private static string FriendlySqlKycMessage(SqlException ex)
         {
             var message = ex == null ? string.Empty : ex.Message;
+            if (message.IndexOf("هذا الكارت/التوكن تم تفعيله من قبل", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "هذا الكارت/التوكن تم تفعيله من قبل ولا يمكن استخدامه مرة أخرى.";
+            }
+
+            if (message.IndexOf("هذا العميل لديه كارت مفعل بالفعل من نفس النوع", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.";
+            }
+
+            if (message.IndexOf("هذا الكارت غير متاح بالمخزون", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.";
+            }
+
             if (ex != null && (ex.Number == 2601 || ex.Number == 2627))
             {
                 return "البيانات مكررة. راجع رقم الهاتف أو الرقم القومي أو رقم الكارت.";
@@ -1963,9 +2014,27 @@ namespace MyERP.Areas.Pos.Controllers
             return "حدث خطأ من قاعدة البيانات أثناء حفظ بيانات الكارت";
         }
 
+        private static bool IsKeshniActivationValidationSqlError(SqlException ex)
+        {
+            var message = ex == null ? string.Empty : ex.Message;
+            return message.IndexOf("هذا الكارت/التوكن تم تفعيله من قبل", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("هذا العميل لديه كارت مفعل بالفعل من نفس النوع", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("هذا الكارت غير متاح بالمخزون", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private static string FriendlySqlSaveMessage(SqlException ex)
         {
             var message = ex == null ? string.Empty : ex.Message;
+            if (message.IndexOf("هذا الكارت غير متاح بالمخزون", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.";
+            }
+
+            if (message.IndexOf("يجب تفعيل الكارت وحفظ بيانات KYC", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "يجب تفعيل الكارت وحفظ بيانات KYC قبل حفظ الفاتورة.";
+            }
+
             if (HasSqlError(ex, 1205))
             {
                 return "حدث تزاحم أثناء الحفظ. برجاء المحاولة مرة أخرى، وإذا تكرر البلاغ تواصل مع الدعم.";

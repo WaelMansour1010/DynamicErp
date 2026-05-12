@@ -118,6 +118,9 @@ BEGIN
     DECLARE @AllocationError NVARCHAR(4000);
     DECLARE @DevSerialLockResult INT;
     DECLARE @DevSerialLockResource NVARCHAR(255);
+    DECLARE @CardToken NVARCHAR(510);
+    DECLARE @CardTokenLockResult INT;
+    DECLARE @CardTokenLockResource NVARCHAR(255);
 
     DECLARE @IssueVouchers TABLE
     (
@@ -278,6 +281,57 @@ BEGIN
                  AND (ISNULL(t.isRecharg, 0) = 1 OR ISNULL(t.RechargeValue, 0) > 0)
            )
             RAISERROR('Screen IPN already exists for Cash In transactions.', 16, 1);
+
+        BEGIN
+            SET @CardToken = NULLIF(LTRIM(RTRIM(COALESCE(@CardSerial, @VisaNumber, N''))), N'');
+
+            IF ISNULL(@IsPOS, 0) = 1
+            BEGIN
+                IF @CardToken IS NULL
+                    RAISERROR(N'رقم الكارت مطلوب في حالة كارت كيشني.', 16, 1);
+
+                SET @CardTokenLockResource = N'POS.KYC.CardIssue.' + @CardToken;
+                EXEC @CardTokenLockResult = sys.sp_getapplock
+                    @Resource = @CardTokenLockResource,
+                    @LockMode = 'Exclusive',
+                    @LockOwner = 'Transaction',
+                    @LockTimeout = 10000;
+
+                IF @CardTokenLockResult < 0
+                    RAISERROR(N'تعذر قفل التوكن أثناء حفظ فاتورة الكارت. برجاء المحاولة مرة أخرى.', 16, 1);
+
+                IF NOT EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
+                    WHERE ISNULL(EasyCashType, 0) = 0
+                      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @CardToken
+                )
+                    RAISERROR(N'يجب تفعيل الكارت وحفظ بيانات KYC قبل حفظ الفاتورة.', 16, 1);
+
+                IF EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
+                    INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+                        ON t.Transaction_ID = td.Transaction_ID
+                    WHERE t.Transaction_Type = 19
+                      AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @CardToken
+                )
+                    RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);
+
+                IF NOT EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
+                    INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+                        ON t.Transaction_ID = td.Transaction_ID
+                    WHERE t.Transaction_Type = 20
+                      AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @CardToken
+                )
+                    RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);
+            END;
+        END
 
         IF ISNULL(@ExistingTransactionID, 0) <= 0
         BEGIN

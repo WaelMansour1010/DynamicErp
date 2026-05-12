@@ -147,6 +147,33 @@
             '</tr>';
     }
 
+    function displayDate(value) {
+        if (!value) {
+            return '';
+        }
+
+        var date = null;
+        if (Object.prototype.toString.call(value) === '[object Date]') {
+            date = value;
+        } else {
+            var text = String(value).trim();
+            var match = /\/?Date\((-?\d+)(?:[+-]\d+)?\)\/?/.exec(text);
+            if (match) {
+                date = new Date(parseInt(match[1], 10));
+            } else if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+                date = new Date(parseInt(text.substring(0, 4), 10), parseInt(text.substring(5, 7), 10) - 1, parseInt(text.substring(8, 10), 10));
+            } else {
+                date = new Date(text);
+            }
+        }
+
+        if (!date || isNaN(date.getTime())) {
+            return '';
+        }
+
+        return ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear();
+    }
+
     function renderVoucherHeaders(vouchers) {
         var container = byId('voucherHeaders');
         if (!container) {
@@ -162,7 +189,7 @@
             return '<div class="voucher-header-card">' +
                 '<span>نوع القيد: ' + escapeHtml(voucher.VoucherType || '') + '</span>' +
                 '<span>رقم القيد: ' + escapeHtml(voucher.NoteSerial || voucher.NoteId || '') + '</span>' +
-                '<span>التاريخ: ' + escapeHtml((voucher.NoteDate || '').toString().substring(0, 10)) + '</span>' +
+                '<span>التاريخ: ' + escapeHtml(displayDate(voucher.NoteDate)) + '</span>' +
                 '</div>';
         }).join('');
     }

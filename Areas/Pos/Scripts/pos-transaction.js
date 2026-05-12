@@ -44,6 +44,13 @@
     var loadedInvoiceBoxId = null;
     var loadedInvoiceEmpId = null;
     var kycSaveInProgress = false;
+    var kycCardAvailabilityTimer = null;
+    var kycCardAvailabilityXhr = null;
+    var kycNameSyncing = false;
+    var kycArabicNameTimer = null;
+    var kycEnglishNameTimer = null;
+    var kycArabicNameSource = "";
+    var kycEnglishNameSource = "";
     var pendingDuplicateKycCustomer = null;
     var uxLoadingCount = 0;
     var uxSaving = false;
@@ -112,6 +119,37 @@
 
         var parsed = new Date(text);
         return isNaN(parsed.getTime()) ? localIsoDate() : localIsoDate(parsed);
+    }
+    function parseDisplayDate(value) {
+        if (!value) { return null; }
+        if (Object.prototype.toString.call(value) === "[object Date]") {
+            return isNaN(value.getTime()) ? null : value;
+        }
+
+        var text = String(value).trim();
+        var jsonDate = text.match(/\/?Date\((-?\d+)(?:[+-]\d+)?\)\/?/);
+        if (jsonDate) {
+            var parsedJsonDate = new Date(parseInt(jsonDate[1], 10));
+            return isNaN(parsedJsonDate.getTime()) ? null : parsedJsonDate;
+        }
+
+        var dateOnly = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (dateOnly) {
+            return new Date(parseInt(dateOnly[1], 10), parseInt(dateOnly[2], 10) - 1, parseInt(dateOnly[3], 10));
+        }
+
+        var dayFirst = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (dayFirst) {
+            return new Date(parseInt(dayFirst[3], 10), parseInt(dayFirst[2], 10) - 1, parseInt(dayFirst[1], 10));
+        }
+
+        var parsed = new Date(text);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+    function dateDisplayValue(value) {
+        var parsed = parseDisplayDate(value);
+        if (!parsed) { return ""; }
+        return ("0" + parsed.getDate()).slice(-2) + "/" + ("0" + (parsed.getMonth() + 1)).slice(-2) + "/" + parsed.getFullYear();
     }
     function currentTransactionDate() {
         var dateInput = byId("transactionDate");
@@ -1394,9 +1432,174 @@
         }
     }
 
+    function normalizeNameSpaces(value) {
+        return (value || "").replace(/\s+/g, " ").trim();
+    }
+
+    function splitNameIntoFour(value) {
+        var parts = normalizeNameSpaces(value).split(" ").filter(function (part) { return !!part; });
+        if (parts.length <= 4) {
+            while (parts.length < 4) { parts.push(""); }
+            return parts;
+        }
+
+        return [
+            parts[0] || "",
+            parts[1] || "",
+            parts[2] || "",
+            parts.slice(3).join(" ")
+        ];
+    }
+
+    function mergeNameParts(ids) {
+        return normalizeNameSpaces(ids.map(function (id) {
+            var element = byId(id);
+            return element ? element.value : "";
+        }).filter(function (value) {
+            return !!normalizeNameSpaces(value);
+        }).join(" "));
+    }
+
+    function syncNameFromFull(fullId, partIds, normalizeFull) {
+        if (kycNameSyncing) { return; }
+        var full = byId(fullId);
+        if (!full) { return; }
+
+        var normalized = normalizeNameSpaces(full.value);
+        kycNameSyncing = true;
+        try {
+            if (normalizeFull) { full.value = normalized; }
+            var parts = splitNameIntoFour(normalized);
+            for (var i = 0; i < partIds.length; i++) {
+                byId(partIds[i]).value = parts[i] || "";
+            }
+        } finally {
+            kycNameSyncing = false;
+        }
+    }
+
+    function syncFullNameFromParts(fullId, partIds, normalizeParts) {
+        if (kycNameSyncing) { return; }
+
+        kycNameSyncing = true;
+        try {
+            if (normalizeParts) {
+                for (var i = 0; i < partIds.length; i++) {
+                    var part = byId(partIds[i]);
+                    if (part) { part.value = normalizeNameSpaces(part.value); }
+                }
+            }
+            byId(fullId).value = mergeNameParts(partIds);
+        } finally {
+            kycNameSyncing = false;
+        }
+    }
+
+    function scheduleKycNameSync(target) {
+        if (!target || !target.id || kycNameSyncing) { return; }
+
+        var arabicParts = ["kycArabicName0", "kycArabicName1", "kycArabicName2", "kycArabicName3"];
+        var englishParts = ["kycEnglishName0", "kycEnglishName1", "kycEnglishName2", "kycEnglishName3"];
+
+        if (target.id === "kycName") {
+            kycArabicNameSource = "full";
+            window.clearTimeout(kycArabicNameTimer);
+            kycArabicNameTimer = window.setTimeout(function () {
+                syncNameFromFull("kycName", arabicParts, false);
+            }, 350);
+            return;
+        }
+
+        if (arabicParts.indexOf(target.id) >= 0) {
+            kycArabicNameSource = "parts";
+            window.clearTimeout(kycArabicNameTimer);
+            kycArabicNameTimer = window.setTimeout(function () {
+                syncFullNameFromParts("kycName", arabicParts, false);
+            }, 250);
+            return;
+        }
+
+        if (target.id === "kycNameE") {
+            kycEnglishNameSource = "full";
+            window.clearTimeout(kycEnglishNameTimer);
+            kycEnglishNameTimer = window.setTimeout(function () {
+                syncNameFromFull("kycNameE", englishParts, false);
+            }, 350);
+            return;
+        }
+
+        if (englishParts.indexOf(target.id) >= 0) {
+            kycEnglishNameSource = "parts";
+            window.clearTimeout(kycEnglishNameTimer);
+            kycEnglishNameTimer = window.setTimeout(function () {
+                syncFullNameFromParts("kycNameE", englishParts, false);
+            }, 250);
+        }
+    }
+
+    function commitKycNameSync(target) {
+        if (!target || !target.id || kycNameSyncing) { return; }
+
+        var arabicParts = ["kycArabicName0", "kycArabicName1", "kycArabicName2", "kycArabicName3"];
+        var englishParts = ["kycEnglishName0", "kycEnglishName1", "kycEnglishName2", "kycEnglishName3"];
+
+        if (target.id === "kycName") {
+            kycArabicNameSource = "full";
+            window.clearTimeout(kycArabicNameTimer);
+            syncNameFromFull("kycName", arabicParts, true);
+            return;
+        }
+
+        if (arabicParts.indexOf(target.id) >= 0) {
+            kycArabicNameSource = "parts";
+            window.clearTimeout(kycArabicNameTimer);
+            syncFullNameFromParts("kycName", arabicParts, true);
+            return;
+        }
+
+        if (target.id === "kycNameE") {
+            kycEnglishNameSource = "full";
+            window.clearTimeout(kycEnglishNameTimer);
+            syncNameFromFull("kycNameE", englishParts, true);
+            return;
+        }
+
+        if (englishParts.indexOf(target.id) >= 0) {
+            kycEnglishNameSource = "parts";
+            window.clearTimeout(kycEnglishNameTimer);
+            syncFullNameFromParts("kycNameE", englishParts, true);
+        }
+    }
+
+    function commitAllKycNameSync() {
+        var arabicParts = ["kycArabicName0", "kycArabicName1", "kycArabicName2", "kycArabicName3"];
+        var englishParts = ["kycEnglishName0", "kycEnglishName1", "kycEnglishName2", "kycEnglishName3"];
+
+        window.clearTimeout(kycArabicNameTimer);
+        window.clearTimeout(kycEnglishNameTimer);
+
+        if (kycArabicNameSource === "parts") {
+            syncFullNameFromParts("kycName", arabicParts, true);
+        } else if (normalizeNameSpaces(byId("kycName").value)) {
+            syncNameFromFull("kycName", arabicParts, true);
+        } else {
+            syncFullNameFromParts("kycName", arabicParts, true);
+        }
+
+        if (kycEnglishNameSource === "parts") {
+            syncFullNameFromParts("kycNameE", englishParts, true);
+        } else if (normalizeNameSpaces(byId("kycNameE").value)) {
+            syncNameFromFull("kycNameE", englishParts, true);
+        } else {
+            syncFullNameFromParts("kycNameE", englishParts, true);
+        }
+    }
+
     function clearKycFields() {
         byId("cashCustomerId").value = "";
         pendingDuplicateKycCustomer = null;
+        kycArabicNameSource = "";
+        kycEnglishNameSource = "";
         enablePrintAcknowledgmentIfAllowed();
         byId("phone2").value = "";
         byId("ipn").value = "";
@@ -1409,9 +1612,11 @@
         byId("kycArabicName0").value = "";
         byId("kycArabicName1").value = "";
         byId("kycArabicName2").value = "";
+        byId("kycArabicName3").value = "";
         byId("kycEnglishName0").value = "";
         byId("kycEnglishName1").value = "";
         byId("kycEnglishName2").value = "";
+        byId("kycEnglishName3").value = "";
         byId("kycEnglishName5").value = "";
         byId("kycEnglishName6").value = "";
         byId("kycEnglishName7").value = "";
@@ -1420,8 +1625,9 @@
         byId("kycCardNo").value = "";
         byId("kycNationalId").value = "";
         byId("kycCardSource").value = "";
-        byId("kycCreatedBranch").value = "";
-        byId("kycCreatedDate").value = "";
+        byId("kycCreatedBranch").value = activeKycBranchName();
+        byId("kycCreatedDate").value = defaultKycCreatedDate();
+        refreshKycMetadataDisplay();
         byId("kycBirthDate").value = "";
         byId("kycCardDate").value = "";
         byId("kycCardEndDate").value = "";
@@ -1439,6 +1645,45 @@
         if (!messageBox) { return; }
         messageBox.innerText = message || "";
         messageBox.className = "kyc-save-message" + (message ? (isError ? " is-error" : (isInfo ? " is-info" : " is-success")) : "");
+    }
+
+    function scheduleKycCardAvailabilityCheck() {
+        window.clearTimeout(kycCardAvailabilityTimer);
+        kycCardAvailabilityTimer = window.setTimeout(validateKycCardAvailability, 350);
+    }
+
+    function validateKycCardAvailability() {
+        var url = getUrl("data-kyc-card-availability-url");
+        var cardNo = (byId("kycCardNo").value || byId("visaNumber").value || "").trim();
+        if (!url || !cardNo || byId("transactionType").value !== "card") { return; }
+
+        if (cardNo.length !== 8 && cardNo.length !== 18) {
+            setKycMessage("رقم التوكن/الكارت يجب أن يكون 8 أو 18 رقم", true);
+            return;
+        }
+
+        if (kycCardAvailabilityXhr && kycCardAvailabilityXhr.readyState !== 4) {
+            kycCardAvailabilityXhr.abort();
+        }
+
+        var query = "?cardNo=" + encodeURIComponent(cardNo)
+            + "&nationalId=" + encodeURIComponent((byId("kycNationalId").value || byId("cardNationalId").value || "").trim())
+            + "&mobile=" + encodeURIComponent((byId("kycPhoneNo2").value || byId("cashCustomerPhone").value || "").trim())
+            + "&customerId=" + encodeURIComponent(parseInt(byId("cashCustomerId").value, 10) || "");
+
+        kycCardAvailabilityXhr = requestJson("GET", url + query, null, function (status, data) {
+            if (!data || data.success === false) {
+                setKycMessage((data && data.message) || "تعذر فحص حالة الكارت حالياً", true);
+                return;
+            }
+
+            if (data.Available || data.available) {
+                setKycMessage((data.Message || data.message || "الكارت متاح ويمكن تفعيله."), false, false);
+                return;
+            }
+
+            setKycMessage((data.Message || data.message || "الكارت غير متاح للتفعيل."), true);
+        });
     }
 
     function showDuplicateKycCustomerAction(data, message) {
@@ -2425,7 +2670,7 @@
             totalCredit += credit;
             html += '<tr>' +
                 '<td>' + escapeHtml(row.NoteSerial || "") + '</td>' +
-                '<td>' + escapeHtml(row.RecordDate ? String(row.RecordDate).substring(0, 10) : "") + '</td>' +
+                '<td>' + escapeHtml(row.RecordDateText || dateDisplayValue(row.RecordDate)) + '</td>' +
                 '<td>' + escapeHtml(row.AccountSerial || row.AccountCode || "") + '</td>' +
                 '<td>' + escapeHtml(row.AccountName || "") + '</td>' +
                 '<td>' + escapeHtml(row.Description || "") + '</td>' +
@@ -3147,7 +3392,13 @@
         byId("kycCardNo").value = byId("kycCardNo").value || byId("visaNumber").value;
         byId("kycNationalId").value = byId("kycNationalId").value || byId("cardNationalId").value;
         byId("kycSearchTerm").value = byId("cashCustomerPhone").value || byId("visaNumber").value || byId("cardNationalId").value;
+        if (!savedKycCustomerId()) {
+            byId("kycCreatedBranch").value = activeKycBranchName();
+            byId("kycCreatedDate").value = byId("kycCreatedDate").value || defaultKycCreatedDate();
+        }
+        refreshKycMetadataDisplay();
         loadKycAttachments();
+        scheduleKycCardAvailabilityCheck();
     }
 
     function closeKycModal() {
@@ -3166,6 +3417,65 @@
         var parsed = new Date(value);
         if (isNaN(parsed.getTime())) { return ""; }
         return parsed.toISOString().substring(0, 10);
+    }
+
+    function dateTimeForDisplay(value) {
+        if (!value) { return ""; }
+        if (typeof value === "string" && value.indexOf("/Date(") === 0) {
+            var ticks = parseInt(value.replace(/[^0-9-]/g, ""), 10);
+            if (!isNaN(ticks)) { value = ticks; }
+        }
+
+        var parsed = new Date(value);
+        if (isNaN(parsed.getTime())) {
+            return String(value || "").trim();
+        }
+
+        var year = parsed.getFullYear();
+        var month = ("0" + (parsed.getMonth() + 1)).slice(-2);
+        var day = ("0" + parsed.getDate()).slice(-2);
+        var hours = parsed.getHours();
+        var minutes = ("0" + parsed.getMinutes()).slice(-2);
+        var suffix = hours >= 12 ? "PM" : "AM";
+        var hour12 = hours % 12;
+        if (hour12 === 0) { hour12 = 12; }
+        return year + "-" + month + "-" + day + " " + ("0" + hour12).slice(-2) + ":" + minutes + " " + suffix;
+    }
+
+    function activeKycBranchName() {
+        var branchSelect = byId("branchId");
+        if (branchSelect && branchSelect.value) {
+            var text = selectedText(branchSelect);
+            if (text && text !== "تحميل...") { return text; }
+        }
+
+        return contextValue("BranchName", "data-default-kyc-created-branch")
+            || contextValue("BranchName", "data-default-branch-name")
+            || "جلسة POS غير مكتملة";
+    }
+
+    function defaultKycCreatedDate() {
+        return getPageValue("data-default-kyc-created-date") || dateTimeForDisplay(new Date());
+    }
+
+    function ensureKycMetadataDefaults() {
+        if (!byId("kycCreatedBranch").value) {
+            byId("kycCreatedBranch").value = activeKycBranchName();
+        }
+        if (!byId("kycCreatedDate").value) {
+            byId("kycCreatedDate").value = defaultKycCreatedDate();
+        }
+    }
+
+    function setTextIfExists(id, value) {
+        var element = byId(id);
+        if (element) { element.innerText = value || "جلسة POS غير مكتملة"; }
+    }
+
+    function refreshKycMetadataDisplay() {
+        ensureKycMetadataDefaults();
+        setTextIfExists("kycCreatedBranchDisplay", byId("kycCreatedBranch").value || activeKycBranchName());
+        setTextIfExists("kycCreatedDateDisplay", byId("kycCreatedDate").value || defaultKycCreatedDate());
     }
 
     function extractBirthDateFromNationalId(value) {
@@ -3232,6 +3542,8 @@
 
     function applyKeshniCustomer(data) {
         if (!data) { return; }
+        kycArabicNameSource = "";
+        kycEnglishNameSource = "";
         if (data.CustomerID) { byId("cashCustomerId").value = data.CustomerID; }
         enablePrintAcknowledgmentIfAllowed();
         if (data.CustomerName) { byId("cashCustomerName").value = data.CustomerName; }
@@ -3255,9 +3567,11 @@
         byId("kycArabicName0").value = data.ArabicName0 || "";
         byId("kycArabicName1").value = data.ArabicName1 || "";
         byId("kycArabicName2").value = data.ArabicName2 || "";
+        byId("kycArabicName3").value = data.ArabicName3 || "";
         byId("kycEnglishName0").value = data.EnglishName0 || "";
         byId("kycEnglishName1").value = data.EnglishName1 || "";
         byId("kycEnglishName2").value = data.EnglishName2 || "";
+        byId("kycEnglishName3").value = data.EnglishName3 || "";
         byId("kycEnglishName5").value = data.EnglishName5 || "";
         byId("kycEnglishName6").value = data.EnglishName6 || "";
         byId("kycEnglishName7").value = data.EnglishName7 || "";
@@ -3265,8 +3579,9 @@
         byId("kycPhoneNo").value = data.Phone || "";
         byId("kycCardNo").value = data.VisaNumber || "";
         byId("kycCardSource").value = data.CardSource || "";
-        byId("kycCreatedBranch").value = data.BranchName || (data.BranchId ? ("فرع " + data.BranchId) : "");
-        byId("kycCreatedDate").value = dateForInput(data.CreatedDate);
+        byId("kycCreatedBranch").value = data.BranchName || (data.BranchId ? ("فرع " + data.BranchId) : activeKycBranchName());
+        byId("kycCreatedDate").value = dateTimeForDisplay(data.CreatedDate) || defaultKycCreatedDate();
+        refreshKycMetadataDisplay();
         byId("kycBirthDate").value = dateForInput(data.BirthDate);
         byId("kycCardDate").value = dateForInput(data.CardDate);
         byId("kycCardEndDate").value = dateForInput(data.CardEndDate);
@@ -3277,25 +3592,89 @@
         refreshPhoneInputs();
     }
 
+    function kycFileTypeLabel(fileName) {
+        var extension = ((fileName || "").split(".").pop() || "file").toLowerCase();
+        if (extension === "jpg" || extension === "jpeg" || extension === "png" || extension === "gif" || extension === "webp") { return "IMG"; }
+        if (extension === "pdf") { return "PDF"; }
+        if (extension === "doc" || extension === "docx") { return "DOC"; }
+        return extension.substring(0, 4).toUpperCase() || "FILE";
+    }
+
+    function formatFileSize(bytes) {
+        bytes = parseInt(bytes, 10) || 0;
+        if (bytes >= 1024 * 1024) { return (bytes / 1024 / 1024).toFixed(1) + " MB"; }
+        if (bytes >= 1024) { return Math.ceil(bytes / 1024) + " KB"; }
+        return bytes + " B";
+    }
+
+    function renderSelectedKycFiles() {
+        var input = byId("kycAttachments");
+        var container = byId("kycSelectedAttachmentsList");
+        if (!input || !container) { return; }
+
+        var files = input.files || [];
+        if (!files.length) {
+            container.innerHTML = "";
+            return;
+        }
+
+        var html = ['<div class="kyc-attachments-grid">'];
+        for (var i = 0; i < files.length; i++) {
+            html.push('<div class="kyc-attachment-card"><span class="kyc-file-icon">' +
+                escapeHtml(kycFileTypeLabel(files[i].name || "")) + '</span><span class="kyc-attachment-info"><strong>' +
+                escapeHtml(files[i].name || "مرفق جديد") + '</strong><span>جاهز للرفع - ' +
+                escapeHtml(formatFileSize(files[i].size)) + '</span></span>' +
+                '<button type="button" class="link-action kyc-remove-file" data-remove-kyc-file="' + i + '">إزالة</button></div>');
+        }
+        html.push("</div>");
+        container.innerHTML = html.join("");
+    }
+
+    function removeSelectedKycFile(index) {
+        var input = byId("kycAttachments");
+        if (!input || !input.files || index < 0 || index >= input.files.length) { return; }
+        if (!window.DataTransfer) {
+            input.value = "";
+            renderSelectedKycFiles();
+            return;
+        }
+
+        var nextFiles;
+        try {
+            nextFiles = new DataTransfer();
+        } catch (ex) {
+            input.value = "";
+            renderSelectedKycFiles();
+            return;
+        }
+        for (var i = 0; i < input.files.length; i++) {
+            if (i !== index) { nextFiles.items.add(input.files[i]); }
+        }
+        input.files = nextFiles.files;
+        renderSelectedKycFiles();
+    }
+
     function renderKycAttachments(attachments) {
         var container = byId("kycAttachmentsList");
         if (!container) { return; }
 
         if (!attachments || !attachments.length) {
-            container.innerHTML = "لا توجد مرفقات محفوظة";
+            container.innerHTML = '<div class="kyc-attachments-empty"><span class="kyc-file-icon">FILE</span><span>لا توجد مرفقات محفوظة</span></div>';
             return;
         }
 
-        var rows = ['<table class="kyc-attachments-table"><thead><tr><th>اسم الملف</th><th>تاريخ الرفع</th><th>نوع المستند</th><th>فتح</th></tr></thead><tbody>'];
+        var rows = ['<div class="kyc-attachments-grid">'];
         for (var i = 0; i < attachments.length; i++) {
             var item = attachments[i];
             var openUrl = getUrl("data-open-kyc-attachment-url") + "?id=" + encodeURIComponent(item.Id);
-            rows.push("<tr><td>" + escapeHtml(item.FileName || "") + "</td><td>" +
-                escapeHtml(dateForInput(item.ImageDate) || "") + "</td><td>" +
-                escapeHtml(item.ImageTitle || item.Department || "") + "</td><td>" +
-                '<a class="link-action" target="_blank" rel="noopener" href="' + openUrl + '">فتح</a></td></tr>');
+            rows.push('<div class="kyc-attachment-card"><span class="kyc-file-icon">' +
+                escapeHtml(kycFileTypeLabel(item.FileName || "")) + '</span><span class="kyc-attachment-info"><strong>' +
+                escapeHtml(item.FileName || "مرفق KYC") + "</strong><span>" +
+                escapeHtml(dateForInput(item.ImageDate) || "تاريخ الرفع غير محدد") + " - " +
+                escapeHtml(item.ImageTitle || item.Department || "مستند KYC") + '</span></span>' +
+                '<a class="link-action" target="_blank" rel="noopener" href="' + openUrl + '">معاينة</a></div>');
         }
-        rows.push("</tbody></table>");
+        rows.push("</div>");
         container.innerHTML = rows.join("");
     }
 
@@ -3713,6 +4092,8 @@
             return;
         }
 
+        commitAllKycNameSync();
+
         if (byId("transactionType").value !== "card") {
             var wrongModeMessage = "بيانات KYC مطلوبة فقط في كارت كيشني";
             byId("validationSummary").innerText = wrongModeMessage;
@@ -3776,9 +4157,11 @@
         formData.append("ArabicName0", byId("kycArabicName0").value);
         formData.append("ArabicName1", byId("kycArabicName1").value);
         formData.append("ArabicName2", byId("kycArabicName2").value);
+        formData.append("ArabicName3", byId("kycArabicName3").value);
         formData.append("EnglishName0", byId("kycEnglishName0").value);
         formData.append("EnglishName1", byId("kycEnglishName1").value);
         formData.append("EnglishName2", byId("kycEnglishName2").value);
+        formData.append("EnglishName3", byId("kycEnglishName3").value);
         formData.append("EnglishName5", byId("kycEnglishName5").value);
         formData.append("EnglishName6", byId("kycEnglishName6").value);
         formData.append("EnglishName7", byId("kycEnglishName7").value);
@@ -4126,6 +4509,11 @@
         if (event.target.id === "closeKycModalBtn" || event.target.id === "kycModalBackdrop") { closeKycModal(); }
         if (event.target.id === "kycSearchBtn") { searchKeshniCardCustomers(); }
         if (event.target.id === "showKycAttachmentsBtn") { loadKycAttachments(); }
+        var removeKycFileButton = event.target.closest ? event.target.closest("[data-remove-kyc-file]") : null;
+        if (removeKycFileButton) {
+            removeSelectedKycFile(parseInt(removeKycFileButton.getAttribute("data-remove-kyc-file"), 10));
+            return;
+        }
         if (event.target.id === "todaySummaryBtn") { openTodaySummary(); }
         if (event.target.id === "closeTodaySummaryBtn" || event.target.id === "todaySummaryBackdrop") { closeTodaySummary(); }
         if (event.target.id === "toggleTodayInvoicesBtn") {
@@ -4174,6 +4562,7 @@
         if (event.target.classList && event.target.classList.contains("pos-eg-phone")) {
             normalizePhoneInput(event.target, false);
         }
+        scheduleKycNameSync(event.target);
         if (event.target.matches(".qty, .price, .vat, #commissionValue")) {
             recalculateInvoiceSummary({ source: "row-input", requestCommission: false });
         }
@@ -4196,6 +4585,7 @@
             byId("paymentCardNo").value = event.target.value;
             byId("kycCardNo").value = event.target.value;
             scheduleUnusedKycLookup(event.target.value);
+            scheduleKycCardAvailabilityCheck();
             var cardItemId = cardServiceItemIdFromCardNo(event.target.value);
             var cardTypeName = cardTypeNameFromCardNo(event.target.value);
             if (byId("cardTypeName")) {
@@ -4217,6 +4607,7 @@
         if (event.target.id === "kycNationalId") {
             var modalBirthDate = extractBirthDateFromNationalId(event.target.value);
             scheduleUnusedKycLookup(event.target.value);
+            scheduleKycCardAvailabilityCheck();
             if (modalBirthDate) {
                 byId("kycBirthDate").value = modalBirthDate;
                 byId("cardNationalId").value = event.target.value;
@@ -4226,6 +4617,7 @@
         if (event.target.id === "cashCustomerPhone") {
             byId("kycPhoneNo2").value = event.target.value;
             normalizePhoneInput(byId("kycPhoneNo2"), false);
+            scheduleKycCardAvailabilityCheck();
             if (byId("transactionType").value !== "card") { return; }
             window.clearTimeout(customerLookupTimer);
             customerLookupTimer = window.setTimeout(function () {
@@ -4242,6 +4634,7 @@
                 normalizePhoneInput(byId("cashCustomerPhone"), false);
             }
             scheduleUnusedKycLookup(event.target.value);
+            scheduleKycCardAvailabilityCheck();
         }
 
         if (event.target.id === "kycCardDate") {
@@ -4307,6 +4700,7 @@
         if (event.target.classList && event.target.classList.contains("pos-eg-phone")) {
             normalizePhoneInput(event.target, true);
         }
+        commitKycNameSync(event.target);
     }, true);
 
     document.addEventListener("focusout", function (event) {
@@ -4329,6 +4723,11 @@
             formatMoneyInput(event.target);
         }
         if (event.target.id === "branchId") {
+            if (!savedKycCustomerId()) {
+                byId("kycCreatedBranch").value = activeKycBranchName();
+                byId("kycCreatedDate").value = byId("kycCreatedDate").value || defaultKycCreatedDate();
+                refreshKycMetadataDisplay();
+            }
             if (currentContext && currentContext.CanChangeDefaults === true) {
                 loadStoresForBranch(event.target.value);
             } else {
@@ -4347,6 +4746,9 @@
         }
         if (event.target.id === "serviceItemId2") {
             recalculateInvoiceSummary({ source: "serviceItemId2", requestCommission: true });
+        }
+        if (event.target.id === "kycAttachments") {
+            renderSelectedKycFiles();
         }
         if (event.target.name === "violationPayType") {
             setMode(byId("transactionType").value);

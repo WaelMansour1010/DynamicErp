@@ -445,7 +445,7 @@
                 }
                 var html = "<table class='pos-table'><thead><tr><th>رقم الحركة</th><th>رقم السند</th><th>التاريخ</th><th>الفرع</th><th>النوع</th><th>الاسم</th><th>القيمة</th><th></th></tr></thead><tbody>";
                 rows.forEach(function (row) {
-                    html += "<tr><td>" + (row.NoteId || "") + "</td><td>" + (row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + dateText(row.NoteDate) + "</td><td>" + (row.BranchName || "") + "</td><td>" + (row.CashingTypeName || "") + "</td><td>" + (row.NameText || "") + "</td><td>" + (parseFloat(row.Value || 0)).toFixed(2) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + row.NoteId + "'>فتح</button></td></tr>";
+                    html += "<tr><td>" + (row.NoteId || "") + "</td><td>" + (row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + displayDateText(row.NoteDate) + "</td><td>" + (row.BranchName || "") + "</td><td>" + (row.CashingTypeName || "") + "</td><td>" + (row.NameText || "") + "</td><td>" + (parseFloat(row.Value || 0)).toFixed(2) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + row.NoteId + "'>فتح</button></td></tr>";
                 });
                 html += "</tbody></table>";
                 target.innerHTML = html;
@@ -455,12 +455,29 @@
                 if (!element) { return; }
                 element.value = value === null || value === undefined ? "" : value;
             }
-            function dateText(value) {
+            function parseDateValue(value) {
                 if (!value) { return ""; }
+                var date;
                 if (typeof value === "string" && value.indexOf("/Date(") === 0) {
-                    return new Date(parseInt(value.replace(/[^0-9-]/g, ""), 10)).toISOString().substring(0, 10);
+                    var match = /\/?Date\((-?\d+)(?:[+-]\d+)?\)\/?/.exec(value);
+                    date = match ? new Date(parseInt(match[1], 10)) : null;
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+                    var parts = value.substring(0, 10).split("-");
+                    date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                } else {
+                    date = new Date(value);
                 }
-                return String(value).substring(0, 10);
+                return date && !isNaN(date.getTime()) ? date : null;
+            }
+            function dateText(value) {
+                var date = parseDateValue(value);
+                if (!date) { return ""; }
+                return date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
+            }
+            function displayDateText(value) {
+                var date = parseDateValue(value);
+                if (!date) { return ""; }
+                return ("0" + date.getDate()).slice(-2) + "/" + ("0" + (date.getMonth() + 1)).slice(-2) + "/" + date.getFullYear();
             }
             function resetPaymentForm() {
                 byId("paymentNoteId").value = "";

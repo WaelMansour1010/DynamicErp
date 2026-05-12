@@ -3352,7 +3352,12 @@ SELECT TOP (1) Id
 FROM dbo.TblCusCsh
 WHERE " + columnName + @" = @value
   AND ISNULL(EasyCashType, 0) = 0
-  AND (@cardLength IS NULL OR LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = @cardLength)
+  AND
+  (
+      @cardLength IS NULL
+      OR (@cardLength = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+      OR (@cardLength <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18)
+  )
   AND (@excludeId IS NULL OR Id <> @excludeId);";
 
             using (var connection = new SqlConnection(_connectionString))
@@ -3393,6 +3398,327 @@ WHERE T.Transaction_Type = 20
             }
         }
 
+        public PosKycCardAvailabilityDto ValidateKeshniCardAvailability(string cardNo, string nationalId, string mobile, int? excludeCustomerId)
+        {
+            var result = new PosKycCardAvailabilityDto
+            {
+                Success = true,
+                Available = false,
+                Status = "Invalid",
+                Message = "رقم الكارت مطلوب"
+            };
+
+            if (string.IsNullOrWhiteSpace(cardNo))
+            {
+                return result;
+            }
+
+            cardNo = cardNo.Trim();
+            result.TokenLength = cardNo.Length;
+            result.CardType = cardNo.Length == 18 ? "18" : "Other";
+
+            const string sql = @"
+DECLARE @Token NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@cardNo)), N'');
+DECLARE @NationalId NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@nationalId)), N'');
+DECLARE @Mobile NVARCHAR(50) = NULLIF(LTRIM(RTRIM(@mobile)), N'');
+DECLARE @ExcludeId INT = @excludeCustomerId;
+DECLARE @CardType INT = CASE WHEN LEN(@Token) = 18 THEN 18 ELSE 0 END;
+DECLARE @SameExisting BIT = 0;
+
+IF @ExcludeId IS NOT NULL
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.TblCusCsh
+       WHERE Id = @ExcludeId
+         AND ISNULL(EasyCashType, 0) = 0
+         AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+   )
+    SET @SameExisting = 1;
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.TblCusCsh
+    WHERE ISNULL(EasyCashType, 0) = 0
+      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+      AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+)
+BEGIN
+    SELECT TOP (1)
+        CAST(0 AS BIT) AS Available,
+        N'AlreadyUsed' AS [Status],
+        N'هذا الكارت/التوكن تم تفعيله من قبل ولا يمكن استخدامه مرة أخرى.' AS [Message],
+        Id AS ExistingCustomerId,
+        CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName
+    FROM dbo.TblCusCsh
+    WHERE ISNULL(EasyCashType, 0) = 0
+      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+      AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+    ORDER BY Id;
+    RETURN;
+END;
+
+IF @NationalId IS NOT NULL
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.TblCusCsh
+       WHERE ISNULL(EasyCashType, 0) = 0
+         AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalId
+         AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+         AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+              OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
+   )
+BEGIN
+    SELECT TOP (1)
+        CAST(0 AS BIT) AS Available,
+        N'CustomerSameType' AS [Status],
+        N'هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.' AS [Message],
+        Id AS ExistingCustomerId,
+        CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName
+    FROM dbo.TblCusCsh
+    WHERE ISNULL(EasyCashType, 0) = 0
+      AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalId
+      AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+      AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+           OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
+    ORDER BY Id;
+    RETURN;
+END;
+
+IF @NationalId IS NULL
+   AND @Mobile IS NOT NULL
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.TblCusCsh
+       WHERE ISNULL(EasyCashType, 0) = 0
+         AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @Mobile
+         AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+         AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+              OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
+   )
+BEGIN
+    SELECT TOP (1)
+        CAST(0 AS BIT) AS Available,
+        N'CustomerSameType' AS [Status],
+        N'هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.' AS [Message],
+        Id AS ExistingCustomerId,
+        CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName
+    FROM dbo.TblCusCsh
+    WHERE ISNULL(EasyCashType, 0) = 0
+      AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @Mobile
+      AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+      AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+           OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
+    ORDER BY Id;
+    RETURN;
+END;
+
+IF @SameExisting = 0
+   AND
+   (
+       NOT EXISTS
+       (
+           SELECT 1
+           FROM dbo.Transaction_Details td
+           INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+           WHERE t.Transaction_Type = 20
+             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+       )
+       OR EXISTS
+       (
+           SELECT 1
+           FROM dbo.Transaction_Details td
+           INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+           WHERE t.Transaction_Type = 19
+             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+       )
+   )
+BEGIN
+    SELECT
+        CAST(0 AS BIT) AS Available,
+        N'NotInStock' AS [Status],
+        N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.' AS [Message],
+        CAST(NULL AS INT) AS ExistingCustomerId,
+        CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName;
+    RETURN;
+END;
+
+SELECT
+    CAST(1 AS BIT) AS Available,
+    N'Available' AS [Status],
+    N'الكارت متاح ويمكن تفعيله.' AS [Message],
+    CAST(NULL AS INT) AS ExistingCustomerId,
+    CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@cardNo", SqlDbType.NVarChar, 255, cardNo);
+                AddString(command, "@nationalId", SqlDbType.NVarChar, 255, nationalId);
+                AddString(command, "@mobile", SqlDbType.NVarChar, 50, mobile);
+                Add(command, "@excludeCustomerId", SqlDbType.Int, excludeCustomerId);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        result.Available = ReadBoolean(reader, "Available");
+                        result.Status = ReadString(reader, "Status");
+                        result.Message = ReadString(reader, "Message");
+                        result.ExistingCustomerId = ReadInt(reader, "ExistingCustomerId");
+                        result.ExistingBranchName = ReadString(reader, "ExistingBranchName");
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public PosCustomerLookupDto SaveKeshniCardCustomer(PosCashCustomerSaveRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException("request");
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction(IsolationLevel.Serializable))
+                {
+                    var lockResource = "POS.KYC.CardActivation." + (request.CardNo ?? string.Empty).Trim();
+                    using (var lockCommand = new SqlCommand("sys.sp_getapplock", connection, transaction))
+                    {
+                        lockCommand.CommandType = CommandType.StoredProcedure;
+                        lockCommand.Parameters.Add("@Resource", SqlDbType.NVarChar, 255).Value = lockResource;
+                        lockCommand.Parameters.Add("@LockMode", SqlDbType.VarChar, 32).Value = "Exclusive";
+                        lockCommand.Parameters.Add("@LockOwner", SqlDbType.VarChar, 32).Value = "Transaction";
+                        lockCommand.Parameters.Add("@LockTimeout", SqlDbType.Int).Value = 10000;
+                        var returnParameter = lockCommand.Parameters.Add("@ReturnValue", SqlDbType.Int);
+                        returnParameter.Direction = ParameterDirection.ReturnValue;
+                        lockCommand.ExecuteNonQuery();
+                        var lockResult = returnParameter.Value == DBNull.Value ? -999 : Convert.ToInt32(returnParameter.Value, CultureInfo.InvariantCulture);
+                        if (lockResult < 0)
+                        {
+                            throw new InvalidOperationException("تعذر قفل التوكن أثناء التفعيل. برجاء المحاولة مرة أخرى.");
+                        }
+                    }
+
+                    ExecuteKeshniCardActivationValidation(connection, transaction, request);
+                    var savedId = SaveCashCustomerInternal(connection, transaction, request);
+                    transaction.Commit();
+
+                    request.CustomerID = savedId;
+                }
+            }
+
+            var saved = GetKeshniCardCustomerById(request.CustomerID.Value, request.BranchId, true);
+            if (saved == null)
+            {
+                throw new InvalidOperationException("تم حفظ بيانات KYC لكن تعذر تحميل نفس العميل بعد الحفظ.");
+            }
+
+            return saved;
+        }
+
+        private static void ExecuteKeshniCardActivationValidation(SqlConnection connection, SqlTransaction transaction, PosCashCustomerSaveRequest request)
+        {
+            const string sql = @"
+DECLARE @Token NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@cardNo)), N'');
+DECLARE @NationalId NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@nationalId)), N'');
+DECLARE @Mobile NVARCHAR(50) = NULLIF(LTRIM(RTRIM(@mobile)), N'');
+DECLARE @ExcludeId INT = @customerId;
+DECLARE @CardType INT = CASE WHEN LEN(@Token) = 18 THEN 18 ELSE 0 END;
+DECLARE @SameExisting BIT = 0;
+
+IF @Token IS NULL
+    RAISERROR(N'رقم الكارت مطلوب', 16, 1);
+
+IF @ExcludeId IS NOT NULL
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
+       WHERE Id = @ExcludeId
+         AND ISNULL(EasyCashType, 0) = 0
+         AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+   )
+    SET @SameExisting = 1;
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
+    WHERE ISNULL(EasyCashType, 0) = 0
+      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+      AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+)
+    RAISERROR(N'هذا الكارت/التوكن تم تفعيله من قبل ولا يمكن استخدامه مرة أخرى.', 16, 1);
+
+IF @NationalId IS NOT NULL
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
+       WHERE ISNULL(EasyCashType, 0) = 0
+         AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalId
+         AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+         AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+              OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
+   )
+    RAISERROR(N'هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.', 16, 1);
+
+IF @NationalId IS NULL
+   AND @Mobile IS NOT NULL
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
+       WHERE ISNULL(EasyCashType, 0) = 0
+         AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @Mobile
+         AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
+         AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
+              OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
+   )
+    RAISERROR(N'هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.', 16, 1);
+
+IF @SameExisting = 0
+   AND NOT EXISTS
+   (
+       SELECT 1
+       FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
+       INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+           ON t.Transaction_ID = td.Transaction_ID
+       WHERE t.Transaction_Type = 20
+         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+   )
+    RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);
+
+IF @SameExisting = 0
+   AND EXISTS
+   (
+       SELECT 1
+       FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
+       INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+           ON t.Transaction_ID = td.Transaction_ID
+       WHERE t.Transaction_Type = 19
+         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+   )
+    RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);";
+
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                AddString(command, "@cardNo", SqlDbType.NVarChar, 255, request.CardNo);
+                AddString(command, "@nationalId", SqlDbType.NVarChar, 255, request.Tet_NumPoket);
+                AddString(command, "@mobile", SqlDbType.NVarChar, 50, request.PhoneNo2);
+                Add(command, "@customerId", SqlDbType.Int, request.CustomerID);
+                command.ExecuteNonQuery();
+            }
+        }
+
         public PosCustomerLookupDto SaveCashCustomer(PosCashCustomerSaveRequest request)
         {
             if (request == null)
@@ -3400,6 +3726,25 @@ WHERE T.Transaction_Type = 20
                 throw new ArgumentNullException("request");
             }
 
+            int savedId;
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                savedId = SaveCashCustomerInternal(connection, null, request);
+            }
+
+            request.CustomerID = savedId;
+            var saved = GetKeshniCardCustomerById(savedId, request.BranchId, true);
+            if (saved == null)
+            {
+                throw new InvalidOperationException("تم حفظ بيانات KYC لكن تعذر تحميل نفس العميل بعد الحفظ.");
+            }
+
+            return saved;
+        }
+
+        private int SaveCashCustomerInternal(SqlConnection connection, SqlTransaction transaction, PosCashCustomerSaveRequest request)
+        {
             if (request.CustomerID.HasValue && request.CustomerID.Value > 0)
             {
                 const string updateSql = @"
@@ -3440,12 +3785,10 @@ SET
     EditDate = GETDATE()
 WHERE Id = @id;";
 
-                using (var connection = new SqlConnection(_connectionString))
-                using (var command = new SqlCommand(updateSql, connection))
+                using (var command = new SqlCommand(updateSql, connection, transaction))
                 {
                     AddCashCustomerParameters(command, request);
                     command.Parameters.Add("@id", SqlDbType.Int).Value = request.CustomerID.Value;
-                    connection.Open();
                     var affected = command.ExecuteNonQuery();
                     if (affected <= 0)
                     {
@@ -3453,13 +3796,7 @@ WHERE Id = @id;";
                     }
                 }
 
-                var updated = GetKeshniCardCustomerById(request.CustomerID.Value, request.BranchId, true);
-                if (updated == null)
-                {
-                    throw new InvalidOperationException("تم تحديث بيانات KYC لكن تعذر تحميل نفس العميل بعد الحفظ.");
-                }
-
-                return updated;
+                return request.CustomerID.Value;
             }
 
             const string insertSql = @"
@@ -3545,23 +3882,11 @@ VALUES
 
 SELECT @id AS Id;";
 
-            int newId;
-            using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand(insertSql, connection))
+            using (var command = new SqlCommand(insertSql, connection, transaction))
             {
                 AddCashCustomerParameters(command, request);
-                connection.Open();
-                newId = Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+                return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture);
             }
-
-            request.CustomerID = newId;
-            var inserted = GetKeshniCardCustomerById(newId, request.BranchId, true);
-            if (inserted == null)
-            {
-                throw new InvalidOperationException("تم حفظ بيانات KYC لكن تعذر تحميل نفس العميل الجديد برقم السجل.");
-            }
-
-            return inserted;
         }
 
         public void SaveKeshniCardAttachment(string subjectNo, string fileName, string title)
@@ -7391,10 +7716,12 @@ ORDER BY dev.Notes_ID, dev.DEV_ID_Line_No;";
                 {
                     while (reader.Read())
                     {
+                        var recordDate = ReadDateTime(reader, "RecordDate");
                         entries.Add(new PosJournalEntryDto
                         {
                             NoteSerial = ReadString(reader, "NoteSerial"),
-                            RecordDate = ReadDateTime(reader, "RecordDate"),
+                            RecordDate = recordDate,
+                            RecordDateText = recordDate.HasValue ? recordDate.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) : string.Empty,
                             AccountSerial = ReadString(reader, "Account_Serial"),
                             AccountCode = ReadString(reader, "Account_Code"),
                             AccountName = ReadString(reader, "Account_Name"),

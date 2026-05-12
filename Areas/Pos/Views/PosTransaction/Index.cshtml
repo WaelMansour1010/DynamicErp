@@ -19,6 +19,10 @@
         && !posContext.IsFullAccess
         && posContext.UserType.GetValueOrDefault(-1) != 0;
     var showSalesIndexFirst = posContext != null && !opensInvoiceDirectly;
+    var kycDefaultBranchName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BranchName)
+        ? posContext.BranchName
+        : (posContext != null && posContext.BranchId.HasValue ? ("فرع " + posContext.BranchId.Value.ToString()) : "جلسة POS غير مكتملة");
+    var kycDefaultCreatedDate = DateTime.Now.ToString("yyyy-MM-dd hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
 }
 
 <meta charset="utf-8" />
@@ -37,6 +41,7 @@
      data-customer-lookup-url="@Url.Action("LookupCustomerByPhone", "PosTransaction", new { area = "Pos" })"
      data-customer-search-url="@Url.Action("SearchKeshniCardCustomers", "PosTransaction", new { area = "Pos" })"
      data-unused-kyc-lookup-url="@Url.Action("LookupUnusedKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
+     data-kyc-card-availability-url="@Url.Action("ValidateKeshniCardAvailability", "PosTransaction", new { area = "Pos" })"
      data-save-keshni-card-url="@Url.Action("SaveKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
      data-kyc-attachments-url="@Url.Action("List", "KycAttachment", new { area = "Pos" })"
      data-open-kyc-attachment-url="@Url.Action("Open", "KycAttachment", new { area = "Pos" })"
@@ -62,6 +67,8 @@
      data-default-emp-name="@(posContext != null ? posContext.EmpName : "")"
      data-default-branch-id="@(posContext != null && posContext.BranchId.HasValue ? posContext.BranchId.Value.ToString() : "")"
      data-default-branch-name="@(posContext != null ? posContext.BranchName : "")"
+     data-default-kyc-created-branch="@kycDefaultBranchName"
+     data-default-kyc-created-date="@kycDefaultCreatedDate"
      data-default-store-id="@(posContext != null && posContext.StoreId.HasValue ? posContext.StoreId.Value.ToString() : "")"
      data-default-store-name="@(posContext != null ? posContext.StoreName : "")"
      data-default-box-id="@(posContext != null && posContext.BoxId.HasValue ? posContext.BoxId.Value.ToString() : "")"
@@ -250,54 +257,77 @@
 
             <section class="pos-modal" id="cashCustomerPanel" aria-hidden="true">
                 <div class="pos-modal-backdrop" id="kycModalBackdrop"></div>
-                <div class="pos-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kycModalTitle">
-                <div class="panel-heading modal-heading">
-                    <h2 id="kycModalTitle">تفعيل كارت كيشني - بيانات KYC</h2>
-                    <button type="button" class="icon-action" id="closeKycModalBtn">إغلاق</button>
+                <div class="pos-modal-dialog kyc-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kycModalTitle">
+                <div class="kyc-modal-header modal-heading">
+                    <div class="kyc-title-block">
+                        <h2 id="kycModalTitle">تفعيل كارت كيشني - بيانات KYC</h2>
+                        <div class="kyc-meta-line" aria-label="بيانات النظام">
+                            <span>فرع الإنشاء: <strong id="kycCreatedBranchDisplay">@kycDefaultBranchName</strong></span>
+                            <span class="kyc-meta-separator">|</span>
+                            <span>تاريخ الإنشاء: <strong id="kycCreatedDateDisplay">@kycDefaultCreatedDate</strong></span>
+                        </div>
+                    </div>
+                    <button type="button" class="icon-action kyc-close-action" id="closeKycModalBtn">إغلاق</button>
                 </div>
                 <input type="hidden" id="cashCustomerId" />
+                <input type="hidden" id="kycCreatedBranch" value="@kycDefaultBranchName" />
+                <input type="hidden" id="kycCreatedDate" value="@kycDefaultCreatedDate" />
                 <div class="kyc-search-row">
-                    <input type="text" id="kycSearchTerm" placeholder="ابحث برقم الهاتف أو التوكن أو الرقم القومي أو اسم العميل" />
+                    <input type="text" id="kycSearchTerm" placeholder="ابحث بالموبايل / الرقم القومي / التوكن" />
                     <button type="button" class="secondary-action" id="kycSearchBtn">بحث</button>
                 </div>
                 <div id="kycSearchResults" class="kyc-results"></div>
-                <div class="pos-grid four-cols">
-                    <label>فرع إنشاء KYC<input type="text" id="kycCreatedBranch" readonly /></label>
-                    <label>تاريخ إنشاء KYC<input type="text" id="kycCreatedDate" readonly /></label>
-                    <label>الاسم العربي الأول<input type="text" id="kycArabicName0" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>
-                    <label>الاسم العربي الثاني<input type="text" id="kycArabicName1" dir="rtl" lang="ar" /></label>
-                    <label>الاسم العربي الثالث<input type="text" id="kycArabicName2" dir="rtl" lang="ar" /></label>
-                    <label>اسم العميل كامل<input type="text" id="kycName" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>
-                    <label>الاسم الإنجليزي الأول<input type="text" id="kycEnglishName0" dir="ltr" lang="en" /></label>
-                    <label>الاسم الإنجليزي الثاني<input type="text" id="kycEnglishName1" dir="ltr" lang="en" /></label>
-                    <label>الاسم الإنجليزي الثالث<input type="text" id="kycEnglishName2" dir="ltr" lang="en" /></label>
-                    <label>الاسم الإنجليزي كامل<input type="text" id="kycNameE" dir="ltr" lang="en" /></label>
-                    <label>موبايل أساسي<input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></label>
-                    <input type="hidden" id="kycPhoneNo" />
-                    <label>رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
-                    <label>الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
-                    <input type="hidden" id="kycCardSource" />
+                <div class="pos-grid four-cols kyc-compact-form">
+                    <div class="kyc-inline-section-title">البيانات الأساسية</div>
+                    <label class="kyc-important-field">الموبايل الأساسي<input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></label>
+                    <label class="kyc-important-field">الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
+                    <label class="kyc-important-field">رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
                     <label>تاريخ الميلاد<input type="date" id="kycBirthDate" min="1753-01-01" max="9999-12-31" /></label>
                     <label>تاريخ الإصدار<input type="date" id="kycCardDate" min="1753-01-01" max="9999-12-31" /></label>
                     <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" min="1753-01-01" max="9999-12-31" /></label>
-                    <label>العنوان العربي<input type="text" id="kycAddress" dir="rtl" lang="ar" /></label>
-                    <label>العنوان الإنجليزي 1<input type="text" id="kycEnglishName5" dir="ltr" lang="en" /></label>
+
+                    <div class="kyc-inline-section-title">الاسم بالعربي</div>
+                    <label>الاسم الأول<input type="text" id="kycArabicName0" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>
+                    <label>الاسم الثاني<input type="text" id="kycArabicName1" dir="rtl" lang="ar" /></label>
+                    <label>الاسم الثالث<input type="text" id="kycArabicName2" dir="rtl" lang="ar" /></label>
+                    <label>الاسم الرابع<input type="text" id="kycArabicName3" dir="rtl" lang="ar" /></label>
+                    <label class="kyc-half-field">الاسم العربي كامل<input type="text" id="kycName" placeholder="اسم العميل" dir="rtl" lang="ar" /><span class="kyc-field-helper">يمكن كتابة الاسم كامل وسيتم توزيعه تلقائيًا</span></label>
+
+                    <div class="kyc-inline-section-title">الاسم بالإنجليزية</div>
+                    <label class="kyc-ltr-field">First Name<input type="text" id="kycEnglishName0" dir="ltr" lang="en" /></label>
+                    <label class="kyc-ltr-field">Second Name<input type="text" id="kycEnglishName1" dir="ltr" lang="en" /></label>
+                    <label class="kyc-ltr-field">Third Name<input type="text" id="kycEnglishName2" dir="ltr" lang="en" /></label>
+                    <label class="kyc-ltr-field">Fourth Name<input type="text" id="kycEnglishName3" dir="ltr" lang="en" /></label>
+                    <label class="kyc-half-field kyc-ltr-field">Full English Name<input type="text" id="kycNameE" dir="ltr" lang="en" /><span class="kyc-field-helper">Write the full name to split it automatically</span></label>
+
+                    <div class="kyc-inline-section-title">العنوان</div>
+                    <label class="kyc-half-field">العنوان العربي<input type="text" id="kycAddress" dir="rtl" lang="ar" /></label>
+                    <label class="kyc-half-field kyc-ltr-field">العنوان الإنجليزي<input type="text" id="kycEnglishName5" dir="ltr" lang="en" /></label>
+
+                    <input type="hidden" id="kycPhoneNo" />
+                    <input type="hidden" id="kycCardSource" />
                     <input type="hidden" id="kycEnglishName6" />
                     <input type="hidden" id="kycEnglishName7" />
                     <input type="hidden" id="kycMailAddress" />
-                    <label>مرفقات<input type="file" id="kycAttachments" multiple /></label>
                     <input type="hidden" id="kycTel" />
                     <input type="hidden" id="kycCard" />
                 </div>
-                <div class="kyc-attachments-panel">
-                    <div class="panel-heading compact-heading">
+                <section class="kyc-attachments-panel">
+                    <div class="compact-heading">
                         <h3>المرفقات</h3>
                         <button type="button" class="secondary-action" id="showKycAttachmentsBtn">عرض المرفقات</button>
                     </div>
+                    <label class="kyc-upload-dropzone" for="kycAttachments">
+                        <span class="kyc-upload-icon" aria-hidden="true">⇧</span>
+                        <strong>اسحب الملفات هنا أو اضغط للاختيار</strong>
+                        <small>صور أو PDF، ويتم ربطها ببيانات العميل عند الحفظ</small>
+                        <input type="file" id="kycAttachments" multiple />
+                    </label>
+                    <div id="kycSelectedAttachmentsList" class="kyc-attachments-list"></div>
                     <div id="kycAttachmentsList" class="kyc-attachments-list">لا توجد مرفقات معروضة</div>
-                </div>
+                </section>
                 <div id="kycSaveMessage" class="kyc-save-message"></div>
-                <div class="modal-actions">
+                <div class="modal-actions kyc-action-bar">
                     <span class="prototype-warning">يتم حفظ المرفقات وربطها ببيانات العميل.</span>
                     <button type="button" class="secondary-action" id="printCardBtn" disabled>طباعة الكارت</button>
                     <button type="button" class="secondary-action" id="printAcknowledgmentBtn" disabled>طباعة الإقرار</button>
