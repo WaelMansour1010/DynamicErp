@@ -3456,32 +3456,37 @@ WHERE T.Transaction_Type = 20
             const string sql = @"
 ;WITH StoreTokens AS
 (
-    SELECT
+    SELECT TOP (@CandidateTake)
         LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
         td.Item_ID AS ItemId,
-        td.Quantity
-    FROM dbo.Transaction_Details td
-    INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
-    LEFT JOIN dbo.TblStore st ON st.StoreID = t.StoreID
-    WHERE t.StoreID = @StoreId
-      AND t.Transaction_Type = 20
-      AND (@CanChangeDefaults = 1 OR @BranchId IS NULL OR ISNULL(st.BranchId, 0) = @BranchId)
+        ISNULL(td.Quantity, 0) AS Quantity,
+        t.Transaction_ID
+    FROM dbo.Transactions t WITH (READPAST)
+    INNER JOIN dbo.Transaction_Details td WITH (READPAST)
+        ON td.Transaction_ID = t.Transaction_ID
+    WHERE t.Transaction_Type = 20
+      AND t.StoreID = @StoreId
       AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
       AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) IN (8, 18)
       AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermLike)
+    ORDER BY
+      CASE WHEN ISNULL(@Term, N'') <> N'' AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermStartsWith THEN 0 ELSE 1 END,
+      t.Transaction_ID DESC
 ),
 Filtered AS
 (
     SELECT TOP (@Take)
         st.Token,
         MAX(st.ItemId) AS ItemId,
-        SUM(ISNULL(st.Quantity, 0)) AS AvailableQty
+        SUM(st.Quantity) AS AvailableQty,
+        MAX(st.Transaction_ID) AS LastTransactionId
     FROM StoreTokens st
     WHERE NOT EXISTS
       (
           SELECT 1
-          FROM dbo.Transaction_Details issueDetail
-          INNER JOIN dbo.Transactions issueTransaction ON issueTransaction.Transaction_ID = issueDetail.Transaction_ID
+          FROM dbo.Transactions issueTransaction WITH (READPAST)
+          INNER JOIN dbo.Transaction_Details issueDetail WITH (READPAST)
+              ON issueDetail.Transaction_ID = issueTransaction.Transaction_ID
           WHERE issueTransaction.Transaction_Type = 19
             AND issueTransaction.StoreID = @StoreId
             AND LTRIM(RTRIM(ISNULL(issueDetail.ItemSerial, N''))) = st.Token
@@ -3489,7 +3494,7 @@ Filtered AS
       AND NOT EXISTS
       (
           SELECT 1
-          FROM dbo.Transactions saleTransaction
+          FROM dbo.Transactions saleTransaction WITH (READPAST)
           WHERE saleTransaction.Transaction_Type = 21
             AND ISNULL(saleTransaction.IsCancelled, 0) = 0
             AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = st.Token
@@ -3497,7 +3502,7 @@ Filtered AS
       AND NOT EXISTS
       (
           SELECT 1
-          FROM dbo.TblCusCsh customer
+          FROM dbo.TblCusCsh customer WITH (READPAST)
           WHERE ISNULL(customer.EasyCashType, 0) = 0
             AND
             (
@@ -3506,9 +3511,10 @@ Filtered AS
             )
       )
     GROUP BY st.Token
-    HAVING SUM(ISNULL(st.Quantity, 0)) > 0
+    HAVING SUM(st.Quantity) > 0
     ORDER BY
         CASE WHEN ISNULL(@Term, N'') <> N'' AND st.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
+        MAX(st.Transaction_ID) DESC,
         st.Token
 )
 SELECT
@@ -3521,7 +3527,7 @@ SELECT
 FROM Filtered f
 LEFT JOIN dbo.TblItems i ON i.ItemID = f.ItemId
 LEFT JOIN dbo.TblStore store ON store.StoreID = @StoreId
-ORDER BY f.Token;";
+ORDER BY f.LastTransactionId DESC, f.Token;";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -3531,6 +3537,7 @@ ORDER BY f.Token;";
                 Add(command, "@BranchId", SqlDbType.Int, branchId);
                 Add(command, "@CanChangeDefaults", SqlDbType.Bit, canChangeDefaults);
                 Add(command, "@Take", SqlDbType.Int, take);
+                Add(command, "@CandidateTake", SqlDbType.Int, string.IsNullOrWhiteSpace(term) ? Math.Max(take * 20, 500) : Math.Max(take * 10, 200));
                 AddString(command, "@Term", SqlDbType.NVarChar, 255, string.IsNullOrWhiteSpace(term) ? null : term.Trim());
                 AddString(command, "@TermLike", SqlDbType.NVarChar, 260, string.IsNullOrWhiteSpace(term) ? null : "%" + term.Trim() + "%");
                 AddString(command, "@TermStartsWith", SqlDbType.NVarChar, 260, string.IsNullOrWhiteSpace(term) ? null : term.Trim() + "%");
@@ -3648,8 +3655,6 @@ END;
 
 IF @NationalIdValue IS NULL
    AND @MobileValue IS NOT NULL
-      AND NOT EXISTS
-      (
    AND EXISTS
    (
        SELECT 1

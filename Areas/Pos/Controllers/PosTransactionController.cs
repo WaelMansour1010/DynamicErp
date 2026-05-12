@@ -1118,15 +1118,30 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            var effectiveStoreId = context.CanChangeDefaults ? (storeId ?? context.StoreId) : context.StoreId;
-            var cards = _repository.SearchAvailableKeshniCardTokens(term, effectiveStoreId, context.BranchId, context.CanChangeDefaults, 30);
-            return Json(new
+            try
             {
-                success = true,
-                cards,
-                storeId = effectiveStoreId,
-                storeName = context.StoreName
-            }, JsonRequestBehavior.AllowGet);
+                var effectiveStoreId = context.CanChangeDefaults ? (storeId ?? context.StoreId) : context.StoreId;
+                var cards = _repository.SearchAvailableKeshniCardTokens(term, effectiveStoreId, context.BranchId, context.CanChangeDefaults, 30);
+                return Json(new
+                {
+                    success = true,
+                    cards,
+                    storeId = effectiveStoreId,
+                    storeName = context.StoreName
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (SqlException ex)
+            {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "SearchAvailableKeshniCards.SqlException", null, null, ex.Message, ex, "SearchAvailableKeshniCards", "Error", "SqlException");
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر تحميل الكروت المتاحة من مخزن الجلسة. جرّب كتابة أول أرقام من التوكن لتضييق البحث.", ex.Message), JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                PosSystemErrorLogger.Log(_repository, Request, context, "PosTransaction", "SearchAvailableKeshniCards.Exception", null, null, ex.Message, ex, "SearchAvailableKeshniCards", "Error", "Exception");
+                SetJsonErrorStatus(500);
+                return Json(Fail("تعذر تحميل الكروت المتاحة", ex.Message), JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
