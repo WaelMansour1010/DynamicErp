@@ -4,6 +4,25 @@
     var templateName = (string)ViewBag.TemplateName ?? "KycCard";
     var availableTemplates = (System.Collections.Generic.IList<string>)ViewBag.Templates
         ?? new System.Collections.Generic.List<string>();
+
+    // Cache-buster derived from the asset's last-write time so every
+    // deploy automatically defeats stale browser/proxy caches without
+    // anyone having to remember to bump a manual version string.
+    System.Func<string, string> ptdAssetVersion = (virtualPath) =>
+    {
+        try
+        {
+            var physical = Server.MapPath(virtualPath);
+            if (!string.IsNullOrEmpty(physical) && System.IO.File.Exists(physical))
+            {
+                return System.IO.File.GetLastWriteTimeUtc(physical).Ticks.ToString();
+            }
+        }
+        catch { /* ignore - fall back to a constant below */ }
+        return "20260512-ptd2";
+    };
+    var ptdCssV = ptdAssetVersion("~/Areas/Pos/Content/print-template-designer.css");
+    var ptdJsV = ptdAssetVersion("~/Areas/Pos/Scripts/print-template-designer.js");
 }
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -11,7 +30,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>@ViewBag.Title</title>
-    <link href="@Url.Content("~/Areas/Pos/Content/print-template-designer.css?v=20260512-ptd2")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/print-template-designer.css")?v=@ptdCssV" rel="stylesheet" />
 </head>
 <body>
     <div class="ptd-page" id="ptdPage"
@@ -125,6 +144,6 @@
         </div>
     </div>
 
-    <script src="@Url.Content("~/Areas/Pos/Scripts/print-template-designer.js?v=20260512-ptd2")"></script>
+    <script src="@Url.Content("~/Areas/Pos/Scripts/print-template-designer.js")?v=@ptdJsV"></script>
 </body>
 </html>
