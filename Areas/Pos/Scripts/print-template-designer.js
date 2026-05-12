@@ -27,7 +27,53 @@
         { key: "Phone", label: "رقم المحمول", isCellBased: true, defaultCells: 11 },
         { key: "TokenNo", label: "Token NO. (تحت)", isCellBased: true, defaultCells: 12 },
         { key: "SignatureName", label: "اسم العميل (توقيع)" },
-        { key: "FooterDate", label: "التاريخ" }
+        { key: "FooterDate", label: "التاريخ" },
+        // Extra data fields that map to columns/aliases already exposed
+        // by KycCardReport.BuildValues.
+        { key: "name", label: "الاسم (Name)" },
+        { key: "namee", label: "الاسم بالإنجليزي (NameE)", direction: "LTR" },
+        { key: "EnglishName5", label: "الاسم بالإنجليزي 5", direction: "LTR" },
+        { key: "EnglishName6", label: "الاسم بالإنجليزي 6", direction: "LTR" },
+        { key: "EnglishName7", label: "الاسم بالإنجليزي 7", direction: "LTR" },
+        { key: "CardDate", label: "تاريخ البطاقة", direction: "LTR" },
+        { key: "CardSource", label: "جهة البطاقة" },
+        { key: "CardEndDate", label: "تاريخ انتهاء البطاقة", direction: "LTR" },
+        { key: "phoneNo", label: "رقم الهاتف", direction: "LTR" },
+        { key: "jobName", label: "الوظيفة" },
+        { key: "WorkAddress", label: "عنوان العمل" },
+        { key: "Email", label: "البريد الإلكتروني", direction: "LTR" }
+    ];
+
+    // Special field types (not bound to the customer dictionary) that
+    // the user adds from the palette as many times as they need. Each
+    // instance gets a unique FieldKey so multiple of them coexist on
+    // the same template.
+    var SPECIAL_DEFS = [
+        {
+            type: "CheckMark",
+            label: "علامة صح ✓",
+            keyPrefix: "Check",
+            defaultWidth: 30,
+            defaultHeight: 30,
+            defaultFontSize: 16
+        },
+        {
+            type: "CrossMark",
+            label: "علامة خطأ ✗",
+            keyPrefix: "Cross",
+            defaultWidth: 30,
+            defaultHeight: 30,
+            defaultFontSize: 16
+        },
+        {
+            type: "StaticText",
+            label: "نص حر (تكست)",
+            keyPrefix: "Text",
+            defaultWidth: 200,
+            defaultHeight: 24,
+            defaultFontSize: 10,
+            defaultStaticContent: "اكتب النص هنا"
+        }
     ];
 
     var state = {
@@ -139,6 +185,57 @@
             });
             paletteEl.appendChild(btn);
         });
+
+        // Separator + special (non-data-bound) fields. Each click creates
+        // a new instance with a unique FieldKey so the user can drop
+        // multiple checkmarks / crosses / static texts on the template.
+        var separator = document.createElement("div");
+        separator.className = "ptd-palette-separator";
+        separator.textContent = "إضافات";
+        paletteEl.appendChild(separator);
+
+        SPECIAL_DEFS.forEach(function (def) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = def.label;
+            btn.className = "ptd-palette-special";
+            btn.addEventListener("click", function () { addSpecialField(def); });
+            paletteEl.appendChild(btn);
+        });
+    }
+
+    function nextSpecialKey(prefix) {
+        var i = 1;
+        while (findField(prefix + "_" + i)) { i++; }
+        return prefix + "_" + i;
+    }
+
+    function addSpecialField(def) {
+        var t = state.template;
+        var newField = {
+            FieldKey: nextSpecialKey(def.keyPrefix),
+            Label: def.label,
+            X: t.PageWidth * 0.4,
+            Y: t.PageHeight * 0.4,
+            Width: def.defaultWidth || 100,
+            Height: def.defaultHeight || 24,
+            FontName: "Tahoma",
+            FontSize: def.defaultFontSize || 11,
+            Bold: true,
+            Alignment: "Center",
+            Direction: "LTR",
+            IsCellBased: false,
+            CellCount: 0,
+            CellWidth: 0,
+            CharacterSpacing: 0,
+            FieldType: def.type,
+            StaticContent: def.defaultStaticContent || ""
+        };
+        t.Fields.push(newField);
+        state.selectedFieldKey = newField.FieldKey;
+        renderPalette();
+        renderFields();
+        renderPropertiesPanel();
     }
 
     function addFieldFromDef(def) {
@@ -158,7 +255,9 @@
             IsCellBased: !!def.isCellBased,
             CellCount: def.isCellBased ? def.defaultCells : 0,
             CellWidth: def.isCellBased ? 50 : 0,
-            CharacterSpacing: 0
+            CharacterSpacing: 0,
+            FieldType: "Data",
+            StaticContent: ""
         };
         t.Fields.push(newField);
         state.selectedFieldKey = newField.FieldKey;
@@ -176,11 +275,23 @@
         });
     }
 
+    function previewContentFor(field) {
+        var type = (field.FieldType || "Data");
+        if (type === "CheckMark") { return "✓"; }
+        if (type === "CrossMark") { return "✗"; }
+        if (type === "StaticText") { return field.StaticContent || ""; }
+        return null;
+    }
+
     function createFieldNode(field) {
         var node = document.createElement("div");
         node.className = "ptd-field";
         if (state.selectedFieldKey === field.FieldKey) { node.classList.add("is-selected"); }
         node.setAttribute("data-key", field.FieldKey);
+        if (field.FieldType && field.FieldType !== "Data") {
+            node.classList.add("is-special");
+            node.setAttribute("data-type", field.FieldType);
+        }
 
         node.style.left = unitsToScreen(field.X) + "px";
         node.style.top = unitsToScreen(field.Y) + "px";
@@ -191,6 +302,21 @@
         label.className = "ptd-field-label";
         label.textContent = field.Label || field.FieldKey;
         node.appendChild(label);
+
+        // Preview the actual content (✓ / ✗ / static text) inside the
+        // box so the designer matches what will print. Data fields keep
+        // showing only the small caption tag - their value depends on
+        // the customer at print time.
+        var preview = previewContentFor(field);
+        if (preview !== null) {
+            var content = document.createElement("div");
+            content.className = "ptd-field-content";
+            content.textContent = preview;
+            content.style.fontSize = unitsToScreen(field.FontSize || 10) + "px";
+            content.style.fontWeight = field.Bold ? "bold" : "normal";
+            content.style.textAlign = ((field.Alignment || "Center").toLowerCase());
+            node.appendChild(content);
+        }
 
         if (field.IsCellBased && field.CellCount > 1 && field.CellWidth > 0) {
             var cellsBox = document.createElement("div");
@@ -364,6 +490,28 @@
         propsEl.innerHTML = "";
 
         addPropRow(propsEl, "العنوان", inputText("Label", field.Label, field));
+
+        // For non-data fields show the type and (only for StaticText)
+        // an editable content box. The renderer reads StaticContent at
+        // print time when FieldType === "StaticText".
+        var fieldType = field.FieldType || "Data";
+        if (fieldType !== "Data") {
+            var typeRow = document.createElement("p");
+            typeRow.className = "ptd-hint";
+            var typeLabel = "نص حر";
+            if (fieldType === "CheckMark") { typeLabel = "علامة صح ✓ (ثابتة)"; }
+            else if (fieldType === "CrossMark") { typeLabel = "علامة خطأ ✗ (ثابتة)"; }
+            typeRow.textContent = "نوع الحقل: " + typeLabel;
+            propsEl.appendChild(typeRow);
+
+            if (fieldType === "StaticText") {
+                addPropRow(propsEl, "النص الثابت",
+                    inputText("StaticContent", field.StaticContent, field, function () {
+                        renderFields();
+                    }));
+            }
+        }
+
         propsEl.appendChild(grid([
             propRow("X", inputNumber("X", field.X, field, 1)),
             propRow("Y", inputNumber("Y", field.Y, field, 1))
@@ -541,7 +689,7 @@
         return row;
     }
 
-    function inputText(propKey, value, field) {
+    function inputText(propKey, value, field, onChange) {
         var input = document.createElement("input");
         input.type = "text";
         input.setAttribute("data-prop", propKey);
@@ -549,6 +697,7 @@
         input.addEventListener("input", function () {
             field[propKey] = input.value;
             if (propKey === "Label") { renderFields(); }
+            if (onChange) { onChange(); }
         });
         return input;
     }

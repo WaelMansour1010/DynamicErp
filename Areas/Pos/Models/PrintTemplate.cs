@@ -80,5 +80,24 @@ namespace MyERP.Areas.Pos.Models
         // Default is LTR. The RightToLeft setting on the parent report
         // does NOT affect this - cell order is positional, not RTL text.
         public string CellDirection { get; set; } = "LTR";
+
+        // Content source for the rendered field. Controls how the label
+        // text is computed at print-time:
+        //   "Data"       - lookup value from the customer dictionary
+        //                  using FieldKey (the default - backwards
+        //                  compatible with existing templates that have
+        //                  no FieldType set).
+        //   "CheckMark"  - render a fixed check glyph (✓), used as a
+        //                  yes/tick marker on the form.
+        //   "CrossMark"  - render a fixed cross glyph (✗), used as a
+        //                  no/error marker on the form.
+        //   "StaticText" - render the verbatim StaticContent below; the
+        //                  designer lets the user type whatever caption
+        //                  they want.
+        public string FieldType { get; set; } = "Data";
+
+        // Verbatim text printed when FieldType == "StaticText". Ignored
+        // for every other FieldType.
+        public string StaticContent { get; set; }
     }
 }
