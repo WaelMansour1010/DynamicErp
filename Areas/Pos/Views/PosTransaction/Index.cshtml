@@ -41,6 +41,7 @@
      data-customer-lookup-url="@Url.Action("LookupCustomerByPhone", "PosTransaction", new { area = "Pos" })"
      data-customer-search-url="@Url.Action("SearchKeshniCardCustomers", "PosTransaction", new { area = "Pos" })"
      data-unused-kyc-lookup-url="@Url.Action("LookupUnusedKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
+     data-available-kyc-cards-url="@Url.Action("SearchAvailableKeshniCards", "PosTransaction", new { area = "Pos" })"
      data-kyc-card-availability-url="@Url.Action("ValidateKeshniCardAvailability", "PosTransaction", new { area = "Pos" })"
      data-save-keshni-card-url="@Url.Action("SaveKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
      data-kyc-attachments-url="@Url.Action("List", "KycAttachment", new { area = "Pos" })"
@@ -281,10 +282,16 @@
                     <div class="kyc-inline-section-title">البيانات الأساسية</div>
                     <label class="kyc-important-field">الموبايل الأساسي<input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></label>
                     <label class="kyc-important-field">الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
-                    <label class="kyc-important-field">رقم الكارت / التوكن<input type="text" id="kycCardNo" placeholder="رقم المرجع" /></label>
-                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label class="kyc-important-field kyc-token-field">رقم الكارت / التوكن
+                        <span class="kyc-token-picker">
+                            <input type="text" id="kycCardNo" placeholder="رقم المرجع" inputmode="numeric" autocomplete="off" />
+                            <button type="button" class="kyc-token-picker-btn" id="showAvailableKycCardsBtn" title="عرض الكروت المتاحة">اختيار</button>
+                            <span class="kyc-token-results" id="kycAvailableCardsResults"></span>
+                        </span>
+                    </label>
                     <label>تاريخ الإصدار<input type="date" id="kycCardDate" min="1753-01-01" max="9999-12-31" /></label>
                     <label>تاريخ الانتهاء<input type="date" id="kycCardEndDate" min="1753-01-01" max="9999-12-31" /></label>
+                    <label>تاريخ الميلاد<input type="date" id="kycBirthDate" min="1753-01-01" max="9999-12-31" /></label>
 
                     <div class="kyc-inline-section-title">الاسم بالعربي</div>
                     <label>الاسم الأول<input type="text" id="kycArabicName0" placeholder="اسم العميل" dir="rtl" lang="ar" /></label>

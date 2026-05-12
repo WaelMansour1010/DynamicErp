@@ -1042,6 +1042,15 @@ namespace MyERP.Areas.Pos.Controllers
                         request.Phone2 = string.IsNullOrWhiteSpace(request.Phone2) ? cashCustomer.Phone2 : request.Phone2;
                         request.VisaNumber = string.IsNullOrWhiteSpace(request.VisaNumber) ? cashCustomer.VisaNumber : request.VisaNumber;
                     }
+
+                    var existingCardInvoiceId = _repository.FindKeshniCardInvoiceDuplicateId(request.VisaNumber, request.Transaction_ID);
+                    if (existingCardInvoiceId.HasValue)
+                    {
+                        validationErrors["VisaNumberDuplicate"] = "هذا الكارت تم إصدار فاتورة تفعيل له من قبل. رقم الفاتورة السابقة: " + existingCardInvoiceId.Value.ToString(CultureInfo.InvariantCulture);
+                        LogPosSystemIssue(context, "Save.KycCardInvoiceDuplicate", request, null, "Duplicate Keshni card activation invoice blocked", "Warning", "Validation", BuildSaveDiagnostic("PosTransactionController.Save", request, validationErrors, null));
+                        SetJsonErrorStatus(400);
+                        return Json(Fail("لا يمكن إصدار فاتورة أخرى لنفس كارت كيشني", "Keshni card activation invoice already exists.", validationErrors));
+                    }
                 }
                 else
                 {
@@ -1097,6 +1106,27 @@ namespace MyERP.Areas.Pos.Controllers
                 var visibleMessage = "تعذر حفظ الفاتورة. " + SafeExceptionMessage(ex);
                 return Json(Fail(visibleMessage, diagnostic));
             }
+        }
+
+        [HttpGet]
+        public JsonResult SearchAvailableKeshniCards(string term, int? storeId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            var effectiveStoreId = context.CanChangeDefaults ? (storeId ?? context.StoreId) : context.StoreId;
+            var cards = _repository.SearchAvailableKeshniCardTokens(term, effectiveStoreId, context.BranchId, context.CanChangeDefaults, 30);
+            return Json(new
+            {
+                success = true,
+                cards,
+                storeId = effectiveStoreId,
+                storeName = context.StoreName
+            }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]

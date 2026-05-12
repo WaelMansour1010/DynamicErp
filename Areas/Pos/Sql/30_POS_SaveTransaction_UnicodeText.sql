@@ -330,6 +330,17 @@ BEGIN
                       AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @CardToken
                 )
                     RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);
+
+                IF EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+                    WHERE t.Transaction_Type = 21
+                      AND ISNULL(t.IsCancelled, 0) = 0
+                      AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') = @CardToken
+                      AND (@ExistingTransactionID IS NULL OR @ExistingTransactionID <= 0 OR t.Transaction_ID <> @ExistingTransactionID)
+                )
+                    RAISERROR(N'هذا الكارت تم إصدار فاتورة تفعيل له من قبل ولا يمكن إصدار فاتورة أخرى لنفس الكارت.', 16, 1);
             END;
         END
 

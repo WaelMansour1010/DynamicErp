@@ -2338,6 +2338,50 @@ WHERE t.Transaction_Type = 21
             }
         }
 
+        public int? FindKeshniCardInvoiceDuplicateId(string cardNo, int? excludeTransactionId = null)
+        {
+            if (string.IsNullOrWhiteSpace(cardNo))
+            {
+                return null;
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                return FindKeshniCardInvoiceDuplicateId(connection, cardNo, excludeTransactionId);
+            }
+        }
+
+        private static int? FindKeshniCardInvoiceDuplicateId(SqlConnection connection, string cardNo, int? excludeTransactionId = null)
+        {
+            if (connection == null)
+            {
+                throw new ArgumentNullException("connection");
+            }
+
+            if (string.IsNullOrWhiteSpace(cardNo))
+            {
+                return null;
+            }
+
+            const string sql = @"
+SELECT TOP (1) t.Transaction_ID
+FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+WHERE t.Transaction_Type = 21
+  AND ISNULL(t.IsCancelled, 0) = 0
+  AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') = @cardNo
+  AND (@excludeTransactionId IS NULL OR t.Transaction_ID <> @excludeTransactionId)
+ORDER BY t.Transaction_ID DESC;";
+
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@cardNo", SqlDbType.NVarChar, 255, cardNo.Trim());
+                Add(command, "@excludeTransactionId", SqlDbType.Int, excludeTransactionId);
+                var value = command.ExecuteScalar();
+                return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value, CultureInfo.InvariantCulture);
+            }
+        }
+
         public bool PosExcelImportSourceRowExists(string sourceFileHash, string sourceSheet, int sourceRow)
         {
             EnsurePosExcelImportAuditTables();
@@ -3398,6 +3442,120 @@ WHERE T.Transaction_Type = 20
             }
         }
 
+        public IList<PosAvailableKeshniCardDto> SearchAvailableKeshniCardTokens(string term, int? storeId, int? branchId, bool canChangeDefaults, int take)
+        {
+            var cards = new List<PosAvailableKeshniCardDto>();
+            if (!storeId.HasValue || storeId.Value <= 0)
+            {
+                return cards;
+            }
+
+            take = take <= 0 ? 20 : take;
+            if (take > 100) { take = 100; }
+
+            const string sql = @"
+;WITH AvailableSerials AS
+(
+    SELECT
+        LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
+        MAX(td.Item_ID) AS ItemId,
+        SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty
+    FROM dbo.Transaction_Details td
+    INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
+    INNER JOIN dbo.TransactionTypes tt ON tt.Transaction_Type = t.Transaction_Type
+    LEFT JOIN dbo.TblStore st ON st.StoreID = t.StoreID
+    WHERE t.StoreID = @StoreId
+      AND (@CanChangeDefaults = 1 OR @BranchId IS NULL OR ISNULL(st.BranchId, 0) = @BranchId)
+      AND ISNULL(tt.StockEffect, 0) <> 0
+      AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
+      AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) IN (8, 18)
+    GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+    HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
+),
+Filtered AS
+(
+    SELECT TOP (@Take)
+        av.Token,
+        av.ItemId,
+        av.AvailableQty
+    FROM AvailableSerials av
+    WHERE (ISNULL(@Term, N'') = N'' OR av.Token LIKE @TermLike)
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.Transaction_Details issueDetail
+          INNER JOIN dbo.Transactions issueTransaction ON issueTransaction.Transaction_ID = issueDetail.Transaction_ID
+          WHERE issueTransaction.Transaction_Type = 19
+            AND LTRIM(RTRIM(ISNULL(issueDetail.ItemSerial, N''))) = av.Token
+      )
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.Transactions saleTransaction
+          WHERE saleTransaction.Transaction_Type = 21
+            AND ISNULL(saleTransaction.IsCancelled, 0) = 0
+            AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = av.Token
+      )
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.TblCusCsh customer
+          WHERE ISNULL(customer.EasyCashType, 0) = 0
+            AND
+            (
+                LTRIM(RTRIM(ISNULL(customer.CardNo, N''))) = av.Token
+                OR LTRIM(RTRIM(ISNULL(customer.CardId, N''))) = av.Token
+            )
+      )
+    ORDER BY
+        CASE WHEN ISNULL(@Term, N'') <> N'' AND av.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
+        av.Token
+)
+SELECT
+    f.Token,
+    f.ItemId,
+    COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(50), f.ItemId)) AS ItemName,
+    COALESCE(NULLIF(i.Fullcode, N''), NULLIF(i.ItemCode, N''), CONVERT(NVARCHAR(50), f.ItemId)) AS ItemCode,
+    CAST(f.AvailableQty AS DECIMAL(18, 4)) AS AvailableQty,
+    COALESCE(NULLIF(st.StoreName, N''), NULLIF(st.StoreNamee, N''), CONVERT(NVARCHAR(50), @StoreId)) AS StoreName
+FROM Filtered f
+LEFT JOIN dbo.TblItems i ON i.ItemID = f.ItemId
+LEFT JOIN dbo.TblStore st ON st.StoreID = @StoreId
+ORDER BY f.Token;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                Add(command, "@StoreId", SqlDbType.Int, storeId);
+                Add(command, "@BranchId", SqlDbType.Int, branchId);
+                Add(command, "@CanChangeDefaults", SqlDbType.Bit, canChangeDefaults);
+                Add(command, "@Take", SqlDbType.Int, take);
+                AddString(command, "@Term", SqlDbType.NVarChar, 255, string.IsNullOrWhiteSpace(term) ? null : term.Trim());
+                AddString(command, "@TermLike", SqlDbType.NVarChar, 260, string.IsNullOrWhiteSpace(term) ? null : "%" + term.Trim() + "%");
+                AddString(command, "@TermStartsWith", SqlDbType.NVarChar, 260, string.IsNullOrWhiteSpace(term) ? null : term.Trim() + "%");
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var token = ReadString(reader, "Token");
+                        cards.Add(new PosAvailableKeshniCardDto
+                        {
+                            Token = token,
+                            ItemId = ReadInt(reader, "ItemId"),
+                            ItemName = ReadString(reader, "ItemName"),
+                            ItemCode = ReadString(reader, "ItemCode"),
+                            AvailableQty = ReadDecimal(reader, "AvailableQty").GetValueOrDefault(),
+                            StoreName = ReadString(reader, "StoreName"),
+                            TokenLength = string.IsNullOrWhiteSpace(token) ? 0 : token.Trim().Length
+                        });
+                    }
+                }
+            }
+
+            return cards;
+        }
+
         public PosKycCardAvailabilityDto ValidateKeshniCardAvailability(string cardNo, string nationalId, string mobile, int? excludeCustomerId)
         {
             var result = new PosKycCardAvailabilityDto
@@ -3418,11 +3576,11 @@ WHERE T.Transaction_Type = 20
             result.CardType = cardNo.Length == 18 ? "18" : "Other";
 
             const string sql = @"
-DECLARE @Token NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@cardNo)), N'');
-DECLARE @NationalId NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@nationalId)), N'');
-DECLARE @Mobile NVARCHAR(50) = NULLIF(LTRIM(RTRIM(@mobile)), N'');
+DECLARE @TokenValue NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@cardNo)), N'');
+DECLARE @NationalIdValue NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@nationalId)), N'');
+DECLARE @MobileValue NVARCHAR(50) = NULLIF(LTRIM(RTRIM(@mobile)), N'');
 DECLARE @ExcludeId INT = @excludeCustomerId;
-DECLARE @CardType INT = CASE WHEN LEN(@Token) = 18 THEN 18 ELSE 0 END;
+DECLARE @CardType INT = CASE WHEN LEN(@TokenValue) = 18 THEN 18 ELSE 0 END;
 DECLARE @SameExisting BIT = 0;
 
 IF @ExcludeId IS NOT NULL
@@ -3432,7 +3590,7 @@ IF @ExcludeId IS NOT NULL
        FROM dbo.TblCusCsh
        WHERE Id = @ExcludeId
          AND ISNULL(EasyCashType, 0) = 0
-         AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+         AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @TokenValue
    )
     SET @SameExisting = 1;
 
@@ -3441,7 +3599,7 @@ IF EXISTS
     SELECT 1
     FROM dbo.TblCusCsh
     WHERE ISNULL(EasyCashType, 0) = 0
-      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @TokenValue
       AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
 )
 BEGIN
@@ -3453,19 +3611,19 @@ BEGIN
         CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName
     FROM dbo.TblCusCsh
     WHERE ISNULL(EasyCashType, 0) = 0
-      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @TokenValue
       AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
     ORDER BY Id;
     RETURN;
 END;
 
-IF @NationalId IS NOT NULL
+IF @NationalIdValue IS NOT NULL
    AND EXISTS
    (
        SELECT 1
        FROM dbo.TblCusCsh
        WHERE ISNULL(EasyCashType, 0) = 0
-         AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalId
+         AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalIdValue
          AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
          AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
               OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
@@ -3479,7 +3637,7 @@ BEGIN
         CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName
     FROM dbo.TblCusCsh
     WHERE ISNULL(EasyCashType, 0) = 0
-      AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalId
+      AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalIdValue
       AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
       AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
            OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
@@ -3487,14 +3645,14 @@ BEGIN
     RETURN;
 END;
 
-IF @NationalId IS NULL
-   AND @Mobile IS NOT NULL
+IF @NationalIdValue IS NULL
+   AND @MobileValue IS NOT NULL
    AND EXISTS
    (
        SELECT 1
        FROM dbo.TblCusCsh
        WHERE ISNULL(EasyCashType, 0) = 0
-         AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @Mobile
+         AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @MobileValue
          AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
          AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
               OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
@@ -3508,7 +3666,7 @@ BEGIN
         CAST(NULL AS NVARCHAR(255)) AS ExistingBranchName
     FROM dbo.TblCusCsh
     WHERE ISNULL(EasyCashType, 0) = 0
-      AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @Mobile
+      AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @MobileValue
       AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
       AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
            OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
@@ -3525,7 +3683,7 @@ IF @SameExisting = 0
            FROM dbo.Transaction_Details td
            INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
            WHERE t.Transaction_Type = 20
-             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
        )
        OR EXISTS
        (
@@ -3533,7 +3691,7 @@ IF @SameExisting = 0
            FROM dbo.Transaction_Details td
            INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
            WHERE t.Transaction_Type = 19
-             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+             AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
        )
    )
 BEGIN
@@ -3627,14 +3785,14 @@ SELECT
         private static void ExecuteKeshniCardActivationValidation(SqlConnection connection, SqlTransaction transaction, PosCashCustomerSaveRequest request)
         {
             const string sql = @"
-DECLARE @Token NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@cardNo)), N'');
-DECLARE @NationalId NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@nationalId)), N'');
-DECLARE @Mobile NVARCHAR(50) = NULLIF(LTRIM(RTRIM(@mobile)), N'');
+DECLARE @TokenValue NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@cardNo)), N'');
+DECLARE @NationalIdValue NVARCHAR(255) = NULLIF(LTRIM(RTRIM(@nationalId)), N'');
+DECLARE @MobileValue NVARCHAR(50) = NULLIF(LTRIM(RTRIM(@mobile)), N'');
 DECLARE @ExcludeId INT = @customerId;
-DECLARE @CardType INT = CASE WHEN LEN(@Token) = 18 THEN 18 ELSE 0 END;
+DECLARE @CardType INT = CASE WHEN LEN(@TokenValue) = 18 THEN 18 ELSE 0 END;
 DECLARE @SameExisting BIT = 0;
 
-IF @Token IS NULL
+IF @TokenValue IS NULL
     RAISERROR(N'رقم الكارت مطلوب', 16, 1);
 
 IF @ExcludeId IS NOT NULL
@@ -3644,7 +3802,7 @@ IF @ExcludeId IS NOT NULL
        FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
        WHERE Id = @ExcludeId
          AND ISNULL(EasyCashType, 0) = 0
-         AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+         AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @TokenValue
    )
     SET @SameExisting = 1;
 
@@ -3653,32 +3811,32 @@ IF EXISTS
     SELECT 1
     FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
     WHERE ISNULL(EasyCashType, 0) = 0
-      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @Token
+      AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @TokenValue
       AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
 )
     RAISERROR(N'هذا الكارت/التوكن تم تفعيله من قبل ولا يمكن استخدامه مرة أخرى.', 16, 1);
 
-IF @NationalId IS NOT NULL
+IF @NationalIdValue IS NOT NULL
    AND EXISTS
    (
        SELECT 1
        FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
        WHERE ISNULL(EasyCashType, 0) = 0
-         AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalId
+         AND LTRIM(RTRIM(ISNULL(Tet_NumPoket, N''))) = @NationalIdValue
          AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
          AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
               OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
    )
     RAISERROR(N'هذا العميل لديه كارت مفعل بالفعل من نفس النوع. مسموح فقط بكارت واحد من كل نوع.', 16, 1);
 
-IF @NationalId IS NULL
-   AND @Mobile IS NOT NULL
+IF @NationalIdValue IS NULL
+   AND @MobileValue IS NOT NULL
    AND EXISTS
    (
        SELECT 1
        FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
        WHERE ISNULL(EasyCashType, 0) = 0
-         AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @Mobile
+         AND LTRIM(RTRIM(ISNULL(PhoneNo2, N''))) = @MobileValue
          AND (@ExcludeId IS NULL OR Id <> @ExcludeId)
          AND ((@CardType = 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) = 18)
               OR (@CardType <> 18 AND LEN(LTRIM(RTRIM(ISNULL(CardNo, N'')))) <> 18))
@@ -3693,7 +3851,7 @@ IF @SameExisting = 0
        INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
            ON t.Transaction_ID = td.Transaction_ID
        WHERE t.Transaction_Type = 20
-         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
    )
     RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);
 
@@ -3705,7 +3863,7 @@ IF @SameExisting = 0
        INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
            ON t.Transaction_ID = td.Transaction_ID
        WHERE t.Transaction_Type = 19
-         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @Token
+         AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @TokenValue
    )
     RAISERROR(N'هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.', 16, 1);";
 
@@ -4361,6 +4519,7 @@ SELECT
                 paymentsParameter.Value = paymentsTable;
 
                 connection.Open();
+                AssertKeshniCardInvoiceCanBeSaved(connection, request);
                 using (var reader = command.ExecuteReader())
                 {
                     if (!reader.Read())
@@ -4374,6 +4533,46 @@ SELECT
                         NoteSerial1 = ReadString(reader, "NoteSerial1")
                     };
                 }
+            }
+        }
+
+        private void AssertKeshniCardInvoiceCanBeSaved(SqlConnection connection, PosSaveTransactionRequest request)
+        {
+            if (connection == null)
+            {
+                throw new ArgumentNullException("connection");
+            }
+
+            if (request == null || !IsCardService(request.TransactionType))
+            {
+                return;
+            }
+
+            var cardToken = string.IsNullOrWhiteSpace(request.VisaNumber) ? request.CardSerial : request.VisaNumber;
+            if (string.IsNullOrWhiteSpace(cardToken))
+            {
+                return;
+            }
+
+            cardToken = cardToken.Trim();
+            var lockResource = "POS.KYC.CardInvoice." + cardToken;
+            using (var lockCommand = new SqlCommand("EXEC @result = sys.sp_getapplock @Resource = @resource, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 10000;", connection))
+            {
+                lockCommand.Parameters.Add("@resource", SqlDbType.NVarChar, 255).Value = lockResource;
+                var resultParameter = lockCommand.Parameters.Add("@result", SqlDbType.Int);
+                resultParameter.Direction = ParameterDirection.Output;
+                lockCommand.ExecuteNonQuery();
+                var lockResult = resultParameter.Value == DBNull.Value ? -999 : Convert.ToInt32(resultParameter.Value, CultureInfo.InvariantCulture);
+                if (lockResult < 0)
+                {
+                    throw new InvalidOperationException("تعذر قفل الكارت أثناء حفظ الفاتورة. برجاء المحاولة مرة أخرى.");
+                }
+            }
+
+            var duplicateTransactionId = FindKeshniCardInvoiceDuplicateId(connection, cardToken, request.Transaction_ID);
+            if (duplicateTransactionId.HasValue)
+            {
+                throw new InvalidOperationException("هذا الكارت تم إصدار فاتورة تفعيل له من قبل. رقم الفاتورة السابقة: " + duplicateTransactionId.Value.ToString(CultureInfo.InvariantCulture));
             }
         }
 

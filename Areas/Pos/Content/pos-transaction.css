@@ -4643,6 +4643,109 @@ button.kyc-only.is-visible { display: inline-flex !important; }
     padding: 7px 9px;
 }
 
+.kyc-token-field {
+    position: relative;
+}
+
+.kyc-token-picker {
+    align-items: stretch;
+    display: flex;
+    gap: 6px;
+    position: relative;
+    width: 100%;
+}
+
+.kyc-compact-form .kyc-token-picker input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+}
+
+.kyc-token-picker .kyc-token-picker-btn {
+    background: #eef5fb;
+    border: 1px solid #c6d6e4;
+    border-radius: 4px;
+    color: #24506d;
+    cursor: pointer;
+    flex: 0 0 auto;
+    font-family: "Tahoma", "Arial", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    min-height: 38px;
+    min-width: 58px;
+    padding: 0 12px;
+    white-space: nowrap;
+}
+
+.kyc-token-picker .kyc-token-picker-btn:hover {
+    background: #e3eef8;
+    border-color: #9fb9ce;
+}
+
+.kyc-token-results {
+    background: #ffffff;
+    border: 1px solid #cbd5df;
+    border-radius: 6px;
+    box-shadow: 0 14px 32px rgba(17, 24, 39, .14);
+    display: none;
+    inset-inline: 0;
+    max-height: 260px;
+    overflow: auto;
+    padding: 6px;
+    position: absolute;
+    top: calc(100% + 4px);
+    z-index: 40;
+}
+
+.kyc-token-results.is-open {
+    display: block;
+}
+
+.kyc-token-results-title,
+.kyc-token-empty {
+    color: #667085;
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 8px;
+}
+
+.kyc-token-option {
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    color: #1f2937;
+    cursor: pointer;
+    display: block;
+    font-family: inherit;
+    padding: 7px 8px;
+    text-align: right;
+    width: 100%;
+}
+
+.kyc-token-option:hover,
+.kyc-token-option:focus {
+    background: #f0f6fb;
+    outline: 0;
+}
+
+.kyc-token-option strong {
+    color: #12344d;
+    display: block;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.kyc-token-option span {
+    color: #667085;
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
 .kyc-compact-form .pos-phone-helper,
 .kyc-field-helper {
     color: #7b8794;

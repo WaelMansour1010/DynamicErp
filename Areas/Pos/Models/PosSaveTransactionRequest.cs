@@ -337,6 +337,17 @@ namespace MyERP.Areas.Pos.Models
         public string ExistingBranchName { get; set; }
     }
 
+    public class PosAvailableKeshniCardDto
+    {
+        public string Token { get; set; }
+        public int? ItemId { get; set; }
+        public string ItemName { get; set; }
+        public string ItemCode { get; set; }
+        public decimal AvailableQty { get; set; }
+        public string StoreName { get; set; }
+        public int TokenLength { get; set; }
+    }
+
     public class PosTransactionItemDto
     {
         public int? Item_ID { get; set; }

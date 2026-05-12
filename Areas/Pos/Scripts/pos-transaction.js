@@ -46,6 +46,9 @@
     var kycSaveInProgress = false;
     var kycCardAvailabilityTimer = null;
     var kycCardAvailabilityXhr = null;
+    var kycAvailableCardsTimer = null;
+    var kycAvailableCardsXhr = null;
+    var kycAvailableCards = [];
     var kycNameSyncing = false;
     var kycArabicNameTimer = null;
     var kycEnglishNameTimer = null;
@@ -1637,6 +1640,7 @@
         byId("kycCard").value = "";
         byId("kycSearchTerm").value = "";
         byId("kycSearchResults").innerHTML = "";
+        hideAvailableKycCards();
         setKycMessage("");
     }
 
@@ -1684,6 +1688,101 @@
 
             setKycMessage((data.Message || data.message || "الكارت غير متاح للتفعيل."), true);
         });
+    }
+
+    function hideAvailableKycCards() {
+        var results = byId("kycAvailableCardsResults");
+        if (results) {
+            results.innerHTML = "";
+            results.classList.remove("is-open");
+        }
+    }
+
+    function renderAvailableKycCards(cards, message) {
+        var results = byId("kycAvailableCardsResults");
+        if (!results) { return; }
+
+        kycAvailableCards = cards || [];
+        if (message) {
+            results.innerHTML = '<span class="kyc-token-empty">' + escapeHtml(message) + '</span>';
+            results.classList.add("is-open");
+            return;
+        }
+
+        if (!kycAvailableCards.length) {
+            results.innerHTML = '<span class="kyc-token-empty">لا توجد كروت متاحة مطابقة في المخزن الحالي</span>';
+            results.classList.add("is-open");
+            return;
+        }
+
+        var html = ['<span class="kyc-token-results-title">الكروت المتاحة في المخزن</span>'];
+        for (var i = 0; i < kycAvailableCards.length; i++) {
+            var card = kycAvailableCards[i];
+            html.push('<button type="button" class="kyc-token-option" data-kyc-token-index="' + i + '">' +
+                '<strong>' + escapeHtml(card.Token || card.token || "") + '</strong>' +
+                '<span>' + escapeHtml(card.ItemName || card.itemName || "كارت كيشني") + ' | المتاح: ' +
+                escapeHtml(decimalText(card.AvailableQty || card.availableQty || 0)) + '</span>' +
+                '</button>');
+        }
+        results.innerHTML = html.join("");
+        results.classList.add("is-open");
+    }
+
+    function searchAvailableKycCards(forceOpen) {
+        var url = getUrl("data-available-kyc-cards-url");
+        if (!url) {
+            renderAvailableKycCards([], "رابط تحميل الكروت المتاحة غير مضبوط");
+            return;
+        }
+
+        var term = (byId("kycCardNo").value || "").trim();
+        if (!forceOpen && term.length < 2) {
+            hideAvailableKycCards();
+            return;
+        }
+
+        if (kycAvailableCardsXhr && kycAvailableCardsXhr.readyState !== 4) {
+            kycAvailableCardsXhr.abort();
+        }
+
+        renderAvailableKycCards([], "جاري تحميل الكروت المتاحة...");
+        var query = "?term=" + encodeURIComponent(term)
+            + "&storeId=" + encodeURIComponent(parseInt(byId("storeId").value, 10) || "");
+        kycAvailableCardsXhr = requestJson("GET", url + query, null, function (status, data) {
+            if (status < 200 || status >= 300 || !data || data.success === false) {
+                renderAvailableKycCards([], (data && data.message) || "تعذر تحميل الكروت المتاحة");
+                return;
+            }
+
+            renderAvailableKycCards(data.cards || data.Cards || []);
+        });
+    }
+
+    function scheduleAvailableKycCardsSearch(forceOpen) {
+        window.clearTimeout(kycAvailableCardsTimer);
+        kycAvailableCardsTimer = window.setTimeout(function () {
+            searchAvailableKycCards(forceOpen);
+        }, forceOpen ? 0 : 250);
+    }
+
+    function selectAvailableKycCard(index) {
+        var card = kycAvailableCards[index];
+        if (!card) { return; }
+
+        var token = card.Token || card.token || "";
+        byId("kycCardNo").value = token;
+        byId("visaNumber").value = token;
+        byId("paymentCardNo").value = token;
+        var cardItemId = cardServiceItemIdFromCardNo(token);
+        if (cardItemId) {
+            byId("serviceItemId").value = cardItemId;
+        }
+        if (byId("cardTypeName")) {
+            byId("cardTypeName").value = cardTypeNameFromCardNo(token);
+        }
+        hideAvailableKycCards();
+        scheduleUnusedKycLookup(token);
+        scheduleKycCardAvailabilityCheck();
     }
 
     function showDuplicateKycCustomerAction(data, message) {
@@ -4509,6 +4608,18 @@
         if (event.target.id === "closeKycModalBtn" || event.target.id === "kycModalBackdrop") { closeKycModal(); }
         if (event.target.id === "kycSearchBtn") { searchKeshniCardCustomers(); }
         if (event.target.id === "showKycAttachmentsBtn") { loadKycAttachments(); }
+        if (event.target.closest && !event.target.closest(".kyc-token-picker")) {
+            hideAvailableKycCards();
+        }
+        if (event.target.id === "showAvailableKycCardsBtn") {
+            scheduleAvailableKycCardsSearch(true);
+            return;
+        }
+        var tokenOption = event.target.closest ? event.target.closest("[data-kyc-token-index]") : null;
+        if (tokenOption) {
+            selectAvailableKycCard(parseInt(tokenOption.getAttribute("data-kyc-token-index"), 10));
+            return;
+        }
         var removeKycFileButton = event.target.closest ? event.target.closest("[data-remove-kyc-file]") : null;
         if (removeKycFileButton) {
             removeSelectedKycFile(parseInt(removeKycFileButton.getAttribute("data-remove-kyc-file"), 10));
@@ -4543,6 +4654,9 @@
 
     document.addEventListener("keydown", function (event) {
         if (handleGlobalShortcuts(event)) { return; }
+        if (event.key === "Escape") {
+            hideAvailableKycCards();
+        }
         if (event.key === "Enter" && isAmountInput(event.target)) {
             event.preventDefault();
             amountEnterAdvancePending = true;
@@ -4632,6 +4746,11 @@
             if (event.target.id === "kycPhoneNo2") {
                 byId("cashCustomerPhone").value = event.target.value;
                 normalizePhoneInput(byId("cashCustomerPhone"), false);
+            }
+            if (event.target.id === "kycCardNo") {
+                byId("visaNumber").value = event.target.value;
+                byId("paymentCardNo").value = event.target.value;
+                scheduleAvailableKycCardsSearch(false);
             }
             scheduleUnusedKycLookup(event.target.value);
             scheduleKycCardAvailabilityCheck();
