@@ -262,7 +262,8 @@
         return select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
     }
     function updateHeroSummary() {
-        if (!byId("epHeroPlanName")) { return; }
+        var heroTitle = byId("epHeroPlanName");
+        if (!heroTitle) { return; }
         var planName = byId("epPlanNameAr") ? byId("epPlanNameAr").value : "";
         var providerName = selectedText(byId("epPlanProvider"));
         var start = byId("epPlanStartDate") ? byId("epPlanStartDate").value : "";
@@ -329,33 +330,100 @@
     }
     function renderDependents() {
         var tbody = byId("epDependentsRows");
+        var cards = byId("epDependentsCards");
         if (!tbody) { return; }
         tbody.innerHTML = "";
+        if (cards) { cards.innerHTML = ""; }
         if (!enterpriseDependents.length) {
             tbody.innerHTML = '<tr><td colspan="6" class="ep-empty-row">لا يوجد تابعون في المعاينة الحالية.</td></tr>';
         }
         enterpriseDependents.forEach(function (x, i) {
             var age = ageFromDate(x.BirthDate);
             var cost = dependentCost(x.Relation);
+            if (cards) {
+                cards.insertAdjacentHTML("beforeend", '<article class="ep-dependent-card"><div><strong>' + html(x.Name) + '</strong><span>' + html(relationLabel(x.Relation)) + '</span></div><div class="ep-dependent-metrics"><span>' + age + ' yrs</span><span>' + html(x.CoveragePercent) + '%</span><span>' + formatMoney(cost) + '</span></div><button type="button" title="Remove" data-remove-dependent="' + i + '"><i class="fas fa-trash"></i></button></article>');
+            }
             tbody.insertAdjacentHTML("beforeend", '<tr><td>' + html(x.Name) + '</td><td>' + html(relationLabel(x.Relation)) + '</td><td>' + age + '</td><td>' + html(x.CoveragePercent) + '%</td><td>' + formatMoney(cost) + '</td><td><button type="button" data-remove-dependent="' + i + '"><i class="fas fa-trash"></i></button></td></tr>');
         });
+        if (cards && !cards.innerHTML) { cards.innerHTML = '<div class="ep-empty-card">No dependents in this plan preview.</div>'; }
         setText("epHeroDependents", enterpriseDependents.length);
         validateEnterpriseInsurance();
     }
     function renderRules() {
         var tbody = byId("epRulesRows");
+        var cards = byId("epRulesCards");
         if (!tbody) { return; }
         tbody.innerHTML = "";
+        if (cards) { cards.innerHTML = ""; }
         if (!enterpriseRules.length) {
             tbody.innerHTML = '<tr><td colspan="4" class="ep-empty-row">أضف قواعد تحمل ذكية حسب الوظيفة أو الإدارة أو الفرع.</td></tr>';
         }
         enterpriseRules.forEach(function (x) {
+            if (cards) {
+                cards.insertAdjacentHTML("beforeend", '<article class="ep-rule-card"><div class="ep-rule-line"><span>IF</span><strong>' + html(x.Scope) + '</strong><em>=</em><strong>' + html(x.Value) + '</strong></div><div class="ep-rule-line then"><span>THEN</span><strong>Company Contribution</strong><em>=</em><strong>' + html(x.CompanyPercent) + '%</strong></div><p>' + html(x.Description || "") + '</p></article>');
+            }
             tbody.insertAdjacentHTML("beforeend", '<tr><td>' + html(x.Scope) + '</td><td>' + html(x.Value) + '</td><td>' + html(x.CompanyPercent) + '%</td><td>' + html(x.Description) + '</td></tr>');
         });
+        if (cards && !cards.innerHTML) { cards.innerHTML = '<div class="ep-empty-card">No automation rules yet.</div>'; }
     }
     function addRule(scope, value, percent, description) {
         enterpriseRules.push({ Scope: scope, Value: value, CompanyPercent: percent, Description: description });
         renderRules();
+    }
+    function openDrawer(id) {
+        var drawer = byId(id);
+        var backdrop = byId("epDrawerBackdrop");
+        if (backdrop) { backdrop.hidden = false; }
+        if (drawer) {
+            drawer.hidden = false;
+            setTimeout(function () { drawer.classList.add("open"); }, 0);
+        }
+        document.body.classList.add("ep-drawer-open");
+    }
+    function closeDrawers() {
+        var backdrop = byId("epDrawerBackdrop");
+        if (backdrop) { backdrop.hidden = true; }
+        root.querySelectorAll(".ep-side-drawer").forEach(function (drawer) {
+            drawer.classList.remove("open");
+            drawer.hidden = true;
+        });
+        document.body.classList.remove("ep-drawer-open");
+    }
+    function resetPlanForm() {
+        byId("epPlanForm").reset();
+        byId("epPlanId").value = "";
+        enterpriseDependents = [];
+        enterpriseRules = [];
+        renderDependents();
+        renderRules();
+        updateHeroSummary();
+    }
+    function renderMasterCards(providers, plans) {
+        var providerHost = byId("epProvidersCards");
+        var planHost = byId("epPlansCards");
+        var term = (byId("epMasterSearch") ? byId("epMasterSearch").value : "").toLowerCase();
+        var status = byId("epMasterStatus") ? byId("epMasterStatus").value : "";
+        if (providerHost) {
+            providerHost.innerHTML = "";
+            (providers || []).filter(function (x) {
+                return !term || [x.ProviderNameAr, x.ProviderNameEn, x.Phone].join(" ").toLowerCase().indexOf(term) >= 0;
+            }).forEach(function (x) {
+                providerHost.insertAdjacentHTML("beforeend", '<article class="ep-provider-mini-card" data-provider="' + html(x.ProviderId) + '"><div><strong>' + html(x.ProviderNameAr || "شركة تأمين") + '</strong><span>' + html(x.ProviderNameEn || x.Phone || "") + '</span></div><span class="ep-pill ' + (x.IsActive ? "" : "off") + '">' + (x.IsActive ? "نشط" : "متوقف") + '</span></article>');
+            });
+            if (!providerHost.innerHTML) { providerHost.innerHTML = '<div class="ep-empty-card">لا توجد شركات مطابقة.</div>'; }
+        }
+        if (planHost) {
+            planHost.innerHTML = "";
+            (plans || []).filter(function (x) {
+                var lifecycle = x.LifecycleStatus || (x.IsActive ? "Active" : "Draft");
+                var haystack = [x.PlanNameAr, x.PlanNameEn, x.ProviderName, lifecycle].join(" ").toLowerCase();
+                return (!term || haystack.indexOf(term) >= 0) && (!status || lifecycle === status);
+            }).forEach(function (x) {
+                var lifecycle = x.LifecycleStatus || (x.IsActive ? "Active" : "Draft");
+                planHost.insertAdjacentHTML("beforeend", '<article class="ep-plan-master-card" data-plan="' + html(x.PlanId) + '"><div class="ep-plan-card-top"><span class="ep-status-badge ' + statusClass(lifecycle) + '">' + html(lifecycle) + '</span><button type="button" data-plan="' + html(x.PlanId) + '"><i class="fas fa-pen"></i></button></div><h3>' + html(x.PlanNameAr || "خطة تأمين") + '</h3><p>' + html(x.ProviderName || "بدون شركة") + '</p><dl><div><dt>Monthly Cost</dt><dd>' + formatMoney(x.DefaultMonthlyCost) + '</dd></div><div><dt>Employee</dt><dd>' + html(shareTypeLabel(x.DefaultEmployeeShareType)) + ' ' + money(x.DefaultEmployeeShareValue) + '</dd></div><div><dt>Company</dt><dd>' + html(shareTypeLabel(x.DefaultCompanyShareType)) + ' ' + money(x.DefaultCompanyShareValue) + '</dd></div></dl></article>');
+            });
+            if (!planHost.innerHTML) { planHost.innerHTML = '<div class="ep-empty-card">لا توجد خطط مطابقة للفلاتر.</div>'; }
+        }
     }
     function renderCoverageRows(rows) {
         var tbody = byId("epCoverageRows");
@@ -515,6 +583,7 @@
             });
             root._providers = providers;
             root._plans = plans;
+            renderMasterCards(providers, plans);
         });
     }
 
@@ -539,6 +608,7 @@
             });
             root._providers = providers;
             root._plans = plans;
+            renderMasterCards(providers, plans);
             renderRules();
             renderDependents();
             updateLifecycleBadge();
@@ -596,8 +666,38 @@
     });
 
     root.addEventListener("click", function (e) {
+        if (screen === "insurance-settings" && e.target && e.target.id === "epDrawerBackdrop") {
+            closeDrawers();
+            return;
+        }
+        var masterCard = e.target.closest(".ep-provider-mini-card[data-provider], .ep-plan-master-card[data-plan]");
+        if (screen === "insurance-settings" && masterCard && !e.target.closest("button")) {
+            if (masterCard.hasAttribute("data-provider")) {
+                var cardProvider = (root._providers || []).filter(function (x) { return String(x.ProviderId) === masterCard.getAttribute("data-provider"); })[0];
+                if (cardProvider) { fillProviderForm(cardProvider); openDrawer("epProviderDrawer"); }
+            }
+            if (masterCard.hasAttribute("data-plan")) {
+                var cardPlan = (root._plans || []).filter(function (x) { return String(x.PlanId) === masterCard.getAttribute("data-plan"); })[0];
+                if (cardPlan) { fillPlanForm(cardPlan); openDrawer("epPlanDrawer"); }
+            }
+            return;
+        }
         var btn = e.target.closest("button");
         if (!btn) { return; }
+        if (screen === "insurance-settings" && btn.hasAttribute("data-close-drawer")) { closeDrawers(); return; }
+        if (screen === "insurance-settings" && btn.id === "epOpenProviderDrawer") { fillProviderForm({ IsActive: true }); openDrawer("epProviderDrawer"); return; }
+        if (screen === "insurance-settings" && btn.id === "epOpenProviderDrawer2") { fillProviderForm({ IsActive: true }); openDrawer("epProviderDrawer"); return; }
+        if (screen === "insurance-settings" && btn.id === "epOpenPlanDrawer") { resetPlanForm(); openDrawer("epPlanDrawer"); return; }
+        if (screen === "insurance-settings" && btn.id === "epOpenPlanDrawer2") { resetPlanForm(); openDrawer("epPlanDrawer"); return; }
+        if (screen === "insurance-settings" && btn.hasAttribute("data-drawer-tab")) {
+            var drawerTab = btn.getAttribute("data-drawer-tab");
+            var drawer = btn.closest(".ep-side-drawer");
+            if (drawer) {
+                drawer.querySelectorAll("[data-drawer-tab]").forEach(function (x) { x.classList.toggle("active", x === btn); });
+                drawer.querySelectorAll("[data-drawer-panel]").forEach(function (x) { x.classList.toggle("active", x.getAttribute("data-drawer-panel") === drawerTab); });
+            }
+            return;
+        }
         if (btn.id === "epSearchBtn") { loadEmployees(); }
         if (btn.id === "epNewEmployee") { openEditor(); }
         if (btn.id === "epCloseEditor") { byId("epEmployeeEditor").hidden = true; }
@@ -682,11 +782,11 @@
         }
         if (btn.hasAttribute("data-provider")) {
             var provider = (root._providers || []).filter(function (x) { return String(x.ProviderId) === btn.getAttribute("data-provider"); })[0];
-            if (provider) { fillProviderForm(provider); }
+            if (provider) { fillProviderForm(provider); openDrawer("epProviderDrawer"); }
         }
         if (btn.hasAttribute("data-plan")) {
             var plan = (root._plans || []).filter(function (x) { return String(x.PlanId) === btn.getAttribute("data-plan"); })[0];
-            if (plan) { fillPlanForm(plan); }
+            if (plan) { fillPlanForm(plan); openDrawer("epPlanDrawer"); }
         }
     });
 
@@ -710,6 +810,9 @@
         if (screen === "insurance-settings" && e.target && e.target.id === "epCoverageStatus") {
             renderCoverageRows(enterpriseCoverageRows);
         }
+        if (screen === "insurance-settings" && e.target && e.target.id === "epMasterStatus") {
+            renderMasterCards(root._providers || [], root._plans || []);
+        }
     });
     root.addEventListener("input", function (e) {
         if (e.target && e.target.closest("[data-tab-panel='insurance']")) { updateInsurancePreview(); }
@@ -719,6 +822,9 @@
         }
         if (screen === "insurance-settings" && e.target && e.target.id === "epCoverageSearch") {
             renderCoverageRows(enterpriseCoverageRows);
+        }
+        if (screen === "insurance-settings" && e.target && e.target.id === "epMasterSearch") {
+            renderMasterCards(root._providers || [], root._plans || []);
         }
     });
 
@@ -741,7 +847,7 @@
             e.preventDefault();
             postJson(root.getAttribute("data-save-provider-url"), collectProvider()).then(function (res) {
                 message(res.message || "تم الحفظ", !res.success);
-                if (res.success) { byId("epProviderForm").reset(); byId("epProviderId").value = ""; loadInsuranceSettings(); }
+                if (res.success) { byId("epProviderForm").reset(); byId("epProviderId").value = ""; closeDrawers(); loadInsuranceSettings(); }
             });
         });
         byId("epPlanForm").addEventListener("submit", function (e) {
@@ -757,6 +863,7 @@
                     renderDependents();
                     renderRules();
                     updateHeroSummary();
+                    closeDrawers();
                     loadInsuranceSettings();
                 }
             });
