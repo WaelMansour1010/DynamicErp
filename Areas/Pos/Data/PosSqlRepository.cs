@@ -3454,39 +3454,37 @@ WHERE T.Transaction_Type = 20
             if (take > 100) { take = 100; }
 
             const string sql = @"
-;WITH AvailableSerials AS
+;WITH StoreTokens AS
 (
     SELECT
         LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
-        MAX(td.Item_ID) AS ItemId,
-        SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty
+        td.Item_ID AS ItemId,
+        td.Quantity
     FROM dbo.Transaction_Details td
     INNER JOIN dbo.Transactions t ON t.Transaction_ID = td.Transaction_ID
-    INNER JOIN dbo.TransactionTypes tt ON tt.Transaction_Type = t.Transaction_Type
     LEFT JOIN dbo.TblStore st ON st.StoreID = t.StoreID
     WHERE t.StoreID = @StoreId
+      AND t.Transaction_Type = 20
       AND (@CanChangeDefaults = 1 OR @BranchId IS NULL OR ISNULL(st.BranchId, 0) = @BranchId)
-      AND ISNULL(tt.StockEffect, 0) <> 0
       AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
       AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) IN (8, 18)
-    GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
-    HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
+      AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermLike)
 ),
 Filtered AS
 (
     SELECT TOP (@Take)
-        av.Token,
-        av.ItemId,
-        av.AvailableQty
-    FROM AvailableSerials av
-    WHERE (ISNULL(@Term, N'') = N'' OR av.Token LIKE @TermLike)
-      AND NOT EXISTS
+        st.Token,
+        MAX(st.ItemId) AS ItemId,
+        SUM(ISNULL(st.Quantity, 0)) AS AvailableQty
+    FROM StoreTokens st
+    WHERE NOT EXISTS
       (
           SELECT 1
           FROM dbo.Transaction_Details issueDetail
           INNER JOIN dbo.Transactions issueTransaction ON issueTransaction.Transaction_ID = issueDetail.Transaction_ID
           WHERE issueTransaction.Transaction_Type = 19
-            AND LTRIM(RTRIM(ISNULL(issueDetail.ItemSerial, N''))) = av.Token
+            AND issueTransaction.StoreID = @StoreId
+            AND LTRIM(RTRIM(ISNULL(issueDetail.ItemSerial, N''))) = st.Token
       )
       AND NOT EXISTS
       (
@@ -3494,7 +3492,7 @@ Filtered AS
           FROM dbo.Transactions saleTransaction
           WHERE saleTransaction.Transaction_Type = 21
             AND ISNULL(saleTransaction.IsCancelled, 0) = 0
-            AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = av.Token
+            AND LTRIM(RTRIM(ISNULL(saleTransaction.VisaNumber, N''))) = st.Token
       )
       AND NOT EXISTS
       (
@@ -3503,13 +3501,15 @@ Filtered AS
           WHERE ISNULL(customer.EasyCashType, 0) = 0
             AND
             (
-                LTRIM(RTRIM(ISNULL(customer.CardNo, N''))) = av.Token
-                OR LTRIM(RTRIM(ISNULL(customer.CardId, N''))) = av.Token
+                LTRIM(RTRIM(ISNULL(customer.CardNo, N''))) = st.Token
+                OR LTRIM(RTRIM(ISNULL(customer.CardId, N''))) = st.Token
             )
       )
+    GROUP BY st.Token
+    HAVING SUM(ISNULL(st.Quantity, 0)) > 0
     ORDER BY
-        CASE WHEN ISNULL(@Term, N'') <> N'' AND av.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
-        av.Token
+        CASE WHEN ISNULL(@Term, N'') <> N'' AND st.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
+        st.Token
 )
 SELECT
     f.Token,
@@ -3517,15 +3517,16 @@ SELECT
     COALESCE(NULLIF(i.ItemName, N''), NULLIF(i.ItemNamee, N''), i.ItemCode, CONVERT(NVARCHAR(50), f.ItemId)) AS ItemName,
     COALESCE(NULLIF(i.Fullcode, N''), NULLIF(i.ItemCode, N''), CONVERT(NVARCHAR(50), f.ItemId)) AS ItemCode,
     CAST(f.AvailableQty AS DECIMAL(18, 4)) AS AvailableQty,
-    COALESCE(NULLIF(st.StoreName, N''), NULLIF(st.StoreNamee, N''), CONVERT(NVARCHAR(50), @StoreId)) AS StoreName
+    COALESCE(NULLIF(store.StoreName, N''), NULLIF(store.StoreNamee, N''), CONVERT(NVARCHAR(50), @StoreId)) AS StoreName
 FROM Filtered f
 LEFT JOIN dbo.TblItems i ON i.ItemID = f.ItemId
-LEFT JOIN dbo.TblStore st ON st.StoreID = @StoreId
+LEFT JOIN dbo.TblStore store ON store.StoreID = @StoreId
 ORDER BY f.Token;";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
+                command.CommandTimeout = 15;
                 Add(command, "@StoreId", SqlDbType.Int, storeId);
                 Add(command, "@BranchId", SqlDbType.Int, branchId);
                 Add(command, "@CanChangeDefaults", SqlDbType.Bit, canChangeDefaults);
@@ -3647,6 +3648,8 @@ END;
 
 IF @NationalIdValue IS NULL
    AND @MobileValue IS NOT NULL
+      AND NOT EXISTS
+      (
    AND EXISTS
    (
        SELECT 1

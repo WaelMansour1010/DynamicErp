@@ -291,6 +291,53 @@
             normalizePhoneInput(inputs[i], false);
         }
     }
+
+    function updateNationalIdHelper(input) {
+        if (!input) { return; }
+        var helper = document.querySelector("[data-national-helper-for='" + input.id + "']");
+        if (!helper) { return; }
+        helper.innerText = amountDigits(input.value).length + " / 14";
+    }
+
+    function setNationalIdValidState(input, isValid) {
+        if (!input) { return; }
+        input.classList.toggle("pos-field-valid", isValid);
+        var wrapper = fieldWrapper(input);
+        if (wrapper) { wrapper.classList.toggle("pos-field-valid-wrap", isValid); }
+    }
+
+    function normalizeNationalIdInput(input, showBlurErrors) {
+        if (!input) { return true; }
+        var digits = amountDigits(input.value).slice(0, 14);
+        if (input.value !== digits) { input.value = digits; }
+        updateNationalIdHelper(input);
+        setNationalIdValidState(input, false);
+
+        if (!digits) {
+            clearFieldInvalid("#" + input.id);
+            return false;
+        }
+
+        if (digits.length < 14) {
+            if (showBlurErrors) {
+                markFieldInvalid("#" + input.id, "الرقم القومي يجب أن يكون 14 رقم");
+            } else {
+                clearFieldInvalid("#" + input.id);
+            }
+            return false;
+        }
+
+        clearFieldInvalid("#" + input.id);
+        setNationalIdValidState(input, true);
+        return true;
+    }
+
+    function refreshNationalIdInputs() {
+        var inputs = document.querySelectorAll(".pos-national-id");
+        for (var i = 0; i < inputs.length; i++) {
+            normalizeNationalIdInput(inputs[i], false);
+        }
+    }
     function selectedRadioValue(name) {
         var selected = document.querySelector('input[name="' + name + '"]:checked');
         return selected ? selected.value : "";
@@ -4676,6 +4723,9 @@
         if (event.target.classList && event.target.classList.contains("pos-eg-phone")) {
             normalizePhoneInput(event.target, false);
         }
+        if (event.target.classList && event.target.classList.contains("pos-national-id")) {
+            normalizeNationalIdInput(event.target, false);
+        }
         scheduleKycNameSync(event.target);
         if (event.target.matches(".qty, .price, .vat, #commissionValue")) {
             recalculateInvoiceSummary({ source: "row-input", requestCommission: false });
@@ -4711,6 +4761,7 @@
 
         if (event.target.id === "cardNationalId" && byId("transactionType").value === "card") {
             byId("kycNationalId").value = event.target.value;
+            normalizeNationalIdInput(byId("kycNationalId"), false);
             scheduleUnusedKycLookup(event.target.value);
             var birthDate = extractBirthDateFromNationalId(event.target.value);
             if (birthDate) {
@@ -4725,6 +4776,7 @@
             if (modalBirthDate) {
                 byId("kycBirthDate").value = modalBirthDate;
                 byId("cardNationalId").value = event.target.value;
+                normalizeNationalIdInput(byId("cardNationalId"), false);
             }
         }
 
@@ -4818,6 +4870,9 @@
     document.addEventListener("blur", function (event) {
         if (event.target.classList && event.target.classList.contains("pos-eg-phone")) {
             normalizePhoneInput(event.target, true);
+        }
+        if (event.target.classList && event.target.classList.contains("pos-national-id")) {
+            normalizeNationalIdInput(event.target, true);
         }
         commitKycNameSync(event.target);
     }, true);
@@ -4919,6 +4974,7 @@
     initSalesIndexFilters();
     initTodayInvoicesPanelState();
     refreshPhoneInputs();
+    refreshNationalIdInputs();
     if (salesIndexFirst()) {
         showSalesIndex();
     } else {

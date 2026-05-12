@@ -250,8 +250,8 @@
                     <input type="hidden" id="phone2" />
                     <label class="card-field">رقم الكارت<input type="text" id="visaNumber" placeholder="أدخل رقم الكارت أو التوكن" inputmode="numeric" /></label>
                     <label class="card-field">نوع الكارت<input type="text" id="cardTypeName" readonly /></label>
-                    <label class="card-field">الرقم القومي<input type="text" id="cardNationalId" placeholder="الرقم القومي" /></label>
-                    <label class="wallet-field pos-primary-wallet-field">رقم المحفظة<input type="text" id="tetNumPoket" class="pos-eg-phone" data-pos-field="WalletNumber" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="tetNumPoket">0 / 11</span></label>
+                    <label class="card-field national-id-compact-field">الرقم القومي<span class="phone-inline-control national-id-inline-control"><input type="text" id="cardNationalId" class="pos-national-id" placeholder="الرقم القومي" inputmode="numeric" maxlength="14" /><span class="pos-national-helper" data-national-helper-for="cardNationalId">0 / 14</span></span></label>
+                    <label class="wallet-field pos-primary-wallet-field phone-compact-field">رقم المحفظة<span class="phone-inline-control"><input type="text" id="tetNumPoket" class="pos-eg-phone" data-pos-field="WalletNumber" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="tetNumPoket">0 / 11</span></span></label>
                     <label class="card-field card-action-field"><span>&nbsp;</span><button type="button" class="primary-action" id="activateCardBtn">تفعيل الكارت</button></label>
                 </div>
             </section>
@@ -281,7 +281,7 @@
                 <div class="pos-grid four-cols kyc-compact-form">
                     <div class="kyc-inline-section-title">البيانات الأساسية</div>
                     <label class="kyc-important-field phone-compact-field">الموبايل الأساسي<span class="phone-inline-control"><input type="text" id="kycPhoneNo2" class="pos-eg-phone" placeholder="01xxxxxxxxx" inputmode="numeric" maxlength="11" /><span class="pos-phone-helper" data-phone-helper-for="kycPhoneNo2">0 / 11</span></span></label>
-                    <label class="kyc-important-field">الرقم القومي<input type="text" id="kycNationalId" placeholder="الرقم القومي" /></label>
+                    <label class="kyc-important-field national-id-compact-field">الرقم القومي<span class="phone-inline-control national-id-inline-control"><input type="text" id="kycNationalId" class="pos-national-id" placeholder="الرقم القومي" inputmode="numeric" maxlength="14" /><span class="pos-national-helper" data-national-helper-for="kycNationalId">0 / 14</span></span></label>
                     <label class="kyc-important-field kyc-token-field">رقم الكارت / التوكن
                         <span class="kyc-token-picker">
                             <input type="text" id="kycCardNo" placeholder="رقم المرجع" inputmode="numeric" autocomplete="off" />
