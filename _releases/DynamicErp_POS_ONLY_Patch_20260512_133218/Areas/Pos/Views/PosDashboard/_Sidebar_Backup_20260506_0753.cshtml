@@ -1,0 +1,271 @@
+﻿@{
+    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var activeScreen = (ViewBag.ActiveScreen as string) ?? "sales";
+    var canViewReports = posContext != null && posContext.CanViewReports;
+    var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
+    var isTellerCategory = posContext != null
+        && (string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "تلر", StringComparison.OrdinalIgnoreCase)
+            || string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "Teller", StringComparison.OrdinalIgnoreCase));
+    var isTellerOnly = posContext != null
+        && !isAdmin
+        && (isTellerCategory || posContext.CanTeller || posContext.UserType.GetValueOrDefault(-1) == 2);
+    var logoPath = "~/Areas/Pos/assets/images/company-logo.png";
+    var logoAltPath = "~/Areas/Pos/assets/images/company-logo-1.png";
+    var companyLogoPath = System.IO.File.Exists(Server.MapPath(logoPath))
+        ? logoPath
+        : (System.IO.File.Exists(Server.MapPath(logoAltPath)) ? logoAltPath : null);
+    Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
+    Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
+    var operationsOpen = sectionActive(new[] { "sales", "closing", "payments", "purchase-invoice", "stock-transfer", "excel-import" });
+    var accountingOpen = sectionActive(new[] { "journal-entries", "accounting-reports", "reports" });
+    var financialIntelligenceOpen = sectionActive(new[] { "financial-intelligence" });
+    var kycOpen = sectionActive(new[] { "kyc", "kyc-bank-follow-up" });
+    var systemOpen = sectionActive(new[] { "system-health", "system-error-log", "permissions" });
+    var otherOpen = sectionActive(new[] { "dashboard", "print-templates" });
+    if (!(operationsOpen || accountingOpen || financialIntelligenceOpen || kycOpen || systemOpen || otherOpen))
+    {
+        operationsOpen = true;
+    }
+}
+
+<aside class="pos-main-sidebar" id="posMainSidebar">
+    <div class="pos-sidebar-brand">
+        <div class="pos-main-logo">
+            @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+            {
+                <img src="@Url.Content(companyLogoPath)" alt="Keshni" />
+            }
+            else
+            {
+                <strong>كيشني</strong>
+            }
+        </div>
+        <button type="button" class="pos-sidebar-collapse" id="posSidebarCollapseBtn" aria-label="تصغير القائمة" title="تصغير القائمة">
+            <i class="fas fa-bars" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <div class="pos-sidebar-user" title="المستخدم الحالي">
+        <span class="user-avatar"><i class="fas fa-user" aria-hidden="true"></i></span>
+        <div>
+            <strong>@(posContext != null ? posContext.UserName : "")</strong>
+            <small>@(posContext != null ? posContext.BranchName : "")</small>
+        </div>
+    </div>
+
+    <nav class="pos-main-nav pos-modern-nav @(isTellerOnly ? "teller-only-sidebar" : "")" aria-label="قائمة نقطة البيع">
+        <a class="pos-nav-link pos-nav-home @(isActive("dashboard") ? "active" : "")"
+           href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })"
+           data-dashboard-screen="true"
+           title="لوحة التحكم">
+            <i class="fas fa-tachometer-alt" aria-hidden="true"></i><span>لوحة التحكم</span>
+        </a>
+
+        <section class="pos-nav-section teller-sales-section @(operationsOpen ? "is-open" : "")">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="العمليات">
+                <span><i class="fas fa-shopping-cart" aria-hidden="true"></i><b>العمليات</b></span>
+                <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link teller-sales-link @(isActive("sales") ? "active" : "")"
+                   href="@Url.Action("Sales", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index")"
+                   title="شاشة البيع">
+                    <i class="fas fa-shopping-cart" aria-hidden="true"></i><span>شاشة البيع</span>
+                </a>
+                <a class="pos-nav-link @(isActive("closing") ? "active" : "")"
+                   href="@Url.Action("Closing", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosClosing/Index")"
+                   title="الإغلاق">
+                    <i class="fas fa-lock" aria-hidden="true"></i><span>الإغلاق</span>
+                </a>
+                @if (isAdmin || (posContext != null && posContext.CanOpenPayments))
+                {
+                    <a class="pos-nav-link @(isActive("payments") ? "active" : "")"
+                       href="@Url.Action("Payments", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/Payments/Index")"
+                       title="تمويل العهدة">
+                        <i class="fas fa-money-bill-alt" aria-hidden="true"></i><span>تمويل العهدة</span>
+                    </a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanSave))
+                {
+                    <a class="pos-nav-link @(isActive("stock-transfer") ? "active" : "")"
+                       href="@Url.Action("StockTransfer", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/StockTransfer/Index")"
+                       title="تحويل مخزون">
+                        <i class="fas fa-exchange-alt" aria-hidden="true"></i><span>تحويل مخزون</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("purchase-invoice") ? "active" : "")"
+                       href="@Url.Action("PurchaseInvoice", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PurchaseInvoice/Index")"
+                       title="فواتير مشتريات">
+                        <i class="fas fa-file-alt" aria-hidden="true"></i><span>فواتير مشتريات</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("excel-import") ? "active" : "")"
+                       href="@Url.Action("ExcelImport", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/ExcelImport/Index")"
+                       title="استيراد العمليات من Excel">
+                        <i class="fas fa-file-import" aria-hidden="true"></i><span>استيراد العمليات من Excel</span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
+        {
+            <section class="pos-nav-section @(financialIntelligenceOpen ? "is-open" : "")">
+                <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الحسابات الذكية">
+                    <span><i class="fas fa-brain" aria-hidden="true"></i><b>الحسابات الذكية</b></span>
+                    <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="pos-nav-submenu">
+                    <a class="pos-nav-link @(isActive("financial-intelligence") ? "active" : "")"
+                       href="@Url.Action("FinancialIntelligence", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Index")"
+                       title="Financial Intelligence">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i><span>Financial Intelligence</span>
+                    </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")"
+                       data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")"
+                       title="تشخيص ذمم الموظفين">
+                        <i class="fas fa-user-check" aria-hidden="true"></i><span>تشخيص ذمم الموظفين</span>
+                    </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/FinancialIntelligence/Custody")"
+                       data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Custody")"
+                       title="تشخيص العهد والسلف">
+                        <i class="fas fa-wallet" aria-hidden="true"></i><span>تشخيص العهد والسلف</span>
+                    </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")"
+                       data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")"
+                       title="اكتشاف القيود غير الطبيعية">
+                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>قيود غير طبيعية</span>
+                    </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/FinancialIntelligence/RootCause")"
+                       data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/RootCause")"
+                       title="Root Cause Analyzer">
+                        <i class="fas fa-search-dollar" aria-hidden="true"></i><span>Root Cause Analyzer</span>
+                    </a>
+                </div>
+            </section>
+        }
+
+        <section class="pos-nav-section @(accountingOpen ? "is-open" : "")">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الحسابات">
+                <span><i class="fas fa-book" aria-hidden="true"></i><b>الحسابات</b></span>
+                <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="pos-nav-submenu">
+                @if (isAdmin || (posContext != null && (posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry)))
+                {
+                    <a class="pos-nav-link @(isActive("journal-entries") ? "active" : "")"
+                       href="@Url.Action("JournalEntries", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")"
+                       title="إدخال واستعراض القيود">
+                        <i class="fas fa-book" aria-hidden="true"></i><span>إدخال واستعراض القيود</span>
+                    </a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
+                {
+                    <a class="pos-nav-link @(isActive("accounting-reports") ? "active" : "")"
+                       href="@Url.Action("AccountingReports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/AccountingReports/Index")"
+                       title="تقارير الحسابات">
+                        <i class="fas fa-chart-pie" aria-hidden="true"></i><span>تقارير الحسابات</span>
+                    </a>
+                }
+                @if (canViewReports)
+                {
+                    <a class="pos-nav-link @(isActive("reports") ? "active" : "")"
+                       href="@Url.Action("Reports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosReports/Index")"
+                       title="التقارير التشغيلية">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i><span>التقارير التشغيلية</span>
+                    </a>
+                    <a class="pos-nav-link"
+                       href="@Url.Content("~/Pos/HtmlReports/Index")"
+                       data-screen-url="@Url.Content("~/Pos/HtmlReports/Index")"
+                       title="التقارير الذكية">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i><span>التقارير الذكية</span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        <section class="pos-nav-section @(kycOpen ? "is-open" : "")">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="KYC والبنك">
+                <span><i class="fas fa-id-card" aria-hidden="true"></i><b>KYC والبنك</b></span>
+                <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("kyc") ? "active" : "")"
+                   href="@Url.Action("Kyc", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index?openKyc=true")"
+                   title="KYC">
+                    <i class="fas fa-address-card" aria-hidden="true"></i><span>KYC</span>
+                </a>
+                @if (isAdmin || (posContext != null && posContext.IsFullAccessCustomerService))
+                {
+                    <a class="pos-nav-link @(isActive("kyc-bank-follow-up") ? "active" : "")"
+                       href="@Url.Action("KycBankFollowUp", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/KycBankFollowUp/Index")"
+                       title="متابعة KYC والبنك">
+                        <i class="fas fa-university" aria-hidden="true"></i><span>متابعة KYC والبنك</span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        @if (isAdmin)
+        {
+            <section class="pos-nav-section @(systemOpen ? "is-open" : "")">
+                <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="النظام">
+                    <span><i class="fas fa-shield-alt" aria-hidden="true"></i><b>النظام</b></span>
+                    <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="pos-nav-submenu">
+                    <a class="pos-nav-link @(isActive("system-health") ? "active" : "")"
+                       href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")"
+                       title="مراقبة النظام">
+                        <i class="fas fa-desktop" aria-hidden="true"></i><span>مراقبة النظام</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("system-error-log") ? "active" : "")"
+                       href="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
+                       title="سجل أخطاء النظام">
+                        <i class="fas fa-bug" aria-hidden="true"></i><span>سجل أخطاء النظام</span>
+                    </a>
+                    <a class="pos-nav-link @(isActive("permissions") ? "active" : "")"
+                       href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")"
+                       title="صلاحيات POS">
+                        <i class="fas fa-shield-alt" aria-hidden="true"></i><span>صلاحيات POS</span>
+                    </a>
+                </div>
+            </section>
+        }
+
+        @if (isAdmin || (posContext != null && posContext.CanManagePrintTemplates))
+        {
+            <section class="pos-nav-section @(otherOpen ? "is-open" : "")">
+                <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="أخرى">
+                    <span><i class="fas fa-th-large" aria-hidden="true"></i><b>أخرى</b></span>
+                    <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="pos-nav-submenu">
+                    <a class="pos-nav-link @(isActive("print-templates") ? "active" : "")"
+                       href="@Url.Action("PrintTemplates", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PrintTemplate/Index?name=KycCard")"
+                       title="مصمم نماذج الطباعة">
+                        <i class="fas fa-print" aria-hidden="true"></i><span>مصمم نماذج الطباعة</span>
+                    </a>
+                </div>
+            </section>
+        }
+    </nav>
+</aside>

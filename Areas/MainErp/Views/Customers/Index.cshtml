@@ -1,0 +1,391 @@
+@model MyERP.Areas.MainErp.ViewModels.Customers.CustomersIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "العملاء والموردون";
+    var selected = Model.Selected ?? new MyERP.Areas.MainErp.ViewModels.Customers.CustomerEditViewModel();
+    var canAdd = Model.Permissions != null && Model.Permissions.CanAdd;
+    var canEdit = Model.Permissions != null && Model.Permissions.CanEdit;
+    var canDelete = Model.Permissions != null && Model.Permissions.CanDelete;
+}
+<link href="@Url.Content("~/Areas/MainErp/Content/customers.css?v=20260512")" rel="stylesheet" />
+
+<section class="main-erp-panel main-erp-premium-workspace customers-page" dir="rtl" id="customersPage"
+         data-new-url="@Url.Action("New", "Customers", new { area = "MainErp" })"
+         data-details-url="@Url.Action("Details", "Customers", new { area = "MainErp" })"
+         data-save-url="@Url.Action("Save", "Customers", new { area = "MainErp" })"
+         data-delete-url="@Url.Action("Delete", "Customers", new { area = "MainErp" })"
+         data-can-add="@(canAdd ? "true" : "false")"
+         data-can-edit="@(canEdit ? "true" : "false")">
+    <header class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-kicker">FrmCustemers</span>
+            <h2>العملاء والموردون</h2>
+            <p>إدارة بيانات العميل أو المورد وربطها بحساب دليل الحسابات بنفس دورة شاشة VB6 الأصلية.</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <button type="button" class="main-erp-inline-action" id="customerNewBtn" @(canAdd ? "" : "disabled")>جديد</button>
+            <button type="button" class="main-erp-inline-action" id="customerSaveBtn" @((canAdd || canEdit) ? "" : "disabled")>حفظ</button>
+            <button type="button" class="main-erp-inline-action is-danger" id="customerDeleteBtn" @(canDelete && selected.CusId.HasValue ? "" : "disabled")>حذف</button>
+        </div>
+    </header>
+
+    @Html.AntiForgeryToken()
+    <div id="customerStatus" class="customers-status" role="status" aria-live="polite" hidden></div>
+
+    <div class="customers-layout">
+        <aside class="main-erp-premium-search customers-search">
+            <div class="main-erp-search-head">
+                <span>الوصول السريع</span>
+                <h3>بحث العملاء</h3>
+            </div>
+            <form method="get" action="@Url.Action("Index", "Customers", new { area = "MainErp" })" class="main-erp-filter-bar">
+                <label>البحث
+                    <input type="text" name="searchText" value="@Model.SearchText" placeholder="الاسم / الهاتف / الرقم الضريبي / الكود" />
+                </label>
+                <label>النوع
+                    <select name="customerType">
+                        <option value="">الكل</option>
+                        <option value="1" @(Model.CustomerType == 1 ? "selected" : "")>عميل</option>
+                        <option value="2" @(Model.CustomerType == 2 ? "selected" : "")>مورد</option>
+                    </select>
+                </label>
+                <label>الفرع
+                    <select name="branchId">
+                        <option value="">كل الفروع</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.Id" @(Model.BranchId.HasValue && Model.BranchId.Value.ToString() == branch.Id ? "selected" : "")>@branch.Text</option>
+                        }
+                    </select>
+                </label>
+                <button type="submit">بحث</button>
+            </form>
+
+            <div class="main-erp-table-wrap customers-results">
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>النوع</th>
+                            <th>الحساب</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Results)
+                        {
+                            <tr data-id="@row.CusId">
+                                <td>@row.CusId</td>
+                                <td><strong>@row.CusName</strong><small>@row.BranchName</small></td>
+                                <td>@(string.IsNullOrWhiteSpace(row.Mobile) ? row.Phone : row.Mobile)</td>
+                                <td>@row.TypeName</td>
+                                <td>@row.AccountDisplay</td>
+                                <td><button type="button" class="main-erp-link-btn js-load-customer" data-id="@row.CusId">تحميل</button></td>
+                            </tr>
+                        }
+                        @if (Model.Results.Count == 0)
+                        {
+                            <tr><td colspan="6" class="main-erp-empty">لا توجد نتائج مطابقة.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+
+        <main class="customers-editor">
+            <section class="main-erp-premium-card customers-card">
+                <div class="customers-section-head">
+                    <div>
+                        <span>البيانات الأساسية</span>
+                        <h3 id="customerEditorTitle">@(selected.CusId.HasValue ? "تعديل عميل" : "عميل جديد")</h3>
+                    </div>
+                    <strong id="customerCodeBadge">@(selected.CusId.HasValue ? selected.CusId.Value.ToString() : "جديد")</strong>
+                </div>
+
+                <input type="hidden" id="CusId" value="@selected.CusId" />
+                <input type="hidden" id="AccountCode" value="@selected.AccountCode" />
+                <input type="hidden" id="ParentAccount" value="@selected.ParentAccount" />
+
+                <div class="main-erp-form-grid customers-form-grid">
+                    <label>نوع السجل
+                        <select id="Type">
+                            <option value="1" @(selected.Type == 1 ? "selected" : "")>عميل</option>
+                            <option value="2" @(selected.Type == 2 ? "selected" : "")>مورد</option>
+                        </select>
+                    </label>
+                    <label>البادئة
+                        <input type="text" id="Prefix" value="@selected.Prefix" />
+                    </label>
+                    <label>كود العميل
+                        <input type="text" id="Code" value="@selected.Code" />
+                    </label>
+                    <label>الكود الكامل
+                        <input type="text" id="FullCode" value="@selected.FullCode" readonly />
+                    </label>
+                    <label>اسم العميل / المورد
+                        <input type="text" id="CusName" maxlength="200" value="@selected.CusName" required />
+                    </label>
+                    <label>الاسم الإنجليزي
+                        <input type="text" id="CusNameEnglish" value="@selected.CusNameEnglish" />
+                    </label>
+                    <label>مسؤول الاتصال
+                        <input type="text" id="ResponsibleContact" value="@selected.ResponsibleContact" />
+                    </label>
+                    <label>الهاتف
+                        <input type="text" id="Phone" value="@selected.Phone" />
+                    </label>
+                    <label>الجوال
+                        <input type="text" id="Mobile" value="@selected.Mobile" />
+                    </label>
+                    <label>الفاكس
+                        <input type="text" id="FaxNumber" value="@selected.FaxNumber" />
+                    </label>
+                    <label>البريد الإلكتروني
+                        <input type="email" id="Email" value="@selected.Email" />
+                    </label>
+                    <label>الفرع
+                        <select id="BranchId">
+                            <option value="">اختر الفرع</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.Id" @(selected.BranchId.HasValue && selected.BranchId.Value.ToString() == branch.Id ? "selected" : "")>@branch.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label>تاريخ التسجيل
+                        <input type="date" id="RecordDate" value="@(selected.RecordDate.HasValue ? selected.RecordDate.Value.ToString("yyyy-MM-dd") : DateTime.Today.ToString("yyyy-MM-dd"))" />
+                    </label>
+                    <label class="customers-wide">العنوان
+                        <input type="text" id="Address" value="@selected.Address" />
+                    </label>
+                    <label class="customers-wide">ملاحظات
+                        <textarea id="Remark" rows="3">@selected.Remark</textarea>
+                    </label>
+                    <label class="customers-wide">ملاحظات إضافية
+                        <textarea id="Remark2" rows="2">@selected.Remark2</textarea>
+                    </label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card customers-card">
+                <div class="customers-section-head">
+                    <div>
+                        <span>الربط المحاسبي</span>
+                        <h3>الحساب والرصيد الافتتاحي</h3>
+                    </div>
+                    <strong id="customerAccountBadge">@(string.IsNullOrWhiteSpace(selected.AccountDisplay) ? "ينشأ عند الحفظ" : selected.AccountDisplay)</strong>
+                </div>
+                <div class="main-erp-form-grid customers-form-grid">
+                    <label>الرصيد الافتتاحي
+                        <input type="number" step="0.01" id="OpenBalance" value="@selected.OpenBalance" />
+                    </label>
+                    <label>نوع الرصيد
+                        <select id="OpenBalanceType">
+                            <option value="">غير محدد</option>
+                            <option value="0" @(selected.OpenBalanceType == 0 ? "selected" : "")>مدين</option>
+                            <option value="1" @(selected.OpenBalanceType == 1 ? "selected" : "")>دائن</option>
+                        </select>
+                    </label>
+                    <label>شيكات تحت التحصيل
+                        <input type="number" step="0.01" id="OpenBalance1" value="@selected.OpenBalance1" />
+                    </label>
+                    <label>نوعها
+                        <select id="OpenBalanceType1">
+                            <option value="">غير محدد</option>
+                            <option value="0" @(selected.OpenBalanceType1 == 0 ? "selected" : "")>مدين</option>
+                            <option value="1" @(selected.OpenBalanceType1 == 1 ? "selected" : "")>دائن</option>
+                        </select>
+                    </label>
+                    <label>دفعات مقدمة
+                        <input type="number" step="0.01" id="OpenBalance2" value="@selected.OpenBalance2" />
+                    </label>
+                    <label>نوعها
+                        <select id="OpenBalanceType2">
+                            <option value="">غير محدد</option>
+                            <option value="0" @(selected.OpenBalanceType2 == 0 ? "selected" : "")>مدين</option>
+                            <option value="1" @(selected.OpenBalanceType2 == 1 ? "selected" : "")>دائن</option>
+                        </select>
+                    </label>
+                    <label>تاريخ الرصيد
+                        <input type="date" id="OpenBalanceDate" value="@(selected.OpenBalanceDate.HasValue ? selected.OpenBalanceDate.Value.ToString("yyyy-MM-dd") : "")" />
+                    </label>
+                    <label>حد الائتمان
+                        <input type="number" step="0.01" id="CreditLimit" value="@selected.CreditLimit" />
+                    </label>
+                    <label>حد الائتمان الدائن
+                        <input type="number" step="0.01" id="CreditLimitCredit" value="@selected.CreditLimitCredit" />
+                    </label>
+                    <label>مهلة المدين
+                        <input type="number" id="DebitInterval" value="@selected.DebitInterval" />
+                    </label>
+                    <label>مهلة الدائن
+                        <input type="number" id="CreditInterval" value="@selected.CreditInterval" />
+                    </label>
+                    <label>طريقة الدفع
+                        <select id="PaymentType">
+                            <option value="0" @(selected.PaymentType == 0 ? "selected" : "")>نقدي</option>
+                            <option value="1" @(selected.PaymentType == 1 ? "selected" : "")>آجل</option>
+                        </select>
+                    </label>
+                    <label>تصنيف العميل
+                        <select id="ClassCustomersId">
+                            <option value="">بدون</option>
+                            @foreach (var item in Model.Classes)
+                            {
+                                <option value="@item.Id" @(selected.ClassCustomersId.HasValue && selected.ClassCustomersId.Value.ToString() == item.Id ? "selected" : "")>@item.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label>مجموعة العميل
+                        <select id="GroupsCustomersId">
+                            <option value="">بدون</option>
+                            @foreach (var item in Model.Groups)
+                            {
+                                <option value="@item.Id" @(selected.GroupsCustomersId.HasValue && selected.GroupsCustomersId.Value.ToString() == item.Id ? "selected" : "")>@item.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="customers-check"><input type="checkbox" id="CustomerAndVendor" @(selected.CustomerAndVendor ? "checked" : "") /> عميل ومورد في نفس الوقت</label>
+                    <label class="customers-check"><input type="checkbox" id="IsLocked" @(selected.IsLocked ? "checked" : "") /> إيقاف التعامل</label>
+                    <label class="customers-check"><input type="checkbox" id="CreditLocked" @(selected.CreditLocked ? "checked" : "") /> إيقاف الائتمان</label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card customers-card">
+                <div class="customers-section-head">
+                    <div>
+                        <span>الخصومات</span>
+                        <h3>خصومات البيع والشراء</h3>
+                    </div>
+                </div>
+                <div class="main-erp-form-grid customers-form-grid">
+                    <label>نوع البيع
+                        <select id="SaleType">
+                            <option value="0" @(selected.SaleType == 0 ? "selected" : "")>نقدي</option>
+                            <option value="1" @(selected.SaleType == 1 ? "selected" : "")>آجل</option>
+                        </select>
+                    </label>
+                    <label>خصم البيع
+                        <select id="DiscountType">
+                            <option value="0" @(selected.DiscountType == 0 ? "selected" : "")>بدون</option>
+                            <option value="1" @(selected.DiscountType == 1 ? "selected" : "")>قيمة</option>
+                            <option value="2" @(selected.DiscountType == 2 ? "selected" : "")>نسبة</option>
+                        </select>
+                    </label>
+                    <label>قيمة خصم البيع
+                        <input type="number" step="0.01" id="DiscountValue" value="@selected.DiscountValue" />
+                    </label>
+                    <label>خصم الشراء
+                        <select id="PurchaseDiscountType">
+                            <option value="0" @(selected.PurchaseDiscountType == 0 ? "selected" : "")>بدون</option>
+                            <option value="1" @(selected.PurchaseDiscountType == 1 ? "selected" : "")>قيمة</option>
+                            <option value="2" @(selected.PurchaseDiscountType == 2 ? "selected" : "")>نسبة</option>
+                        </select>
+                    </label>
+                    <label>قيمة خصم الشراء
+                        <input type="number" step="0.01" id="PurchaseDiscountValue" value="@selected.PurchaseDiscountValue" />
+                    </label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card customers-card">
+                <div class="customers-section-head">
+                    <div>
+                        <span>الهوية والضرائب</span>
+                        <h3>بيانات الفاتورة والملفات النظامية</h3>
+                    </div>
+                </div>
+                <div class="main-erp-form-grid customers-form-grid">
+                    <label>رقم الهوية / السجل
+                        <input type="text" id="NationalNo" value="@selected.NationalNo" />
+                    </label>
+                    <label>الرقم الضريبي
+                        <input type="text" id="VatNo" value="@selected.VatNo" />
+                    </label>
+                    <label>السجل التجاري
+                        <input type="text" id="CommercialRegisterNo" value="@selected.CommercialRegisterNo" />
+                    </label>
+                    <label>البطاقة الضريبية
+                        <input type="text" id="TaxCardNo" value="@selected.TaxCardNo" />
+                    </label>
+                    <label>رقم بطاقة الاستيراد
+                        <input type="text" id="ImportCardNo" value="@selected.ImportCardNo" />
+                    </label>
+                    <label>رقم بطاقة التصدير
+                        <input type="text" id="ExportCardNo" value="@selected.ExportCardNo" />
+                    </label>
+                    <label>اسم الشارع
+                        <input type="text" id="StreetName" value="@selected.StreetName" />
+                    </label>
+                    <label>الشارع الإضافي
+                        <input type="text" id="AdditionalStreetName" value="@selected.AdditionalStreetName" />
+                    </label>
+                    <label>رقم المبنى
+                        <input type="text" id="BuildingNumber" value="@selected.BuildingNumber" />
+                    </label>
+                    <label>رقم القطعة
+                        <input type="text" id="PlotIdentification" value="@selected.PlotIdentification" />
+                    </label>
+                    <label>المدينة
+                        <input type="text" id="CityName" value="@selected.CityName" />
+                    </label>
+                    <label>الحي
+                        <input type="text" id="CitySubdivisionName" value="@selected.CitySubdivisionName" />
+                    </label>
+                    <label>الرمز البريدي
+                        <input type="text" id="PostalZone" value="@selected.PostalZone" />
+                    </label>
+                    <label>كود الدولة
+                        <input type="text" id="IdentificationCode" value="@selected.IdentificationCode" />
+                    </label>
+                    <label>الرقم 700
+                        <input type="text" id="Id700" value="@selected.Id700" />
+                    </label>
+                    <label>الصندوق البريدي
+                        <input type="text" id="BoxMil" value="@selected.BoxMil" />
+                    </label>
+                    <label>ZipCode
+                        <input type="text" id="ZipCode" value="@selected.ZipCode" />
+                    </label>
+                    <label class="customers-check"><input type="checkbox" id="TaxExempt" @(selected.TaxExempt ? "checked" : "") /> معفى من الضريبة</label>
+                    <label class="customers-check"><input type="checkbox" id="Export" @(selected.Export ? "checked" : "") /> تصدير</label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card customers-card">
+                <div class="customers-section-head">
+                    <div>
+                        <span>بيانات البنك</span>
+                        <h3>حساب التحويلات</h3>
+                    </div>
+                </div>
+                <div class="main-erp-form-grid customers-form-grid">
+                    <label>اسم البنك
+                        <input type="text" id="BankName" value="@selected.BankName" />
+                    </label>
+                    <label>رقم الحساب
+                        <input type="text" id="BankAccount" value="@selected.BankAccount" />
+                    </label>
+                    <label>كود البنك
+                        <input type="text" id="BankCode" value="@selected.BankCode" />
+                    </label>
+                    <label>Bank IBAN
+                        <input type="text" id="BankIban" value="@selected.BankIban" />
+                    </label>
+                    <label class="customers-wide">عنوان البنك
+                        <input type="text" id="BankAddress" value="@selected.BankAddress" />
+                    </label>
+                    <label>IBAN
+                        <input type="text" id="Iban" value="@selected.Iban" />
+                    </label>
+                </div>
+            </section>
+        </main>
+    </div>
+</section>
+
+@section scripts {
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/customers.js?v=20260512")"></script>
+}

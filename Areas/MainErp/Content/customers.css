@@ -1,0 +1,156 @@
+.customers-page .main-erp-cockpit-header p {
+    max-width: 760px;
+}
+
+.customers-layout {
+    display: grid;
+    grid-template-columns: minmax(360px, 0.95fr) minmax(560px, 1.55fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.customers-search {
+    position: sticky;
+    top: 18px;
+}
+
+.customers-results {
+    max-height: 680px;
+    overflow: auto;
+}
+
+.customers-results td strong,
+.customers-results td small {
+    display: block;
+}
+
+.customers-results td small {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.customers-editor {
+    display: grid;
+    gap: 16px;
+}
+
+.customers-card {
+    border-radius: 8px;
+}
+
+.customers-section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.customers-section-head span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.customers-section-head h3 {
+    margin: 3px 0 0;
+    font-size: 18px;
+}
+
+.customers-section-head strong {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    max-width: 360px;
+    padding: 6px 10px;
+    border: 1px solid #dbe5ef;
+    background: #f8fafc;
+    color: #0f172a;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: start;
+}
+
+.customers-form-grid {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+}
+
+.customers-wide {
+    grid-column: span 3;
+}
+
+.customers-form-grid textarea {
+    resize: vertical;
+}
+
+.customers-check {
+    min-height: 44px;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    flex-direction: row !important;
+    justify-content: flex-start;
+    padding: 10px 12px;
+    border: 1px solid #dbe5ef;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.customers-check input {
+    width: auto !important;
+    min-height: auto !important;
+}
+
+.customers-status {
+    margin: 0 0 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.customers-status.success {
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.customers-status.error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.customers-status.info {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+
+@media (max-width: 1180px) {
+    .customers-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .customers-search {
+        position: static;
+    }
+}
+
+@media (max-width: 760px) {
+    .customers-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .customers-wide {
+        grid-column: span 1;
+    }
+
+    .customers-section-head {
+        flex-direction: column;
+    }
+}

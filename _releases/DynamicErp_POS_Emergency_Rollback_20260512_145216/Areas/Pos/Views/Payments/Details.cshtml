@@ -1,0 +1,161 @@
+@model MyERP.Areas.MainErp.ViewModels.Payments.PaymentVoucherDetailsViewModel
+@functions {
+    private static string FormatVoucherSerial(string value)
+    {
+        decimal numericValue;
+        return !string.IsNullOrWhiteSpace(value)
+            && value.IndexOf("e", StringComparison.OrdinalIgnoreCase) >= 0
+            && decimal.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out numericValue)
+            ? numericValue.ToString("0.############################", System.Globalization.CultureInfo.InvariantCulture)
+            : value;
+    }
+}
+@{
+    Layout = null;
+    ViewBag.Title = "تفاصيل سند صرف";
+    var h = Model.Header;
+    var cashboxOrBank = string.IsNullOrWhiteSpace(h.CashboxDisplay) ? h.BankDisplay : h.CashboxDisplay;
+    var allocationSummary = Model.Allocations
+        .GroupBy(x => string.IsNullOrWhiteSpace(x.SourceDisplay) ? x.Source : x.SourceDisplay)
+        .Select(g => new { Source = g.Key, Count = g.Count(), Paid = g.Sum(x => x.PaidValue), Remaining = g.Sum(x => x.RemainingValue) })
+        .ToList();
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    @Html.Partial("~/Areas/Pos/Views/Shared/_VoucherScreenStyles.cshtml")
+</head>
+<body>
+<div class="pos-page voucher-pos-page">
+    <section class="pos-panel voucher-pos-panel voucher-details-page">
+        <header class="voucher-page-header">
+            <div>
+                <span class="voucher-eyebrow">سند صرف</span>
+                <h2>@FormatVoucherSerial(h.NoteSerial)</h2>
+                <p>@(string.IsNullOrWhiteSpace(h.Remark) ? "تفاصيل سند الصرف والتتبع المحاسبي المرتبط به." : h.Remark)</p>
+            </div>
+            <div class="voucher-header-actions">
+                @if (!Model.IsBalanced)
+                {
+                    <span class="voucher-status is-unbalanced">القيد غير متوازن</span>
+                }
+                <a class="secondary-action voucher-ghost-action" href="@Url.Action("Vouchers", "Payments", new { area = "Pos" })">رجوع</a>
+            </div>
+        </header>
+        @if (TempData["VoucherMessage"] != null)
+        {
+            <div class="voucher-empty">@TempData["VoucherMessage"]</div>
+        }
+        @if (TempData["VoucherError"] != null)
+        {
+            <div class="voucher-empty voucher-error">@TempData["VoucherError"]</div>
+        }
+
+        <div class="voucher-kpi-grid">
+            <article><span>رقم السند</span><strong>@FormatVoucherSerial(h.NoteSerial)</strong></article>
+            <article><span>التاريخ</span><strong>@(h.NoteDate.HasValue ? h.NoteDate.Value.ToString("dd/MM/yyyy") : "")</strong></article>
+            <article><span>الطرف</span><strong>@h.PartyDisplay</strong></article>
+            <article><span>الخزنة / البنك</span><strong>@cashboxOrBank</strong></article>
+            <article><span>المبلغ</span><strong>@h.Amount.ToString("N2")</strong></article>
+            <article><span>الضريبة</span><strong>@h.Vat.ToString("N2")</strong></article>
+            <article><span>الإجمالي</span><strong>@h.Total.ToString("N2")</strong></article>
+            @if (!Model.IsBalanced)
+            {
+                <article><span>تنبيه القيد</span><strong>غير متوازن</strong></article>
+            }
+        </div>
+
+        <nav class="voucher-tab-strip" aria-label="أقسام السند">
+            <a href="#voucher-header">بيانات السند</a>
+            <a href="#voucher-allocation">تفاصيل السداد/التخصيص</a>
+            <a href="#voucher-accounting">القيود المحاسبية</a>
+            <a href="#voucher-print">التقارير والطباعة</a>
+            <a href="#voucher-log">سجل الحركة</a>
+        </nav>
+
+        <div class="voucher-action-row">
+            <a class="secondary-action voucher-ghost-action" href="@Url.Action("EditVoucher", "Payments", new { area = "Pos", id = h.NoteId })">تعديل</a>
+            <a class="secondary-action voucher-ghost-action" href="@Url.Action("PrintVoucher", "Payments", new { area = "Pos", id = h.NoteId })" target="_blank">طباعة / تقرير</a>
+            @using (Html.BeginForm("PostVoucher", "Payments", new { area = "Pos", id = h.NoteId }, FormMethod.Post, new { @class = "voucher-inline-form" }))
+            {
+                @Html.AntiForgeryToken()
+                <button type="submit" class="secondary-action voucher-ghost-action">ترحيل</button>
+            }
+            @using (Html.BeginForm("DeleteVoucher", "Payments", new { area = "Pos", id = h.NoteId }, FormMethod.Post, new { @class = "voucher-inline-form", onsubmit = "return confirm('تأكيد حذف السند غير المرحل؟');" }))
+            {
+                @Html.AntiForgeryToken()
+                <button type="submit" class="secondary-action voucher-ghost-action">حذف</button>
+            }
+        </div>
+
+        <div class="voucher-section-stack">
+            <section id="voucher-header" class="voucher-section">
+                <h3>بيانات السند</h3>
+                <dl class="voucher-definition-grid">
+                    <div><dt>حساب الطرف</dt><dd>@h.AccountDisplay</dd></div>
+                    <div><dt>طريقة الدفع</dt><dd>@h.PaymentMethodDisplay</dd></div>
+                    <div><dt>نوع السند</dt><dd>@h.CashingTypeDisplay</dd></div>
+                    <div><dt>تصنيف إضافي</dt><dd>@h.ReceiptClassDisplay</dd></div>
+                    <div><dt>الفرع</dt><dd>@h.BranchDisplay</dd></div>
+                    <div><dt>رقم يدوي</dt><dd>@h.ManualNo</dd></div>
+                    <div><dt>رقم أمر / مرجع</dt><dd>@h.OrderNo</dd></div>
+                    <div><dt>وصف الدفع</dt><dd>@h.PayDescription</dd></div>
+                    <div><dt>وصف إضافي</dt><dd>@h.PayDescription2</dd></div>
+                    <div><dt>رقم الشيك</dt><dd>@h.ChequeNumber</dd></div>
+                    <div><dt>تاريخ استحقاق الشيك</dt><dd>@(h.ChequeDueDate.HasValue ? h.ChequeDueDate.Value.ToString("dd/MM/yyyy") : "")</dd></div>
+                    <div><dt>العملة / المعدل</dt><dd>@(string.IsNullOrWhiteSpace(h.CurrencyDisplay) ? h.CurrencyRate.ToString("N6") : h.CurrencyDisplay + " / " + h.CurrencyRate.ToString("N6"))</dd></div>
+                    <div><dt>مركز التكلفة</dt><dd>@h.CostCenterDisplay</dd></div>
+                    <div><dt>المشروع</dt><dd>@h.ProjectDisplay</dd></div>
+                    <div><dt>VAT</dt><dd>@(h.IncludeVat ? "شامل الضريبة" : "غير شامل / غير محدد")</dd></div>
+                    <div><dt>تقرير الطباعة</dt><dd>@h.ReportName</dd></div>
+                </dl>
+            </section>
+
+            <section id="voucher-allocation" class="voucher-section">
+                <h3>تفاصيل السداد/التخصيص</h3>
+                @if (allocationSummary.Count > 0)
+                {
+                    <div class="voucher-metric-strip voucher-allocation-summary">
+                        @foreach (var item in allocationSummary)
+                        {
+                            <article><span>@item.Source</span><strong>@item.Paid.ToString("N2")</strong><small>@item.Count بند / متبقي @item.Remaining.ToString("N2")</small></article>
+                        }
+                    </div>
+                }
+                <div class="report-result compact-result voucher-table-wrap">
+                    <table class="voucher-table"><thead><tr><th>المصدر</th><th>الرقم</th><th>التاريخ</th><th>الأصل</th><th>المدفوع</th><th>المتبقي</th><th>الوصف</th></tr></thead><tbody>
+                    @foreach (var line in Model.Allocations) { <tr><td>@(string.IsNullOrWhiteSpace(line.SourceDisplay) ? line.Source : line.SourceDisplay)</td><td>@FormatVoucherSerial(line.Serial)</td><td>@(line.Date.HasValue ? line.Date.Value.ToString("dd/MM/yyyy") : "")</td><td class="voucher-number">@line.OriginalValue.ToString("N2")</td><td class="voucher-number">@line.PaidValue.ToString("N2")</td><td class="voucher-number">@line.RemainingValue.ToString("N2")</td><td>@line.Description</td></tr> }
+                    @if (Model.Allocations.Count == 0) { <tr><td colspan="7" class="voucher-empty">لا توجد تخصيصات مسجلة.</td></tr> }
+                    </tbody></table>
+                </div>
+            </section>
+
+            <section id="voucher-accounting" class="voucher-section">
+                <div class="voucher-section-title"><h3>القيود المحاسبية</h3><span class="voucher-status @(Model.IsBalanced ? "is-balanced" : "is-unbalanced")">مدين @Model.DebitTotal.ToString("N2") / دائن @Model.CreditTotal.ToString("N2")</span></div>
+                <div class="report-result compact-result voucher-table-wrap">
+                    <table class="voucher-table"><thead><tr><th>القيد</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>البيان</th></tr></thead><tbody>
+                    @foreach (var line in Model.AccountingEntries) { <tr><td>@line.VoucherId</td><td>@line.AccountDisplay</td><td class="voucher-number">@line.Debit.ToString("N2")</td><td class="voucher-number">@line.Credit.ToString("N2")</td><td>@line.Description</td></tr> }
+                    <tr class="voucher-total-row"><th colspan="2">الإجمالي</th><th>@Model.DebitTotal.ToString("N2")</th><th>@Model.CreditTotal.ToString("N2")</th><th></th></tr>
+                    </tbody></table>
+                </div>
+            </section>
+
+            <section id="voucher-print" class="voucher-section"><h3>التقارير والطباعة</h3><p>الطباعة تعمل من نفس بيانات السند والقيد. تقرير الطباعة: @h.ReportName</p></section>
+
+            <section id="voucher-log" class="voucher-section">
+                <h3>سجل الحركة</h3>
+                <div class="report-result compact-result voucher-table-wrap">
+                    <table class="voucher-table"><tbody>
+                    @foreach (var note in Model.RelatedNotes) { <tr><td>@note.NoteId</td><td>@FormatVoucherSerial(note.NoteSerial)</td><td>@note.NoteType</td><td>@(note.NoteDate.HasValue ? note.NoteDate.Value.ToString("dd/MM/yyyy") : "")</td><td class="voucher-number">@note.Amount.ToString("N2")</td><td>@note.Remark</td></tr> }
+                    </tbody></table>
+                </div>
+            </section>
+        </div>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<main class="ep-page" data-screen="salary"
+      data-lookups-url="@Url.Action("Lookups", "EmployeePayroll")"
+      data-preview-url="@Url.Action("PreviewSalaryRun", "EmployeePayroll")"
+      data-save-url="@Url.Action("SaveSalaryRun", "EmployeePayroll")">
+    <header class="ep-header">
+        <div>
+            <h1>مسير الرواتب</h1>
+            <p>حساب وحفظ مسودة المسير مع خصم التأمين الطبي ضمن الخصومات دون تحميل الموظف نصيب الشركة.</p>
+        </div>
+        <div class="ep-header-actions">
+            <a class="ep-link" href="@Url.Action("Employees", "EmployeePayroll")"><i class="fas fa-users"></i> الموظفون</a>
+            <a class="ep-link" href="@Url.Action("MedicalInsuranceReports", "EmployeePayroll")"><i class="fas fa-chart-bar"></i> تقارير التأمين</a>
+        </div>
+    </header>
+    <section class="ep-wizard">
+        <div class="ep-step active">1. اختيار الفترة</div>
+        <div class="ep-step">2. اختيار الموظفين</div>
+        <div class="ep-step">3. Preview</div>
+        <div class="ep-step">4. حفظ المسودة</div>
+        <div class="ep-step">5. القيد الناتج</div>
+    </section>
+    <section class="ep-toolbar">
+        <label>السنة<input id="epRunYear" type="number" min="2000" max="2100" value="@DateTime.Today.Year" /></label>
+        <label>الشهر<input id="epRunMonth" type="number" min="1" max="12" value="@DateTime.Today.Month" /></label>
+        <label>الفرع<select id="epRunBranch"><option value="">كل الفروع</option></select></label>
+        <label>الإدارة<select id="epRunDepartment"><option value="">كل الإدارات</option></select></label>
+        <label>رقم موظف<input id="epRunEmployee" type="number" min="1" placeholder="اختياري" /></label>
+        <button type="button" class="ep-primary" id="epPreviewRun"><i class="fas fa-calculator"></i> حساب Preview</button>
+        <button type="button" id="epSaveRun"><i class="fas fa-save"></i> حفظ مسودة</button>
+    </section>
+    <section class="ep-kpis">
+        <div><span>إجمالي الأساسي</span><strong id="epTotalBasic">0.00</strong></div>
+        <div><span>إجمالي الإضافات</span><strong id="epTotalAdditions">0.00</strong></div>
+        <div><span>إجمالي الخصومات</span><strong id="epTotalDeductions">0.00</strong></div>
+        <div><span>خصم التأمين الطبي</span><strong id="epTotalMedical">0.00</strong></div>
+        <div><span>تكلفة التأمين على الشركة</span><strong id="epTotalCompanyMedical">0.00</strong></div>
+        <div><span>صافي الرواتب</span><strong id="epTotalNet">0.00</strong></div>
+    </section>
+    <section class="ep-grid-wrap">
+        <h2>تفاصيل الموظفين</h2>
+        <table class="ep-table">
+            <thead><tr><th>الموظف</th><th>الفرع</th><th>الأساسي</th><th>الإضافات</th><th>السلف</th><th>خصومات أخرى</th><th>خطة التأمين</th><th>تكلفة التأمين</th><th>خصم الموظف</th><th>تكلفة الشركة</th><th>الصافي</th><th>الحالة</th></tr></thead>
+            <tbody id="epSalaryRows"></tbody>
+        </table>
+    </section>
+    <section class="ep-grid-wrap">
+        <h2>Preview القيد الناتج</h2>
+        <table class="ep-table">
+            <thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th>البيان</th><th>الموظف</th></tr></thead>
+            <tbody id="epJournalRows"></tbody>
+        </table>
+    </section>
+    <div class="ep-message" id="epMessage"></div>
+</main>

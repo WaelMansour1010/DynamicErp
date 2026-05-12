@@ -2,6 +2,10 @@
     DROP PROCEDURE dbo.usp_POS_SaveTransaction;
 GO
 
+IF COL_LENGTH(N'dbo.Transactions', N'AccountTypeName1') IS NULL
+    ALTER TABLE dbo.Transactions ADD AccountTypeName1 NVARCHAR(255) NULL;
+GO
+
 SET ANSI_NULLS ON;
 GO
 SET QUOTED_IDENTIFIER ON;
@@ -38,6 +42,7 @@ CREATE PROCEDURE dbo.usp_POS_SaveTransaction
     @VisaNumber NVARCHAR(510) = NULL,
     @RechargeValue FLOAT = NULL,
     @Tet_NumPoket FLOAT = NULL,
+    @AccountTypeName1 NVARCHAR(255) = NULL,
     @TrafficViolations BIT = NULL,
     @ViolationsValue FLOAT = NULL,
     @ItemIDService INT = NULL,
@@ -387,6 +392,7 @@ BEGIN
             VisaNumber,
             RechargeValue,
             Tet_NumPoket,
+            AccountTypeName1,
             VAT,
             TrafficViolations,
             ViolationsValue,
@@ -437,6 +443,7 @@ BEGIN
             @VisaNumber,
             @RechargeValue,
             @Tet_NumPoket,
+            @AccountTypeName1,
             CASE WHEN ISNULL(@TrafficViolations, 0) = 1 THEN 0 ELSE @VatAmount END,
             @TrafficViolations,
             @ViolationsValue,
@@ -483,6 +490,7 @@ BEGIN
                 VisaNumber = @VisaNumber,
                 RechargeValue = @RechargeValue,
                 Tet_NumPoket = @Tet_NumPoket,
+                AccountTypeName1 = @AccountTypeName1,
                 VAT = CASE WHEN ISNULL(@TrafficViolations, 0) = 1 THEN 0 ELSE @VatAmount END,
                 TrafficViolations = @TrafficViolations,
                 ViolationsValue = @ViolationsValue,

@@ -56,6 +56,7 @@ namespace MyERP.Areas.Pos.Models
         public int? ItemIDService2 { get; set; }
         public int? ViolationPayType { get; set; }
         public string Tet_NumPoket { get; set; }
+        public string AccountTypeName1 { get; set; }
         public bool IsRecharg { get; set; }
         public bool IsWallet { get; set; }
         public bool HaveGuarantee { get; set; }
@@ -107,6 +108,8 @@ namespace MyERP.Areas.Pos.Models
         public bool CanExecuteClosing { get; set; }
         public bool CanOpenSales { get; set; }
         public bool CanEditInvoice { get; set; }
+        public bool CanEditSalesInvoice { get; set; }
+        public bool CanEditSalesInvoicePos { get; set; }
         public bool CanCancelOrReturn { get; set; }
         public bool CanEditKyc { get; set; }
         public bool CustomerService { get; set; }
@@ -324,6 +327,8 @@ namespace MyERP.Areas.Pos.Models
         public int? BranchId { get; set; }
         public int? StoreId { get; set; }
         public int? UserId { get; set; }
+        public int? InvoiceTransactionId { get; set; }
+        public string EditPassword { get; set; }
     }
 
     public class PosKycCardAvailabilityDto
@@ -574,6 +579,8 @@ namespace MyERP.Areas.Pos.Models
         public string ServiceType { get; set; }
         public bool IsExcelImported { get; set; }
         public long? ExcelImportBatchId { get; set; }
+        public bool HasExcelImportWarning { get; set; }
+        public string ExcelImportWarningMessage { get; set; }
         public bool IsCancelled { get; set; }
     }
 
@@ -637,6 +644,19 @@ namespace MyERP.Areas.Pos.Models
         public string BoxName { get; set; }
         public int? Emp_ID { get; set; }
         public string EmpName { get; set; }
+        public int PaymentType { get; set; }
+        public int? PaymentNetid { get; set; }
+        public bool IsCashOut { get; set; }
+        public bool IsPOS { get; set; }
+        public bool OtherItems { get; set; }
+        public int? PayType { get; set; }
+        public int? POSBillType { get; set; }
+        public int? STableID { get; set; }
+        public int? SessionD { get; set; }
+        public int? BillBasedOn { get; set; }
+        public bool IsRecharg { get; set; }
+        public bool IsWallet { get; set; }
+        public bool HaveGuarantee { get; set; }
         public decimal RechargeValue { get; set; }
         public decimal PayedValue { get; set; }
         public decimal NetValue { get; set; }
@@ -651,10 +671,19 @@ namespace MyERP.Areas.Pos.Models
         public string ItemIDService2Name { get; set; }
         public decimal? ViolationsValue { get; set; }
         public string Tet_NumPoket { get; set; }
+        public string AccountTypeName1 { get; set; }
         public bool IsCancelled { get; set; }
         public int? CancelledBy { get; set; }
         public DateTime? CancelledDate { get; set; }
         public string CancelReason { get; set; }
+        public bool IsExcelImported { get; set; }
+        public bool HasExcelImportWarning { get; set; }
+        public string ExcelImportWarningMessage { get; set; }
+        public bool CanEditSalesInvoice { get; set; }
+        public bool CanEditSalesInvoicePos { get; set; }
+        public bool CanEditLoadedInvoice { get; set; }
+        public bool CanEditLoadedInvoiceKyc { get; set; }
+        public string EditModeMessage { get; set; }
         public IList<PosTransactionItemDto> Items { get; set; }
         public PosCustomerLookupDto KycCustomer { get; set; }
 

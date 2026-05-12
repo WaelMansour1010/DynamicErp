@@ -6,12 +6,17 @@
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
 
     var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "account-charts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing", "dynamic-reports", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
-    var salesOpen = sectionActive(new[] { "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
+    var salesOpen = sectionActive(new[] { "customers", "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
     var purchasesOpen = sectionActive(new[] { "purchases" });
     var inventoryOpen = sectionActive(new[] { "stock-transfers", "defin-comp-item" });
     var projectsOpen = sectionActive(new[] { "projects", "project-extracts" });
     var lcOpen = sectionActive(new[] { "lc" });
     var adminOpen = sectionActive(new[] { "database-migration" });
+    var canViewCustomers = false;
+    if (mainErpContext != null)
+    {
+        canViewCustomers = new MyERP.Areas.MainErp.Infrastructure.LegacyScreenPermissionService(new MyERP.Areas.MainErp.Infrastructure.MainErpDbConnectionFactory()).CanView(mainErpContext, "FrmCustemers");
+    }
     if (!(accountingOpen || salesOpen || purchasesOpen || inventoryOpen || projectsOpen || lcOpen || adminOpen || isActive("dashboard"))) { accountingOpen = true; }
 }
 
@@ -71,6 +76,10 @@
         <section class="pos-nav-section @(salesOpen ? "is-open" : "")">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="@T("Sales")"><span><i class="fas fa-chart-line"></i><b>@T("Sales")</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
             <div class="pos-nav-submenu">
+                @if (canViewCustomers)
+                {
+                    <a class="pos-nav-link main-erp-nav-link @(isActive("customers") ? "active" : "")" href="@Url.Action("Index", "Customers", new { area = "MainErp" })" title="العملاء والموردون"><i class="fas fa-address-book"></i><span>العملاء والموردون</span></a>
+                }
                 <a class="pos-nav-link main-erp-nav-link @(isActive("workshop-sales") ? "active" : "")" href="@Url.Action("Index", "WorkshopSales", new { area = "MainErp" })"><i class="fas fa-tools"></i><span>@T("WorkshopSalesInvoice")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("pump-sales") ? "active" : "")" href="@Url.Action("Index", "PumpSales", new { area = "MainErp" })"><i class="fas fa-gas-pump"></i><span>@T("PumpSalesInvoice")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("sales-reports") ? "active" : "")" href="@Url.Action("Index", "SalesReports", new { area = "MainErp" })"><i class="fas fa-chart-bar"></i><span>@T("SalesReports")</span></a>

@@ -1,0 +1,713 @@
+@{
+    Layout = null;
+    ViewBag.Title = "فاتورة مشتريات";
+    var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+    var stores = ViewBag.Stores as IEnumerable<MyERP.Areas.Pos.Models.PosStoreDto>;
+    var boxes = ViewBag.Boxes as IEnumerable<MyERP.Areas.Pos.Models.PosCashBoxDto>;
+    var banks = ViewBag.Banks as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui")" rel="stylesheet" />
+    <style>
+        body {
+            direction: rtl;
+            background: #f4f6f8;
+            color: #17202a;
+            font-family: Tahoma, Arial, sans-serif;
+            margin: 0;
+        }
+
+        .purchase-page {
+            padding: 18px;
+        }
+
+        .purchase-shell {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .purchase-card {
+            background: #fff;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+        }
+
+        .purchase-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .purchase-title h1 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .purchase-title span {
+            color: #667085;
+            font-size: 13px;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #344054;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            height: 38px;
+            border-radius: 4px;
+            border-color: #cfd6df;
+            box-shadow: none;
+        }
+
+        textarea.form-control {
+            min-height: 78px;
+            resize: vertical;
+        }
+
+        .lookup-wrap {
+            position: relative;
+        }
+
+        .lookup-results {
+            display: none;
+            position: absolute;
+            top: 39px;
+            right: 0;
+            left: 0;
+            z-index: 40;
+            max-height: 260px;
+            overflow: auto;
+            background: #fff;
+            border: 1px solid #b8c2cc;
+            border-radius: 4px;
+            box-shadow: 0 8px 20px rgba(16, 24, 40, .14);
+        }
+
+        .lookup-results.is-open {
+            display: block;
+        }
+
+        .lookup-results button {
+            display: block;
+            width: 100%;
+            border: 0;
+            background: #fff;
+            padding: 9px 10px;
+            text-align: right;
+            color: #17202a;
+        }
+
+        .lookup-results button:hover,
+        .lookup-results button:focus {
+            background: #eef4ff;
+        }
+
+        .inline-field-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .inline-field-actions .form-control {
+            flex: 1 1 auto;
+        }
+
+        .purchase-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .purchase-toolbar h2 {
+            font-size: 20px;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .grid-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .grid-actions input[type=file] {
+            max-width: 280px;
+        }
+
+        .items-scroll {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+        }
+
+        .purchase-table {
+            min-width: 1240px;
+            margin: 0;
+            background: #fff;
+        }
+
+        .purchase-table th {
+            background: #f0f3f7;
+            color: #344054;
+            font-size: 13px;
+            white-space: nowrap;
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        .purchase-table td {
+            vertical-align: top;
+            position: relative;
+        }
+
+        .purchase-table .item-cell {
+            width: 270px;
+        }
+
+        .purchase-table .unit-cell {
+            width: 135px;
+        }
+
+        .purchase-table .number-cell {
+            width: 118px;
+        }
+
+        .purchase-table .serial-cell {
+            width: 190px;
+        }
+
+        .purchase-table .remove-cell {
+            width: 70px;
+            text-align: center;
+        }
+
+        .purchase-table .line-total {
+            height: 38px;
+            line-height: 38px;
+            font-weight: 700;
+            color: #1d2939;
+        }
+
+        .grid-pager {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #d8dee6;
+            border-top: 0;
+            border-radius: 0 0 6px 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            padding: 10px 12px;
+        }
+
+        .grid-page-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .grid-page-info,
+        .grid-page-current {
+            color: #475467;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .serial-badge {
+            display: none;
+            margin-top: 4px;
+            color: #b54708;
+            font-size: 12px;
+        }
+
+        tr.is-serial .serial-badge {
+            display: block;
+        }
+
+        .totals-panel {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+
+        .totals-box {
+            width: 360px;
+            max-width: 100%;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            background: #fbfcfe;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e4e7ec;
+        }
+
+        .total-row:last-child {
+            border-bottom: 0;
+            font-weight: 800;
+            font-size: 18px;
+            color: #0f5132;
+        }
+
+        .purchase-footer {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+
+        .purchase-message {
+            flex: 1 1 auto;
+            min-height: 22px;
+            font-weight: 600;
+        }
+
+        .purchase-message.is-error {
+            color: #b42318;
+        }
+
+        .purchase-message.is-success {
+            color: #027a48;
+        }
+
+        .pos-breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .pos-breadcrumb a {
+            color: #2563eb;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .index-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .index-filter-row {
+            direction: rtl;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .index-filter-row > [class*="col-"] {
+            float: none;
+        }
+
+        .filter-from { order: 1; }
+        .filter-to { order: 2; }
+        .filter-branch { order: 3; }
+        .filter-number { order: 4; }
+        .filter-supplier { order: 5; }
+        .filter-store { order: 6; }
+        .filter-payment { order: 7; }
+
+        .index-table-wrap {
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            margin-top: 14px;
+            overflow-x: auto;
+        }
+
+        .index-table {
+            min-width: 980px;
+            margin: 0;
+        }
+
+        .index-table th {
+            background: #f0f3f7;
+            color: #344054;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .empty-index-row {
+            color: #667085;
+            padding: 24px !important;
+            text-align: center;
+        }
+
+        .is-hidden-ui {
+            display: none !important;
+        }
+
+        .import-result {
+            display: none;
+            margin-top: 12px;
+            border: 1px solid #d8dee6;
+            border-radius: 6px;
+            background: #fff;
+            padding: 10px;
+        }
+
+        .import-result.is-open {
+            display: block;
+        }
+
+        .import-result h3 {
+            font-size: 16px;
+            margin: 0 0 8px;
+        }
+
+        .payment-dependent {
+            display: none;
+        }
+
+        .payment-dependent.is-visible {
+            display: block;
+        }
+
+        @@media (max-width: 767px) {
+            .purchase-page {
+                padding: 10px;
+            }
+
+            .purchase-card {
+                padding: 12px;
+            }
+
+            .purchase-title {
+                display: block;
+            }
+
+            .purchase-footer {
+                display: block;
+            }
+
+            .purchase-footer .btn {
+                width: 100%;
+                margin-top: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="purchase-page"
+         data-lookup-url="@Url.Action("Lookup", "PurchaseInvoice", new { area = "Pos" })"
+         data-units-url="@Url.Action("Units", "PurchaseInvoice", new { area = "Pos" })"
+         data-stores-url="@Url.Action("Stores", "PurchaseInvoice", new { area = "Pos" })"
+         data-import-url="@Url.Action("ImportExcel", "PurchaseInvoice", new { area = "Pos" })"
+         data-save-url="@Url.Action("Save", "PurchaseInvoice", new { area = "Pos" })"
+         data-search-url="@Url.Action("Search", "PurchaseInvoice", new { area = "Pos" })"
+         data-get-url="@Url.Action("Get", "PurchaseInvoice", new { area = "Pos" })">
+        <div class="purchase-shell">
+            <nav class="pos-breadcrumb" aria-label="breadcrumb">
+                <a href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })" target="_top">لوحة التحكم</a>
+                <span>/</span>
+                <span>العمليات</span>
+                <span>/</span>
+                <strong>فواتير مشتريات</strong>
+            </nav>
+
+            <section class="purchase-card" id="purchaseIndexPanel">
+                <div class="purchase-title">
+                    <h1>فواتير مشتريات</h1>
+                    <span>ابحث عن فاتورة موجودة أو ابدأ فاتورة شراء جديدة.</span>
+                </div>
+                <div class="row index-filter-row">
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-number">
+                        <div class="form-group">
+                            <label for="purchaseSearchInvoice">رقم الفاتورة</label>
+                            <input type="text" id="purchaseSearchInvoice" class="form-control" placeholder="رقم الفاتورة أو رقم المورد" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-from">
+                        <div class="form-group">
+                            <label for="purchaseSearchFrom">من تاريخ</label>
+                            <input type="date" id="purchaseSearchFrom" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-to">
+                        <div class="form-group">
+                            <label for="purchaseSearchTo">إلى تاريخ</label>
+                            <input type="date" id="purchaseSearchTo" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-supplier">
+                        <div class="form-group">
+                            <label for="purchaseSearchSupplier">المورد</label>
+                            <input type="text" id="purchaseSearchSupplier" class="form-control" placeholder="كود أو اسم المورد" />
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-branch">
+                        <div class="form-group">
+                            <label for="purchaseSearchBranch">الفرع</label>
+                            <select id="purchaseSearchBranch" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                <option value="">كل الفروع</option>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-store">
+                        <div class="form-group">
+                            <label for="purchaseSearchStore">المخزن</label>
+                            <select id="purchaseSearchStore" class="form-control">
+                                <option value="">كل المخازن</option>
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID">@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12 filter-payment">
+                        <div class="form-group">
+                            <label for="purchaseSearchPayment">طريقة الدفع</label>
+                            <select id="purchaseSearchPayment" class="form-control">
+                                <option value="">كل الطرق</option>
+                                <option value="1">آجل / على المورد</option>
+                                <option value="0">نقدي</option>
+                                <option value="3">بنك</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="index-actions">
+                    <button type="button" class="btn btn-primary" id="purchaseSearchBtn">بحث</button>
+                    <button type="button" class="btn btn-default" id="purchaseClearSearchBtn">مسح الفلاتر</button>
+                    <button type="button" class="btn btn-success" id="purchaseAddNewBtn">إضافة فاتورة جديدة</button>
+                </div>
+                <div class="index-table-wrap">
+                    <table class="table table-bordered index-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>التاريخ</th>
+                                <th>المورد</th>
+                                <th>الفرع</th>
+                                <th>المخزن</th>
+                                <th>الصافي</th>
+                                <th>الحالة</th>
+                                <th>إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseIndexBody">
+                            <tr><td colspan="8" class="empty-index-row">اضغط بحث لعرض فواتير المشتريات.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="purchaseEntryPanel" class="is-hidden-ui">
+            <section class="purchase-card">
+                <div class="purchase-title">
+                    <h1>فاتورة مشتريات</h1>
+                    <span>إدخال مبسط مطابق لتأثيرات FrmBillBuy الأساسية</span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseInvoiceNumber">رقم الفاتورة</label>
+                            <input type="text" id="purchaseInvoiceNumber" class="form-control" placeholder="يولد تلقائياً عند تركه فارغاً" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseInvoiceDate">تاريخ الفاتورة</label>
+                            <input type="date" id="purchaseInvoiceDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseSupplierText">المورد</label>
+                            <div class="lookup-wrap">
+                                <input type="hidden" id="purchaseSupplierId" />
+                                <div class="inline-field-actions">
+                                    <input type="text" id="purchaseSupplierText" class="form-control lookup-input" data-lookup-kind="supplier" placeholder="اكتب كود أو اسم المورد" autocomplete="off" />
+                                    <button type="button" class="btn btn-default" id="clearSupplierBtn">مسح</button>
+                                </div>
+                                <div class="lookup-results" id="supplierResults" role="listbox"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseManualNo">رقم فاتورة المورد</label>
+                            <input type="text" id="purchaseManualNo" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseBranchId">الفرع</label>
+                            <select id="purchaseBranchId" class="form-control" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseStoreId">المخزن</label>
+                            <select id="purchaseStoreId" class="form-control">
+                                @if (stores != null)
+                                {
+                                    foreach (var store in stores)
+                                    {
+                                        <option value="@store.StoreID" @(context != null && context.StoreId == store.StoreID ? "selected" : "")>@store.StoreName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchasePaymentType">طريقة الدفع</label>
+                            <select id="purchasePaymentType" class="form-control">
+                                <option value="1">آجل / على المورد</option>
+                                <option value="0">نقدي</option>
+                                <option value="3">بنك</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12 payment-dependent" data-payment-field="cash">
+                        <div class="form-group">
+                            <label for="purchaseBoxId">الخزنة</label>
+                            <select id="purchaseBoxId" class="form-control">
+                                <option value="">اختر الخزنة</option>
+                                @if (boxes != null)
+                                {
+                                    foreach (var box in boxes)
+                                    {
+                                        <option value="@box.BoxID" @(context != null && context.BoxId == box.BoxID ? "selected" : "")>@box.BoxName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-xs-12 payment-dependent" data-payment-field="bank">
+                        <div class="form-group">
+                            <label for="purchaseBankId">البنك</label>
+                            <select id="purchaseBankId" class="form-control">
+                                <option value="">اختر البنك</option>
+                                @if (banks != null)
+                                {
+                                    foreach (var bank in banks)
+                                    {
+                                        <option value="@bank.Id">@bank.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-8 col-sm-12 col-xs-12">
+                        <div class="form-group">
+                            <label for="purchaseRemarks">ملاحظات</label>
+                            <textarea id="purchaseRemarks" class="form-control"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="purchase-card">
+                <div class="purchase-toolbar">
+                    <h2>الأصناف</h2>
+                    <div class="grid-actions">
+                        <button type="button" class="btn btn-default" id="addPurchaseRowBtn">إضافة صف</button>
+                        <input type="file" id="purchaseImportFile" class="form-control" accept=".xls,.xlsx" />
+                        <button type="button" class="btn btn-default" id="importPurchaseBtn">استيراد Excel</button>
+                    </div>
+                </div>
+
+                <div class="items-scroll">
+                    <table class="table table-bordered purchase-table">
+                        <thead>
+                            <tr>
+                                <th class="item-cell">الصنف</th>
+                                <th class="unit-cell">الوحدة</th>
+                                <th class="number-cell">الكمية</th>
+                                <th class="number-cell">سعر الشراء</th>
+                                <th class="number-cell">خصم</th>
+                                <th class="number-cell">VAT %</th>
+                                <th class="number-cell">قيمة VAT</th>
+                                <th class="number-cell">الإجمالي</th>
+                                <th class="serial-cell">السيريال</th>
+                                <th class="remove-cell">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseItemsBody"></tbody>
+                    </table>
+                </div>
+                <div id="purchaseItemsPager" class="grid-pager"></div>
+
+                <div id="purchaseImportResult" class="import-result"></div>
+
+                <div class="totals-panel">
+                    <div class="totals-box">
+                        <div class="total-row"><span>الإجمالي قبل الخصم والضريبة</span><strong id="purchaseSubtotal">0.00</strong></div>
+                        <div class="total-row"><span>إجمالي الخصم</span><strong id="purchaseDiscountTotal">0.00</strong></div>
+                        <div class="total-row"><span>إجمالي VAT</span><strong id="purchaseVatTotal">0.00</strong></div>
+                        <div class="total-row"><span>الصافي</span><strong id="purchaseNetTotal">0.00</strong></div>
+                    </div>
+                </div>
+
+                <div class="purchase-footer">
+                    <span id="purchaseMessage" class="purchase-message"></span>
+                    <button type="button" class="btn btn-default btn-lg" id="purchaseBackToIndexBtn">العودة للقائمة</button>
+                    <button type="button" class="btn btn-primary btn-lg" id="savePurchaseBtn">حفظ الفاتورة</button>
+                </div>
+            </section>
+            </div>
+        </div>
+    </div>
+
+    <script src="@Url.Content("~/Scripts/jquery-3.3.1.min.js")"></script>
+    <script src="@Url.Content("~/Areas/Pos/Scripts/purchase-invoice.js")"></script>
+</body>
+</html>

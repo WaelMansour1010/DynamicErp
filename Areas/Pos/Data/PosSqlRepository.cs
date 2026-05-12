@@ -364,6 +364,8 @@ WHERE User_ID = @userId
                 context.CanExecuteClosing = true;
                 context.CanOpenSales = true;
                 context.CanEditInvoice = true;
+                context.CanEditSalesInvoice = true;
+                context.CanEditSalesInvoicePos = true;
                 context.CanOpenPayments = true;
                 context.CanExecutePayments = true;
                 context.CanEditPayments = true;
@@ -390,7 +392,9 @@ WHERE User_ID = @userId
             var permissions = GetTemporaryPosPermissions(context.UserId);
             var isTeller = IsTellerCategory(context.UserCategory) || IsTemporaryAllowed(permissions, "CanTeller");
             context.CanSave = context.CanSave || isTeller || IsTemporaryAllowed(permissions, "CanSaveInvoice");
-            context.CanEditInvoice = context.CanChangeDefaults || IsTemporaryAllowed(permissions, "CanEditInvoice");
+            context.CanEditSalesInvoice = context.CanChangeDefaults || IsTemporaryAllowed(permissions, "CanEditSalesInvoice") || IsTemporaryAllowed(permissions, "CanEditInvoice");
+            context.CanEditSalesInvoicePos = IsTemporaryAllowed(permissions, "CanEditSalesInvoicePos");
+            context.CanEditInvoice = context.CanEditSalesInvoice || context.CanEditSalesInvoicePos;
             context.CanViewJournalEntry = IsTemporaryAllowed(permissions, "CanViewJournalEntry");
             context.CanOpenClosing = !IsTemporaryDenied(permissions, "CanOpenClosing") && (isTeller || IsTemporaryAllowed(permissions, "CanOpenClosing"));
             context.CanExecuteClosing = !IsTemporaryDenied(permissions, "CanExecuteClosing") && (isTeller || IsTemporaryAllowed(permissions, "CanExecuteClosing"));
@@ -2338,6 +2342,64 @@ WHERE t.Transaction_Type = 21
             }
         }
 
+        public PosTodayInvoiceDto FindImportantIpnDuplicatePosSale(string manualNo, int? excludeTransactionId = null)
+        {
+            if (string.IsNullOrWhiteSpace(manualNo))
+            {
+                return null;
+            }
+
+            const string sql = @"
+SELECT TOP (1)
+    t.Transaction_ID,
+    t.NoteSerial1,
+    CONVERT(VARCHAR(10), t.Transaction_Date, 120) AS TransactionDate,
+    CASE
+        WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'مخالفات'
+        WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'كارت كيشني'
+        WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'كاش أوت'
+        ELSE N'كاش إن'
+    END AS ServiceType
+FROM dbo.Transactions t
+WHERE t.Transaction_Type = 21
+  AND NULLIF(LTRIM(RTRIM(ISNULL(t.ManualNO, N''))), N'') = @manualNo
+  AND (@excludeTransactionId IS NULL OR t.Transaction_ID <> @excludeTransactionId)
+  AND
+  (
+      NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL
+      OR
+      (
+          ISNULL(t.IsCashOut, 0) = 0
+          AND ISNULL(t.TrafficViolations, 0) = 0
+          AND (ISNULL(t.isRecharg, 0) = 1 OR ISNULL(t.RechargeValue, 0) > 0)
+      )
+  )
+ORDER BY t.Transaction_ID DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddString(command, "@manualNo", SqlDbType.NVarChar, 255, manualNo.Trim());
+                Add(command, "@excludeTransactionId", SqlDbType.Int, excludeTransactionId);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new PosTodayInvoiceDto
+                    {
+                        Transaction_ID = ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
+                        NoteSerial1 = ReadString(reader, "NoteSerial1"),
+                        TransactionDate = ReadString(reader, "TransactionDate"),
+                        ServiceType = ReadString(reader, "ServiceType")
+                    };
+                }
+            }
+        }
+
         public int? FindKeshniCardInvoiceDuplicateId(string cardNo, int? excludeTransactionId = null)
         {
             if (string.IsNullOrWhiteSpace(cardNo))
@@ -2455,21 +2517,32 @@ WHERE b.SourceFileHash = @sourceFileHash
             }
 
             const string sql = @"
-SELECT
-    COUNT(DISTINCT t.Transaction_ID) AS InvoiceCount,
-    MIN(t.Transaction_Date) AS ExistingFromDate,
-    MAX(t.Transaction_Date) AS ExistingToDate,
-    MAX(b.BatchId) AS BatchId
-FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
-INNER JOIN dbo.POS_ImportBatchRow r WITH (UPDLOCK, HOLDLOCK)
-    ON r.TransactionId = t.Transaction_ID
-   AND r.Status = N'Imported'
-INNER JOIN dbo.POS_ImportBatch b WITH (UPDLOCK, HOLDLOCK)
-    ON b.BatchId = r.BatchId
-WHERE t.Transaction_Type = 21
-  AND t.BranchId = @branchId
-  AND t.Transaction_Date >= @fromDate
-  AND t.Transaction_Date < DATEADD(DAY, 1, @toDate);";
+;WITH BatchRanges AS
+(
+    SELECT
+        b.BatchId,
+        COUNT(DISTINCT t.Transaction_ID) AS InvoiceCount,
+        MIN(CONVERT(DATE, t.Transaction_Date)) AS ExistingFromDate,
+        MAX(CONVERT(DATE, t.Transaction_Date)) AS ExistingToDate
+    FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+    INNER JOIN dbo.POS_ImportBatchRow r WITH (UPDLOCK, HOLDLOCK)
+        ON r.TransactionId = t.Transaction_ID
+       AND r.Status = N'Imported'
+    INNER JOIN dbo.POS_ImportBatch b WITH (UPDLOCK, HOLDLOCK)
+        ON b.BatchId = r.BatchId
+    WHERE t.Transaction_Type = 21
+      AND t.BranchId = @branchId
+    GROUP BY b.BatchId
+)
+SELECT TOP (1)
+    InvoiceCount,
+    ExistingFromDate,
+    ExistingToDate,
+    BatchId
+FROM BatchRanges
+WHERE ExistingFromDate <= @toDate
+  AND ExistingToDate >= @fromDate
+ORDER BY ExistingFromDate DESC, BatchId DESC;";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -4371,6 +4444,19 @@ SELECT
                 request.IsCashOut = false;
                 request.IsWallet = false;
                 request.PayType = request.ViolationPayType.HasValue ? request.ViolationPayType.Value : 1;
+                if (string.IsNullOrWhiteSpace(request.AccountTypeName1))
+                {
+                    request.AccountTypeName1 = request.Tet_NumPoket;
+                }
+                request.Tet_NumPoket = null;
+            }
+            else if (IsCashOutService(request.TransactionType))
+            {
+                if (string.IsNullOrWhiteSpace(request.AccountTypeName1))
+                {
+                    request.AccountTypeName1 = request.Tet_NumPoket;
+                }
+                request.Tet_NumPoket = null;
             }
 
             var itemsTable = BuildItemsTable(request.Items);
@@ -4529,6 +4615,7 @@ SELECT
                 AddString(command, "@VisaNumber", SqlDbType.NVarChar, 255, request.VisaNumber);
                 Add(command, "@RechargeValue", SqlDbType.Float, ToNullableDouble(request.RechargeValue));
                 Add(command, "@Tet_NumPoket", SqlDbType.Float, ToNullableDouble(request.Tet_NumPoket));
+                AddString(command, "@AccountTypeName1", SqlDbType.NVarChar, 255, request.AccountTypeName1);
                 Add(command, "@TrafficViolations", SqlDbType.Bit, request.TrafficViolations);
                 Add(command, "@ViolationsValue", SqlDbType.Float, ToNullableDouble(request.ViolationsValue));
                 Add(command, "@ItemIDService", SqlDbType.Int, request.ItemIDService);
@@ -5597,7 +5684,7 @@ ORDER BY Transaction_ID DESC;";
             };
         }
 
-        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType, DateTime? fromDate, DateTime? toDate, int? filterBranchId, bool excelOnly = false)
+        public IList<PosTodayInvoiceDto> GetTodayInvoices(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType, DateTime? fromDate, DateTime? toDate, int? filterBranchId, bool excelOnly = false, bool excelWithWarnings = false)
         {
             EnsurePosExcelImportAuditTables();
             var invoices = new List<PosTodayInvoiceDto>();
@@ -5639,13 +5726,16 @@ SELECT TOP (50)
     END AS ServiceType,
     CASE WHEN excelRow.RowId IS NULL THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END AS IsExcelImported,
     excelRow.BatchId AS ExcelImportBatchId,
+    CAST(CASE WHEN CHARINDEX(N'[ExcelImportWarning]', ISNULL(excelRow.Message, N'')) > 0 THEN 1 ELSE 0 END AS BIT) AS HasExcelImportWarning,
+    REPLACE(ISNULL(excelRow.Message, N''), N'[ExcelImportWarning] ', N'') AS ExcelImportWarningMessage,
     CAST(ISNULL(t.IsCancelled, 0) AS BIT) AS IsCancelled
 FROM dbo.Transactions t
 OUTER APPLY
 (
     SELECT TOP (1)
         r.RowId,
-        r.BatchId
+        r.BatchId,
+        r.Message
     FROM dbo.POS_ImportBatchRow r
     WHERE r.TransactionId = t.Transaction_ID
       AND r.Status = N'Imported'
@@ -5693,6 +5783,7 @@ WHERE t.Transaction_Type = 21
       OR (@operationType = N'violations' AND ISNULL(t.TrafficViolations, 0) = 1)
   )
   AND (@excelOnly = 0 OR excelRow.RowId IS NOT NULL)
+  AND (@excelWithWarnings = 0 OR CHARINDEX(N'[ExcelImportWarning]', ISNULL(excelRow.Message, N'')) > 0)
 ORDER BY t.Transaction_ID DESC;";
 
             using (var connection = new SqlConnection(_connectionString))
@@ -5708,6 +5799,7 @@ ORDER BY t.Transaction_ID DESC;";
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = searchTerm;
                 command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
                 command.Parameters.Add("@excelOnly", SqlDbType.Bit).Value = excelOnly;
+                command.Parameters.Add("@excelWithWarnings", SqlDbType.Bit).Value = excelWithWarnings;
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -5726,6 +5818,8 @@ ORDER BY t.Transaction_ID DESC;";
                             ServiceType = ReadString(reader, "ServiceType"),
                             IsExcelImported = ReadBoolean(reader, "IsExcelImported"),
                             ExcelImportBatchId = ReadLong(reader, "ExcelImportBatchId"),
+                            HasExcelImportWarning = ReadBoolean(reader, "HasExcelImportWarning"),
+                            ExcelImportWarningMessage = ReadString(reader, "ExcelImportWarningMessage"),
                             IsCancelled = ReadBoolean(reader, "IsCancelled")
                         });
                     }
@@ -6426,6 +6520,7 @@ RIGHT JOIN (SELECT 1 AS Anchor) a ON 1 = 1;";
 
         public PosInvoiceReviewDto GetInvoiceForReview(int transactionId, int userId, bool canChangeDefaults)
         {
+            EnsurePosExcelImportAuditTables();
             PosInvoiceReviewDto invoice = null;
             const string headerSql = @"
 SELECT TOP (1)
@@ -6452,6 +6547,19 @@ SELECT TOP (1)
     COALESCE(NULLIF(box.BoxName, N''), NULLIF(box.BoxNameE, N''), CONVERT(NVARCHAR(50), t.BoxID)) AS BoxName,
     t.Emp_ID,
     e.Emp_Name AS EmpName,
+    ISNULL(t.PaymentType, 0) AS PaymentType,
+    t.PaymentNetid,
+    CAST(ISNULL(t.IsCashOut, 0) AS BIT) AS IsCashOut,
+    CAST(ISNULL(t.IsPOS, 0) AS BIT) AS IsPOS,
+    CAST(ISNULL(t.OtherItems, 0) AS BIT) AS OtherItems,
+    t.PayType,
+    t.POSBillType,
+    t.STableID,
+    t.SessionD,
+    t.BillBasedOn,
+    CAST(ISNULL(t.isRecharg, 0) AS BIT) AS IsRecharg,
+    CAST(ISNULL(t.IsWallet, 0) AS BIT) AS IsWallet,
+    CAST(ISNULL(t.HaveGuarantee, 0) AS BIT) AS HaveGuarantee,
     CAST(ISNULL(t.RechargeValue, 0) AS DECIMAL(18, 2)) AS RechargeValue,
     CAST(ISNULL(t.PayedValue, 0) AS DECIMAL(18, 2)) AS PayedValue,
     CAST(ISNULL(t.NetValue, 0) AS DECIMAL(18, 2)) AS NetValue,
@@ -6466,10 +6574,14 @@ SELECT TOP (1)
         WHEN t.Tet_NumPoket IS NULL THEN NULL
         ELSE CONVERT(NVARCHAR(100), CONVERT(DECIMAL(38, 0), t.Tet_NumPoket))
     END AS Tet_NumPoket,
+    t.AccountTypeName1,
     CAST(ISNULL(t.IsCancelled, 0) AS BIT) AS IsCancelled,
     t.CancelledBy,
     t.CancelledDate,
     t.CancelReason,
+    CASE WHEN excelRow.RowId IS NULL THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END AS IsExcelImported,
+    CAST(CASE WHEN CHARINDEX(N'[ExcelImportWarning]', ISNULL(excelRow.Message, N'')) > 0 THEN 1 ELSE 0 END AS BIT) AS HasExcelImportWarning,
+    REPLACE(ISNULL(excelRow.Message, N''), N'[ExcelImportWarning] ', N'') AS ExcelImportWarningMessage,
     CASE
         WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
         WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
@@ -6484,6 +6596,16 @@ LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = t.Emp_ID
 LEFT JOIN dbo.TblUsers creator ON creator.UserID = t.UserID
 LEFT JOIN dbo.TblItems primaryServiceItem ON primaryServiceItem.ItemID = t.ItemIDService
 LEFT JOIN dbo.TblItems secondaryServiceItem ON secondaryServiceItem.ItemID = t.ItemIDService2
+OUTER APPLY
+(
+    SELECT TOP (1)
+        r.RowId,
+        r.Message
+    FROM dbo.POS_ImportBatchRow r
+    WHERE r.TransactionId = t.Transaction_ID
+      AND r.Status = N'Imported'
+    ORDER BY r.RowId DESC
+) excelRow
 WHERE t.Transaction_ID = @transactionId
   AND t.Transaction_Type = 21
   AND (@canChangeDefaults = 1 OR t.UserID = @userId);";
@@ -6553,6 +6675,19 @@ ORDER BY d.Item_ID;";
                             BoxName = ReadString(reader, "BoxName"),
                             Emp_ID = ReadInt(reader, "Emp_ID"),
                             EmpName = ReadString(reader, "EmpName"),
+                            PaymentType = ReadInt(reader, "PaymentType").GetValueOrDefault(),
+                            PaymentNetid = ReadInt(reader, "PaymentNetid"),
+                            IsCashOut = ReadBoolean(reader, "IsCashOut"),
+                            IsPOS = ReadBoolean(reader, "IsPOS"),
+                            OtherItems = ReadBoolean(reader, "OtherItems"),
+                            PayType = ReadInt(reader, "PayType"),
+                            POSBillType = ReadInt(reader, "POSBillType"),
+                            STableID = ReadInt(reader, "STableID"),
+                            SessionD = ReadInt(reader, "SessionD"),
+                            BillBasedOn = ReadInt(reader, "BillBasedOn"),
+                            IsRecharg = ReadBoolean(reader, "IsRecharg"),
+                            IsWallet = ReadBoolean(reader, "IsWallet"),
+                            HaveGuarantee = ReadBoolean(reader, "HaveGuarantee"),
                             RechargeValue = ReadDecimal(reader, "RechargeValue").GetValueOrDefault(),
                             PayedValue = ReadDecimal(reader, "PayedValue").GetValueOrDefault(),
                             NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
@@ -6564,10 +6699,14 @@ ORDER BY d.Item_ID;";
                             ItemIDService2Name = ReadString(reader, "ItemIDService2Name"),
                             ViolationsValue = ReadDecimal(reader, "ViolationsValue"),
                             Tet_NumPoket = ReadString(reader, "Tet_NumPoket"),
+                            AccountTypeName1 = ReadString(reader, "AccountTypeName1"),
                             IsCancelled = ReadBoolean(reader, "IsCancelled"),
                             CancelledBy = ReadInt(reader, "CancelledBy"),
                             CancelledDate = ReadDateTime(reader, "CancelledDate"),
-                            CancelReason = ReadString(reader, "CancelReason")
+                            CancelReason = ReadString(reader, "CancelReason"),
+                            IsExcelImported = ReadBoolean(reader, "IsExcelImported"),
+                            HasExcelImportWarning = ReadBoolean(reader, "HasExcelImportWarning"),
+                            ExcelImportWarningMessage = ReadString(reader, "ExcelImportWarningMessage")
                         };
                     }
                 }
@@ -6708,6 +6847,119 @@ WHERE UserID = @userId
                 connection.Open();
                 return command.ExecuteScalar() != null;
             }
+        }
+
+        public void LogSalesInvoiceEdit(PosInvoiceReviewDto oldInvoice, PosSaveTransactionRequest newRequest, int userId, string editReason)
+        {
+            if (oldInvoice == null || newRequest == null)
+            {
+                return;
+            }
+
+            EnsurePosSalesInvoiceEditLogTable();
+
+            const string sql = @"
+INSERT INTO dbo.POS_SalesInvoiceEditLog
+(
+    Transaction_ID,
+    OldValues,
+    NewValues,
+    UserId,
+    EditDateTime,
+    EditReason
+)
+VALUES
+(
+    @transactionId,
+    @oldValues,
+    @newValues,
+    @userId,
+    GETDATE(),
+    @editReason
+);";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@transactionId", SqlDbType.Int).Value = oldInvoice.Transaction_ID;
+                command.Parameters.Add("@oldValues", SqlDbType.NVarChar, -1).Value = BuildSalesInvoiceEditSnapshot(oldInvoice);
+                command.Parameters.Add("@newValues", SqlDbType.NVarChar, -1).Value = BuildSalesInvoiceEditSnapshot(newRequest);
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@editReason", SqlDbType.NVarChar, 500).Value = string.IsNullOrWhiteSpace(editReason) ? (object)DBNull.Value : editReason.Trim();
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private void EnsurePosSalesInvoiceEditLogTable()
+        {
+            const string sql = @"
+IF OBJECT_ID(N'dbo.POS_SalesInvoiceEditLog', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.POS_SalesInvoiceEditLog
+    (
+        Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_POS_SalesInvoiceEditLog PRIMARY KEY,
+        Transaction_ID INT NOT NULL,
+        OldValues NVARCHAR(MAX) NULL,
+        NewValues NVARCHAR(MAX) NULL,
+        UserId INT NOT NULL,
+        EditDateTime DATETIME NOT NULL CONSTRAINT DF_POS_SalesInvoiceEditLog_EditDateTime DEFAULT(GETDATE()),
+        EditReason NVARCHAR(500) NULL
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SalesInvoiceEditLog_Transaction_ID' AND object_id = OBJECT_ID(N'dbo.POS_SalesInvoiceEditLog'))
+BEGIN
+    CREATE INDEX IX_POS_SalesInvoiceEditLog_Transaction_ID ON dbo.POS_SalesInvoiceEditLog(Transaction_ID, EditDateTime);
+END";
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private static string BuildSalesInvoiceEditSnapshot(PosInvoiceReviewDto invoice)
+        {
+            return string.Join("|", new[]
+            {
+                "Transaction_ID=" + invoice.Transaction_ID,
+                "TransactionDate=" + (invoice.TransactionDate.HasValue ? invoice.TransactionDate.Value.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) : ""),
+                "TransactionType=" + (invoice.TransactionType ?? ""),
+                "RechargeValue=" + invoice.RechargeValue.ToString(CultureInfo.InvariantCulture),
+                "PayedValue=" + invoice.PayedValue.ToString(CultureInfo.InvariantCulture),
+                "NetValue=" + invoice.NetValue.ToString(CultureInfo.InvariantCulture),
+                "RemainValue=" + invoice.RemainValue.ToString(CultureInfo.InvariantCulture),
+                "VatValue=" + invoice.VatValue.ToString(CultureInfo.InvariantCulture),
+                "TotalFees=" + invoice.TotalFees.ToString(CultureInfo.InvariantCulture),
+                "CashCustomerPhone=" + (invoice.CashCustomerPhone ?? ""),
+                "Phone2=" + (invoice.Phone2 ?? ""),
+                "Tet_NumPoket=" + (invoice.Tet_NumPoket ?? ""),
+                "AccountTypeName1=" + (invoice.AccountTypeName1 ?? ""),
+                "VisaNumber=" + (invoice.VisaNumber ?? "")
+            });
+        }
+
+        private static string BuildSalesInvoiceEditSnapshot(PosSaveTransactionRequest request)
+        {
+            return string.Join("|", new[]
+            {
+                "Transaction_ID=" + request.Transaction_ID.GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
+                "TransactionDate=" + (request.TransactionDate ?? ""),
+                "TransactionType=" + (request.TransactionType ?? ""),
+                "RechargeValue=" + request.RechargeValue.GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
+                "PayedValue=" + request.PayedValue.ToString(CultureInfo.InvariantCulture),
+                "NetValue=" + request.NetValue.ToString(CultureInfo.InvariantCulture),
+                "RemainValue=" + request.RemainValue.ToString(CultureInfo.InvariantCulture),
+                "VatValue=" + request.VatValue.GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
+                "TotalFees=" + request.TotalFees.GetValueOrDefault().ToString(CultureInfo.InvariantCulture),
+                "CashCustomerPhone=" + (request.CashCustomerPhone ?? ""),
+                "Phone2=" + (request.Phone2 ?? ""),
+                "Tet_NumPoket=" + (request.Tet_NumPoket ?? ""),
+                "AccountTypeName1=" + (request.AccountTypeName1 ?? ""),
+                "VisaNumber=" + (request.VisaNumber ?? "")
+            });
         }
 
         public DataTable RunPosReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null)
@@ -9055,7 +9307,9 @@ SELECT ISNULL(@AffectedUsers, 0) AS AffectedUsers, ISNULL(@UpdatedRows, 0) AS Up
                 new PosPermissionItemDto { Key = "CanExecuteClosing", Title = "عمل الإغلاق" },
                 new PosPermissionItemDto { Key = "CanOpenSales", Title = "فتح شاشة المبيعات" },
                 new PosPermissionItemDto { Key = "CanSaveInvoice", Title = "حفظ فواتير البيع" },
-                new PosPermissionItemDto { Key = "CanEditInvoice", Title = "تعديل فواتير البيع السابقة" },
+                new PosPermissionItemDto { Key = "CanEditSalesInvoice", Title = "تعديل محدود لفواتير البيع" },
+                new PosPermissionItemDto { Key = "CanEditSalesInvoicePos", Title = "تعديل محدود لفواتير بيع اليوم للـ POS" },
+                new PosPermissionItemDto { Key = "CanEditInvoice", Title = "تعديل فواتير البيع السابقة - صلاحية قديمة" },
                 new PosPermissionItemDto { Key = "CanImportExcel", Title = "استيراد العمليات من Excel" },
                 new PosPermissionItemDto { Key = "CanCancelInvoice", Title = "إلغاء فواتير Cash In / Cash Out" },
                 new PosPermissionItemDto { Key = "CanOpenPayments", Title = "فتح شاشة التمويل والاستعاضة" },

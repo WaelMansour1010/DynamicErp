@@ -87,6 +87,8 @@
      data-can-print-kyc-card="@(posContext != null && posContext.CanPrintKycCard ? "true" : "false")"
      data-can-edit-kyc="@(posContext != null && posContext.CanEditKyc ? "true" : "false")"
       data-can-edit-invoice="@(posContext != null && posContext.CanEditInvoice ? "true" : "false")"
+      data-can-edit-sales-invoice="@(posContext != null && posContext.CanEditSalesInvoice ? "true" : "false")"
+      data-can-edit-sales-invoice-pos="@(posContext != null && posContext.CanEditSalesInvoicePos ? "true" : "false")"
       data-can-admin-delete-invoice="@(posContext != null && (posContext.IsFullAccess || posContext.UserType.GetValueOrDefault(-1) == 0) ? "true" : "false")"
       data-can-cancel-invoice="@(posContext != null && posContext.CanCancelInvoice ? "true" : "false")"
       data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
@@ -158,6 +160,10 @@
                 <label class="check-field">
                     <input type="checkbox" id="salesExcelOnly" />
                     فواتير Excel فقط
+                </label>
+                <label class="check-field">
+                    <input type="checkbox" id="salesExcelWarningsOnly" />
+                    فواتير Excel بملاحظات
                 </label>
                 <label>الفرع
                     <span class="smart-lookup sales-branch-lookup">
@@ -481,6 +487,7 @@
                     <label>إلى<input type="date" id="todayToDate" min="1753-01-01" max="9999-12-31" /></label>
                 </div>
                 <label class="today-excel-filter"><input type="checkbox" id="todayExcelOnly" /> Excel فقط</label>
+                <label class="today-excel-filter"><input type="checkbox" id="todayExcelWarningsOnly" /> Excel بملاحظات</label>
                 <button type="button" class="secondary-action compact-action today-clear-search" id="clearTodayInvoiceSearchBtn">مسح البحث</button>
                 <div id="todayInvoicesList" class="today-invoices-list">اضغط بحث أو اختر نوع الفاتورة لعرض الفواتير.</div>
                 <div id="todayInvoiceSummary" class="today-invoice-summary"></div>

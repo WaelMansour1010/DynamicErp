@@ -1,0 +1,580 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "تمويل العهدة";
+    var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+    var canExecute = context != null && (context.IsFullAccess || context.CanExecutePayments);
+    var canEdit = context != null && (context.IsFullAccess || context.CanEditPayments);
+    var canViewJournal = context != null && (context.IsFullAccess || context.CanViewJournalEntry);
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <style>
+        .payments-index-actions {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
+        .payments-entry-header {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .payments-entry-header h3 {
+            margin: 0;
+        }
+
+        .is-hidden-ui {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="pos-page pos-payments-page"
+         data-preview-url="@Url.Action("Preview", "Payments", new { area = "Pos" })"
+         data-save-url="@Url.Action("Create", "Payments", new { area = "Pos" })"
+         data-search-url="@Url.Action("Search", "Payments", new { area = "Pos" })"
+         data-get-url="@Url.Action("Get", "Payments", new { area = "Pos" })"
+         data-lookup-url="@Url.Action("Lookup", "Payments", new { area = "Pos" })"
+         data-can-edit="@(canEdit ? "true" : "false")">
+        <div class="pos-shell">
+            <section class="pos-panel" id="paymentIndexPanel">
+                <div class="panel-heading">
+                    <h2>تمويل العهدة</h2>
+                    <span>ابحث عن حركة سابقة أو ابدأ حركة تمويل عهدة جديدة.</span>
+                </div>
+
+                <div class="pos-panel soft-panel payment-search-panel">
+                    <div class="panel-heading">
+                        <h3>بحث الحركات السابقة</h3>
+                        <span>افتح الحركة للمراجعة أو التعديل حسب الصلاحية</span>
+                    </div>
+                    <div class="pos-grid four-cols">
+                        <label>رقم/بحث عام<input type="text" id="paymentSearchText" placeholder="رقم الحركة، السند، الاسم، البيان" /></label>
+                        <label>من تاريخ<input type="date" id="paymentSearchFrom" /></label>
+                        <label>إلى تاريخ<input type="date" id="paymentSearchTo" /></label>
+                        <label>
+                            الفرع
+                            <select id="paymentSearchBranch" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                <option value="">كل الفروع</option>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            الموظف
+                            <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentSearchEmpId" data-text-id="paymentSearchEmpText">
+                                <input type="hidden" id="paymentSearchEmpId" />
+                                <input type="text" id="paymentSearchEmpText" class="lookup-input" placeholder="اكتب كود أو اسم الموظف" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="payments-index-actions">
+                        <button type="button" class="secondary-action" id="searchPaymentBtn">بحث</button>
+                        <button type="button" class="secondary-action" id="newPaymentBtn">حركة جديدة</button>
+                    </div>
+                    <div id="paymentSearchResult" class="report-result compact-result"></div>
+                </div>
+            </section>
+
+            <section class="pos-panel is-hidden-ui" id="paymentEntryPanel">
+                <div class="payments-entry-header">
+                    <div>
+                        <h3>حركة تمويل العهدة</h3>
+                        <span>بيانات الحركة والقيد المحاسبي</span>
+                    </div>
+                    <button type="button" class="secondary-action" id="backToPaymentIndexBtn">رجوع للبحث</button>
+                </div>
+
+                <div class="payments-section-title">
+                    <h3>بيانات الحركة</h3>
+                    <span>حدد نوع الحركة والحساب الرئيسي للحركة</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="main">
+                    <input type="hidden" id="paymentNoteId" />
+                    <div class="pos-grid four-cols">
+                        <label>
+                            الفرع
+                            <select id="paymentBranchId" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                                @if (branches != null)
+                                {
+                                    foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                    }
+                                }
+                            </select>
+                        </label>
+                        <label>
+                            التاريخ
+                            <input type="date" id="paymentDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </label>
+                        <label>
+                            نوع المدفوعات
+                            <select id="paymentCashingType">
+                                <option value="5">استعاضة عهدة</option>
+                                <option value="6">تمويل خزينة</option>
+                            </select>
+                        </label>
+                        <label>
+                            القيمة
+                            <input type="number" id="paymentValue" min="0" step="0.01" />
+                        </label>
+                    </div>
+                    <div class="pos-grid two-cols">
+                        <label>
+                            الاسم / الحساب
+                            <span class="smart-lookup" data-lookup-kind="name-account" data-target-id="paymentNameAccount" data-text-id="paymentNameAccountText">
+                                <input type="hidden" id="paymentNameAccount" />
+                                <input type="text" id="paymentNameAccountText" class="lookup-input" placeholder="اكتب كود أو اسم الحساب" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
+                        </label>
+                        <label>
+                            البيان
+                            <input type="text" id="paymentRemarks" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="payments-section-title">
+                    <h3>القيم والدفع</h3>
+                    <span>اختر طريقة الدفع والخزنة أو البنك عند الحاجة</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="pay">
+                    <div class="pos-grid four-cols">
+                        <label>
+                            طريقة الدفع
+                            <select id="paymentMethod">
+                                <option value="0">نقدي</option>
+                                <option value="1">شيك</option>
+                                <option value="2">حوالة</option>
+                                <option value="3">شيك مسدد</option>
+                            </select>
+                        </label>
+                        <label>
+                            الخزنة
+                            <span class="smart-lookup" data-lookup-kind="box" data-target-id="paymentBoxId" data-text-id="paymentBoxText">
+                                <input type="hidden" id="paymentBoxId" />
+                                <input type="text" id="paymentBoxText" class="lookup-input" placeholder="اكتب كود أو اسم الخزنة" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
+                        </label>
+                        <label>
+                            البنك
+                            <span class="smart-lookup" data-lookup-kind="bank" data-target-id="paymentBankId" data-text-id="paymentBankText">
+                                <input type="hidden" id="paymentBankId" />
+                                <input type="text" id="paymentBankText" class="lookup-input" placeholder="اكتب كود أو اسم البنك" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
+                        </label>
+                        <label>
+                            رقم الشيك/الحوالة
+                            <input type="text" id="paymentReferenceNo" />
+                        </label>
+                    </div>
+                    <div class="pos-grid two-cols">
+                        <label>
+                            تاريخ الاستحقاق/الحوالة
+                            <input type="date" id="paymentReferenceDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </label>
+                        <label>
+                            وصف عام
+                            <input type="text" id="paymentGeneralDescription" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="payments-section-title">
+                    <h3>الحسابات</h3>
+                    <span>ابحث عن الموظف عند وجود جزء عهدة في الحركة</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="accounts">
+                    <div class="pos-grid four-cols">
+                        <label>
+                            قيمة الخزنة
+                            <input type="number" id="paymentBoxValue" min="0" step="0.01" />
+                        </label>
+                        <label>
+                            الموظف
+                            <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentEmpId" data-text-id="paymentEmpText" data-extra-target-id="paymentEmpAccountCode">
+                                <input type="hidden" id="paymentEmpId" />
+                                <input type="text" id="paymentEmpText" class="lookup-input" placeholder="اكتب كود أو اسم الموظف" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
+                        </label>
+                        <label>
+                            حساب العهدة
+                            <input type="text" id="paymentEmpAccountCode" readonly />
+                        </label>
+                        <label>
+                            قيمة العهدة
+                            <input type="number" id="paymentEmpValue" min="0" step="0.01" />
+                        </label>
+                    </div>
+                </div>
+
+                <div class="payments-section-title">
+                    <h3>القيد المحاسبي / المعاينة</h3>
+                    <span>استعرض القيد قبل الحفظ حسب الصلاحية</span>
+                </div>
+
+                <div class="payments-tab-panel active payment-section" data-payment-panel="journal">
+                    @if (canViewJournal)
+                    {
+                        <div class="pos-actions">
+                            <button type="button" class="secondary-action" id="previewPaymentBtn">استعراض القيد</button>
+                        </div>
+                        <div id="paymentJournalResult" class="report-result"></div>
+                    }
+                    else
+                    {
+                        <div class="empty-state">ليست لديك صلاحية استعراض القيد</div>
+                    }
+                </div>
+
+                <div class="pos-actions">
+                    <button type="button" class="primary-action" id="savePaymentBtn" @(canExecute ? "" : "disabled")>تنفيذ العملية</button>
+                    <span id="paymentMessage" class="pos-validation"></span>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <script>
+        (function () {
+            var page = document.querySelector(".pos-payments-page");
+            var message = document.getElementById("paymentMessage");
+            function byId(id) { return document.getElementById(id); }
+            function setMessage(text, error) { message.innerText = text || ""; message.classList.toggle("error", !!error); }
+            function escapeHtml(value) {
+                return String(value || "").replace(/[&<>"']/g, function (ch) {
+                    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
+                });
+            }
+            function lookupUrl(kind, term) {
+                var url = page.getAttribute("data-lookup-url") + "?kind=" + encodeURIComponent(kind || "") + "&term=" + encodeURIComponent(term || "");
+                if (kind === "name-account") {
+                    url += "&cashingType=" + encodeURIComponent(byId("paymentCashingType").value || "5");
+                }
+                return url;
+            }
+            function setLookupValue(hiddenId, textId, id, text, extra) {
+                var hidden = byId(hiddenId);
+                var input = byId(textId);
+                if (hidden) { hidden.value = id === null || id === undefined ? "" : id; hidden.setAttribute("data-extra", extra || ""); }
+                if (input) { input.value = text || ""; }
+            }
+            function clearLookup(wrapper) {
+                if (!wrapper) { return; }
+                setLookupValue(wrapper.getAttribute("data-target-id"), wrapper.getAttribute("data-text-id"), "", "", "");
+                var extraTarget = wrapper.getAttribute("data-extra-target-id");
+                if (extraTarget && byId(extraTarget)) { byId(extraTarget).value = ""; }
+                var results = wrapper.querySelector(".lookup-results");
+                if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+            }
+            function selectLookupRow(wrapper, row) {
+                setLookupValue(wrapper.getAttribute("data-target-id"), wrapper.getAttribute("data-text-id"), row.id, row.text, row.extra);
+                var extraTarget = wrapper.getAttribute("data-extra-target-id");
+                if (extraTarget && byId(extraTarget)) { byId(extraTarget).value = row.extra || ""; }
+                var results = wrapper.querySelector(".lookup-results");
+                if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+            }
+            function renderLookupRows(wrapper, rows) {
+                var results = wrapper.querySelector(".lookup-results");
+                if (!results) { return; }
+                if (!rows || !rows.length) {
+                    results.innerHTML = "<button type='button' class='lookup-row empty' disabled>لا توجد نتائج</button>";
+                    results.classList.add("is-open");
+                    return;
+                }
+                results.innerHTML = rows.map(function (row, index) {
+                    return "<button type='button' class='lookup-row' data-index='" + index + "'><strong>" + escapeHtml(row.text || "") + "</strong></button>";
+                }).join("");
+                results._rows = rows;
+                results.classList.add("is-open");
+            }
+            function setupLookup(wrapper) {
+                var input = byId(wrapper.getAttribute("data-text-id"));
+                var clearButton = wrapper.querySelector(".lookup-clear");
+                var timer = null;
+                if (!input) { return; }
+                input.addEventListener("input", function () {
+                    var term = input.value.trim();
+                    byId(wrapper.getAttribute("data-target-id")).value = "";
+                    window.clearTimeout(timer);
+                    if (term.length < 2) {
+                        var results = wrapper.querySelector(".lookup-results");
+                        if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+                        return;
+                    }
+                    timer = window.setTimeout(function () {
+                        var results = wrapper.querySelector(".lookup-results");
+                        if (results) { results.innerHTML = "<button type='button' class='lookup-row empty' disabled>جاري البحث...</button>"; results.classList.add("is-open"); }
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("GET", lookupUrl(wrapper.getAttribute("data-lookup-kind"), term), true);
+                        xhr.onreadystatechange = function () {
+                            if (xhr.readyState !== 4) { return; }
+                            var data = null;
+                            try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                            renderLookupRows(wrapper, data && data.success ? (data.rows || []) : []);
+                        };
+                        xhr.send();
+                    }, 250);
+                });
+                input.addEventListener("keydown", function (event) {
+                    var results = wrapper.querySelector(".lookup-results");
+                    if (!results || !results.classList.contains("is-open")) { return; }
+                    var rows = Array.prototype.slice.call(results.querySelectorAll(".lookup-row:not(.empty)"));
+                    if (!rows.length) { return; }
+                    var current = results.querySelector(".lookup-row.is-active");
+                    var index = current ? rows.indexOf(current) : -1;
+                    if (event.key === "ArrowDown") { event.preventDefault(); index = Math.min(rows.length - 1, index + 1); }
+                    else if (event.key === "ArrowUp") { event.preventDefault(); index = Math.max(0, index - 1); }
+                    else if (event.key === "Enter" && current) { event.preventDefault(); current.click(); return; }
+                    else if (event.key === "Escape") { results.innerHTML = ""; results.classList.remove("is-open"); return; }
+                    rows.forEach(function (row, rowIndex) { row.classList.toggle("is-active", rowIndex === index); });
+                });
+                if (clearButton) { clearButton.addEventListener("click", function () { clearLookup(wrapper); input.focus(); }); }
+                wrapper.addEventListener("click", function (event) {
+                    var rowButton = event.target.closest ? event.target.closest(".lookup-row:not(.empty)") : null;
+                    if (!rowButton) { return; }
+                    var rows = wrapper.querySelector(".lookup-results")._rows || [];
+                    selectLookupRow(wrapper, rows[parseInt(rowButton.getAttribute("data-index"), 10)] || {});
+                });
+            }
+            function requestPayload() {
+                return {
+                    NoteId: parseInt(byId("paymentNoteId").value, 10) || null,
+                    BranchId: parseInt(byId("paymentBranchId").value, 10) || 0,
+                    PaymentDate: byId("paymentDate").value,
+                    CashingType: parseInt(byId("paymentCashingType").value, 10) || 0,
+                    NameAccountCode: byId("paymentNameAccount").value,
+                    NameText: byId("paymentNameAccountText").value,
+                    PaymentMethod: parseInt(byId("paymentMethod").value, 10) || 0,
+                    Value: parseFloat(byId("paymentValue").value || "0"),
+                    BoxId: parseInt(byId("paymentBoxId").value, 10) || null,
+                    BankId: parseInt(byId("paymentBankId").value, 10) || null,
+                    ReferenceNo: byId("paymentReferenceNo").value,
+                    ReferenceDate: byId("paymentReferenceDate").value,
+                    EmpId: parseInt(byId("paymentEmpId").value, 10) || null,
+                    EmpAccountCode: byId("paymentEmpAccountCode").value,
+                    BoxValue: parseFloat(byId("paymentBoxValue").value || "0"),
+                    EmpValue: parseFloat(byId("paymentEmpValue").value || "0"),
+                    Remarks: byId("paymentRemarks").value,
+                    GeneralDescription: byId("paymentGeneralDescription").value
+                };
+            }
+            function searchPayload() {
+                return {
+                    SearchText: byId("paymentSearchText").value || "",
+                    FromDate: byId("paymentSearchFrom").value || null,
+                    ToDate: byId("paymentSearchTo").value || null,
+                    BranchId: parseInt(byId("paymentSearchBranch").value, 10) || null,
+                    EmpId: parseInt(byId("paymentSearchEmpId").value, 10) || null
+                };
+            }
+            function showIndex() {
+                byId("paymentIndexPanel").classList.remove("is-hidden-ui");
+                byId("paymentEntryPanel").classList.add("is-hidden-ui");
+            }
+            function showEntry() {
+                byId("paymentIndexPanel").classList.add("is-hidden-ui");
+                byId("paymentEntryPanel").classList.remove("is-hidden-ui");
+            }
+            function post(url, payload, done) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    done(xhr.status, data);
+                };
+                xhr.send(JSON.stringify(payload));
+            }
+            function renderLines(lines) {
+                var target = byId("paymentJournalResult");
+                if (!target) { return; }
+                if (!lines || !lines.length) { target.innerHTML = "<div class='empty-state'>لا توجد بيانات</div>"; return; }
+                var html = "<table class='pos-table'><thead><tr><th>الحساب</th><th>اسم الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead><tbody>";
+                var debit = 0, credit = 0;
+                lines.forEach(function (line) {
+                    debit += parseFloat(line.Debit || 0); credit += parseFloat(line.Credit || 0);
+                    html += "<tr><td>" + (line.AccountCode || "") + "</td><td>" + (line.AccountName || "") + "</td><td>" + (line.Description || "") + "</td><td>" + (line.Debit || 0).toFixed(2) + "</td><td>" + (line.Credit || 0).toFixed(2) + "</td></tr>";
+                });
+                html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + debit.toFixed(2) + "</td><td>" + credit.toFixed(2) + "</td></tr></tbody></table>";
+                target.innerHTML = html;
+            }
+            function renderSearch(rows) {
+                var target = byId("paymentSearchResult");
+                if (!target) { return; }
+                if (!rows || !rows.length) {
+                    target.innerHTML = "<div class='empty-state'>لا توجد حركات مطابقة</div>";
+                    return;
+                }
+                var html = "<table class='pos-table'><thead><tr><th>رقم الحركة</th><th>رقم السند</th><th>التاريخ</th><th>الفرع</th><th>النوع</th><th>الاسم</th><th>القيمة</th><th></th></tr></thead><tbody>";
+                rows.forEach(function (row) {
+                    html += "<tr><td>" + (row.NoteId || "") + "</td><td>" + (row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + displayDateText(row.NoteDate) + "</td><td>" + (row.BranchName || "") + "</td><td>" + (row.CashingTypeName || "") + "</td><td>" + (row.NameText || "") + "</td><td>" + (parseFloat(row.Value || 0)).toFixed(2) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + row.NoteId + "'>فتح</button></td></tr>";
+                });
+                html += "</tbody></table>";
+                target.innerHTML = html;
+            }
+            function setSelectValue(id, value) {
+                var element = byId(id);
+                if (!element) { return; }
+                element.value = value === null || value === undefined ? "" : value;
+            }
+            function parseDateValue(value) {
+                if (!value) { return ""; }
+                var date;
+                if (typeof value === "string" && value.indexOf("/Date(") === 0) {
+                    var match = /\/?Date\((-?\d+)(?:[+-]\d+)?\)\/?/.exec(value);
+                    date = match ? new Date(parseInt(match[1], 10)) : null;
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+                    var parts = value.substring(0, 10).split("-");
+                    date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                } else {
+                    date = new Date(value);
+                }
+                return date && !isNaN(date.getTime()) ? date : null;
+            }
+            function dateText(value) {
+                var date = parseDateValue(value);
+                if (!date) { return ""; }
+                return date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
+            }
+            function displayDateText(value) {
+                var date = parseDateValue(value);
+                if (!date) { return ""; }
+                return ("0" + date.getDate()).slice(-2) + "/" + ("0" + (date.getMonth() + 1)).slice(-2) + "/" + date.getFullYear();
+            }
+            function resetPaymentForm() {
+                byId("paymentNoteId").value = "";
+                ["paymentValue", "paymentReferenceNo", "paymentEmpAccountCode", "paymentBoxValue", "paymentEmpValue", "paymentRemarks", "paymentGeneralDescription"].forEach(function (id) { byId(id).value = ""; });
+                byId("paymentDate").value = new Date().toISOString().substring(0, 10);
+                byId("paymentReferenceDate").value = new Date().toISOString().substring(0, 10);
+                setSelectValue("paymentCashingType", "5");
+                setSelectValue("paymentMethod", "0");
+                clearLookup(document.querySelector('[data-target-id="paymentNameAccount"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentBoxId"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentBankId"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentEmpId"]'));
+                clearLookup(document.querySelector('[data-target-id="paymentSearchEmpId"]'));
+                renderLines([]);
+                byId("savePaymentBtn").disabled = @(canExecute ? "false" : "true");
+                byId("savePaymentBtn").innerText = "تنفيذ العملية";
+                setMessage("");
+                showEntry();
+            }
+            function applyMovement(movement, canEdit, editMessage) {
+                if (!movement) { return; }
+                byId("paymentNoteId").value = movement.NoteId || "";
+                setSelectValue("paymentBranchId", movement.BranchId);
+                byId("paymentDate").value = dateText(movement.NoteDate);
+                setSelectValue("paymentCashingType", movement.CashingType);
+                setLookupValue("paymentNameAccount", "paymentNameAccountText", movement.NameAccountCode || "", movement.NameText || "", "");
+                setSelectValue("paymentMethod", movement.PaymentMethod);
+                byId("paymentValue").value = movement.Value || 0;
+                setLookupValue("paymentBoxId", "paymentBoxText", movement.BoxId || "", movement.BoxName || "", "");
+                setLookupValue("paymentBankId", "paymentBankText", movement.BankId || "", movement.BankName || "", "");
+                byId("paymentReferenceNo").value = movement.ReferenceNo || "";
+                byId("paymentReferenceDate").value = dateText(movement.ReferenceDate);
+                setLookupValue("paymentEmpId", "paymentEmpText", movement.EmpId || "", movement.EmpName || "", movement.EmpAccountCode || "");
+                byId("paymentEmpAccountCode").value = movement.EmpAccountCode || "";
+                byId("paymentBoxValue").value = movement.BoxValue || 0;
+                byId("paymentEmpValue").value = movement.EmpValue || 0;
+                byId("paymentRemarks").value = movement.Remarks || "";
+                byId("paymentGeneralDescription").value = movement.GeneralDescription || "";
+                renderLines(movement.Lines || []);
+                byId("savePaymentBtn").disabled = !canEdit;
+                byId("savePaymentBtn").innerText = canEdit ? "حفظ التعديل" : "عرض فقط";
+                setMessage(canEdit ? "تم تحميل الحركة للتعديل" : (editMessage || "ليس لديك صلاحية تعديل هذه الحركة"), !canEdit);
+                showEntry();
+            }
+            document.addEventListener("click", function (event) {
+                if (event.target.getAttribute("data-payment-tab")) {
+                    var tab = event.target.getAttribute("data-payment-tab");
+                    document.querySelectorAll("[data-payment-tab]").forEach(function (x) { x.classList.toggle("active", x === event.target); });
+                    document.querySelectorAll("[data-payment-panel]").forEach(function (x) { x.classList.toggle("active", x.getAttribute("data-payment-panel") === tab); });
+                }
+                if (event.target.id === "previewPaymentBtn") {
+                    post(page.getAttribute("data-preview-url"), requestPayload(), function (status, data) {
+                        if (data && data.success) { renderLines(data.lines || []); setMessage(""); } else { setMessage((data && data.message) || "تعذر استعراض القيد", true); }
+                    });
+                }
+                if (event.target.id === "savePaymentBtn") {
+                    setMessage("جاري الحفظ...");
+                    post(page.getAttribute("data-save-url"), requestPayload(), function (status, data) {
+                        if (data && data.success) { renderLines(data.result && data.result.Lines); setMessage(data.message + " - رقم السند: " + (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId), false); }
+                        else { setMessage((data && data.message) || "تعذر حفظ العملية", true); }
+                    });
+                }
+                if (event.target.id === "searchPaymentBtn") {
+                    setMessage("جاري البحث...");
+                    post(page.getAttribute("data-search-url"), searchPayload(), function (status, data) {
+                        if (data && data.success) { renderSearch(data.rows || []); setMessage("تم البحث", false); }
+                        else { setMessage((data && data.message) || "تعذر البحث", true); }
+                    });
+                }
+                if (event.target.id === "newPaymentBtn") {
+                    resetPaymentForm();
+                }
+                if (event.target.id === "backToPaymentIndexBtn") {
+                    showIndex();
+                }
+                if (event.target.classList && event.target.classList.contains("load-payment-row")) {
+                    var id = event.target.getAttribute("data-note-id");
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", page.getAttribute("data-get-url").replace(/\/$/, "") + "/" + encodeURIComponent(id), true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState !== 4) { return; }
+                        var data = null;
+                        try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                        if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
+                            applyMovement(data.movement, data.canEdit, data.editMessage);
+                        } else {
+                            setMessage((data && data.message) || "تعذر تحميل الحركة", true);
+                        }
+                    };
+                    xhr.send();
+                }
+            });
+            byId("paymentCashingType").addEventListener("change", function () {
+                clearLookup(document.querySelector('[data-target-id="paymentNameAccount"]'));
+            });
+            document.querySelectorAll(".smart-lookup").forEach(setupLookup);
+        })();
+    </script>
+</body>
+</html>

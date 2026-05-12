@@ -1,0 +1,734 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "تقارير كيشني";
+    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var reports = (ViewBag.ReportDefinitions as IEnumerable<MyERP.Areas.Pos.Controllers.PosReportDefinition>) ?? Enumerable.Empty<MyERP.Areas.Pos.Controllers.PosReportDefinition>();
+    var branches = (ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosBranchDto>();
+    var stores = (ViewBag.Stores as IEnumerable<MyERP.Areas.Pos.Models.PosStoreDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosStoreDto>();
+    var users = (ViewBag.Users as IEnumerable<MyERP.Areas.Pos.Models.PosPermissionUserDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosPermissionUserDto>();
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <style>
+        .crystal-report { background: #fff; border-radius: 8px; padding: 14px 12px 18px; }
+        .crystal-title { color: #b42318; font-size: 20px; font-weight: 800; margin: 0 0 16px; text-align: right; }
+        .crystal-table th { border: 2px solid #4b168d; color: #111827; text-align: center; vertical-align: middle; white-space: nowrap; }
+        .crystal-table th span { display: block; }
+        .crystal-table th small { color: #ef4444; display: block; font-size: 11px; font-weight: 700; margin-top: 2px; }
+        .crystal-table th.warn-head span { color: #ef4444; }
+        .crystal-table td, .crystal-table tfoot th { direction: ltr; text-align: center; unicode-bidi: isolate; white-space: nowrap; }
+        .crystal-table td:nth-child(2), .crystal-table tfoot th:nth-child(2) { text-align: right; white-space: normal; min-width: 170px; }
+        .crystal-table td:nth-child(2), .crystal-table td:nth-child(17) { direction: rtl; unicode-bidi: plaintext; }
+        .crystal-table tfoot th { background: #f6f7fb; color: #24364f; font-weight: 800; }
+        .crystal-summary { display: grid; gap: 14px; grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.2fr); margin-top: 22px; }
+        .crystal-summary table { border-collapse: collapse; width: 100%; }
+        .crystal-summary th, .crystal-summary td { border: 1px solid #ffffff; padding: 8px 10px; text-align: center; vertical-align: middle; }
+        .crystal-summary th { background: #d7b6ed; color: #111827; font-weight: 800; }
+        .crystal-summary td { background: #ead8f5; }
+        .crystal-summary tr:nth-child(even) td { background: #ffffff; }
+        .crystal-summary .summary-label { color: #111827; font-weight: 800; text-align: right; }
+        .crystal-summary .summary-red { color: #dc2626; font-weight: 800; }
+        .crystal-summary .summary-total { background: #d7b6ed !important; font-size: 18px; font-weight: 800; }
+        .crystal-sales-total { align-items: stretch; display: grid; grid-template-columns: 135px 1fr; }
+        .crystal-sales-total .total-caption { align-items: center; background: #ffffff; border: 1px solid #ffffff; color: #111827; display: flex; flex-direction: column; font-weight: 800; justify-content: center; min-height: 150px; }
+        .crystal-sales-total .total-caption span:last-child { color: #dc2626; }
+        @@media (max-width: 900px) { .crystal-summary { grid-template-columns: 1fr; } }
+        .report-check-filter { align-items: center; display: flex; flex-direction: row; gap: 8px; justify-content: flex-end; padding-top: 0; }
+        .report-check-filter input { width: auto; }
+        .report-print { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; color: #24364f; cursor: pointer; font-weight: 700; padding: 10px 12px; width: 100%; }
+        .report-print:disabled { color: #9aa8bc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="pos-page pos-reports-page"
+         dir="rtl"
+         data-run-report-url="@Url.Action("Run", "PosReports", new { area = "Pos" })"
+         data-export-report-url="@Url.Action("Export", "PosReports", new { area = "Pos" })">
+        <div class="pos-shell">
+            <section class="pos-panel pos-card pos-filter-card">
+                <div class="panel-heading pos-card-heading">
+                    <h2>فلاتر التقارير</h2>
+                    <span>المستخدم: @(posContext != null ? posContext.UserName : "")</span>
+                </div>
+
+                <div class="pos-grid four-cols reports-filter-grid pos-filter-grid">
+                    <label class="pos-field">
+                        الفرع
+                        <select id="reportBranchId">
+                            <option value="">كل الفروع المتاحة</option>
+                            @foreach (var branch in branches)
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="pos-field">
+                        من فرع
+                        <select id="reportBranchFromId">
+                            <option value="">بداية الفروع</option>
+                            @foreach (var branch in branches)
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="pos-field">
+                        إلى فرع
+                        <select id="reportBranchToId">
+                            <option value="">نهاية الفروع</option>
+                            @foreach (var branch in branches)
+                            {
+                                <option value="@branch.BranchId">@branch.BranchName</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="pos-field">من تاريخ<input type="date" id="reportFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label class="pos-field">إلى تاريخ<input type="date" id="reportToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label class="pos-field">
+                        المستخدم
+                        <select id="reportUserId">
+                            <option value="">كل المستخدمين</option>
+                            @foreach (var user in users)
+                            {
+                                <option value="@user.UserId">@user.UserName</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="pos-field">فلتر خدمة/نشاط<input type="text" id="reportServiceSearch" placeholder="اسم الخدمة أو كودها" /></label>
+                    <label class="report-check-filter pos-check-field"><input type="checkbox" id="reportShowEmptyBranches" /> <span>إظهار الفروع الخاضعة / الفاضية</span></label>
+                    <label class="pos-field">مصدر الدخول<input type="text" id="reportLoginSource" placeholder="مثال: فرع / جهاز / قناة تشغيل" /></label>
+                    <label class="serial-filter is-hidden-ui pos-field">
+                        المخزن
+                        <select id="reportStoreId">
+                            <option value="">كل المخازن المتاحة</option>
+                            @foreach (var store in stores)
+                            {
+                                <option value="@store.StoreID">@store.StoreName</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="serial-filter is-hidden-ui pos-field">بحث سيريال/صنف<input type="text" id="reportSerialSearch" /></label>
+                </div>
+            </section>
+
+            <section class="pos-panel pos-card">
+                <div class="report-tabs" id="reportTabs">
+                    <button type="button" class="active" data-report-group="sales">تقارير المبيعات</button>
+                    <button type="button" data-report-group="closings">تقارير الإغلاقات</button>
+                    <button type="button" data-report-group="serials">المخزون والسيريالات</button>
+                    <button type="button" data-report-group="excel">تصدير/استيراد Excel</button>
+                </div>
+
+                <div class="reports-button-grid">
+                    @foreach (var report in reports)
+                    {
+                        if (!report.Allowed)
+                        {
+                            continue;
+                        }
+
+                        <div class="report-card" data-report-group="@report.Group">
+                            <button type="button"
+                                    class="report-action"
+                                    data-report-key="@report.Key"
+                                    @(report.Enabled ? "" : "disabled")>
+                                <strong>@report.Title</strong>
+                                <span>@(report.Enabled ? "تشغيل مبدئي" : "لم يتم ربط التقرير بعد")</span>
+                            </button>
+                            <button type="button"
+                                    class="report-export"
+                                    data-report-key="@report.Key"
+                                    @(report.Enabled ? "" : "disabled")>
+                                تصدير Excel
+                            </button>
+                            <button type="button"
+                                    class="report-print"
+                                    data-report-key="@report.Key"
+                                    @(report.Enabled ? "" : "disabled")>
+                                طباعة
+                            </button>
+                            <small>@report.Source</small>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="pos-panel pos-card">
+                <div id="reportMessage" class="pos-validation"></div>
+                <div id="reportResult" class="report-result"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            function byId(id) { return document.getElementById(id); }
+            function escapeHtml(value) {
+                return String(value === null || value === undefined ? "" : value)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+            }
+            function activeGroup() {
+                var active = document.querySelector("#reportTabs button.active");
+                return active ? active.getAttribute("data-report-group") : "sales";
+            }
+            function updateGroups(group) {
+                var cards = document.querySelectorAll(".report-card");
+                for (var i = 0; i < cards.length; i++) {
+                    cards[i].style.display = cards[i].getAttribute("data-report-group") === group ? "" : "none";
+                }
+                var serialFilters = document.querySelectorAll(".serial-filter");
+                for (var s = 0; s < serialFilters.length; s++) {
+                    serialFilters[s].classList.toggle("is-hidden-ui", group !== "serials");
+                }
+            }
+            function enhanceSelectSearch(select, placeholder) {
+                if (!select || select.getAttribute("data-enhanced") === "true") { return; }
+                select.setAttribute("data-enhanced", "true");
+                var parent = select.parentNode;
+                var wrap = document.createElement("span");
+                wrap.className = "smart-lookup smart-select";
+                parent.insertBefore(wrap, select);
+                wrap.appendChild(select);
+                var input = document.createElement("input");
+                input.type = "text";
+                input.className = "lookup-input";
+                input.placeholder = placeholder || "اكتب للبحث";
+                input.autocomplete = "off";
+                var results = document.createElement("div");
+                results.className = "lookup-results";
+                wrap.insertBefore(input, select);
+                wrap.appendChild(results);
+
+                function text(opt) { return opt ? (opt.textContent || opt.innerText || "").trim() : ""; }
+                function sync() { input.value = select.value ? text(select.options[select.selectedIndex]) : ""; }
+                function close() { results.classList.remove("is-open"); }
+                function choose(opt) {
+                    select.value = opt.value;
+                    sync();
+                    close();
+                    select.dispatchEvent(new Event("change"));
+                }
+                function render() {
+                    var term = input.value.trim().toLowerCase();
+                    var opts = Array.prototype.slice.call(select.options).filter(function (opt) {
+                        if (!opt.value) { return term.length === 0; }
+                        return text(opt).toLowerCase().indexOf(term) >= 0 || String(opt.value).toLowerCase().indexOf(term) >= 0;
+                    }).slice(0, 40);
+                    results.innerHTML = "";
+                    if (!opts.length) {
+                        var empty = document.createElement("div");
+                        empty.className = "lookup-row empty";
+                        empty.textContent = "لا توجد نتائج";
+                        results.appendChild(empty);
+                    } else {
+                        opts.forEach(function (opt) {
+                            var row = document.createElement("button");
+                            row.type = "button";
+                            row.className = "lookup-row";
+                            row.textContent = text(opt);
+                            row.addEventListener("mousedown", function (event) {
+                                event.preventDefault();
+                                choose(opt);
+                            });
+                            results.appendChild(row);
+                        });
+                    }
+                    results.classList.add("is-open");
+                }
+                input.addEventListener("input", render);
+                input.addEventListener("focus", render);
+                input.addEventListener("blur", function () { window.setTimeout(close, 150); });
+                sync();
+            }
+            function payload(key) {
+                return {
+                    reportKey: key,
+                    fromDate: byId("reportFromDate").value,
+                    toDate: byId("reportToDate").value,
+                    branchId: parseInt(byId("reportBranchId").value, 10) || null,
+                    branchFromId: parseInt(byId("reportBranchFromId").value, 10) || null,
+                    branchToId: parseInt(byId("reportBranchToId").value, 10) || null,
+                    storeId: parseInt(byId("reportStoreId").value, 10) || null,
+                    userId: parseInt(byId("reportUserId").value, 10) || null,
+                    loginSource: byId("reportLoginSource").value || "",
+                    serialSearch: byId("reportSerialSearch").value || "",
+                    serviceSearch: byId("reportServiceSearch").value || "",
+                    showEmptyBranches: byId("reportShowEmptyBranches").checked
+                };
+            }
+            function renderTable(data) {
+                if (!data || !data.columns || !data.rows) {
+                    byId("reportResult").innerHTML = "";
+                    return;
+                }
+
+                if (!data.rows.length) {
+                    byId("reportResult").innerHTML = '<div class="empty-state">لا توجد بيانات</div>';
+                    return;
+                }
+
+                if ((data.reportKey || data.ReportKey) === "finance-closing-discounts") {
+                    renderFinancialClosingReport(data);
+                    return;
+                }
+
+                var html = '<div class="responsive-table"><table class="pos-table"><thead><tr>';
+                for (var c = 0; c < data.columns.length; c++) {
+                    html += "<th>" + escapeHtml(data.columns[c].Title || data.columns[c].title || data.columns[c].Key || data.columns[c].key) + "</th>";
+                }
+                html += "</tr></thead><tbody>";
+                var totals = {};
+                var hasTotals = false;
+
+                for (var r = 0; r < data.rows.length; r++) {
+                    html += "<tr>";
+                    for (var x = 0; x < data.columns.length; x++) {
+                        var key = data.columns[x].Key || data.columns[x].key;
+                        var value = data.rows[r][key];
+                        var numberValue = typeof value === "number" ? value : parseFloat(String(value || "").replace(/,/g, ""));
+                        if (shouldTotal(key) && isFinite(numberValue)) {
+                            totals[key] = (totals[key] || 0) + numberValue;
+                            hasTotals = true;
+                        }
+                        html += "<td>" + escapeHtml(value) + "</td>";
+                    }
+                    html += "</tr>";
+                }
+
+                html += "</tbody>";
+                if (hasTotals) {
+                    html += "<tfoot><tr>";
+                    for (var t = 0; t < data.columns.length; t++) {
+                        var totalKey = data.columns[t].Key || data.columns[t].key;
+                        if (totals.hasOwnProperty(totalKey)) {
+                            html += "<th>" + escapeHtml(formatNumber(totals[totalKey])) + "</th>";
+                        } else {
+                            html += "<th>" + (t === 0 ? "الإجمالي العام" : "") + "</th>";
+                        }
+                    }
+                    html += "</tr></tfoot>";
+                }
+                html += "</table></div>";
+                byId("reportResult").innerHTML = html;
+            }
+            function shouldTotal(key) {
+                key = String(key || "");
+                return key !== "RowNo"
+                    && key.toLowerCase().indexOf("id") < 0
+                    && key.toLowerCase().indexOf("status") < 0
+                    && key !== "BranchName";
+            }
+            function formatNumber(value) {
+                return Math.round((value + Number.EPSILON) * 100) / 100;
+            }
+            function renderFinancialClosingReport(data) {
+                var cols = [
+                    { key: "RowNo", title: "م", total: false },
+                    { key: "BranchName", title: "بيان الفروع", total: false },
+                    { key: "TotalSupply", title: "إجمالي التوريد", note: "داخل الضريبة", total: true },
+                    { key: "CountCards", title: "كارت كيشني", note: "عدد", aliases: ["TotalCards", "CountCard"], total: true },
+                    { key: "CardValue", title: "كارت كيشني", note: "قيمة", aliases: ["TotalSaleDay2", "CardsValue"], total: true },
+                    { key: "CountTransaction", title: "عدد عمليات الشحن", aliases: ["CountTransac", "TransactionCashCount"], total: true },
+                    { key: "WalletBalance", title: "رصيد Wallet", aliases: ["WalletNet"], total: true },
+                    { key: "WalletSupply", title: "توريد Wallet", aliases: ["TotalWallet"], total: true },
+                    { key: "BankBalanceCharge", title: "تكلفة رسوم", note: "رسوم", warn: true, aliases: ["BankBalance", "BalanceCharge"], total: true },
+                    { key: "TotalRechargeValue", title: "أصل مبلغ الشحن", total: true },
+                    { key: "TotalRev2", title: "الخصم", total: true },
+                    { key: "TotalRevWithVat", title: "رسوم الشحن", note: "شامل الضريبة", total: true },
+                    { key: "ReturnsCount", title: "المرتجعات", note: "عدد", aliases: ["ReturnCount", "TotalReturnsCount"], total: true },
+                    { key: "TotalReturns", title: "المرتجعات", note: "قيمة", total: true },
+                    { key: "NetCashOut", title: "صافي كاش أوت", total: true },
+                    { key: "BoxValue", title: "العهدة", aliases: ["BoxBalance"], total: true },
+                    { key: "ClosingStatus", title: "حالة الإغلاق", aliases: ["CloseStatus", "VoucherType"], total: false }
+                ];
+                var totals = {};
+                var html = ''
+                    + '<div class="crystal-report">'
+                    + '<div class="crystal-title">' + escapeHtml(data.reportName || "تقرير الإغلاق المالي الشامل على مستوى الفروع") + '</div>'
+                    + '<div class="responsive-table"><table class="pos-table crystal-table"><thead><tr>';
+
+                for (var i = 0; i < cols.length; i++) {
+                    html += '<th' + (cols[i].warn ? ' class="warn-head"' : '') + '>'
+                        + '<span>' + escapeHtml(cols[i].title) + '</span>'
+                        + (cols[i].note ? '<small>' + escapeHtml(cols[i].note) + '</small>' : '')
+                        + '</th>';
+                }
+                html += '</tr></thead><tbody>';
+
+                for (var r = 0; r < data.rows.length; r++) {
+                    html += '<tr>';
+                    for (var c = 0; c < cols.length; c++) {
+                        var col = cols[c];
+                        var value = getCrystalValue(data.rows[r], col, r);
+                        if (col.total) {
+                            var numberValue = readNumber(value);
+                            if (isFinite(numberValue)) {
+                                totals[col.key] = (totals[col.key] || 0) + numberValue;
+                            }
+                        }
+                        html += '<td>' + escapeHtml(formatCell(value)) + '</td>';
+                    }
+                    html += '</tr>';
+                }
+
+                html += '</tbody><tfoot><tr>';
+                for (var t = 0; t < cols.length; t++) {
+                    var totalCol = cols[t];
+                    if (t === 0) {
+                        html += '<th></th>';
+                    } else if (t === 1) {
+                        html += '<th>الإجمالي العام</th>';
+                    } else if (totalCol.total) {
+                        html += '<th>' + escapeHtml(formatCell(totals[totalCol.key] || 0)) + '</th>';
+                    } else {
+                        html += '<th></th>';
+                    }
+                }
+                html += '</tr></tfoot></table></div>';
+                html += buildCrystalSummary(totals);
+                html += '</div>';
+                byId("reportResult").innerHTML = html;
+            }
+            function totalValue(totals, key) {
+                return totals && isFinite(totals[key]) ? totals[key] : 0;
+            }
+            function moneyCell(value) {
+                return escapeHtml(formatCell(value || 0));
+            }
+            function buildCrystalSummary(totals) {
+                var countCards = totalValue(totals, "CountCards");
+                var cardValue = totalValue(totals, "CardValue");
+                var rechargeCount = totalValue(totals, "CountTransaction");
+                var rechargeValue = totalValue(totals, "TotalRechargeValue");
+                var rechargeDiscount = totalValue(totals, "TotalRev2");
+                var rechargeFeesVat = totalValue(totals, "TotalRevWithVat");
+                var walletOut = totalValue(totals, "WalletSupply");
+                var totalDaily = totalValue(totals, "TotalSupply");
+                var bankFees = totalValue(totals, "BankBalanceCharge");
+                var boxValue = totalValue(totals, "BoxValue");
+                var netCashOut = totalValue(totals, "NetCashOut");
+                var total3 = totalDaily + bankFees + boxValue;
+
+                return ''
+                    + '<div class="crystal-summary">'
+                    + '<div class="crystal-sales-total">'
+                    + '<div class="total-caption"><span>إجمالي المبيعات</span><span>شاملة الضريبة</span></div>'
+                    + '<table><tbody>'
+                    + '<tr><td>' + moneyCell(cardValue) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
+                    + '<tr><td>' + moneyCell(rechargeValue) + '</td><td class="summary-label">مبيعات شحن كاش <span class="summary-red">In</span></td></tr>'
+                    + '<tr><td>' + moneyCell(walletOut) + '</td><td class="summary-label">مبيعات شحن كاش <span class="summary-red">OUT</span></td></tr>'
+                    + '<tr><td>0</td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
+                    + '<tr><td>0</td><td class="summary-label">مبيعات توقيفي</td></tr>'
+                    + '</tbody></table></div>'
+                    + '<table><thead><tr>'
+                    + '<th>الإجمالي</th><th>ق م 14%</th><th>مبلغ الإيراد</th><th>العدد</th><th>البيان</th>'
+                    + '</tr></thead><tbody>'
+                    + '<tr><td>' + moneyCell(cardValue) + '</td><td>' + moneyCell(totalValue(totals, "TotalSaleDay2Vat")) + '</td><td>' + moneyCell(cardValue) + '</td><td>' + moneyCell(countCards) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
+                    + '<tr><td>' + moneyCell(rechargeFeesVat) + '</td><td>' + moneyCell(rechargeFeesVat - rechargeDiscount) + '</td><td>' + moneyCell(rechargeDiscount) + '</td><td>' + moneyCell(rechargeCount) + '</td><td class="summary-label">عمليات شحن كاش <span class="summary-red">In</span></td></tr>'
+                    + '<tr><td>' + moneyCell(walletOut) + '</td><td></td><td>' + moneyCell(walletOut) + '</td><td></td><td class="summary-label">عمليات شحن كاش <span class="summary-red">OUT</span></td></tr>'
+                    + '<tr><td></td><td></td><td>0</td><td></td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
+                    + '<tr><td></td><td></td><td>0</td><td></td><td class="summary-label">مبيعات توقيفي</td></tr>'
+                    + '<tr><td>' + moneyCell(totalDaily) + '</td><td>' + moneyCell(rechargeFeesVat - rechargeDiscount) + '</td><td>' + moneyCell(totalDaily) + '</td><td>' + moneyCell(rechargeCount + countCards) + '</td><td class="summary-label">إجمالي اليومية</td></tr>'
+                    + '<tr><td></td><td></td><td>' + moneyCell(bankFees) + '</td><td></td><td class="summary-label">تكلفة رسوم شحن <span class="summary-red">BM</span></td></tr>'
+                    + '<tr><td class="summary-total" colspan="2">تفاصيل و إجمالي التوريد<br><span class="summary-red">قيد الإغلاق العام</span></td><td>' + moneyCell(totalDaily) + '</td><td></td><td class="summary-label">حوالة مجمع الإيراد</td></tr>'
+                    + '<tr><td class="summary-total" colspan="2" rowspan="4">' + moneyCell(total3) + '</td><td>0</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">9995</span></td></tr>'
+                    + '<tr><td>0</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">8846</span></td></tr>'
+                    + '<tr><td>' + moneyCell(netCashOut) + '</td><td></td><td class="summary-label">خزينة <span class="summary-red">POS</span> الرئيسية</td></tr>'
+                    + '<tr><td>' + moneyCell(boxValue) + '</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">19108</span> العهد</td></tr>'
+                    + '</tbody></table></div>';
+            }
+            function getCrystalValue(row, col, rowIndex) {
+                var direct = readAny(row, [col.key].concat(col.aliases || []));
+                if (direct !== null && direct !== undefined && direct !== "") {
+                    return direct;
+                }
+
+                if (col.key === "RowNo") {
+                    return rowIndex + 1;
+                }
+
+                if (col.key === "WalletBalance") {
+                    return sumValues(row, [["CashOutTotal"], ["CashOut"]]);
+                }
+
+                if (col.key === "WalletSupply") {
+                    return sumValues(row, [["CashOutTotal"], ["CashOut"], ["CashOutDisc"]], 2);
+                }
+
+                if (col.key === "TotalRevWithVat") {
+                    return sumValues(row, [["TotalRev2"], ["TotalRevvat", "TotalRevVat"]]);
+                }
+
+                if (col.key === "NetCashOut") {
+                    return sumValues(row, [["CashOut"], ["CashOutTotal"], ["CashOutDisc"]], 2);
+                }
+
+                if (col.key === "BoxValue") {
+                    return readAny(row, ["BoxBalance"]);
+                }
+
+                return "";
+            }
+            function readAny(row, keys) {
+                if (!row || !keys) { return null; }
+                for (var i = 0; i < keys.length; i++) {
+                    var key = keys[i];
+                    if (row.hasOwnProperty(key)) {
+                        return row[key];
+                    }
+
+                    var lower = String(key).toLowerCase();
+                    for (var actual in row) {
+                        if (row.hasOwnProperty(actual) && String(actual).toLowerCase() === lower) {
+                            return row[actual];
+                        }
+                    }
+                }
+                return null;
+            }
+            function sumValues(row, groups, subtractGroupIndex) {
+                var total = 0;
+                var found = false;
+                for (var i = 0; i < groups.length; i++) {
+                    var value = readAny(row, groups[i]);
+                    var numberValue = readNumber(value);
+                    if (isFinite(numberValue)) {
+                        total += i === subtractGroupIndex ? -numberValue : numberValue;
+                        found = true;
+                    }
+                }
+                return found ? total : "";
+            }
+            function readNumber(value) {
+                if (typeof value === "number") { return value; }
+                return parseFloat(String(value || "").replace(/,/g, ""));
+            }
+            function formatCell(value) {
+                if (value === null || value === undefined || value === "") { return ""; }
+                var numberValue = readNumber(value);
+                if (isFinite(numberValue) && String(value).match(/^-?\d+(\.\d+)?$/)) {
+                    return formatNumber(numberValue);
+                }
+                return value;
+            }
+            function selectedText(id, fallback) {
+                var select = byId(id);
+                if (!select || !select.value) { return fallback || ""; }
+                return (select.options[select.selectedIndex].textContent || "").trim();
+            }
+            function getReportTitle(key) {
+                var button = document.querySelector('.report-action[data-report-key="' + key + '"] strong');
+                return button ? (button.textContent || "").trim() : "تقرير";
+            }
+            function buildPrintMeta() {
+                var parts = [
+                    "من تاريخ: " + (byId("reportFromDate").value || ""),
+                    "إلى تاريخ: " + (byId("reportToDate").value || "")
+                ];
+                var branch = selectedText("reportBranchId", "");
+                var branchFrom = selectedText("reportBranchFromId", "");
+                var branchTo = selectedText("reportBranchToId", "");
+                var service = byId("reportServiceSearch").value || "";
+                if (branch) { parts.push("الفرع: " + branch); }
+                if (branchFrom) { parts.push("من فرع: " + branchFrom); }
+                if (branchTo) { parts.push("إلى فرع: " + branchTo); }
+                if (service) { parts.push("خدمة/نشاط: " + service); }
+                if (byId("reportShowEmptyBranches").checked) { parts.push("إظهار الفروع الفاضية"); }
+                return parts;
+            }
+            function runReport(key, afterRender) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-run-report-url"), true);
+                xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                byId("reportMessage").innerText = "جاري تشغيل التقرير...";
+                byId("reportResult").innerHTML = "";
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var data = null;
+                    try {
+                        data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                    } catch (ignore) {
+                        data = { success: false, message: "تعذر قراءة رد السيرفر" };
+                    }
+
+                    if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
+                        byId("reportMessage").innerText = (data.reportKey || data.ReportKey) === "finance-closing-discounts" ? "" : (data.reportName || "تم تشغيل التقرير");
+                        renderTable(data);
+                        if (typeof afterRender === "function") {
+                            afterRender(data);
+                        }
+                        return;
+                    }
+
+                    byId("reportMessage").innerText = (data && data.message) || "تعذر تشغيل التقرير";
+                };
+                xhr.send(JSON.stringify(payload(key)));
+            }
+            function printCurrentReport(key, data, popup) {
+                var result = byId("reportResult");
+                if (!result || !result.innerHTML.trim()) {
+                    byId("reportMessage").innerText = "لا توجد بيانات للطباعة";
+                    if (popup && !popup.closed) { popup.close(); }
+                    return;
+                }
+
+                var title = (data && (data.reportName || data.ReportName)) || getReportTitle(key);
+                var meta = buildPrintMeta().map(function (item) { return "<span>" + escapeHtml(item) + "</span>"; }).join("");
+                var styles = ''
+                    + '<style>'
+                    + '@@page{size:A4 landscape;margin:8mm;}'
+                    + 'body{direction:rtl;font-family:Tahoma,Arial,sans-serif;color:#1f2937;margin:0;}'
+                    + '.print-header{text-align:center;margin:0 0 10px;}'
+                    + '.print-header h1{color:#b42318;font-size:20px;margin:0 0 8px;}'
+                    + '.print-meta{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:11px;margin-bottom:10px;}'
+                    + '.print-meta span{border:1px solid #d9e1ee;border-radius:4px;padding:3px 6px;}'
+                    + '.responsive-table{overflow:visible;}'
+                    + 'table{border-collapse:collapse;width:100%;font-size:10px;}'
+                    + 'th,td{border:1px solid #d9e1ee;padding:4px;text-align:center;vertical-align:middle;}'
+                    + 'th{background:#f6f8fb;color:#111827;font-weight:800;}'
+                    + 'tfoot th{background:#eef2f7;}'
+                    + '.crystal-title{display:none;}'
+                    + '.crystal-table th{border:2px solid #4b168d;}'
+                    + '.crystal-table th small{color:#ef4444;display:block;font-size:9px;}'
+                    + '.crystal-table td,.crystal-table tfoot th{direction:ltr;unicode-bidi:isolate;}'
+                    + '.crystal-table td:nth-child(2),.crystal-table td:nth-child(17),.crystal-table tfoot th:nth-child(2){direction:rtl;text-align:right;unicode-bidi:plaintext;}'
+                    + '</style>';
+                popup = popup || window.open("", "_blank");
+                if (!popup) {
+                    byId("reportMessage").innerText = "المتصفح منع فتح نافذة الطباعة";
+                    return;
+                }
+                popup.document.open();
+                popup.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + escapeHtml(title) + '</title>' + styles + '</head><body>');
+                popup.document.write('<div class="print-header"><h1>' + escapeHtml(title) + '</h1><div class="print-meta">' + meta + '</div></div>');
+                popup.document.write(result.innerHTML);
+                popup.document.write('</body></html>');
+                popup.document.close();
+                popup.focus();
+                window.setTimeout(function () {
+                    popup.print();
+                }, 250);
+            }
+            function printReport(key) {
+                var popup = window.open("", "_blank");
+                if (!popup) {
+                    byId("reportMessage").innerText = "المتصفح منع فتح نافذة الطباعة";
+                    return;
+                }
+                popup.document.open();
+                popup.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>جاري تجهيز الطباعة</title></head><body style="direction:rtl;font-family:Tahoma,Arial,sans-serif;padding:20px;">جاري تجهيز الطباعة...</body></html>');
+                popup.document.close();
+                runReport(key, function (data) {
+                    printCurrentReport(key, data, popup);
+                });
+            }
+            function exportReport(key) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-export-report-url"), true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+                xhr.responseType = "blob";
+                byId("reportMessage").innerText = "جاري تجهيز ملف Excel...";
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+
+                    var contentType = xhr.getResponseHeader("Content-Type") || "";
+                    if (xhr.status >= 200 && xhr.status < 300 && contentType.indexOf("spreadsheetml") >= 0) {
+                        var fileName = "POS_Report_" + (byId("reportFromDate").value || "") + "_" + (byId("reportToDate").value || "") + ".xlsx";
+                        var url = window.URL.createObjectURL(xhr.response);
+                        var link = document.createElement("a");
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                        byId("reportMessage").innerText = "تم تنزيل ملف Excel";
+                        return;
+                    }
+
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var text = reader.result || "";
+                        try {
+                            var data = text ? JSON.parse(text) : null;
+                            byId("reportMessage").innerText = (data && data.message) || "تعذر تصدير Excel";
+                        } catch (ignore) {
+                            byId("reportMessage").innerText = text || "تعذر تصدير Excel";
+                        }
+                    };
+                    reader.onerror = function () {
+                        byId("reportMessage").innerText = "تعذر تصدير Excel";
+                    };
+                    reader.readAsText(xhr.response || new Blob(), "utf-8");
+                };
+                xhr.onerror = function () {
+                    byId("reportMessage").innerText = "تعذر الاتصال بالسيرفر أثناء تصدير Excel";
+                };
+                var data = payload(key);
+                var form = [
+                    ["ReportKey", data.reportKey || ""],
+                    ["FromDate", data.fromDate || ""],
+                    ["ToDate", data.toDate || ""],
+                    ["BranchId", data.branchId || ""],
+                    ["BranchFromId", data.branchFromId || ""],
+                    ["BranchToId", data.branchToId || ""],
+                    ["StoreId", data.storeId || ""],
+                    ["UserId", data.userId || ""],
+                    ["LoginSource", data.loginSource || ""],
+                    ["SerialSearch", data.serialSearch || ""],
+                    ["ServiceSearch", data.serviceSearch || ""],
+                    ["ShowEmptyBranches", data.showEmptyBranches ? "true" : "false"]
+                ].map(function (item) {
+                    return encodeURIComponent(item[0]) + "=" + encodeURIComponent(item[1]);
+                }).join("&");
+                xhr.send(form);
+            }
+
+            document.addEventListener("click", function (event) {
+                var tab = event.target.closest ? event.target.closest("#reportTabs button") : null;
+                if (tab) {
+                    var buttons = document.querySelectorAll("#reportTabs button");
+                    for (var i = 0; i < buttons.length; i++) { buttons[i].classList.remove("active"); }
+                    tab.classList.add("active");
+                    updateGroups(activeGroup());
+                    return;
+                }
+
+                var reportButton = event.target.closest ? event.target.closest(".report-action") : null;
+                if (reportButton && !reportButton.disabled) {
+                    runReport(reportButton.getAttribute("data-report-key"));
+                    return;
+                }
+
+                var exportButton = event.target.closest ? event.target.closest(".report-export") : null;
+                if (exportButton && !exportButton.disabled) {
+                    exportReport(exportButton.getAttribute("data-report-key"));
+                    return;
+                }
+
+                var printButton = event.target.closest ? event.target.closest(".report-print") : null;
+                if (printButton && !printButton.disabled) {
+                    printReport(printButton.getAttribute("data-report-key"));
+                }
+            });
+
+            enhanceSelectSearch(byId("reportBranchId"), "اكتب اسم الفرع أو الكود");
+            enhanceSelectSearch(byId("reportBranchFromId"), "من فرع");
+            enhanceSelectSearch(byId("reportBranchToId"), "إلى فرع");
+            enhanceSelectSearch(byId("reportUserId"), "اكتب اسم المستخدم أو الكود");
+            enhanceSelectSearch(byId("reportStoreId"), "اكتب اسم المخزن أو الكود");
+            updateGroups("sales");
+        })();
+    </script>
+</body>
+</html>

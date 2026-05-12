@@ -100,7 +100,7 @@ namespace MyERP.Areas.Pos.Services
                     rowResult.Status = "Imported";
                     rowResult.TransactionId = saved.Transaction_ID;
                     rowResult.NoteSerial1 = saved.NoteSerial1;
-                    rowResult.Message = "تم الترحيل";
+                    rowResult.Message = BuildImportedMessage(row);
                     result.ImportedCount++;
                 }
                 catch (Exception ex)
@@ -258,6 +258,23 @@ namespace MyERP.Areas.Pos.Services
             }
 
             return "تم ترك الصف لأنه غير جاهز للترحيل.";
+        }
+
+        private static string BuildImportedMessage(PosExcelImportRowPreview row)
+        {
+            var warningReasons = row == null || row.Reasons == null
+                ? new List<string>()
+                : row.Reasons
+                    .Where(x => !string.IsNullOrWhiteSpace(x) && x.IndexOf("IPN", StringComparison.OrdinalIgnoreCase) >= 0)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+            if (warningReasons.Count == 0)
+            {
+                return "تم الترحيل";
+            }
+
+            return "[ExcelImportWarning] تم الترحيل مع ملاحظة: " + string.Join(" | ", warningReasons);
         }
 
         private PosSaveTransactionRequest BuildSaveRequest(PosExcelImportPreviewResult preview, PosExcelImportRowPreview row, PosExcelImportDefaultContext defaults, PosUserContext importContext)

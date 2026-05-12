@@ -1,0 +1,360 @@
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Tahoma", Arial, sans-serif;
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.ptd-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.ptd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: #1f2937;
+    color: #f9fafb;
+    border-bottom: 2px solid #111827;
+}
+
+.ptd-header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.ptd-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.ptd-header-actions label {
+    color: #f9fafb;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ptd-header-actions select {
+    background: #111827;
+    color: #f9fafb;
+    border: 1px solid #374151;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+.ptd-btn {
+    background: #4b5563;
+    color: #f9fafb;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.ptd-btn:hover { background: #374151; }
+.ptd-btn-primary { background: #2563eb; }
+.ptd-btn-primary:hover { background: #1d4ed8; }
+.ptd-btn-warn { background: #b45309; }
+.ptd-btn-warn:hover { background: #92400e; }
+
+.ptd-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.ptd-side {
+    background: #ffffff;
+    border-inline-start: 1px solid #e5e7eb;
+    border-inline-end: 1px solid #e5e7eb;
+    padding: 14px;
+    overflow-y: auto;
+}
+
+.ptd-side h2 {
+    font-size: 14px;
+    margin: 14px 0 8px 0;
+    color: #111827;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 4px;
+}
+
+.ptd-side h2:first-child { margin-top: 0; }
+
+.ptd-side label {
+    display: block;
+    font-size: 12px;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+.ptd-side label input[type=number],
+.ptd-side label input[type=text] {
+    display: block;
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-top: 3px;
+}
+.ptd-side label input[type=range] {
+    width: 100%;
+}
+
+.ptd-zoom-buttons {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 14px;
+}
+.ptd-zoom-buttons button {
+    flex: 1;
+}
+
+.ptd-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 6px 0 12px 0;
+}
+
+.ptd-field-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.ptd-field-palette button {
+    text-align: start;
+    padding: 6px 10px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e3a8a;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    direction: rtl;
+}
+.ptd-field-palette button:hover { background: #dbeafe; }
+.ptd-field-palette button.is-on-canvas {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+.ptd-field-palette button.ptd-palette-special {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+}
+.ptd-field-palette button.ptd-palette-special:hover { background: #fde68a; }
+.ptd-palette-separator {
+    margin: 10px 0 4px 0;
+    padding-top: 8px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 11px;
+    color: #6b7280;
+    text-align: start;
+    direction: rtl;
+}
+.ptd-field-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.ptd-field.is-special {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: #f59e0b;
+}
+.ptd-field.is-special.is-selected {
+    background: rgba(245, 158, 11, 0.25);
+    border-color: #b45309;
+}
+
+.ptd-canvas-wrap {
+    overflow: auto;
+    background: #d1d5db;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.ptd-canvas {
+    position: relative;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    border: 1px solid #9ca3af;
+    /* Page coordinates are LTR: (0,0) is the top-LEFT corner of the page
+       and every field's left/top is measured from there. Do not change
+       this even when the surrounding shell is dir="rtl". */
+    transform-origin: top left;
+    direction: ltr;
+}
+
+.ptd-canvas img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    user-select: none;
+}
+.ptd-canvas img.is-hidden { display: none; }
+
+.ptd-fields-layer {
+    position: absolute;
+    inset: 0;
+}
+
+.ptd-canvas.is-grid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, rgba(37, 99, 235, 0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(37, 99, 235, 0.10) 1px, transparent 1px);
+    /* Default grid step 5 units; overridden via inline style. */
+    background-size: 5px 5px;
+}
+
+.ptd-field {
+    position: absolute;
+    border: 1px dashed #2563eb;
+    background: rgba(37, 99, 235, 0.10);
+    cursor: move;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.ptd-field.is-selected {
+    border: 1.5px solid #b91c1c;
+    background: rgba(239, 68, 68, 0.18);
+}
+
+.ptd-field-label {
+    position: absolute;
+    top: -16px;
+    right: 0;
+    background: #2563eb;
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+    direction: rtl;
+}
+.ptd-field.is-selected .ptd-field-label {
+    background: #b91c1c;
+}
+
+.ptd-field-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: #b91c1c;
+    border: 2px solid #fff;
+    border-radius: 2px;
+    bottom: -8px;
+    right: -8px;
+    cursor: nwse-resize;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.ptd-field.is-selected {
+    z-index: 5;
+}
+.ptd-field-handle:hover { background: #7f1d1d; }
+
+.ptd-field-cells {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.ptd-cell {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-right: 1px dashed rgba(37, 99, 235, 0.4);
+}
+.ptd-field.is-selected .ptd-cell {
+    border-color: rgba(185, 28, 28, 0.6);
+}
+
+.ptd-canvas-status {
+    display: flex;
+    gap: 24px;
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: "Consolas", "Courier New", monospace;
+}
+
+.ptd-properties .ptd-prop-row {
+    margin-bottom: 9px;
+}
+.ptd-properties .ptd-prop-row label {
+    display: block;
+    font-size: 12px;
+    color: #4b5563;
+    margin-bottom: 3px;
+}
+.ptd-properties input[type=number],
+.ptd-properties input[type=text],
+.ptd-properties select {
+    width: 100%;
+    padding: 5px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.ptd-properties .ptd-prop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.ptd-properties hr {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+    margin: 12px 0;
+}
+.ptd-properties .ptd-prop-row.is-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ptd-properties .ptd-prop-row.is-checkbox label {
+    margin: 0;
+}
+
+.ptd-file-label {
+    display: block;
+    cursor: pointer;
+}
+
+#saveStatus.is-success { color: #86efac; }
+#saveStatus.is-error { color: #fca5a5; }

@@ -142,7 +142,6 @@ namespace MyERP.Areas.Pos.Services
                 TransactionDateText = ReadText(sheet, rowIndex, 9),
                 TransactionDate = ReadDate(sheet, rowIndex, 9)
             };
-
             ApplyViolationDefaultPricing(row);
             ApplyExistingImportMarker(sheet, rowIndex, row);
             ValidateTransactionRow(row, mapping);

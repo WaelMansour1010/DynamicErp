@@ -1,0 +1,166 @@
+@{
+    Layout = null;
+    ViewBag.Title = "فاتورة مشتريات";
+    var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+    var stores = ViewBag.Stores as IEnumerable<MyERP.Areas.Pos.Models.PosStoreDto>;
+    var boxes = ViewBag.Boxes as IEnumerable<MyERP.Areas.Pos.Models.PosCashBoxDto>;
+    var banks = ViewBag.Banks as IEnumerable<MyERP.Areas.Pos.Models.PosLookupDto>;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="pos-page purchase-invoice-page"
+         data-lookup-url="@Url.Action("Lookup", "PurchaseInvoice", new { area = "Pos" })"
+         data-stores-url="@Url.Action("Stores", "PurchaseInvoice", new { area = "Pos" })"
+         data-save-url="@Url.Action("Save", "PurchaseInvoice", new { area = "Pos" })">
+        <div class="pos-shell">
+            <section class="pos-panel">
+                <div class="panel-heading">
+                    <h2>فاتورة مشتريات</h2>
+                    <span>الحقول الأساسية من FrmBillBuy</span>
+                </div>
+
+                <div class="pos-grid four-cols">
+                    <label>رقم الفاتورة<input type="text" id="purchaseInvoiceNumber" placeholder="يولد تلقائياً عند تركه فارغاً" /></label>
+                    <label>تاريخ الفاتورة<input type="date" id="purchaseInvoiceDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>
+                        الفرع
+                        <select id="purchaseBranchId" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                            @if (branches != null)
+                            {
+                                foreach (var branch in branches)
+                                {
+                                    <option value="@branch.BranchId" @(context != null && context.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        المخزن
+                        <select id="purchaseStoreId">
+                            @if (stores != null)
+                            {
+                                foreach (var store in stores)
+                                {
+                                    <option value="@store.StoreID" @(context != null && context.StoreId == store.StoreID ? "selected" : "")>@store.StoreName</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                </div>
+
+                <div class="pos-grid four-cols">
+                    <label class="wide-field">
+                        المورد
+                        <span class="smart-lookup" data-lookup-kind="supplier">
+                            <input type="hidden" id="purchaseSupplierId" />
+                            <input type="text" id="purchaseSupplierText" class="lookup-input" placeholder="اكتب كود أو اسم المورد" autocomplete="off" />
+                            <button type="button" class="lookup-clear" id="clearSupplierBtn" aria-label="مسح">×</button>
+                            <span class="lookup-results" id="supplierResults" role="listbox"></span>
+                        </span>
+                    </label>
+                    <label>
+                        طريقة الدفع
+                        <select id="purchasePaymentType">
+                            <option value="1">آجل / مورد</option>
+                            <option value="0">نقدي</option>
+                            <option value="3">بنك</option>
+                        </select>
+                    </label>
+                    <label>
+                        الخزنة
+                        <select id="purchaseBoxId">
+                            <option value="">اختر الخزنة</option>
+                            @if (boxes != null)
+                            {
+                                foreach (var box in boxes)
+                                {
+                                    <option value="@box.BoxID" @(context != null && context.BoxId == box.BoxID ? "selected" : "")>@box.BoxName</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        البنك
+                        <select id="purchaseBankId">
+                            <option value="">اختر البنك</option>
+                            @if (banks != null)
+                            {
+                                foreach (var bank in banks)
+                                {
+                                    <option value="@bank.Id">@bank.Name</option>
+                                }
+                            }
+                        </select>
+                    </label>
+                </div>
+
+                <div class="pos-grid two-cols">
+                    <label>رقم فاتورة المورد<input type="text" id="purchaseManualNo" /></label>
+                    <label>ملاحظات<input type="text" id="purchaseRemarks" /></label>
+                </div>
+
+                <div class="payments-section-title">
+                    <h3>الأصناف</h3>
+                    <span>أضف صنفاً ثم عدل الكمية والسعر والضريبة عند الحاجة</span>
+                </div>
+
+                <div class="pos-grid two-cols">
+                    <label>
+                        بحث صنف
+                        <span class="smart-lookup" data-lookup-kind="item">
+                            <input type="text" id="purchaseItemSearch" class="lookup-input" placeholder="كود أو اسم الصنف" autocomplete="off" />
+                            <span class="lookup-results" id="itemResults" role="listbox"></span>
+                        </span>
+                    </label>
+                    <div class="pos-actions inline-actions">
+                        <button type="button" class="secondary-action" id="clearItemsBtn">مسح الأصناف</button>
+                    </div>
+                </div>
+
+                <div class="report-result">
+                    <table class="pos-data-table purchase-items-table">
+                        <thead>
+                            <tr>
+                                <th>الصنف</th>
+                                <th>الوحدة</th>
+                                <th>الكمية</th>
+                                <th>سعر الشراء</th>
+                                <th>خصم</th>
+                                <th>VAT</th>
+                                <th>الإجمالي</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseItemsBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4">الإجمالي</th>
+                                <th id="purchaseDiscountTotal">0.00</th>
+                                <th id="purchaseVatTotal">0.00</th>
+                                <th id="purchaseGrandTotal">0.00</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="pos-actions">
+                    <button type="button" class="primary-action" id="savePurchaseBtn">حفظ الفاتورة</button>
+                    <span id="purchaseMessage" class="pos-validation"></span>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="@Url.Content("~/Areas/Pos/Scripts/purchase-invoice.js")"></script>
+</body>
+</html>

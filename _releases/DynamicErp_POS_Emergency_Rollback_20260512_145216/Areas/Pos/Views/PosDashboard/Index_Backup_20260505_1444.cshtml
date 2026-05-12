@@ -1,0 +1,734 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "كيشني - لوحة التشغيل";
+    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
+    var activeScreen = (ViewBag.ActiveScreen as string) ?? "sales";
+    var initialScreenUrl = (ViewBag.InitialScreenUrl as string) ?? Url.Content("~/Pos/PosTransaction/Index");
+    if (string.IsNullOrWhiteSpace(initialScreenUrl)) { initialScreenUrl = "about:blank"; }
+    var canViewReports = posContext != null && posContext.CanViewReports;
+    var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
+    var logoPath = "~/Areas/Pos/assets/images/company-logo.png";
+    var logoAltPath = "~/Areas/Pos/assets/images/company-logo-1.png";
+    var companyLogoPath = System.IO.File.Exists(Server.MapPath(logoPath))
+        ? logoPath
+        : (System.IO.File.Exists(Server.MapPath(logoAltPath)) ? logoAltPath : null);
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
+</head>
+<body>
+    <div class="pos-main-shell" dir="rtl"
+         data-dashboard-summary-url="@Url.Action("Summary", "PosDashboard", new { area = "Pos" })"
+         data-sales-url="@Url.Content("~/Pos/PosTransaction/Index")"
+         data-is-admin="@(isAdmin ? "true" : "false")">
+        <aside class="pos-main-sidebar">
+            <div class="pos-main-logo">
+                @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+                {
+                    <img src="@Url.Content(companyLogoPath)" alt="Keshni" />
+                }
+                else
+                {
+                    <strong>كيشني</strong>
+                }
+            </div>
+
+            <nav class="pos-main-nav" aria-label="قائمة نقطة البيع">
+                @if (isAdmin)
+                {
+                    <a class="@(activeScreen == "dashboard" ? "active" : "")"
+                       href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })"
+                       data-dashboard-screen="true">لوحة التحكم</a>
+                }
+                <a class="@(activeScreen == "sales" ? "active" : "")"
+                   href="@Url.Action("Sales", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index")">شاشة البيع</a>
+                <a class="@(activeScreen == "closing" ? "active" : "")"
+                   href="@Url.Action("Closing", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosClosing/Index")">الإغلاق</a>
+                <a class="@(activeScreen == "kyc" ? "active" : "")"
+                   href="@Url.Action("Kyc", "PosDashboard", new { area = "Pos" })"
+                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index?openKyc=true")">KYC</a>
+                @if (isAdmin || (posContext != null && posContext.IsFullAccessCustomerService))
+                {
+                    <a class="@(activeScreen == "kyc-bank-follow-up" ? "active" : "")"
+                       href="@Url.Action("KycBankFollowUp", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/KycBankFollowUp/Index")">متابعة KYC والبنك</a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanManagePrintTemplates))
+                {
+                    <a class="@(activeScreen == "print-templates" ? "active" : "")"
+                       href="@Url.Action("PrintTemplates", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PrintTemplate/Index?name=KycCard")">مصمم نماذج الطباعة</a>
+                }
+                @if (canViewReports)
+                {
+                    <a class="@(activeScreen == "reports" ? "active" : "")"
+                       href="@Url.Action("Reports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosReports/Index")">تقارير</a>
+                    <a href="@Url.Content("~/Pos/HtmlReports/Index")"
+                       data-screen-url="@Url.Content("~/Pos/HtmlReports/Index")">التقارير الذكية</a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
+                {
+                    <a class="@(activeScreen == "accounting-reports" ? "active" : "")"
+                       href="@Url.Action("AccountingReports", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/AccountingReports/Index")">تقارير الحسابات</a>
+                }
+                @if (isAdmin || (posContext != null && (posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry)))
+                {
+                    <a class="@(activeScreen == "journal-entries" ? "active" : "")"
+                       href="@Url.Action("JournalEntries", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")">إدخال واستعراض القيود</a>
+                }
+                @if (isAdmin || (posContext != null && posContext.CanOpenPayments))
+                {
+                    <a class="@(activeScreen == "payments" ? "active" : "")"
+                       href="@Url.Action("Payments", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/Payments/Index")">تمويل العهدة</a>
+                }
+                @if (isAdmin)
+                {
+                    <a class="@(activeScreen == "system-health" ? "active" : "")"
+                       href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")">مراقبة النظام</a>
+                    <a class="@(activeScreen == "system-error-log" ? "active" : "")"
+                       href="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
+                       data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")">سجل أخطاء النظام</a>
+                    <a class="@(activeScreen == "permissions" ? "active" : "")"
+                       href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
+                       data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")">صلاحيات POS</a>
+                }
+            </nav>
+        </aside>
+
+        <main class="pos-main-content">
+            <header class="pos-main-topbar">
+                <div>
+                    <h1>لوحة تشغيل كيشني</h1>
+                    <p>المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "")</p>
+                </div>
+                @using (Html.BeginForm("Logout", "PosLogin", new { area = "Pos" }, FormMethod.Post, new { @class = "pos-main-logout" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit">خروج</button>
+                }
+            </header>
+
+            @if (isAdmin)
+            {
+                <section id="adminDashboardPanel" class="pos-admin-dashboard @(activeScreen == "dashboard" ? "" : "is-hidden-ui")">
+                    <div class="pos-panel executive-hero-panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h2>لوحة التحكم التنفيذية</h2>
+                                <span>لوحة مؤشرات ذكية لصاحب الشركة - للمدير فقط</span>
+                            </div>
+                            <button type="button" class="link-action" id="reloadAdminDashboardBtn">تحميل مؤشرات الأداء</button>
+                        </div>
+                        <div class="dashboard-period-toggle" id="dashboardPeriodToggle" role="radiogroup" aria-label="فترة لوحة التحكم">
+                            <label><input type="radio" name="dashboardPeriodType" value="daily" checked /> يومي</label>
+                            <label><input type="radio" name="dashboardPeriodType" value="weekly" /> أسبوعي</label>
+                            <label><input type="radio" name="dashboardPeriodType" value="monthly" /> شهري</label>
+                            <label><input type="radio" name="dashboardPeriodType" value="yearly" /> سنوي</label>
+                            <label><input type="radio" name="dashboardPeriodType" value="custom" /> مخصص</label>
+                        </div>
+                        <div class="pos-grid four-cols reports-filter-grid dashboard-filter-grid">
+                            <label class="dashboard-date-filter">من تاريخ<input type="date" id="dashboardFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" disabled /></label>
+                            <label class="dashboard-date-filter">إلى تاريخ<input type="date" id="dashboardToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" disabled /></label>
+                            <label>
+                                الفرع
+                                <select id="dashboardBranchId">
+                                    <option value="">كل الفروع</option>
+                                    @if (branches != null)
+                                    {
+                                        foreach (var branch in branches)
+                                        {
+                                            <option value="@branch.BranchId">@branch.BranchName</option>
+                                        }
+                                    }
+                                </select>
+                            </label>
+                            <label>نوع العملية<select id="dashboardOperationType"><option value="">كل العمليات</option><option value="cash-in">Cash In</option><option value="cash-out">Cash Out</option><option value="card">كارت كيشني</option><option value="violations">مخالفات</option></select></label>
+                        </div>
+                    </div>
+
+                    <div id="adminDashboardMessage" class="pos-validation">اضغط تحميل مؤشرات الأداء لعرض بيانات لوحة التحكم.</div>
+                    <div id="adminDashboardKpis" class="admin-kpi-grid"></div>
+                    <section class="pos-panel executive-insights-panel">
+                        <div class="panel-heading"><h2>مركز الرؤى الذكية</h2><span>تحليلات تشغيلية مبنية على بيانات حقيقية</span></div>
+                        <div id="adminDashboardInsights" class="insight-grid"></div>
+                    </section>
+                    <section class="pos-panel executive-insights-panel">
+                        <div class="panel-heading"><h2>توصيات تشغيلية</h2></div>
+                        <div id="adminDashboardRecommendations" class="recommendation-list"></div>
+                    </section>
+
+                    <div class="admin-dashboard-grid">
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>تحليل نوع العملية</h2></div>
+                            <div class="dashboard-chart-wrap"><canvas id="operationDonutChart"></canvas></div>
+                            <div id="adminOperationSummary" class="report-result compact-result"></div>
+                        </section>
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>🏆 أفضل الفروع أداءً</h2></div>
+                            <div class="dashboard-chart-wrap"><canvas id="branchBarChart"></canvas></div>
+                            <div id="adminBranchComparison" class="report-result"></div>
+                        </section>
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>📊 أقل الفروع أداءً</h2><span>الترتيب حسب صافي التحصيل ثم عدد الحركات</span></div>
+                            <div class="dashboard-chart-wrap"><canvas id="worstBranchBarChart"></canvas></div>
+                            <div id="adminWorstBranches" class="report-result"></div>
+                        </section>
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>الخدمات الأكثر استخدامًا</h2></div>
+                            <div class="dashboard-chart-wrap"><canvas id="topServicesChart"></canvas></div>
+                            <div id="adminTopServices" class="report-result"></div>
+                        </section>
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>أفضل 5 بائعين</h2><span>حسب صافي الحركات في الفترة المحددة</span></div>
+                            <div class="dashboard-chart-wrap"><canvas id="topSellersChart"></canvas></div>
+                            <div id="adminTopSellers" class="report-result"></div>
+                        </section>
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>📈 اتجاه التحصيل</h2></div>
+                            <div class="dashboard-chart-wrap"><canvas id="dailyTrendChart"></canvas></div>
+                            <div id="adminDailyTrend" class="report-result"></div>
+                        </section>
+                        <section class="pos-panel">
+                            <div class="panel-heading"><h2>💰 التحصيل مقابل الرسوم</h2></div>
+                            <div class="dashboard-chart-wrap"><canvas id="revenueFeesChart"></canvas></div>
+                        </section>
+                    </div>
+                </section>
+            }
+
+            <section id="posHomePanel" class="pos-main-frame-card @(activeScreen == "home" ? "" : "is-hidden-ui")">
+                <div class="empty-state" style="padding:32px;text-align:center;">
+                    <h2>مرحباً بك في لوحة تشغيل كيشني</h2>
+                    <p>اختر الشاشة المطلوبة من القائمة الجانبية.</p>
+                    <p>لا توجد إعدادات بيع افتراضية لهذا المستخدم، لذلك لن يتم فتح شاشة البيع تلقائياً.</p>
+                </div>
+            </section>
+
+            <section id="posFrameSection" class="pos-main-frame-card @(activeScreen == "dashboard" || activeScreen == "home" ? "is-hidden-ui" : "")">
+                <iframe id="posMainFrame"
+                        title="شاشة نقطة البيع"
+                        src="@initialScreenUrl"
+                        loading="eager"></iframe>
+            </section>
+        </main>
+
+        <div class="pos-main-loading-overlay" id="posMainLoadingOverlay" aria-live="polite" aria-hidden="true">
+            <div class="pos-loading-box">
+                <span class="pos-loading-spinner" aria-hidden="true"></span>
+                <span id="posMainLoadingText">جاري تحميل البيانات...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var shell = document.querySelector(".pos-main-shell");
+            var frame = document.getElementById("posMainFrame");
+            var links = document.querySelectorAll("[data-screen-url]");
+            var dashboardLink = document.querySelector("[data-dashboard-screen]");
+            var dashboardPanel = document.getElementById("adminDashboardPanel");
+            var frameSection = document.getElementById("posFrameSection");
+            var homePanel = document.getElementById("posHomePanel");
+            var navLoadingOverlay = document.getElementById("posMainLoadingOverlay");
+            var navLoadingText = document.getElementById("posMainLoadingText");
+            var navigationLoading = false;
+            var navigationTimer = null;
+            var charts = {};
+
+            function escapeHtml(value) {
+                return String(value === null || value === undefined ? "" : value)
+                    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+
+            function money(value) {
+                var number = parseFloat(value || 0);
+                return isNaN(number) ? "0.00" : number.toFixed(2);
+            }
+
+            function displayDate(value) {
+                if (!value) { return ""; }
+                if (typeof value === "string" && value.indexOf("/Date(") === 0) {
+                    var match = /\/Date\((-?\d+)\)\//.exec(value);
+                    if (match) { value = new Date(parseInt(match[1], 10)); }
+                } else if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+                    value = new Date(value);
+                }
+
+                if (value instanceof Date && !isNaN(value.getTime())) {
+                    var day = String(value.getDate());
+                    var month = String(value.getMonth() + 1);
+                    return (day.length === 1 ? "0" + day : day) + "/" + (month.length === 1 ? "0" + month : month) + "/" + value.getFullYear();
+                }
+
+                return value;
+            }
+
+            function displayValue(value) {
+                return displayDate(value);
+            }
+
+            function toDateInput(value) {
+                var year = value.getFullYear();
+                var month = String(value.getMonth() + 1);
+                var day = String(value.getDate());
+                return year + "-" + (month.length === 1 ? "0" + month : month) + "-" + (day.length === 1 ? "0" + day : day);
+            }
+
+            function addDays(value, days) {
+                var result = new Date(value.getTime());
+                result.setDate(result.getDate() + days);
+                return result;
+            }
+
+            function selectedPeriodType() {
+                var selected = document.querySelector("input[name='dashboardPeriodType']:checked");
+                return selected ? selected.value : "daily";
+            }
+
+            function applyPeriodDates() {
+                var type = selectedPeriodType();
+                var today = new Date();
+                var from = today;
+                var to = today;
+                if (type === "weekly") {
+                    from = addDays(today, -6);
+                } else if (type === "monthly") {
+                    from = new Date(today.getFullYear(), today.getMonth(), 1);
+                    to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                } else if (type === "yearly") {
+                    from = new Date(today.getFullYear(), 0, 1);
+                    to = new Date(today.getFullYear(), 11, 31);
+                }
+
+                var fromInput = document.getElementById("dashboardFromDate");
+                var toInput = document.getElementById("dashboardToDate");
+                var custom = type === "custom";
+                if (fromInput) { fromInput.disabled = !custom; }
+                if (toInput) { toInput.disabled = !custom; }
+                if (!custom) {
+                    if (fromInput) { fromInput.value = toDateInput(from); }
+                    if (toInput) { toInput.value = toDateInput(to); }
+                }
+            }
+
+            function operationLabel(value) {
+                if (value === "cash-in") { return "Cash In"; }
+                if (value === "cash-out") { return "Cash Out"; }
+                if (value === "card") { return "كارت كيشني"; }
+                if (value === "violations") { return "مخالفات"; }
+                return value || "";
+            }
+
+            function destroyChart(id) {
+                if (charts[id]) {
+                    charts[id].destroy();
+                    charts[id] = null;
+                }
+            }
+
+            function renderChart(id, type, labels, values, title, secondValues, secondTitle) {
+                var canvas = document.getElementById(id);
+                if (!canvas || typeof Chart === "undefined") { return; }
+                destroyChart(id);
+                if (!labels || !labels.length) {
+                    var parent = canvas.parentNode;
+                    if (parent) { parent.setAttribute("data-empty", "لا توجد بيانات للعرض"); }
+                    return;
+                }
+                if (canvas.parentNode) { canvas.parentNode.removeAttribute("data-empty"); }
+                charts[id] = new Chart(canvas.getContext("2d"), {
+                    type: type,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: title || "",
+                            data: values,
+                            backgroundColor: ["#2563eb", "#7c3aed", "#f97316", "#14b8a6", "#0ea5e9", "#22c55e"],
+                            borderColor: "#ffffff",
+                            borderWidth: type === "line" ? 2 : 1,
+                            fill: type === "line" ? false : true
+                        }].concat(secondValues ? [{
+                            label: secondTitle || "",
+                            data: secondValues,
+                            backgroundColor: "#f97316",
+                            borderColor: "#f97316",
+                            borderWidth: 2,
+                            fill: false
+                        }] : [])
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: { display: type === "doughnut", position: "bottom" },
+                        scales: type === "doughnut" ? {} : {
+                            yAxes: [{ ticks: { beginAtZero: true } }],
+                            xAxes: [{ ticks: { autoSkip: false } }]
+                        }
+                    }
+                });
+            }
+
+            function setActive(url, dashboard) {
+                for (var i = 0; i < links.length; i++) {
+                    var linkUrl = links[i].getAttribute("data-screen-url");
+                    links[i].classList.toggle("active", !dashboard && linkUrl === url);
+                }
+                if (dashboardLink) { dashboardLink.classList.toggle("active", !!dashboard); }
+            }
+
+            function setNavLinksDisabled(disabled) {
+                for (var i = 0; i < links.length; i++) {
+                    links[i].classList.toggle("is-disabled", disabled);
+                    links[i].setAttribute("aria-disabled", disabled ? "true" : "false");
+                }
+                if (dashboardLink) {
+                    dashboardLink.classList.toggle("is-disabled", disabled);
+                    dashboardLink.setAttribute("aria-disabled", disabled ? "true" : "false");
+                }
+            }
+
+            function showNavigationLoading(message) {
+                navigationLoading = true;
+                window.clearTimeout(navigationTimer);
+                if (navLoadingText) { navLoadingText.innerText = message || "جاري تحميل البيانات..."; }
+                if (navLoadingOverlay) { navLoadingOverlay.setAttribute("aria-hidden", "false"); }
+                if (shell) { shell.classList.add("is-nav-loading"); }
+                setNavLinksDisabled(true);
+                navigationTimer = window.setTimeout(function () {
+                    if (!navigationLoading) { return; }
+                    if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    window.setTimeout(hideNavigationLoading, 1800);
+                }, 45000);
+            }
+
+            function hideNavigationLoading() {
+                navigationLoading = false;
+                window.clearTimeout(navigationTimer);
+                if (shell) { shell.classList.remove("is-nav-loading"); }
+                if (navLoadingOverlay) { navLoadingOverlay.setAttribute("aria-hidden", "true"); }
+                if (navLoadingText) { navLoadingText.innerText = "جاري تحميل البيانات..."; }
+                setNavLinksDisabled(false);
+            }
+
+            function showFrame(url) {
+                if (!url || !frame) { return; }
+                if (dashboardPanel) { dashboardPanel.classList.add("is-hidden-ui"); }
+                if (homePanel) { homePanel.classList.add("is-hidden-ui"); }
+                if (frameSection) { frameSection.classList.remove("is-hidden-ui"); }
+                frame.src = url;
+                setActive(url, false);
+            }
+
+            function showDashboard() {
+                if (!dashboardPanel) { return; }
+                if (frameSection) { frameSection.classList.add("is-hidden-ui"); }
+                if (homePanel) { homePanel.classList.add("is-hidden-ui"); }
+                dashboardPanel.classList.remove("is-hidden-ui");
+                setActive("", true);
+                var message = document.getElementById("adminDashboardMessage");
+                if (message) { message.innerText = "اضغط تحميل مؤشرات الأداء لعرض بيانات لوحة التحكم."; }
+            }
+
+            function renderTable(targetId, columns, rows, emptyMessage) {
+                var target = document.getElementById(targetId);
+                if (!target) { return; }
+                if (!rows || !rows.length) {
+                    target.innerHTML = "<div class=\"empty-state\">" + escapeHtml(emptyMessage || "لا توجد بيانات") + "</div>";
+                    return;
+                }
+                var html = "<div class=\"responsive-table\"><table class=\"pos-table\"><thead><tr>";
+                for (var c = 0; c < columns.length; c++) { html += "<th>" + escapeHtml(columns[c].title) + "</th>"; }
+                html += "</tr></thead><tbody>";
+                for (var r = 0; r < rows.length; r++) {
+                    html += "<tr>";
+                    for (var x = 0; x < columns.length; x++) {
+                        var value = rows[r][columns[x].key];
+                        html += "<td>" + escapeHtml(columns[x].money ? money(value) : displayValue(value)) + "</td>";
+                    }
+                    html += "</tr>";
+                }
+                html += "</tbody></table></div>";
+                target.innerHTML = html;
+            }
+
+            function renderKpis(kpis, comparisons) {
+                var target = document.getElementById("adminDashboardKpis");
+                if (!target) { return; }
+                kpis = kpis || {};
+                comparisons = comparisons || [];
+                var items = [
+                    ["transactions", "إجمالي عدد الحركات", kpis.TransactionCount || 0],
+                    ["sales", "إجمالي قيمة المبيعات/الشحن", money(kpis.SalesTotal)],
+                    ["fees", "إجمالي الرسوم", money(kpis.FeesTotal)],
+                    ["vat", "إجمالي الضريبة", money(kpis.VatTotal)],
+                    ["net", "صافي التحصيل", money(kpis.NetCollection)],
+                    ["kyc", "كروت KYC المفعلة", kpis.ActivatedKycCards || 0],
+                    ["returns", "فواتير ملغاة/مرتجعة", kpis.CancelledOrReturnedCount || 0]
+                ];
+                var html = "";
+                for (var i = 0; i < items.length; i++) {
+                    var comparison = null;
+                    for (var c = 0; c < comparisons.length; c++) {
+                        if (comparisons[c].Key === items[i][0] || comparisons[c].key === items[i][0]) { comparison = comparisons[c]; break; }
+                    }
+                    var percent = comparison ? parseFloat(comparison.ChangePercent || comparison.changePercent || 0) : 0;
+                    var positive = comparison ? (comparison.IsPositive === true || comparison.isPositive === true) : percent >= 0;
+                    html += "<article><span>" + escapeHtml(items[i][1]) + "</span><strong>" + escapeHtml(items[i][2]) + "</strong>"
+                        + "<small class=\"" + (positive ? "positive" : "negative") + "\">" + (percent >= 0 ? "↑ " : "↓ ") + Math.abs(percent).toFixed(1) + "% عن الفترة السابقة</small></article>";
+                }
+                target.innerHTML = html;
+            }
+
+            function renderList(targetId, rows, className) {
+                var target = document.getElementById(targetId);
+                if (!target) { return; }
+                if (!rows || !rows.length) {
+                    target.innerHTML = "<div class=\"empty-state\">لا توجد بيانات كافية</div>";
+                    return;
+                }
+                var html = "";
+                for (var i = 0; i < rows.length; i++) {
+                    html += "<article class=\"" + (className || "") + "\">" + escapeHtml(rows[i]) + "</article>";
+                }
+                target.innerHTML = html;
+            }
+
+            function renderSmartInsights(targetId, rows) {
+                var target = document.getElementById(targetId);
+                if (!target) { return; }
+                if (!rows || !rows.length) {
+                    target.innerHTML = "<div class=\"empty-state\">لا توجد بيانات كافية لإصدار توصية موثوقة.</div>";
+                    return;
+                }
+
+                var html = "";
+                for (var i = 0; i < rows.length; i++) {
+                    var item = rows[i] || {};
+                    var severity = String(item.Severity || item.severity || "Low").toLowerCase();
+                    html += "<article class=\"smart-insight-card severity-" + escapeHtml(severity) + "\">"
+                        + "<div class=\"smart-insight-head\"><span class=\"smart-insight-icon\">" + escapeHtml(item.Icon || item.icon || "💡") + "</span>"
+                        + "<strong>" + escapeHtml(item.Title || item.title || "") + "</strong></div>"
+                        + "<p>" + escapeHtml(item.Description || item.description || "") + "</p>"
+                        + "<small>" + escapeHtml(item.Metric || item.metric || "") + "</small>"
+                        + "<em>" + escapeHtml(item.Action || item.action || "") + "</em>"
+                        + "</article>";
+                }
+                target.innerHTML = html;
+            }
+
+            function loadAdminDashboard(loadAdvanced) {
+                if (!shell || shell.getAttribute("data-is-admin") !== "true") { return; }
+                loadAdvanced = loadAdvanced === true;
+                var message = document.getElementById("adminDashboardMessage");
+                if (message) { message.innerText = loadAdvanced ? "جاري تحميل مؤشرات الأداء..." : "جاري تحميل المؤشرات الأساسية..."; }
+                applyPeriodDates();
+                var url = shell.getAttribute("data-dashboard-summary-url")
+                    + "?periodType=" + encodeURIComponent(selectedPeriodType())
+                    + "&fromDate=" + encodeURIComponent(document.getElementById("dashboardFromDate").value)
+                    + "&toDate=" + encodeURIComponent(document.getElementById("dashboardToDate").value)
+                    + "&branchId=" + encodeURIComponent(document.getElementById("dashboardBranchId").value || "")
+                    + "&operationType=" + encodeURIComponent(document.getElementById("dashboardOperationType").value || "")
+                    + "&advanced=" + (loadAdvanced ? "true" : "false")
+                    + "&refreshSnapshot=" + (loadAdvanced ? "true" : "false");
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var response = null;
+                    try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    if (xhr.status < 200 || xhr.status >= 300 || !response || !response.success) {
+                        if (message) { message.innerText = (response && response.message) || "تعذر تحميل لوحة التحكم"; }
+                        hideNavigationLoading();
+                        return;
+                    }
+                    var data = response.data || {};
+                    if (message) {
+                        var snapshotStatus = data.SnapshotStatus || data.snapshotStatus || "";
+                        var snapshotMessage = data.SnapshotMessage || data.snapshotMessage || "";
+                        if (snapshotStatus && snapshotStatus !== "Completed") {
+                            message.innerText = snapshotMessage || "لم يتم تجهيز مؤشرات هذه الفترة بعد";
+                        } else if (data.IsSnapshotData || data.isSnapshotData) {
+                            message.innerText = "تم تحميل البيانات من مؤشرات محفوظة" + ((data.SnapshotGeneratedAt || data.snapshotGeneratedAt) ? " - آخر تجهيز: " + (data.SnapshotGeneratedAt || data.snapshotGeneratedAt) : "");
+                        } else {
+                            message.innerText = "تم تحميل البيانات";
+                        }
+                    }
+                    renderKpis(data.Kpis, data.KpiComparisons);
+                    if (!loadAdvanced) {
+                        renderSmartInsights("adminDashboardInsights", []);
+                        renderList("adminDashboardRecommendations", ["اضغط تحميل مؤشرات الأداء لعرض التحليلات التفصيلية والتوصيات التشغيلية."], "recommendation-card");
+                        renderTable("adminBranchComparison", [], [], "اضغط تحميل مؤشرات الأداء لعرض مقارنة الفروع");
+                        renderTable("adminWorstBranches", [], [], "اضغط تحميل مؤشرات الأداء لعرض أقل الفروع أداءً");
+                        renderTable("adminTopServices", [], [], "اضغط تحميل مؤشرات الأداء لعرض الخدمات الأكثر استخدامًا");
+                        renderTable("adminTopSellers", [], [], "اضغط تحميل مؤشرات الأداء لعرض أفضل البائعين");
+                        renderTable("adminOperationSummary", [], [], "اضغط تحميل مؤشرات الأداء لعرض تحليل نوع العملية");
+                        renderTable("adminDailyTrend", [], [], "اضغط تحميل مؤشرات الأداء لعرض اتجاه التحصيل");
+                        for (var chartName in charts) {
+                            if (charts.hasOwnProperty(chartName) && charts[chartName]) { charts[chartName].destroy(); charts[chartName] = null; }
+                        }
+                        hideNavigationLoading();
+                        return;
+                    }
+                    renderSmartInsights("adminDashboardInsights", data.SmartInsights || data.smartInsights || data.Insights);
+                    renderList("adminDashboardRecommendations", data.Recommendations, "recommendation-card");
+                    renderTable("adminBranchComparison", [
+                        { key: "BranchName", title: "الفرع" },
+                        { key: "TransactionCount", title: "عدد الحركات" },
+                        { key: "TotalValue", title: "إجمالي القيمة", money: true },
+                        { key: "FeesTotal", title: "إجمالي الرسوم", money: true }
+                    ], data.BranchComparison);
+                    renderTable("adminWorstBranches", [
+                        { key: "BranchName", title: "الفرع" },
+                        { key: "TransactionCount", title: "عدد الحركات" },
+                        { key: "TotalValue", title: "صافي التحصيل", money: true },
+                        { key: "FeesTotal", title: "إجمالي الرسوم", money: true }
+                    ], data.WorstBranches);
+                    renderTable("adminTopServices", [
+                        { key: "ItemName", title: "الخدمة" },
+                        { key: "SaleCount", title: "عدد مرات البيع" },
+                        { key: "TotalValue", title: "إجمالي القيمة", money: true },
+                        { key: "FeesTotal", title: "إجمالي الرسوم", money: true }
+                    ], data.TopServices);
+                    renderTable("adminTopSellers", [
+                        { key: "RankIcon", title: "" },
+                        { key: "RankNo", title: "الترتيب" },
+                        { key: "SellerName", title: "البائع" },
+                        { key: "TransactionCount", title: "عدد الحركات" },
+                        { key: "NetValue", title: "الصافي", money: true }
+                    ], data.TopSellers, "لا توجد بيانات كافية لعرض أفضل البائعين في الفترة المحددة");
+                    renderTable("adminOperationSummary", [
+                        { key: "OperationType", title: "نوع العملية" },
+                        { key: "TransactionCount", title: "عدد الحركات" },
+                        { key: "RechargeTotal", title: "إجمالي القيمة", money: true },
+                        { key: "FeesTotal", title: "الرسوم", money: true },
+                        { key: "VatTotal", title: "الضريبة", money: true },
+                        { key: "NetCollection", title: "الصافي", money: true }
+                    ], data.OperationTypeSummary);
+                    renderTable("adminDailyTrend", [
+                        { key: "Day", title: "اليوم" },
+                        { key: "TransactionCount", title: "عدد الحركات" },
+                        { key: "NetCollection", title: "صافي التحصيل", money: true }
+                    ], data.DailyTrend);
+                    renderChart("operationDonutChart", "doughnut",
+                        (data.OperationTypeSummary || []).map(function (x) { return operationLabel(x.OperationType); }),
+                        (data.OperationTypeSummary || []).map(function (x) { return parseFloat(x.NetCollection || 0); }),
+                        "الصافي");
+                    renderChart("branchBarChart", "bar",
+                        (data.BranchComparison || []).map(function (x) { return x.BranchName; }),
+                        (data.BranchComparison || []).map(function (x) { return parseFloat(x.TotalValue || 0); }),
+                        "إجمالي القيمة");
+                    renderChart("worstBranchBarChart", "bar",
+                        (data.WorstBranches || []).map(function (x) { return x.BranchName; }),
+                        (data.WorstBranches || []).map(function (x) { return parseFloat(x.TotalValue || 0); }),
+                        "صافي التحصيل");
+                    renderChart("topServicesChart", "bar",
+                        (data.TopServices || []).map(function (x) { return x.ItemName; }),
+                        (data.TopServices || []).map(function (x) { return parseFloat(x.TotalValue || 0); }),
+                        "إجمالي القيمة");
+                    renderChart("topSellersChart", "bar",
+                        (data.TopSellers || []).map(function (x) { return x.SellerName; }),
+                        (data.TopSellers || []).map(function (x) { return parseFloat(x.NetValue || 0); }),
+                        "صافي الحركات");
+                    renderChart("dailyTrendChart", "line",
+                        (data.DailyTrend || []).map(function (x) { return x.Day; }),
+                        (data.DailyTrend || []).map(function (x) { return parseFloat(x.NetCollection || 0); }),
+                        "صافي التحصيل");
+                    renderChart("revenueFeesChart", "bar",
+                        (data.OperationTypeSummary || []).map(function (x) { return operationLabel(x.OperationType); }),
+                        (data.OperationTypeSummary || []).map(function (x) { return parseFloat(x.NetCollection || 0); }),
+                        "صافي التحصيل",
+                        (data.OperationTypeSummary || []).map(function (x) { return parseFloat(x.FeesTotal || 0); }),
+                        "الرسوم");
+                    hideNavigationLoading();
+                };
+                xhr.onerror = function () {
+                    if (message) { message.innerText = "تعذر تحميل لوحة التحكم"; }
+                    if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    window.setTimeout(hideNavigationLoading, 1200);
+                };
+                xhr.send();
+            }
+
+            if (frame) {
+                frame.addEventListener("load", function () {
+                    hideNavigationLoading();
+                });
+                frame.addEventListener("error", function () {
+                    if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    window.setTimeout(hideNavigationLoading, 1200);
+                });
+            }
+
+            for (var i = 0; i < links.length; i++) {
+                links[i].addEventListener("click", function (event) {
+                    if (navigationLoading) {
+                        event.preventDefault();
+                        return;
+                    }
+                    var url = this.getAttribute("data-screen-url");
+                    if (!url || !frame) { return; }
+                    event.preventDefault();
+                    showNavigationLoading("جاري تحميل البيانات...");
+                    showFrame(url);
+                });
+            }
+
+            if (dashboardLink) {
+                dashboardLink.addEventListener("click", function (event) {
+                    if (navigationLoading) {
+                        event.preventDefault();
+                        return;
+                    }
+                     event.preventDefault();
+                     showNavigationLoading("جاري تحميل البيانات...");
+                     showDashboard();
+                     hideNavigationLoading();
+                 });
+             }
+
+            document.addEventListener("click", function (event) {
+                if (event.target && event.target.id === "reloadAdminDashboardBtn") {
+                    loadAdminDashboard(true);
+                }
+            });
+
+            document.addEventListener("change", function (event) {
+                if (event.target && event.target.name === "dashboardPeriodType") {
+                    applyPeriodDates();
+                    var message = document.getElementById("adminDashboardMessage");
+                    if (message) { message.innerText = "تم تغيير الفلاتر. اضغط تحميل مؤشرات الأداء لعرض البيانات."; }
+                    return;
+                }
+                if (event.target && /dashboard(FromDate|ToDate|BranchId|OperationType)/.test(event.target.id)) {
+                    var filterMessage = document.getElementById("adminDashboardMessage");
+                    if (filterMessage) { filterMessage.innerText = "تم تغيير الفلاتر. اضغط تحميل مؤشرات الأداء لعرض البيانات."; }
+                }
+            });
+
+            if (window.matchMedia && window.matchMedia("(max-width: 1000px)").matches) {
+                showFrame(shell.getAttribute("data-sales-url"));
+                return;
+            }
+
+            if (dashboardPanel && !dashboardPanel.classList.contains("is-hidden-ui")) {
+                applyPeriodDates();
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -408,6 +408,8 @@ namespace MyERP.Areas.Pos.Controllers
                 CanOpenPayments = context.CanOpenPayments,
                 CanExecutePayments = context.CanExecutePayments,
                 CanEditInvoice = context.CanEditInvoice,
+                CanEditSalesInvoice = context.CanEditSalesInvoice,
+                CanEditSalesInvoicePos = context.CanEditSalesInvoicePos,
                 CanAdminDeleteInvoice = IsAdmin(context),
                 CanCancelInvoice = context.CanCancelInvoice,
                 IsFullAccess = context.IsFullAccess,
@@ -430,7 +432,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult GetTodayInvoices(string term, string operationType, DateTime? fromDate, DateTime? toDate, int? branchId, bool excelOnly = false)
+        public JsonResult GetTodayInvoices(string term, string operationType, DateTime? fromDate, DateTime? toDate, int? branchId, bool excelOnly = false, bool excelWithWarnings = false)
         {
             var context = GetPosContext();
             if (context == null)
@@ -441,7 +443,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             try
             {
-                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId, excelOnly), JsonRequestBehavior.AllowGet);
+                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId, excelOnly, excelWithWarnings), JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -624,6 +626,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("لم يتم العثور على الفاتورة أو لا تملك صلاحية فتحها", "Invoice not found or not allowed."), JsonRequestBehavior.AllowGet);
             }
 
+            ApplyInvoiceEditFlags(invoice, context);
             return Json(invoice, JsonRequestBehavior.AllowGet);
         }
 
@@ -832,10 +835,11 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."));
                 }
 
-                if (!context.CanEditKyc)
+                string kycPermissionMessage;
+                if (!CanSaveKycForCurrentContext(request, context, out kycPermissionMessage))
                 {
                     SetJsonErrorStatus(403);
-                    return Json(Fail("ليست لديك صلاحية تعديل بيانات KYC", "CanEditKyc is false."));
+                    return Json(Fail(kycPermissionMessage, "CanEditKyc/limited invoice edit permission is false."));
                 }
 
                 request.UserId = context.UserId;
@@ -959,28 +963,28 @@ namespace MyERP.Areas.Pos.Controllers
                         return Json(Fail("لم يتم العثور على الفاتورة أو لا تملك صلاحية تعديلها", "Existing invoice not found or not allowed."));
                     }
 
-                    if (!context.CanEditInvoice)
+                    var editPermission = ResolveSalesInvoiceEditPermission(originalInvoice, context);
+                    if (!editPermission.CanEdit)
                     {
                         SetJsonErrorStatus(403);
-                        return Json(Fail("ليست لديك صلاحية تعديل هذه الفاتورة", "CanEditInvoice is false."));
+                        return Json(Fail(editPermission.Message, "CanEditSalesInvoice/CanEditSalesInvoicePos did not allow this edit."));
                     }
 
-                    if (originalInvoice.CreatedUserId.HasValue && originalInvoice.CreatedUserId.Value != context.UserId
-                        && !_repository.ValidatePosUserPassword(context.UserId, request.EditPassword))
+                    if (!_repository.ValidatePosUserPassword(context.UserId, request.EditPassword))
                     {
                         SetJsonErrorStatus(403);
                         return Json(Fail("كلمة المرور غير صحيحة، لم يتم حفظ التعديل", "Current POS user password validation failed."));
                     }
 
-                    request.BranchId = originalInvoice.BranchId;
-                    request.StoreID = originalInvoice.StoreID;
-                    request.BoxID = originalInvoice.BoxID;
-                    request.UserID = originalInvoice.CreatedUserId;
-                    request.Emp_ID = originalInvoice.Emp_ID;
-                    request.NoID = originalInvoice.NoID;
-                    request.TransactionDate = originalInvoice.TransactionDate.HasValue
-                        ? originalInvoice.TransactionDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
-                        : request.TransactionDate;
+                    NormalizeLimitedSalesInvoiceEditRequest(request, originalInvoice);
+                    var editErrors = ValidateLimitedSalesInvoiceEdit(request, originalInvoice, editPermission.AllowKycFields);
+                    if (editErrors.Count > 0)
+                    {
+                        SetJsonErrorStatus(400);
+                        return Json(Fail("التعديل المسموح لهذه الفاتورة محدود بالقيمة وبيانات KYC المسموحة فقط", "Blocked prohibited POS invoice edit fields.", editErrors));
+                    }
+
+                    NormalizeLimitedSalesInvoiceEditRequest(request, originalInvoice);
                 }
 
                 var validationErrors = ValidateSaveRequest(request, context);
@@ -1020,7 +1024,15 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 request.PaymentNetid = context.PaymentNetId;
-                if (!context.CanChangeDefaults && context.PaymentTypeId.HasValue)
+                if (originalInvoice != null)
+                {
+                    request.PaymentNetid = originalInvoice.PaymentNetid;
+                }
+                if (originalInvoice != null)
+                {
+                    request.PaymentType = originalInvoice.PaymentType;
+                }
+                else if (!context.CanChangeDefaults && context.PaymentTypeId.HasValue)
                 {
                     request.PaymentType = context.PaymentTypeId.Value;
                 }
@@ -1079,6 +1091,11 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     SetJsonErrorStatus(500);
                     return Json(Fail("تم إنشاء رأس الفاتورة ولكن لا توجد تفاصيل محفوظة", "Transaction header exists, but Transaction_Details has no rows after save."));
+                }
+
+                if (originalInvoice != null)
+                {
+                    _repository.LogSalesInvoiceEdit(originalInvoice, request, context.UserId, null);
                 }
 
                 return Json(new
@@ -1155,12 +1172,6 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.CanEditKyc)
-            {
-                SetJsonErrorStatus(403);
-                return Json(Fail("ليست لديك صلاحية تعديل بيانات KYC", "CanEditKyc is false."), JsonRequestBehavior.AllowGet);
-            }
-
             var result = _repository.ValidateKeshniCardAvailability(cardNo, nationalId, mobile, customerId, context.StoreId);
             if (!result.Available)
             {
@@ -1220,9 +1231,9 @@ namespace MyERP.Areas.Pos.Controllers
                     errors["ViolationPayType"] = "طريقة دفع المخالفات مطلوبة";
                 }
 
-                if (string.IsNullOrWhiteSpace(request.Tet_NumPoket))
+                if (string.IsNullOrWhiteSpace(request.AccountTypeName1) && string.IsNullOrWhiteSpace(request.Tet_NumPoket))
                 {
-                    errors["Tet_NumPoket"] = "رقم المحفظة مطلوب";
+                    errors["AccountTypeName1"] = "رقم المحفظة مطلوب";
                 }
             }
             else if (!isCard && request.RechargeValue.GetValueOrDefault() <= 0)
@@ -1244,9 +1255,9 @@ namespace MyERP.Areas.Pos.Controllers
                     : "قيمة المخالفات أكبر من الحد المسموح لهذه الخدمة";
             }
 
-            if (isCashOut && string.IsNullOrWhiteSpace(request.Tet_NumPoket))
+            if (isCashOut && string.IsNullOrWhiteSpace(request.AccountTypeName1) && string.IsNullOrWhiteSpace(request.Tet_NumPoket))
             {
-                errors["Tet_NumPoket"] = "رقم المحفظة مطلوب";
+                errors["AccountTypeName1"] = "رقم المحفظة مطلوب";
             }
 
             if (isCard && (request.IsCashOut || request.IsWallet || request.ItemIDService2.HasValue))
@@ -1313,6 +1324,324 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return errors;
+        }
+
+        private static void ApplyInvoiceEditFlags(PosInvoiceReviewDto invoice, PosUserContext context)
+        {
+            if (invoice == null || context == null)
+            {
+                return;
+            }
+
+            var permission = ResolveSalesInvoiceEditPermission(invoice, context);
+            invoice.CanEditSalesInvoice = context.CanEditSalesInvoice;
+            invoice.CanEditSalesInvoicePos = context.CanEditSalesInvoicePos;
+            invoice.CanEditLoadedInvoice = permission.CanEdit && !invoice.IsCancelled;
+            invoice.CanEditLoadedInvoiceKyc = invoice.CanEditLoadedInvoice && permission.AllowKycFields;
+            invoice.EditModeMessage = invoice.IsCancelled ? "الفاتورة ملغاة ولا يمكن تعديلها" : permission.Message;
+        }
+
+        private bool CanSaveKycForCurrentContext(PosCashCustomerSaveRequest request, PosUserContext context, out string message)
+        {
+            message = "ليست لديك صلاحية تعديل بيانات KYC";
+            if (context == null)
+            {
+                return false;
+            }
+
+            if (context.CanEditKyc)
+            {
+                return true;
+            }
+
+            if (!request.InvoiceTransactionId.HasValue || request.InvoiceTransactionId.Value <= 0)
+            {
+                return false;
+            }
+
+            var invoice = _repository.GetInvoiceForReview(request.InvoiceTransactionId.Value, context.UserId, context.CanChangeDefaults || context.CanEditInvoice);
+            var permission = ResolveSalesInvoiceEditPermission(invoice, context);
+            if (!permission.CanEdit || !permission.AllowKycFields)
+            {
+                message = permission.Message;
+                return false;
+            }
+
+            if (!_repository.ValidatePosUserPassword(context.UserId, request.EditPassword))
+            {
+                message = "كلمة المرور غير صحيحة، لم يتم حفظ تعديل KYC";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static PosSalesInvoiceEditPermission ResolveSalesInvoiceEditPermission(PosInvoiceReviewDto invoice, PosUserContext context)
+        {
+            if (invoice == null || context == null)
+            {
+                return new PosSalesInvoiceEditPermission(false, false, "لم يتم العثور على الفاتورة");
+            }
+
+            if (invoice.IsCancelled)
+            {
+                return new PosSalesInvoiceEditPermission(false, false, "الفاتورة ملغاة ولا يمكن تعديلها");
+            }
+
+            var isCard = IsKeshniCardTransaction(invoice.TransactionType);
+            if (context.CanEditSalesInvoice)
+            {
+                return new PosSalesInvoiceEditPermission(true, isCard, "مسموح بتعديل محدود للقيمة" + (isCard ? " وبيانات KYC" : ""));
+            }
+
+            if (context.CanEditSalesInvoicePos)
+            {
+                if (!invoice.TransactionDate.HasValue || invoice.TransactionDate.Value.Date != DateTime.Today)
+                {
+                    return new PosSalesInvoiceEditPermission(false, false, "صلاحية POS تسمح بتعديل فواتير اليوم فقط");
+                }
+
+                return new PosSalesInvoiceEditPermission(true, isCard, "مسموح بتعديل محدود لفاتورة اليوم" + (isCard ? " وبيانات KYC" : ""));
+            }
+
+            return new PosSalesInvoiceEditPermission(false, false, "ليست لديك صلاحية تعديل هذه الفاتورة");
+        }
+
+        private static Dictionary<string, string> ValidateLimitedSalesInvoiceEdit(PosSaveTransactionRequest request, PosInvoiceReviewDto originalInvoice, bool allowKycFields)
+        {
+            var errors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (request == null || originalInvoice == null)
+            {
+                errors["Invoice"] = "بيانات الفاتورة غير مكتملة";
+                return errors;
+            }
+
+            var isCard = IsKeshniCardTransaction(originalInvoice.TransactionType);
+            AddTextChangedError(errors, "TransactionType", request.TransactionType, originalInvoice.TransactionType, "لا يمكن تغيير نوع الفاتورة");
+            AddDateChangedError(errors, "TransactionDate", request.TransactionDate, originalInvoice.TransactionDate, "لا يمكن تغيير تاريخ الفاتورة");
+            AddIntChangedError(errors, "BranchId", request.BranchId, originalInvoice.BranchId, "لا يمكن تغيير الفرع");
+            AddIntChangedError(errors, "StoreID", request.StoreID, originalInvoice.StoreID, "لا يمكن تغيير المخزن");
+            AddIntChangedError(errors, "BoxID", request.BoxID, originalInvoice.BoxID, "لا يمكن تغيير الخزنة");
+            AddIntChangedError(errors, "Emp_ID", request.Emp_ID, originalInvoice.Emp_ID, "لا يمكن تغيير الكاشير/المندوب");
+            AddIntChangedErrorDefault(errors, "PaymentType", request.PaymentType, originalInvoice.PaymentType, 1, "لا يمكن تغيير طريقة الدفع");
+            AddIntChangedError(errors, "PaymentNetid", request.PaymentNetid, originalInvoice.PaymentNetid, "لا يمكن تغيير حساب الدفع");
+            AddBoolChangedError(errors, "IsCashOut", request.IsCashOut, originalInvoice.IsCashOut, "لا يمكن تغيير نوع تأثير العملية");
+            AddBoolChangedError(errors, "IsPOS", request.IsPOS, originalInvoice.IsPOS, "لا يمكن تغيير نوع POS");
+            AddBoolChangedError(errors, "OtherItems", request.OtherItems, originalInvoice.OtherItems, "لا يمكن تغيير إعداد الأصناف");
+            AddIntChangedErrorDefault(errors, "PayType", request.PayType, originalInvoice.PayType, string.Equals(originalInvoice.TransactionType, "violations", StringComparison.OrdinalIgnoreCase) ? 0 : 1, "لا يمكن تغيير نوع السداد");
+            AddIntChangedErrorDefault(errors, "POSBillType", request.POSBillType, originalInvoice.POSBillType, 0, "لا يمكن تغيير نوع الفاتورة");
+            AddIntChangedErrorDefault(errors, "STableID", request.STableID, originalInvoice.STableID, -1, "لا يمكن تغيير بيانات الجلسة");
+            AddIntChangedErrorDefault(errors, "SessionD", request.SessionD, originalInvoice.SessionD, -1, "لا يمكن تغيير بيانات الجلسة");
+            AddIntChangedErrorDefault(errors, "BillBasedOn", request.BillBasedOn, originalInvoice.BillBasedOn, 0, "لا يمكن تغيير أساس الفاتورة");
+            AddBoolChangedError(errors, "IsRecharg", request.IsRecharg, originalInvoice.IsRecharg, "لا يمكن تغيير نوع الشحن");
+            AddBoolChangedError(errors, "IsWallet", request.IsWallet, originalInvoice.IsWallet, "لا يمكن تغيير بيانات المحفظة");
+            AddBoolChangedError(errors, "HaveGuarantee", request.HaveGuarantee, originalInvoice.HaveGuarantee, "لا يمكن تغيير بيانات الضمان");
+            AddIntChangedError(errors, "ItemIDService", request.ItemIDService, originalInvoice.ItemIDService, "لا يمكن تغيير الخدمة");
+            AddIntChangedError(errors, "ItemIDService2", request.ItemIDService2, originalInvoice.ItemIDService2, "لا يمكن تغيير الخدمة الفرعية");
+            if (!string.Equals(originalInvoice.TransactionType, "violations", StringComparison.OrdinalIgnoreCase))
+            {
+                AddDecimalChangedError(errors, "ViolationsValue", request.ViolationsValue, originalInvoice.ViolationsValue, "لا يمكن تعديل قيمة المخالفات لهذه الفاتورة");
+            }
+            AddTextChangedError(errors, "NoID", request.NoID, originalInvoice.NoID, "لا يمكن تغيير مصدر الفاتورة");
+            AddTextChangedError(errors, "VisaNumber", request.VisaNumber, originalInvoice.VisaNumber, "لا يمكن تغيير رقم الكارت");
+
+            if (allowKycFields && !isCard)
+            {
+                errors["KycFields"] = "بيانات KYC لا تعدل إلا مع فواتير الكارت";
+            }
+
+            if (isCard)
+            {
+                AddDecimalChangedError(errors, "RechargeValue", request.RechargeValue, originalInvoice.RechargeValue, "لا يمكن تغيير قيمة الشحن في فاتورة الكارت");
+            }
+
+            ValidateLimitedEditItems(request, originalInvoice, errors);
+            return errors;
+        }
+
+        private static void NormalizeLimitedSalesInvoiceEditRequest(PosSaveTransactionRequest request, PosInvoiceReviewDto originalInvoice)
+        {
+            if (request == null || originalInvoice == null)
+            {
+                return;
+            }
+
+            request.TransactionType = originalInvoice.TransactionType;
+            request.TransactionDate = originalInvoice.TransactionDate.HasValue
+                ? originalInvoice.TransactionDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+                : request.TransactionDate;
+            request.BranchId = originalInvoice.BranchId;
+            request.StoreID = originalInvoice.StoreID;
+            request.BoxID = originalInvoice.BoxID;
+            request.UserID = originalInvoice.CreatedUserId;
+            request.Emp_ID = originalInvoice.Emp_ID;
+            request.PaymentType = originalInvoice.PaymentType;
+            request.PaymentNetid = originalInvoice.PaymentNetid;
+            request.NoID = originalInvoice.NoID;
+            request.IsCashOut = originalInvoice.IsCashOut;
+            request.IsPOS = originalInvoice.IsPOS;
+            request.OtherItems = originalInvoice.OtherItems;
+            request.PayType = originalInvoice.PayType;
+            request.POSBillType = originalInvoice.POSBillType;
+            request.STableID = originalInvoice.STableID;
+            request.SessionD = originalInvoice.SessionD;
+            request.BillBasedOn = originalInvoice.BillBasedOn;
+            request.IsRecharg = originalInvoice.IsRecharg;
+            request.IsWallet = originalInvoice.IsWallet;
+            request.HaveGuarantee = originalInvoice.HaveGuarantee;
+            request.ItemIDService = originalInvoice.ItemIDService;
+            request.ItemIDService2 = originalInvoice.ItemIDService2;
+            request.VisaNumber = originalInvoice.VisaNumber;
+            request.CardSerial = originalInvoice.VisaNumber;
+
+            if (!string.Equals(originalInvoice.TransactionType, "violations", StringComparison.OrdinalIgnoreCase))
+            {
+                request.ViolationsValue = originalInvoice.ViolationsValue;
+            }
+
+            if (!string.Equals(originalInvoice.TransactionType, "violations", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(originalInvoice.TransactionType, "cash-out", StringComparison.OrdinalIgnoreCase))
+            {
+                request.AccountTypeName1 = originalInvoice.AccountTypeName1;
+            }
+
+            NormalizeLimitedSalesInvoiceEditItems(request, originalInvoice);
+        }
+
+        private static void NormalizeLimitedSalesInvoiceEditItems(PosSaveTransactionRequest request, PosInvoiceReviewDto originalInvoice)
+        {
+            var requestedItems = (request.Items ?? new List<PosTransactionItemDto>()).Where(i => i != null).ToList();
+            var originalItems = (originalInvoice.Items ?? new List<PosTransactionItemDto>()).Where(i => i != null).ToList();
+            if (requestedItems.Count != originalItems.Count)
+            {
+                return;
+            }
+
+            for (var i = 0; i < originalItems.Count; i++)
+            {
+                var requested = requestedItems[i];
+                var original = originalItems[i];
+                requested.Item_ID = original.Item_ID;
+                requested.UnitId = original.UnitId;
+                requested.Quantity = original.Quantity;
+                requested.ShowQty = original.ShowQty;
+                requested.QtyBySmalltUnit = original.QtyBySmalltUnit;
+                requested.StoreID2 = original.StoreID2;
+                requested.ItemCase = original.ItemCase;
+                requested.CostPrice = original.CostPrice;
+                requested.SavedItemType = original.SavedItemType;
+            }
+        }
+
+        private static void ValidateLimitedEditItems(PosSaveTransactionRequest request, PosInvoiceReviewDto originalInvoice, IDictionary<string, string> errors)
+        {
+            var requestedItems = (request.Items ?? new List<PosTransactionItemDto>()).Where(i => i != null && i.Item_ID.HasValue).ToList();
+            var originalItems = (originalInvoice.Items ?? new List<PosTransactionItemDto>()).Where(i => i != null && i.Item_ID.HasValue).ToList();
+            if (requestedItems.Count != originalItems.Count)
+            {
+                errors["Items"] = "لا يمكن إضافة أو حذف أصناف الفاتورة";
+                return;
+            }
+
+            for (var i = 0; i < originalItems.Count; i++)
+            {
+                var requested = requestedItems[i];
+                var original = originalItems[i];
+                var prefix = "Items[" + i.ToString(CultureInfo.InvariantCulture) + "].";
+                AddIntChangedError(errors, prefix + "Item_ID", requested.Item_ID, original.Item_ID, "لا يمكن تغيير الصنف");
+                AddIntChangedError(errors, prefix + "UnitId", requested.UnitId, original.UnitId, "لا يمكن تغيير الوحدة");
+                AddDecimalChangedError(errors, prefix + "Quantity", requested.Quantity, original.Quantity, "لا يمكن تغيير الكمية");
+                AddDecimalChangedError(errors, prefix + "ShowQty", requested.ShowQty, original.ShowQty, "لا يمكن تغيير الكمية");
+                AddDecimalChangedError(errors, prefix + "QtyBySmalltUnit", requested.QtyBySmalltUnit, original.QtyBySmalltUnit, "لا يمكن تغيير معامل الوحدة");
+                AddIntChangedError(errors, prefix + "StoreID2", requested.StoreID2, original.StoreID2, "لا يمكن تغيير مخزن الصنف");
+                AddIntChangedError(errors, prefix + "ItemCase", requested.ItemCase, original.ItemCase, "لا يمكن تغيير حالة الصنف");
+                AddDecimalChangedError(errors, prefix + "CostPrice", requested.CostPrice, original.CostPrice, "لا يمكن تغيير تكلفة الصنف");
+                AddIntChangedError(errors, prefix + "SavedItemType", requested.SavedItemType, original.SavedItemType, "لا يمكن تغيير نوع الصنف المحفوظ");
+            }
+        }
+
+        private static void AddTextChangedError(IDictionary<string, string> errors, string key, string current, string original, string message)
+        {
+            if (!string.Equals(NormalizeCompareText(current), NormalizeCompareText(original), StringComparison.OrdinalIgnoreCase))
+            {
+                errors[key] = message;
+            }
+        }
+
+        private static void AddIntChangedError(IDictionary<string, string> errors, string key, int? current, int? original, string message)
+        {
+            if (current.GetValueOrDefault() != original.GetValueOrDefault() || current.HasValue != original.HasValue)
+            {
+                errors[key] = message;
+            }
+        }
+
+        private static void AddIntChangedErrorDefault(IDictionary<string, string> errors, string key, int? current, int? original, int defaultValue, string message)
+        {
+            if (current.GetValueOrDefault(defaultValue) != original.GetValueOrDefault(defaultValue))
+            {
+                errors[key] = message;
+            }
+        }
+
+        private static void AddBoolChangedError(IDictionary<string, string> errors, string key, bool current, bool original, string message)
+        {
+            if (current != original)
+            {
+                errors[key] = message;
+            }
+        }
+
+        private static void AddDecimalChangedError(IDictionary<string, string> errors, string key, decimal? current, decimal? original, string message)
+        {
+            if (Math.Abs(current.GetValueOrDefault() - original.GetValueOrDefault()) > 0.01m)
+            {
+                errors[key] = message;
+            }
+        }
+
+        private static void AddDateChangedError(IDictionary<string, string> errors, string key, string current, DateTime? original, string message)
+        {
+            DateTime parsed;
+            if (!original.HasValue)
+            {
+                if (!string.IsNullOrWhiteSpace(current))
+                {
+                    errors[key] = message;
+                }
+                return;
+            }
+
+            if (!DateTime.TryParse(current, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
+                && !DateTime.TryParse(current, out parsed))
+            {
+                errors[key] = message;
+                return;
+            }
+
+            if (parsed.Date != original.Value.Date)
+            {
+                errors[key] = message;
+            }
+        }
+
+        private static string NormalizeCompareText(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private class PosSalesInvoiceEditPermission
+        {
+            public PosSalesInvoiceEditPermission(bool canEdit, bool allowKycFields, string message)
+            {
+                CanEdit = canEdit;
+                AllowKycFields = allowKycFields;
+                Message = message;
+            }
+
+            public bool CanEdit { get; private set; }
+            public bool AllowKycFields { get; private set; }
+            public string Message { get; private set; }
         }
 
         private static bool LooksLikePhoneNumber(decimal value)

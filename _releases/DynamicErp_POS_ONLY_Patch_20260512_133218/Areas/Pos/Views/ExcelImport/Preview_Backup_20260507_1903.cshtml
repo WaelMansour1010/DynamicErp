@@ -1,0 +1,277 @@
+@model MyERP.Areas.Pos.Models.PosExcelImportPreviewViewModel
+@{
+    Layout = null;
+    ViewBag.Title = "نتيجة معاينة Excel";
+    var preview = Model != null ? Model.Preview : null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css")" rel="stylesheet" />
+    <style>
+        .excel-import-page { padding: 18px; background: #f5f7fa; min-height: 100vh; }
+        .import-kpis { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 10px; }
+        .import-kpi { background: #fff; border: 1px solid #d8dee6; border-radius: 8px; padding: 12px; }
+        .import-kpi span { color: #64748b; display: block; font-size: 12px; font-weight: 700; }
+        .import-kpi strong { color: #0f172a; display: block; font-size: 22px; margin-top: 4px; }
+        .status-chip { border-radius: 999px; display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 9px; }
+        .status-ready { background: #dcfce7; color: #166534; }
+        .status-warning { background: #fef3c7; color: #92400e; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-unmatched { background: #e0f2fe; color: #075985; }
+        .preflight-list { display: grid; gap: 8px; }
+        .preflight-item { border: 1px solid #d8dee6; border-radius: 8px; padding: 10px 12px; }
+        .preflight-item strong { display: block; }
+        .preflight-item small { color: #64748b; display: block; margin-top: 4px; }
+        .import-error { background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; color: #991b1b; padding: 12px; }
+        .reason-list { margin: 0; padding-right: 16px; }
+        @@media (max-width: 900px) { .import-kpis { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+<main class="html-report-page erp-ui-page excel-import-page">
+    <header class="erp-hero-card">
+        <div>
+            <h1>نتيجة معاينة Excel</h1>
+            <p>مطابقة وتحذيرات قبل الحفظ. زر commit غير مفعل في Phase 1.</p>
+        </div>
+        <a class="erp-btn erp-btn-secondary" href="@Url.Action("Index", "ExcelImport", new { area = "Pos" })">ملف آخر</a>
+    </header>
+
+    @if (Model != null && !string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <section class="import-error">@Model.ErrorMessage</section>
+    }
+
+    @if (preview != null)
+    {
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>ملخص الملف</h2>
+                    <p>@preview.SourceFileName</p>
+                </div>
+                <span class="status-chip status-unmatched">@preview.WorkbookType</span>
+            </div>
+            <div class="import-kpis">
+                <div class="import-kpi"><span>جاهز</span><strong>@preview.ReadyCount</strong></div>
+                <div class="import-kpi"><span>تحذيرات</span><strong>@preview.WarningCount</strong></div>
+                <div class="import-kpi"><span>مرفوض</span><strong>@preview.RejectedCount</strong></div>
+                <div class="import-kpi"><span>توكنات غير مطابقة</span><strong>@preview.UnmatchedTokenCount</strong></div>
+                <div class="import-kpi"><span>الإجمالي</span><strong>@preview.TotalGross.ToString("N2")</strong></div>
+            </div>
+            <div class="preflight-list" style="margin-top:12px;">
+                <div class="preflight-item">
+                    <strong>هاش الملف</strong>
+                    <small>@preview.SourceFileHash</small>
+                </div>
+                <div class="preflight-item">
+                    <strong>تلميح الفرع</strong>
+                    <small>@(string.IsNullOrWhiteSpace(preview.DetectedBranchHint) ? "غير معروف" : preview.DetectedBranchHint)</small>
+                </div>
+                <div class="preflight-item">
+                    <strong>استراتيجية التوكن</strong>
+                    <small>@preview.TokenMatchingStrategy</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>Preflight</h2>
+                    <p>حقول لا يسمح بتجاوزها بصمت قبل مرحلة الحفظ.</p>
+                </div>
+            </div>
+            <div class="preflight-list">
+                @foreach (var item in preview.PreflightItems)
+                {
+                    var statusClass = item.Status == "Mapped" ? "status-ready" : (item.Status == "Required" ? "status-rejected" : "status-warning");
+                    <div class="preflight-item">
+                        <strong>@item.FieldName <span class="status-chip @statusClass">@item.Status</span></strong>
+                        <small>@item.Message</small>
+                        @if (!string.IsNullOrWhiteSpace(item.Value))
+                        {
+                            <small>القيمة: @item.Value</small>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>الشيتات المكتشفة</h2>
+                    <p>الشيتات اليومية فقط يتم تحليلها.</p>
+                </div>
+            </div>
+            <div class="responsive-table">
+                <table class="pos-table">
+                    <thead><tr><th>الشيت</th><th>التاريخ</th><th>صفوف العمليات</th><th>التوكنات</th><th>الإجمالي</th></tr></thead>
+                    <tbody>
+                    @foreach (var sheet in preview.Sheets)
+                    {
+                        <tr>
+                            <td>@sheet.SheetName</td>
+                            <td>@sheet.SheetDateText</td>
+                            <td>@sheet.TransactionRows</td>
+                            <td>@sheet.TokenRows</td>
+                            <td>@sheet.SheetTotal.ToString("N2")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>مطابقة التوكنات</h2>
+                    <p>المطابقة الحالية متسلسلة داخل نفس الشيت، ومرئية قبل أي commit.</p>
+                </div>
+            </div>
+            <div class="responsive-table">
+                <table class="pos-table">
+                    <thead><tr><th>الشيت</th><th>صف العملية</th><th>IPN</th><th>العميل</th><th>الإجمالي</th><th>صف التوكن</th><th>التوكن</th><th>الحالة</th></tr></thead>
+                    <tbody>
+                    @if (preview.TokenMatches.Count == 0)
+                    {
+                        <tr><td colspan="8">لا توجد مطابقات توكن.</td></tr>
+                    }
+                    else
+                    {
+                        foreach (var match in preview.TokenMatches)
+                        {
+                            <tr>
+                                <td>@match.SheetName</td>
+                                <td>@match.SourceRowNumber</td>
+                                <td>@match.IPN</td>
+                                <td>@match.CustomerName</td>
+                                <td>@(match.GrossTotal.HasValue ? match.GrossTotal.Value.ToString("N2") : "")</td>
+                                <td>@match.TokenRowNumber</td>
+                                <td>@match.Token</td>
+                                <td><span class="status-chip status-ready">@match.MatchStatus</span></td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>نتائج الصفوف</h2>
+                    <p>جاهز / تحذير / مرفوض مع السبب.</p>
+                </div>
+            </div>
+            <div class="responsive-table">
+                <table class="pos-table">
+                    <thead>
+                        <tr>
+                            <th>الحالة</th>
+                            <th>الشيت</th>
+                            <th>الصف</th>
+                            <th>IPN</th>
+                            <th>العميل</th>
+                            <th>الهاتف</th>
+                            <th>الخدمة</th>
+                            <th>التاريخ</th>
+                            <th>الشحنة</th>
+                            <th>الرسوم</th>
+                            <th>الإجمالي</th>
+                            <th>الأسباب</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in preview.Rows)
+                    {
+                        var statusClass = row.Status == "Ready" ? "status-ready" : (row.Status == "Warning" ? "status-warning" : "status-rejected");
+                        <tr>
+                            <td><span class="status-chip @statusClass">@row.Status</span></td>
+                            <td>@row.SheetName</td>
+                            <td>@row.RowNumber</td>
+                            <td>@row.IPN</td>
+                            <td>@row.CustomerName</td>
+                            <td>@row.Phone</td>
+                            <td>@row.ServiceType</td>
+                            <td>@(row.TransactionDate.HasValue ? row.TransactionDate.Value.ToString("yyyy-MM-dd") : row.TransactionDateText)</td>
+                            <td>@(row.Amount.HasValue ? row.Amount.Value.ToString("N2") : "")</td>
+                            <td>@(row.Fee.HasValue ? row.Fee.Value.ToString("N2") : "")</td>
+                            <td>@(row.GrossTotal.HasValue ? row.GrossTotal.Value.ToString("N2") : "")</td>
+                            <td>
+                                @if (row.Reasons.Count > 0)
+                                {
+                                    <ul class="reason-list">
+                                        @foreach (var reason in row.Reasons)
+                                        {
+                                            <li>@reason</li>
+                                        }
+                                    </ul>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>التوكنات غير المطابقة</h2>
+                    <p>لا يسمح بحفظ توكن غير مطابق بشكل حتمي ومرئي.</p>
+                </div>
+            </div>
+            <div class="responsive-table">
+                <table class="pos-table">
+                    <thead><tr><th>الحالة</th><th>الشيت</th><th>الصف</th><th>التوكن</th><th>الأسباب</th></tr></thead>
+                    <tbody>
+                    @foreach (var token in preview.Tokens)
+                    {
+                        if (token.Status == "Matched")
+                        {
+                            continue;
+                        }
+                        <tr>
+                            <td><span class="status-chip status-unmatched">@token.Status</span></td>
+                            <td>@token.SheetName</td>
+                            <td>@token.RowNumber</td>
+                            <td>@token.Token</td>
+                            <td>
+                                <ul class="reason-list">
+                                    @foreach (var reason in token.Reasons)
+                                    {
+                                        <li>@reason</li>
+                                    }
+                                </ul>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="erp-card">
+            <form method="post" action="@Url.Action("Commit", "ExcelImport", new { area = "Pos" })">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="erp-btn erp-btn-secondary" disabled>
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    Commit مغلق حتى Phase 4
+                </button>
+            </form>
+        </section>
+    }
+</main>
+</body>
+</html>

@@ -1,0 +1,243 @@
+@model MyERP.Areas.Pos.Models.SalesRepresentativesPerformancePageModel
+@{
+    Layout = null;
+    ViewBag.Title = "لوحة أداء المناديب والمبيعات";
+}
+@functions {
+    private static string Money(decimal value) { return value.ToString("#,##0.##"); }
+    private static string Percent(decimal value) { return value.ToString("0.##") + "%"; }
+    private static string DateValue(DateTime? value) { return value.HasValue ? value.Value.ToString("yyyy-MM-dd") : ""; }
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui")" rel="stylesheet" />
+    <style>
+        body { background:#f4f7fb; color:#172033; font-family:Tahoma, Arial, sans-serif; direction:rtl; }
+        .dashboard-page { max-width:1580px; margin:0 auto; padding:22px; }
+        .page-head { background:#12263f; color:#fff; padding:18px 22px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
+        .page-head h1 { margin:0 0 6px; font-size:24px; font-weight:700; }
+        .page-head p { margin:0; color:#c7d2e3; }
+        .filter-panel, .kpi-card, .report-panel { background:#fff; border:1px solid #dde5f0; border-radius:8px; box-shadow:0 8px 24px rgba(18,38,63,.06); }
+        .filter-panel { margin:18px 0; padding:16px; }
+        .filter-panel label { font-size:12px; color:#56657a; margin-bottom:5px; }
+        .filter-actions { display:flex; gap:8px; align-items:flex-end; }
+        .kpi-grid { display:grid; grid-template-columns:repeat(6, 1fr); gap:12px; margin-bottom:18px; }
+        .kpi-card { padding:14px; min-height:92px; }
+        .kpi-card small { display:block; color:#66758a; margin-bottom:8px; }
+        .kpi-card strong { display:block; font-size:22px; color:#10233d; }
+        .report-panel { padding:16px; }
+        .summary-strip { display:grid; grid-template-columns:340px 1fr; gap:16px; margin-bottom:16px; align-items:stretch; }
+        .mini-note { color:#67788f; line-height:1.8; padding:10px 0; }
+        .target-achievement-card { border:1px solid #d9e3ef; border-radius:8px; padding:14px; background:#fff; min-width:300px; }
+        .target-card-head, .target-line, .target-total { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .target-card-head strong { font-size:16px; }
+        .target-card-head span { font-weight:700; padding:4px 10px; border-radius:20px; background:#eef3f8; }
+        .target-card-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+        .target-card-grid div { background:#f7f9fc; border-radius:6px; padding:10px; }
+        .target-card-grid small { display:block; color:#65758a; margin-bottom:6px; }
+        .target-card-grid b { font-size:17px; }
+        .target-lines { border-top:1px solid #edf1f6; padding-top:8px; }
+        .target-line { padding:5px 0; color:#44546a; }
+        .target-line b { color:#16263d; }
+        .target-line em { font-style:normal; color:#6c7a8e; margin-right:6px; }
+        .target-progress { height:9px; border-radius:20px; background:#edf1f6; overflow:hidden; margin:10px 0; }
+        .target-progress span { display:block; height:100%; border-radius:20px; }
+        .target-success .target-progress span, .badge-success-soft { background:#18a058; }
+        .target-warning .target-progress span, .badge-warning-soft { background:#e5a100; }
+        .target-danger .target-progress span, .badge-danger-soft { background:#d64545; }
+        .target-success { border-color:#b7e4c7; }
+        .target-warning { border-color:#ffe08a; }
+        .target-danger { border-color:#f3b7b7; }
+        .status-badge { display:inline-block; min-width:86px; color:#fff; border-radius:20px; padding:5px 10px; text-align:center; font-weight:700; }
+        .table-wrap { overflow:auto; border:1px solid #e3e9f1; border-radius:8px; }
+        .performance-table { margin:0; background:#fff; min-width:1800px; }
+        .performance-table th { background:#f1f5f9; color:#314158; white-space:nowrap; text-align:right; border-bottom:1px solid #dbe4ef !important; }
+        .performance-table td { white-space:nowrap; vertical-align:middle !important; }
+        .number-cell { text-align:left; direction:ltr; font-family:Consolas, monospace; }
+        .print-actions { display:flex; gap:8px; justify-content:flex-end; margin-bottom:12px; }
+        @@media (max-width:1100px) { .kpi-grid { grid-template-columns:repeat(2, 1fr); } .summary-strip { grid-template-columns:1fr; } .page-head { display:block; } }
+        @@media print { .no-print { display:none !important; } body { background:#fff; } .dashboard-page { max-width:none; padding:0; } .report-panel, .kpi-card, .target-achievement-card { box-shadow:none; } }
+    </style>
+</head>
+<body>
+    <main class="dashboard-page">
+        <header class="page-head">
+            <div>
+                <h1>لوحة أداء المناديب والمبيعات</h1>
+                <p>Sales Representatives Performance Dashboard</p>
+            </div>
+            <strong>Dynamic ERP POS</strong>
+        </header>
+
+        <section class="filter-panel no-print">
+            @using (Html.BeginForm("Index", "SalesRepresentativesPerformance", new { area = "Pos" }, FormMethod.Get))
+            {
+                <div class="row">
+                    <div class="col-md-2">
+                        <label>من تاريخ</label>
+                        <input type="date" name="FromDate" class="form-control" value="@DateValue(Model.Filter.FromDate)" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>إلى تاريخ</label>
+                        <input type="date" name="ToDate" class="form-control" value="@DateValue(Model.Filter.ToDate)" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>الفرع</label>
+                        <select name="BranchId" class="form-control" @(Model.LockedBranchId.HasValue ? "disabled=\"disabled\"" : "")>
+                            <option value="">كل الفروع</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.BranchId" @(Model.Filter.BranchId == branch.BranchId || Model.LockedBranchId == branch.BranchId ? "selected=\"selected\"" : "")>@branch.BranchName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>المندوب</label>
+                        <select name="UserId" class="form-control">
+                            <option value="">كل المناديب</option>
+                            @foreach (var user in Model.SalesRepresentatives)
+                            {
+                                <option value="@user.UserId" @(Model.Filter.UserId == user.UserId ? "selected=\"selected\"" : "")>@user.DisplayName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>نوع الخدمة</label>
+                        <select name="ServiceType" class="form-control">
+                            <option value="" @(string.IsNullOrWhiteSpace(Model.Filter.ServiceType) ? "selected=\"selected\"" : "")>كل الخدمات</option>
+                            <option value="cash-in" @(Model.Filter.ServiceType == "cash-in" ? "selected=\"selected\"" : "")>Cash In</option>
+                            <option value="cash-out" @(Model.Filter.ServiceType == "cash-out" ? "selected=\"selected\"" : "")>Cash Out</option>
+                            <option value="card" @(Model.Filter.ServiceType == "card" ? "selected=\"selected\"" : "")>كروت</option>
+                            <option value="violations" @(Model.Filter.ServiceType == "violations" ? "selected=\"selected\"" : "")>مخالفات</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label>أيام العمل بالشهر</label>
+                        <input type="number" name="WorkingDaysInMonth" class="form-control" value="@Model.Filter.WorkingDaysInMonth" min="1" max="31" />
+                    </div>
+                </div>
+                <div class="row" style="margin-top:12px">
+                    <div class="col-md-2">
+                        <label>تارجت الشحنات الشهري</label>
+                        <input type="number" step="0.01" name="MonthlyRechargeTarget" class="form-control" value="@Model.Filter.MonthlyRechargeTarget" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>تارجت الكروت الشهري</label>
+                        <input type="number" name="MonthlyCardTarget" class="form-control" value="@Model.Filter.MonthlyCardTarget" />
+                    </div>
+                    <div class="col-md-8 filter-actions">
+                        <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-filter"></span> عرض التقرير</button>
+                        <a class="btn btn-success" href="@Url.Action("Export", "SalesRepresentativesPerformance", new { area = "Pos", Model.Filter.FromDate, Model.Filter.ToDate, Model.Filter.BranchId, Model.Filter.UserId, Model.Filter.ServiceType, Model.Filter.MonthlyRechargeTarget, Model.Filter.MonthlyCardTarget, Model.Filter.WorkingDaysInMonth })"><span class="glyphicon glyphicon-download-alt"></span> Export Excel</a>
+                        <button type="button" class="btn btn-default" onclick="window.print()"><span class="glyphicon glyphicon-print"></span> طباعة</button>
+                    </div>
+                </div>
+            }
+        </section>
+
+        <section class="kpi-grid">
+            <div class="kpi-card"><small>عدد المناديب</small><strong>@Model.Summary.RepresentativeCount</strong></div>
+            <div class="kpi-card"><small>إجمالي Cash In</small><strong>@Money(Model.Summary.CashInTotal)</strong></div>
+            <div class="kpi-card"><small>Cash Out بالرسوم</small><strong>@Money(Model.Summary.CashOutWithFeesTotal)</strong></div>
+            <div class="kpi-card"><small>إجمالي الرسوم</small><strong>@Money(Model.Summary.FeesTotal)</strong></div>
+            <div class="kpi-card"><small>إجمالي الكروت</small><strong>@Money(Model.Summary.CardsTotal)</strong></div>
+            <div class="kpi-card"><small>نسبة إجمالية</small><strong>@Percent(Model.Summary.OverallAchievementPercent)</strong></div>
+        </section>
+
+        <section class="report-panel">
+            <div class="summary-strip">
+                @Html.Partial("~/Areas/Pos/Views/SalesRepresentativesPerformance/_SalesTargetAchievementCard.cshtml",
+                    new MyERP.Areas.Pos.Models.SalesTargetAchievementCardModel {
+                        TotalRecharge = Model.Rows.Sum(x => x.AchievedRecharge),
+                        TotalCards = Model.Rows.Sum(x => x.AchievedCards),
+                        RechargeTarget = Model.Rows.Sum(x => x.RechargeTarget),
+                        RechargeTodayAchievement = Model.Rows.Sum(x => x.AchievedRecharge),
+                        RechargeAchievementPercent = Model.Rows.Sum(x => x.RechargeTarget) > 0 ? (Model.Rows.Sum(x => x.AchievedRecharge) / Model.Rows.Sum(x => x.RechargeTarget)) * 100 : 0,
+                        CardTarget = Model.Rows.Sum(x => x.CardTarget),
+                        CardTodayAchievement = Model.Rows.Sum(x => x.AchievedCards),
+                        CardAchievementPercent = Model.Rows.Sum(x => x.CardTarget) > 0 ? (Model.Rows.Sum(x => x.AchievedCards) / Model.Rows.Sum(x => x.CardTarget)) * 100 : 0,
+                        OverallAchievementPercent = Model.Summary.OverallAchievementPercent,
+                        PerformanceClass = Model.Summary.OverallAchievementPercent >= 100 ? "success" : (Model.Summary.OverallAchievementPercent >= 80 ? "warning" : "danger")
+                    })
+                <div class="mini-note">
+                    <strong>الفترة:</strong> @DateValue(Model.Filter.FromDate) إلى @DateValue(Model.Filter.ToDate)<br />
+                    <strong>طريقة حساب بلوك التارجت:</strong> يعتمد الحساب على نسبة الشحنات ونسبة الكروت ثم متوسطهما عند توفر الهدفين.
+                </div>
+            </div>
+
+            <div class="print-actions no-print">
+                <button type="button" class="btn btn-default btn-sm" onclick="window.print()">طباعة التقرير</button>
+            </div>
+
+            <div class="table-wrap">
+                <table class="table table-bordered performance-table">
+                    <thead>
+                        <tr>
+                            <th>المندوب</th>
+                            <th>الفرع</th>
+                            <th>كارت التارجت</th>
+                            <th>Cash In</th>
+                            <th>عدد Cash In</th>
+                            <th>Cash Out بدون رسوم</th>
+                            <th>Cash Out بالرسوم</th>
+                            <th>عدد Cash Out</th>
+                            <th>المخالفات</th>
+                            <th>عدد المخالفات</th>
+                            <th>الرسوم / العمولة</th>
+                            <th>الكروت</th>
+                            <th>عدد الكروت</th>
+                            <th>التوريد النقدي المتوقع</th>
+                            <th>المحقق فعليًا</th>
+                            <th>تحقيق الشحنات</th>
+                            <th>تحقيق الكروت</th>
+                            <th>النسبة الإجمالية</th>
+                            <th>المطلوب يوميًا</th>
+                            <th>Projection</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Rows.Count == 0)
+                        {
+                            <tr><td colspan="21" class="text-center">لا توجد بيانات في الفترة المحددة</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var row in Model.Rows)
+                            {
+                                <tr>
+                                    <td>@row.RepresentativeName</td>
+                                    <td>@row.BranchName</td>
+                                    <td style="min-width:320px">@Html.Partial("~/Areas/Pos/Views/SalesRepresentativesPerformance/_SalesTargetAchievementCard.cshtml", row.ToTargetCard())</td>
+                                    <td class="number-cell">@Money(row.CashInTotal)</td>
+                                    <td class="number-cell">@row.CashInCount</td>
+                                    <td class="number-cell">@Money(row.CashOutWithoutFees)</td>
+                                    <td class="number-cell">@Money(row.CashOutWithFees)</td>
+                                    <td class="number-cell">@row.CashOutCount</td>
+                                    <td class="number-cell">@Money(row.ViolationsTotal)</td>
+                                    <td class="number-cell">@row.ViolationsCount</td>
+                                    <td class="number-cell">@Money(row.FeesTotal)</td>
+                                    <td class="number-cell">@Money(row.CardsTotal)</td>
+                                    <td class="number-cell">@row.CardsCount</td>
+                                    <td class="number-cell">@Money(row.ExpectedCashSupply)</td>
+                                    <td class="number-cell">@Money(row.AchievedRecharge)</td>
+                                    <td class="number-cell">@Percent(row.RechargeAchievementPercent)</td>
+                                    <td class="number-cell">@Percent(row.CardAchievementPercent)</td>
+                                    <td class="number-cell">@Percent(row.OverallAchievementPercent)</td>
+                                    <td class="number-cell">@Money(row.RequiredDailyRecharge) / @Money(row.RequiredDailyCards) كارت</td>
+                                    <td class="number-cell">@Money(row.ProjectedRecharge) / @Money(row.ProjectedCards) كارت</td>
+                                    <td><span class="status-badge badge-@(row.PerformanceClass)-soft">@row.PerformanceStatus</span></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

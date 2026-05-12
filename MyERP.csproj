@@ -426,6 +426,7 @@
     <Compile Include="Areas\MainErp\Controllers\MainErpControllerBase.cs" />
     <Compile Include="Areas\MainErp\Controllers\PaymentsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\CashingController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\CustomersController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DefinCompItemController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ProjectExtractsController.cs" />
@@ -459,6 +460,7 @@
     <Compile Include="Areas\MainErp\Models\Accounting\VoucherEntryType.cs" />
     <Compile Include="Areas\MainErp\Models\Security\MainErpUserContext.cs" />
     <Compile Include="Areas\MainErp\Repositories\Accounting\VoucherRepository.cs" />
+    <Compile Include="Areas\MainErp\Repositories\Customers\CustomerRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\DefinCompItem\DefinCompItemRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\JournalEntries\JournalEntryReadRepository.cs" />
     <Compile Include="Areas\MainErp\Repositories\Payments\PaymentVoucherReadRepository.cs" />
@@ -475,6 +477,7 @@
     <Compile Include="Areas\MainErp\Services\Accounting\AuditLogger.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\ManualIdGenerator.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\NoteNumberingService.cs" />
+    <Compile Include="Areas\MainErp\Services\Customers\CustomerService.cs" />
     <Compile Include="Areas\MainErp\Services\DefinCompItem\DefinCompItemService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\PostingPreviewService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\VoucherPostingService.cs" />
@@ -505,6 +508,7 @@
     <Compile Include="Areas\Reports\Services\ReportValidationService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\AccountCharts\AccountChartsViewModels.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\Customers\CustomersViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\DefinCompItem\DefinCompItemViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntriesIndexViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\JournalEntries\JournalEntryDetailsViewModel.cs" />
@@ -595,6 +599,7 @@
     <Compile Include="Areas\Pos\Services\PosExcelImportParser.cs" />
     <Compile Include="Areas\Pos\Services\PosExcelImportCommitService.cs" />
     <Compile Include="Areas\Pos\Services\PosExcelImportWorkbookMarker.cs" />
+    <Compile Include="Areas\Pos\Services\PosKycExcelParser.cs" />
     <Compile Include="Areas\Pos\Services\PosExcelImportPreflightService.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemErrorLogger.cs" />
     <Compile Include="Areas\Pos\Services\PosSqlAutoUpdateService.cs" />
@@ -4134,12 +4139,15 @@
     <Content Include="assets\xtrareportsjs\js\dx-webdocumentviewer.min.js" />
     <Content Include="Areas\MainErp\Content\database-migration-manager.css" />
     <Content Include="Areas\MainErp\Content\account-charts.css" />
+    <Content Include="Areas\MainErp\Content\customers.css" />
     <Content Include="Areas\MainErp\Content\enterprise-ui.css" />
     <Content Include="Areas\MainErp\Content\mainerp\mainerp.css" />
     <Content Include="Areas\MainErp\Content\defin-comp-item.css" />
     <Content Include="Areas\MainErp\Scripts\enterprise-ui.js" />
     <Content Include="Areas\MainErp\Scripts\account-charts.js" />
+    <Content Include="Areas\MainErp\Scripts\customers.js" />
     <Content Include="Areas\MainErp\Scripts\defin-comp-item.js" />
+    <Content Include="Areas\MainErp\Docs\FrmCustemers_Migration.md" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.ar.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.en.resx" />
@@ -4151,6 +4159,7 @@
     <Content Include="Areas\MainErp\Sql\05_MainErp_AuditLog.sql" />
     <Content Include="Areas\MainErp\Sql\06_EmployeePayroll_MedicalInsurance.sql" />
     <Content Include="Areas\MainErp\Sql\07_MainErp_Projects_ReadWrite_Procedures.sql" />
+    <Content Include="Areas\MainErp\Sql\08_MainErp_Customers_Permission.sql" />
     <Content Include="Areas\MainErp\Views\Web.config" />
     <Content Include="Areas\MainErp\Views\Home\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Accounting\PreviewTest.cshtml" />
@@ -4171,6 +4180,7 @@
     <Content Include="Areas\MainErp\Views\Payments\Print.cshtml" />
     <Content Include="Areas\MainErp\Views\Cashing\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Cashing\Details.cshtml" />
+    <Content Include="Areas\MainErp\Views\Customers\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\EmployeePayroll\Employees.cshtml" />
     <Content Include="Areas\MainErp\Views\EmployeePayroll\MedicalInsurance.cshtml" />
     <Content Include="Areas\MainErp\Views\EmployeePayroll\MedicalInsuranceReports.cshtml" />

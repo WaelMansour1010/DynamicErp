@@ -1,0 +1,100 @@
+<main class="ep-page" data-screen="employees"
+      data-lookups-url="@Url.Action("Lookups", "EmployeePayroll")"
+      data-search-url="@Url.Action("Search", "EmployeePayroll")"
+      data-get-url="@Url.Action("Get", "EmployeePayroll")"
+      data-save-url="@Url.Action("Save", "EmployeePayroll")"
+      data-active-url="@Url.Action("SetActive", "EmployeePayroll")"
+      data-plan-defaults-url="@Url.Action("PlanDefaults", "EmployeePayroll")">
+    <header class="ep-header">
+        <div>
+            <h1>الموظفون</h1>
+            <p>إدارة بيانات الموظف العملية المرتبطة بالراتب والحساب والتأمين الطبي.</p>
+        </div>
+        <div class="ep-header-actions">
+            <a class="ep-link" href="@Url.Action("SalaryRun", "EmployeePayroll")"><i class="fas fa-file-invoice-dollar"></i> مسير الرواتب</a>
+            <a class="ep-link" href="@Url.Action("MedicalInsurance", "EmployeePayroll")"><i class="fas fa-briefcase-medical"></i> إعدادات التأمين</a>
+            <button type="button" class="ep-primary" id="epNewEmployee"><i class="fas fa-plus"></i> موظف جديد</button>
+        </div>
+    </header>
+
+    <section class="ep-toolbar">
+        <label>بحث سريع<input id="epSearchTerm" type="search" placeholder="كود، اسم، جوال" /></label>
+        <label>الفرع<select id="epBranchFilter"><option value="">كل الفروع</option></select></label>
+        <label>الإدارة<select id="epDepartmentFilter"><option value="">كل الإدارات</option></select></label>
+        <label>الحالة<select id="epActiveFilter"><option value="">الكل</option><option value="true">نشط</option><option value="false">غير نشط</option></select></label>
+        <button type="button" id="epSearchBtn"><i class="fas fa-search"></i></button>
+    </section>
+
+    <section class="ep-grid-wrap">
+        <table class="ep-table">
+            <thead><tr><th>الكود</th><th>الاسم</th><th>الفرع</th><th>الإدارة</th><th>الوظيفة</th><th>الراتب</th><th>الحالة</th><th></th></tr></thead>
+            <tbody id="epEmployeesRows"></tbody>
+        </table>
+    </section>
+
+    <section class="ep-editor" id="epEmployeeEditor" hidden>
+        <form id="epEmployeeForm">
+            <input type="hidden" id="epEmployeeId" />
+            <input type="hidden" id="epInsuranceId" />
+            <div class="ep-editor-head">
+                <h2 id="epEditorTitle">بيانات الموظف</h2>
+                <div>
+                    <button type="button" id="epCloseEditor">إغلاق</button>
+                    <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ</button>
+                </div>
+            </div>
+            <nav class="ep-tabs" role="tablist">
+                <button type="button" class="active" data-tab="basic">بيانات أساسية</button>
+                <button type="button" data-tab="job">بيانات وظيفية</button>
+                <button type="button" data-tab="finance">مالية/راتب</button>
+                <button type="button" data-tab="insurance">التأمين الطبي</button>
+                <button type="button" data-tab="notes">ملاحظات</button>
+            </nav>
+            <div class="ep-tab active" data-tab-panel="basic">
+                <label>كود الموظف<input id="epCode" required maxlength="50" /></label>
+                <label>اسم الموظف<input id="epName" required maxlength="255" /></label>
+                <label>الجوال<input id="epMobile" /></label>
+                <label>الهاتف<input id="epPhone" /></label>
+                <label>البريد<input id="epEmail" type="email" /></label>
+                <label class="ep-check"><input id="epIsActive" type="checkbox" checked /> نشط</label>
+            </div>
+            <div class="ep-tab" data-tab-panel="job">
+                <label>الفرع<select id="epBranch"><option value="">غير محدد</option></select></label>
+                <label>الإدارة<select id="epDepartment"><option value="">غير محدد</option></select></label>
+                <label>الوظيفة<select id="epJob"><option value="">غير محدد</option></select></label>
+                <label>تاريخ التعيين<input id="epHiringDate" type="date" /></label>
+            </div>
+            <div class="ep-tab" data-tab-panel="finance">
+                <label>الراتب الأساسي<input id="epSalary" type="number" step="0.01" min="0" /></label>
+                <label>حساب ذمة الموظف<input id="epAccountCode" /></label>
+                <label>حساب الأجور المستحقة<input id="epAccruedAccountCode" /></label>
+            </div>
+            <div class="ep-tab" data-tab-panel="insurance">
+                <label class="ep-check"><input id="epInsuranceActive" type="checkbox" /> تأمين نشط</label>
+                <label>خطة التأمين<select id="epInsurancePlan"><option value="">غير محدد</option></select></label>
+                <label>تكلفة شهرية<input id="epInsuranceMonthlyCost" type="number" step="0.01" min="0" /></label>
+                <label>نصيب الموظف<select id="epEmployeeShareType"><option value="Amount">مبلغ</option><option value="Percent">نسبة</option></select></label>
+                <label>قيمة نصيب الموظف<input id="epEmployeeShareValue" type="number" step="0.01" min="0" /></label>
+                <label>نصيب الشركة<select id="epCompanyShareType"><option value="AutoBalance">الباقي تلقائيًا</option><option value="Amount">مبلغ</option><option value="Percent">نسبة</option></select></label>
+                <label>قيمة نصيب الشركة<input id="epCompanyShareValue" type="number" step="0.01" min="0" /></label>
+                <label>خصم الموظف الشهري<input id="epEmployeeDeductionPreview" type="number" step="0.01" min="0" readonly /></label>
+                <label>تكلفة الشركة الشهرية<input id="epCompanyCostPreview" type="number" step="0.01" min="0" readonly /></label>
+                <label>بداية الاشتراك<input id="epInsuranceStart" type="date" /></label>
+                <label>نهاية الاشتراك<input id="epInsuranceEnd" type="date" /></label>
+                <label class="ep-check"><input id="epInsuranceMonthly" type="checkbox" checked /> خصم شهري دوري</label>
+                <label class="ep-span-all">ملاحظات التأمين<textarea id="epInsuranceNotes"></textarea></label>
+                <div class="ep-span-all">
+                    <h3>سجل الاشتراكات</h3>
+                    <table class="ep-table ep-mini-table">
+                        <thead><tr><th>الخطة</th><th>البداية</th><th>النهاية</th><th>خصم الموظف</th><th>تكلفة الشركة</th><th>الحالة</th></tr></thead>
+                        <tbody id="epInsuranceHistory"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="ep-tab" data-tab-panel="notes">
+                <label>ملاحظات<textarea id="epNotes"></textarea></label>
+            </div>
+        </form>
+    </section>
+    <div class="ep-message" id="epMessage"></div>
+</main>

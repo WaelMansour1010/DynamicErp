@@ -1,0 +1,18 @@
+@model MyERP.Areas.Pos.Models.PosFinancialIntelligencePageModel
+@{
+    var active = (ViewData["Active"] as string) ?? "index";
+    Func<string, string> cls = key => string.Equals(active, key, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<header class="fi-header">
+    <div>
+        <h1>الحسابات الذكية / Financial Intelligence</h1>
+        <p>طبقة تشخيصية تقرأ القيود والحركات وتبرز أين بدأ الخطر، ومن ساهم فيه، وما الذي يحتاج تحقيقا فوريا.</p>
+    </div>
+    <nav class="fi-nav">
+        <a class="@cls("index")" href="@Url.Action("Index", "FinancialIntelligence", new { area = "Pos" })">Dashboard</a>
+        <a class="@cls("employee")" href="@Url.Action("EmployeeReceivables", "FinancialIntelligence", new { area = "Pos" })">ذمم الموظفين</a>
+        <a class="@cls("custody")" href="@Url.Action("Custody", "FinancialIntelligence", new { area = "Pos" })">العهد والسلف</a>
+        <a class="@cls("journals")" href="@Url.Action("AbnormalJournals", "FinancialIntelligence", new { area = "Pos" })">قيود غير طبيعية</a>
+        <a class="@cls("root")" href="@Url.Action("RootCause", "FinancialIntelligence", new { area = "Pos" })">Root Cause</a>
+    </nav>
+</header>

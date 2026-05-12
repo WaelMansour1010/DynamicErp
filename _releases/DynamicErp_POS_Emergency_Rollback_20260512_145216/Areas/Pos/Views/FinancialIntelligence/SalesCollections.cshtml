@@ -1,0 +1,37 @@
+﻿@model MyERP.Areas.Pos.Models.PosFinancialIntelligencePageModel
+@{
+    Layout = null;
+    ViewBag.Title = "تحليل المبيعات والتحصيل";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/financial-intelligence.css?v=20260506-clean")" rel="stylesheet" />
+</head>
+<body data-fi-endpoint="@Url.Action("SalesCollectionsData", "FinancialIntelligence", new { area = "Pos" })"
+      data-fi-mode="diagnostic"
+      data-fi-timeline-index="1"
+      data-fi-root-url="@Url.Action("RootCause", "FinancialIntelligence", new { area = "Pos" })">
+    <main class="fi-page">
+        @Html.Partial("_Nav", Model, new ViewDataDictionary { { "Active", "sales" } })
+        <section class="fi-filter">
+            @Html.Partial("_Filters", Model)
+            <div class="fi-actions">
+                <button type="button" class="fi-btn fi-btn-primary" data-fi-load><i class="fas fa-search"></i>تحميل التحليل</button>
+            </div>
+        </section>
+        <div data-fi-error></div>
+        <section class="fi-grid">
+            <article class="fi-panel fi-panel-wide"><h2>كفاءة التحصيل حسب الفرع</h2><div data-fi-main-table></div></article>
+            <article class="fi-panel"><h2>اتجاه المبيعات والتحصيل</h2><div class="fi-chart-box"><canvas data-fi-chart></canvas></div><div data-fi-side-table></div></article>
+            <article class="fi-panel"><h2>توزيع نوع الخدمة</h2><div data-fi-extra-table></div></article>
+        </section>
+    </main>
+    <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
+    <script src="@Url.Content("~/Areas/Pos/Scripts/financial-intelligence.js?v=20260506-clean")"></script>
+</body>
+</html>
