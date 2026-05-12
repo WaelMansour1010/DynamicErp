@@ -1,0 +1,18 @@
+@{
+    Layout = null;
+    ViewBag.Title = "الموظفون";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")" rel="stylesheet" />
+</head>
+<body class="ep-body" data-base="@Url.Action("Employees", "EmployeePayroll", new { area = "Pos" })">
+    @Html.Partial("_EmployeePayrollEmployees")
+    <script src="@Url.Content("~/Areas/Pos/Scripts/employee-payroll.js")"></script>
+</body>
+</html>

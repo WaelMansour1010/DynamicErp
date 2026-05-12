@@ -1,0 +1,23 @@
+﻿@model MyERP.Areas.Pos.Models.PosFinancialIntelligencePageModel
+@{
+    var active = (ViewData["Active"] as string) ?? "index";
+    Func<string, string> cls = key => string.Equals(active, key, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<header class="fi-header">
+    <div>
+        <h1>التحليل المالي والإداري</h1>
+        <p>مؤشرات مالية ذكية تعرض الاتجاهات والمقارنات ومواطن المراجعة مع إمكانية فتح القيد وتحليل سبب المشكلة.</p>
+    </div>
+    <nav class="fi-nav" aria-label="قائمة التحليل المالي">
+        <a class="@cls("index")" href="@Url.Action("Index", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-tachometer-alt"></i>لوحة المؤشرات المالية</a>
+        <a class="@cls("branch")" href="@Url.Action("BranchPerformance", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-building"></i>أداء الفروع المالي</a>
+        <a class="@cls("cash")" href="@Url.Action("CashFlow", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-coins"></i>تحليل التدفقات النقدية</a>
+        <a class="@cls("sales")" href="@Url.Action("SalesCollections", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-chart-line"></i>تحليل المبيعات والتحصيل</a>
+        <a class="@cls("expenses")" href="@Url.Action("Expenses", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-chart-pie"></i>تحليل المصروفات</a>
+        <a class="@cls("inventory")" href="@Url.Action("InventoryProfitability", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-boxes"></i>مؤشرات المخزون والربحية</a>
+        <a class="@cls("journals")" href="@Url.Action("AbnormalJournals", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-exclamation-triangle"></i>تنبيهات ومراجعة محاسبية</a>
+        <a class="@cls("employee")" href="@Url.Action("EmployeeReceivables", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-user-check"></i>تشخيص ذمم الموظفين</a>
+        <a class="@cls("custody")" href="@Url.Action("Custody", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-wallet"></i>تشخيص العهد والسلف</a>
+        <a class="@cls("root")" href="@Url.Action("RootCause", "FinancialIntelligence", new { area = "Pos" })"><i class="fas fa-search"></i>تحليل سبب المشكلة</a>
+    </nav>
+</header>

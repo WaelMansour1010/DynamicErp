@@ -1,0 +1,46 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoice>
+
+    @{ 
+        UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    }
+<div class="table-responsive">
+    <table class="table table-centered table-sm mb-0">
+        <thead><tr><th>@MyERP.Properties.Resources.InvoiceNo</th><th>@MyERP.Properties.Resources.Date</th><th>@MyERP.Properties.Resources.Customer</th><th>@MyERP.Properties.Resources.Department</th><th>@MyERP.Properties.Resources.Total</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DocumentNumber)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.VoucherDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Customer.ArName)
+                </td>
+
+                <td>
+                    @Html.DisplayFor(modelItem => item.Department.ArName)
+                </td>
+              
+                <td>
+                    @if (item.IsInstallmentPlan == true)
+                    {
+                        @Html.DisplayFor(modelItem => item.TotalAfterTotalInstallment, new { @class = "money" })
+                    }
+                    else
+                    {
+                        @Html.DisplayFor(modelItem => item.TotalAfterTaxes, new { @class = "money" })
+                    }
+                </td>
+
+                <td>
+                    <button class="btn btn-primary btn-sm"onclick="getSalesInvoiceDetails(@item.Id, @item.DocumentNumber)">@MyERP.Properties.Resources.Link</button>
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+</div>

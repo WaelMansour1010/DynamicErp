@@ -1,0 +1,283 @@
+@model MyERP.Areas.Pos.Models.PosSalesTargetsPageModel
+@{
+    Layout = null;
+    ViewBag.Title = "إدارة تارجت المناديب";
+}
+@functions {
+    private static string Money(decimal value) { return value.ToString("#,##0.##"); }
+    private static string DateValue(DateTime value) { return value.ToString("yyyy-MM-dd"); }
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui")" rel="stylesheet" />
+    <style>
+        body { margin:0; background:#f4f7fb; color:#18243a; font-family:Tahoma, Arial, sans-serif; direction:rtl; }
+        .targets-page { max-width:1180px; margin:0 auto; padding:22px; }
+        .page-head { background:#111c33; color:#fff; border-radius:8px; padding:18px 22px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+        .page-head h1 { margin:0 0 6px; font-size:24px; font-weight:700; }
+        .page-head p { margin:0; color:#c8d4e7; }
+        .panel-box { background:#fff; border:1px solid #dce5f1; border-radius:8px; box-shadow:0 10px 28px rgba(17,28,51,.06); }
+        .target-form { margin-top:16px; padding:18px; }
+        .target-form label { display:block; color:#596a82; font-size:12px; margin-bottom:6px; }
+        .form-control { border-radius:6px; border-color:#d5deea; box-shadow:none; }
+        .mode-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+        .mode-option { border:1px solid #d9e3ef; border-radius:8px; padding:10px 14px; cursor:pointer; background:#f8fafc; min-width:210px; }
+        .mode-option input { margin-left:6px; }
+        .mode-option strong { display:block; color:#1a2b45; }
+        .mode-option small { color:#687890; }
+        .reps-box { max-height:180px; min-height:180px; }
+        .preview-card { height:100%; min-height:180px; background:linear-gradient(180deg,#f9fbff,#eef5ff); border:1px solid #d7e4f6; border-radius:8px; padding:15px; display:flex; flex-direction:column; justify-content:space-between; }
+        .preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+        .preview-grid div { background:#fff; border:1px solid #e2e9f3; border-radius:8px; padding:10px; }
+        .preview-grid small { display:block; color:#687890; margin-bottom:6px; }
+        .preview-grid b { font-size:18px; color:#0f766e; }
+        .actions { display:flex; gap:8px; justify-content:flex-start; align-items:center; margin-top:16px; }
+        .btn-main { background:#2563eb; color:#fff; border:0; border-radius:7px; padding:9px 18px; font-weight:700; }
+        .btn-main:hover, .btn-main:focus { background:#1d4ed8; color:#fff; }
+        .btn-lightline { background:#fff; color:#26374f; border:1px solid #d7e0ec; border-radius:7px; padding:8px 14px; }
+        .message { display:none; border-radius:7px; padding:10px 12px; margin-top:14px; }
+        .message.ok { display:block; background:#e8f7ef; color:#11613b; border:1px solid #bde8cf; }
+        .message.bad { display:block; background:#fff0f0; color:#a32424; border:1px solid #ffc7c7; }
+        .targets-table-wrap { margin-top:16px; overflow:auto; }
+        .targets-table { margin:0; min-width:980px; background:#fff; }
+        .targets-table th { background:#f1f5f9; color:#30415a; white-space:nowrap; text-align:right; border-bottom:1px solid #dbe4ef !important; }
+        .targets-table td { white-space:nowrap; vertical-align:middle !important; }
+        .number-cell { text-align:left; direction:ltr; font-family:Consolas, monospace; }
+        .badge-all { background:#eef4ff; color:#1d4ed8; border-radius:18px; padding:4px 10px; font-weight:700; }
+        .btn-stop { border:1px solid #ffc9c9; background:#fff5f5; color:#b91c1c; border-radius:7px; padding:6px 10px; }
+        @@media (max-width:900px) { .page-head { display:block; } .preview-card { margin-top:12px; } }
+    </style>
+</head>
+<body>
+    <main class="targets-page">
+        <header class="page-head">
+            <div>
+                <h1>إدارة تارجت المناديب</h1>
+                <p>حدد التارجت الشهري للشحنات والكروت، وسيظهر يوميًا داخل ملخص فاتورة البيع وتقارير الأداء.</p>
+            </div>
+            <strong>POS Targets</strong>
+        </header>
+
+        <section class="panel-box target-form">
+            <form id="salesTargetForm">
+                <div class="mode-row">
+                    <label class="mode-option">
+                        <input type="radio" name="ApplyMode" value="all" checked />
+                        <strong>كل المناديب</strong>
+                        <small>تطبيق نفس التارجت على كل البياعين المؤهلين.</small>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="ApplyMode" value="selected" />
+                        <strong>مجموعة محددة</strong>
+                        <small>اختر مندوب أو أكثر من القائمة.</small>
+                    </label>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <label>من تاريخ</label>
+                        <input type="date" name="FromDate" class="form-control" value="@DateValue(Model.FromDate)" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>إلى تاريخ</label>
+                        <input type="date" name="ToDate" class="form-control" value="@DateValue(Model.ToDate)" />
+                    </div>
+                    <div class="col-md-3">
+                        <label>الفرع</label>
+                        <select name="BranchId" class="form-control" @(Model.LockedBranchId.HasValue ? "disabled" : "")>
+                            <option value="">كل الفروع</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.BranchId" @(Model.LockedBranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                            }
+                        </select>
+                        @if (Model.LockedBranchId.HasValue)
+                        {
+                            <input type="hidden" name="BranchId" value="@Model.LockedBranchId.Value" />
+                        }
+                    </div>
+                    <div class="col-md-2">
+                        <label>تارجت الشحنات الشهري</label>
+                        <input type="number" name="MonthlyRechargeTarget" id="monthlyRechargeTarget" class="form-control" min="0" step="0.01" value="0" />
+                    </div>
+                    <div class="col-md-1">
+                        <label>تارجت الكروت</label>
+                        <input type="number" name="MonthlyCardTarget" id="monthlyCardTarget" class="form-control" min="0" step="1" value="0" />
+                    </div>
+                    <div class="col-md-2">
+                        <label>أيام العمل</label>
+                        <input type="number" name="WorkingDaysInMonth" id="workingDaysInMonth" class="form-control" min="1" max="31" value="@DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month)" />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:14px;">
+                    <div class="col-md-7" id="selectedUsersBlock" style="display:none;">
+                        <label>المناديب</label>
+                        <select name="UserIds" class="form-control reps-box" multiple>
+                            @foreach (var rep in Model.SalesRepresentatives)
+                            {
+                                <option value="@rep.UserId" data-branch="@rep.BranchId">@rep.DisplayName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="preview-card">
+                            <div>
+                                <strong>معاينة التارجت اليومي</strong>
+                                <p style="color:#66758c;margin:6px 0 0;">يتم توزيع الهدف الشهري على أيام العمل المعتمدة.</p>
+                            </div>
+                            <div class="preview-grid">
+                                <div>
+                                    <small>الشحنات يوميًا</small>
+                                    <b id="dailyRechargePreview">0</b>
+                                </div>
+                                <div>
+                                    <small>الكروت يوميًا</small>
+                                    <b id="dailyCardPreview">0</b>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" class="btn-main">حفظ التارجت</button>
+                    <button type="button" class="btn-lightline" id="refreshPageBtn">تحديث القائمة</button>
+                    <span style="color:#6c7a8f;">الحفظ يوقف أي تارجت قديم متداخل لنفس المندوب أو نفس نطاق كل المناديب.</span>
+                </div>
+                <div id="targetMessage" class="message"></div>
+            </form>
+        </section>
+
+        <section class="panel-box targets-table-wrap">
+            <table class="table table-bordered targets-table">
+                <thead>
+                    <tr>
+                        <th>النطاق</th>
+                        <th>الفرع</th>
+                        <th>الفترة</th>
+                        <th>تارجت الشحنات</th>
+                        <th>تارجت الكروت</th>
+                        <th>اليومي شحنات</th>
+                        <th>اليومي كروت</th>
+                        <th>أيام العمل</th>
+                        <th>أنشئ بواسطة</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Targets.Any())
+                    {
+                        <tr><td colspan="10" class="text-center text-muted">لا يوجد تارجت نشط في الشهر الحالي.</td></tr>
+                    }
+                    @foreach (var target in Model.Targets)
+                    {
+                        <tr>
+                            <td>
+                                @if (target.UserId.HasValue)
+                                {
+                                    @target.RepresentativeName
+                                }
+                                else
+                                {
+                                    <span class="badge-all">كل المناديب</span>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(target.BranchName) ? "كل الفروع" : target.BranchName)</td>
+                            <td>@DateValue(target.FromDate) إلى @DateValue(target.ToDate)</td>
+                            <td class="number-cell">@Money(target.MonthlyRechargeTarget)</td>
+                            <td class="number-cell">@target.MonthlyCardTarget</td>
+                            <td class="number-cell">@Money(target.DailyRechargeTarget)</td>
+                            <td class="number-cell">@Money(target.DailyCardTarget)</td>
+                            <td class="number-cell">@target.WorkingDaysInMonth</td>
+                            <td>@target.CreatedByName</td>
+                            <td><button type="button" class="btn-stop" data-target-id="@target.TargetId">إيقاف</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="@Url.Content("~/Scripts/jquery-3.3.1.min.js")"></script>
+    <script>
+        (function () {
+            var $form = $('#salesTargetForm');
+            var $message = $('#targetMessage');
+            var $selectedBlock = $('#selectedUsersBlock');
+
+            function numberValue(selector) {
+                var value = parseFloat($(selector).val());
+                return isNaN(value) ? 0 : value;
+            }
+
+            function updatePreview() {
+                var days = numberValue('#workingDaysInMonth');
+                if (days <= 0) { days = 1; }
+                $('#dailyRechargePreview').text((numberValue('#monthlyRechargeTarget') / days).toLocaleString('ar-EG', { maximumFractionDigits: 2 }));
+                $('#dailyCardPreview').text((numberValue('#monthlyCardTarget') / days).toLocaleString('ar-EG', { maximumFractionDigits: 2 }));
+            }
+
+            function toggleMode() {
+                var mode = $('input[name="ApplyMode"]:checked').val();
+                $selectedBlock.toggle(mode === 'selected');
+            }
+
+            function showMessage(ok, text) {
+                $message.removeClass('ok bad').addClass(ok ? 'ok' : 'bad').text(text || '');
+            }
+
+            $('input[name="ApplyMode"]').on('change', toggleMode);
+            $('#monthlyRechargeTarget,#monthlyCardTarget,#workingDaysInMonth').on('input change', updatePreview);
+            $('#refreshPageBtn').on('click', function () { window.location.reload(); });
+
+            $form.on('submit', function (event) {
+                event.preventDefault();
+                $.ajax({
+                    url: '@Url.Action("Save", "SalesTargets", new { area = "Pos" })',
+                    method: 'POST',
+                    data: $form.serialize(),
+                    success: function (response) {
+                        showMessage(response && response.ok, response ? response.message : 'تم تنفيذ الطلب.');
+                        if (response && response.ok) {
+                            setTimeout(function () { window.location.reload(); }, 700);
+                        }
+                    },
+                    error: function () {
+                        showMessage(false, 'تعذر حفظ التارجت الآن.');
+                    }
+                });
+            });
+
+            $('.btn-stop').on('click', function () {
+                if (!confirm('إيقاف هذا التارجت؟')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("Deactivate", "SalesTargets", new { area = "Pos" })',
+                    method: 'POST',
+                    data: { targetId: $(this).data('target-id') },
+                    success: function (response) {
+                        showMessage(response && response.ok, response ? response.message : 'تم تنفيذ الطلب.');
+                        if (response && response.ok) {
+                            setTimeout(function () { window.location.reload(); }, 500);
+                        }
+                    },
+                    error: function () {
+                        showMessage(false, 'تعذر إيقاف التارجت الآن.');
+                    }
+                });
+            });
+
+            toggleMode();
+            updatePreview();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+@model IEnumerable<MyERP.Areas.Sync.ViewModels.NotificationRow>
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "التنبيهات";
+}
+<div class="sync-card">
+    <div class="card-title">تنبيهات المزامنة</div>
+    <table class="sync-table modern">
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>الأهمية</th><th>العنوان</th><th>SyncKey</th><th>Branch</th><th>الحالة</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model)
+        {
+            <tr><td>@(row.CreatedAt.HasValue ? row.CreatedAt.Value.ToString("yyyy-MM-dd HH:mm") : "")</td><td>@row.NotificationType</td><td><span class="status @row.Severity">@row.Severity</span></td><td>@row.Title</td><td class="mono">@row.SyncKey</td><td>@row.BranchId</td><td>@row.Status</td></tr>
+        }
+        </tbody>
+    </table>
+    @if (!Model.Any())
+    {
+        <div class="empty-state">لا توجد تنبيهات حالية. سيتم عرض تعارض البيانات، فشل المزامنة، وحظر الجاهزية هنا بعد تطبيق جداول التنبيهات.</div>
+    }
+</div>

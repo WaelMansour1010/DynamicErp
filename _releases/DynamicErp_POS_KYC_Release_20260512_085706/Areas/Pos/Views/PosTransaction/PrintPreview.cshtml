@@ -1,0 +1,83 @@
+﻿@model MyERP.Areas.Pos.Reports.PosReceiptReport
+@using DevExpress.Web.Mvc
+@using DevExpress.Web.Mvc.UI
+@using DevExpress.XtraReports.Web
+@{
+    Layout = null;
+    var transactionId = ViewBag.TransactionId;
+}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Receipt Preview</title>
+    @Html.DevExpress().GetStyleSheets(
+        new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },
+        new StyleSheet { ExtensionSuite = ExtensionSuite.Report }
+    )
+    @Html.DevExpress().GetScripts(
+        new Script { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+        new Script { ExtensionSuite = ExtensionSuite.Editors },
+        new Script { ExtensionSuite = ExtensionSuite.Report }
+    )
+    <style>
+        body {
+            background: #f4f6f8;
+            direction: ltr;
+            font-family: Tahoma, Arial, sans-serif;
+            margin: 0;
+            text-align: left;
+        }
+
+        .preview-toolbar {
+            align-items: center;
+            background: #fff;
+            border-bottom: 1px solid #d8dee6;
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            padding: 10px 14px;
+        }
+
+        .preview-toolbar h1 {
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .preview-toolbar button {
+            background: #0f766e;
+            border: 0;
+            color: #fff;
+            cursor: pointer;
+            font-family: Tahoma, Arial, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            min-height: 38px;
+            padding: 8px 18px;
+        }
+
+        .viewer-host {
+            height: calc(100vh - 60px);
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-toolbar">
+        <h1>Receipt Preview #@transactionId</h1>
+        <div>
+            <button type="button" onclick="window.print();">Print</button>
+            <button type="button" onclick="window.close();">Back</button>
+        </div>
+    </div>
+    <div class="viewer-host">
+        @Html.DevExpress().WebDocumentViewer(settings =>
+        {
+            settings.Name = "PosReceiptDocumentViewer";
+            settings.Height = System.Web.UI.WebControls.Unit.Percentage(100);
+        }).Bind(new CachedReportSourceWeb(Model)).GetHtml()
+    </div>
+</body>
+</html>
+

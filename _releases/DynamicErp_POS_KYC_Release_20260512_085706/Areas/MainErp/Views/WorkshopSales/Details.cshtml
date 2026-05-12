@@ -1,0 +1,499 @@
+﻿@model MyERP.Areas.MainErp.ViewModels.SalesInvoices.SalesInvoiceDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.ArabicTitle;
+    var isPump = Model.Kind == MyERP.Areas.MainErp.ViewModels.SalesInvoices.MainErpSalesInvoiceKind.Pump;
+    var controllerName = isPump ? "PumpSales" : "WorkshopSales";
+    var voucherBalanced = Math.Abs(Model.VoucherBalanceDifference) < 0.01m;
+    var isLocked = Model.Closed == true || Model.Posted == true || Model.Approved == true || Model.IsPosted == true;
+    var canEditPumpSales = ViewBag.CanEditPumpSales as bool? ?? false;
+    var canPostPumpSales = ViewBag.CanPostPumpSales as bool? ?? false;
+    var canRebuildPumpSales = ViewBag.CanRebuildPumpSales as bool? ?? false;
+    var canDeletePumpSalesDraft = ViewBag.CanDeletePumpSalesDraft as bool? ?? false;
+    var canPostPumpSalesWithCost = ViewBag.CanPostPumpSalesWithCost as bool? ?? false;
+    var canCancelPumpSalesPosted = ViewBag.CanCancelPumpSalesPosted as bool? ?? false;
+    Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<decimal, string> moneyValue = v => String.Format("{0:n2}", v);
+}
+
+<section class="main-erp-panel invoice-workspace" dir="rtl">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@Model.ArabicTitle</h3>
+            <p>Workspace طھط´ط؛ظٹظ„ظٹ ظ…ظ† `Transactions` ظˆ `Transaction_Details` ظ…ط¹ Trace ظ„ظ„ظ…ط¯ظپظˆط¹ط§طھ ظˆط§ظ„ظ‚ظٹظˆط¯ ظˆطھط£ط«ظٹط± ط§ظ„ظ…ط®ط²ظˆظ†. ظƒظ„ ط§ظ„ط¹ظ…ظ„ظٹط§طھ ط§ظ„ط®ط·ط±ط© ظ…ط¹ط·ظ„ط©.</p>
+        </div>
+        <div class="main-erp-actions">
+            <a class="main-erp-button" href="@Url.Action("Index", controllerName, new { area = "MainErp" })">ط±ط¬ظˆط¹</a>
+            @if (isPump)
+            {
+                if (!isLocked && canEditPumpSales)
+                {
+                    <a class="main-erp-button" href="@Url.Action("Edit", "PumpSales", new { area = "MainErp", id = Model.TransactionId })">طھط¹ط¯ظٹظ„ ظ…ط³ظˆط¯ط© ط§ظ„ظ…ط¶ط®ط§طھ</a>
+                }
+                using (Html.BeginForm("Post", "PumpSales", new { area = "MainErp", id = Model.TransactionId }, FormMethod.Post, new { @class = "main-erp-inline-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" name="command" value="preview" class="main-erp-button" @(!canPostPumpSales ? "disabled=\"disabled\"" : "")>ظ…ط¹ط§ظٹظ†ط© ط§ظ„طھط±ط­ظٹظ„</button>
+                    <button type="submit" name="command" value="preview-cost" class="main-erp-button" @(!canPostPumpSales ? "disabled=\"disabled\"" : "") title="ظ…ط¹ط§ظٹظ†ط© ظپظ‚ط· ظ„ظ‚ظٹط¯ طھظƒظ„ظپط© ط§ظ„ظ…ط¨ظٹط¹ط§طھ/ط§ظ„ظ…ط®ط²ظˆظ† ط·ط¨ظ‚ظ‹ط§ ظ„ط­ط³ط§ط¨ط§طھ PG ط¨ط¯ظˆظ† ظƒطھط§ط¨ط©">ظ…ط¹ط§ظٹظ†ط© ظ‚ظٹط¯ ط§ظ„طھظƒظ„ظپط©</button>
+                    <button type="submit" name="command" value="post" class="main-erp-button" @(isLocked || !canPostPumpSales ? "disabled=\"disabled\"" : "")>طھط±ط­ظٹظ„ ظپط¹ظ„ظٹ</button>
+                <button type="submit" name="command" value="rebuild" class="main-erp-button" @(!canRebuildPumpSales || Model.Approved == true || Model.Closed == true ? "disabled=\"disabled\"" : "") title="ط¥ط¹ط§ط¯ط© ط¨ظ†ط§ط، ط§ظ„ظ‚ظٹظˆط¯ طھط­طھط§ط¬ طµظ„ط§ط­ظٹط© ظ…ط¯ظٹط± ظˆظ…ط±ط§ط¬ط¹ط© طµط±ظٹط­ط©">ط¥ط¹ط§ط¯ط© ط¨ظ†ط§ط، ط§ظ„ظ‚ظٹظˆط¯</button>
+                }
+                using (Html.BeginForm("Post", "PumpSales", new { area = "MainErp", id = Model.TransactionId }, FormMethod.Post, new { @class = "main-erp-inline-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" name="command" value="post-cost" class="main-erp-button" @(isLocked || !canPostPumpSalesWithCost ? "disabled=\"disabled\"" : "") onclick="return confirm('ط³ظٹطھظ… طھط±ط­ظٹظ„ ط§ظ„ظپط§طھظˆط±ط© ظپط¹ظ„ظٹظ‹ط§ ظ…ط¹ ظ‚ظٹط¯ طھظƒظ„ظپط© ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط§ظ„ظ…ط®ط²ظˆظ†. ظ‡ظ„ طھط±ظٹط¯ ط§ظ„ط§ط³طھظ…ط±ط§ط±طں');">طھط±ط­ظٹظ„ ظ…ط¹ ظ‚ظٹط¯ ط§ظ„طھظƒظ„ظپط©</button>
+                }
+                using (Html.BeginForm("DeleteDraft", "PumpSales", new { area = "MainErp", id = Model.TransactionId }, FormMethod.Post, new { @class = "main-erp-inline-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" name="command" value="preview" class="main-erp-button" @(isLocked || !canDeletePumpSalesDraft ? "disabled=\"disabled\"" : "")>ظ…ط¹ط§ظٹظ†ط© ط­ط°ظپ ط§ظ„ظ…ط³ظˆط¯ط©</button>
+                    <button type="submit" name="command" value="delete" class="main-erp-button main-erp-danger-button" @(isLocked || !canDeletePumpSalesDraft ? "disabled=\"disabled\"" : "") onclick="return confirm('ط³ظٹطھظ… ط­ط°ظپ ظ…ط³ظˆط¯ط© ط؛ظٹط± ظ…ط±ط­ظ„ط© ظپظ‚ط·. ظ‡ظ„ طھط±ظٹط¯ ط§ظ„ط§ط³طھظ…ط±ط§ط±طں');">ط­ط°ظپ ط§ظ„ظ…ط³ظˆط¯ط©</button>
+                }
+                using (Html.BeginForm("CancelPreview", "PumpSales", new { area = "MainErp", id = Model.TransactionId }, FormMethod.Post, new { @class = "main-erp-inline-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="main-erp-button" @(Model.IsPosted == true && canPostPumpSales ? "" : "disabled=\"disabled\"") title="ظ…ط¹ط§ظٹظ†ط© ط¹ظƒط³ ط§ظ„ظ‚ظٹظˆط¯ ظˆط§ظ„ظ…ط³طھظ†ط¯ط§طھ ظپظ‚ط· - ظ„ط§ ظٹطھظ… طھظ†ظپظٹط° ط£ظٹ ظƒطھط§ط¨ط©">ظ…ط¹ط§ظٹظ†ط© ط¥ظ„ط؛ط§ط، ظپط§طھظˆط±ط© ظ…ط±ط­ظ„ط©</button>
+                }
+                using (Html.BeginForm("CancelPosted", "PumpSales", new { area = "MainErp", id = Model.TransactionId }, FormMethod.Post, new { @class = "main-erp-inline-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" name="command" value="cancel" class="main-erp-button main-erp-danger-button" @(Model.IsPosted == true && canCancelPumpSalesPosted && Model.Closed != true ? "" : "disabled=\"disabled\"") onclick="return confirm('سيتم إنشاء قيد عكسي ومستند مرتجع Transaction_Type=20 وإغلاق الفاتورة. هل تريد الاستمرار؟');">إلغاء فعلي بعكس القيد</button>
+                }
+                <a class="main-erp-button" href="@Url.Action("DailyReport", "PumpSales", new { area = "MainErp", id = Model.TransactionId })">طھظ‚ط±ظٹط± ط§ظ„ظ…ط¶ط®ط§طھ</a>
+            }
+            else
+            {
+                <a class="main-erp-button" href="@Url.Action("Report", "WorkshopSales", new { area = "MainErp", id = Model.TransactionId })">تقرير الورشة</a>
+                <button type="button" class="main-erp-button" disabled title="Not migrated yet">ط­ظپط¸</button>
+            }
+            @if (!isPump)
+            {
+                <button type="button" class="main-erp-button" disabled title="Read Only Mode">طھط±ط­ظٹظ„</button>
+            }
+            @if (!isPump)
+            {
+                <button type="button" class="main-erp-button" disabled title="Read Only Mode">ط­ط°ظپ</button>
+            }
+            <button type="button" class="main-erp-button" disabled title="Preview only - no write">ظ…ط¹ط§ظٹظ†ط© طھط£ط«ظٹط± ط§ظ„ط­ظپط¸</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    <div class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-eyebrow">FrmSaleBill6 / Transaction_Type @Model.TransactionType / TypeInvoice @Model.TypeInvoice</span>
+            <h2>@(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</h2>
+            <p>@Model.NoteSerial1 - @String.Format("{0:yyyy-MM-dd}", Model.TransactionDate)</p>
+        </div>
+        <div class="main-erp-status-stack">
+            <span class="main-erp-badge">Read-only</span>
+            @if (Model.IsPosted == true)
+            {
+                <span class="main-erp-badge is-success">ظ…ط±ط­ظ„</span>
+            }
+            <span class="main-erp-badge @(voucherBalanced ? "is-success" : "is-danger")">@(voucherBalanced ? "ط§ظ„ظ‚ظٹط¯ ظ…طھظˆط§ط²ظ†" : "ظٹظˆط¬ط¯ ظپط±ظ‚ ظ‚ظٹظˆط¯")</span>
+        </div>
+    </div>
+
+    <div class="main-erp-kpi-grid">
+        <div class="main-erp-kpi-card"><span>ط±ظ‚ظ… ط§ظ„ظپط§طھظˆط±ط©</span><strong>@Model.TransactionId</strong><small>@Model.TransactionSerial / @Model.NoteSerial1</small></div>
+        <div class="main-erp-kpi-card"><span>ط§ظ„ط¹ظ…ظٹظ„</span><strong>@(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</strong><small>@Model.BranchName</small></div>
+        <div class="main-erp-kpi-card"><span>ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظپط§طھظˆط±ط©</span><strong>@money(Model.Total)</strong><small>ط§ظ„طµط§ظپظٹ @money(Model.NetValue)</small></div>
+        <div class="main-erp-kpi-card"><span>ط§ظ„ط¶ط±ظٹط¨ط©</span><strong>@money(Model.Vat)</strong><small>ظ…ظ† ط§ظ„ط¨ظ†ظˆط¯ @moneyValue(Model.LinesVat)</small></div>
+        <div class="main-erp-kpi-card"><span>ط§ظ„ظ…ط¯ظپظˆط¹</span><strong>@money(Model.PayedValue)</strong><small>ط§ظ„ظ…طھط¨ظ‚ظٹ @money(Model.RemainValue)</small></div>
+        <div class="main-erp-kpi-card"><span>ط¹ط¯ط¯ ط§ظ„ط¨ظ†ظˆط¯</span><strong>@Model.Lines.Count</strong><small>ظƒظ…ظٹط© @moneyValue(Model.InventoryQuantityTotal)</small></div>
+        <div class="main-erp-kpi-card"><span>ط£ط«ط± ط§ظ„ظ…ط®ط²ظˆظ†</span><strong>@moneyValue(Model.LinesCost)</strong><small>StoreID @Model.StoreId</small></div>
+        <div class="main-erp-kpi-card"><span>ط­ط³ط§ط¨ط§طھ ظ…طھط£ط«ط±ط©</span><strong>@Model.AffectedAccountCount</strong><small>@Model.VoucherLines.Count ط³ط·ط± ظ‚ظٹط¯</small></div>
+        <div class="main-erp-kpi-card"><span>ظ…ط³طھظ†ط¯ط§طھ ظ…ط®ط²ظ†ظٹط©</span><strong>@Model.RelatedInventoryTransactions.Count</strong><small>طµط±ظپ @Model.RelatedInventoryIssueCount / ط§ط³طھظ„ط§ظ… @Model.RelatedInventoryReceiptCount</small></div>
+        <div class="main-erp-kpi-card"><span>طھظپطµظٹظ„ ط§ظ„ظ…ط¯ظپظˆط¹ط§طھ</span><strong>@moneyValue(Model.PaymentRowsTotal)</strong><small>ظ…ط¶ط®ط§طھ @moneyValue(Model.PumpLinePaymentTotal)</small></div>
+        @if (isPump)
+        {
+            <div class="main-erp-kpi-card"><span>طھظˆط²ظٹط¹ ط§ظ„ط¢ط¬ظ„</span><strong>@moneyValue(Model.PumpDeferredDistributionTotal)</strong><small>@Model.PumpDeferredCustomerCount ط¹ظ…ظٹظ„ / ظƒظ…ظٹط© @moneyValue(Model.PumpDeferredDistributionQuantityTotal)</small></div>
+        }
+    </div>
+
+    <div class="main-erp-tabs premium-tabs">
+        <section>
+            <h4>ظ…ظ„ط®طµ ط§ظ„ظپط§طھظˆط±ط©</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>ظ…ط±ط­ظ„ط© VB6: <strong>ظ‚ط±ط§ط،ط© ظ…ظ† FrmSaleBill6</strong></span>
+                <span>SaveData: <strong>ظ…ط¹ط·ظ„</strong></span>
+                <span>CreateIssueVoucher2: <strong>Trace ظپظ‚ط·</strong></span>
+                <span>CreateRecieveVoucher: <strong>Trace ظپظ‚ط·</strong></span>
+                <span>CREATE_VOUCHER_GE/createVoucher2: <strong>ط¹ط±ط¶ ظ‚ظٹظˆط¯ ظپظ‚ط·</strong></span>
+            </div>
+            <div class="main-erp-two-column">
+                <dl class="main-erp-details">
+                    <dt>ط§ظ„ط³ظٹط±ظٹط§ظ„</dt><dd>@Model.TransactionSerial</dd>
+                    <dt>ط±ظ‚ظ… ط§ظ„ظپط§طھظˆط±ط©</dt><dd>@Model.NoteSerial1</dd>
+                    <dt>Manual No</dt><dd>@Model.ManualNo</dd>
+                    <dt>ط§ظ„ظپط±ط¹</dt><dd>@Model.BranchName</dd>
+                    <dt>ط§ظ„ظ…ط®ط²ظ†</dt><dd>@Model.StoreId</dd>
+                    <dt>ط§ظ„ط®ط²ظٹظ†ط©</dt><dd>@Model.BoxId</dd>
+                    <dt>Prefix / FullCode</dt><dd>@Model.Prefix @Model.FullCode</dd>
+                    <dt>CBoBasedON</dt><dd>@Model.CboBasedOn</dd>
+                    <dt>POSBillType</dt><dd>@Model.PosBillType</dd>
+                </dl>
+                <dl class="main-erp-details">
+                    <dt>ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹</dt><dd>@Model.PaymentTypeLabel</dd>
+                    <dt>ط§ظ„ط¹ظ…ظ„ط©</dt><dd>@Model.CurrencyId / @money(Model.CurrencyRate)</dd>
+                    <dt>ط£ظ…ط± ظ…ط±طھط¨ط·</dt><dd>@Model.OrderNo</dd>
+                    <dt>NoteID</dt><dd>@Model.NoteId</dd>
+                    <dt>Posted / IsPosted / Approved / Closed</dt><dd>@Model.Posted / @Model.IsPosted / @Model.Approved / @Model.Closed</dd>
+                    <dt>Transaction_NetValue</dt><dd>@money(Model.TransactionNetValue)</dd>
+                    <dt>SumValueLine / SumVATLine</dt><dd>@money(Model.SumValueLine) / @money(Model.SumVatLine)</dd>
+                    <dt>DateRec</dt><dd>@String.Format("{0:yyyy-MM-dd HH:mm}", Model.DateRec)</dd>
+                    <dt>ظ…ظ„ط§ط­ط¸ط§طھ</dt><dd>@Model.Remarks</dd>
+                </dl>
+            </div>
+        </section>
+
+        <section>
+            <h4>ط¨ظ†ظˆط¯ ط§ظ„ظپط§طھظˆط±ط©</h4>
+            @if (Model.Lines.Count == 0)
+            {
+                <div class="main-erp-empty">ظ„ط§ طھظˆط¬ط¯ ط¨ظ†ظˆط¯ ظ…ط³ط¬ظ„ط© ظ„ظ‡ط°ظ‡ ط§ظ„ظپط§طھظˆط±ط©</div>
+            }
+            else
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>ط§ظ„ظƒظˆط¯</th>
+                                <th>ط§ظ„طµظ†ظپ</th>
+                                <th>ط§ظ„ظˆط­ط¯ط©</th>
+                                <th>ط§ظ„ظƒظ…ظٹط©</th>
+                                <th>ط§ظ„ط³ط¹ط±</th>
+                                <th>ط§ظ„ط®طµظ…</th>
+                                <th>VAT</th>
+                                <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
+                                <th>ط§ظ„ظ…ط®ط²ظ†</th>
+                        <th>ط§ظ„طھظƒظ„ظپط©</th>
+                        <th>ط§ظ„ط­ط³ط§ط¨</th>
+                        @if (isPump)
+                        {
+                            <th>ط­ط³ط§ط¨ ط§ظ„ط¹ظ…ظˆظ„ط©</th>
+                            <th>ظ…ط¤ط´ط±ط§طھ ط§ظ„ظ…ط¶ط®ط©</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                            @foreach (var line in Model.Lines)
+                            {
+                                <tr>
+                                    <td>@line.ItemCode</td>
+                                    <td class="main-erp-strong">@line.ItemName</td>
+                                    <td>@line.UnitName</td>
+                                    <td>@money(line.ShowQty ?? line.Quantity)</td>
+                                    <td>@money(line.ShowPrice ?? line.Price)</td>
+                                    <td>@money((line.DiscountValue ?? 0m) + (line.TotalDiscountPerLine ?? 0m))</td>
+                                    <td>@money(line.Vat)</td>
+                                    <td class="main-erp-strong">@moneyValue(line.LineTotal)</td>
+                                    <td>@Model.StoreId</td>
+                                    <td>@money(line.CostPrice)</td>
+                                    <td>@line.AccountDisplay</td>
+                                    @if (isPump)
+                                    {
+                                        <td>@line.CommissionAccountDisplay</td>
+                                        <td>PumpId @line.PumpId / IsOther @line.IsOther / Color @line.ColorId</td>
+                                    }
+                                </tr>
+                                if (isPump)
+                                {
+                                    <tr class="main-erp-subrow">
+                                        <td colspan="13">
+                                            <strong>ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¶ط®ط©:</strong>
+                                            @line.PumpName |
+                                            ط§ظ„ط³ط§ط¨ظ‚: @money(line.PrevQty) |
+                                            ط§ظ„ط­ط§ظ„ظٹ: @money(line.CurrentQty) |
+                                            ظ†ظ‚ط¯ظٹ: @money(line.Cash) / ظ…ط¯ظ‰: @money(line.Mada) / ظپظٹط²ط§: @money(line.Visa) / ط¢ط¬ظ„: @money(line.Deferred)
+                                            @if (!String.IsNullOrWhiteSpace(line.PumpDetails))
+                                            {
+                                                <span> | DetailsPump: @line.PumpDetails</span>
+                                            }
+                                            <a class="main-erp-button" href="@Url.Action("DeferredDistribution", "PumpSales", new { area = "MainErp", transactionId = Model.TransactionId, lineId = line.Id })">طھط¹ط¯ظٹظ„ طھظˆط²ظٹط¹ ط§ظ„ط¢ط¬ظ„</a>
+                                        </td>
+                                    </tr>
+                                    if (line.DeferredAllocations.Count > 0)
+                                    {
+                                        <tr class="main-erp-subrow">
+                                            <td colspan="13">
+                                                <strong>طھظˆط²ظٹط¹ ط§ظ„ط¢ط¬ظ„ ط¹ظ„ظ‰ ط§ظ„ط¹ظ…ظ„ط§ط،:</strong>
+                                                <div class="main-erp-table-wrap">
+                                                    <table class="main-erp-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>CustomerID</th>
+                                                                <th>ط§ظ„ط¹ظ…ظٹظ„</th>
+                                                                <th>ط§ظ„ظƒظ…ظٹط©</th>
+                                                                <th>ط§ظ„ط³ط¹ط±</th>
+                                                                <th>ط§ظ„ظ‚ظٹظ…ط©</th>
+                                                                <th>RecNo</th>
+                                                                <th>ط­ط³ط§ط¨ ط§ظ„ط¹ظ…ظٹظ„</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var allocation in line.DeferredAllocations)
+                                                            {
+                                                                <tr>
+                                                                    <td>@allocation.CustomerId</td>
+                                                                    <td>@allocation.CustomerName</td>
+                                                                    <td>@money(allocation.Quantity)</td>
+                                                                    <td>@money(allocation.UnitPrice)</td>
+                                                                    <td class="main-erp-strong">@money(allocation.Amount)</td>
+                                                                    <td>@allocation.ReferenceNo</td>
+                                                                    <td>@allocation.CustomerAccountDisplay</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td colspan="2">ط¥ط¬ظ…ط§ظ„ظٹ طھظˆط²ظٹط¹ ط§ظ„ط³ط·ط±</td>
+                                                                <td>@moneyValue(line.DeferredAllocations.Sum(x => x.Quantity ?? 0m))</td>
+                                                                <td></td>
+                                                                <td>@moneyValue(line.DeferredAllocations.Sum(x => x.Amount ?? 0m))</td>
+                                                                <td colspan="2">Deferred: @money(line.Deferred) / DeferredQty: @money(line.DeferredQty)</td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3">ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹط§طھ</td>
+                                <td>@moneyValue(Model.InventoryQuantityTotal)</td>
+                                <td></td>
+                                <td></td>
+                                <td>@moneyValue(Model.LinesVat)</td>
+                                <td>@moneyValue(Model.LinesTotal)</td>
+                                <td></td>
+                            <td>@moneyValue(Model.LinesCost)</td>
+                            <td></td>
+                            @if (isPump)
+                            {
+                                <td></td>
+                                <td></td>
+                            }
+                        </tr>
+                    </tfoot>
+                </table>
+                </div>
+            }
+        </section>
+
+        <section>
+            <h4>ط§ظ„ظ…ط¯ظپظˆط¹ط§طھ</h4>
+            @if (Model.Payments.Count == 0)
+            {
+                <div class="main-erp-empty">ظ„ط§ طھظˆط¬ط¯ ط·ط±ظ‚ ط¯ظپط¹ طھظپطµظٹظ„ظٹط© ظ„ظ‡ط°ظ‡ ط§ظ„ظپط§طھظˆط±ط©</div>
+            }
+            else
+            {
+                <div class="main-erp-kpi-grid">
+                    <div class="main-erp-kpi-card"><span>ط¥ط¬ظ…ط§ظ„ظٹ TblSalesPayment</span><strong>@moneyValue(Model.PaymentRowsTotal)</strong></div>
+                    <div class="main-erp-kpi-card"><span>PayedValue</span><strong>@money(Model.PayedValue)</strong></div>
+                    <div class="main-erp-kpi-card"><span>RemainValue</span><strong>@money(Model.RemainValue)</strong></div>
+                    <div class="main-erp-kpi-card"><span>ظپط±ظ‚ ط§ظ„ظ‚ط±ط§ط،ط©</span><strong>@moneyValue(Model.PaymentRowsTotal - (Model.PayedValue ?? 0m))</strong></div>
+                </div>
+                <table class="main-erp-table">
+                    <thead><tr><th>ID</th><th>PaymentID</th><th>ط§ظ„ظ‚ظٹظ…ط©</th><th>CardNo</th><th>MaxValue</th></tr></thead>
+                    <tbody>
+                        @foreach (var payment in Model.Payments)
+                        {
+                            <tr><td>@payment.Id</td><td>@payment.PaymentId</td><td>@money(payment.Value)</td><td>@payment.CardNo</td><td>@money(payment.MaxValue)</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section>
+            <h4>ط£ط«ط± ط§ظ„ظ…ط®ط²ظˆظ†</h4>
+            <div class="main-erp-kpi-grid">
+                <div class="main-erp-kpi-card"><span>ط¹ط¯ط¯ ط§ظ„ط¨ظ†ظˆط¯</span><strong>@Model.Lines.Count</strong></div>
+                <div class="main-erp-kpi-card"><span>ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظƒظ…ظٹط©</span><strong>@moneyValue(Model.InventoryQuantityTotal)</strong></div>
+                <div class="main-erp-kpi-card"><span>طھظƒظ„ظپط© ط§ظ„ط¨ظ†ظˆط¯</span><strong>@moneyValue(Model.LinesCost)</strong></div>
+                <div class="main-erp-kpi-card"><span>ط§ظ„ظ…ط®ط²ظ†</span><strong>@Model.StoreId</strong><small>ط§ظ„ط£ط«ط± ط§ظ„ظ†ظ‡ط§ط¦ظٹ ظٹط­طھط§ط¬ ظ…ط±ط§ط¬ط¹ط© VB6</small></div>
+                <div class="main-erp-kpi-card"><span>ظپظˆط§طھظٹط± ط§ظ„طµط±ظپ</span><strong>@Model.RelatedInventoryIssueCount</strong><small>Transaction_Type = 19</small></div>
+                <div class="main-erp-kpi-card"><span>ظپظˆط§طھظٹط± ط§ظ„ط§ط³طھظ„ط§ظ…</span><strong>@Model.RelatedInventoryReceiptCount</strong><small>Transaction_Type = 20</small></div>
+            </div>
+            <div class="main-erp-warning">ط§ظ„ظ…ط¹ط±ظˆط¶ ظ‡ظ†ط§ ظ‚ط±ط§ط،ط© ظپظ‚ط·. VB6 ظٹظ†ط´ط¦ ظ…ط³طھظ†ط¯ط§طھ طµط±ظپ/ط§ط³طھظ„ط§ظ… ظ…ط±طھط¨ط·ط© ظ…ظ† CreateIssueVoucher2 ظˆ CreateRecieveVoucher ط¹ط¨ط± Transactions.nots ظˆ Transactions.nots2طŒ ظˆظ„ط§ ظٹطھظ… ظ‡ظ†ط§ طھظ†ظپظٹط° ط£ظٹ ط¥ظ†ط´ط§ط، ط£ظˆ طھط¹ط¯ظٹظ„.</div>
+            @if (Model.RelatedInventoryTransactions.Count == 0)
+            {
+                <div class="main-erp-empty">ظ„ط§ طھظˆط¬ط¯ ظ…ط³طھظ†ط¯ط§طھ طµط±ظپ ط£ظˆ ط§ط³طھظ„ط§ظ… ظ…ط±طھط¨ط·ط© ط¨ظ‡ط°ظ‡ ط§ظ„ظپط§طھظˆط±ط© ط¹ط¨ط± nots/nots2.</div>
+            }
+            else
+            {
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction</th>
+                            <th>ط§ظ„ظ†ظˆط¹</th>
+                            <th>ط§ظ„طھط§ط±ظٹط®</th>
+                            <th>Serial</th>
+                            <th>NoteSerial</th>
+                            <th>ط§ظ„ظ…ط®ط²ظ†</th>
+                            <th>ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ</th>
+                            <th>ط§ظ„طµط§ظپظٹ</th>
+                            <th>ط³ط¨ط¨ ط§ظ„ط±ط¨ط·</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var related in Model.RelatedInventoryTransactions)
+                        {
+                            <tr>
+                                <td>@related.TransactionId</td>
+                                <td>@related.TransactionType</td>
+                                <td>@String.Format("{0:yyyy-MM-dd}", related.TransactionDate)</td>
+                                <td>@related.TransactionSerial</td>
+                                <td>@related.NoteSerial / @related.NoteSerial1</td>
+                                <td>@related.StoreName</td>
+                                <td>@money(related.Total)</td>
+                                <td>@money(related.NetValue)</td>
+                                <td>@related.LinkReason</td>
+                                <td>@if (related.NoteId.HasValue) { <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = related.NoteId.Value })">ظپطھط­ ط§ظ„ظ‚ظٹط¯</a> }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section>
+            <h4>ط§ظ„ظ‚ظٹظˆط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹط©</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>ط³ط·ظˆط± ط§ظ„ظ‚ظٹظˆط¯: <strong>@Model.VoucherLines.Count</strong></span>
+                <span>ط­ط³ط§ط¨ط§طھ ظ…طھط£ط«ط±ط©: <strong>@Model.AffectedAccountCount</strong></span>
+                <span>ظ…ط¯ظٹظ†: <strong>@moneyValue(Model.VoucherDebitTotal)</strong></span>
+                <span>ط¯ط§ط¦ظ†: <strong>@moneyValue(Model.VoucherCreditTotal)</strong></span>
+                <span class="@(voucherBalanced ? "main-erp-ok" : "main-erp-danger")">ط§ظ„ظپط±ظ‚: @moneyValue(Model.VoucherBalanceDifference)</span>
+                @if (Model.NoteId.HasValue)
+                {
+                    <a class="main-erp-button" href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = Model.NoteId.Value })">ظپطھط­ ط§ظ„ظ‚ظٹط¯</a>
+                }
+            </div>
+            @if (Model.VoucherLines.Count == 0)
+            {
+                <div class="main-erp-empty">ظ„ط§ طھظˆط¬ط¯ ظ‚ظٹظˆط¯ ظ…ط­ط§ط³ط¨ظٹط© ظ…ط±طھط¨ط·ط© ط¨ظ‡ط°ظ‡ ط§ظ„ظپط§طھظˆط±ط©</div>
+            }
+            else
+            {
+                <table class="main-erp-table">
+                    <thead><tr><th>Voucher</th><th>ط§ظ„طھط§ط±ظٹط®</th><th>ط§ظ„ط­ط³ط§ط¨</th><th>ظ…ط¯ظٹظ†</th><th>ط¯ط§ط¦ظ†</th><th>ط§ظ„ظˆطµظپ</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var voucher in Model.VoucherLines)
+                        {
+                            <tr>
+                                <td>@voucher.VoucherId / @voucher.LineNo</td>
+                                <td>@String.Format("{0:yyyy-MM-dd}", voucher.RecordDate)</td>
+                                <td>@voucher.AccountDisplay</td>
+                                <td>@moneyValue(voucher.Debit)</td>
+                                <td>@moneyValue(voucher.Credit)</td>
+                                <td>@voucher.Description</td>
+                                <td>@if (voucher.NoteId.HasValue) { <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = voucher.NoteId.Value })">ظپطھط­ ط§ظ„ظ‚ظٹط¯</a> }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
+        <section>
+            <h4>ظ…ط¹ط§ظٹظ†ط© طھط£ط«ظٹط± ط§ظ„ط­ظپط¸</h4>
+            <div class="main-erp-warning">ظ‡ط°ظ‡ ظ…ط¹ط§ظٹظ†ط© ظ‚ط±ط§ط،ط© ظپظ‚ط·. ظ„ط§ ظٹطھظ… ط¥ظ†ط´ط§ط، Transactions ط£ظˆ Transaction_Details ط£ظˆ Notes ط£ظˆ DOUBLE_ENTREY_VOUCHERS.</div>
+            <div class="main-erp-two-column">
+                <div>
+                    <h5>ط±ط£ط³ ط§ظ„ظپط§طھظˆط±ط©</h5>
+                    <ul>@foreach (var item in Model.SavePreview.HeaderEffects) { <li>@item</li> }</ul>
+                    <h5>ط§ظ„ط¨ظ†ظˆط¯ ظˆط§ظ„ظ…ط®ط²ظˆظ†</h5>
+                    <ul>@foreach (var item in Model.SavePreview.DetailEffects.Concat(Model.SavePreview.InventoryEffects)) { <li>@item</li> }</ul>
+                </div>
+                <div>
+                    <h5>ط§ظ„ظ‚ظٹط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ط§ظ„ظ…طھظˆظ‚ط¹</h5>
+                    <ul>@foreach (var item in Model.SavePreview.AccountingEffects) { <li>@item</li> }</ul>
+                    <h5>طھط­ط°ظٹط±ط§طھ</h5>
+                    @if (Model.SavePreview.Warnings.Count == 0)
+                    {
+                        <p class="main-erp-ok">ظ„ط§ طھظˆط¬ط¯ طھط­ط°ظٹط±ط§طھ ظ‚ط±ط§ط،ط© ط£ط³ط§ط³ظٹط©.</p>
+                    }
+                    else
+                    {
+                        <ul>@foreach (var item in Model.SavePreview.Warnings) { <li>@item</li> }</ul>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h4>ط³ط¬ظ„ ط§ظ„ط¹ظ…ظ„ظٹط§طھ Audit</h4>
+            <div class="main-erp-grid-toolbar">
+                <span>ط¹ط¯ط¯ ط§ظ„ط¹ظ…ظ„ظٹط§طھ: <strong>@Model.AuditLogs.Count</strong></span>
+                <span>ط§ظ„ظ…طµط¯ط±: MainErp_AuditLog</span>
+            </div>
+            @if (Model.AuditLogs.Count == 0)
+            {
+                <div class="main-erp-empty">ظ„ط§ طھظˆط¬ط¯ ط¹ظ…ظ„ظٹط§طھ ظ…ط³ط¬ظ„ط© ظ„ظ‡ط°ظ‡ ط§ظ„ظپط§طھظˆط±ط© ظپظٹ ط³ط¬ظ„ MainErp ط­طھظ‰ ط§ظ„ط¢ظ†.</div>
+            }
+            else
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ط§ظ„ط¹ظ…ظ„ظٹط©</th>
+                                <th>ط§ظ„ظ…ط³طھط®ط¯ظ…</th>
+                                <th>ط§ظ„طھط§ط±ظٹط®</th>
+                                <th>Correlation</th>
+                                <th>ط§ظ„ط±ط³ط§ظ„ط©</th>
+                                <th>Before</th>
+                                <th>After</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var audit in Model.AuditLogs)
+                            {
+                                <tr>
+                                    <td>@audit.AuditId</td>
+                                    <td>@audit.OperationName</td>
+                                    <td>@(String.IsNullOrWhiteSpace(audit.UserDisplay) ? Convert.ToString(audit.UserId) : audit.UserDisplay)</td>
+                                    <td>@String.Format("{0:yyyy-MM-dd HH:mm}", audit.CreatedAt)</td>
+                                    <td>@audit.CorrelationId</td>
+                                    <td>@audit.Message</td>
+                                    <td>@audit.BeforeSnapshot</td>
+                                    <td>@audit.AfterSnapshot</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section>
+            <h4>ط§ظ„ط·ط¨ط§ط¹ط© ظˆط§ظ„ظ…ط±ظپظ‚ط§طھ</h4>
+            <div class="main-erp-warning">ط§ظ„ط·ط¨ط§ط¹ط© ظˆطھظ‚ط§ط±ظٹط± FrmSaleBill6 ظ‚ط±ط§ط،ط© ط®ط±ظٹط·ط© ظپظ‚ط· ط§ظ„ط¢ظ†. ظ‡ط°ظ‡ ط§ظ„ط´ط§ط´ط© ظ„ط§ طھط³طھط¯ط¹ظٹ Crystal Reports ظˆظ„ط§ طھظ†ظپط° ط£ظٹ طھط­ط¯ظٹط«.</div>
+            <div class="main-erp-table-wrap">
+                <table class="main-erp-table">
+                    <thead><tr><th>ط§ظ„ظ…ط³ط§ط± ظپظٹ VB6</th><th>ط§ظ„ط§ط³طھط®ط¯ط§ظ…</th><th>ط­ط§ظ„ط© ط§ظ„ظˆظٹط¨</th></tr></thead>
+                    <tbody>
+                        <tr><td>PrintReport / cmdPrint*</td><td>ط·ط¨ط§ط¹ط© ظپط§طھظˆط±ط© ط§ظ„ظ…ط¨ظٹط¹ط§طھ ط­ط³ط¨ ظˆط¶ط¹ ط§ظ„ط´ط§ط´ط©</td><td>ط؛ظٹط± ظ…ظ†ظپط° - Read-only placeholder</td></tr>
+                        <tr><td>PrintCash</td><td>ط·ط¨ط§ط¹ط© ظƒط§ط´/ط¥ظٹطµط§ظ„ ط¹ظ†ط¯ ظ…ط³ط§ط±ط§طھ ط¯ظپط¹ ظ…ط¹ظٹظ†ط©</td><td>ط؛ظٹط± ظ…ظ†ظپط°</td></tr>
+                        <tr><td>DailyPumpR.Rpt</td><td>طھظ‚ط±ظٹط± ط§ظ„ظ…ط¶ط®ط§طھ ظ…ط¹ TypeInvoice = 2 ظˆ tblPumpType</td><td>ظ…ظˆط«ظ‚ ظپظ‚ط·طŒ ظ„ط§ ظٹطھظ… طھط´ط؛ظٹظ„ Crystal</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>

@@ -1,0 +1,16 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>تقارير التأمين الطبي</title>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")" rel="stylesheet" />
+</head>
+<body class="ep-body" data-base="@Url.Action("MedicalInsuranceReports", "EmployeePayroll", new { area = "Pos" })">
+    @Html.Partial("_MedicalInsuranceReports")
+    <script src="@Url.Content("~/Areas/Pos/Scripts/employee-payroll.js")"></script>
+</body>
+</html>

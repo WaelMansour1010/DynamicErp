@@ -1,0 +1,172 @@
+﻿@model MyERP.Models.ShareHolder
+
+@{
+    ViewBag.Title = "المساهمين";
+}
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info" >الأول</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info" >&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info" >&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info" >الأخير</a>
+                        }
+                    }
+                }
+                else
+                {<a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">رجوع</a>}
+            </div>
+            <div class="hed page-title">المساهمين :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ShareHolder/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label for="Code" class="control-label col-sm-2">الكود</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", required = "required" } })
+                                        @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    @Html.AntiForgeryToken()
+
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @if (Model != null)
+                                    {
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                    }
+
+                                    <label for="ArName" class="control-label col-sm-1">الاسم بالعربية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الاسم بالعربية مطلوب
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.ArName, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="EnName" class="control-label col-sm-2">الاسم بالانجليزية</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control" } })
+                                        @Html.ValidationMessageFor(model => model.EnName, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="PhoneNumber" class="control-label col-sm-1">الهاتف</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.PhoneNumber, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            الهاتف مطلوب
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.PhoneNumber, "", new { @class = "text-danger" })*@
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Email" class="control-label col-sm-2">الاميل</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", @type = "email" } })
+                                        @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                                    </div>
+
+                                    <label for="Address" class="control-label col-sm-1">العنوان</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Address, new { htmlAttributes = new { @class = "form-control" } })
+                                        @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="NationalId" class="control-label col-sm-2">الرقم القومي</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.NationalId, new { htmlAttributes = new { @class = "form-control" } })
+                                        <div class="invalid-feedback">
+                                            الرقم القومى مطلوب
+                                        </div>
+                                        @*@Html.ValidationMessageFor(model => model.NationalId, "", new { @class = "text-danger" })*@
+                                    </div>
+
+                                    <label for="AccountId" class="control-label col-sm-1">الحساب</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("AccountId", null, htmlAttributes: new { @class = "form-control" })
+                                        @Html.ValidationMessageFor(model => model.AccountId, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Notes" class="control-label col-sm-2">الملاحظات</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control"> </textarea>
+                                        @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                        <input id="new" name="newBtn" hidden />
+                                        <button type="submit" id="newbtn" class="btn btn-success">
+                                            حفظ و جديد
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success">
+                                                حفظ
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                            <a class="btn btn-danger" onclick="Delete(@Model.Id,'ShareHolder')" role="button">حذف</a>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+   
+    @*@section Scripts {
+            @Scripts.Render("~/bundles/jqueryval")
+        }*@
+    <script>
+        if (!$('#Id').val() > 0) {
+            function setCodeNum() {
+                $.get('/ShareHolder/SetCodeNum').done(function (r) {
+                    $('#Code').val(r);
+                });
+            }
+            setCodeNum();
+        }
+    </script>

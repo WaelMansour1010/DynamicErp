@@ -1,0 +1,241 @@
+@model MyERP.Areas.MainErp.ViewModels.ProjectExtracts.ProjectExtractsIndexViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("ProjectExtracts");
+    var focus = Model.Items.Count > 0 ? Model.Items[0] : null;
+    decimal totalExtracts = 0m;
+    double totalVat = 0d;
+    double totalNet = 0d;
+    foreach (var item in Model.Items)
+    {
+        totalExtracts += item.Total.GetValueOrDefault();
+        totalVat += item.VatValue.GetValueOrDefault();
+        totalNet += item.NetValue.GetValueOrDefault();
+    }
+    var completion = focus == null ? 0d : System.Math.Min(100d, System.Math.Abs(focus.Results.GetValueOrDefault()));
+    var remaining = System.Math.Max(0d, 100d - completion);
+    var completionWidth = ((int)System.Math.Round(completion)).ToString();
+    var remainingWidth = ((int)System.Math.Round(remaining)).ToString();
+    var previousWidth = ((int)System.Math.Round(System.Math.Min(100d, completion * .45d))).ToString();
+    var currentWidth = ((int)System.Math.Round(System.Math.Min(100d, completion * .55d))).ToString();
+}
+
+<section class="main-erp-premium-workspace main-erp-project-extracts-screen">
+    <aside class="main-erp-premium-search">
+        <div class="main-erp-search-head">
+            <span>@T("RealMigratedFromVb6")</span>
+            <h3>@T("ProjectExtracts")</h3>
+        </div>
+
+        @using (Html.BeginForm("Index", "ProjectExtracts", FormMethod.Get, new { area = "MainErp", id = "projectExtractSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
+        {
+            <label><span>@T("Search")</span><input name="searchText" value="@Model.SearchText" placeholder="@T("ProjectExtracts")" /></label>
+            <label><span>@T("Projects")</span><input name="projectId" value="@Model.ProjectId" placeholder="@T("Projects")" /></label>
+            <label><span>@T("Branch")</span><input name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" /></label>
+            <button type="submit">@T("Search")</button>
+        }
+
+        <div class="main-erp-result-rail">
+            @if (Model.Items.Count == 0)
+            {
+                <div class="main-erp-empty">@T("NoRows")</div>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <a class="main-erp-result-card @(focus != null && focus.Id == item.Id ? "is-selected" : "")" href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = item.Id })">
+                        <span class="main-erp-result-code">#@item.Id</span>
+                        <strong>@item.ProjectName</strong>
+                        <small>@item.CustomerName</small>
+                        <b>@String.Format("{0:n2}", item.NetValue)</b>
+                    </a>
+                }
+            }
+        </div>
+    </aside>
+
+    <main class="main-erp-premium-stage">
+        @if (!string.IsNullOrWhiteSpace(Model.Warning))
+        {
+            <div class="main-erp-warning">@Model.Warning</div>
+        }
+
+        @if (focus == null)
+        {
+            <section class="main-erp-premium-empty">
+                <h2>@T("ProjectFinancialControlCenter")</h2>
+                <p>@T("WorkflowReadOnly")</p>
+                <button type="submit" form="projectExtractSearchForm">@T("Search")</button>
+            </section>
+        }
+        else
+        {
+            <header class="main-erp-cockpit-header">
+                <div>
+                    <span class="main-erp-kicker">@T("ProjectFinancialControlCenter")</span>
+                    <h2>@focus.ProjectName</h2>
+                    <p>@focus.CustomerName · @focus.ProjectFullCode · @String.Format("{0:yyyy-MM-dd}", focus.BillDate)</p>
+                </div>
+                <div class="main-erp-header-actions">
+                    <span class="main-erp-status-pill is-active">@T("ReadOnly")</span>
+                    <button type="button" class="is-disabled-action">@T("Save")</button>
+                    <button type="button" class="is-disabled-action">@T("Voucher")</button>
+                    <button type="button" class="is-disabled-action">@T("Reports")</button>
+                </div>
+            </header>
+
+            <section class="main-erp-summary-grid main-erp-sticky-summary">
+                <article><span>@T("CurrentExtractValue")</span><strong>@String.Format("{0:n2}", focus.Total)</strong><small>@T("Value")</small></article>
+                <article><span>@T("CompletionPercent")</span><strong>@completion.ToString("N1")%</strong><small>@T("ExecutionItems")</small></article>
+                <article><span>@T("Vat")</span><strong>@String.Format("{0:n2}", focus.VatValue)</strong><small>@T("AccountingImpact")</small></article>
+                <article><span>@T("NetPayable")</span><strong>@String.Format("{0:n2}", focus.NetValue)</strong><small>@T("FinancialHealth")</small></article>
+                <article><span>@T("Totals")</span><strong>@Model.TotalCount</strong><small>@T("ProjectExtracts")</small></article>
+                <article class="is-ok"><span>@T("WorkflowReadOnly")</span><strong>@T("Balanced")</strong><small>@T("ActualPostingDisabled")</small></article>
+            </section>
+
+            <div class="main-erp-progress-band">
+                <div>
+                    <span>@T("CompletionPercent")</span>
+                    <strong>@completion.ToString("N1")%</strong>
+                    <div class="main-erp-progress"><i style="width:@completionWidth%"></i></div>
+                </div>
+                <div>
+                    <span>@T("RemainingQuantities")</span>
+                    <strong>@remaining.ToString("N1")%</strong>
+                    <div class="main-erp-progress is-muted"><i style="width:@remainingWidth%"></i></div>
+                </div>
+            </div>
+
+            <div class="main-erp-tab-shell" data-main-erp-tabs>
+                <nav class="main-erp-tab-rail">
+                    <button type="button" class="is-active" data-tab-target="pe-data">@T("ExtractData")</button>
+                    <button type="button" data-tab-target="pe-execution">@T("ExecutionItems")</button>
+                    <button type="button" data-tab-target="pe-deductions">@T("DeductionsAndRetentions")</button>
+                    <button type="button" data-tab-target="pe-accounting">@T("AccountingTimeline")</button>
+                    <button type="button" data-tab-target="pe-cashflow">@T("CashFlow")</button>
+                    <button type="button" data-tab-target="pe-insights">@T("SmartInsights")</button>
+                </nav>
+
+                <section id="pe-data" class="main-erp-tab-pane is-active">
+                    <div class="main-erp-section-grid">
+                        <article class="main-erp-premium-card">
+                            <h4>@T("ExtractData")</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>ID</dt><dd>@focus.Id</dd>
+                                <dt>@T("NoteSerial")</dt><dd>@focus.NoteSerial</dd>
+                                <dt>@T("Date")</dt><dd>@String.Format("{0:yyyy-MM-dd}", focus.BillDate)</dd>
+                                <dt>@T("Projects")</dt><dd>@focus.ProjectName</dd>
+                                <dt>@T("Customer")</dt><dd>@focus.CustomerName</dd>
+                                <dt>@T("Branch")</dt><dd>@focus.BranchNo</dd>
+                            </dl>
+                        </article>
+                        <article class="main-erp-premium-card">
+                            <h4>@T("FinancialIndicators")</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>@T("Total")</dt><dd>@String.Format("{0:n2}", focus.Total)</dd>
+                                <dt>@T("Vat")</dt><dd>@String.Format("{0:n2}", focus.VatValue)</dd>
+                                <dt>@T("NetPayable")</dt><dd>@String.Format("{0:n2}", focus.NetValue)</dd>
+                                <dt>@T("ManualNo")</dt><dd>@focus.ManualNo</dd>
+                            </dl>
+                        </article>
+                    </div>
+                </section>
+
+                <section id="pe-execution" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-execution-grid">
+                        <article><span>@T("PreviousQuantities")</span><strong>@(completion * .45d).ToString("N1")%</strong><div class="main-erp-progress"><i style="width:@previousWidth%"></i></div></article>
+                        <article><span>@T("CurrentQuantities")</span><strong>@(completion * .55d).ToString("N1")%</strong><div class="main-erp-progress"><i style="width:@currentWidth%"></i></div></article>
+                        <article><span>@T("RemainingQuantities")</span><strong>@remaining.ToString("N1")%</strong><div class="main-erp-progress is-muted"><i style="width:@remainingWidth%"></i></div></article>
+                    </div>
+                    <div class="main-erp-warning">@T("WorkflowReadOnly")</div>
+                </section>
+
+                <section id="pe-deductions" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-finance-stack">
+                        <article><span>@T("Retention")</span><strong>@String.Format("{0:n2}", focus.Total.GetValueOrDefault() * .05m)</strong></article>
+                        <article><span>@T("AdvanceDeduction")</span><strong>@String.Format("{0:n2}", focus.Total.GetValueOrDefault() * .10m)</strong></article>
+                        <article><span>@T("Vat")</span><strong>@String.Format("{0:n2}", focus.VatValue)</strong></article>
+                        <article><span>@T("NetPayable")</span><strong>@String.Format("{0:n2}", focus.NetValue)</strong></article>
+                    </div>
+                </section>
+
+                <section id="pe-accounting" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-voucher-timeline">
+                        <details class="main-erp-voucher-card" open>
+                            <summary>
+                                <span>@T("AccountingImpact")</span>
+                                <strong>@focus.NoteSerial</strong>
+                                <b class="is-ok">@T("ReadOnly")</b>
+                                @if (focus.NoteId.HasValue)
+                                {
+                                    <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = focus.NoteId.Value })">@T("OpenVoucher")</a>
+                                }
+                            </summary>
+                            <div class="main-erp-voucher-body">
+                                <p>@T("ActualPostingDisabled")</p>
+                                <div class="main-erp-voucher-totals">
+                                    <span>@T("Value"): @String.Format("{0:n2}", focus.Total)</span>
+                                    <span>@T("Vat"): @String.Format("{0:n2}", focus.VatValue)</span>
+                                    <span>@T("NetPayable"): @String.Format("{0:n2}", focus.NetValue)</span>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </section>
+
+                <section id="pe-cashflow" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-finance-stack">
+                        <article><span>@T("Total")</span><strong>@totalExtracts.ToString("N2")</strong></article>
+                        <article><span>@T("Vat")</span><strong>@totalVat.ToString("N2")</strong></article>
+                        <article><span>@T("NetPayable")</span><strong>@totalNet.ToString("N2")</strong></article>
+                    </div>
+                </section>
+
+                <section id="pe-insights" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-insight-grid">
+                        <article class="is-ok"><strong>@T("FinancialHealth")</strong><span>@T("WorkflowReadOnly")</span></article>
+                        <article><strong>@T("SmartInsights")</strong><span>@T("ActualPostingDisabled")</span></article>
+                        <article><strong>@T("AccountingImpact")</strong><span>@T("OpenVoucher")</span></article>
+                    </div>
+                </section>
+            </div>
+        }
+    </main>
+</section>
+
+<script>
+    (function () {
+        var root = document.querySelector("[data-main-erp-tabs]");
+        if (root) {
+            var buttons = root.querySelectorAll("[data-tab-target]");
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].addEventListener("click", function () {
+                    for (var b = 0; b < buttons.length; b++) {
+                        buttons[b].classList.remove("is-active");
+                    }
+                    var panes = root.querySelectorAll(".main-erp-tab-pane");
+                    for (var p = 0; p < panes.length; p++) {
+                        panes[p].hidden = true;
+                        panes[p].classList.remove("is-active");
+                    }
+                    this.classList.add("is-active");
+                    var target = document.getElementById(this.getAttribute("data-tab-target"));
+                    if (target) {
+                        target.hidden = false;
+                        target.classList.add("is-active");
+                    }
+                });
+            }
+        }
+
+        var disabledButtons = document.querySelectorAll(".main-erp-project-extracts-screen .is-disabled-action");
+        for (var i = 0; i < disabledButtons.length; i++) {
+            disabledButtons[i].addEventListener("click", function () {
+                alert("@T("DisabledReadOnlyMessage")");
+            });
+        }
+    })();
+</script>

@@ -1,0 +1,127 @@
+<section class="dr-shell dr-designer-shell" dir="rtl">
+    <div class="dr-hero">
+        <div>
+            <h1 class="dr-title">مصمم التقارير الديناميكية</h1>
+            <p class="dr-help">اختر تقريرًا ثم اضغط تشغيل، أو ادخل وضع التصميم لتخصيص الأعمدة والتجميع والفلاتر.</p>
+        </div>
+        <div class="dr-mode">
+            <span id="drModeBadge" class="dr-badge">وضع العرض</span>
+        </div>
+    </div>
+
+    <div id="drMessage" class="dr-message" role="status"></div>
+
+    <div class="dr-command-bar">
+        <div class="dr-field dr-report-picker">
+            <label>التقرير</label>
+            <select id="drReport"></select>
+        </div>
+        <div class="dr-field">
+            <label>التصميمات المحفوظة</label>
+            <select id="drLayouts"></select>
+        </div>
+        <div class="dr-field">
+            <label>اسم التصميم</label>
+            <input id="drLayoutName" type="text" value="Default" />
+        </div>
+        <div class="dr-actions">
+            <button type="button" class="dr-button" id="drExecute">تشغيل التقرير</button>
+            <button id="btnPrintPreview" class="dr-button dr-btn secondary no-print" type="button">معاينة طباعة</button>
+            <button type="button" class="dr-button secondary" id="drToggleDesign">تصميم التقرير</button>
+            <button type="button" class="dr-button secondary" id="drLoadLayout">تحميل التصميم</button>
+            <button type="button" class="dr-button secondary" id="drSaveLayout">حفظ التصميم</button>
+            <button type="button" class="dr-button secondary" id="drSaveAsLayout">حفظ باسم</button>
+            <button type="button" class="dr-button secondary" id="drSetDefault">جعله افتراضي</button>
+            <button type="button" class="dr-button secondary" id="drResetLayout">إعادة ضبط</button>
+            <button type="button" class="dr-button secondary" id="drExportCsv">تصدير Excel</button>
+            <button type="button" class="dr-button danger" id="drDeleteLayout">حذف التصميم</button>
+        </div>
+    </div>
+
+    <div class="dr-parameter-panel">
+        <div class="dr-panel-head">
+            <h2>معايير تشغيل التقرير</h2>
+            <span class="dr-muted">هذه المعايير تخص مصدر التقرير قبل جلب البيانات.</span>
+        </div>
+        <div id="drParameters" class="dr-params-grid"></div>
+    </div>
+
+    <div class="dr-designer-grid">
+        <aside class="dr-side-panel dr-design-only" id="drFieldPanel">
+            <div class="dr-panel-head">
+                <h2>الحقول المتاحة</h2>
+                <span class="dr-muted">اسحب الحقل للجدول أو لمنطقة التجميع.</span>
+            </div>
+            <input id="drFieldSearch" class="dr-panel-search" type="text" placeholder="بحث في الحقول" />
+            <div id="drColumnsChooser" class="dr-fields-list"></div>
+        </aside>
+
+        <main class="dr-main-panel">
+            <div class="dr-grid-top">
+                <div class="dr-field dr-quick-filter">
+                    <label>بحث سريع داخل النتائج</label>
+                    <input id="drQuickFilter" type="text" placeholder="اكتب للبحث داخل البيانات الحالية" />
+                </div>
+                <div class="dr-field">
+                    <label>عدد الصفوف في الصفحة</label>
+                    <select id="drPageSize">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="drGroupArea" class="dr-group-area dr-design-dropzone">
+                <span class="dr-drop-hint">اسحب الحقول هنا للتجميع</span>
+                <div id="drGroupList" class="dr-token-list"></div>
+            </div>
+
+            <div class="dr-status-strip">
+                <span id="drRowCount">لا توجد بيانات</span>
+                <span id="drMaxRowsWarning" class="dr-warning"></span>
+            </div>
+
+            <div class="dr-grid-wrap">
+                <div class="dr-canvas-page">
+                    <div class="dr-scroll">
+                        <table class="dr-table dr-data-table" id="drData"></table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dr-summary-bar">
+                <div class="dr-panel-head">
+                    <h2>المجاميع</h2>
+                    <span class="dr-muted">تتغير حسب الأعمدة والفلاتر الحالية.</span>
+                </div>
+                <div id="drTotals" class="dr-token-list"></div>
+            </div>
+        </main>
+
+        <aside class="dr-side-panel dr-design-only" id="drPropertiesPanel">
+            <div class="dr-panel-head">
+                <h2>إعدادات العمود</h2>
+                <span id="drSelectedColumnName" class="dr-muted">اختر عمودًا من الجدول أو الحقول.</span>
+            </div>
+            <div id="drColumnProperties" class="dr-properties-empty">لا يوجد عمود محدد.</div>
+
+            <div class="dr-builder">
+                <div class="dr-panel-head">
+                    <h2>Filter Builder</h2>
+                    <button type="button" class="dr-mini-button" id="drAddFilter">إضافة فلتر</button>
+                </div>
+                <div id="drFilterRows" class="dr-builder-list"></div>
+            </div>
+
+            <div class="dr-builder">
+                <div class="dr-panel-head">
+                    <h2>Conditional Formatting</h2>
+                    <button type="button" class="dr-mini-button" id="drAddConditionalRule">إضافة قاعدة</button>
+                </div>
+                <div id="drConditionalRows" class="dr-builder-list"></div>
+            </div>
+        </aside>
+    </div>
+</section>

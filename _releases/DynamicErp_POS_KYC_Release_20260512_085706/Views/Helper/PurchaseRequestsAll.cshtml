@@ -1,0 +1,54 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequest>
+<div class="table-responsive">
+    <table class="table table-striped table-centered">
+        <thead>
+            <tr>
+                <th>
+                    رقم الطلب
+                </th>
+                <th>
+                    الفرع
+                </th>
+                <th>
+                    التاريخ
+                </th>
+                <th>
+                    مجموعة الاصناف
+                </th>
+                <th>
+                    الحالة
+                </th>
+                <th>
+                    تفاصيل
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var PurchaseRequest in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelPurchaseRequest => PurchaseRequest.DocumentNumber)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelPurchaseRequest => PurchaseRequest.Department.ArName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelPurchaseRequest => PurchaseRequest.VoucherDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelPurchaseRequest => PurchaseRequest.ItemGroup.ArName)
+                    </td>
+                    <td class="status-name">
+                        @Html.DisplayFor(modelPurchaseRequest => PurchaseRequest.PurchaseRequestStatu.ArName)
+                    </td>
+                    <td>
+                        <a href="@Url.Action("AddEdit","PurchaseRequest",new { id=PurchaseRequest.Id })"  target="_blank">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

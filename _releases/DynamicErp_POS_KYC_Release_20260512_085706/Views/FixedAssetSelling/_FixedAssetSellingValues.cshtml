@@ -1,0 +1,18 @@
+﻿@model MyERP.Models.FixedAsset_DepreciationValues_Result
+
+<tr>
+    <td class="tabledit-edit-mode">
+        <select class="form-control tabledit-input form-control-sm fixed-asset"><option selected value="@Model.Id"></option></select>
+    </td>
+    <td class="tabledit-edit-mode">
+        <input class="form-control money fixed-asset-value tabledit-input form-control-sm" value="@Model.ValueOfAsset" readonly />
+    </td>
+    <td class="tabledit-edit-mode"><input class="form-control money TotalDepreciationValue tabledit-input form-control-sm" value="@Html.Raw(Model.ValueOfAsset-Model.CurrentValue)" readonly /></td>
+    <td class="tabledit-edit-mode"><input class="form-control money current-fixed-asset-value tabledit-input form-control-sm" value="@Model.CurrentValue" readonly /></td>
+    <td class="tabledit-edit-mode"><input class="form-control money SellingPrice tabledit-input form-control-sm" /></td>
+    <td>
+        <a href="javascript:void(0);" onclick="deleteRow(this);">
+            <i class="fas fa-trash-alt"></i>
+        </a>
+    </td>
+</tr>

@@ -1,0 +1,60 @@
+@model MyERP.Areas.MainErp.ViewModels.Security.MainErpLoginViewModel
+@{
+    Layout = null;
+    ViewBag.Title = "النظام الرئيسي - تسجيل الدخول";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/MainErp/Content/mainerp/mainerp.css")" rel="stylesheet" />
+</head>
+<body class="main-erp-body">
+    <div class="main-erp-login-page" dir="rtl">
+        <section class="main-erp-login-card">
+            <header>
+                <span class="main-erp-kicker">Main ERP Migration</span>
+                <h1>النظام الرئيسي</h1>
+                <p>تسجيل دخول مستقل لتحميل إعدادات مستخدم ERP القديم من قاعدة MainErp.</p>
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+            {
+                <div class="main-erp-warning">@Model.ErrorMessage</div>
+            }
+
+            @using (Html.BeginForm("Index", "Login", new { area = "MainErp" }, FormMethod.Post, new { autocomplete = "off", @class = "main-erp-login-form" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+
+                <label>
+                    <span>اسم المستخدم</span>
+                    <input type="text" name="UserName" value="@Model.UserName" autofocus required />
+                </label>
+
+                <label>
+                    <span>كلمة المرور</span>
+                    <input type="password" name="Password" required />
+                </label>
+
+                if (Model.IsDebugDatabaseOverrideEnabled)
+                {
+                    <div class="main-erp-login-db">
+                        <span>قاعدة MainErp الحالية</span>
+                        <strong>@Model.CurrentDatabaseName</strong>
+                    </div>
+                }
+
+                <button type="submit">تسجيل دخول</button>
+            }
+
+            <footer>
+                <a href="@Url.Action("Index", "DevStart", new { area = "" })">اختيار وضع التشغيل</a>
+            </footer>
+        </section>
+    </div>
+</body>
+</html>

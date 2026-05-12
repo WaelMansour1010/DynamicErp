@@ -1,0 +1,79 @@
+<main class="ep-page" data-screen="insurance-settings"
+      data-lookups-url="@Url.Action("Lookups", "EmployeePayroll")"
+      data-providers-url="@Url.Action("Providers", "EmployeePayroll")"
+      data-save-provider-url="@Url.Action("SaveProvider", "EmployeePayroll")"
+      data-plans-url="@Url.Action("Plans", "EmployeePayroll")"
+      data-save-plan-url="@Url.Action("SavePlan", "EmployeePayroll")">
+    <header class="ep-header">
+        <div>
+            <h1>إعدادات التأمين الطبي</h1>
+            <p>تعريف شركات التأمين وخطط الاشتراك وقيم تحمل الموظف والشركة.</p>
+        </div>
+        <nav class="ep-header-actions" aria-label="روابط موديول الموظفين">
+            <a class="ep-link" href="@Url.Action("Employees", "EmployeePayroll")"><i class="fas fa-users"></i> الموظفون</a>
+            <a class="ep-link" href="@Url.Action("SalaryRun", "EmployeePayroll")"><i class="fas fa-file-invoice-dollar"></i> مسير الرواتب</a>
+            <a class="ep-link" href="@Url.Action("MedicalInsuranceReports", "EmployeePayroll")"><i class="fas fa-chart-bar"></i> التقارير</a>
+        </nav>
+    </header>
+
+    <section class="ep-settings-grid">
+        <form class="ep-editor ep-form-card ep-provider-card" id="epProviderForm">
+            <input type="hidden" id="epProviderId" />
+            <div class="ep-card-title">
+                <h2>شركة تأمين</h2>
+                <label class="ep-switch"><input id="epProviderActive" type="checkbox" checked /> نشط</label>
+            </div>
+            <div class="ep-fields ep-provider-fields ep-form-grid">
+                <label>اسم عربي<input id="epProviderNameAr" required maxlength="200" /></label>
+                <label>اسم إنجليزي<input id="epProviderNameEn" maxlength="200" /></label>
+                <label>هاتف<input id="epProviderPhone" maxlength="50" /></label>
+                <label class="ep-span-all">ملاحظات<textarea id="epProviderNotes"></textarea></label>
+            </div>
+            <div class="ep-form-actions">
+                <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ الشركة</button>
+            </div>
+        </form>
+
+        <form class="ep-editor ep-form-card ep-plan-card" id="epPlanForm">
+            <input type="hidden" id="epPlanId" />
+            <div class="ep-card-title">
+                <h2>خطة تأمين</h2>
+                <label class="ep-switch"><input id="epPlanActive" type="checkbox" checked /> نشط</label>
+            </div>
+            <div class="ep-fields ep-plan-fields ep-form-grid">
+                <label>شركة التأمين<select id="epPlanProvider" required><option value="">اختر الشركة</option></select></label>
+                <label>اسم الخطة عربي<input id="epPlanNameAr" required maxlength="200" /></label>
+                <label>اسم الخطة إنجليزي<input id="epPlanNameEn" maxlength="200" /></label>
+                <label>التكلفة الشهرية<input id="epPlanMonthlyCost" type="number" step="0.01" min="0" /></label>
+                <label>تحمل الموظف<select id="epPlanEmployeeShareType"><option value="Amount">مبلغ</option><option value="Percent">نسبة</option></select></label>
+                <label>قيمة تحمل الموظف<input id="epPlanEmployeeShareValue" type="number" step="0.01" min="0" /></label>
+                <label>تحمل الشركة<select id="epPlanCompanyShareType"><option value="AutoBalance">الباقي تلقائيا</option><option value="Amount">مبلغ</option><option value="Percent">نسبة</option></select></label>
+                <label>قيمة تحمل الشركة<input id="epPlanCompanyShareValue" type="number" step="0.01" min="0" /></label>
+                <label>حساب خصم الموظف<input id="epPlanEmployeeAccount" maxlength="110" /></label>
+                <label>حساب تكلفة الشركة<input id="epPlanCompanyAccount" maxlength="110" /></label>
+                <label class="ep-span-all">ملاحظات<textarea id="epPlanNotes"></textarea></label>
+            </div>
+            <div class="ep-form-actions">
+                <button type="submit" class="ep-primary"><i class="fas fa-save"></i> حفظ الخطة</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="ep-lists-grid">
+        <div class="ep-grid-wrap ep-table-card">
+            <div class="ep-card-title"><h2>شركات التأمين</h2></div>
+            <table class="ep-table ep-mini-table ep-provider-table">
+                <thead><tr><th>الشركة</th><th>الهاتف</th><th>الحالة</th><th class="ep-action-col"></th></tr></thead>
+                <tbody id="epProvidersRows"></tbody>
+            </table>
+        </div>
+        <div class="ep-grid-wrap ep-table-card">
+            <div class="ep-card-title"><h2>خطط التأمين</h2></div>
+            <table class="ep-table ep-mini-table ep-plan-table">
+                <thead><tr><th>الخطة</th><th>الشركة</th><th>التكلفة</th><th>الموظف</th><th>الشركة</th><th>الحالة</th><th class="ep-action-col"></th></tr></thead>
+                <tbody id="epPlansRows"></tbody>
+            </table>
+        </div>
+    </section>
+    <div class="ep-message" id="epMessage"></div>
+</main>

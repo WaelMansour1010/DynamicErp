@@ -1,0 +1,112 @@
+﻿
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.AboutUs;
+    Layout = "~/Views/Shared/_HotelBookingLayout.cshtml";
+}
+<head>
+
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <!------ Include the above in your HEAD tag ---------->
+    <style>
+    .aboutus-area {
+    padding-top:120px;
+    padding-bottom:120px;
+    }
+    /*-- aboutus Image --*/
+    .aboutus-image {
+    margin-right: 52px;
+    width: 318px; }
+    @@media only screen and (min-width: 992px) and (max-width: 1200px) {
+    .aboutus-image {
+    margin-right: 35px;
+    width: 345px; } }
+    @@media only screen and (min-width: 768px) and (max-width: 991px) {
+    .aboutus-image {
+    margin-bottom: 30px;
+    float: none; } }
+    @@media only screen and (max-width: 767px) {
+    .aboutus-image {
+    margin-bottom: 30px;
+    margin-right: 0;
+    float: none;
+    width: auto; } }
+    .aboutus-image img {
+    width: 100%; }
+
+    /*-- aboutus Content --*/
+    .aboutus-content h1 {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 40px;
+    margin-bottom: 2px; }
+    @@media only screen and (max-width: 479px) {
+    .aboutus-content h1 {
+    font-size: 30px;
+    line-height: 30px; } }
+        .aboutus-content h1 span {
+            color: #f5e4c3 /*#71b100*/;
+        }
+
+    .aboutus-content h4 {
+    font-size: 18px;
+    font-weight: 500;
+    color: #9b9b9b;
+    margin-bottom: 23px; }
+
+    .aboutus-content p {
+    font-size: 16px;
+    line-height: 27px; }
+
+    
+
+    </style>
+</head>
+
+<div class="aboutus-area" style="text-align:center">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="col-md-4 col-sm-6 col-xs-12">
+                    <div class="aboutus-image float-left hidden-sm"><img src="https://devitems.com/preview/sopnovilla/sopnovilla/img/about/1.jpg" alt=""></div>
+                </div>
+                <div class="col-md-8 col-sm-6 col-xs-12">
+                    <div class="aboutus-content ">
+                        <h1> @MyERP.Properties.Resources.Chalets <span> @MyERP.Properties.Resources.FunTimes </span></h1>
+                        <br />
+                        <h2> @MyERP.Properties.Resources.AboutUs</h2>
+                        <p>
+                            @MyERP.Properties.Resources.FunTimesChaletsAboutUs
+                        </p>
+                        <br />
+
+                        <h2> @MyERP.Properties.Resources.FunTimesChaletsAlThumama</h2>
+                        <p>
+                            @MyERP.Properties.Resources.FunTimesChaletsAlThumamaDescription
+                        </p>
+                        <br />
+
+
+                        <h2> @MyERP.Properties.Resources.FunTimeDharma</h2>
+                        <h4> @MyERP.Properties.Resources.LocatedInDharma</h4>
+                        <p>
+                            @MyERP.Properties.Resources.FunTimeDharmaDescription
+                        </p>
+                        <br />
+
+                        <h2> @MyERP.Properties.Resources.FunTimeCampAndRestQassimRoad</h2>
+                        <h4> @MyERP.Properties.Resources.LocatedInQassimRoad</h4>
+                        <p>
+                            @MyERP.Properties.Resources.FunTimeFunTimeCampAndRestQassimRoadDescription
+                        </p>
+                        <br />
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

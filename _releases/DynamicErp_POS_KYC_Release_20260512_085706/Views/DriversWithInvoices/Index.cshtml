@@ -1,0 +1,53 @@
+﻿@model IEnumerable<MyERP.Models.SalesInvoice>
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Drivers;
+}
+
+<div class="card-box">
+    <div class="form-group form-row">
+        <label class=" col-sm-4 control-label" for="DepartmentId">@MyERP.Properties.Resources.Branch</label>
+        <div class="col-sm-8">
+            @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12" id="DriversWithInvoicesTable">
+
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        showDriversInvoices();
+
+    });
+    $(document).on("change", "#DepartmentId", function () {
+        showDriversInvoices();
+    });
+
+    
+
+    function showDriversInvoices() {
+        var depId = $("#DepartmentId").val();
+        //alert(depId)
+        getUnpaidInvoices(depId);
+
+    }
+
+    
+
+    function getUnpaidInvoices(depId) {
+        $('#UnpaidInvoicesTable').empty().append('<div class="col-sm-12"><div class="d-flex align-items-center"><div class="spinner-border ml-auto" role="status" aria-hidden="true"></div></div></div>');
+        $.get('/PointOfSale/DriversWithOrdersByDepartment?depId=' + depId).done(function (r) {
+            $('#DriversWithInvoicesTable').empty().append(r);
+        });
+    }
+
+</script>
+
+

@@ -1,0 +1,103 @@
+@model MyERP.Areas.MainErp.ViewModels.LC.LCDetailsViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("LettersOfCredit");
+}
+
+<section class="main-erp-panel main-erp-operational-page main-erp-lc-screen">
+    <div class="main-erp-title-row">
+        <div>
+            <span class="main-erp-kicker">@T("ReadOnly")</span>
+            <h3>@T("LettersOfCredit")</h3>
+            <p>@T("LcReadOnlyIntro")</p>
+        </div>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    <div class="main-erp-vb6-toolbar">
+        <a href="@Url.Action("Index", "LC", new { area = "MainErp", selectedId = Model.TblLCID })">@T("Back")</a>
+        <button type="button" class="is-disabled-action" aria-disabled="true">@T("Save")</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true">@T("PreviewVoucher")</button>
+        <button type="button" class="is-disabled-action" aria-disabled="true">@T("Reports")</button>
+    </div>
+
+    <section class="main-erp-lc-strip main-erp-lc-status-panel">
+        <div><span>@T("LcNumber")</span><strong>@Model.LCNO</strong></div>
+        <div><span>@T("Bank")</span><strong>@Model.BankName</strong></div>
+        <div><span>@T("Currency")</span><strong>@Model.CurrencyName</strong></div>
+        <div><span>@T("Value")</span><strong>@String.Format("{0:n2}", Model.Value)</strong></div>
+        <div><span>@T("Open")</span><strong>@String.Format("{0:n2}", Model.OpenValue)</strong></div>
+        <div><span>@T("Close")</span><strong>@(Model.Locked == true || Model.CloseDate.HasValue ? T("Close") : T("Open"))</strong></div>
+    </section>
+
+    <section class="main-erp-tabs main-erp-lc-tabs">
+        <section>
+            <h4>@T("LcHeader")</h4>
+            <dl class="main-erp-details">
+                <dt>@T("LcNumber")</dt><dd>@Model.LCNO</dd>
+                <dt>@T("Supplier")</dt><dd>@Model.VendorName</dd>
+                <dt>@T("Projects")</dt><dd>@Model.ProjectName</dd>
+                <dt>@T("Branch")</dt><dd>@Model.BranchID</dd>
+                <dt>@T("Description")</dt><dd>@Model.Remarks</dd>
+            </dl>
+        </section>
+
+        <section>
+            <h4>@T("LcBankCurrencyValues")</h4>
+            <dl class="main-erp-details">
+                <dt>@T("Bank")</dt><dd>@Model.BankName</dd>
+                <dt>@T("Currency")</dt><dd>@Model.CurrencyName</dd>
+                <dt>@T("Value")</dt><dd>@String.Format("{0:n2}", Model.Value)</dd>
+                <dt>@T("FromDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.FromDate)</dd>
+                <dt>@T("ToDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", Model.ToDate)</dd>
+            </dl>
+        </section>
+
+        <section>
+            <h4>@T("LcAccounts")</h4>
+            <table class="main-erp-table">
+                <thead>
+                    <tr>
+                        <th>@T("Details")</th>
+                        <th>@T("Account")</th>
+                        <th>@T("ParentAccount")</th>
+                        <th>@T("Validation")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var account in Model.AccountLinks)
+                    {
+                        <tr>
+                            <td>@account.Role</td>
+                            <td>@(string.IsNullOrWhiteSpace(account.AccountDisplay) ? T("AccountNotFound") : account.AccountDisplay)</td>
+                            <td>@(string.IsNullOrWhiteSpace(account.ParentAccountDisplay) ? T("AccountNotFound") : account.ParentAccountDisplay)</td>
+                            <td>@account.Warning</td>
+                        </tr>
+                    }
+                    @if (Model.AccountLinks.Count == 0)
+                    {
+                        <tr><td colspan="4">@T("NoRows")</td></tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+    </section>
+</section>
+
+<script>
+    (function () {
+        var buttons = document.querySelectorAll('.main-erp-lc-screen .is-disabled-action');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].addEventListener('click', function () {
+                alert('@T("DisabledReadOnlyMessage")');
+            });
+        }
+    })();
+</script>

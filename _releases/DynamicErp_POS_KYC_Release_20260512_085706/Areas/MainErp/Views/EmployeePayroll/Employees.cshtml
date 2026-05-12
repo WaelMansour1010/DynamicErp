@@ -1,0 +1,11 @@
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الموظفون";
+}
+<div class="ep-body" data-base="@Url.Action("Employees", "EmployeePayroll", new { area = "MainErp" })">
+    @Html.Partial("~/Areas/Pos/Views/EmployeePayroll/_EmployeePayrollEmployees.cshtml")
+</div>
+@section scripts {
+    <link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")" rel="stylesheet" />
+    <script src="@Url.Content("~/Areas/Pos/Scripts/employee-payroll.js")"></script>
+}

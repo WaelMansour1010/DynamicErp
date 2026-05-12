@@ -1,0 +1,1155 @@
+﻿@model MyERP.Models.Employee
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.Employees;
+    var EnterEmployeeCodeManually = ViewBag.EnterEmployeeCodeManually;
+}
+
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.Employees :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Employee/AddEdit" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-12">
+                        @* panal 1 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.EmployeeData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse1">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                @if (Model != null)
+                                                {
+                                                    @Html.HiddenFor(model => model.Id)
+                                                    @Html.HiddenFor(model => model.IsActive)
+                                                    @Html.HiddenFor(model => model.IsDeleted)
+                                                    @Html.HiddenFor(model => model.UserId)
+                                                    @Html.HiddenFor(model => model.Image)
+                                                    @Html.HiddenFor(model => model.FixedAssetId)
+                                                    @Html.HiddenFor(model => model.IsDriver)
+                                                    @Html.HiddenFor(model => model.DepartmentRepId)
+                                                    @Html.HiddenFor(model => model.RepresentativeGroupId)
+                                                    @Html.HiddenFor(model => model.DiscountPercentage)
+                                                    @Html.HiddenFor(model => model.IsSalesRepresentative)
+                                                    @Html.HiddenFor(model => model.CurrentYearBalanceEG)
+                                                    @Html.HiddenFor(model => model.OpeningBalanceEG)
+                                                    @Html.HiddenFor(model => model.PreviousVacationsEG)
+                                                    @Html.HiddenFor(model => model.RemainingBalanceEG)
+                                                    @Html.HiddenFor(model => model.IsDeported)
+                                                }
+                                                <label class=" col-sm-4 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                                <div class="col-sm-4">
+                                                    @if (EnterEmployeeCodeManually == true)
+                                                    {
+                                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, required = "required" } })
+                                                        <div class="invalid-feedback">
+                                                            @MyERP.Properties.Resources.Required
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        @Html.EditorFor(model => model.Code, new
+                                                   {
+                                                       htmlAttributes = new
+                                                       {
+                                                           @class = "form-control",
+                                                           placeholder = @MyERP.Properties.Resources.Code,
+                                                           @readonly = "readonly",@*required = "required"*@}
+})
+                                                        @*<div class="invalid-feedback">
+                    الكود مطلوب
+                </div>*@
+                                                    }
+                                                </div>
+                                                <div class="col-sm-4">
+                                                    @Html.DropDownListFor(model => model.FieldsCodingId, null, null, htmlAttributes: new { @class = "form-control" })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="form-group row">
+                                                <label class=" col-sm-4 control-label" for="ArName">  @MyERP.Properties.Resources.ArName</label>
+                                                <div class="col-sm-8">
+                                                    @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.ArNameRequired
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="form-group row">
+                                                <label class=" col-sm-4 control-label" for="EnName">  @MyERP.Properties.Resources.EnName</label>
+                                                <div class="col-sm-8">
+                                                    @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            @* مكان الصورة *@
+                                            @if (Model != null)
+                                            {
+                                                <div class="row p-3">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <div class="row text-center">
+                                                                <label for="inputtext3" class="control-label">
+                                                                    @MyERP.Properties.Resources.CurrentPhoto
+                                                                </label>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-sm-4">
+                                                                    @if (Model.Image != null)
+                                                                    {
+                                                                        <img style='height:100px;width:100px;border-radius: 50px;' class="imgold" src='@Model.Image' />
+
+                                                                    }
+                                                                    @*else
+                                                                        {
+                                                                            <img style='height:100px;width:100px;border-radius: 50px;' class="imgold" src='#' />
+
+                                                                        }
+                                                                        @Html.HiddenFor(model => model.Image)*@
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <div class="row">
+                                                                <label for="inputtext3" class="control-label">
+
+                                                                    @MyERP.Properties.Resources.SelectNew
+                                                                </label>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-sm-4">
+                                                                    <input type="file" style="display: inline" onchange="readURL(this)" name="upload" class="photo" id="img" />
+                                                                    <img style='height:100px; width: 100px;  border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="form-group row">
+                                                    <label for="inputtext3" class="col-sm-4 control-label">
+                                                        @MyERP.Properties.Resources.SelectNew
+                                                    </label>
+                                                    <div class="col-sm-8">
+                                                        <input type="file" style="display: inline" onchange="readURL(this)" name="upload" photo" id="img" />
+                                                        <img style='height:100px;width:100px;border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="JobGradeId"> @MyERP.Properties.Resources.JobGrade </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("JobGradeId", null, @MyERP.Properties.Resources.Select
+, htmlAttributes: new
+{
+    @class = "form-control",@*required = "required"*@})
+                                            @*@Html.ValidationMessageFor(model => model.JobGradeId, "", new { @class = "text-danger" })*@
+                                        </div>
+
+                                        <label for="GenderId" class="control-label col-sm-2">@MyERP.Properties.Resources.Gender</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("GenderId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    الجنس مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="Email" class="control-label col-sm-2">@MyERP.Properties.Resources.Email</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Email } })
+                                        </div>
+
+                                        <label for="MaritalStatusId" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.MaritalStatus
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("MaritalStatusId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    الحالة الاجتماعية مطلوبة
+                                                </div>*@
+
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="PhoneNumber" class="control-label col-sm-2">@MyERP.Properties.Resources.Tel </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.PhoneNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Tel } })
+                                        </div>
+
+                                        <label for="MobileNumber" class="control-label col-sm-2"> @MyERP.Properties.Resources.Mobile</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.MobileNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Mobile } })
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="Birthdate" class="control-label col-sm-2"> @MyERP.Properties.Resources.BirthDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Birthdate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",
+                                                    @type = "datetime-local",@*@required = "required"*@}
+})
+                                            @*@Html.ValidationMessageFor(model => model.Birthdate, "", new { @class = "text-danger" })*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijryBirthdate  </label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="BirthdateHijri" class="form-control" />
+                                            @*@Html.ValidationMessageFor(model => model.Birthdate, "", new { @class = "text-danger" })*@
+                                        </div>
+                                        @*<label class="control-label col-sm-1">العمر</label>
+                                            <div class="col-sm-1">
+                                                <input id="Age" class="form-control" disabled readonly />
+                                                <span class="ml-2">سنة</span>
+                                            </div>*@
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="ContractsTypeId" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.ContractsType
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ContractsTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                       {
+                                           @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    نوع التعاقد مطلوب
+                                                </div>*@
+
+                                        </div>
+
+                                        <label for="EmpCodeOnFingerPrint" class="control-label col-sm-2">
+                                            @MyERP.Properties.Resources.EmpCodeOnFingerPrint
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.EmpCodeOnFingerPrint, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",@*@required = "required"*@}
+})
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="WorkStatusId" class="control-label col-sm-2"> @MyERP.Properties.Resources.WorkStatus</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("WorkStatusId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <label for="SalaryProtection" class="control-label col-sm-2">@MyERP.Properties.Resources.SalaryProtection </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.SalaryProtection, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",@*@required = "required"*@}
+})
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="DirectManagerId" class="control-label col-sm-2"> @MyERP.Properties.Resources.DirectManager</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("DirectManagerId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    المدير المباشر مطلوب
+                                                </div>*@
+                                        </div>
+
+                                        <label for="EmployeeTypeId" class="control-label col-sm-2"> @MyERP.Properties.Resources.EmployeeType</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("EmployeeTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    نوع الموظف مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="AlternativeEmployeeId" class="control-label col-sm-2"> @MyERP.Properties.Resources.AlternativeEmployee</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("AlternativeEmployeeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    الموظف البديل مطلوب
+                                                </div>*@
+                                        </div>
+
+                                        <label for="HasOverTime" class="control-label col-sm-2"> @MyERP.Properties.Resources.HasOverTime</label>
+                                        <div class="col-sm-4">
+                                            @if (Model != null && Model.HasOverTime == true)
+                                            {
+                                                @Html.CheckBox("HasOverTime", true, new { htmlAttributes = new { @class = "form-control", @value = Model.HasOverTime } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("HasOverTime", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
+                                        <div class="col-sm-4">
+
+                                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*@Html.ValidationMessageFor(model => model.DepartmentId, "", new { @class = "text-danger" })*@
+                                        </div>
+                                        <label for="IsChef" class="control-label col-sm-2">@MyERP.Properties.Resources.Chef</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.IsChef)
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+
+                                        <label for="IsInsured" class="control-label col-sm-2">@MyERP.Properties.Resources.IsInsured</label>
+                                        <div class="col-sm-4">
+                                            @if (Model != null && Model.IsInsured == true)
+                                            {
+                                                @Html.CheckBox("IsInsured", true, new { htmlAttributes = new { @class = "form-control", @value = Model.IsInsured } })
+                                            }
+                                            else
+                                            {
+                                                @Html.CheckBox("IsInsured", false, new { htmlAttributes = new { @class = "form-control" } })
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="NationalityId" class="control-label col-sm-2">@MyERP.Properties.Resources.Nationality</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("NationalityId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                       {
+                                           @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    الجنسية مطلوبة
+                                                </div>*@
+                                        </div>
+
+                                        <label for="ReligionId" class="control-label col-sm-2">@MyERP.Properties.Resources.Religion</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("ReligionId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    الديانة مطلوبة
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="LocationId" class="control-label col-sm-2">@MyERP.Properties.Resources.Location</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("LocationId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    الموقع مطلوب
+                                                </div>*@
+                                        </div>
+
+                                        <label for="WorkTeamId" class="control-label col-sm-2">@MyERP.Properties.Resources.WorkTeam </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("WorkTeamId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                            {
+                                                @class = "form-control",@*required = "required"*@})
+                                            @*<div class="invalid-feedback">
+                                                    فريق العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 2 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                            @MyERP.Properties.Resources.Residence
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse2">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="NationalId">@MyERP.Properties.Resources.NationalID </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.NationalId, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.NationalID,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    رقم الهوية مطلوبة
+                                                </div>*@
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="LivingAddress"> @MyERP.Properties.Resources.LivingAddress</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.LivingAddress, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.LivingAddress
+                                                    ,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    مكان الإقامة مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="ResidenceReleaseDate">@MyERP.Properties.Resources.ReleaseDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ResidenceReleaseDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إصدار الاقامة مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriReleaseDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="ResidenceReleaseDateHijri" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="ResidenceExpiryDate">@MyERP.Properties.Resources.ExpiryDate </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.ResidenceExpiryDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إنتهاء الاقامة مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="ResidenceExpiryDateHijri" class="form-control" />
+                                        </div>
+                                    </div>
+
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="NationalJobId">@MyERP.Properties.Resources.Job</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.NationalJobId, null, @MyERP.Properties.Resources.Select, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",@*required = "required"*@
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    المهنة مطلوبة
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="NationalExpiryDate">@MyERP.Properties.Resources.NationalExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.NationalExpiryDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ انتهاءالهوية مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">  @MyERP.Properties.Resources.HijriNationalExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryNationalExpiryDate" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 3 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                            @MyERP.Properties.Resources.PassPort
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse3">
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="PassportId">@MyERP.Properties.Resources.PassPortID</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.PassportId, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",
+                                               placeholder = @MyERP.Properties.Resources.PassPortID,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    رقم جواز السفر مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="PassportReleaseAddress"> @MyERP.Properties.Resources.PassportReleaseAddress</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.PassportReleaseAddressId, null, @MyERP.Properties.Resources.Select, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    مكان إصدار جواز السفر مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="PassportReleaseDate">@MyERP.Properties.Resources.ReleaseDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.PassportReleaseDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إصدار جواز السفر مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriReleaseDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="PassportReleaseDateHijri" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="PassportExpiryDate">@MyERP.Properties.Resources.ExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.PassportExpiryDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إنتهاء جواز السفر مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriExpiryDate  </label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="PassportExpiryDateHijri" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="PassportJobId">
+                                            @MyERP.Properties.Resources.PassportJob
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.PassportJobId, null, @MyERP.Properties.Resources.Select, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",@*required = "required"*@
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    المهنة فى جواز السفر مطلوبة
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 4 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                            @MyERP.Properties.Resources.WorkData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse4">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="AreaId">@MyERP.Properties.Resources.AddressDetails</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.AreaId, null, @MyERP.Properties.Resources.Select, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    المنطقة/القطاع/المسكن مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="HrDepartmentId">@MyERP.Properties.Resources.HrDepartment</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.HrDepartmentId, null, @MyERP.Properties.Resources.Select, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    الإدارة مطلوبة
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="AdministrativeDepartmentId">@MyERP.Properties.Resources.AdministrativeDepartment</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.AdministrativeDepartmentId, null, @MyERP.Properties.Resources.Select, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    القسم مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="JobId">@MyERP.Properties.Resources.Job</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownList("JobId", null, @MyERP.Properties.Resources.Select, new { htmlAttributes = new { @class = "form-control", required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="HireDate" class="control-label col-sm-2">@MyERP.Properties.Resources.HireDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.HireDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",
+                                                    @type = "datetime-local",@*@required = "required"*@}
+})
+
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ التعين مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriHireDate </label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryHireDate" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="IndustrialSafetyExpiryDate"> @MyERP.Properties.Resources.IndustrialSafetyExpiryDate  </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.IndustrialSafetyExpiryDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ نهاية بطاقة الامن الصناعى مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriIndustrialSafetyExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryIndustrialSafetyExpiryDate" class="form-control" />
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 5 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                            @MyERP.Properties.Resources.Worklicense
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse5">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="WorkLicenseId">
+                                            @MyERP.Properties.Resources.WorklicenseID
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkLicenseId, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",
+                                               placeholder = @MyERP.Properties.Resources.WorklicenseID
+,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    رقم رخصة العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="WorkLicenseReleaseDate"> @MyERP.Properties.Resources.ReleaseDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkLicenseReleaseDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إصدار رخصة العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriReleaseDate </label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryWorkLicenseReleaseDate" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="WorkLicenseExpiryDate">@MyERP.Properties.Resources.ExpiryDate </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkLicenseExpiryDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إنتهاء رخصة العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2"> @MyERP.Properties.Resources.HijriExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryWorkLicenseExpiryDate" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 6 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+                                            @MyERP.Properties.Resources.DrivingLicense
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse6">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="DrivingLicenseId">
+                                            @MyERP.Properties.Resources.DrivingLicenseID
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.DrivingLicenseId, new
+                                       {
+                                           htmlAttributes = new
+                                           {
+                                               @class = "form-control",
+                                               placeholder = @MyERP.Properties.Resources.DrivingLicenseID
+,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                   رقم رخصةالقيادة مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="DrivingLicenseReleaseDate">
+                                            @MyERP.Properties.Resources.ReleaseDate
+                                        </label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.DrivingLicenseReleaseDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إصدار رخصة القيادة مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriReleaseDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryDrivingLicenseReleaseDate" class="form-control" />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="DrivingLicenseExpiryDate"> @MyERP.Properties.Resources.ExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.DrivingLicenseExpiryDate, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control Gregorian",@*required = "required",*@@type = "datetime-local"
+}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تاريخ إنتهاء رخصة القيادة مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class="control-label col-sm-2">@MyERP.Properties.Resources.HijriExpiryDate</label>
+                                        <div class="col-sm-4">
+                                            <input readonly type="text" id="HijryDrivingLicenseExpiryDate" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* panal 7 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse7">
+                                            @MyERP.Properties.Resources.WorkOwnerData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse7">
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="WorkOwnerId">@MyERP.Properties.Resources.NationalID</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkOwnerId, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.NationalID,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    رقم هوية صاحب العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="WorkOwnerName">@MyERP.Properties.Resources.ArName</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkOwnerName, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.ArName,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    اسم صاحب العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="WorkOwnerNum">@MyERP.Properties.Resources.Mobile</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkOwnerNum, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.Mobile,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    تليفون صاحب العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                        <label class=" col-sm-2 control-label" for="WorkOwnerId">@MyERP.Properties.Resources.Address</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.WorkOwnerAddress, new
+                                            {
+                                                htmlAttributes = new
+                                                {
+                                                    @class = "form-control",
+                                                    placeholder = @MyERP.Properties.Resources.Address,@*required = "required"*@}
+})
+                                            @*<div class="invalid-feedback">
+                                                    عنوان صاحب العمل مطلوب
+                                                </div>*@
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <!--************************************ My Code End  *********************************************-->
+
+                        <input id="new" name="newBtn" hidden />
+                        <div style="float:left;">
+                            @if (Model == null)
+                            {
+                                <button type="submit" id="newbtn" class="btn btn-success">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button type="submit" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <a class="btn btn-danger" onclick="Delete(@Model.Id,'Employee')" role="button">@MyERP.Properties.Resources.Delete</a>
+                                    if (Model.EmployeeContracts.Where(a => a.EmployeeId == Model.Id).FirstOrDefault() != null)
+                                    {
+                                        <a class="btn btn-success" target="_blank" href="/Report/EmployeesContract/@Model.EmployeeContracts.Where(a => a.EmployeeId == Model.Id).FirstOrDefault().Id" role="button">@MyERP.Properties.Resources.PrintContract</a>
+                                    }
+                                }
+                            }
+
+                        </div>
+
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var EnterEmployeeCodeManually = '@ViewBag.EnterEmployeeCodeManually';
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+    function setCodeNum() {
+        var doc = $.get('/Employee/SetCodeNum?FieldsCodingId=' + $('#FieldsCodingId').val()).done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+
+    $('#FieldsCodingId').on('change', function () {
+        if (!$('#Id').val()) {
+            if (EnterEmployeeCodeManually != 'True') {
+                setCodeNum();
+            }
+        }
+    });
+    // disable gives Null with form Submit so we have to reverse it in submin
+    $("form").submit(function () {
+        $("#FieldsCodingId").prop('disabled', false);
+    });
+
+    $(document).ready(function () {
+
+            $('#img').on('change', function () {
+
+                $('#oImg').val($('#img').val());
+            });
+
+        if ($('#Id').val() > 0) {
+            $('#FieldsCodingId').prop('disabled', true);
+        $('#Birthdate').val('@ViewBag.Birthdate');
+        $('#HireDate').val('@ViewBag.HireDate');
+        $('#ResidenceReleaseDate').val('@ViewBag.ResidenceReleaseDate');
+        $('#ResidenceExpiryDate').val('@ViewBag.ResidenceExpiryDate');
+        $('#NationalExpiryDate').val('@ViewBag.NationalExpiryDate');
+        $('#IndustrialSafetyExpiryDate').val('@ViewBag.IndustrialSafetyExpiryDate');
+        $('#WorkLicenseExpiryDate').val('@ViewBag.WorkLicenseExpiryDate');
+        $('#WorkLicenseReleaseDate').val('@ViewBag.WorkLicenseReleaseDate');
+        $('#DrivingLicenseExpiryDate').val('@ViewBag.DrivingLicenseExpiryDate');
+        $('#DrivingLicenseReleaseDate').val('@ViewBag.DrivingLicenseReleaseDate');
+        $('#PassportReleaseDate').val('@ViewBag.PassportReleaseDate');
+        $('#PassportExpiryDate').val('@ViewBag.PassportExpiryDate');
+    }
+    else
+        {
+            if (EnterEmployeeCodeManually != 'True') {
+                setCodeNum();
+            }
+        var d = new Date();
+        $('#HireDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#Birthdate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+         $('#DrivingLicenseExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#DrivingLicenseReleaseDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#WorkLicenseExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#WorkLicenseReleaseDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#ResidenceExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#ResidenceReleaseDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#IndustrialSafetyExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#PassportExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#PassportReleaseDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#NationalExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+        }
+        $('.Gregorian').each(function () {
+            var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+            $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+        });
+
+    });
+
+    $('#Birthdate').change(function () {
+            var date = new Date();
+            var CurrentYear = date.getFullYear();
+            var BD = $('#Birthdate').val();
+            var NewDate = new Date(BD);
+            var BirthYear = NewDate.getFullYear();
+            var Diff = CurrentYear - BirthYear;
+            $('#Age').val(Diff);
+    });
+
+    $('.Gregorian').on('change',function () {
+
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry'+$(this).attr('id')+'').val(Hijry);
+
+    });
+
+
+
+    //--------------------------------------------------//
+
+        $(".photo").change(function () {
+            $(".imgold").addClass("hidden");
+        });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $(".imgnew").removeClass("hidden");
+
+                    $('#blah')
+                        .attr('src', e.target.result)
+
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+    }
+        function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Employee/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Employee');
+                        }
+                    }
+                });
+        }
+    }
+
+
+</script>

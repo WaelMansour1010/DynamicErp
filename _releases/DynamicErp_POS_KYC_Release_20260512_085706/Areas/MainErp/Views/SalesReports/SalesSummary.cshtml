@@ -1,0 +1,73 @@
+@model MyERP.Areas.MainErp.ViewModels.Reports.SalesSummaryReportViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("SalesSummary");
+}
+
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@T("SalesSummary")</h3>
+            <p>@T("SalesSummaryIntro")</p>
+        </div>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    @using (Html.BeginForm("SalesSummary", "SalesReports", new { area = "MainErp" }, FormMethod.Get, new { @class = "main-erp-filter" }))
+    {
+        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("FromDate")" />
+        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("ToDate")" />
+        <input type="number" name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" />
+        <input type="number" name="userId" value="@Model.UserId" placeholder="@T("User")" />
+        <input type="number" name="customerId" value="@Model.CustomerId" placeholder="@T("Customer")" />
+        <button type="submit">@T("ReportRun")</button>
+    }
+
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>@T("Date")</th>
+                <th>@T("Branch")</th>
+                <th>@T("User")</th>
+                <th>@T("InvoiceCount")</th>
+                <th>@T("TotalBeforeVat")</th>
+                <th>@T("Vat")</th>
+                <th>@T("Total")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    <td>@(row.Date.HasValue ? row.Date.Value.ToString("dd/MM/yyyy") : "")</td>
+                    <td>@row.BranchName</td>
+                    <td>@row.UserName</td>
+                    <td>@row.InvoiceCount</td>
+                    <td>@row.TotalBeforeVat.ToString("N2")</td>
+                    <td>@row.Vat.ToString("N2")</td>
+                    <td>@row.Total.ToString("N2")</td>
+                </tr>
+            }
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="7">@T("NoRows")</td></tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3">@T("Totals")</th>
+                <th>@Model.InvoiceCount</th>
+                <th>@Model.TotalBeforeVat.ToString("N2")</th>
+                <th>@Model.TotalVat.ToString("N2")</th>
+                <th>@Model.TotalAmount.ToString("N2")</th>
+            </tr>
+        </tfoot>
+    </table>
+</section>

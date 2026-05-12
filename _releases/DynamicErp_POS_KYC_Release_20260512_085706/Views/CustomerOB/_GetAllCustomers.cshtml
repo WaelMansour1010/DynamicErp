@@ -1,0 +1,30 @@
+﻿@model IEnumerable<MyERP.Models.GetCustomerOB_Result>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td hidden>
+            <input class="id" value="@item.Id" />
+
+        </td>
+
+        <td>
+            @Html.DisplayFor(modelItem => item.Code)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.ArName)
+        </td>
+
+        <td>
+            <input class="form-control OBDebit money" type="text" value="@item.OBDebit" />
+
+        </td>
+        <td>
+            <input class="form-control OBCredit money" type="text" value="@item.OBCredit" />
+
+
+        </td>
+
+    </tr>
+}
+

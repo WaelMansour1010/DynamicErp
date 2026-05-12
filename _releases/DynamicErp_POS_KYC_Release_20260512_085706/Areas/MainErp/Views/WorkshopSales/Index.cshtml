@@ -1,0 +1,139 @@
+@model MyERP.Areas.MainErp.ViewModels.SalesInvoices.SalesInvoiceIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.ArabicTitle;
+    var isPump = Model.Kind == MyERP.Areas.MainErp.ViewModels.SalesInvoices.MainErpSalesInvoiceKind.Pump;
+    var controllerName = isPump ? "PumpSales" : "WorkshopSales";
+}
+
+<section class="main-erp-panel" dir="rtl">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@Model.ArabicTitle</h3>
+            <p>شاشة قراءة تشغيلية من المصدر الرئيسي `FrmSaleBill6.frm`. تعرض الفواتير والتفاصيل والقيود فقط، بدون حفظ أو ترحيل.</p>
+        </div>
+        <span class="main-erp-badge">Read-only / Main ERP</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    <form method="get" class="main-erp-filter-bar">
+        <label>بحث<input type="text" name="searchText" value="@Model.SearchText" placeholder="رقم الفاتورة / العميل / السيريال" /></label>
+        <label>من تاريخ<input type="date" name="fromDate" value="@String.Format("{0:yyyy-MM-dd}", Model.FromDate)" /></label>
+        <label>إلى تاريخ<input type="date" name="toDate" value="@String.Format("{0:yyyy-MM-dd}", Model.ToDate)" /></label>
+        <label>الفرع<input type="number" name="branchId" value="@Model.BranchId" /></label>
+        <button type="submit">عرض</button>
+    </form>
+
+    <div class="main-erp-kpi-grid">
+        <div class="main-erp-kpi-card"><span>عدد النتائج</span><strong>@Model.TotalCount</strong><small>صفوف مطابقة للفلاتر</small></div>
+        <div class="main-erp-kpi-card"><span>مصدر الشاشة</span><strong>FrmSaleBill6</strong><small>Main ERP فقط</small></div>
+        <div class="main-erp-kpi-card"><span>نوع القراءة</span><strong>@(isPump ? "TypeInvoice = 2" : "TypeInvoice <> 2")</strong><small>Transaction_Type: 21,42,38,9</small></div>
+        <div class="main-erp-kpi-card"><span>حالة التنفيذ</span><strong>قراءة فقط</strong><small>لا يوجد حفظ أو ترحيل</small></div>
+    </div>
+
+    @if (isPump && Model.Diagnostics != null)
+    {
+        <section class="main-erp-warning">
+            <h4>تشخيص بيانات فواتير المضخات</h4>
+            <p>قاعدة البيانات: <strong>@Model.Diagnostics.DatabaseName</strong></p>
+            <p>الفلاتر المستخدمة: <strong>@Model.Diagnostics.FilterDescription</strong></p>
+            <p>عدد الصفوف المطابقة: <strong>@Model.Diagnostics.RowCountFound</strong></p>
+
+            @if (Model.Diagnostics.TypeBreakdown.Count > 0)
+            {
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead><tr><th>TypeInvoice</th><th>Transaction_Type</th><th>Count</th><th>Sample Transaction_ID</th></tr></thead>
+                        <tbody>
+                            @foreach (var row in Model.Diagnostics.TypeBreakdown)
+                            {
+                                <tr><td>@row.TypeInvoice</td><td>@row.TransactionType</td><td>@row.Count</td><td>@row.MaxTransactionId</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (Model.Diagnostics.PumpCandidates.Count > 0)
+            {
+                <h5>مرشحات قريبة تحتوي PumpId أو DetailsPump</h5>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table">
+                        <thead><tr><th>Transaction_ID</th><th>Type</th><th>TypeInvoice</th><th>التاريخ</th><th>العميل</th><th>بنود مضخات</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Diagnostics.PumpCandidates)
+                            {
+                                <tr>
+                                    <td>@item.TransactionId</td>
+                                    <td>@item.TransactionType</td>
+                                    <td>@item.TypeInvoice</td>
+                                    <td>@String.Format("{0:yyyy-MM-dd}", item.TransactionDate)</td>
+                                    <td>@item.CustomerName</td>
+                                    <td>@item.PumpLineCount</td>
+                                    <td><a href="@Url.Action("Details", "PumpSales", new { area = "MainErp", id = item.TransactionId })">فتح</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p>لا توجد فواتير مضخات مطابقة في قاعدة Eng، ولا توجد مرشحات قريبة ببنود PumpId/DetailsPump.</p>
+            }
+        </section>
+    }
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="main-erp-empty">@(isPump ? "لا توجد فواتير مضخات مطابقة في قاعدة البيانات الحالية. للتجربة المحلية استخدم قاعدة Nagahat من /DevStart." : "لا توجد فواتير مطابقة في قاعدة البيانات الحالية")</div>
+    }
+    else
+    {
+        <div class="main-erp-table-wrap">
+            <table class="main-erp-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>التاريخ</th>
+                        <th>السيريال</th>
+                        <th>رقم الفاتورة</th>
+                        <th>العميل</th>
+                        <th>الفرع</th>
+                        <th>النوع</th>
+                        <th>الإجمالي</th>
+                        <th>الضريبة</th>
+                        <th>الصافي</th>
+                        <th>المدفوع</th>
+                        <th>المتبقي</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.TransactionId</td>
+                            <td>@String.Format("{0:yyyy-MM-dd}", item.TransactionDate)</td>
+                            <td>@item.TransactionSerial</td>
+                            <td>@item.NoteSerial1</td>
+                            <td>@(String.IsNullOrWhiteSpace(item.CustomerName) ? item.CashCustomerName : item.CustomerName)</td>
+                            <td>@item.BranchName</td>
+                            <td>@item.TransactionType</td>
+                            <td>@String.Format("{0:n2}", item.Total ?? 0m)</td>
+                            <td>@String.Format("{0:n2}", item.Vat ?? 0m)</td>
+                            <td>@String.Format("{0:n2}", item.NetValue ?? 0m)</td>
+                            <td>@String.Format("{0:n2}", item.PayedValue ?? 0m)</td>
+                            <td>@String.Format("{0:n2}", item.RemainValue ?? 0m)</td>
+                            <td><a href="@Url.Action("Details", controllerName, new { area = "MainErp", id = item.TransactionId })">فتح</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

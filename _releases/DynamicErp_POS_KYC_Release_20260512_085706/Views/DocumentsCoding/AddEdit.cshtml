@@ -1,0 +1,380 @@
+﻿@model  MyERP.Models.DocumentsCoding
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.DocumentsCoding;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <h4 class="page-title">@MyERP.Properties.Resources.DocumentsCoding</h4>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            @*<form action="/FieldsCoding/AddEdit" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">*@
+            <div class="form-horizontal needs-validation" role="form" method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-12">
+                        @* panal 1 *@
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="accordion">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.MainData
+                                        </a>
+                                    </h5>
+                                </div>
+                                <div id="collapse1">
+                                    <div class="form-group row">
+                                        @if (Model != null)
+                                        {
+                                            @Html.HiddenFor(model => model.Id)
+                                            @Html.HiddenFor(model => model.IsActive)
+                                            @Html.HiddenFor(model => model.UserId)
+                                            @Html.HiddenFor(model => model.Image)
+                                            @Html.HiddenFor(model => model.IsDeleted)
+                                        }
+                                        <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="form-group row">
+                                        <div class="col-sm-6">
+                                            <input type="checkbox" name="AllDepartments" @Html.Raw(Model != null && Model.AllDepartments == true ? "checked" : "") id="AllDepartments" />
+                                            <label class="col-sm-10 control-label" for="AllDepartments">
+                                                @MyERP.Properties.Resources.AllDepartments
+                                            </label>
+                                        </div>
+
+                                        <label for="DepartmentId" class="control-label col-sm-2"> @MyERP.Properties.Resources.Department</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.DepartmentId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label for="DepartmentId" class="control-label col-sm-2"> @MyERP.Properties.Resources.CodingType</label>
+                                        <div class="col-sm-4">
+                                            @Html.DropDownListFor(model => model.CodingTypeId, null, null, htmlAttributes: new { @class = "form-control" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <label for="DepartmentId" class="control-label col-sm-2"> @MyERP.Properties.Resources.YearFormat</label>
+                                        <div class="col-sm-3">
+                                            @Html.DropDownListFor(model => model.YearFormat, null, null, htmlAttributes: new { @class = "form-control" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+                                        <span class="col-sm-1">@MyERP.Properties.Resources.Digit </span>
+                                    </div>
+
+                                    <div class="form-group row">
+                                        <label class=" col-sm-2 control-label" for="MobileNumber">@MyERP.Properties.Resources.NoOfDigits</label>
+                                        <div class="col-sm-4">
+                                            @Html.EditorFor(model => model.DigitsNo, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.NoOfDigits, required = "required", @type = "text" } })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <div class="col-sm-3">
+                                            <input type="checkbox" name="IsZerosFills" @Html.Raw(Model != null && Model.IsZerosFills == true || Model == null ? "checked" : "") id="IsZerosFills" />
+                                            <label class="col-sm-10 control-label" for="IsZerosFills">
+                                                @MyERP.Properties.Resources.ZerosFills
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-offset-2">
+                                @if (Model == null)
+                                {
+                                    <button type="submit" id="newbtn" onclick="addEdit('new')" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                }
+                                else if (Model.IsDeleted == false)
+                                {
+                                    <button class="btn btn-success" id="save" onclick="addEdit()">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <button class="btn btn-danger" onclick="Delete(@Model.Id)">
+                                        @MyERP.Properties.Resources.Delete
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @*</form>*@
+        </div>
+    </div>
+</div>
+
+
+<script>
+    //--------------- Variables Declarations -------------------//
+
+    //*********************************************************//
+    //--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        if ($('#Id').val() > 0) {
+            if ($('#AllDepartments').prop('checked') == true) {
+                $('#DepartmentId').prop('selectedIndex', 0);
+                $('#DepartmentId').select2();
+                $('#DepartmentId').prop('disabled', true);
+                $('#DepartmentId').prop('required', false);
+            }
+            else {
+                $('#DepartmentId').prop('disabled', false);
+                $('#DepartmentId').prop('required', true);
+            }
+        }
+        else {
+            setCodeNum();
+        }
+    });
+    //*********************************************************//
+    //--------------- Event Functions -------------------//
+    $(document).on('change', '#AllDepartments', function () {
+        if ($('#AllDepartments').prop('checked') == true) {
+            $('#DepartmentId').prop('selectedIndex', 0);
+            $('#DepartmentId').select2();
+            $('#DepartmentId').prop('disabled', true);
+            $('#DepartmentId').prop('required', false);
+            CheckDepartmentExist();
+        }
+        else {
+            $('#DepartmentId').prop('disabled', false);
+            $('#DepartmentId').prop('required', true);
+        }
+        
+    });
+    $(document).on('change', '#DepartmentId', function () {
+        CheckDepartmentExist();
+    });
+    //*********************************************************//
+    //--------------- Other Functions -------------------//
+    function CheckDepartmentExist() {
+        $.get('/DocumentsCoding/CheckDepartmentExist?DepartmentId=' + $('#DepartmentId').val()).done(function (r) {
+            if (r.success == "true") {
+                alert("@MyERP.Properties.Resources.ThisDepartmentAlreadyHadCoding") 
+                    $('#DepartmentId').prop('selectedIndex', 0);
+                    $('#DepartmentId').select2();
+                
+            }
+            else if (r.success == "AllDepartments") {
+                alert("@MyERP.Properties.Resources.AllDepartmentAlreadyHadCoding") 
+                    $('#AllDepartments').prop('checked', false);
+                    $('#DepartmentId').prop('disabled', false);
+                    $('#DepartmentId').prop('required', true);
+                
+            }
+        });
+    }
+
+
+    function setCodeNum() {
+        var doc = $.get('/DocumentsCoding/SetCodeNum').done(function (r) {
+            $('#Code').val(r);
+        });
+    }
+    function addEdit(n) {
+        let valid = true;
+        if ($('#AllDepartments').prop('checked') == true) {
+            $('#DepartmentId').prop('selectedIndex', 0);
+            $('#DepartmentId').select2();
+            $('#DepartmentId').prop('disabled', true);
+            $('#DepartmentId').prop('required', false);
+        }
+        else {
+            $('#DepartmentId').prop('disabled', false);
+            $('#DepartmentId').prop('required', true);
+
+        }
+
+        if ($(".form-control:invalid").length > 0) {
+            console.log($(".form-control:invalid"));
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+        }
+        else {
+            var DocumentsCoding = {
+                Id: $('#Id').val(),
+                Code: $('#Code').val(),
+                AllDepartments: $('#AllDepartments').prop('checked'),
+                DepartmentId: $('#DepartmentId').val(),
+                CodingTypeId: $('#CodingTypeId').val(),
+                YearFormat: $('#YearFormat').val(),
+                DigitsNo: $('#DigitsNo').val(),
+                IsZerosFills: $('#IsZerosFills').prop('checked'),
+            }
+
+            if (valid == true) {
+                Swal.fire({
+                    title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                    text: " ",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                    cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: "POST",
+                            contentType: "application/json",
+                            url: "/DocumentsCoding/AddEdit",
+                            data: JSON.stringify({
+                                DocumentsCoding: DocumentsCoding
+                            }),
+                            success: function (r) {
+                                if (r.success == "true") {
+                                    if (n == "new") {
+                                        Swal.fire(
+                                            {
+                                                title: '@MyERP.Properties.Resources.Saved',
+                                                text: " ",
+                                                icon: 'success',
+                                                showCancelButton: false,
+                                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                                confirmButtonColor: '#3085d6'
+                                            });
+                                        window.location.replace("/DocumentsCoding/AddEdit");
+
+                                    } else {
+                                        Swal.fire(
+                                            {
+                                                title: '@MyERP.Properties.Resources.Saved',
+                                                text: " ",
+                                                icon: 'success',
+                                                showCancelButton: false,
+                                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                                confirmButtonColor: '#3085d6'
+                                            });
+                                        window.location.replace("/DocumentsCoding");
+                                    }
+                                }
+                                else
+                                    Swal.fire({
+                                        title: '@MyERP.Properties.Resources.NotSaved',
+                                        text: " ",
+                                        icon: 'error',
+                                        showCancelButton: false,
+                                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                        confirmButtonColor: '#3085d6'
+                                    }); $('#preloader, #status').fadeOut();
+                            },
+                            error: function (r) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                }); $('#preloader, #status').fadeOut();
+                            }
+                        });
+
+                    }
+                    else { result.dismiss; }
+                });
+            }
+        }
+    }
+
+    function Delete(id) {
+        Swal.fire({
+            title: '@MyERP.Properties.Resources.AreYouSureYouWantToDelete',
+            text: " ",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                 $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/DocumentsCoding/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                            text: " ",
+                            icon: 'error',
+                            showCancelButton: false,
+                            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                            confirmButtonColor: '#3085d6'
+                        });
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.Deleted',
+                                text: " ",
+                                icon: 'success',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            window.location.replace('/DocumentsCoding');
+                        }
+                        else {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.DeleteDoesNotSucceeded',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                        }
+                    }
+                });
+            }
+            else { result.dismiss; }
+        });
+    }
+</script>

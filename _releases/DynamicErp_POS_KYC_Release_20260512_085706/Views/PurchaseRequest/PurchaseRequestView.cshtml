@@ -1,0 +1,18 @@
+﻿@model IEnumerable<MyERP.Models.PurchaseRequestDetail>
+@if (Model != null)
+{
+    foreach (var item in Model)
+    {
+        <tr>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="item-name form-control tabledit-input form-control-sm" required readonly value="@item.Item.ArName" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="money price form-control tabledit-input form-control-sm" readonly value="@item.Qty" />
+            </td>
+            <td class="tabledit-edit-mode" colspan="1">
+                <input type="text" class="money price form-control tabledit-input form-control-sm" readonly value="@item.ItemUnit.ArName" />
+            </td>
+        </tr>
+    }
+}

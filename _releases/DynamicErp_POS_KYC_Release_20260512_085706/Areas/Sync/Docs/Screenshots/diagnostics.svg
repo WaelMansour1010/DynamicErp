@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#f5f7fb"/>
+  <text x="1200" y="70" text-anchor="end" font-family="Tahoma" font-size="30" fill="#172033">التشخيص والمراجعة</text>
+  <rect x="40" y="110" width="580" height="230" rx="8" fill="#fff" stroke="#dfe5ef"/>
+  <rect x="660" y="110" width="580" height="230" rx="8" fill="#fff" stroke="#dfe5ef"/>
+  <rect x="40" y="372" width="1200" height="260" rx="8" fill="#fff" stroke="#dfe5ef"/>
+  <text x="580" y="154" text-anchor="end" font-family="Tahoma" font-size="22" fill="#172033">ملخص العنصر</text>
+  <text x="1200" y="154" text-anchor="end" font-family="Tahoma" font-size="22" fill="#172033">فحوصات السلامة</text>
+  <text x="1200" y="414" text-anchor="end" font-family="Tahoma" font-size="22" fill="#172033">Object Map</text>
+</svg>

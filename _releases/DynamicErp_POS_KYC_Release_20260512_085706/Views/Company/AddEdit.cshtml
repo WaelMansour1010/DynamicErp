@@ -1,0 +1,443 @@
+﻿@model MyERP.Models.Company
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+    /**/
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.title = MyERP.Properties.Resources.Company;
+}
+
+
+
+@Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                        <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                    }
+                }
+                else
+                {
+                    <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                }
+            </div>
+            <h4 class="page-title">@MyERP.Properties.Resources.Company</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Company/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data" id="FormId">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                    @Html.AntiForgeryToken()
+                                    @if (Model != null)
+                                    {
+
+                                        @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.IsActive)
+                                        @Html.HiddenFor(model => model.UserId)
+                                        @Html.HiddenFor(model => model.Image)
+                                        @Html.HiddenFor(model => model.IsDeleted)
+                                        @Html.HiddenFor(model => model.Logo)
+
+                                    }
+
+                                    <label for="Code" class="col-sm-2 control-label">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CodeRequired
+                                        </div>
+                                    </div>
+                                    <label for="FoundationDate" class="col-sm-2 control-label">@MyERP.Properties.Resources.FoundationDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.FoundationDate, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.FoundationDate, @type = "datetime-local" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.FoundationDate @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ArName" class="col-sm-2 control-label">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.ArNameRequired
+                                        </div>
+                                    </div>
+                                    <label for="EnName" class="col-sm-2 control-label">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="TaxNumber" class="col-sm-2 control-label">@MyERP.Properties.Resources.TaxNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.TaxNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.TaxNumber } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.TaxNumber @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="InsuranceNumber" class="col-sm-2 control-label">@MyERP.Properties.Resources.InsuranceNumber</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.InsuranceNumber, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.InsuranceNumber } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.InsuranceNumber @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label for="CompanyActivity" class="col-sm-2 control-label">@MyERP.Properties.Resources.CompanyActivity</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.CompanyActivity, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CompanyActivity } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.CompanyActivity @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Mobile" class="col-sm-2 control-label">@MyERP.Properties.Resources.Mobile</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Mobile, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Mobile } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Mobile @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Tel1" class="col-sm-2 control-label">@MyERP.Properties.Resources.Tel 1</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Tel1, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Tel } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Tel 1 @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="Tel2" class="col-sm-2 control-label">@MyERP.Properties.Resources.Tel 2</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Tel2, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Tel } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Tel 2 @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Fax" class="col-sm-2 control-label">@MyERP.Properties.Resources.Fax</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Fax, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Fax } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Fax @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Email" class="col-sm-2 control-label">@MyERP.Properties.Resources.Email</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Email, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Email, @type = "email" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Email @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Site" class="col-sm-2 control-label">@MyERP.Properties.Resources.WebSite</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Site, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.WebSite } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.WebSite @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+
+                                    <label for="Address" class="col-sm-2 control-label">@MyERP.Properties.Resources.Address</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Address, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Address } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Address @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Interviewer" class="col-sm-2 control-label">@MyERP.Properties.Resources.Interviewer</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Interviewer, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Interviewer } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Interviewer @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="InterviewerJob" class="col-sm-2 control-label">@MyERP.Properties.Resources.InterviewerJob</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.InterviewerJob, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.InterviewerJob } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.InterviewerJob @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="InterviewerJob" class="col-sm-2 control-label">@MyERP.Properties.Resources.GeneralManager</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.GeneralManager, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.GeneralManager } })
+
+                                    </div>
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+
+                                <!-- LOGO -->
+                                <div class="col-md-6">
+                                    @* مكان الصورة *@
+                                    @if (Model != null)
+                                    {
+                                        <div class="row p-3">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <div class="row text-center">
+                                                        <label for="inputtext3" class="control-label">
+                                                            @MyERP.Properties.Resources.CurrentPhoto
+                                                        </label>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-4">
+                                                            @if (Model.Logo != null)
+                                                            {
+                                                                <img style='height:100px;width:100px;border-radius: 50px;' class="imgold" src='@Model.Logo' />
+
+                                                            }
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <div class="row">
+                                                        <label for="inputtext3" class="control-label">
+
+                                                            @MyERP.Properties.Resources.SelectNew
+                                                        </label>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-sm-4">
+                                                            <input type="file" style="display: inline" onchange="readURL(this)" name="upload" class="photo" id="img" />
+                                                            <img style='height:100px; width: 100px;  border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="form-group row">
+                                            <label for="inputtext3" class="col-sm-4 control-label">
+                                                @MyERP.Properties.Resources.SelectNew
+                                            </label>
+                                            <div class="col-sm-8">
+                                                <input type="file" style="display: inline" onchange="readURL(this)" name="upload" photo" id="img" />
+                                                <img style='height:100px;width:100px;border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <!--*******************-->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="float:left;">
+                        <input id="new" name="newBtn" hidden />
+                        <div>
+                            @if(Model == null||Model.Id==0)
+                            {
+                                <input id="new" name="newBtn" hidden />
+                                <button type="submit" id="newbtn" class="btn btn-success saveBtns">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button type="submit" class="btn btn-success saveBtns">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else
+                            {
+                                if (Model.IsDeleted == false)
+                                {
+                                    <button type="submit" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!--------------------------------------------- Modal Section ---------------------------------------------------------------->
+<div class="modal fade" id="CheckPassWordModal" tabindex="-1" role="dialog" aria-labelledby="DiscountModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="DiscountModalTitle">@MyERP.Properties.Resources.ConfirmPassword</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class=" col-sm-6 control-label" for="EnName">@MyERP.Properties.Resources.PassWord </label>
+                    <div class="col-sm-6">
+                        <input type="password" class="form-control" id="Password" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                <button type="button" class="btn btn-primary waves-effect waves-light" data-dismiss="modal" onclick="CheckPassword()">@MyERP.Properties.Resources.Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--------------------------------------------- End Of Modal Section ---------------------------------------------------------------->
+
+
+
+<script>
+     //date
+     function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+     if ($('#Id').val() != 0) {
+         $('#FoundationDate').val('@ViewBag.FoundationDate');
+
+
+    } else {
+        var d = new Date();
+        $('#FoundationDate').val('@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")');
+        $('#FoundationDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+         $('#CheckPassWordModal').modal('show');
+         $('.saveBtns').hide();
+    }
+    if ($('#Id').val() == 0) {
+         function setCodeNum() {
+             var doc = $.get('/Company/SetCodeNum').done(function (r) {
+                 $('#Code').val(r);
+             });
+
+         }
+
+         setCodeNum();
+    }
+            function CheckPassword() {
+        var Password = $('#Password').val();
+        if (Password.length > 0) {
+            $.get('/Helper/CheckCurrentUserPassWord?Password=' + Password).done(function (r) {
+                if (r.success == "PasswordIncorrect") {
+                    Swal.fire({
+                        title: '@MyERP.Properties.Resources.PassWordNotMatched',
+                        text: " ",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+                else {
+                    $('.saveBtns').show();
+                }
+            });
+        }
+        else {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.PassWordRequired',
+                text: " ",
+                icon: 'error',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        $('#Password').val('');
+    }
+
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                $(".imgnew").removeClass("hidden");
+
+                $('#blah')
+                    .attr('src', e.target.result)
+
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+        function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/Company/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/Company');
+                        } else
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded');
+                    }
+                });
+        }
+    }
+
+</script>

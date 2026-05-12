@@ -1,0 +1,18 @@
+﻿@model List<DocumentNumberDate>
+@foreach (var item in Model)
+{
+    <tr>
+       
+        <td>
+            @Html.DisplayFor(modelItem => item.DocumentNumber)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Date)
+        </td>
+        <td>
+            <a href="@Url.Action("AddEdit",ViewBag.Controller,new { id=item.Id })" onclick="$('#preloader, #status').fadeIn();">
+                <i class="fa fa-eye"></i>
+            </a>
+        </td>
+    </tr>
+}

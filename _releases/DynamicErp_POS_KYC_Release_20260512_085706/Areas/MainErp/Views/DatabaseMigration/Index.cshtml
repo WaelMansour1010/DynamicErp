@@ -1,0 +1,297 @@
+@model MyERP.Areas.MainErp.ViewModels.DatabaseMigration.DatabaseMigrationDashboardViewModel
+@using System.Globalization
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    var lastRun = Model.LastRunResult;
+    var uiError = TempData["DatabaseMigration.Error"] as string;
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<link href="@Url.Content("~/Areas/MainErp/Content/database-migration-manager.css?v=20260509-db-migration")" rel="stylesheet" />
+
+<section class="dbm-page" dir="rtl">
+    <div class="dbm-header">
+        <div>
+            <span class="dbm-kicker">Database Update Manager</span>
+            <h2>إدارة تحديثات قاعدة البيانات</h2>
+            <p>قاعدة البيانات: <strong>@Model.DatabaseName</strong> | السيرفر: <strong>@Model.ServerName</strong> | البيئة: <strong>@Model.EnvironmentName</strong></p>
+        </div>
+        <div class="dbm-status dbm-status-@Model.Status.ToLowerInvariant().Replace(" ", "-")">
+            <span>@Model.Status</span>
+            <small>آخر تحديث: @(Model.LastAppliedOn.HasValue ? Model.LastAppliedOn.Value.ToString("yyyy-MM-dd HH:mm", inv) : "لا يوجد")</small>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(uiError))
+    {
+        <div class="dbm-alert dbm-alert-danger">@uiError</div>
+    }
+
+    @if (Model.Warnings.Any())
+    {
+        <div class="dbm-alert dbm-alert-warning">
+            يوجد ملفات SQL غير مصنفة في مصادر التحديث. سيتم عرضها للمراجعة فقط ولن يتم تطبيقها تلقائيًا.
+        </div>
+    }
+
+    <div class="dbm-summary-grid">
+        <div class="dbm-card"><span>Applied migrations</span><strong>@Model.AppliedCount</strong></div>
+        <div class="dbm-card"><span>Pending migrations</span><strong>@Model.PendingCount</strong></div>
+        <div class="dbm-card"><span>Failed migrations</span><strong>@Model.FailedCount</strong></div>
+        <div class="dbm-card"><span>Hash mismatch warnings</span><strong>@Model.HashMismatchCount</strong></div>
+        <div class="dbm-card"><span>Last applied date</span><strong>@(Model.LastAppliedOn.HasValue ? Model.LastAppliedOn.Value.ToString("yyyy-MM-dd", inv) : "-")</strong></div>
+    </div>
+
+    <div class="dbm-actions">
+        @using (Html.BeginForm("DryRun", "DatabaseMigration", new { area = "MainErp" }, FormMethod.Post, new { @class = "dbm-inline-form" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="dbm-btn dbm-btn-secondary"><i class="fas fa-search"></i> فحص بدون تنفيذ</button>
+        }
+        <a class="dbm-btn dbm-btn-secondary" href="@Url.Action("ExportReport", "DatabaseMigration", new { area = "MainErp" })"><i class="fas fa-file-export"></i> تصدير التقرير</a>
+        <input class="dbm-search" type="search" placeholder="بحث في الجداول" data-dbm-search />
+    </div>
+
+    @if (lastRun != null)
+    {
+        <section class="dbm-run-result">
+            <h3>نتيجة آخر تشغيل: @lastRun.Mode - @lastRun.Status</h3>
+            <div class="dbm-run-pills">
+                <span>Pending: @lastRun.TotalScripts</span>
+                <span>Applied: @lastRun.AppliedCount</span>
+                <span>Failed: @lastRun.FailedCount</span>
+                <span>Warnings: @lastRun.WarningCount</span>
+                @if (lastRun.RunId.HasValue) { <span>Run #@lastRun.RunId</span> }
+            </div>
+            @if (lastRun.Applied.Any() || lastRun.Failed.Any() || lastRun.HashMismatches.Any())
+            {
+                <div class="dbm-last-run-details">
+                    @foreach (var item in lastRun.Applied)
+                    {
+                        <span class="dbm-run-detail dbm-run-detail-ok">@item.ScriptName - @item.Status</span>
+                    }
+                    @foreach (var item in lastRun.Failed)
+                    {
+                        <span class="dbm-run-detail dbm-run-detail-failed">@item.ScriptName - @item.Status - @item.ErrorMessage</span>
+                    }
+                    @foreach (var item in lastRun.HashMismatches)
+                    {
+                        <span class="dbm-run-detail dbm-run-detail-warning">@item.ScriptName - Hash mismatch</span>
+                    }
+                </div>
+            }
+        </section>
+    }
+
+    <div class="dbm-tabs" data-dbm-tabs>
+        <button type="button" class="is-active" data-tab="pending">Pending Updates</button>
+        <button type="button" data-tab="history">Applied History</button>
+        <button type="button" data-tab="failed">Failed / Errors</button>
+        <button type="button" data-tab="settings">Settings / Sources</button>
+        <button type="button" data-tab="log">Execution Log</button>
+    </div>
+
+    <section class="dbm-tab-panel is-active" data-tab-panel="pending">
+        @using (Html.BeginForm("ApplySelected", "DatabaseMigration", new { area = "MainErp" }, FormMethod.Post, new { id = "dbmApplySelectedForm" }))
+        {
+            @Html.AntiForgeryToken()
+            <div class="dbm-panel-head">
+                <h3>التحديثات المنتظرة</h3>
+                <div class="dbm-apply-controls">
+                    <label><input type="checkbox" name="StopOnError" value="true" checked /> إيقاف عند أول خطأ</label>
+                    <input type="text" name="ReleaseNo" placeholder="Release No" />
+                    <input type="text" name="ConfirmText" placeholder="اكتب APPLY للتأكيد" autocomplete="off" />
+                    <button type="submit" class="dbm-btn dbm-btn-danger" data-confirm-apply>Apply Selected</button>
+                </div>
+            </div>
+            <div class="dbm-table-wrap">
+                <table class="dbm-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" data-select-all /></th>
+                            <th>رقم</th>
+                            <th>Script</th>
+                            <th>Module</th>
+                            <th>Path</th>
+                            <th>Hash</th>
+                            <th>File Date</th>
+                            <th>Type</th>
+                            <th>Safe</th>
+                            <th>Dependencies</th>
+                            <th>Status</th>
+                            <th>Preview</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Pending)
+                        {
+                            <tr>
+                                <td><input type="checkbox" name="ScriptKeys" value="@item.ScriptKey" /></td>
+                                <td>@(item.MigrationNumber.HasValue ? item.MigrationNumber.Value.ToString("0000") : "-")</td>
+                                <td>@item.ScriptName</td>
+                                <td><span class="dbm-badge">@item.ModuleName</span></td>
+                                <td class="dbm-path">@item.ScriptPath</td>
+                                <td class="dbm-hash">@item.ScriptHash</td>
+                                <td>@item.LastModifiedOn.ToString("yyyy-MM-dd HH:mm", inv)</td>
+                                <td>@item.UpdateType</td>
+                                <td>@(item.SafeToRerun ? "Yes" : "No")</td>
+                                <td>@item.Dependencies</td>
+                                <td><span class="dbm-state dbm-state-pending">@item.ValidationStatus</span></td>
+                                <td><a class="dbm-icon-link" href="@Url.Action("PreviewScript", "DatabaseMigration", new { area = "MainErp", id = item.ScriptKey })"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                        }
+                        @foreach (var item in Model.HashMismatches)
+                        {
+                            <tr class="dbm-danger-row">
+                                <td></td>
+                                <td>@(item.MigrationNumber.HasValue ? item.MigrationNumber.Value.ToString("0000") : "-")</td>
+                                <td>@item.ScriptName</td>
+                                <td><span class="dbm-badge">@item.ModuleName</span></td>
+                                <td class="dbm-path">@item.ScriptPath</td>
+                                <td class="dbm-hash">@item.ScriptHash</td>
+                                <td>@item.LastModifiedOn.ToString("yyyy-MM-dd HH:mm", inv)</td>
+                                <td>@item.UpdateType</td>
+                                <td>@(item.SafeToRerun ? "Yes" : "No")</td>
+                                <td>@item.Dependencies</td>
+                                <td><span class="dbm-state dbm-state-warning">Hash mismatch</span></td>
+                                <td><a class="dbm-icon-link" href="@Url.Action("PreviewScript", "DatabaseMigration", new { area = "MainErp", id = item.ScriptKey })"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @using (Html.BeginForm("ApplyAll", "DatabaseMigration", new { area = "MainErp" }, FormMethod.Post, new { id = "dbmApplyAllForm", @class = "dbm-apply-all" }))
+        {
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="StopOnError" value="true" />
+            <input type="text" name="ReleaseNo" placeholder="Release No" />
+            <input type="text" name="ConfirmText" placeholder="اكتب APPLY للتأكيد" autocomplete="off" />
+            <button type="submit" class="dbm-btn dbm-btn-danger" data-confirm-apply>Apply All Pending</button>
+        }
+    </section>
+
+    <section class="dbm-tab-panel" data-tab-panel="history">
+        <div class="dbm-table-wrap">
+            <table class="dbm-table">
+                <thead><tr><th>ScriptName</th><th>ModuleName</th><th>AppliedOn</th><th>AppliedBy</th><th>MachineName</th><th>DatabaseName</th><th>DurationMs</th><th>Success</th><th>ErrorMessage</th><th>ScriptHash</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.AppliedHistory)
+                    {
+                        <tr><td>@item.ScriptName</td><td>@item.ModuleName</td><td>@item.AppliedOn.ToString("yyyy-MM-dd HH:mm:ss", inv)</td><td>@item.AppliedBy</td><td>@item.MachineName</td><td>@item.DatabaseName</td><td>@item.DurationMs</td><td>@item.Success</td><td>@item.ErrorMessage</td><td class="dbm-hash">@item.ScriptHash</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dbm-tab-panel" data-tab-panel="failed">
+        <div class="dbm-table-wrap">
+            <table class="dbm-table">
+                <thead><tr><th>ScriptName</th><th>ModuleName</th><th>AppliedOn</th><th>AppliedBy</th><th>DurationMs</th><th>ErrorMessage</th><th>ScriptHash</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.FailedHistory)
+                    {
+                        <tr class="dbm-danger-row"><td>@item.ScriptName</td><td>@item.ModuleName</td><td>@item.AppliedOn.ToString("yyyy-MM-dd HH:mm:ss", inv)</td><td>@item.AppliedBy</td><td>@item.DurationMs</td><td>@item.ErrorMessage</td><td class="dbm-hash">@item.ScriptHash</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dbm-tab-panel" data-tab-panel="settings">
+        <div class="dbm-table-wrap">
+            <table class="dbm-table">
+                <thead><tr><th>Configured folder</th><th>Resolved folder</th><th>Exists</th><th>SQL files</th></tr></thead>
+                <tbody>
+                    @foreach (var source in Model.Sources)
+                    {
+                        <tr><td>@source.ConfiguredPath</td><td class="dbm-path">@source.ResolvedPath</td><td>@source.Exists</td><td>@source.SqlFileCount</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="dbm-alert dbm-alert-warning">مصادر السكريبتات للقراءة فقط ويتم ضبطها من Web.config عبر DatabaseMigrationFolders. لا يتم قبول مسارات من المستخدم.</div>
+    </section>
+
+    <section class="dbm-tab-panel" data-tab-panel="log">
+        <div class="dbm-table-wrap">
+            <table class="dbm-table">
+                <thead><tr><th>RunId</th><th>StartedAt</th><th>FinishedAt</th><th>StartedBy</th><th>Database</th><th>Server</th><th>Mode</th><th>Status</th><th>Total</th><th>Applied</th><th>Failed</th><th>Warnings</th><th>Script results</th></tr></thead>
+                <tbody>
+                    @foreach (var run in Model.ExecutionLog)
+                    {
+                        <tr>
+                            <td>@run.RunId</td>
+                            <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm:ss", inv)</td>
+                            <td>@(run.FinishedAt.HasValue ? run.FinishedAt.Value.ToString("yyyy-MM-dd HH:mm:ss", inv) : "-")</td>
+                            <td>@run.StartedBy</td>
+                            <td>@run.DatabaseName</td>
+                            <td>@run.ServerName</td>
+                            <td>@run.Mode</td>
+                            <td>@run.Status</td>
+                            <td>@run.TotalScripts</td>
+                            <td>@run.AppliedCount</td>
+                            <td>@run.FailedCount</td>
+                            <td>@run.WarningCount</td>
+                            <td>
+                                @foreach (var detail in run.Details)
+                                {
+                                    <span class="dbm-run-detail @(detail.Status == "Failed" ? "dbm-run-detail-failed" : "dbm-run-detail-ok")">@detail.ScriptName - @detail.Status</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>
+
+@section scripts {
+    <script>
+        (function () {
+            var root = document.querySelector(".dbm-page");
+            if (!root) { return; }
+            root.querySelectorAll("[data-dbm-tabs] button").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    var tab = btn.getAttribute("data-tab");
+                    root.querySelectorAll("[data-dbm-tabs] button").forEach(function (b) { b.classList.remove("is-active"); });
+                    root.querySelectorAll("[data-tab-panel]").forEach(function (p) { p.classList.remove("is-active"); });
+                    btn.classList.add("is-active");
+                    var panel = root.querySelector('[data-tab-panel="' + tab + '"]');
+                    if (panel) { panel.classList.add("is-active"); }
+                });
+            });
+            root.querySelectorAll("[data-select-all]").forEach(function (checkbox) {
+                checkbox.addEventListener("change", function () {
+                    root.querySelectorAll('input[name="ScriptKeys"]').forEach(function (item) { item.checked = checkbox.checked; });
+                });
+            });
+            root.querySelectorAll("[data-confirm-apply]").forEach(function (button) {
+                button.addEventListener("click", function (event) {
+                    var form = button.closest("form");
+                    var confirmInput = form ? form.querySelector('input[name="ConfirmText"]') : null;
+                    if (!confirmInput || confirmInput.value !== "APPLY") {
+                        event.preventDefault();
+                        alert("يجب كتابة APPLY للتأكيد قبل تطبيق أي تحديث على قاعدة البيانات.");
+                        return;
+                    }
+                    if (!window.confirm("سيتم تطبيق تحديثات على قاعدة البيانات. تأكد من وجود Backup حديث قبل المتابعة.")) {
+                        event.preventDefault();
+                    }
+                });
+            });
+            var search = root.querySelector("[data-dbm-search]");
+            if (search) {
+                search.addEventListener("input", function () {
+                    var q = search.value.toLowerCase();
+                    root.querySelectorAll(".dbm-table tbody tr").forEach(function (row) {
+                        row.style.display = row.innerText.toLowerCase().indexOf(q) >= 0 ? "" : "none";
+                    });
+                });
+            }
+        })();
+    </script>
+}

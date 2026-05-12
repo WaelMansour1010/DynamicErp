@@ -1,0 +1,29 @@
+@model MyERP.Areas.Sync.ViewModels.PilotViewModel
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "جاهزية التنفيذ التجريبي";
+}
+<div class="sync-target">قاعدة البيانات المستهدفة: <strong>@Model.TargetDatabase</strong></div>
+<div class="sync-grid three">
+@foreach (var check in Model.Checks)
+{
+    <div class="sync-card readiness @(check.IsHardBlocker ? "red" : "green")">
+        <strong>@check.CheckName</strong>
+        <span>@check.Status</span>
+        <p>@check.Message</p>
+    </div>
+}
+</div>
+<div class="sync-card">
+    <div class="card-title">الموافقات</div>
+    <table class="sync-table"><thead><tr><th>التاريخ</th><th>العملية</th><th>SyncKey</th><th>الموافق</th><th>الحالة</th></tr></thead><tbody>
+    @foreach (var approval in Model.Approvals)
+    {
+        <tr><td>@(approval.CreatedAt.HasValue ? approval.CreatedAt.Value.ToString("yyyy-MM-dd HH:mm") : "")</td><td>@approval.Operation</td><td class="mono">@approval.SyncKey</td><td>@approval.ApprovedBy</td><td><span class="status @approval.Status">@approval.Status</span></td></tr>
+    }
+    </tbody></table>
+    @if (!Model.Approvals.Any())
+    {
+        <div class="empty-state">لا توجد موافقات مسجلة بعد.</div>
+    }
+</div>

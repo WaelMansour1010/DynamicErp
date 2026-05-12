@@ -1,0 +1,74 @@
+@model MyERP.Areas.MainErp.ViewModels.Reports.AccountMovementReportViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("AccountMovement");
+}
+
+<section class="main-erp-panel">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>@T("AccountMovement")</h3>
+            <p>@T("AccountMovementIntro")</p>
+        </div>
+        <span class="main-erp-badge">@T("ReadOnly")</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    @using (Html.BeginForm("AccountMovement", "AccountingReports", new { area = "MainErp" }, FormMethod.Get, new { @class = "main-erp-filter" }))
+    {
+        <input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("FromDate")" />
+        <input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : string.Empty)" title="@T("ToDate")" />
+        <input type="text" name="accountCode" value="@Model.AccountCode" placeholder="@T("Account")" required="required" />
+        <input type="number" name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" />
+        <button type="submit">@T("ReportRun")</button>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.AccountDisplay))
+    {
+        <p class="main-erp-muted">@T("Account"): <strong>@Model.AccountDisplay</strong></p>
+    }
+
+    <table class="main-erp-table">
+        <thead>
+            <tr>
+                <th>@T("Date")</th>
+                <th>@T("NoteSerial")</th>
+                <th>@T("Description")</th>
+                <th>@T("Debit")</th>
+                <th>@T("Credit")</th>
+                <th>@T("PeriodMovement")</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    <td>@(row.NoteDate.HasValue ? row.NoteDate.Value.ToString("dd/MM/yyyy") : "")</td>
+                    <td>@row.NoteSerial</td>
+                    <td>@row.Description</td>
+                    <td>@row.Debit.ToString("N2")</td>
+                    <td>@row.Credit.ToString("N2")</td>
+                    <td>@row.RunningMovement.ToString("N2")</td>
+                </tr>
+            }
+            @if (Model.Rows.Count == 0)
+            {
+                <tr><td colspan="6">@T("NoRows")</td></tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3">@T("Totals")</th>
+                <th>@Model.TotalDebit.ToString("N2")</th>
+                <th>@Model.TotalCredit.ToString("N2")</th>
+                <th>@Model.PeriodMovement.ToString("N2")</th>
+            </tr>
+        </tfoot>
+    </table>
+</section>

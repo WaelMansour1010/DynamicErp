@@ -3450,14 +3450,54 @@ WHERE T.Transaction_Type = 20
                 return cards;
             }
 
-            take = take <= 0 ? 20 : take;
-            if (take > 100) { take = 100; }
+            take = 20;
 
             const string sql = @"
-;WITH AvailableSerials AS
+;WITH CandidateTokens AS
+(
+    SELECT *
+    FROM
+    (
+        SELECT TOP (10)
+            LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
+            LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) AS CardLength,
+            MAX(t.Transaction_ID) AS LastTransactionId
+        FROM dbo.Transactions t WITH (READPAST)
+        INNER JOIN dbo.Transaction_Details td WITH (READPAST)
+            ON td.Transaction_ID = t.Transaction_ID
+        WHERE t.StoreID = @StoreId
+          AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
+          AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) = 8
+          AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermStartsWith)
+        GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+        ORDER BY MAX(t.Transaction_ID) DESC, LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+    ) Ahly
+
+    UNION ALL
+
+    SELECT *
+    FROM
+    (
+        SELECT TOP (10)
+            LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
+            LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) AS CardLength,
+            MAX(t.Transaction_ID) AS LastTransactionId
+        FROM dbo.Transactions t WITH (READPAST)
+        INNER JOIN dbo.Transaction_Details td WITH (READPAST)
+            ON td.Transaction_ID = t.Transaction_ID
+        WHERE t.StoreID = @StoreId
+          AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
+          AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) = 18
+          AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermStartsWith)
+        GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+        ORDER BY MAX(t.Transaction_ID) DESC, LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+    ) BanqueMisr
+),
+AvailableSerials AS
 (
     SELECT
-        LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) AS Token,
+        ct.Token,
+        ct.CardLength,
         MAX(td.Item_ID) AS ItemId,
         SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) AS AvailableQty,
         MAX(t.Transaction_ID) AS LastTransactionId
@@ -3466,18 +3506,18 @@ WHERE T.Transaction_Type = 20
         ON td.Transaction_ID = t.Transaction_ID
     INNER JOIN dbo.TransactionTypes tt WITH (READPAST)
         ON tt.Transaction_Type = t.Transaction_Type
+    INNER JOIN CandidateTokens ct
+        ON ct.Token = LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
     WHERE t.StoreID = @StoreId
       AND ISNULL(tt.StockEffect, 0) <> 0
-      AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) <> N''
-      AND LEN(LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))) IN (8, 18)
-      AND (ISNULL(@Term, N'') = N'' OR LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) LIKE @TermStartsWith)
-    GROUP BY LTRIM(RTRIM(ISNULL(td.ItemSerial, N'')))
+    GROUP BY ct.Token, ct.CardLength
     HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
 ),
 Filtered AS
 (
     SELECT TOP (@Take)
         av.Token,
+        av.CardLength,
         av.ItemId,
         av.AvailableQty,
         av.LastTransactionId
@@ -3512,7 +3552,7 @@ Filtered AS
             )
       )
     ORDER BY
-        CASE WHEN ISNULL(@Term, N'') <> N'' AND av.Token LIKE @TermStartsWith THEN 0 ELSE 1 END,
+        av.CardLength,
         av.LastTransactionId DESC,
         av.Token
 )
@@ -3526,7 +3566,7 @@ SELECT
 FROM Filtered f
 LEFT JOIN dbo.TblItems i ON i.ItemID = f.ItemId
 LEFT JOIN dbo.TblStore store ON store.StoreID = @StoreId
-ORDER BY f.LastTransactionId DESC, f.Token;";
+ORDER BY f.CardLength, f.LastTransactionId DESC, f.Token;";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -5524,8 +5564,10 @@ ORDER BY Transaction_ID DESC;";
             var hasSearchTerm = !string.IsNullOrWhiteSpace(searchTerm);
             var today = DateTime.Today;
             var searchFromDate = today.AddDays(-2);
-            var effectiveFromDate = fromDate.HasValue ? fromDate.Value.Date : (hasSearchTerm ? searchFromDate : today);
-            var effectiveToDate = toDate.HasValue ? toDate.Value.Date : today;
+            var safeFromDate = NormalizeSqlDate(fromDate);
+            var safeToDate = NormalizeSqlDate(toDate);
+            var effectiveFromDate = safeFromDate.HasValue ? safeFromDate.Value.Date : (hasSearchTerm ? searchFromDate : today);
+            var effectiveToDate = safeToDate.HasValue ? safeToDate.Value.Date : today;
             if (effectiveToDate < effectiveFromDate)
             {
                 var temp = effectiveFromDate;
@@ -9446,6 +9488,23 @@ WHERE Transaction_ID = @transactionId;";
                 default:
                     return string.Empty;
             }
+        }
+
+        private static DateTime? NormalizeSqlDate(DateTime? value)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            var date = value.Value.Date;
+            if (date < System.Data.SqlTypes.SqlDateTime.MinValue.Value.Date
+                || date > System.Data.SqlTypes.SqlDateTime.MaxValue.Value.Date)
+            {
+                return null;
+            }
+
+            return date;
         }
 
         private static string GetPrimaryServiceWhere(string serviceType)

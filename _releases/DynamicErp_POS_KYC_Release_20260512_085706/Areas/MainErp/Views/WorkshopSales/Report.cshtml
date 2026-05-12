@@ -1,0 +1,96 @@
+@model MyERP.Areas.MainErp.ViewModels.SalesInvoices.SalesInvoiceDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "تقرير فاتورة مبيعات الورشة";
+    var voucherBalanced = Math.Abs(Model.VoucherBalanceDifference) < 0.01m;
+    Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<decimal, string> moneyValue = v => String.Format("{0:n2}", v);
+}
+
+<section class="main-erp-report-page workshop-sales-report-page" dir="rtl">
+    <header class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-kicker">FrmSaleBill6 - Workshop Web Report</span>
+            <h2>تقرير فاتورة مبيعات الورشة</h2>
+            <p>@Model.NoteSerial1 - @(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <a href="@Url.Action("Details", "WorkshopSales", new { area = "MainErp", id = Model.TransactionId })">رجوع للفاتورة</a>
+            <button type="button" onclick="window.print()">طباعة</button>
+        </div>
+    </header>
+
+    <section class="main-erp-summary-grid main-erp-sticky-summary">
+        <article><span>الفاتورة</span><strong>@Model.NoteSerial1</strong><small>@Model.TransactionId</small></article>
+        <article><span>العميل</span><strong>@(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</strong><small>@Model.BranchName</small></article>
+        <article><span>الإجمالي</span><strong>@money(Model.Total)</strong><small>الصافي @money(Model.NetValue)</small></article>
+        <article><span>الضريبة</span><strong>@money(Model.Vat)</strong><small>بنود @moneyValue(Model.LinesVat)</small></article>
+        <article><span>البنود</span><strong>@Model.Lines.Count</strong><small>كمية @moneyValue(Model.InventoryQuantityTotal)</small></article>
+        <article class="@(voucherBalanced ? "is-ok" : "is-warning")"><span>القيود</span><strong>@moneyValue(Model.VoucherDebitTotal) / @moneyValue(Model.VoucherCreditTotal)</strong><small>فرق @moneyValue(Model.VoucherBalanceDifference)</small></article>
+    </section>
+
+    <article class="main-erp-premium-card">
+        <h4>بنود الفاتورة</h4>
+        <table class="main-erp-table">
+            <thead>
+                <tr>
+                    <th>الكود</th>
+                    <th>الصنف</th>
+                    <th>الوحدة</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>الخصم</th>
+                    <th>الضريبة</th>
+                    <th>الإجمالي</th>
+                    <th>الحساب</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in Model.Lines)
+                {
+                    <tr>
+                        <td>@line.ItemCode</td>
+                        <td>@line.ItemName</td>
+                        <td>@line.UnitName</td>
+                        <td>@money(line.ShowQty ?? line.Quantity)</td>
+                        <td>@money(line.ShowPrice ?? line.Price)</td>
+                        <td>@money(line.DiscountValue)</td>
+                        <td>@money(line.Vat)</td>
+                        <td>@moneyValue(line.LineTotal)</td>
+                        <td>@line.AccountDisplay</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">الإجماليات</td>
+                    <td>@moneyValue(Model.InventoryQuantityTotal)</td>
+                    <td></td>
+                    <td></td>
+                    <td>@moneyValue(Model.LinesVat)</td>
+                    <td>@moneyValue(Model.LinesTotal)</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </article>
+
+    <article class="main-erp-premium-card">
+        <h4>الأثر المحاسبي</h4>
+        <table class="main-erp-table">
+            <thead><tr><th>القيد</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>البيان</th></tr></thead>
+            <tbody>
+                @foreach (var line in Model.VoucherLines)
+                {
+                    <tr>
+                        <td>@line.NoteSerial</td>
+                        <td>@line.AccountDisplay</td>
+                        <td>@moneyValue(line.Debit)</td>
+                        <td>@moneyValue(line.Credit)</td>
+                        <td>@line.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </article>
+</section>

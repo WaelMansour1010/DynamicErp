@@ -1,0 +1,252 @@
+@using System
+@using System.Collections.Generic
+@using System.Globalization
+@using System.Linq
+@using System.Web.Script.Serialization
+@using MyERP.Areas.Reports.Models
+@{
+    Layout = null;
+    var definition = ViewBag.Definition as DynamicReportDefinition;
+    var result = ViewBag.Result as DynamicReportExecutionResult;
+    var user = ViewBag.User as DynamicReportUserContext;
+    var appliedParameters = ViewBag.Parameters as IDictionary<string, string> ?? new Dictionary<string, string>();
+    var generatedAt = ViewBag.GeneratedAt is DateTime ? (DateTime)ViewBag.GeneratedAt : DateTime.Now;
+    var layoutJson = ViewBag.LayoutJson as string;
+    var layout = ParseLayout(layoutJson);
+    var columns = BuildPrintColumns(result, layout);
+    var rows = result == null || result.Rows == null ? new List<IDictionary<string, object>>() : result.Rows;
+    var reportName = definition == null ? "Dynamic Report" : FirstText(definition.ReportNameAr, definition.ReportNameEn, definition.ReportCode);
+}
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8" />
+    <title>@reportName</title>
+    <link href="@Url.Content("~/Areas/Reports/Content/dynamic-reports-print.css")" rel="stylesheet" />
+</head>
+<body class="dr-print">
+    <main class="dr-print-page">
+        <header class="dr-print-header">
+            <div>
+                <h1>@reportName</h1>
+                <div class="dr-print-meta">تاريخ التوليد: @generatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                <div class="dr-print-meta">المستخدم: @(user == null ? "" : user.UserName)</div>
+            </div>
+            <button type="button" class="no-print dr-print-button" onclick="window.print()">طباعة</button>
+        </header>
+
+        <section class="dr-print-params">
+            @if (definition != null && definition.Parameters != null && definition.Parameters.Count > 0)
+            {
+                foreach (var parameter in definition.Parameters)
+                {
+                    var key = NormalizeParameterName(parameter.ParameterName);
+                    var value = appliedParameters.ContainsKey(key) ? appliedParameters[key] : "";
+                    <span><strong>@FirstText(parameter.CaptionAr, parameter.CaptionEn, parameter.ParameterName):</strong> @value</span>
+                }
+            }
+            else
+            {
+                <span>لا توجد معاملات تشغيل.</span>
+            }
+        </section>
+
+        @if (result == null || !result.Success)
+        {
+            <div class="dr-print-error">تعذر تشغيل التقرير للمعاينة. راجع المعاملات أو صلاحية التقرير.</div>
+        }
+        else
+        {
+            <table class="dr-print-table">
+                <thead>
+                    <tr>
+                        @foreach (var column in columns)
+                        {
+                            <th style="@HeaderStyle(column, layout)">@ColumnCaption(column, layout)</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in rows)
+                    {
+                        <tr>
+                            @foreach (var column in columns)
+                            {
+                                object value;
+                                row.TryGetValue(column.FieldName, out value);
+                                <td class="@AlignmentClass(column, layout)" style="@CellStyle(column, layout)">@FormatValue(value, column, layout)</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="@Math.Max(columns.Count, 1)">Dynamic Report Designer - Print Preview</td>
+                    </tr>
+                </tfoot>
+            </table>
+        }
+    </main>
+</body>
+</html>
+
+@functions {
+    private static Dictionary<string, object> ParseLayout(string layoutJson)
+    {
+        if (string.IsNullOrWhiteSpace(layoutJson)) return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            return new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Deserialize<Dictionary<string, object>>(layoutJson)
+                   ?? new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private static IList<DynamicReportColumn> BuildPrintColumns(DynamicReportExecutionResult result, IDictionary<string, object> layout)
+    {
+        var source = result == null || result.Columns == null ? new List<DynamicReportColumn>() : result.Columns.ToList();
+        var visible = GetMap(layout, "visibleColumns");
+        var ordered = new List<DynamicReportColumn>();
+        object orderRaw;
+        if (layout != null && layout.TryGetValue("columnOrder", out orderRaw) && orderRaw is object[])
+        {
+            foreach (var item in (object[])orderRaw)
+            {
+                var field = Convert.ToString(item);
+                var column = source.FirstOrDefault(x => string.Equals(x.FieldName, field, StringComparison.OrdinalIgnoreCase));
+                if (column != null && IsVisible(column, visible)) ordered.Add(column);
+            }
+        }
+
+        foreach (var column in source)
+        {
+            if (ordered.Any(x => string.Equals(x.FieldName, column.FieldName, StringComparison.OrdinalIgnoreCase))) continue;
+            if (IsVisible(column, visible)) ordered.Add(column);
+        }
+
+        return ordered;
+    }
+
+    private static bool IsVisible(DynamicReportColumn column, IDictionary<string, object> visible)
+    {
+        object raw;
+        if (visible != null && visible.TryGetValue(column.FieldName, out raw))
+        {
+            bool parsed;
+            return !bool.TryParse(Convert.ToString(raw), out parsed) || parsed;
+        }
+        return column.IsVisibleDefault;
+    }
+
+    private static string ColumnCaption(DynamicReportColumn column, IDictionary<string, object> layout)
+    {
+        var captions = GetMap(layout, "captions");
+        object raw;
+        if (captions != null && captions.TryGetValue(column.FieldName, out raw) && !string.IsNullOrWhiteSpace(Convert.ToString(raw)))
+        {
+            return Convert.ToString(raw);
+        }
+        return FirstText(column.CaptionAr, column.CaptionEn, column.FieldName);
+    }
+
+    private static string HeaderStyle(DynamicReportColumn column, IDictionary<string, object> layout)
+    {
+        return WidthStyle(column, layout);
+    }
+
+    private static string CellStyle(DynamicReportColumn column, IDictionary<string, object> layout)
+    {
+        return WidthStyle(column, layout);
+    }
+
+    private static string WidthStyle(DynamicReportColumn column, IDictionary<string, object> layout)
+    {
+        var widths = GetMap(layout, "widths");
+        object raw;
+        if (widths != null && widths.TryGetValue(column.FieldName, out raw))
+        {
+            int width;
+            if (int.TryParse(Convert.ToString(raw), out width) && width > 0)
+            {
+                return "width:" + width.ToString(CultureInfo.InvariantCulture) + "px";
+            }
+        }
+        return column.Width.HasValue ? "width:" + column.Width.Value.ToString(CultureInfo.InvariantCulture) + "px" : "";
+    }
+
+    private static string AlignmentClass(DynamicReportColumn column, IDictionary<string, object> layout)
+    {
+        var alignment = GetMap(layout, "alignment");
+        object raw;
+        var value = alignment != null && alignment.TryGetValue(column.FieldName, out raw) ? Convert.ToString(raw) : column.TextAlign;
+        if (string.Equals(value, "left", StringComparison.OrdinalIgnoreCase)) return "dr-print-left";
+        if (string.Equals(value, "center", StringComparison.OrdinalIgnoreCase)) return "dr-print-center";
+        return "dr-print-right";
+    }
+
+    private static string FormatValue(object value, DynamicReportColumn column, IDictionary<string, object> layout)
+    {
+        if (value == null) return "";
+        var fieldFormat = GetNestedMap(layout, "formatting", column.FieldName);
+        var format = GetMapValue(fieldFormat, "format");
+        if (string.IsNullOrWhiteSpace(format)) format = column.DisplayFormat;
+        var decimalsRaw = GetMapValue(fieldFormat, "decimals");
+        int decimals;
+        var hasDecimals = int.TryParse(decimalsRaw, out decimals);
+        if (!hasDecimals && column.DecimalPlaces.HasValue)
+        {
+            decimals = column.DecimalPlaces.Value;
+            hasDecimals = true;
+        }
+        decimal number;
+        if (decimal.TryParse(Convert.ToString(value), NumberStyles.Any, CultureInfo.InvariantCulture, out number))
+        {
+            return number.ToString("N" + (hasDecimals ? decimals : 2), CultureInfo.InvariantCulture);
+        }
+        var date = value as DateTime?;
+        if (date.HasValue)
+        {
+            if (string.Equals(format, "yyyy-MM-dd", StringComparison.OrdinalIgnoreCase)) return date.Value.ToString("yyyy-MM-dd");
+            if (string.Equals(format, "datetime", StringComparison.OrdinalIgnoreCase)) return date.Value.ToString("yyyy-MM-dd HH:mm");
+            return date.Value.ToString("dd/MM/yyyy");
+        }
+        return Convert.ToString(value);
+    }
+
+    private static IDictionary<string, object> GetMap(IDictionary<string, object> layout, string key)
+    {
+        object raw;
+        return layout != null && layout.TryGetValue(key, out raw) ? raw as IDictionary<string, object> : null;
+    }
+
+    private static IDictionary<string, object> GetNestedMap(IDictionary<string, object> layout, string key, string nestedKey)
+    {
+        var map = GetMap(layout, key);
+        object raw;
+        return map != null && map.TryGetValue(nestedKey, out raw) ? raw as IDictionary<string, object> : null;
+    }
+
+    private static string GetMapValue(IDictionary<string, object> map, string key)
+    {
+        object raw;
+        return map != null && map.TryGetValue(key, out raw) ? Convert.ToString(raw) : "";
+    }
+
+    private static string FirstText(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value)) return value;
+        }
+        return "";
+    }
+
+    private static string NormalizeParameterName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "";
+        return name.Trim().TrimStart('@');
+    }
+}

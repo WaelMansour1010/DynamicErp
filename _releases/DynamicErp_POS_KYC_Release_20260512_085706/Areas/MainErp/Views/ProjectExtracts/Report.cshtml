@@ -1,0 +1,90 @@
+@model MyERP.Areas.MainErp.ViewModels.ProjectExtracts.ProjectExtractDetailsViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "تقرير مستخلص مشروع";
+    var voucherBalanced = Math.Abs(Model.VoucherBalanceDifference) < 0.01m;
+    Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<double?, string> moneyDouble = v => String.Format("{0:n2}", v ?? 0d);
+}
+
+<section class="main-erp-report-page project-extract-report-page" dir="rtl">
+    <header class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-kicker">Web Report - Read Only</span>
+            <h2>تقرير مستخلص مشروع</h2>
+            <p>@Model.ProjectName - @Model.NoteSerial</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = Model.Id })">رجوع للمستخلص</a>
+            <button type="button" onclick="window.print()">طباعة</button>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    <section class="main-erp-summary-grid main-erp-sticky-summary">
+        <article><span>رقم المستخلص</span><strong>@Model.Id</strong><small>@Model.ManualNo</small></article>
+        <article><span>المشروع</span><strong>@Model.ProjectFullCode</strong><small>@Model.ProjectName</small></article>
+        <article><span>الإجمالي</span><strong>@String.Format("{0:n2}", Model.Total ?? 0m)</strong><small>الصافي @moneyDouble(Model.NetValue)</small></article>
+        <article><span>الضريبة</span><strong>@moneyDouble(Model.VatValue)</strong><small>قبل الضريبة @moneyDouble(Model.PreVat)</small></article>
+        <article><span>بنود التنفيذ</span><strong>@Model.DetailLineCount</strong><small>@money(Model.DetailCurrentValueTotal)</small></article>
+        <article class="@(voucherBalanced ? "is-ok" : "is-warning")"><span>القيود</span><strong>@money(Model.VoucherDebitTotal) / @money(Model.VoucherCreditTotal)</strong><small>فرق @money(Model.VoucherBalanceDifference)</small></article>
+    </section>
+
+    <article class="main-erp-premium-card">
+        <h4>ملخص الحسابات والخصومات</h4>
+        <dl class="main-erp-rich-details">
+            <dt>العميل</dt><dd>@Model.CustomerName</dd>
+            <dt>حساب الإيراد</dt><dd>@Model.RevenueAccount</dd>
+            <dt>حساب تحت التنفيذ</dt><dd>@Model.AccountUnderImplementation</dd>
+            <dt>حساب الضريبة</dt><dd>@Model.VatAccountCode</dd>
+            <dt>دفعة مقدمة</dt><dd>@moneyDouble(Model.AdvancedPayment)</dd>
+            <dt>ضمان أعمال</dt><dd>@moneyDouble(Model.PerformanceBond)</dd>
+        </dl>
+    </article>
+
+    <article class="main-erp-premium-card">
+        <h4>بنود المستخلص</h4>
+        <table class="main-erp-table">
+            <thead>
+                <tr>
+                    <th>البند</th>
+                    <th>الكود</th>
+                    <th>الوحدة</th>
+                    <th>السابق</th>
+                    <th>الحالي</th>
+                    <th>الإجمالي</th>
+                    <th>الضريبة</th>
+                    <th>النهائي</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var line in Model.DetailLines)
+                {
+                    <tr>
+                        <td>@line.Item</td>
+                        <td>@line.FullCode</td>
+                        <td>@line.Unit</td>
+                        <td>@money(line.PreValue)</td>
+                        <td>@money(line.CurrValue)</td>
+                        <td>@money(line.TotalValue)</td>
+                        <td>@money(line.LineVat)</td>
+                        <td>@money(line.LineFinal)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4">الإجماليات</td>
+                    <td>@money(Model.DetailCurrentValueTotal)</td>
+                    <td></td>
+                    <td>@money(Model.DetailVatTotal)</td>
+                    <td>@money(Model.DetailFinalTotal)</td>
+                </tr>
+            </tfoot>
+        </table>
+    </article>
+</section>

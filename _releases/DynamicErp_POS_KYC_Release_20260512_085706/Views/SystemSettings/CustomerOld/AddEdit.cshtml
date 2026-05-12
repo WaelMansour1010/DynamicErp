@@ -1,0 +1,581 @@
+﻿<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="form-title">
+                    <input type="button" class="btn btn-info btnAdd" name="AddEdit" value="رجوع" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')" style="float:left;">
+                    <h4>بيانات العميل :</h4>
+                </div>
+
+                <div class="form-body">
+                    <form class="form-horizontal">
+
+                        <div class="panel-group" id="accordion">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            البيانات الاساسية
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse1" class="panel-collapse collapse">
+                                    <div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الكود</label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" name="txtCode" id="txtCode" placeholder="الكود" required>
+                                                <span class="Asterisks">*</span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الاسم العربى</label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" name="txtArName" id="txtArName" placeholder="الاسم العربى" required>
+                                                <span class="Asterisks">*</span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الاسم الانجليزى</label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" name="txtEnName" id="txtEnName" placeholder="الاسم الانجليزى">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">المسمى الوظيفى</label>
+                                            <div class="col-sm-9">
+                                                <select id="ddlJobTitleId" name="ddlJobTitleId" class="form-control"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الشركة</label>
+                                            <div class="col-sm-9">
+                                                <select id="ddlCompanyId" name="ddlCompanyId" class="form-control"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الفروع</label>
+                                            <div class="col-sm-9">
+                                                <select id="ddlBranchId" name="ddlBranchId" class="form-control"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">المجموعة</label>
+                                            <div class="col-sm-9">
+                                                <select id="ddlCustomersGroupId" name="ddlCustomersGroupId" class="form-control"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الشخص المسؤل</label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" name="txtPerson" id="txtPerson" placeholder="الشخص المسؤل" disabled>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الجنسية</label>
+                                            <div class="col-sm-9">
+                                                <select id="ddlNationalityId" name="ddlNationalityId" class="form-control"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label" style="margin-top: 20px;">تاريخ التعامل</label>
+                                            <div class="col-sm-9">
+                                                <input type="date" class="form-control" name="dtDealingDate" id="dtDealingDate" placeholder="تاريخ التعامل" onchange="$(this).next().val(ToHijriDate($(this)));">
+                                                <input type="text" class="form-control hjdate" name="dtDealingDateHijri" id="dtDealingDateHijri" placeholder="التاريخ الهجري" disabled >
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">الحساب</label>
+                                            <div class="col-sm-9">
+                                                <select id="ddlAccountId" name="ddlAccountId" class="form-control"></select>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">نشط</label>
+                                            <div class="col-sm-9">
+                                                <input type="checkbox" class="form-control" id="chkIsActive" name="chkIsActive" style="width:15px;">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">ملاحظات</label>
+                                            <div class="col-sm-9">
+                                                <textarea type="text" class="form-control" id="txtNotes" name="txtNotes" placeholder="ملاحظات"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                                            بيانات الاتصال
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse2" class="panel-collapse collapse">
+                                    <div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">جوال</label>
+                                            <div class="col-sm-9">
+                                                <input type="number" step="any" class="form-control" name="txtMobile" id="txtMobile" placeholder="جوال">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">تليفون1</label>
+                                            <div class="col-sm-9">
+                                                <input type="number" step="any" class="form-control" name="txtTel1" id="txtTel1" placeholder="تليفون1">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">تليفون2</label>
+                                            <div class="col-sm-9">
+                                                <input type="number" step="any" class="form-control" name="txtTel2" id="txtTel2" placeholder="تليفون2">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">فاكس</label>
+                                            <div class="col-sm-9">
+                                                <input type="text" class="form-control" name="txtFax" id="txtFax" placeholder="فاكس">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">البريد الاليكترونى</label>
+                                            <div class="col-sm-9">
+                                                <input type="email" class="form-control" name="txtEmail" id="txtEmail" placeholder="البريد الاليكترونى">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">موقع الانترنت</label>
+                                            <div class="col-sm-9">
+                                                <input type="email" class="form-control" name="txtSite" id="txtSite" placeholder="موقع الانترنت">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="inputtext3" class="col-sm-3 control-label">العنوان</label>
+                                            <div class="col-sm-9">
+                                                <textarea type="text" class="form-control" name="txtAddress" id="txtAddress" placeholder="العنوان"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                            البيانات الرسمية
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse3" class="panel-collapse collapse">
+                                    <div>
+                                        <div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">نوع الهوية</label>
+                                                <div class="col-sm-9">
+                                                    <select id="ddlIdentityTypeId" name="ddlIdentityTypeId" class="form-control"></select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">رقم الهوية</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtIdentityNumber" id="txtIdentityNumber" placeholder="رقم الهوية">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">المصدر</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtIdentitySource" id="txtIdentitySource" placeholder="المصدر">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label" style="margin-top: 20px;">تاريخ الاصدار</label>
+                                                <div class="col-sm-9">
+                                                    <input type="date" class="form-control" name="dtIdentityIssueDate" id="dtIdentityIssueDate" placeholder="تاريخ الاصدار" onchange="$(this).next().val(ToHijriDate($(this)));">
+                                                    <input type="text" class="form-control hjdate" name="dtIdentityIssueDateHijri" id="dtIdentityIssueDateHijri" placeholder="التاريخ الهجري" disabled >
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label" style="margin-top: 20px;">تاريخ الانتهاء</label>
+                                                <div class="col-sm-9">
+                                                    <input type="date" class="form-control" name="dtIdentityExpireDate" id="dtIdentityExpireDate" placeholder="تاريخ الانتهاء"  onchange="$(this).next().val(ToHijriDate($(this)));">
+                                                    <input type="text" class="form-control hjdate" name="dtIdentityExpireDateHijri" id="dtIdentityExpireDateHijri" placeholder="التاريخ الهجري" disabled >
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">رقم التسجيل الضريبى</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtTaxNumber" id="txtTaxNumber" placeholder="رقم التسجيل الضريبى">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">رقم الملف</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtFileNumber" id="txtFileNumber" placeholder="رقم الملف">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse4">
+                                            الحد الاتمانى
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse4" class="panel-collapse collapse">
+                                    <div>
+                                        <div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">السماح بالحد الائتمانى</label>
+                                                <div class="col-sm-9">
+                                                    <input type="checkbox" class="form-control" name="chkAllowCreditLimit" id="chkAllowCreditLimit" style="width:15px;"                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">الحد الائتمانى</label>
+                                                <div class="col-sm-9">
+                                                    <input type="number" step="any"  class="form-control" name="txtCreditLimitAmount" id="txtCreditLimitAmount" placeholder="الحد الائتمانى">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">فترة الحد الائتماني </label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtCreditLimitPeriod" id="txtCreditLimitPeriod" placeholder="فترة الحد الائتماني ">
+                                                </div                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">الرصيد الافتتاحى</label>
+                                                <div class="col-sm-9">
+                                                    <input type="number" step="any"  class="form-control" name="txtOpeningBalance" id="txtOpeningBalance" placeholder="الرصيد الافتتاحى">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">طبيعة العمل حسب العقد</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtWorkNature" id="txtWorkNature" placeholder="طبيعة العمل حسب العقد">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @*<div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse5">
+                                            معلومات المشروع
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse5" class="panel-collapse collapse">
+                                    <div>
+                                        <div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">اسم المشروع</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtProjectName" id="txtProjectName" placeholder="اسم المشروع">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">عدد المباني</label>
+                                                <div class="col-sm-9">
+                                                    <input type="number" step="any" class="form-control" name="txtConstructionNo" id="txtConstructionNo" placeholder="عدد المباني">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">طبيعة المشروع</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtProjectNature" id="txtProjectNature" placeholder="طبيعة المشروع">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">الإدارة التابعة للمشروع</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtDepartmentName" id="txtDepartmentName" placeholder="الإدارة التابعة للمشروع">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">منطقة المشروع</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtProjectArea" id="txtProjectArea" placeholder="منطقة المشروع">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">رقم إشعار الترسية</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtAwardNoticeNo" id="txtAwardNoticeNo" placeholder="رقم إشعار الترسية">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">رقم الضمان النهائي</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtFinalGuaranteeNo" id="txtFinalGuaranteeNo" placeholder="رقم الضمان النهائي">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label" style="margin-top: 20px;">تاريخ إصدار الضمان</label>
+                                                <div class="col-sm-9">
+                                                    <input type="date" class="form-control" name="dtGuaranteeIssueDate" id="dtGuaranteeIssueDate" placeholder="تاريخ إصدار الضمان"  onchange="$(this).next().val(ToHijriDate($(this)));">
+                                                    <input type="text" class="form-control hjdate" name="dtGuaranteeIssueDateHijri" id="dtGuaranteeIssueDateHijri" placeholder="التاريخ الهجري" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label" style="margin-top: 20px;">تاريخ إنتهاء الضمان</label>
+                                                <div class="col-sm-9">
+                                                    <input type="date" class="form-control" name="dtGuaranteeExpireDate" id="dtGuaranteeExpireDate" placeholder="تاريخ إنتهاء الضمان" onchange="$(this).next().val(ToHijriDate($(this)));">
+                                                    <input type="text" class="form-control hjdate" name="dtGuaranteeExpireDateHijri" id="dtGuaranteeExpireDateHijri" placeholder="التاريخ الهجري" disabled >
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label" style="margin-top: 20px;">تاريخ تحرير العقد</label>
+                                                <div class="col-sm-9">
+                                                    <input type="date" class="form-control" name="dtContractDate" id="dtContractDate" placeholder="تاريخ تحرير العقد"  onchange="$(this).next().val(ToHijriDate($(this)));">
+                                                    <input type="text" class="form-control hjdate" name="dtContractDateHijri" id="dtContractDateHijri" placeholder="التاريخ الهجري" disabled >
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">مدة تنفيذ المشروع بالشهور</label>
+                                                <div class="col-sm-9">
+                                                    <input type="number" step="any" class="form-control" name="txtProjectPeriodInMonths" id="txtProjectPeriodInMonths" placeholder="مدة تنفيذ المشروع بالشهور">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="inputtext3" class="col-sm-3 control-label">قيمة المشروع</label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" name="txtProjectValue" id="txtProjectValue" placeholder="قيمة المشروع">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse6">
+                                            المدارس او المباني
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapse6" class="panel-collapse collapse">
+                                    <div>
+                                        <div>
+                                            لا يوجد مدارس أو مبانى
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>*@
+                        </div>
+                        <div class="col-sm-offset-2">
+                            <button type="button" class="btn btn-success" onclick="save()">
+                                حفظ
+                            </button>
+                            <button type="reset" class="btn btn-danger" onclick="back('@ViewContext.RouteData.Values["controller"].ToString()')">
+                                رجوع
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="hdnobjID" />
+<input type="hidden" id="hdnUserId"/>
+<input type="hidden" id="hdnIsDeleted" />
+<input type="hidden" id="hdnIsActive" />
+<input type="hidden" id="hdnImage" />
+<input type="hidden" id="hdnObDebit"  />
+<input type="hidden" id="hdnObCredit" />
+
+<script>
+
+    FillBranchDDL();
+    FillcompanyDDL();
+    FillIdentityTypeDDL();
+    FillCustomersGroupDDL();
+    FillNationalityDDL();
+    FillJobTitleDDL();
+
+function save() {
+
+            CheckSave();
+
+
+        if ($("form").valid() && $('.error:visible').length == 0) {
+        $('#preloader, #status').fadeIn();
+        $.ajax(
+            {
+                url: MainDomain + 'api/Customer/' + $('#hdnobjID').val(),
+                type: ((@ViewBag.ID.ToString() != '') ? 'PUT' : 'POST'),
+                data: {
+                    "Id": $('#hdnobjID').val(),
+                    "Code": $('#txtCode').val(),
+                    "ArName": $('#txtArName').val(),
+                    "EnName": $('#txtEnName').val(),
+                    "CompanyId": $('#ddlCompanyId').val(),
+                    "BranchId": $('#ddlBranchId').val(),
+                    "CustomersGroupId": $('#ddlCustomersGroupId').val(),
+                    "DealingDate": $('#dtDealingDate').val(),
+                    "DealingDateHijri": $('#dtDealingDateHijri').val(),
+                    "Mobile": $('#txtMobile').val(),
+                    "Tel1": $('#txtTel1').val(),
+                    "Tel2": $('#txtTel2').val(),
+                    "Fax": $('#txtFax').val(),
+                    "Email": $('#txtEmail').val(),
+                    "Site": $('#txtSite').val(),
+                    "Address": $('#txtAddress').val(),
+                    "Notes": $('#txtNotes').val(),
+                    "NationalityId": $('#ddlNationalityId').val(),
+                    "TaxNumber": $('#txtTaxNumber').val(),
+                    "FileNumber": $('#txtFileNumber').val(),
+                    "IdentityTypeId": $('#ddlIdentityTypeId').val(),
+                    "IdentityNumber": $('#txtIdentityNumber').val(),
+                    "IdentitySource": $('#txtIdentitySource').val(),
+                    "IdentityIssueDate": $('#dtIdentityIssueDate').val(),
+                    "IdentityIssueDateHijri": $('#dtIdentityIssueDateHijri').val(),
+                    "IdentityExpireDate": $('#dtIdentityExpireDate').val(),
+                    "IdentityExpireDateHijri": $('#dtIdentityExpireDateHijri').val(),
+                    "JobTitleId": $('#ddlJobTitleId').val(),
+                    "WorkNature": $('#txtWorkNature').val(),
+                    "AccountId": $('#ddlAccountId').val(),
+                    "AllowCreditLimit": $('#chkAllowCreditLimit').prop("checked"),
+                    "CreditLimitAmount": $('#txtCreditLimitAmount').val(),
+                    "CreditLimitPeriod": $('#txtCreditLimitPeriod').val(),
+                    "OpeningBalance": $('#txtOpeningBalance').val(),
+
+                    "ProjectName": $('#txtProjectName').val(),
+                    "ConstructionNo": $('#txtConstructionNo').val(),
+                    "ProjectNature": $('#txtProjectNature').val(),
+                    "DepartmentName": $('#txtDepartmentName').val(),
+                    "ProjectArea": $('#txtProjectArea').val(),
+                    "AwardNoticeNo": $('#txtAwardNoticeNo').val(),
+                    "FinalGuaranteeNo": $('#txtFinalGuaranteeNo').val(),
+                    "GuaranteeIssueDate": $('#dtGuaranteeIssueDate').val(),
+                    "GuaranteeIssueDateHijri": $('#dtGuaranteeIssueDateHijri').val(),
+                    "GuaranteeExpireDate": $('#dtGuaranteeExpireDate').val(),
+                    "GuaranteeExpireDateHijri": $('#dtGuaranteeExpireDateHijri').val(),
+                    "ContractDate": $('#dtContractDate').val(),
+                    "ContractDateHijri": $('#dtContractDateHijri').val(),
+                    "ProjectPeriodInMonths": $('#txtProjectPeriodInMonths').val(),
+                    "ProjectValue": $('#txtProjectValue').val(),
+
+                    "IsActive": (@ViewBag.ID.ToString() != '') ? $('#hdnIsActive').val() : true,
+                    "IsDeleted": (@ViewBag.ID.ToString() != '') ? $('#hdnIsDeleted').val() : false,
+                    "UserId": $('#hdnUserId').val(),
+                    "Image": $('#hdnImage').val(),
+                    "ObDebit": $('#hdnObDebit').val(),
+                    "ObCredit": $('#hdnObCredit').val()
+                },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                },
+                error: function (e) {
+                    if (e.responseJSON.Message == 'Duplicate Code Found') {
+                        alert("الكود موجود بالفعل");
+                        $('#preloader, #status').fadeOut();
+                    } else
+                      alert("er")
+                },
+                success: function (r) {
+                    back('@ViewContext.RouteData.Values["controller"].ToString()');
+                }
+            });
+        } else {
+            CheckSave();
+            $("label.error").html('يرحى ادخال هذا الحقل');
+            $('html').animate({ scrollTop: $('.error:visible').offset().top - 170 }, '500', 'swing');
+        }
+    }
+
+
+    if (@ViewBag.ID.ToString() != '') {
+
+        $.ajax(
+            {
+                url: MainDomain + 'api/Customer/@ViewBag.ID.ToString()',
+                type: 'Get',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                }, error: function () {
+                    window.location = '/logout/';
+                },
+                success: function (r) {
+                    console.log(r);
+                    console.log(r['ArName']);
+                    if (r != null) {
+                        $('#txtCode').val(r['Code']);
+                        $('#txtArName').val(r['ArName']);
+                        $('#txtEnName').val(r['EnName']);
+                        $('#ddlJobTitleId').val(r['JobTitleId']);
+                        $('#ddlCompanyId').val(r['CompanyId']);
+                        $('#ddlBranchId').val(r['BranchId']);
+                        $('#ddlCustomersGroupId').val(r['CustomersGroupId']);
+                        $('#ddlNationalityId').val(r['NationalityId']);
+                        $('#dtDealingDate').val(r['DealingDate'] == null ? '' : r['DealingDate'].split("T")[0]);
+                        $('#dtDealingDateHijri').val(r['DealingDateHijri']);
+                        $('#ddlAccountId').val(r['AccountId']);
+                        $('#chkIsActive').prop("checked", r['IsActive']);
+                        $('#txtNotes').val(r['Notes']);
+                        $('#txtMobile').val(r['Mobile']);
+                        $('#txtTel1').val(r['Tel1']);
+                        $('#txtTel2').val(r['Tel2']);
+                        $('#txtFax').val(r['Fax']);
+                        $('#txtEmail').val(r['Email']);
+                        $('#txtSite').val(r['Site']);
+                        $('#txtAddress').val(r['Address']);
+                        $('#ddlIdentityTypeId').val(r['IdentityTypeId']);
+                        $('#txtIdentityNumber').val(r['IdentityNumber']);
+                        $('#txtIdentitySource').val(r['IdentitySource']);
+                        $('#dtIdentityIssueDate').val(r['IdentityIssueDate'] == null ? '' : r['IdentityIssueDate'].split("T")[0]);
+                        $('#dtIdentityIssueDateHijri').val(r['IdentityIssueDateHijri']);
+                        $('#dtIdentityExpireDate').val(r['IdentityExpireDate'] == null ? '' : r['IdentityExpireDate'].split("T")[0]);
+                        $('#dtIdentityExpireDateHijri').val(r['IdentityExpireDateHijri']);
+                        $('#txtTaxNumber').val(r['TaxNumber']);
+                        $('#txtFileNumber').val(r['FileNumber']);
+                        $('#chkAllowCreditLimit').prop("checked", r['AllowCreditLimit']);
+                        $('#txtCreditLimitAmount').val(r['CreditLimitAmount']);
+                        $('#txtCreditLimitPeriod').val(r['CreditLimitPeriod']);
+                        $('#txtOpeningBalance').val(r['OpeningBalance']);
+                        $('#txtWorkNature').val(r['WorkNature']);
+
+                        $('#txtProjectName').val(r['ProjectName']);
+                        $('#txtConstructionNo').val(r['ConstructionNo']);
+                        $('#txtProjectNature').val(r['ProjectNature']);
+                        $('#txtDepartmentName').val(r['DepartmentName']);
+                        $('#txtProjectArea').val(r['ProjectArea']);
+                        $('#txtAwardNoticeNo').val(r['AwardNoticeNo']);
+                        $('#txtFinalGuaranteeNo').val(r['FinalGuaranteeNo']);
+                        $('#dtGuaranteeIssueDate').val(r['GuaranteeIssueDate'] == null ? '' : r['GuaranteeIssueDate'].split("T")[0]);
+                        $('#dtGuaranteeIssueDateHijri').val(r['GuaranteeIssueDateHijri']);
+                        $('#dtGuaranteeExpireDate').val(r['GuaranteeExpireDate'] == null ? '' : r['GuaranteeExpireDate'].split("T")[0]);
+                        $('#dtGuaranteeExpireDateHijri').val(r['GuaranteeExpireDateHijri']);
+                        $('#dtContractDate').val(r['ContractDate'] == null ? '' : r['ContractDate'].split("T")[0]);
+                        $('#dtContractDateHijri').val(r['ContractDateHijri']);
+                        $('#txtProjectPeriodInMonths').val(r['ProjectPeriodInMonths']);
+                        $('#txtProjectValue').val(r['ProjectValue']);
+
+                        $('#hdnImage').val(r['Image']);
+                        $('#hdnobjID').val(r['Id']);
+                        $('#hdnUserId').val(r['UserId']);
+                        $('#hdnIsDeleted').val(r['IsDeleted']);
+                        $('#hdnIsActive').val(r['IsActive']);
+
+                        $('#hdnObDebit').val(r['ObDebit']);
+                        $('#hdnObCredit').val(r['ObCredit']);
+
+FillAutoCompelete();
+                    }
+
+                    $('#preloader, #status').fadeOut();
+                }
+            });
+    }
+</script>

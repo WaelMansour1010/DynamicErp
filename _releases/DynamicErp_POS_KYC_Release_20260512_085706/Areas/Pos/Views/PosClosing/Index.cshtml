@@ -1,0 +1,122 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "إغلاق نقطة البيع";
+    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>إغلاق نقطة البيع</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="pos-page pos-closing-page"
+         id="posClosingPage"
+         data-load-url="@Url.Action("LoadValues", "PosClosing", new { area = "Pos" })"
+         data-execute-url="@Url.Action("ExecuteClosing", "PosClosing", new { area = "Pos" })"
+         data-default-branch-id="@(posContext != null && posContext.BranchId.HasValue ? posContext.BranchId.Value.ToString() : "")"
+         data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")">
+        <div class="pos-shell">
+            <header class="pos-header">
+                <div>
+                    <h1>إغلاق نقطة البيع</h1>
+                    <p>تنفيذ إغلاق يومي للفرع حسب شاشة project_status القديمة</p>
+                    <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "")</p>
+                </div>
+                <div class="pos-status">إغلاق يومي</div>
+            </header>
+
+            <section class="pos-panel">
+                <div class="panel-heading">
+                    <h2>بيانات الإغلاق</h2>
+                    <div class="closing-actions">
+                        <button type="button" class="secondary-action" id="loadClosingBtn">تحديث البيانات</button>
+                        <button type="button" class="primary-action" id="executeClosingBtn">تنفيذ الإغلاق</button>
+                    </div>
+                </div>
+                <div class="pos-grid four-cols">
+                    <label>تاريخ الإغلاق<input type="date" id="closingDate" /></label>
+                    <label>الفرع<input type="text" id="branchName" value="@(posContext != null ? posContext.BranchName : "")" readonly /><input type="hidden" id="branchId" value="@(posContext != null && posContext.BranchId.HasValue ? posContext.BranchId.Value.ToString() : "")" /></label>
+                    <label>رقم القيد<input type="text" id="noteSerial" readonly /></label>
+                    <label>حالة الإغلاق<input type="text" id="closingStatus" readonly /></label>
+                </div>
+            </section>
+
+            <section class="pos-panel">
+                <div class="panel-heading"><h2>الأرصدة والحركات</h2></div>
+                <div class="closing-values-grid">
+                    <label>رصيد اول اليوم<input type="text" id="openBalance" readonly /></label>
+                    <label>مبيعات اليوم<input type="text" id="totalSaleDay" readonly /></label>
+                    <label>رصيد نهاية اليوم<input type="text" id="lastBalance" readonly /></label>
+                    <label>عدد الحركات<input type="text" id="countTransaction" readonly /></label>
+                    <label>عدد الكروت<input type="text" id="countCards" readonly /></label>
+                    <label>مبلغ الشحن<input type="text" id="totalRechargeValue" readonly /></label>
+                    <label>مبلغ الرسوم<input type="text" id="totalRev" readonly /></label>
+                    <label>ضريبة الرسوم<input type="text" id="totalRevVat" readonly /></label>
+                    <label>Cash Out total<input type="text" id="cashOutTotal" readonly /></label>
+                    <label style="display:none">خصم Cash Out<input type="text" id="cashOutDisc" readonly /></label>
+                    <label>رصيد العهدة أول اليوم<input type="text" id="boxBalance" readonly /></label>
+                    <label>التوريد النقدي<input type="text" id="totalSupply" readonly /></label>
+                    <label>رصيد المحفظة<input type="text" id="totalWallet" readonly /></label>
+                    <label style="display:none">POS توريد<input type="text" id="totalPOS" readonly /></label>
+                    <label>توريد رسوم<input type="text" id="totalRev2" readonly /></label>
+                    <label style="display:none">توريد توكن<input type="text" id="totalSaleDay2" readonly /></label>
+                    <label>إجمالي التوريد<input type="text" id="net" readonly /></label>
+                    <label>القيمة الفعلية<input type="text" id="actValue" /></label>
+                    <label>الفرق<input type="text" id="diff" readonly /></label>
+                    <label>حساب العهدة<input type="text" id="boxBalanceAccount" readonly /></label>
+                </div>
+            </section>
+
+            <section class="pos-panel">
+                <div class="panel-heading"><h2>تفاصيل قيد الشحن</h2></div>
+                <div class="responsive-table">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>نوع الشحن</th>
+                                <th>حساب العميل</th>
+                                <th>حساب البنك</th>
+                                <th>مبلغ الشحن</th>
+                                <th>رسوم إدارية</th>
+                                <th>عمولة مشاركة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rechargeRows">
+                            <tr><td colspan="6">اضغط تحديث البيانات</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="pos-panel closing-password-panel">
+                <div class="panel-heading"><h2>تأكيد التنفيذ</h2></div>
+                <div class="pos-grid three-cols">
+                    <label>كلمة المرور<input type="password" id="closingPassword" autocomplete="off" /></label>
+                    <label>آخر نتيجة<input type="text" id="closingResult" readonly /></label>
+                </div>
+                <div id="closingMessage" class="save-warning">يتم إنشاء قيد إغلاق فعلي. تأكد من البيانات قبل التنفيذ.</div>
+                <div id="voucherHeaders" class="closing-voucher-headers"></div>
+                <div class="responsive-table closing-vouchers-wrap">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحساب</th>
+                                <th>اسم الحساب</th>
+                                <th>البيان / الشرح</th>
+                                <th>مدين</th>
+                                <th>دائن</th>
+                            </tr>
+                        </thead>
+                        <tbody id="createdVouchers">
+                            <tr><td colspan="5">لم يتم تنفيذ إغلاق بعد</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+    <script src="@Url.Content("~/Areas/Pos/Scripts/pos-closing.js")"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+﻿@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.DeletedTransaction;
+}
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title"> @MyERP.Properties.Resources.DeletedTransaction</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label for="SystemPages" class="control-label col-sm-2"> @MyERP.Properties.Resources.Transaction</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("SystemPages", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label " for="DateFrom">@MyERP.Properties.Resources.FromDate</label>
+                                    <div class="col-sm-4">
+                                        <input id="DateFrom" class="form-control" type="datetime-local" />
+                                    </div>
+
+                                    <label class="col-sm-1 control-label " for="DateTo">@MyERP.Properties.Resources.ToDate</label>
+                                    <div class="col-sm-4">
+                                        <input id="DateTo" class="form-control" type="datetime-local" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-horizontal needs-validation" role="form">
+                                    <div class="table-responsive">
+                                        <table class="table table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DocNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Date
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Details
+                                                    </th>
+
+                                                </tr>
+                                            </thead>
+                                            <tbody id="DeletedTransactions"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+           
+        </div>
+    </div>
+</div>
+    <script>
+        function GetDeletedTransaction() {
+            if ($('#SystemPages').val() != "") {
+                $('#preloader, #status').fadeIn();
+                var DeletedTransactions = $.get("/DeletedTransaction/GetDeletedTransaction?table=" + $('#SystemPages').val() + "&from=" + $('#DateFrom').val() + "&to=" + $('#DateTo').val())
+                    .done(function () {
+
+                        $('#DeletedTransactions').html('');
+                        DeletedTransactions = DeletedTransactions.responseText;
+
+                        $('#DeletedTransactions').append(DeletedTransactions);
+                        $('#preloader, #status').fadeOut();
+                    }).fail(function () {
+                        $('#preloader, #status').fadeOut();
+                    });
+
+            }
+        }
+
+        GetDeletedTransaction();
+        $('#SystemPages').on('change', function () {
+            GetDeletedTransaction();
+        });
+
+        $('#DateFrom').on('change', function () {
+            GetDeletedTransaction();
+        });
+
+        $('#DateTo').on('change', function () {
+            GetDeletedTransaction();
+        });
+        function zeroPadded(val) {
+            if (val >= 10)
+                return val;
+            else
+                return '0' + val;
+        }
+        if ($('#SystemPages').val() == 0) {
+            var d = new Date();
+            $('#DateFrom').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+            $('#DateTo').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        }
+    </script>

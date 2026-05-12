@@ -1,0 +1,312 @@
+﻿@model IEnumerable<MyERP.Models.SystemPage>
+
+@{
+    ViewBag.Title = "صفحات النظام";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Create")" role="button" style="float:left;">إضافة جديد</a>
+            </div>
+            <div class="hed page-title">صفحات النظام</div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<div class="card-box">
+    <div class="row">
+        <div class="col-12">
+            <div class="form-horizontal" role="form">
+                <div class="form-group row">
+                    <div class="col-xs-12 col-sm-6 col-lg-3">
+                        <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder="بحث">
+                    </div>
+                    <div class="col-xs-12 col-sm-3 col-lg-3">
+                        <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        <button type="button" class="btn btn-info btnSearch" onclick="pageNo = 1; searchWord=''; paging();">
+                            <i class="fe-refresh-ccw"></i>
+                        </button>
+                    </div>
+                    <div class="form-check">
+                        <label class="control-label" for="Module">
+                            Only Modules
+                        </label>
+                        <input class="form-check-input col-sm-4" type="checkbox" id="Module" onclick="ShowModule();" @Html.Raw(ViewBag.check== true ? "checked" : "")>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-centered mb-0">
+                    <thead>
+                        <tr>
+
+                            @*<th>
+                                    الكود
+                                </th>
+
+                                                    <th>
+                                    الاسم باللغة الإنجليزية
+                                </th>
+
+                                <th>
+                                    اسم الجدول
+                                </th>
+                                <th>
+                                    اسم الكنترول
+                                </th>*@
+                            <th>
+                                الاسم باللغة العربية
+                            </th>
+                            <th>
+                                نشط
+                            </th>
+                            @*<th>
+                                حذف
+                            </th>*@
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                @*<td>
+                                        @Html.DisplayFor(modelItem => item.Code)
+                                    </td>
+
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.EnName)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.TableName)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.ControllerName)
+                                    </td>*@
+                                @if (item.IsReport == true)
+                                {
+                                    <td>
+                                         تقارير  @item.ArName  
+                                    </td>
+
+                                }
+                                else
+                                {
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.ArName)
+                                    </td>
+                                }
+
+                                <td>
+                                    <input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsActive == true ? "checked" : "") onchange="ActivateDeactivate(@item.Id)" />
+                                </td>
+                                @*<td>
+                                    <input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(item.IsDeleted == false ? "checked" : "") onchange="Delete(@item.Id)" />
+                                </td>*@
+                                @*<td>
+                                        <a href="javascript:void(0);" onclick="Delete(@item.Id)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>*@
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">الكل</option>
+            </select>
+            <span style="font-size:12px;float:right;"> عدد النتائج : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> رقم الصفحة: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+     var pageNo = 1;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function paging() {
+        var link = '/SystemPages/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord + '&OnlyModules=' +false ;
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+          //  $('.pagination').append('<li class="pageNo" id="pg' + (i + 1) + '"><a href="javascript:void(0);" onclick="pageNo=' + (i + 1) + '; paging();">' + (i + 1) + '</a></li>');
+   $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+
+   // $('#pg' +ViewBag.PageIndex).addClass('disabled active');
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+
+    })
+
+
+  /*  function Delete(id) {
+        //if (confirm('هل تريد الحذف؟')) {
+            //  $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+
+                    url: '/SystemPages/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            // window.location.reload();
+                            alert('تم تغير حالة الحذف!')
+
+                        }
+                    }
+                });
+       // }
+
+    }*/
+
+    function ActivateDeactivate(id) {
+        $.ajax({
+            url: '/SystemPages/ActivateDeactivate',
+            type: 'POST',
+            data: {
+                "Id": id,
+            },
+            error: function (e) {
+
+            },
+            success: function (r) {
+                if (r == 'true') {
+                    alert('تم تغير حالة التنشيط!')
+                }
+            }
+        });
+    }
+
+    function ShowModule() {
+        var checked = $('#Module').prop('checked');
+       // console.log(checked, "checkBox"); //true,false
+
+        if (checked == true) {
+            var link = '/SystemPages/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord + '&OnlyModules=' + checked;
+            window.location.replace(link);
+        }
+        else {
+            paging();
+        }
+    }
+
+
+</script>
+
+@*<p>
+        @Html.ActionLink("Create New", "Create")
+    </p>
+
+    <table class="table">
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Code)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ArName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EnName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsMasterFile)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TableName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ControllerName)
+            </th>
+            <th></th>
+        </tr>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Code)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ArName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EnName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.IsMasterFile)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TableName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ControllerName)
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                    @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                </td>
+            </tr>
+        }
+
+    </table> *@
+
+
+

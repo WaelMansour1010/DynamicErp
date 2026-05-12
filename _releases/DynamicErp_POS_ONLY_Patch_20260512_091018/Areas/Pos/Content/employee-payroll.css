@@ -1,0 +1,68 @@
+@import url("../../MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui");
+
+.ep-body { margin:0; background:#f6f7fb; color:#172033; font-family:Tahoma, Arial, sans-serif; direction:rtl; }
+.ep-page { padding:18px; max-width:100%; box-sizing:border-box; overflow-x:hidden; }
+.ep-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; padding:4px 2px; }
+.ep-header-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; flex-shrink:0; }
+.ep-header h1 { margin:0 0 6px; font-size:24px; font-weight:700; line-height:1.35; }
+.ep-header p { margin:0; color:#667085; line-height:1.7; }
+.ep-toolbar, .ep-kpis, .ep-editor, .ep-grid-wrap, .ep-wizard { background:#fff; border:1px solid #dde3ee; border-radius:8px; padding:12px; margin-bottom:12px; }
+.ep-two-columns { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.ep-settings-grid { display:grid; grid-template-columns:minmax(320px, .9fr) minmax(520px, 1.35fr); gap:14px; align-items:start; margin-bottom:14px; }
+.ep-lists-grid { display:grid; grid-template-columns:minmax(320px, .9fr) minmax(520px, 1.35fr); gap:14px; align-items:start; }
+.ep-form-card { margin-bottom:0; padding:16px; overflow:hidden; }
+.ep-card-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.ep-card-title h2, .ep-inline-form h2 { margin:0; font-size:20px; font-weight:700; line-height:1.35; }
+.ep-fields, .ep-inline-form { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px 16px; margin-bottom:0; align-items:start; }
+.ep-provider-fields { grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); }
+.ep-plan-fields { grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); }
+.ep-toolbar { display:grid; grid-template-columns:repeat(6, minmax(130px, 1fr)); gap:10px; align-items:end; }
+.ep-toolbar label, .ep-tab label, .ep-fields label, .ep-inline-form label { display:flex; flex-direction:column; gap:7px; font-weight:700; color:#344054; line-height:1.45; min-width:0; }
+.ep-toolbar input, .ep-toolbar select, .ep-tab input, .ep-tab select, .ep-tab textarea, .ep-fields input, .ep-fields select, .ep-fields textarea, .ep-inline-form input, .ep-inline-form select, .ep-inline-form textarea { width:100%; min-width:0; box-sizing:border-box; border:1px solid #cfd7e6; border-radius:6px; padding:9px 10px; min-height:40px; font:inherit; background:#fff; color:#172033; }
+.ep-tab textarea, .ep-fields textarea, .ep-inline-form textarea { min-height:82px; resize:vertical; }
+button, .ep-link { border:1px solid #cfd7e6; background:#fff; color:#172033; border-radius:6px; padding:9px 12px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; justify-content:center; font:inherit; min-height:38px; }
+.ep-primary { background:#1264a3; color:#fff; border-color:#1264a3; }
+.ep-form-actions { display:flex; justify-content:flex-start; padding-top:14px; margin-top:4px; border-top:1px solid #eef2f7; }
+.ep-form-actions .ep-primary { min-width:180px; }
+.ep-grid-wrap { overflow:auto; padding:12px; }
+.ep-table-card { background:#fff; border:1px solid #dde3ee; border-radius:8px; box-shadow:0 8px 22px rgba(15, 23, 42, .04); overflow-x:auto; padding:0; }
+.ep-table-card .ep-card-title { border-bottom:1px solid #eef2f7; margin:0; padding:12px; }
+.ep-table-card .ep-table { display:table; }
+.ep-table { width:100%; border-collapse:collapse; min-width:680px; table-layout:auto; }
+.ep-table th, .ep-table td { border-bottom:1px solid #e6ebf3; padding:10px 12px; text-align:right; vertical-align:middle; white-space:normal; overflow-wrap:anywhere; line-height:1.55; }
+.ep-table th { background:#f2f5fa; color:#344054; position:sticky; top:0; font-weight:700; white-space:nowrap; }
+.ep-row-actions { display:flex; gap:6px; }
+.ep-pill { display:inline-block; border-radius:999px; padding:4px 9px; background:#e8f5ed; color:#137333; }
+.ep-pill.off { background:#fff0f0; color:#b42318; }
+.ep-editor { position:relative; }
+.ep-editor-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.ep-editor-head h2 { margin:0; font-size:18px; }
+.ep-tabs { display:flex; gap:6px; border-bottom:1px solid #e6ebf3; margin-bottom:12px; overflow:auto; }
+.ep-tabs button { border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:0; }
+.ep-tabs button.active { background:#edf6ff; border-color:#9bc7f0; color:#1264a3; }
+.ep-tab { display:none; grid-template-columns:repeat(3, minmax(180px, 1fr)); gap:12px; }
+.ep-tab.active { display:grid; }
+.ep-span-all { grid-column:1 / -1; }
+.ep-mini-table { min-width:640px; }
+.ep-provider-table { min-width:520px; }
+.ep-plan-table { min-width:760px; }
+.ep-action-col { width:56px; }
+.ep-switch, .ep-check { flex-direction:row !important; align-items:center; justify-content:flex-start; gap:8px; white-space:normal; font-weight:700; color:#344054; }
+.ep-switch input, .ep-check input { width:auto; min-height:auto; }
+.ep-message { min-height:22px; color:#1264a3; font-weight:700; }
+.ep-message.error { color:#b42318; }
+.ep-kpis { display:grid; grid-template-columns:repeat(6, minmax(130px, 1fr)); gap:10px; }
+.ep-kpis div { background:#f7fafc; border:1px solid #e6ebf3; border-radius:8px; padding:12px; }
+.ep-kpis span { display:block; color:#667085; margin-bottom:6px; }
+.ep-kpis strong { font-size:20px; }
+.ep-wizard { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+.ep-step { border:1px solid #d8e2ef; border-radius:6px; padding:10px; background:#f7fafc; text-align:center; font-weight:700; }
+.ep-step.active { background:#eaf4ff; border-color:#8fc2ed; color:#1264a3; }
+@media (max-width: 900px) {
+    .ep-toolbar, .ep-tab, .ep-kpis, .ep-wizard, .ep-two-columns, .ep-inline-form, .ep-settings-grid, .ep-lists-grid, .ep-fields { grid-template-columns:1fr; }
+    .ep-header, .ep-editor-head { align-items:stretch; flex-direction:column; }
+    .ep-header-actions { justify-content:flex-start; }
+    .ep-form-actions .ep-primary { width:100%; }
+    .ep-page { padding:12px; }
+    .ep-card-title { align-items:stretch; flex-direction:column; }
+}

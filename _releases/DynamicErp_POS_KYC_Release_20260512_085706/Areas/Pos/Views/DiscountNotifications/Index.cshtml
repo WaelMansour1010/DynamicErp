@@ -1,0 +1,180 @@
+@model MyERP.Common.DiscountNotifications.DiscountNotificationIndexViewModel
+@{
+    Layout = null;
+    ViewBag.Title = "الإشعارات";
+    var d = Model.SelectedDetails;
+    var balanced = d != null && d.Difference == 0;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/MainErp/Content/mainerp/mainerp.css")" rel="stylesheet" />
+</head>
+<body>
+<section class="main-erp-premium-workspace main-erp-discount-notifications-screen" style="padding:16px">
+    <aside class="main-erp-premium-search">
+        <div class="main-erp-search-head">
+            <span>منقول من FrmDiscounts.frm</span>
+            <h3>الإشعارات</h3>
+        </div>
+        @using (Html.BeginForm("Index", "DiscountNotifications", FormMethod.Get, new { area = "Pos", id = "discountNotificationSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
+        {
+            <label><span>بحث</span><input name="searchText" value="@Model.SearchText" placeholder="رقم الإشعار / العميل / البيان" /></label>
+            <label><span>الفرع</span><input name="branchId" value="@Model.BranchId" placeholder="BranchID" /></label>
+            <label><span>من تاريخ</span><input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" /></label>
+            <label><span>إلى تاريخ</span><input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" /></label>
+            <button type="submit">بحث</button>
+        }
+        <div class="main-erp-result-rail">
+            @if (Model.Items.Count == 0)
+            {
+                <div class="main-erp-empty">لا توجد إشعارات للعرض.</div>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    var isSelected = d != null && d.NoteId == item.NoteId;
+                    <a class="main-erp-result-card @(isSelected ? "is-selected" : "")" href="@Url.Action("Open", "DiscountNotifications", new { area = "Pos", id = item.NoteId })">
+                        <span class="main-erp-result-code">@item.NoteSerial</span>
+                        <strong>@item.NotificationTypeName</strong>
+                        <small>@item.CustomerName</small>
+                        <b>@item.NoteValue.ToString("N2")</b>
+                    </a>
+                }
+            }
+        </div>
+    </aside>
+
+    <main class="main-erp-premium-stage">
+        @if (!string.IsNullOrWhiteSpace(Model.Warning))
+        {
+            <div class="main-erp-warning">@Model.Warning</div>
+        }
+        @if (d == null)
+        {
+            <section class="main-erp-premium-empty">
+                <h2>شاشة الإشعارات</h2>
+                <p>نقل آمن من FrmDiscounts.frm داخل Kishny/POS. الحفظ والترحيل والحذف واستيراد Excel غير مفعلة الآن.</p>
+                <button type="submit" form="discountNotificationSearchForm">بحث</button>
+            </section>
+        }
+        else
+        {
+            <header class="main-erp-cockpit-header">
+                <div>
+                    <span class="main-erp-kicker">FrmDiscounts.frm / Read-only</span>
+                    <h2>@d.NotificationTypeName - @d.NoteSerial</h2>
+                    <p>@d.CustomerName · @d.BranchName · @String.Format("{0:yyyy-MM-dd}", d.NoteDate)</p>
+                </div>
+                <div class="main-erp-header-actions">
+                    <span class="main-erp-status-pill @(balanced ? "is-active" : "is-closed")">@(balanced ? "قيد متوازن" : "فرق محاسبي")</span>
+                    <button type="button" class="is-disabled-action">جديد</button>
+                    <button type="button" class="is-disabled-action">حفظ</button>
+                    <button type="button" class="is-disabled-action">حذف</button>
+                    <button type="button" class="is-disabled-action">استيراد Excel</button>
+                </div>
+            </header>
+
+            <section class="main-erp-summary-grid main-erp-sticky-summary">
+                <article><span>قيمة الإشعار</span><strong>@d.NoteValue.ToString("N2")</strong><small>@d.CurrencyCode</small></article>
+                <article><span>VAT</span><strong>@d.Vat.ToString("N2")</strong><small>@d.InvoiceTypeCodeName</small></article>
+                <article><span>الإجمالي</span><strong>@d.TotalValue.ToString("N2")</strong><small>@d.OrderNo</small></article>
+                <article><span>سطور القيد</span><strong>@d.VoucherLineCount</strong><small>DOUBLE_ENTREY_VOUCHERS</small></article>
+                <article><span>مدين</span><strong>@d.TotalDebit.ToString("N2")</strong><small>@d.DebitAccountDisplay</small></article>
+                <article class="@(balanced ? "is-ok" : "is-warning")"><span>دائن / الفرق</span><strong>@d.TotalCredit.ToString("N2")</strong><small>@d.Difference.ToString("N2")</small></article>
+            </section>
+
+            <div class="main-erp-tab-shell" data-main-erp-tabs>
+                <nav class="main-erp-tab-rail">
+                    <button type="button" class="is-active" data-tab-target="dn-basic">بيانات الإشعار</button>
+                    <button type="button" data-tab-target="dn-accounts">أطراف القيد</button>
+                    <button type="button" data-tab-target="dn-voucher">القيد المحاسبي</button>
+                    <button type="button" data-tab-target="dn-invoices">فواتير مرتبطة</button>
+                    <button type="button" data-tab-target="dn-tax">الفاتورة الإلكترونية</button>
+                </nav>
+
+                <section id="dn-basic" class="main-erp-tab-pane is-active">
+                    <div class="main-erp-section-grid">
+                        <article class="main-erp-premium-card">
+                            <h4>بيانات الإشعار</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>NoteID</dt><dd>@d.NoteId</dd>
+                                <dt>رقم الإشعار</dt><dd>@d.NoteSerial</dd>
+                                <dt>رقم الفاتورة</dt><dd>@d.NoteSerial1</dd>
+                                <dt>النوع</dt><dd>@d.NotificationTypeName</dd>
+                                <dt>العميل / المورد</dt><dd>@d.CustomerName</dd>
+                                <dt>الفرع</dt><dd>@d.BranchName</dd>
+                            </dl>
+                        </article>
+                        <article class="main-erp-premium-card">
+                            <h4>القيم</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>القيمة</dt><dd>@d.NoteValue.ToString("N2")</dd>
+                                <dt>VAT</dt><dd>@d.Vat.ToString("N2")</dd>
+                                <dt>الإجمالي</dt><dd>@d.TotalValue.ToString("N2")</dd>
+                                <dt>العملة</dt><dd>@d.CurrencyCode</dd>
+                            </dl>
+                        </article>
+                    </div>
+                    <article class="main-erp-premium-card"><h4>البيان</h4><p class="main-erp-notes-box">@d.Remark</p></article>
+                </section>
+
+                <section id="dn-accounts" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-account-map">
+                        <article class="main-erp-account-card"><span>طرف مدين</span><strong>@d.DebitAccountDisplay</strong></article>
+                        <article class="main-erp-account-card"><span>طرف دائن</span><strong>@d.CreditAccountDisplay</strong></article>
+                    </div>
+                </section>
+
+                <section id="dn-voucher" class="main-erp-tab-pane" hidden>
+                    <table class="main-erp-table">
+                        <thead><tr><th>Voucher</th><th>Line</th><th>الحساب</th><th>مدين</th><th>دائن</th><th>البيان</th></tr></thead>
+                        <tbody>
+                            @foreach (var line in d.VoucherLines)
+                            {
+                                <tr><td>@line.VoucherId</td><td>@line.LineNo</td><td>@line.AccountDisplay</td><td>@line.Debit.ToString("N2")</td><td>@line.Credit.ToString("N2")</td><td>@line.Description</td></tr>
+                            }
+                            @if (d.VoucherLines.Count == 0)
+                            {
+                                <tr><td colspan="6">لا توجد سطور قيد للعرض.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </section>
+
+                <section id="dn-invoices" class="main-erp-tab-pane" hidden><div class="main-erp-warning">قراءة فواتير FIFO والسداد الجزئي من TblNotesBillBuyPayment2 مؤجلة للمرحلة التالية.</div></section>
+                <section id="dn-tax" class="main-erp-tab-pane" hidden><div class="main-erp-warning">منطق QR / إرسال الفاتورة الإلكترونية غير مفعل في هذه المرحلة.</div></section>
+            </div>
+        }
+    </main>
+</section>
+
+<script>
+    (function () {
+        var root = document.querySelector("[data-main-erp-tabs]");
+        if (root) {
+            var buttons = root.querySelectorAll("[data-tab-target]");
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].addEventListener("click", function () {
+                    for (var b = 0; b < buttons.length; b++) { buttons[b].classList.remove("is-active"); }
+                    var panes = root.querySelectorAll(".main-erp-tab-pane");
+                    for (var p = 0; p < panes.length; p++) { panes[p].hidden = true; panes[p].classList.remove("is-active"); }
+                    this.classList.add("is-active");
+                    var target = document.getElementById(this.getAttribute("data-tab-target"));
+                    if (target) { target.hidden = false; target.classList.add("is-active"); }
+                });
+            }
+        }
+        var disabled = document.querySelectorAll(".main-erp-discount-notifications-screen .is-disabled-action");
+        for (var i = 0; i < disabled.length; i++) {
+            disabled[i].addEventListener("click", function () { alert("هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode"); });
+        }
+    })();
+</script>
+</body>
+</html>

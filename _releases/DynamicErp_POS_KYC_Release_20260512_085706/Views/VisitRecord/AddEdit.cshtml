@@ -1,0 +1,1185 @@
+﻿@model MyERP.Models.CRM_VisitRecord
+@{
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+}
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.Visitrecord;
+}
+
+
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+<script src="~/Scripts/SaveAndNew.js"></script>
+
+
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.Visitrecord :</div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/VisitRecord/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @if (Model != null)
+                    {
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        @Html.HiddenFor(model => model.UserId)
+                        @Html.HiddenFor(model => model.Image)
+
+                    }
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="header-title">
+                                    @MyERP.Properties.Resources.MainData
+                                </h5>
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Code</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Code, @readonly = "readonly", required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.ArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.EnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!--- OLd Code -->
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/Employee/AddEdit" class="form-horizontal needs-validation" novalidate method="post">
+                <div class="row">
+                    <div class="col-12">
+
+
+                        <div class="card">
+                            <div class="card-body">
+
+
+                                <div class="form-group row">
+                                    @*if (Model != null)
+                            {
+                                @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.IsActive)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsPaid)
+                                    @Html.HiddenFor(model => model.VacationTypeId)
+                                    @Html.HiddenFor(model => model.OnEmployeeOrCompany)
+                                    @Html.HiddenFor(model => model.ForEmployeeOrFamily)
+                                    @Html.HiddenFor(model => model.RoundTripOrOneWay)
+                            }*@
+                                    <label class=" col-sm-2 control-label" for="Code">@MyERP.Properties.Resources.Customer</label>
+                                    <div class="col-sm-4">
+
+                                        <input class="form-control" />
+                                    </div>
+                                    <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.BasedOnVisitingNo</label>
+                                    <div class="col-sm-4">
+
+
+                                        <input class="form-control" />
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group row">
+                                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                    <div class="col-sm-4">
+
+                                        <input class="form-control" />
+                                    </div>
+                                    <label for="HijryDate" class="control-label col-sm-2">@MyERP.Properties.Resources.Time</label>
+                                    <div class="col-sm-4">
+                                        <input readonly type="text" id="HijryDate" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="Birthdate" class="control-label col-sm-2">@MyERP.Properties.Resources.GoogleMaps</label>
+                                    <div class="col-sm-4">
+                                        <input type="datetime-local" readonly id="LastAttendDate" class="form-control Gregorian" />
+                                        <input class="form-control" />
+                                    </div>
+                                    <a class="btn btn-danger" href="@Url.Action("Location")" role="button">@MyERP.Properties.Resources.ViewLocation</a>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="EmployeeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.TheVisitingPerson</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" />
+                                    </div>
+                                    <label for="EmployeeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.Attendant</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <label for="EmployeeId" class="col-sm-2 control-label">@MyERP.Properties.Resources.WhatHasBeenDone</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="VacationReason" name="VacationReason" class="form-control" rows="5" cols="5">
+                  @*@if(Model != null) { @Model.VacationReason; }*@
+                </textarea>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <!-- Add those Two </div>-->
+                    </div>
+                </div>
+                <!---- </div>---- -->
+                @*panal 3*@
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.ViewProducts
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.ProductNo
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.ProductName
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.CustomerImpression
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Delete
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*panal 3*@
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.ProvideSamples
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.ProductNo
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.ProductName
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.CustomerImpression
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Delete
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*panal 3*@
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.SubmitQuote
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.Number
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Date
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.ValidityOfQuotation
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.AttachQuotation
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Delete
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*panal 3*@
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.IssuingSalesInvoice
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @MyERP.Properties.Resources.InvoiceNo
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Date
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.TypeOfPayment
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.DueDate
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.AttachInvoice
+                                            </th>
+                                            <th>
+                                                @MyERP.Properties.Resources.Delete
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.NextAction</label>
+                    <div class="col-sm-4">
+                        <textarea id="VacationReason" name="VacationReason" class="form-control" rows="5" cols="5">
+                  @*@if(Model != null) {@Model.VacationReason; }*@
+                </textarea>
+                    </div>
+                </div>
+                panal 3
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.Visit
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="form-group row">
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Time</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" />
+                                </div>
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Date</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Goal</label>
+                                <div class="col-sm-4">
+                                    <input class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+                <div class="form-group row">
+                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Demonstration</label>
+                    <div class="col-sm-1">
+                        <input type="checkbox" />
+                    </div>
+                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.ProvideSamples</label>
+                    <div class="col-sm-1">
+                        <input type="checkbox" />
+                    </div>
+                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.SubmitQuote</label>
+                    <div class="col-sm-1">
+                        <input type="checkbox" />
+                    </div>
+                    <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.IssuingInvoice</label>
+                    <div class="col-sm-1">
+                        <input type="checkbox" />
+                    </div>
+                </div>
+
+
+                <div class="form-group row">
+                    <label class=" col-sm-2 control-label" for="VacationReason">@MyERP.Properties.Resources.CustomerNotes</label>
+                    <div class="col-sm-4">
+                        <textarea id="VacationReason" name="VacationReason" class="form-control" rows="5" cols="5">
+                  @*@if(Model != null) { @Model.VacationReason; }*@
+                </textarea>
+                    </div>
+                </div>
+                @*panal 3*@
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.CustomerEvaluation
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="form-group row">
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Interested</label>
+                                <div class="col-sm-1">
+                                    <input type="radio" />
+                                </div>
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Reasons</label>
+                                <div class="col-sm-6">
+                                    <input class="form-control" />
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.NotInterested</label>
+                                <div class="col-sm-1">
+                                    <input type="radio" />
+                                </div>
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Reasons</label>
+                                <div class="col-sm-6">
+                                    <input class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*panal 3*@
+                <div class="card">
+                    <div class="card-body">
+                        <div id="accordion">
+                            <h5 class=" pb-3 header-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+                                    @MyERP.Properties.Resources.EvaluationOfManagerStartedVisit
+                                </a>
+                            </h5>
+                        </div>
+                        <div id="collapse3">
+                            <div class="form-group row">
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Weak</label>
+                                <div class="col-sm-2">
+                                    <input type="radio" />
+                                </div>
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Good</label>
+                                <div class="col-sm-2">
+                                    <input type="radio" />
+                                </div>
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Excellent</label>
+                                <div class="col-sm-2">
+                                    <input type="radio" />
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="Date" class="control-label col-sm-2">@MyERP.Properties.Resources.Directions</label>
+                                <div class="col-sm-10">
+                                    <input class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!---------------------------------------------------->
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left;">
+                                    @if (Model == null)
+                                    {
+                                    <button type="submit" id="newbtn" class="btn btn-success">
+                                        @MyERP.Properties.Resources.SaveAndNew
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        @MyERP.Properties.Resources.Save
+                                    </button>
+                                    <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                <button type="submit" class="btn btn-success">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                <a href="javascript:void(0);" class="btn btn-danger" onclick="DeleteFunc(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!---  Old Code  was here  -->
+
+<!-------------------------->
+<!--************************************ My Code End  *********************************************-->
+<!--<div style="float:left;">
+                            if (Model == null)
+                            {
+                                <button disabled onclick="addEdit('new')" class="btn btn-success">
+                                    حفظ و جديد
+                                </button>
+                                <button disabled class="btn btn-success" onclick="addEdit()">
+                                    حفظ
+                                </button>
+                                <a class="btn btn-danger" href="Url.Action("Index")" role="button">رجوع</a>
+                            }
+                            else if (Model.IsDeleted == false)
+                            {
+
+                                <button disabled class="btn btn-success" onclick="addEdit()">
+                                    حفظ
+                                </button>
+                                <a class="btn btn-danger" href="Url.Action("Index")" role="button">رجوع</a>
+                            }
+                        </div>
+
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>-->
+
+
+
+
+<script>
+    if (!$('#Id').val() > 0) {
+        function setCodeNum() {
+            var doc = $.get('/VisitRecord/SetCodeNum').done(function (r) {
+                $('#Code').val(r);
+            });
+
+        }
+
+        setCodeNum();
+    }
+
+    function DeleteFunc(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/VisitRecord/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                        alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/VisitRecord');
+                        } else
+                            alert('@MyERP.Properties.Resources.DeleteDoesNotSucceeded'+'!');
+                    }
+                });
+        }
+    }
+</script>
+
+
+
+<!--<script>
+
+    let Employee = [];
+
+    let days = 0;
+    let months = 0;
+    let years = 0;
+    let VacationDays = 0;
+
+    let TotalAbsenceDays = 0;
+
+    let TotalDaysOFVacationWithoutSalary = 0;
+    let TotalDutyDays = 0;
+    let TotalWorkDays = 0;
+    let TotalCarryOverBalance = 0;
+    let TotalDeductionDays = 0;
+
+    function zeroPadded(val)
+    {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    function getEmployee(id , status)
+    {
+
+        $.ajax({
+            type: "POST", contentType: "application/json",
+            url: "/Helper/GetEmployee/" + id,
+            success: function (r)
+            {
+
+                console.log(r);
+                Employee = r;
+                $('#EmpJob').val(r[0].EmpJob);
+                $('#JobLocation').val(r[0].JobLocation);
+                $('#HrDept').val(r[0].HrDept);
+                $('#EmpManager').val(r[0].EmpManager.Code + " - " + r[0].EmpManager.ArName);
+
+
+                var d = convertToJavaScriptDate(r[0].StartDate);
+                $('#StartDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+                //$('#StartDate').val(dateFormat(new Date(parseInt((Employees[i].StartDate).match(/\d+/)[0]))));
+                $('#HijryStartDate').val(new Intl.DateTimeFormat('ar-sa').format(new Date($('#StartDate').val())).toString());
+                let LastDate;
+                if (r[0].LastAttendDate.length > 0)
+                {
+                   let Length = r[0].LastAttendDate.length;
+                   LastDate = r[0].LastAttendDate[Length - 1].Attend_LeaveDateTime;
+                }
+                else
+                {
+                        LastDate = r[0].LastAttendDate.Attend_LeaveDateTime;
+                }
+                var d = convertToJavaScriptDate(LastDate);
+
+                $('#LastAttendDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+
+                //$('#LastAttendDate').val(dateFormat(new Date(parseInt((LastDate).match(/\d+/)[0]))));
+
+                $('#HijryLastAttendDate').val(new Intl.DateTimeFormat('ar-sa').format(new Date($('#LastAttendDate').val())).toString());
+
+                if ($('#Id').val() > 0)
+                {
+                    CalculateEmployeeVacationData(r);
+                }
+                else
+                {
+                    // pass data of employee from ajax call to function that calculate vacation details
+                    ShowEmployeeVacationData(r);
+                }
+
+            },
+            error: function (r) {
+                $('#preloader, #status').fadeOut();
+                alert("لم يتم الربط وجمع البيانات!");
+            }
+        });
+    }
+
+
+    function ShowEmployeeVacationData(r)
+    {
+
+        //------------------------ مدة الغياب -----------------------------//
+        TotalAbsenceDays = r[0].AbsenceDaysBalance + r[0].AbsenceDaysRecord;
+        CalcEquivalent(TotalAbsenceDays);
+        $('#Absence_Days').val(days);
+        $('#Absence_Months').val(months);
+        $('#Absence_Years').val(years);
+        //-------------------------- مدة الخدمة ---------------------------//
+        let ToDate = new Date($('#VacationStartDate').val());
+        let FromDate = convertToJavaScriptDate(r[0].StartDate);
+        TotalDutyDays = CalcTotalDutyPeriod(FromDate, ToDate);
+        //--------------------------- اجازة بدون مرتب --------------------//
+        TotalDaysOFVacationWithoutSalary = r[0].EmployeeVacation[0].VacationWithoutSalary + r[0].VacationWithoutSalaryRecord;
+        CalcEquivalent(TotalDaysOFVacationWithoutSalary);
+        $('#VacationWithoutSalary_Days').val(days);
+        $('#VacationWithoutSalary_Months').val(months);
+        $('#VacationWithoutSalary_Years').val(years);
+        //-------------------------------- مدة العمل ---------------------//
+        TotalWorkDays = TotalDutyDays - (TotalAbsenceDays + TotalDaysOFVacationWithoutSalary);
+        CalcEquivalent(TotalWorkDays);
+        $('#Work_Days').val(days);
+        $('#Work_Months').val(months);
+        $('#Work_Years').val(years);
+        //-------------------------------- الرصيد المرحل -----------------//
+        let VacationDuePeriodNum = r[0].EmployeeContractVacationDetails[0].VacationDuePeriodNum;
+        let VacationDuePeriodTypeId = r[0].EmployeeContractVacationDetails[0].VacationDuePeriod;
+        let VacationPeriodNum = r[0].EmployeeContractVacationDetails[0].VacationPeriodNum;
+        let VacationPeriodTypeId = r[0].EmployeeContractVacationDetails[0].VacationPeriod;
+
+        let calc = (((VacationPeriodNum * VacationPeriodTypeId) / (VacationDuePeriodNum * VacationDuePeriodTypeId)) * 30) * (TotalDutyDays / 30);
+        console.log(calc, "calc");
+        console.log(TotalDutyDays, "TotalDutyDays");
+        TotalCarryOverBalance = (r[0].EmployeeVacation[0].VacationBalance + calc) - r[0].VacationWithSalaryRecord;
+        console.log(TotalCarryOverBalance.toFixed(2), "TotalCarryOverBalance");
+        $('#CarryOverBalanceDays').val(TotalCarryOverBalance.toFixed(2));
+        // -----------------------------  الايام المخصومة -----------------//
+        TotalDeductionDays = $('#DeductionDays').val();
+        //------------------------------ صافى مدة العمل ------------------//
+        let NetWorkDays = TotalWorkDays - TotalDeductionDays;
+        CalcEquivalent(NetWorkDays);
+        $('#NetWork_Days').val(days);
+        $('#NetWork_Months').val(months);
+        $('#NetWork_Years').val(years);
+        //----------------------------
+        let BeforeDeductionDays = calcTotalDays(new Date($('#VacationStartDate').val()), new Date($('#VacationEndDate').val()));
+        console.log(BeforeDeductionDays, "BeforeDeductionDays inside ShowEmployeeVacation()")
+        $('#VacationDaysBeforeDeduction').val(BeforeDeductionDays);
+        //----------------------------
+        $('#AbsenceDays').val(TotalAbsenceDays);
+        $('#VacationWithoutSalaryDays').val(TotalDaysOFVacationWithoutSalary);
+        //----------------------------
+        let NetAbsenceDay = TotalAbsenceDays - TotalDaysOFVacationWithoutSalary;
+        $('#NetAbsenceDay').val(NetAbsenceDay);
+        VacationDays = $('#VacationDaysBeforeDeduction').val();
+        //----------------------------
+        let VacationDues = VacationDays - NetAbsenceDay;
+        $('#VacationDues').val(VacationDues);
+
+    }
+
+
+    function CalculateEmployeeVacationData(r)
+    {
+
+        //------------------------ مدة الغياب -----------------------------//
+        TotalAbsenceDays = $('#AbsenceDays').val();
+        CalcEquivalent(TotalAbsenceDays);
+        $('#Absence_Days').val(days);
+        $('#Absence_Months').val(months);
+        $('#Absence_Years').val(years);
+        //-------------------------- مدة الخدمة ---------------------------//
+        let ToDate = new Date($('#VacationStartDate').val());
+        console.log(ToDate);
+        let FromDate = convertToJavaScriptDate(r[0].StartDate);
+        console.log(FromDate);
+        TotalDutyDays = CalcTotalDutyPeriod(FromDate, ToDate);
+        //--------------------------- اجازة بدون مرتب --------------------//
+        TotalDaysOFVacationWithoutSalary = $('#VacationWithoutSalaryDays').val();
+        CalcEquivalent(TotalDaysOFVacationWithoutSalary);
+        $('#VacationWithoutSalary_Days').val(days);
+        $('#VacationWithoutSalary_Months').val(months);
+        $('#VacationWithoutSalary_Years').val(years);
+        //-------------------------------- مدة العمل ---------------------//
+        TotalWorkDays = parseFloat(TotalDutyDays) - (parseFloat(TotalAbsenceDays) + parseFloat(TotalDaysOFVacationWithoutSalary));
+        console.log(TotalAbsenceDays + TotalDaysOFVacationWithoutSalary);
+        console.log(TotalDutyDays, "TotalWorkDays inside CalculateEmployeeVacationData()");
+        console.log(TotalAbsenceDays, "TotalWorkDays inside CalculateEmployeeVacationData()");
+        console.log(TotalDaysOFVacationWithoutSalary, "TotalWorkDays inside CalculateEmployeeVacationData()");
+        console.log(TotalWorkDays, "TotalWorkDays inside CalculateEmployeeVacationData()");
+        CalcEquivalent(TotalWorkDays);
+        $('#Work_Days').val(days);
+        $('#Work_Months').val(months);
+        $('#Work_Years').val(years);
+        //-------------------------------- الرصيد المرحل -----------------//
+
+        // -----------------------------  الايام المخصومة -----------------//
+
+        //------------------------------ صافى مدة العمل ------------------//
+        let NetWorkDays = TotalWorkDays - TotalDeductionDays;
+        CalcEquivalent(NetWorkDays);
+        $('#NetWork_Days').val(days);
+        $('#NetWork_Months').val(months);
+        $('#NetWork_Years').val(years);
+        //----------------------------
+
+
+        //----------------------------
+        let NetAbsenceDay = TotalAbsenceDays - TotalDaysOFVacationWithoutSalary;
+        $('#NetAbsenceDay').val(NetAbsenceDay);
+        VacationDays = $('#VacationDaysBeforeDeduction').val();
+        //----------------------------
+        let VacationDues = $('#NumberOfVacationDays').val() - NetAbsenceDay;
+        $('#VacationDues').val(VacationDues);
+
+    }
+
+
+
+    function CalcTotalDutyPeriod(FromDate,ToDate)
+    {
+        let Duty_years = ToDate.getFullYear() - FromDate.getFullYear();
+        $('#DutyYears').val(Duty_years);
+        let Duty_months = (ToDate.getMonth() + 1) - (FromDate.getMonth() + 1);
+        $('#DutyMonths').val(Duty_months);
+        let Duty_days = (ToDate.getDate() - FromDate.getDate());
+        $('#DutyDays').val(Duty_days);
+        let TotalDutyDays = (Duty_years * 365) + (Duty_months * 30) + Duty_days;
+        return TotalDutyDays;
+    }
+
+
+    function CalcEquivalent(total)
+    {
+        if (total > 30 && total < 365)
+        {
+            months = parseInt(total / 30);
+            days = total - (months * 30);
+        }
+        else
+        {
+            if (total > 365)
+            {
+                years = parseInt(total / 365);
+                months = parseInt(((total - (years * 365))) / 30);
+                days = total - ((years * 365) + (months * 30));
+            }
+            else
+            {
+                days = total;
+            }
+        }
+
+    }
+
+
+
+    function setDocNum() {
+        if ($('#DepartmentId').val()) {
+            $.get('/CRM_VisitRecord/SetDocNum?id=' + $('#DepartmentId').val()).done(function (r) {
+                console.log(r);
+                $('#DocumentNumber').val(r);
+            });
+        }
+    }
+
+
+
+    function convertToJavaScriptDate(value)
+    {
+        if (value != null)
+        {
+            var pattern = /Date\(([^)]+)\)/;
+            var results = pattern.exec(value);
+            var Converted_Date = new Date(parseFloat(results[1]));
+            return Converted_Date;
+        }
+    }
+
+    if ($('#Id').val() > 0)
+    {
+        $('#Date').val('@ViewBag.Date');
+        $('#VacationStartDate').val('@ViewBag.VacationStartDate');
+        $('#VacationEndDate').val('@ViewBag.VacationEndDate');
+        $('#ReturnToWorkDate').val('@ViewBag.ReturnToWorkDate');-->
+@*$('#NationalExpiryDate').val('@ViewBag.NationalExpiryDate');*@
+<!--}
+    else
+    {
+        var d = new Date();
+        $('#Date').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#VacationStartDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#VacationEndDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        $('#ReturnToWorkDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+        //$('#WorkLicenseExpiryDate').val(d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()) + "T" + zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()));
+
+    }
+
+
+    function calcTotalDays(FromDate, ToDate)
+    {
+        var year = (ToDate.getFullYear() - FromDate.getFullYear()) * 365;
+        console.log(year);
+        var month = ((ToDate.getMonth() + 1) - (FromDate.getMonth() + 1)) * 30;
+        console.log(month);
+        var day = (ToDate.getDate() - FromDate.getDate());
+        console.log(day);
+
+        let TotalDays = year + month + day;
+        return TotalDays;
+    }
+
+    $(document).on('change', '.VacationType', function ()
+    {
+        if ($(this).val() == 3)
+        {
+            $('#AnotherVacationType').attr('readonly', false);
+        }
+        else
+        {
+            $('#AnotherVacationType').val("");
+            $('#AnotherVacationType').attr('readonly', true);
+        }
+    });
+
+    $('#VacationStartDate').change(function () {
+        if ($('#StartDate').val() != null)
+        {
+            let ToDate = new Date($(this).val());
+            let FromDate = new Date($('#StartDate').val());
+            CalcTotalDutyPeriod(FromDate, ToDate);
+
+            let VacationDays = calcTotalDays(new Date($('#VacationStartDate').val()), new Date($('#VacationEndDate').val()));
+
+            $('#NumberOfVacationDays').val(VacationDays);
+            $('#VacationDaysBeforeDeduction').val(VacationDays);
+            $('#VacationDues').val($('#VacationDaysBeforeDeduction').val() - $('#NetAbsenceDay').val());
+        }
+    });
+
+    $('#VacationEndDate').change(function () {
+
+        $('#ReturnToWorkDate').val($(this).val());
+        var ToDate = new Date($(this).val());
+        var FromDate = new Date($('#VacationStartDate').val())
+        let VacationDays = calcTotalDays(FromDate, ToDate);
+
+        $('#NumberOfVacationDays').val(VacationDays);
+        $('#VacationDaysBeforeDeduction').val(VacationDays);
+        $('#VacationDues').val($('#VacationDaysBeforeDeduction').val() - $('#NetAbsenceDay').val());
+
+    });
+
+    $('.Gregorian').on('change',function () {
+
+        var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+        $('#Hijry'+$(this).attr('id')+'').val(Hijry);
+
+    });
+
+    $(document).on('change', '#EmployeeId', function ()
+    {
+
+        let EmployeeName = $(this).find('option:selected').text();
+        let EmployeeId = $(this).find('option:selected').val();
+        console.log(EmployeeId);
+        if (EmployeeName != "أختر الموظف")
+        {
+            if ($('#Id').val() > 0)
+            {
+                getEmployee(EmployeeId, "Edit");
+            }
+            else
+            {
+                getEmployee(EmployeeId, "Add");
+            }
+        }
+
+    });
+
+    $('#DepartmentId').on('change', function ()
+    {
+        setDocNum();
+    });
+
+    //--------------------------------------------------//
+
+    $(document).ready(function ()
+    {
+        $('.Gregorian').each(function () {
+            if ($(this).val())
+            {
+                var Hijry = new Intl.DateTimeFormat('ar-sa').format(new Date($(this).val())).toString();
+                $('#Hijry' + $(this).attr('id') + '').val(Hijry);
+            }
+
+        });
+
+        if ($('#Id').val() > 0)
+        {
+
+            $('#EmployeeId').trigger('change');
+
+
+
+            //-------------------- radio buttons values check -----------------------------------------------------
+            if ($('#IsPaid').val() == "True") {
+                $('#Paid').attr('checked', true);
+            }
+            else {
+                if ($('#IsPaid').val() == "False") {
+                    $('#NotPaid').attr('checked', true);
+                }
+            }
+
+
+            if ($('#VacationTypeId').val() == 1) {
+                $('#Type1').attr('checked', true);
+            }
+            else {
+                if ($('#VacationTypeId').val() == 2) {
+                    $('#Type2').attr('checked', true);
+                }
+                else {
+                    if ($('#VacationTypeId').val() == 3) {
+                        $('#Type3').attr('checked', true);
+                    }
+                }
+            }
+
+            if ($('#OnEmployeeOrCompany').val() == 1) {
+                $('#OnEmployee').attr('checked', true);
+            }
+            else {
+                if ($('#OnEmployeeOrCompany').val() == 2) {
+                    $('#OnCompany').attr('checked', true);
+                }
+
+            }
+
+            if ($('#ForEmployeeOrFamily').val() == 1) {
+                $('#ForFamily').attr('checked', true);
+            }
+            else {
+                if ($('#ForEmployeeOrFamily').val() == 2) {
+                    $('#ForEmployee').attr('checked', true);
+                }
+
+            }
+
+
+            if ($('#RoundTripOrOneWay').val() == 1) {
+                $('#OneWay').attr('checked', true);
+            }
+            else {
+                if ($('#RoundTripOrOneWay').val() == 2) {
+                    $('#RoundTrip').attr('checked', true);
+                }
+
+            }
+        }
+        else
+        {
+            $('#Paid').attr('checked', true);
+            $('#Type1').attr('checked', true);
+            $('#OnEmployee').attr('checked', true);
+            $('#ForFamily').attr('checked', true);
+            $('#OneWay').attr('checked', true);
+        }
+
+
+
+    });
+
+
+    //-------------------------------------------------------------- add/edit ------------------------------------------//
+    function addEdit(n)
+    {
+        let valid = true;
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = false;
+        }
+
+        if (valid && confirm('هل تريد الحفظ؟'))
+        {
+            $('#preloader, #status').fadeIn();
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/CRM_VisitRecord/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: $('#Id').val(),
+                        DocumentNumber: $('#DocumentNumber').val(),
+                        Date: $('#Date').val(),
+                        DepartmentId: $('#DepartmentId').val(),
+                        EmployeeId: $('#EmployeeId').val(),
+
+                        IsPaid: $("input[name='IsPaid']:checked").val(),
+                        IsAcceptedByManager: $("#IsAcceptedByManager").prop('checked'),
+                        VacationTypeId: $("input[name='VacationTypeId']:checked").val(),
+                        AnotherVacationType: $('#AnotherVacationType').val(),
+
+                        Visa: $('#Visa').val(),
+                        VisaCosts: $('#VisaCosts').val(),
+                        OnEmployeeOrCompany: $("input[name='OnEmployeeOrCompany']:checked").val(),
+                        ForEmployeeOrFamily: $("input[name='ForEmployeeOrFamily']:checked").val(),
+                        RoundTripOrOneWay: $("input[name='RoundTripOrOneWay']:checked").val(),
+
+                        VacationStartDate: $('#VacationStartDate').val(),
+                        VacationEndDate: $('#VacationEndDate').val(),
+                        ReturnToWorkDate: $('#ReturnToWorkDate').val(),
+                        NumberOfVacationDays: $('#NumberOfVacationDays').val(),
+
+                        VacationReason: $('#VacationReason').val(),
+                        VacationAddress: $('#VacationAddress').val(),
+                        PhoneNumber: $('#PhoneNumber').val(),
+                        AnotherCommunication: $('#AnotherCommunication').val(),
+
+                        AbsenceDays: TotalAbsenceDays,
+                        DutyDays: TotalDutyDays,
+                        VacationWithoutSalaryDays: TotalDaysOFVacationWithoutSalary,
+                        WorkDays: TotalWorkDays,
+                        CarryOverBalanceDays: TotalCarryOverBalance,
+                        DeductionDays: TotalDeductionDays,
+
+
+                        IsActive: true,
+                        IsDeleted: false,
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+
+                        alert("تم الحفظ");
+                        //    console.log(r);
+                        $('#preloader, #status').fadeOut();
+                        if (n == "new")
+                        {
+                            window.location.replace("/VacationRequest/AddEdit");
+                        }
+                        else
+                        {
+                            //if (n == "report")
+                            //{
+                            //    window.open("/Report/VacationRequest/" + r.id);
+                            //    window.location.replace("/VacationRequest");
+                            //}
+                            //else
+                            //{
+                                window.location.replace("/VacationRequest/Index");
+                            //}
+                        }
+
+                    }
+                    else {
+                        $('#preloader, #status').fadeOut();
+                        alert("لم يتم الحفظ!");
+                    }
+                },
+                error: function (r) {
+                    $('#preloader, #status').fadeOut();
+                    alert("لم يتم الحفظ!");
+                }
+            });
+        }
+
+    }
+
+
+
+    function Delete(id)
+    {
+
+        if (confirm('هل تريد الحذف؟')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/VacationRequest/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        alert("لم يتم الحذف");
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/VacationRequest');
+                        } else
+                            alert("لم يتم الحذف");
+                        $('#preloader, #status').fadeOut();
+                    }
+                });
+        }
+    }
+
+</script>-->

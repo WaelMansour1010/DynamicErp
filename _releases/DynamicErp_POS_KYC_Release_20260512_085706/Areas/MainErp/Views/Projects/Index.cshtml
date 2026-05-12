@@ -1,0 +1,108 @@
+@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectsIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<DateTime?, string> dateValue = value => value.HasValue && value.Value.Year >= 1900
+        ? value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+        : String.Empty;
+    ViewBag.Title = "المشاريع";
+}
+
+<section class="erp-page main-erp-projects-screen" dir="rtl">
+    <header class="erp-page-header">
+        <div>
+            <h1>المشاريع</h1>
+            <p>إدارة بيانات المشاريع المنقولة من شاشة VB6 الأساسية.</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <a class="erp-btn erp-btn-primary" href="@Url.Action("New", "Projects", new { area = "MainErp" })"><i class="fas fa-plus"></i> مشروع جديد</a>
+            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })"><i class="fas fa-tasks"></i> المستخلصات</a>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+    {
+        <div class="erp-alert is-active">@Model.SuccessMessage</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="main-erp-warning">@Model.Warning</div>
+    }
+
+    <section class="erp-filter-card">
+        @using (Html.BeginForm("Index", "Projects", FormMethod.Get, new { area = "MainErp", @class = "main-erp-filter" }))
+        {
+            <label><span>بحث</span><input name="searchText" value="@Model.SearchText" placeholder="اسم المشروع / الكود / العميل" /></label>
+            <label>
+                <span>الحالة</span>
+                <select name="statusId">
+                    <option value="">كل الحالات</option>
+                    @foreach (var status in Model.Statuses)
+                    {
+                        <option value="@status.Value" @(Convert.ToString(Model.StatusId) == status.Value ? "selected" : "")>@status.Text</option>
+                    }
+                </select>
+            </label>
+            <label>
+                <span>الفرع</span>
+                <select name="branchId">
+                    <option value="">كل الفروع</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.Value" @(Convert.ToString(Model.BranchId) == branch.Value ? "selected" : "")>@branch.Text</option>
+                    }
+                </select>
+            </label>
+            <button type="submit"><i class="fas fa-search"></i> بحث</button>
+        }
+    </section>
+
+    <section class="erp-table-card">
+        <div class="erp-card-head">
+            <h2>قائمة المشاريع</h2>
+            <span class="main-erp-badge">@Model.TotalCount مشروع</span>
+        </div>
+        <div class="main-erp-table-wrap">
+            <table class="main-erp-table">
+                <thead>
+                    <tr>
+                        <th>الكود</th>
+                        <th>اسم المشروع</th>
+                        <th>العميل</th>
+                        <th>الحالة</th>
+                        <th>الفرع</th>
+                        <th>القيمة</th>
+                        <th>البداية</th>
+                        <th>النهاية</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="9"><div class="main-erp-empty">لا توجد مشاريع مطابقة للبحث.</div></td></tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.FullCode</td>
+                                <td><strong>@item.ProjectName</strong><br /><small>@item.ProjectNameEnglish</small></td>
+                                <td>@item.CustomerName</td>
+                                <td><span class="main-erp-status-pill">@item.StatusName</span></td>
+                                <td>@item.BranchName</td>
+                                <td>@String.Format("{0:N2}", item.NetCost ?? item.ProjectCost)</td>
+                                <td>@dateValue(item.StartDate)</td>
+                                <td>@dateValue(item.EndDate)</td>
+                                <td class="main-erp-actions">
+                                    <a class="erp-btn" href="@Url.Action("Edit", "Projects", new { area = "MainErp", id = item.Id })"><i class="fas fa-edit"></i> فتح</a>
+                                    <a class="erp-btn" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp", projectId = item.Id })"><i class="fas fa-file-invoice"></i> مستخلص</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</section>

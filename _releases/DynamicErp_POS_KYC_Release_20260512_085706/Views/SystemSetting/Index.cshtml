@@ -1,0 +1,1027 @@
+﻿@model MyERP.Models.SystemSetting
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.SystemSettings;
+}
+
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.SystemSettings:</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/SystemSetting/Index" class="form-horizontal needs-validation" novalidate method="post" , enctype="multipart/form-data">
+                <div class="row">
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(model => model.Id)
+                    @Html.HiddenFor(model => model.Logo)
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <nav>
+                                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                        <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-GeneralSettings" role="tab" aria-controls="nav-home" aria-selected="true">@MyERP.Properties.Resources.GeneralSettings</a>
+                                        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-POSSettings" role="tab" aria-controls="nav-profile" aria-selected="false">@MyERP.Properties.Resources.POSSettings</a>
+                                        <a class="nav-item nav-link" id="InvoicesSettings" data-toggle="tab" href="#nav-InvoicesSettings" role="tab" aria-controls="nav-InvoicesSettings" aria-selected="false">@MyERP.Properties.Resources.InvoicesSettings</a>
+                                        <a class="nav-item nav-link" id="WarehousesSettings" data-toggle="tab" href="#nav-WarehousesSettings" role="tab" aria-controls="nav-WarehousesSettings" aria-selected="false">@MyERP.Properties.Resources.WarehousesSettings</a>
+                                        <a class="nav-item nav-link" id="E-InvoiceData" data-toggle="tab" href="#nav-E-InvoiceData" role="tab" aria-controls="nav-E-InvoiceData" aria-selected="false">@MyERP.Properties.Resources.EInvoiceData</a>
+                                        <a class="nav-item nav-link" id="NotificationSettingsData" data-toggle="tab" href="#nav-NotificationSettings" role="tab" aria-controls="nav-NotificationSettings" aria-selected="false">@MyERP.Properties.Resources.NotificationSettings</a>
+                                    </div>
+                                </nav>
+                                <div class="tab-content" id="nav-tabContent">
+                                    <div class="tab-pane fade show active" id="nav-GeneralSettings" role="tabpanel" aria-labelledby="nav-home-tab">
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowDashBoard" value="true" @Html.Raw(Model.ShowDashBoard == true ? "checked" : "") id="ShowDashBoard" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowDashBoard">
+                                                @MyERP.Properties.Resources.ShowTheDashboardOnTheMainPage
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowUserTasks" value="true" @Html.Raw(Model.ShowUserTasks == true ? "checked" : "") id="ShowUserTasks" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowUserTasks">
+                                                @MyERP.Properties.Resources.ShowTasksToUsersOnTheHomePage
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseItemUnit" value="true" @Html.Raw(Model.UseItemUnit == true ? "checked" : "") id="UseItemUnit" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseItemUnit">
+                                                @MyERP.Properties.Resources.WorkWithItemUnits
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowUserIcons" value="true" @Html.Raw(Model.ShowUserIcons == true ? "checked" : "") id="ShowUserIcons" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowUserIcons">
+                                                @MyERP.Properties.Resources.ShowUserIconsOnTheHomePage
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseExpiryDateForItems" value="true" @Html.Raw(Model.UseExpiryDateForItems == true ? "checked" : "") id="UseExpiryDateForItems" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseExpiryDateForItems">
+                                                @MyERP.Properties.Resources.UseExpirationDateForItems
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseCostCenter" value="true" @Html.Raw(Model.UseCostCenter == true ? "checked" : "") id="UseCostCenter" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseCostCenter">
+                                                @MyERP.Properties.Resources.UseCostCenters
+                                            </label>
+
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowSerialNumbers" value="true" @Html.Raw(Model.ShowSerialNumbers == true ? "checked" : "") id="ShowSerialNumbers" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowSerialNumbers">
+                                                @MyERP.Properties.Resources.UseSerial
+                                            </label>
+
+                                        </div>
+
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="PricingDependOnCustGroups" value="true" @Html.Raw(Model.PricingDependOnCustGroups == true ? "checked" : "") id="PricingDependOnCustGroups" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="PricingDependOnCustGroups">
+                                                @MyERP.Properties.Resources.ItemPricingAccordingToCustomerGroups
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowItemWidthAndHeightAndAreaInTransactions" value="true" @Html.Raw(Model.ShowItemWidthAndHeightAndAreaInTransactions == true ? "checked" : "") id="ShowItemWidthAndHeightAndAreaInTransactions" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowItemWidthAndHeightAndAreaInTransactions">
+                                                @MyERP.Properties.Resources.ShowItemWidthAndHeightAndAreaInTransactions
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="EnterEmployeeCodeManually" value="true" @Html.Raw(Model.EnterEmployeeCodeManually == true ? "checked" : "") id="EnterEmployeeCodeManually" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="EnterEmployeeCodeManually">
+                                                @MyERP.Properties.Resources.EnterEmployeeCodeManually
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="EnterItemCodeManually" value="true" @Html.Raw(Model.EnterItemCodeManually == true ? "checked" : "") id="EnterItemCodeManually" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="EnterItemCodeManually">
+                                                @MyERP.Properties.Resources.EnterItemCodeManually
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="WorkingWithTheEgyptianVacationSystem" value="true" @Html.Raw(Model.WorkingWithTheEgyptianVacationSystem == true ? "checked" : "") id="WorkingWithTheEgyptianVacationSystem" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="WorkingWithTheEgyptianVacationSystem">
+                                                @MyERP.Properties.Resources.WorkingWithTheEgyptianVacationSystem
+                                            </label>
+                                        </div>
+                                       
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.ServiceFeeRate
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="text" class="form-control small-number" name="ServiceFeesPercentage" value="@Model.ServiceFeesPercentage" id="ServiceFeesPercentage" />
+                                            </div>%
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.CommercialRegistrationNo
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="text" oninput="this.value=this.value.replace(/[^0-9]/g,'');" class="form-control" name="CommercialRegistrationNo" value="@Model.CommercialRegistrationNo" id="DefaultQuantityInPos" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.TaxCardNo
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="text" oninput="this.value=this.value.replace(/[^0-9]/g,'');" class="form-control" name="TaxCardNumber" value="@Model.TaxCardNumber" id="DefaultQuantityInPos" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.NoOfDays
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="text" oninput="this.value=this.value.replace(/[^0-9]/g,'');" class="form-control" name="DaysNo" value="@Model.DaysNo" id="DefaultQuantityInPos" />
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <input type="checkbox" name="DocumentCoding" value="true" @Html.Raw(Model.DocumentCoding == true ? "checked" : "") id="DocumentCoding" />
+                                            <label class=" col-sm-4 control-label" style="margin-right:1%; margin-left:1%;" for="DocumentCoding">
+                                                @MyERP.Properties.Resources.DocumentCoding
+                                            </label>
+                                        </div>
+
+                                        <div class="row DocumentCoding" style="display:none;">
+                                            <div class="col-12">
+                                                <div class="card">
+                                                    <div class="card-body">
+
+                                                        <div class="form-group row">
+                                                            <label class=" col-sm-2 control-label" for="TransactionId"> @MyERP.Properties.Resources.DocumentType </label>
+                                                            <div class="col-sm-4">
+                                                                @Html.DropDownList("DocumentTypeId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form -control" })
+                                                                <div class="invalid-feedback">
+                                                                    @MyERP.Properties.Resources.Required
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <label class=" col-sm-2 control-label" for="StreetEnName"> @MyERP.Properties.Resources.NoOfDigits </label>
+                                                            <div class="col-sm-4">
+
+                                                                @if (Model.NoOfDigits != null)
+                                                                {
+                                                                    <input id="NoOfDigits" name="NoOfDigits" class="form-control" type="text" value="@Model.NoOfDigits" readonly />
+                                                                    @*@Html.EditorFor(model => model.NoOfDigits, new { htmlAttributes = new { @class = "form-control", @type = "text", placeholder = @MyERP.Properties.Resources.NoOfDigits, @disabled = "disapled" } })*@
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input id="NoOfDigits" name="NoOfDigits" class="form-control" type="text" placeholder="@MyERP.Properties.Resources.NoOfDigits" />
+                                                                    @*@Html.EditorFor(model => model.NoOfDigits, new { htmlAttributes = new { @class = "form-control", @type = "text", placeholder = @MyERP.Properties.Resources.NoOfDigits } })*@
+                                                                }
+                                                                <div class="invalid-feedback">
+                                                                    @MyERP.Properties.Resources.Required
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <input type="checkbox" name="IsFixedPart" value="true" @Html.Raw(Model.IsFixedPart == true ? "checked" : "") id="IsFixedPart" />
+                                                            <label class=" col-sm-4 control-label" style="margin-right:1%; margin-left:1%;" for="IsFixedPart">
+                                                                @MyERP.Properties.Resources.IsFixedPart
+                                                            </label>
+
+                                                            <label class=" col-sm-2 control-label FixedPart" style="display:none;" for="FixedPart"> @MyERP.Properties.Resources.FixedPart</label>
+                                                            <div class="col-sm-4 FixedPart" style="display:none;">
+                                                                @if (Model.FixedPart != null)
+                                                                {
+                                                                    <input id="FixedPart" name="FixedPart" class="form-control" type="text" value="@Model.FixedPart" readonly />
+                                                                    @*@Html.EditorFor(model => model.FixedPart, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.FixedPart, @disabled = "disapled" } })*@
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input id="FixedPart" name="FixedPart" class="form-control" type="text" placeholder="@MyERP.Properties.Resources.FixedPart" />
+                                                                    @*@Html.EditorFor(model => model.FixedPart, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.FixedPart } })*@
+                                                                }
+                                                                <div class="invalid-feedback">
+                                                                    @MyERP.Properties.Resources.Required
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group row">
+                                                            <input type="checkbox" name="IsSeparator" value="true" @Html.Raw(Model.IsSeparator == true ? "checked" : "") id="IsSeparator" />
+                                                            <label class=" col-sm-4 control-label" style="margin-right:1%; margin-left:1%;" for="IsSeparator">
+                                                                @MyERP.Properties.Resources.IsSeparator
+                                                            </label>
+                                                            <label class=" col-sm-2 control-label Separator" style="display:none;" for="Separator"> @MyERP.Properties.Resources.Separator </label>
+                                                            <div class="col-sm-4 Separator" style="display:none;">
+                                                                @if (Model.Separator != null)
+                                                                {
+                                                                    <input id="Separator" name="Separator" class="form-control" type="text" value="@Model.Separator" readonly />
+                                                                    @*@Html.EditorFor(model => model.Separator, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Separator, @disabled = "disapled" } })*@
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input id="Separator" name="Separator" class="form-control" type="text" placeholder="@MyERP.Properties.Resources.Separator" />
+                                                                    @*@Html.EditorFor(model => model.Separator, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Separator } })*@
+                                                                }
+                                                                <div class="invalid-feedback">
+                                                                    @MyERP.Properties.Resources.Required
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <div class="form-group">
+                                                            <div class="form-group row">
+                                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DefaultBranch</label>
+                                                                <div class="col-sm-4">
+                                                                    @Html.DropDownList("DefaultDepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group row">
+
+                                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DefaultWarehouse</label>
+                                                                <div class="col-sm-4">
+                                                                    @Html.DropDownList("DefaultWarehouseId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group row">
+                                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DefaultBank</label>
+                                                                <div class="col-sm-4">
+                                                                    @Html.DropDownList("DefaultBankId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-group row">
+                                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources.DefaultCashBox</label>
+                                                                <div class="col-sm-4">
+                                                                    @Html.DropDownList("DefaultCashBoxId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <br />
+                                                @*-------------Added LOGO--------------*@
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h5 class=" pb-3 header-title">
+                                                            <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                                                @MyERP.Properties.Resources.Logo
+                                                            </a>
+                                                        </h5>
+                                                        <div class="col-md-6">
+                                                            @* مكان الصورة *@
+                                                            @if (Model != null)
+                                                            {
+                                                                <div class="row p-3">
+                                                                    <div class="col-md-6">
+                                                                        <div class="form-group">
+
+                                                                            <div class="row">
+                                                                                <div class="col-sm-4">
+                                                                                    @if (Model.Logo != null)
+                                                                                    {
+                                                                                        <div class="row text-center">
+                                                                                            <label for="inputtext3" class="control-label">@MyERP.Properties.Resources.CurrentImage</label>
+                                                                                        </div>
+                                                                                        @*@Html.EditorFor(a => a.Logo, new { @class = "form-control" })*@
+                                                                                        <img style='height:100px;width:100px;border-radius: 50px;' class="imgold" id="imgold" src='@Model.Logo' />
+
+                                                                                    }
+                                                                                    <!--else
+                                                    { <div class="row text-center">
+                                                            <label for="inputtext3" class="control-label">انسخ اللينك</label>
+                                                        </div>
+                                                        Html.EditorFor(a => a.Logo, new { class = "form-control" })-->
+                                                                                    @*<img style='height:100px;width:100px;border-radius: 50px;' class="imgold" src='#' />*@
+
+                                                                                    <!--}-->
+                                                                                    @*@Html.HiddenFor(model => model.Logo)*@
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <div class="form-group">
+                                                                            <div class="row">
+                                                                                <label for="inputtext3" class="control-label">@MyERP.Properties.Resources.ChooseNewImage  </label>
+                                                                            </div>
+                                                                            <div class="row">
+                                                                                <div class="col-sm-4">
+                                                                                    <input type="file" style="display: inline" onchange="readURL(this)" name="upload" class="photo" id="img" />
+                                                                                    <img style='height:100px; width: 100px;  border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="form-group row">
+                                                                    <label for="inputtext3" class="col-sm-4 control-label">@MyERP.Properties.Resources.ChooseImage </label>
+                                                                    <div class="col-sm-8">
+                                                                        <input type="file" style="display: inline" onchange="readURL(this)" name="upload" photo" id="img" />
+                                                                        <img style='height:100px;width:100px;border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>                                    <!--*******************************************************-->
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="nav-POSSettings" role="tabpanel" aria-labelledby="POSSettings">
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="EnableAdditionalItemsOnPos" value="true" @Html.Raw(Model.EnableAdditionalItemsOnPos == true ? "checked" : "") id="EnableAdditionalItemsOnPos" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="EnableAdditionalItemsOnPos">
+                                                @MyERP.Properties.Resources.ShowAdditionalItemsAtPointsOfSale
+                                            </label>
+
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="AllowToAddSameItemMultipleTimes" value="true" @Html.Raw(Model.AllowToAddSameItemMultipleTimes == true ? "checked" : "") id="AllowToAddSameItemMultipleTimes" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="AllowToAddSameItemMultipleTimes">
+                                                @MyERP.Properties.Resources.AllowAddItemsMoreThanOnceAtPointsOfSale
+                                            </label>
+
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowCashBoxBalance" value="true" @Html.Raw(Model.ShowCashBoxBalance == true ? "checked" : "") id="ShowCashBoxBalance" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowCashBoxBalance">
+                                                @MyERP.Properties.Resources.ShowCashBoxBalanceAtPointsOfSale
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="AllowSalesOrderInPos" value="true" @Html.Raw(Model.AllowSalesOrderInPos == true ? "checked" : "") id="AllowSalesOrderInPos" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="AllowSalesOrderInPos">
+                                                @MyERP.Properties.Resources.PossibilityOfReservationAtPOS
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowItemImageInsteadOfItemName" value="true" @Html.Raw(Model.ShowItemImageInsteadOfItemName == true ? "checked" : "") id="ShowItemImageInsteadOfItemName" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowItemImageInsteadOfItemName">
+                                                @MyERP.Properties.Resources.ShowPicturesOfItemsAndGroupsInsteadOfNamesInPointsOfSale
+                                            </label>
+                                        </div>
+
+                                        @*<div class="form-group row measure" style="display:none;">
+                <label class="control-label col-sm-2" for="HeightOfImage">
+                    @MyERP.Properties.Resources.ImageHeight
+                </label>
+                <div class="col-sm-3">
+                    <input class="form-control" type="number" step="any" name="HeightOfImage" value="@Model.HeightOfImage" id="HeightOfImage" />
+                </div>
+                <label class="control-label col-sm-2" for="WidthOfImage">
+                    @MyERP.Properties.Resources.ImageWidth
+                </label>
+                <div class="col-sm-3">
+                    <input class="form-control" type="number" step="any" name="WidthOfImage" value="@Model.WidthOfImage" id="WidthOfImage" />
+                </div>
+            </div>*@
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseRefundableInsurancesForAccessories" value="true" @Html.Raw(Model.UseRefundableInsurancesForAccessories == true ? "checked" : "") id="UseRefundableInsurancesForAccessories" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseRefundableInsurancesForAccessories">
+                                                @MyERP.Properties.Resources.UseRefundableInsurancesForAccessories
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.NoOfGroupsOfItemsToShowInEachScreenAtPOS
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="text" oninput="this.value=this.value.replace(/[^0-9]/g,'');" class="form-control " name="NoOfItemGroupsInPOS" value="@Model.NoOfItemGroupsInPOS" id="NoOfItemGroupsInPOS" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.NoOfItemsToShowInEachScreenAtPOS
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="text" oninput="this.value=this.value.replace(/[^0-9]/g,'');" @*enter integer only*@ class="form-control " name="NoOfItemsInPOS" value="@Model.NoOfItemsInPOS" id="NoOfItemsInPOS" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">
+                                                @MyERP.Properties.Resources.DefaultPOSQuantity
+                                            </label>
+                                            <div class="col-sm-3">
+                                                <input type="number" step="any" class="form-control" name="DefaultQuantityInPos" value="@Model.DefaultQuantityInPos" id="DefaultQuantityInPos" />
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="control-label col-sm-2">@MyERP.Properties.Resources.InvoiceSample</label>
+                                            <div class="col-sm-4">
+                                                <select class="form-control" name="InvoiceSampleNo" id="InvoiceSampleNo">
+                                                    @*@if (Model != null)
+                        {
+                            <option value="@Model.InvoiceSampleNo"></option>
+                        }
+                        <option value="1">@MyERP.Properties.Resources.Sample1</option>
+                        <option value="2">@MyERP.Properties.Resources.Sample2</option>*@
+
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="WorkWithCommercialPOS" value="true" @Html.Raw(Model.WorkWithCommercialPOS == true ? "checked" : "") id="WorkWithCommercialPOS" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="WorkWithCommercialPOS">
+                                                @MyERP.Properties.Resources.WorkWithCommercialPOS
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="CashierMaximumAllowedDiscountPercentage"> @MyERP.Properties.Resources.CashierMaximumAllowedDiscountPercentage</label>
+                                            <div class="col-sm-3">
+                                                @Html.EditorFor(model => model.CashierMaximumAllowedDiscountPercentage, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CashierMaximumAllowedDiscountPercentage } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <span class="col-sm-1"> % </span>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowTaxPercentageAndValue" value="true" @Html.Raw(Model.ShowTaxPercentageAndValue == true ? "checked" : "") id="ShowTaxPercentageAndValue" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowTaxPercentageAndValue">
+                                                @MyERP.Properties.Resources.ShowTaxPercentageAndValue
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseThermalPrinterToPrintInvoices" value="true" @Html.Raw(Model.UseThermalPrinterToPrintInvoices == true ? "checked" : "") id="UseThermalPrinterToPrintInvoices" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseThermalPrinterToPrintInvoices">
+                                                @MyERP.Properties.Resources.UseThermalPrinterToPrintInvoices
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UsePrintingAssistantProgram" value="true" @Html.Raw(Model.UsePrintingAssistantProgram == true ? "checked" : "") id="UsePrintingAssistantProgram" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UsePrintingAssistantProgram">
+                                                @MyERP.Properties.Resources.UsePrintingAssistantProgram
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="IsDeliveryPossibility" value="true" @Html.Raw(Model.IsDeliveryPossibility == true ? "checked" : "") id="IsDeliveryPossibility" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="IsDeliveryPossibility">
+                                                @MyERP.Properties.Resources.DeliveryPossibility
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="IsTableSellingPossibility" value="true" @Html.Raw(Model.IsTableSellingPossibility == true ? "checked" : "") id="IsTableSellingPossibility" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="IsTableSellingPossibility">
+                                                @MyERP.Properties.Resources.TableSellingPossibility
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="IsTakeAwaySellingPossibility" value="true" @Html.Raw(Model.IsTakeAwaySellingPossibility == true ? "checked" : "") id="IsTakeAwaySellingPossibility" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="IsTakeAwaySellingPossibility">
+                                                @MyERP.Properties.Resources.TakeAwaySellingPossibility
+                                            </label>
+                                        </div>
+
+
+                                    </div>
+
+                                    <div class="tab-pane fade" id="nav-InvoicesSettings" role="tabpanel" aria-labelledby="InvoicesSettings">
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ApplyTaxesOnSalesIvoiceAuto" value="true" @Html.Raw(Model.ApplyTaxesOnSalesIvoiceAuto == true ? "checked" : "") id="ApplyTaxesOnSalesIvoiceAuto" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ApplyTaxesOnSalesInvoiceAuto">
+                                                @MyERP.Properties.Resources.AutomaticVATAppliedToInvoices
+                                            </label>
+
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="PrintReceiptInsteadOfSalesInvoice" value="true" @Html.Raw(Model.PrintReceiptInsteadOfSalesInvoice == true ? "checked" : "") id="PrintReceiptInsteadOfSalesInvoice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="PrintReceiptInsteadOfSalesInvoice">
+                                                @MyERP.Properties.Resources.PrintTheMiniInvoiceInsteadOfTheSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="AllowDiscountPerItemInSalesInvoice" value="true" @Html.Raw(Model.AllowDiscountPerItemInSalesInvoice == true ? "checked" : "") id="AllowDiscountPerItemInSalesInvoice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="AllowDiscountPerItemInSalesInvoice">
+                                                @MyERP.Properties.Resources.PossibilityOfDiscountingTheItemInTheSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowDirectExpense" value="true" @Html.Raw(Model.ShowDirectExpense == true ? "checked" : "") id="ShowDirectExpense" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowDirectExpense">
+                                                @MyERP.Properties.Resources.UseDirectExpensesInPurchaseInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseMultiWarehousesInSalesInvoice" value="true" @Html.Raw(Model.UseMultiWarehousesInSalesInvoice == true ? "checked" : "") id="UseMultiWarehousesInSalesInvoice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseMultiWarehousesInSalesInvoice">
+                                                @MyERP.Properties.Resources.PossibilityOfSellingFromMoreThanOneStoreInSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseAvgCostPrice" value="true" @Html.Raw(Model.UseAvgCostPrice == true ? "checked" : "") id="UseAvgCostPrice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseAvgCostPrice">
+                                                @MyERP.Properties.Resources.PossibilityOfSellingAtAverageCostInSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="BarcodeUsingCameraInSalesInvoice" value="true" @Html.Raw(Model.BarcodeUsingCameraInSalesInvoice == true ? "checked" : "") id="BarcodeUsingCameraInSalesInvoice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="BarcodeUsingCameraInSalesInvoice">
+                                                @MyERP.Properties.Resources.EnteringItemsWithMobileCameraInSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowSalesInvoiceProfit" value="true" @Html.Raw(Model.ShowSalesInvoiceProfit == true ? "checked" : "") id="ShowSalesInvoiceProfit" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowSalesInvoiceProfit">
+                                                @MyERP.Properties.Resources.ShowProfitabilityOfInvoiceInSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="PrintEInvoiceInsteadOfSalesInvoice" value="true" @Html.Raw(Model.PrintEInvoiceInsteadOfSalesInvoice == true ? "checked" : "") id="PrintEInvoiceInsteadOfSalesInvoice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="PrintEInvoiceInsteadOfSalesInvoice">
+                                                @MyERP.Properties.Resources.PrintEInvoiceInsteadOfSalesInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseDifferentCurrencies" value="true" @Html.Raw(Model.UseDifferentCurrencies == true ? "checked" : "") id="UseDifferentCurrencies" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseDifferentCurrencies">
+                                                @MyERP.Properties.Resources.UseDifferentCurrencies
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseActivityLogo" value="true" @Html.Raw(Model.UseActivityLogo == true ? "checked" : "") id="UseActivityLogo" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseActivityLogo">
+                                                @MyERP.Properties.Resources.UseActivityLogo
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UsePricePolicyIncludedInItemsValueAddedTax" value="true" @Html.Raw(Model.UsePricePolicyIncludedInItemsValueAddedTax == true ? "checked" : "") id="UsePricePolicyIncludedInItemsValueAddedTax" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UsePricePolicyIncludedInItemsValueAddedTax">
+                                                @MyERP.Properties.Resources.UsePricePolicyIncludedInItemsValueAddedTax
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ApplySmokingTax" value="true" @Html.Raw(Model.ApplySmokingTax == true ? "checked" : "") id="ApplySmokingTax" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ApplySmokingTax">
+                                                @MyERP.Properties.Resources.ApplySmokingTax
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="SmokingTaxPercentage"> @MyERP.Properties.Resources.SmokingTaxPercentage</label>
+                                            <div class="col-sm-3">
+                                                @Html.EditorFor(model => model.SmokingTaxPercentage, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.SmokingTaxPercentage } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <span class="col-sm-1"> % </span>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="DontShowEndProductInPurchaseInvoice" value="true" @Html.Raw(Model.DontShowEndProductInPurchaseInvoice == true ? "checked" : "") id="DontShowEndProductInPurchaseInvoice" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="DontShowEndProductInPurchaseInvoice">
+                                                @MyERP.Properties.Resources.DontShowEndProductInPurchaseInvoice
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="ItemsBarcodePrinterName"> @MyERP.Properties.Resources.ItemsBarcodePrinterName</label>
+                                            <div class="col-sm-4">
+                                                @Html.EditorFor(model => model.ItemsBarcodePrinterName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ItemsBarcodePrinterName } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseOverDraftPolicy" value="true" @Html.Raw(Model.UseOverDraftPolicy == true ? "checked" : "") id="UseOverDraftPolicy" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseOverDraftPolicy">
+                                                @MyERP.Properties.Resources.UseOverDraftPolicy
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="AutomaticallyApprovingSalesQuotation" value="true" @Html.Raw(Model.AutomaticallyApprovingSalesQuotation == true ? "checked" : "") id="AutomaticallyApprovingSalesQuotation" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="AutomaticallyApprovingSalesQuotation">
+                                                @MyERP.Properties.Resources.AutomaticallyApprovingSalesQuotation
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="InabilityToEditSalesAndPurchaseInvoicesAndReturns" value="true" @Html.Raw(Model.InabilityToEditSalesAndPurchaseInvoicesAndReturns == true ? "checked" : "") id="InabilityToEditSalesAndPurchaseInvoicesAndReturns" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="InabilityToEditSalesAndPurchaseInvoicesAndReturns">
+                                                @MyERP.Properties.Resources.InabilityToEditSalesAndPurchaseInvoicesAndReturns
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="LinkSalesRepresentativesWithCustomers" value="true" @Html.Raw(Model.LinkSalesRepresentativesWithCustomers == true ? "checked" : "") id="LinkSalesRepresentativesWithCustomers" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="LinkSalesRepresentativesWithCustomers">
+                                                @MyERP.Properties.Resources.LinkSalesRepresentativesWithCustomers
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @*WarehousesSettings *@
+                                    <div class="tab-pane fade" id="nav-WarehousesSettings" role="tabpanel" aria-labelledby="WarehousesSettings">
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="WarehouseItemsDistribution" value="true" @Html.Raw(Model.WarehouseItemsDistribution == true ? "checked" : "") id="WarehouseItemsDistribution" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="WarehouseItemsDistribution">
+                                                @MyERP.Properties.Resources.WarehouseItemsDistribution
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="SendNotificationToWarehousesKeepers" value="true" @Html.Raw(Model.SendNotificationToWarehousesKeepers == true ? "checked" : "") id="SendNotificationToWarehousesKeepers" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="SendNotificationToWarehousesKeepers">
+                                                @MyERP.Properties.Resources.SendingNotificationsToStorekeepersWhenCreatingAStoreExchange
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowItemsInsteadOfItemGroupsInInventoryVoucher" value="true" @Html.Raw(Model.ShowItemsInsteadOfItemGroupsInInventoryVoucher == true ? "checked" : "") id="ShowItemsInsteadOfItemGroupsInInventoryVoucher" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowItemsInsteadOfItemGroupsInInventoryVoucher">
+                                                @MyERP.Properties.Resources.InventoryByItemInsteadOfGroupsOfItemsInInventoryVoucher
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="ShowDepartmentItemsInInventoryVoucher" value="true" @Html.Raw(Model.ShowDepartmentItemsInInventoryVoucher == true ? "checked" : "") id="ShowItemImageInsteadOfItemName" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="ShowDepartmentItemsInInventoryVoucher">
+                                                @MyERP.Properties.Resources.ShowDepartmentItemsInInventoryVoucher
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="IssueComponentsOfItemInStockIssue" value="true" @Html.Raw(Model.IssueComponentsOfItemInStockIssue == true ? "checked" : "") id="ShowDirectExpense" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="IssueComponentsOfItemInStockIssue">
+                                                @MyERP.Properties.Resources.ExchangeOfItemsComponentsInWarehouseExchangeVouchersInsteadOfDisbursingItemItself
+                                            </label>
+                                        </div>
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="UseSeparatedAccountsForWarehouse" value="true" @Html.Raw(Model.UseSeparatedAccountsForWarehouse == true ? "checked" : "") id="UseSeparatedAccountsForWarehouse" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="UseSeparatedAccountsForWarehouse">
+                                                @MyERP.Properties.Resources.UseSeparatedAccountsForWarehouse
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="AddItemBarcodeBasedOnItemCode" value="true" @Html.Raw(Model.AddItemBarcodeBasedOnItemCode == true ? "checked" : "") id="AddItemBarcodeBasedOnItemCode" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="AddItemBarcodeBasedOnItemCode">
+                                                @MyERP.Properties.Resources.AddItemBarcodeBasedOnItemCode
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <input type="checkbox" name="NotAutomaticallyApprovingCashIssueAndCashReceiptVouchers" value="true" @Html.Raw(Model.NotAutomaticallyApprovingCashIssueAndCashReceiptVouchers == true ? "checked" : "") id="NotAutomaticallyApprovingCashIssueAndCashReceiptVouchers" />
+                                            <label style="margin-right:1%; margin-left:1%;" for="NotAutomaticallyApprovingCashIssueAndCashReceiptVouchers">
+                                                @MyERP.Properties.Resources.NotAutomaticallyApprovingCashIssueAndCashReceiptVouchers
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    @* E-Invoice Data *@
+                                    <div class="tab-pane fade" id="nav-E-InvoiceData" role="tabpanel" aria-labelledby="E-InvoiceData">
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="CompanyArName"> @MyERP.Properties.Resources.CompanyArName</label>
+                                            <div class="col-sm-4">
+                                                @Html.EditorFor(model => model.CompanyArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CompanyArName } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <label class=" col-sm-2 control-label" for="CompanyEnName"> @MyERP.Properties.Resources.CompanyEnName</label>
+                                            <div class="col-sm-4">
+                                                @Html.EditorFor(model => model.CompanyEnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.CompanyEnName } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="CountryId"> @MyERP.Properties.Resources.Country </label>
+                                            <div class="col-sm-4">
+                                                @Html.DropDownListFor(a => a.CountryId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <label class=" col-sm-2 control-label" for="CityId"> @MyERP.Properties.Resources.City </label>
+                                            <div class="col-sm-4">
+                                                @*<select class="form-control" id="CityId" name="CityId"></select>*@
+
+                                                @Html.DropDownListFor(a => a.CityId, null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class=" col-sm-2 control-label" for="CompanyArName"> @MyERP.Properties.Resources.StreetArName</label>
+                                            <div class="col-sm-4">
+                                                @Html.EditorFor(model => model.StreetArName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.StreetArName } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <label class=" col-sm-2 control-label" for="StreetEnName"> @MyERP.Properties.Resources.StreetEnName</label>
+                                            <div class="col-sm-4">
+                                                @Html.EditorFor(model => model.StreetEnName, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.StreetEnName } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+
+                                    @* Notification Settings *@
+                                    <div class="tab-pane fade" id="nav-NotificationSettings" role="tabpanel" aria-labelledby="NotificationSettingsData">
+                                        <div class="form-group row">
+                                            <div class="col-sm-3">
+                                                <input type="checkbox" name="ShowExpireContracts" value="true" @Html.Raw(Model.ShowExpireContracts == true ? "checked" : "") id="ShowExpireContracts" />
+                                                <label style="margin-right:1%; margin-left:1%;" for="ShowExpireContracts">
+                                                    @MyERP.Properties.Resources.ShowExpireContracts
+                                                </label>
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.ExpireContractsDays, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Day, @type = "text" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <span class="col-sm-1"><b> @MyERP.Properties.Resources.Day </b>  </span>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-sm-3">
+                                                <input type="checkbox" name="ShowExpireResidencies" value="true" @Html.Raw(Model.ShowExpireResidencies == true ? "checked" : "") id="ShowExpireResidencies" />
+                                                <label style="margin-right:1%; margin-left:1%;" for="ShowExpireResidencies">
+                                                    @MyERP.Properties.Resources.ShowExpireResidencies
+                                                </label>
+                                            </div>
+
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.ExpireResidenciesDays, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Day, @type = "text" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <span class="col-sm-1"><b> @MyERP.Properties.Resources.Day </b>  </span>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-sm-3">
+                                                <input type="checkbox" name="ShowExpireLicenses" value="true" @Html.Raw(Model.ShowExpireLicenses == true ? "checked" : "") id="ShowExpireLicenses" />
+                                                <label style="margin-right:1%; margin-left:1%;" for="ShowExpireLicenses">
+                                                    @MyERP.Properties.Resources.ShowExpireLicenses
+                                                </label>
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.ExpireLicensesDays, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Day, @type = "text" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <span class="col-sm-1"><b> @MyERP.Properties.Resources.Day </b>  </span>
+                                        </div>
+                                        <div class="form-group row">
+                                            <div class="col-sm-3">
+                                                <input type="checkbox" name="ShowExpirePassports" value="true" @Html.Raw(Model.ShowExpirePassports == true ? "checked" : "") id="ShowExpirePassports" />
+                                                <label style="margin-right:1%; margin-left:1%;" for="ShowExpirePassports">
+                                                    @MyERP.Properties.Resources.ShowExpirePassports
+                                                </label>
+                                            </div>
+                                            <div class="col-sm-2">
+                                                @Html.EditorFor(model => model.ExpirePassportsDays, new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.Day, @type = "text" } })
+                                                <div class="invalid-feedback">
+                                                    @MyERP.Properties.Resources.Required
+                                                </div>
+                                            </div>
+                                            <span class="col-sm-1"><b> @MyERP.Properties.Resources.Day </b>  </span>
+                                        </div>
+
+
+                                    </div>
+
+
+                                </div>
+
+                                @*<div class="form-group row">
+                                        <label for="PayViaVisa">
+                                            دفع عن طريق الفيزا
+                                        </label>
+                                        <input type="checkbox" name="PayViaVisa" value="true" @Html.Raw(Model.PayViaVisa == true ? "checked" : "") id="PayViaVisa" />
+                                    </div>*@
+
+                                <!---------------------------------------------------------->
+                                <!---------------------------------------------------------->
+                                @*<div class="form-group row">
+                                        <label class="control-label col-sm-2">
+                                            نسبة عمولة الدفع بالفيزا
+                                        </label>
+                                        <div class="col-sm-3">
+                                            <input type="text" class="form-control small-number" name="VisaCommissionPercentage" value="@Model.VisaCommissionPercentage" id="VisaCommissionPercentage" />
+                                        </div>%
+                                    </div>*@
+
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <div class="col-md-offset-2 col-md-10">
+                                                <button class="btn btn-success" type="submit" style="float: left">
+                                                    @MyERP.Properties.Resources.Save
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let warehouseOptions = '';
+    let sampleInvoiceOptions = '';
+
+    setSampleInvoiceValues();
+
+    function setWarehouseValues() {
+        warehouseOptions = '';
+        return requestData('/Helper/WarehousesByDepartmentId?id=' + $('#DefaultDepartmentId').val())
+            .done(function (r) {
+                warehouseOptions = '<option value>' + '@MyERP.Properties.Resources.Select' + '</option>';
+                for (var i = 0; i < r.length; i++) {
+                    warehouseOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+                }
+            });
+    }
+    function setSampleInvoiceValues() {
+        sampleInvoiceOptions = '';
+
+        sampleInvoiceOptions += '<option value = "1">' + '@MyERP.Properties.Resources.Sample1' + '</option>';
+        sampleInvoiceOptions += '<option value = "2">' + '@MyERP.Properties.Resources.Sample2' + '</option>';
+        $("#InvoiceSampleNo").empty().append(sampleInvoiceOptions);
+        $("#InvoiceSampleNo").val('@Model.InvoiceSampleNo').trigger('change');;
+    }
+    $('#DefaultDepartmentId').on('change', function () {
+        setWarehouseValues().then(function () {
+            $("#DefaultWarehouseId").empty().append(warehouseOptions);
+        });
+    });
+   
+    $('#ShowItemImageInsteadOfItemName').on('click', function () {
+        //if ($('#ShowItemImageInsteadOfItemName').prop('checked')) {
+            //$('.measure').show();
+            //$('#WidthOfImage').attr('required', true);
+            //$('#HeightOfImage').attr('required', true);
+        //}
+       // else {
+            //$('.measure').hide();
+            //$('#WidthOfImage').val(0);
+            //$('#HeightOfImage').val(0);
+       // }
+        CalculateTotals();
+    });
+
+    $(document).ready(function () {
+        //if ($('#ShowItemImageInsteadOfItemName').prop('checked')) {
+            //$('.measure').show();
+        //}
+/*
+        if ($('#IsFixedPart').prop('checked') == true) {
+            $('.FixedPart').show();
+        }
+        else {
+            $('.FixedPart').hide();
+            //   $('#FixedPart').val('');
+        }
+        if ($('#IsSeparator').prop('checked') == true) {
+            $('.Separator').show();
+        }
+        else {
+            $('.Separator').hide();
+           // $('#Separator').val('');
+        }
+        if ($('#DocumentCoding').prop('checked') == true) {
+            $('.DocumentCoding').show();
+        }
+        else {
+            $('.DocumentCoding').hide();
+           // $('#Separator').val('');
+            //   $('#FixedPart').val('');
+            ////$('#NoOfDigits').val('');
+            $('#DocumentTypeId').prop('selectedIndex', 0).select2();
+            $('#IsSeparator').prop('checked', false);
+            $('.Separator').hide();
+            $('#IsFixedPart').prop('checked', false);
+            $('.FixedPart').hide();
+        }
+        */
+    });
+
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                $(".imgnew").removeClass("hidden");
+
+                $('#blah')
+                    .attr('src', e.target.result)
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    $('#CountryId').on('change', function () {
+        getCities($(this).val()).then(function () {
+            $("#CityId").empty().append(CitiesOptions);
+        });
+    });
+
+    $('#ApplySmokingTax').on('click', function () {
+        if ($(this).prop('checked') == true) {
+            $('#SmokingTaxPercentage').attr('required', true)
+        }
+        else {
+            $('#SmokingTaxPercentage').val('');
+        }
+    });
+
+/*
+    $('#IsFixedPart').on('click', function () {
+        if ($(this).prop('checked') == true) {
+            $('.FixedPart').show();
+        }
+        else {
+            $('.FixedPart').hide();
+            //   $('#FixedPart').val('');
+        }
+    });
+    $('#IsSeparator').on('click', function () {
+        if ($(this).prop('checked') == true) {
+            $('.Separator').show();
+        }
+        else {
+            $('.Separator').hide();
+            //$('#Separator').val('');
+        }
+    });
+    $('#DocumentCoding').on('click', function () {
+        if ($(this).prop('checked') == true) {
+            $('.DocumentCoding').show();
+        }
+        else {
+            $('.DocumentCoding').hide();
+            // $('#Separator').val('');
+            //   $('#FixedPart').val('');
+            //$('#NoOfDigits').val('');
+            $('#DocumentTypeId').prop('selectedIndex', 0).select2();
+            $('#IsSeparator').prop('checked', false);
+            $('.Separator').hide();
+            $('#IsFixedPart').prop('checked', false);
+            $('.FixedPart').hide();
+        }
+    });
+    */
+    var CitiesOptions = '';
+
+    function getCities(governorateId) {
+       // $('#CityId').empty();
+
+        if (governorateId != "" && governorateId != null) {
+            CitiesOptions = '';
+
+            return requestData('/Helper/getCitiesInGovernorate?governorateId=' + governorateId).done(function (r) {
+
+                for (var i = 0; i < r.length; i++) {
+                    CitiesOptions += '<option value="' + r[i].Id + '">' + r[i].ArName + '</option>';
+
+                    //$('#CityId').append($('<option>', {
+                    //    value: r[i].Id,
+                    //    text: r[i].ArName
+                    //}));
+                }
+
+               // $('#CityId').trigger('change');
+            });
+        }
+    }
+
+
+
+
+</script>

@@ -1,0 +1,69 @@
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "التحويلات المخزنية";
+}
+<section class="main-erp-panel main-erp-operational-page">
+    <div class="main-erp-title-row">
+        <div>
+            <h3>التحويلات المخزنية</h3>
+            <p>Reused from Kishny generic module. تم اعتماد شكل شاشة التحويلات العاملة في Kishny/POS مع إزالة POS session وتعطيل الحفظ/استيراد السيريالات مؤقتا.</p>
+        </div>
+        <span class="main-erp-badge">Reused from Kishny generic module</span>
+    </div>
+
+    <div class="main-erp-vb6-toolbar">
+        <button type="button">بحث</button>
+        <button type="button">تحويل جديد</button>
+        <button type="button" disabled>حفظ معطل</button>
+        <button type="button" disabled>استيراد سيريالات معطل</button>
+        <button type="button" disabled>طباعة</button>
+    </div>
+
+    <section class="main-erp-tabs">
+        <section>
+            <h4>بحث التحويلات</h4>
+            <div class="main-erp-form-grid">
+                <label><span>من تاريخ</span><input type="date" /></label>
+                <label><span>إلى تاريخ</span><input type="date" /></label>
+                <label><span>رقم التحويل</span><input type="text" /></label>
+                <label><span>فرع من</span><input type="text" /></label>
+                <label><span>مخزن من</span><input type="text" /></label>
+                <label><span>فرع إلى</span><input type="text" /></label>
+                <label><span>مخزن إلى</span><input type="text" /></label>
+            </div>
+        </section>
+
+        <section>
+            <h4>بيانات التحويل</h4>
+            <div class="main-erp-form-grid">
+                <label><span>رقم التحويل</span><input type="text" disabled /></label>
+                <label><span>التاريخ</span><input type="date" disabled /></label>
+                <label><span>من فرع</span><input type="text" disabled /></label>
+                <label><span>من مخزن</span><input type="text" disabled /></label>
+                <label><span>إلى فرع</span><input type="text" disabled /></label>
+                <label><span>إلى مخزن</span><input type="text" disabled /></label>
+                <label class="main-erp-wide-field"><span>ملاحظات</span><textarea disabled></textarea></label>
+            </div>
+        </section>
+
+        <section>
+            <h4>الأصناف والسيريالات</h4>
+            <div class="main-erp-table-wrap">
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>الصنف</th>
+                            <th>الوحدة</th>
+                            <th>الكمية</th>
+                            <th>سيريال</th>
+                            <th>ملاحظات السطر</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5">سيتم توصيل البحث والتفاصيل بقاعدة MainErp قبل تفعيل أي حفظ.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</section>

@@ -1,0 +1,373 @@
+﻿@model MyERP.Models.ServicesCategory
+<script src="~/Scripts/SaveAndNew.js"></script>
+<script src="~/js/DeleteFunctionForAddEditView.js"></script>
+
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = "أقسام الصيانة";
+    List<SelectListItem> TypesItems = new List<SelectListItem>();
+    TypesItems.Add(new SelectListItem
+    {
+        Text = "رئيسي",
+        Value = "1"
+    });
+    TypesItems.Add(new SelectListItem
+    {
+        Text = "وسيط",
+        Value = "2"
+
+    });
+    TypesItems.Add(new SelectListItem
+    {
+        Text = "فرعى",
+        Value = "3"
+
+    });
+}
+
+    @Html.AntiForgeryToken()
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                @if (Model != null)
+                {
+                    if (Model.IsDeleted == false)
+                    {
+                        if (ViewBag.Previous > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.First })" class="btn btn-info">@MyERP.Properties.Resources.First</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Previous })" class=" btn btn-info">&#8250;</a>
+                        }
+                        if (ViewBag.Next > 0)
+                        {
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Next })" class="btn btn-info">&#8249;</a>
+                            <a href="@Url.Action("AddEdit", new { id = ViewBag.Last })" class="btn btn-info">@MyERP.Properties.Resources.Last</a>
+                        }
+                    }
+                }
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <h4 class="page-title"> أقسام الصيانة:</h4>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <form action="/ServiceCategories/AddEdit" class="form-horizontal needs-validation" novalidate method="post" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-12">
+
+                        @Html.HiddenFor(model => model.Id)
+                        @Html.HiddenFor(model => model.IsActive)
+                        @Html.HiddenFor(model => model.IsDeleted)
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Code">الكود</label>
+                                    <div class="col-sm-4">
+                                        @Html.EditorFor(model => model.Code, new { htmlAttributes = new { @class = "form-control", placeholder = "الكود", required = "required" } })
+                                        @Html.ValidationMessageFor(model => model.Code, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الاسم العربى</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" value="@Model.ArName" name="ArName" id="txtArName" placeholder="الاسم العربى" required>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="inputtext3" class="col-sm-2 control-label">الاسم انجليزى</label>
+                                    <div class="col-sm-4">
+                                        <input type="text" class="form-control" name="EnName" value="@Model.EnName" id="txtEnName" placeholder="الاسم انجليزى">
+                                    </div>
+                                </div>
+                                <!-- مكان الصورة  -->
+                                <!--if (Model != null)
+    {
+        <div class="row p-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <div class="row text-center">
+                        <label for="inputtext3" class="control-label">
+                            @MyERP.Properties.Resources.CurrentPhoto
+                        </label>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            if (Model.Image != null)
+                            {
+                                <img style='height:100px;width:100px;border-radius: 50px;' class="imgold" src='@Model.Image' />
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <div class="row">
+                        <label for="inputtext3" class="control-label">
+
+                            @MyERP.Properties.Resources.SelectNew
+                        </label>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <input type="file" style="display: inline" onchange="readURL(this)" name="upload" class="photo" id="img" />
+                            <img style='height:100px; width: 100px;  border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="form-group row">
+            <label for="inputtext3" class="col-sm-4 control-label">
+                @MyERP.Properties.Resources.SelectNew
+            </label>
+            <div class="col-sm-8">
+                <input type="file" style="display: inline" onchange="readURL(this)" name="upload" photo" id="img" />
+                <img style='height:100px;width:100px;border-radius: 50px;' id="blah" src="#" alt="" class="hidden imgnew" />
+            </div>
+        </div>
+    }
+    <div class="form-group row">
+        <label class="col-sm-2 control-label">نوع المجموعة </label>
+        <div class="col-sm-4">
+            @Html.DropDownListFor(model => model.Type, TypesItems, "-- اختر  النوع --", new { @class = "form-control", id = "type1", @required = "required" })
+            @Html.ValidationMessageFor(model => model.Type, "", new { @class = "text-danger" })
+        </div>
+    </div>
+    if (Model.Id > 0)
+    {
+        if (Model.Type == 1)
+        {
+            <div class="form-group row" id="div1" style="display:none;">
+                <label for="inputtext3" class="col-sm-2 control-label">الفئة الرئيسية  </label>
+                <div class="col-sm-4">
+
+                    @Html.DropDownList("ParentId", null, "اختر المجموعة الرئيسية ", htmlAttributes: new { @class = "form-control", id = "DDLParent", name = "ParentId" })
+
+                </div>
+            </div>
+            <div id="div2">
+                <div class="form-group row">
+                    <label for="inputtext3" class="col-sm-2 control-label">لديه تفاصيل</label>
+                    <div class="col-sm-4">
+                        @if (Model.HasDetails == true)
+                        {
+                            <input name="HasDetails" id="HasDetails" type="checkbox" checked class="form-control" onchange="check()" style="width: 15px;" />
+                        }
+                        else
+                        {
+                            <input name="HasDetails" id="HasDetails" type="checkbox" class="form-control" onchange="check()" style="width: 15px;" value="false" />
+                        }
+                    </div>
+                </div>
+                <br />
+                <br />
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">الرصيد الادنى للفنى </label>
+                    <div class="col-md-4">
+                        <input class="money form-control" value="@Model.MinBalance" name="MinBalance" id="MinBalance">
+                        @Html.ValidationMessageFor(model => model.MinBalance, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="form-group row" id="div1">
+                <label for="inputtext3" class="col-sm-2 control-label">الفئة الرئيسية  </label>
+                <div class="col-sm-4">
+                    @Html.DropDownList("ParentId", null, "اختر المجموعة الرئيسية ", htmlAttributes: new { @class = "form-control", id = "DDLParent", name = "ParentId" })
+                </div>
+            </div>
+            <div id="div2" style="display:none;">
+                <div class="form-group row">
+                    <label for="inputtext3" class="col-sm-2 control-label">لديه تفاصيل</label>
+                    <div class="col-sm-4">
+                        @if (Model.HasDetails == true)
+                        {
+                            <input name="HasDetails" id="HasDetails" type="checkbox" checked class="form-control" style="width: 15px;" value="true" onchange="check()" />
+                        }
+                        else
+                        {
+                            <input name="HasDetails" id="HasDetails" type="checkbox" class="form-control" style="width: 15px;" value="false" onchange="check()" />
+                        }
+                    </div>
+                </div>
+                <br />
+                <br />
+                <div class="form-group row">
+                    <label class="col-sm-2 control-label">الرصيد الادنى للفنى </label>
+                    <div class="col-md-4">
+                        <input class="money form-control" value="@Model.MinBalance" name="MinBalance" id="MinBalance">
+                        @Html.ValidationMessageFor(model => model.MinBalance, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    //ADD
+    else
+    {
+        <div class="form-group row" id="div1" style="display:none;">
+            <label for="inputtext3" class="col-sm-2 control-label">الفئة الرئيسية </label>
+            <div class="col-sm-4">
+                @Html.DropDownList("ParentId", null, "اختر المجموعة الرئيسية ", htmlAttributes: new { @class = "form-control", id = "DDLParent", name = "DDLParent" })
+            </div>
+        </div>
+        <div id="div2" style="display:none;">
+            <div class="form-group row">-->
+                                @*<input hidden name="HasDetails"value="@Model.HasDetails" id="EditHasDetails"/>*@
+                                <!--<label for="inputtext3" class="col-sm-2 control-label">لديه تفاصيل</label>
+                <div class="col-sm-4">
+                    <input name="HasDetails" id="HasDetails" type="checkbox" class="form-control" style="width: 15px;" value="@Model.HasDetails" onchange="check()" />
+                </div>
+            </div>
+            <br />
+            <br />
+            <div class="form-group row">
+                <label class="col-sm-2 control-label">الرصيد الادنى للفنى </label>
+                <div class="col-md-4">
+                    <input class="money form-control" value="@Model.MinBalance" name="MinBalance" id="MinBalance">
+                    @Html.ValidationMessageFor(model => model.MinBalance, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+    }-->
+                                <br />
+
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5">@if (Model != null) { @Model.Notes; }</textarea>
+                                        @Html.ValidationMessageFor(model => model.Notes, "", new { @class = "text-danger" })
+                                    </div>
+                                </div>
+
+                                <input id="new" name="newBtn" hidden />
+                                <div style="float:left">
+                                    @if (Model.Id == 0)
+                                    {
+                                        <button type="submit" id="newbtn" class="btn btn-success">
+                                            حفظ و جديد
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            حفظ
+                                        </button>
+                                        <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                    }
+                                    else
+                                    {
+                                        if (Model.IsDeleted == false)
+                                        {
+                                            <button type="submit" class="btn btn-success">
+                                                حفظ
+                                            </button>
+                                            <a class="btn btn-danger" href="@Url.Action("Index")" role="button">رجوع</a>
+                                            <a class="btn btn-danger" onclick="Delete(@Model.Id,'ServiceCategories')" role="button">حذف</a>
+
+                                        }
+                                    }
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                        </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <script>
+
+
+        //date
+        function zeroPadded(val) {
+            if (val >= 10)
+                return val;
+            else
+                return '0' + val;
+        }
+        //if ($('#Id').val() == 0) {
+        //    function setCodeNum() {
+        //        var doc = $.get('/ServiceCategories/SetCodeNum').done(function (r) {
+        //            $('#Code').val(r);
+        //        });
+
+        //    }
+
+        //    setCodeNum();
+        //}
+
+        $(document).on('change', '#type1', function () {
+            var id = $('#type1').val();
+            if (id == 1) {
+                $('#div1').hide();
+                $('#div2').show();
+                $('#DDLParent').attr('required', false);
+            }
+            else {
+                $('#div1').show();
+                $('#div2').hide();
+                $('#DDLParent').attr('required', true);
+
+            }
+        });
+
+
+        function check() {
+            debugger;
+            var Chk = $('#HasDetails').val();
+            if (Chk == true) {
+                $('#HasDetails').val(false);
+            } else {
+                $('#HasDetails').val(true);
+            }
+        }
+
+
+        $(document).ready(function () {
+            $('#img').on('change', function () {
+
+                $('#oImg').val($('#img').val());
+            });
+
+        });
+        $(".photo").change(function () {
+            $(".imgold").addClass("hidden");
+        });
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    $(".imgnew").removeClass("hidden");
+
+                    $('#blah')
+                        .attr('src', e.target.result)
+
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+
+
+
+
+
+
+

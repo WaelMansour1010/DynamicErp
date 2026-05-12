@@ -1,0 +1,293 @@
+﻿@{
+    if (ViewBag.ShowReport == true)
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = MyERP.Properties.Resources.DebitAgesTotal;
+}
+
+    <meta name="viewport" content="width=device-width" />
+    <title> @MyERP.Properties.Resources.DebitAgesTotal </title>
+@if (ViewBag.ShowReport == true)
+{
+    @Html.DevExpress().GetStyleSheets(
+            new StyleSheet { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+            new StyleSheet { ExtensionSuite = ExtensionSuite.Editors },
+            new StyleSheet { ExtensionSuite = ExtensionSuite.Report }
+        )
+    @Html.DevExpress().GetScripts(
+            new Script { ExtensionSuite = ExtensionSuite.NavigationAndLayout },
+            new Script { ExtensionSuite = ExtensionSuite.Editors },
+            new Script { ExtensionSuite = ExtensionSuite.Report }
+        )
+
+    @Html.DevExpress().WebDocumentViewer(settings =>
+{
+    settings.Name = "WebDocumentViewer";
+}).Bind(new DevExpress.XtraReports.Web.CachedReportSourceWeb(new DebitAgesTotal(ViewBag.DepartmentId, ViewBag.CustomerId, ViewBag.ActivityId, ViewBag.CompanyId))).GetHtml()
+
+}
+else
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card-box">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.DebitAgesTotal
+                                    </h5>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-1 control-label" for="Code">@MyERP.Properties.Resources.Customer</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("CustomerId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                            <div class="invalid-feedback">
+                                                @MyERP.Properties.Resources.Required
+                                            </div>
+                                        </div>
+
+                                        <label class=" col-sm-1 control-label" for="ArName">@MyERP.Properties.Resources.Department</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("DepartmentId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control", required = "required" })
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Activity</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("ActivityId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                       {
+                                           @class = "form-control"
+                                       })
+                                        </div>
+                                        <label class=" col-sm-1 control-label">@MyERP.Properties.Resources.Company</label>
+                                        <div class="col-sm-5">
+                                            @Html.DropDownList("CompanyId", null, @MyERP.Properties.Resources.Select, htmlAttributes: new
+                                       {
+                                           @class = "form-control"
+                                       })
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-offset-2">
+                        <button class="btn btn-success" onclick="DownloadReport()">
+                            @MyERP.Properties.Resources.ShowReport
+                        </button>
+                        <button class="btn btn-success" onclick="ShowData()">
+                            @MyERP.Properties.Resources.ShowData
+                        </button>
+                        <button class="btn btn-success" onclick="ShowReport()">
+                            @MyERP.Properties.Resources.ShowDesign
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!--------------------------------ShowData Table --------------------------------------->
+    <div class="row" id="AllTable" style="display:none">
+        <div class="col-12">
+            <div class="card-box">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-horizontal needs-validation" role="form">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="header-title">
+                                        @MyERP.Properties.Resources.ReportData
+                                    </h5>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-centered mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.DebitType
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.FromDay
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.ToDay
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.LatenessDaysNo
+                                                    </th>
+                                                    <th>
+                                                        @MyERP.Properties.Resources.Total
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="ShowDataTable"></tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @*<div style="text-align:center;margin-bottom: 50px;">
+                            <div class="form-group row">
+                                <div class="col-sm-6">
+                                    <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="ShowData()">
+                                        <option value="100">100</option>
+                                        <option value="200">200</option>
+                                        <option value="300">300</option>
+                                        <option value="@ViewBag.Count">@MyERP.Properties.Resources.All</option>
+                                    </select>
+                                    <span style="font-size:12px;float:right;"> @MyERP.Properties.Resources.NoOfResults: <span id="RowsCount">@ViewBag.Count</span></span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <select id="pagination" class="pagination form-control col-sm-4" style="width:70px;float:left;"></select>
+                                    <lablel class="col-sm-2"> @MyERP.Properties.Resources.PageNo: </lablel>
+                                </div>
+
+                            </div>
+                        </div>*@
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-group row">
+                            <label for="Total" class="control-label col-sm-1">@MyERP.Properties.Resources.Total</label>
+                            <div class="col-sm-5">
+                                <input id="Total" name="Total" class="form-control" disabled />
+                            </div>
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--***********************************************************************************************-->
+}
+
+<script>
+    var pageNo = 1;
+    $('#ShowByPage').val('@ViewBag.wantedRowsNo');
+
+    function ShowReport() {
+        @*if (!$('#CustomerId').val())
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.Customer' + ' ' + '@MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        else {*@
+            window.open("/Report/DebitAgesTotal?DepartmentId=" + $('#DepartmentId').val() + "&CustomerId=" + $('#CustomerId').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() +  '&showReport=' + true+'&print='+false, "blank");
+        //}
+    }
+    function DownloadReport() {
+        @*if (!$('#CustomerId').val())
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.Customer' + ' ' + '@MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        else {*@
+            window.open("/Report/DebitAgesTotal?DepartmentId=" + $('#DepartmentId').val() + "&CustomerId=" + $('#CustomerId').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() +  '&showReport=' + false+'&print='+true, "blank");
+        //}
+    }
+
+    function ShowData() {
+        var sumTotal = 0;
+    
+        @*if (!$('#CustomerId').val())
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.Customer' + ' ' + '@MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        else if (!$('#DepartmentId').val())
+        {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.Department' + ' ' + '@MyERP.Properties.Resources.Required',
+                text: " ",
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+        else {*@
+            $('#ShowDataTable').empty();
+            $('#preloader, #status').fadeIn();
+
+            $.get('/Helper/GetDebitAgesTotal?DepartmentId=' + $('#DepartmentId').val() + '&CustomerId=' + $('#CustomerId').val()+ '&ActivityId=' + $('#ActivityId').val() + '&CompanyId=' + $('#CompanyId').val() + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val()).done(function (r) {
+                $('#AllTable').show();
+                for (var i = 0; i < r.length; i++) {
+                    r[i].From = r[i].From == null ? "" : r[i].From;
+                    r[i].To = r[i].To == null ? "" : r[i].To;
+                    r[i].NoOfDays = r[i].NoOfDays == null ? 0 : r[i].NoOfDays;
+                    r[i].Total = r[i].Total == null ? 0 : r[i].Total;
+                    r[i].DebitType = r[i].DebitType == null ? "" : r[i].DebitType;
+
+                    let tr = '<tr><td ><label class="control-label DebitType">' +
+                        r[i].DebitType + '</label></td><td><label class="control-label From">' +
+                        r[i].From + '</label></td><td><label class="control-label To">' +
+                        r[i].To + '</label></td><td><label class="control-label NoOfDays">' +
+                        r[i].NoOfDays + '</label></td><td><label class="control-label Total">' +
+                        r[i].Total + '</label></td></tr>';
+                    $('#ShowDataTable').append(tr);
+                    sumTotal += parseFloat(r[i].Total);
+                }
+                
+                $('#Total').val(sumTotal);
+                $('#preloader, #status').fadeOut();
+
+            });
+        //}
+    }
+
+    function setPages() {
+        var count ='@ViewBag.Count';
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+   $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+
+    $('#pg' +'@ViewBag.PageIndex').attr('selected', 'selected');
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+        ShowData();
+    })
+
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()));
+    }
+
+</script>

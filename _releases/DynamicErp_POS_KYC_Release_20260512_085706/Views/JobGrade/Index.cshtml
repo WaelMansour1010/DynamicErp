@@ -1,0 +1,206 @@
+﻿@model IEnumerable<MyERP.Models.JobGrade>
+
+@{
+    UICulture = Session["lang"] != null?Session["lang"].ToString():"ar";
+    ViewBag.Title = @MyERP.Properties.Resources.JobGrades;
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("AddEdit")" role="button" style="float:left;"> @MyERP.Properties.Resources.AddNew</a>
+            </div>
+            <div class="page-title">@MyERP.Properties.Resources.JobGrades </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal" role="form">
+                        <div class="form-group row">
+                            <div class="col-xs-12 col-sm-6 col-lg-3">
+                                <input type="text" class="form-control searchtxt" value="@Html.Raw(ViewBag.searchWord)" placeholder=@MyERP.Properties.Resources.Search>
+                            </div>
+                            <div class="col-xs-12 col-sm-3 col-lg-3">
+                                <button type="button" class="btn btn-success btnSearch" onclick="searchWord = $('.searchtxt').val(); paging();">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                                <button type="button" class="btn btn-info btnSearch" onclick="pageNo = 1; searchWord=''; paging();">
+                                    <i class="fe-refresh-ccw"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-centered mb-0">
+                            <thead>
+                                <tr>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Code
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.ArName
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.EnName
+                                    </th>
+
+                                    <th>
+                                        @MyERP.Properties.Resources.Notes
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Active
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Edit
+                                    </th>
+                                    <th>
+                                        @MyERP.Properties.Resources.Delete
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var jobGrade in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            @Html.DisplayFor(JobGrade => jobGrade.Code)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(JobGrade => jobGrade.ArName)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(JobGrade => jobGrade.EnName)
+                                        </td>
+                                        <td>
+                                            @Html.DisplayFor(JobGrade => jobGrade.Notes)
+                                        </td>
+                                        <td>
+
+                                            <input type="checkbox" data-plugin="switchery" data-color="#00b19d" data-secondary-color="#ED5565" data-size="small" @Html.Raw(jobGrade.IsActive == true ? "checked" : "") onchange="ActivateAndDeactivate(@jobGrade.Id)" />
+                                        </td>
+                                        <td>
+                                            <a href="@Url.Action("AddEdit","JobGrade",new { id=jobGrade.Id})" onclick="$('#preloader, #status').fadeIn();">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="javascript:void(0);" onclick="Delete(@jobGrade.Id)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+
+                                        </td>
+
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-bottom: 50px;">
+
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select id="ShowByPage" class="form-control" style="width:70px;float:left;" onchange="paging()">
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="@ViewBag.Count">@MyERP.Properties.Resources.All</option>
+            </select>
+            <span style="font-size:12px;float:right;"> @MyERP.Properties.Resources.NoOfResults : <span id="RowsCount">@ViewBag.Count</span></span>
+        </div>
+        <div class="col-sm-2">
+            <lablel class="col-sm-8"> @MyERP.Properties.Resources.PageNo: </lablel>
+        </div>
+        <div class="col-sm-2">
+            <select id="pagination" class="pagination form-control" style="width:70px;float:left;">
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+    var pageNo = 1;
+    var searchWord = '@Html.Raw(ViewBag.searchWord)';
+    $('#ShowByPage').val(@ViewBag.wantedRowsNo);
+
+    function paging() {
+
+        var link = '/JobGrade/Index?' + 'pageIndex=' + pageNo + '&wantedRowsNo=' + $('#ShowByPage').val() + '&searchWord=' + searchWord;
+        window.location.replace(link);
+    }
+
+    function setPages() {
+        var count =@ViewBag.Count;
+        for (var i = 0; i < Math.ceil(count / $('#ShowByPage').val()); i++)
+    $('#pagination').append('<option onchange="pageNo=' + (i + 1) + '; paging();" id="pg' + (i + 1) + '">' + (i + 1) + '</option>');
+    }
+
+    setPages();
+   $('#pg' +@ViewBag.PageIndex).attr('selected', 'selected')
+
+    $('#pagination').on('change', function () {
+        pageNo = $('#pagination').val();
+         paging();
+    })
+
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+
+                    url: '/JobGrade/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.reload();
+                        }
+                    }
+                });
+        }
+    }
+
+    function ActivateAndDeactivate(id) {
+        $.ajax({
+            url: '/JobGrade/ActivateDeactivate',
+            type: 'POST',
+            data: {
+                "Id": id,
+            },
+            error: function (e) {
+
+            },
+            success: function (r) {
+                if (r == 'true') {
+                    alert('@MyERP.Properties.Resources.TheActivationStateHasChanged')
+                }
+            }
+        });
+    }
+</script>

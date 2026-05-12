@@ -1,0 +1,55 @@
+@model MyERP.Areas.Sync.ViewModels.AdminOperationViewModel
+@{
+    Layout = "~/Areas/Sync/Views/Shared/_SyncLayout.cshtml";
+    ViewBag.Title = "طلبات التنفيذ المعلّقة";
+}
+<div class="sync-card">
+    <div class="card-title">طلب تنفيذ مضبوط بقائمة انتظار</div>
+    <p class="sync-muted-text">لا يتم تنفيذ ApplyMode من المتصفح. هذا النموذج ينشئ طلباً معلّقاً فقط ليعالجه Worker مستقل بعد الموافقات.</p>
+    @if (TempData["SyncAdminMessage"] != null)
+    {
+        <div class="sync-success">@TempData["SyncAdminMessage"]</div>
+    }
+    @Html.ValidationSummary(true, "", new { @class = "sync-validation" })
+    @using (Html.BeginForm("Queue", "AdminOperations", FormMethod.Post, new { @class = "operation-form" }))
+    {
+        <div class="filter-grid">
+            <input name="SyncKey" value="@Model.Request.SyncKey" placeholder="SyncKey واحد فقط" />
+            <select name="ProfileName">
+                <option value="POSOnly" @(Model.Request.ProfileName == "POSOnly" ? "selected" : "")>POSOnly</option>
+                <option value="FullAccountingCopy" @(Model.Request.ProfileName == "FullAccountingCopy" ? "selected" : "")>FullAccountingCopy</option>
+            </select>
+            <input name="OperationType" value="PrepareApplySingle" readonly />
+            <input name="MaxInvoicesPerRun" value="1" readonly />
+            <label class="check-inline"><input type="checkbox" name="ApplySingleSyncKeyOnly" value="true" checked /> ApplySingleSyncKey فقط</label>
+            <label class="check-inline"><input type="checkbox" name="ApprovalConfirmed" value="true" /> أوافق على إنشاء طلب تشغيل معلّق</label>
+            <input name="PasswordConfirmation" type="password" placeholder="تأكيد كلمة المرور" autocomplete="new-password" />
+            <input name="Reason" value="@Model.Request.Reason" placeholder="سبب الطلب / رقم موافقة الأعمال" />
+        </div>
+        <button class="btn btn-warning mt-2" type="submit">إنشاء طلب معلّق</button>
+    }
+</div>
+<div class="sync-grid three">
+@foreach (var check in Model.Checks)
+{
+    <div class="sync-card readiness @(check.IsHardBlocker ? "red" : "green")">
+        <strong>@check.CheckName</strong><span>@check.Status</span><p>@check.Message</p>
+    </div>
+}
+</div>
+<div class="sync-card">
+    <div class="card-title">آخر الطلبات</div>
+    <table class="sync-table modern">
+        <thead><tr><th>#</th><th>التاريخ</th><th>المستخدم</th><th>SyncKey</th><th>Profile</th><th>Status</th><th>Result</th><th>Reason</th><th>Blocked reason</th></tr></thead>
+        <tbody>
+        @foreach (var row in Model.Operations)
+        {
+            <tr><td>@row.AdminOperationId</td><td>@(row.CreatedAt.HasValue ? row.CreatedAt.Value.ToString("yyyy-MM-dd HH:mm") : "")</td><td>@row.RequestedBy</td><td class="mono">@row.SyncKey</td><td>@row.ProfileName</td><td><span class="status @row.Status">@row.Status</span></td><td>@row.Result</td><td>@row.Reason</td><td>@row.LastError</td></tr>
+        }
+        </tbody>
+    </table>
+    @if (!Model.Operations.Any())
+    {
+        <div class="empty-state">لا توجد طلبات تشغيل معلّقة.</div>
+    }
+</div>

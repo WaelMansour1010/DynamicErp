@@ -1,0 +1,102 @@
+<section class="dr-shell" dir="rtl">
+    <div class="dr-hero">
+        <div>
+            <h1 class="dr-title">إدارة التقارير الديناميكية</h1>
+            <p class="dr-help">عرّف التقرير من مصدر آمن، حمّل الأعمدة، ثم اضبط العناوين والصلاحيات الأساسية. المستخدم لا يرى SourceName ولا يكتب SQL.</p>
+        </div>
+        <div class="dr-actions">
+            <button type="button" class="dr-button secondary" id="drNew">تقرير جديد</button>
+            <button type="button" class="dr-button" id="drSave">حفظ التقرير</button>
+        </div>
+    </div>
+
+    <div id="drMessage" class="dr-message" role="status"></div>
+
+    <div class="dr-panel">
+        <div class="dr-panel-head">
+            <h2>تعريف التقرير</h2>
+            <span class="dr-muted">مصدر البيانات يحدده Admin فقط ويجب أن يكون Stored Procedure أو View آمن.</span>
+        </div>
+        <input type="hidden" id="ReportId" />
+        <div class="dr-grid">
+            <div class="dr-field"><label>كود التقرير</label><input id="ReportCode" type="text" placeholder="POS_SALES_DAILY" /></div>
+            <div class="dr-field"><label>الاسم العربي</label><input id="ReportNameAr" type="text" /></div>
+            <div class="dr-field"><label>الاسم الإنجليزي</label><input id="ReportNameEn" type="text" /></div>
+            <div class="dr-field">
+                <label>نطاق المشروع</label>
+                <select id="ProjectScope">
+                    <option value="Web">Web</option>
+                    <option value="POS">POS</option>
+                    <option value="MainErp">MainErp</option>
+                    <option value="Shared">Shared</option>
+                </select>
+            </div>
+            <div class="dr-field">
+                <label>نوع المصدر</label>
+                <select id="SourceType">
+                    <option value="StoredProcedure">Stored Procedure</option>
+                    <option value="View">View</option>
+                </select>
+            </div>
+            <div class="dr-field"><label>اسم المصدر الآمن</label><input id="SourceName" type="text" placeholder="dbo.ReportSourceName" dir="ltr" /></div>
+            <div class="dr-field"><label>أقصى عدد صفوف</label><input id="MaxRows" type="number" min="1" max="50000" /></div>
+            <div class="dr-field"><label>Timeout بالثواني</label><input id="CommandTimeoutSeconds" type="number" min="5" max="300" /></div>
+            <div class="dr-field"><label>يتطلب فترة تاريخ</label><input id="RequireDateRange" type="checkbox" /></div>
+            <div class="dr-field"><label>نشط</label><input id="IsActive" type="checkbox" /></div>
+        </div>
+        <button type="button" class="dr-button secondary" id="drLoadMetadata">تحميل الأعمدة والمعاملات</button>
+    </div>
+
+    @Html.Partial("~/Areas/Reports/Views/Admin/_PermissionsPanel.cshtml")
+    @Html.Partial("~/Areas/Reports/Views/Admin/_CatalogPanel.cshtml")
+
+    <div class="dr-panel">
+        <div class="dr-panel-head">
+            <h2>المعاملات</h2>
+            <button type="button" class="dr-mini-button" id="drAddParameter">إضافة Parameter</button>
+        </div>
+        <div class="dr-scroll">
+            <table class="dr-table" id="drParameters">
+                <thead>
+                    <tr>
+                        <th>الاسم</th><th>Caption</th><th>النوع</th><th>إجباري</th><th>Default</th><th>الترتيب</th><th></th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="dr-panel">
+        <div class="dr-panel-head">
+            <h2>الأعمدة المسموحة</h2>
+            <span class="dr-muted">هذه هي الأعمدة التي يمكن للمستخدم تصميمها لاحقًا داخل Layout الخاص به.</span>
+        </div>
+        <div class="dr-scroll">
+            <table class="dr-table" id="drColumns">
+                <thead>
+                    <tr>
+                        <th>Field</th><th>Caption AR</th><th>Caption EN</th><th>Type</th>
+                        <th>ظاهر</th><th>فلترة</th><th>ترتيب</th><th>تجميع</th><th>ملخص</th><th>العرض</th><th>الترتيب</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="dr-panel">
+        <div class="dr-panel-head">
+            <h2>التقارير المعرّفة</h2>
+            <span class="dr-muted">افتح تقريرًا لتعديله أو أضف تقريرًا جديدًا من الأعلى.</span>
+        </div>
+        <div class="dr-scroll">
+            <table class="dr-table" id="drReports">
+                <thead>
+                    <tr><th>الكود</th><th>الاسم</th><th>النطاق</th><th>المصدر</th><th>Lifecycle</th><th>الحالة</th><th></th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</section>

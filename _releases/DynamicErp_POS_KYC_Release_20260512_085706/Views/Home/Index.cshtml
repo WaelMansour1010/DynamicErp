@@ -1,0 +1,1474 @@
+﻿@model IEnumerable<MyERP.Models.OrderStatu>
+<!-- Sparkline charts -->
+<script src="~/assets/libs/jquery-sparkline/jquery.sparkline.min.js"></script>
+<!-- init js -->
+<script src="~/assets/js/pages/dashboard-1.init.js"></script>
+
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+
+    ViewBag.Title = MyERP.Properties.Resources.MainPage;
+    if (System.Web.Configuration.WebConfigurationManager.AppSettings["ECommerce"] == "true")
+    {
+        Layout = "~/Views/Shared/_EcommerceLayout.cshtml";
+    }
+    else if (System.Web.Configuration.WebConfigurationManager.AppSettings["JobApp"] == "true")
+    {
+        Layout = "~/Views/Shared/JobApp.cshtml";
+    }
+
+}
+
+@{
+    @*bool isOnline = System.Web.Configuration.WebConfigurationManager.AppSettings["Online"] == "true" ? true : false;
+        if (isOnline)
+        {
+            <div class="container">
+                <div class="row">
+                    <button id="syncBtn" class="btn btn-success">Sync Online DB With Local DB</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="container">
+                <div class="row">
+                    <button id="syncBtn" class="btn btn-success">Sync Local DB With Online DB</button>
+                </div>
+            </div>
+        }*@
+}
+
+@if (ViewBag.ShowUserTasks == true)
+{
+    <div class="row">
+        <div class="col-xl-6" style="max-height:60vh;overflow-x:scroll;">
+            <div class="card-box">
+                <h4 class="header-title mb-3">@MyERP.Properties.Resources.UserOrientedTasks</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-borderless table-hover table-centered m-0">
+
+                        <thead class="thead-light">
+                            <tr>
+                                <th>@MyERP.Properties.Resources.Task</th>
+                                <th>@MyERP.Properties.Resources.Status</th>
+                                <th>@MyERP.Properties.Resources.DirectedFrom</th>
+                                <th>@MyERP.Properties.Resources.DateCreated</th>
+                                <th>@MyERP.Properties.Resources.View</th>
+                                @*<th>تغيير الحالة</th>*@
+                                <th>
+                                    <a href="#" onclick="Refresh()" style="float:left;">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="AssignedToUser">
+                            @if (ViewBag.AssignedToUser != null)
+                            {
+                                foreach (var item in (List<MyERP.Models.UserTask>)ViewBag.AssignedToUser)
+                                {
+                                    if (item.StatusId != 6)
+                                    {
+                                        <tr>
+                                            <td hidden>
+                                                @*<input class="AssignToID" value="@item.Id" />*@
+                                                <input class="TaskID" value="@item.Id" />
+                                                <input hidden class="taskStatusId" value="@item.StatusId" />
+
+                                            </td>
+                                            <td>
+                                                @item.ArName
+
+                                            </td>
+
+                                            <td>
+                                                @if (item.StatusId == 1)
+                                                {
+                                                    <span class="badge badge-light-warning">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else if (item.StatusId == 2)
+                                                {
+                                                    <span class="badge badge-light-primary">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else if (item.StatusId == 3)
+                                                {
+                                                    <span class="badge badge-light-secondary">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else if (item.StatusId == 4)
+                                                {
+                                                    <span class="badge badge-light-success">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-light-danger">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+
+                                            </td>
+                                            <td>
+                                                @item.ERPUser.UserName
+                                            </td>
+
+                                            <td>
+                                                @item.CreatedDate
+                                            </td>
+                                            @if (item.SystemPage != null)
+                                            {
+                                                <td>
+                                                    <a href="javascript: void(0);" data-toggle="modal" data-target="#ShowTask" onclick="ShowTaskDetails(this,'TO','@item.SystemPage.ControllerName',@item.SelectedId)"><i class="mdi mdi-eye"></i></a>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td>
+                                                    <a href="javascript: void(0);" data-toggle="modal" data-target="#ShowTask" onclick="ShowTaskDetails(this,'TO','',@item.SelectedId)"><i class="mdi mdi-eye"></i></a>
+                                                </td>
+                                            }
+                                            @*<td>
+                                                    <div class="btn-group dropleft">
+                                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="mdi mdi-dots-horizontal"></i>
+                                                        </a>
+                                                        <div class="dropdown-menu">-->
+                                                            <!-- Dropdown menu links -->
+                                                            <!--@if (ViewBag.TaskStatus != null)
+                                                            {
+                                                                foreach (var statu in (List<MyERP.Models.TaskStatu>)ViewBag.TaskStatus)
+                                                                {
+                                                                    if (statu.Id != 5)
+                                                                    {
+                                                                        <input hidden value="@statu.Id" />
+                                                                        <a href="javascript:void(0);" class="dropdown-item" onclick="changeStatue(@statu.Id,@item.Id)" style="min-width:25%;min-height:25%;">@statu.ArName</a>
+                                                                    }
+                                                                }
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>*@
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div> <!-- end card-box -->
+        </div> <!-- end col -->
+
+        <div class="col-xl-6" style="max-height:60vh;overflow:scroll;">
+            <div class="card-box">
+                <h4 class="header-title mb-3">@MyERP.Properties.Resources.UserDirectedTasks</h4>
+                <div class="table-responsive">
+                    <table class="table table-borderless table-hover table-centered m-0">
+
+                        <thead class="thead-light">
+                            <tr>
+                                <th>@MyERP.Properties.Resources.Task</th>
+                                <th>@MyERP.Properties.Resources.Status</th>
+                                <th>@MyERP.Properties.Resources.AddressedTo</th>
+                                <th>@MyERP.Properties.Resources.DateCreated</th>
+                                <th>@MyERP.Properties.Resources.View</th>
+                                @*<th>تغيير الحالة</th>*@
+                                <th>
+                                    <a href="#" onclick="Refresh('By')" style="float:left;">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </a>
+                                    <a href="#" onclick="AddTask()" style="float:right;" data-toggle="modal" data-target="#NewTask">
+                                        <i class="fas fa-plus" style="color:green;"></i>
+                                    </a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="CreatedByUser">
+                            @if (ViewBag.CreatedByUser != null)
+                            {
+                                foreach (var item in (List<MyERP.Models.UserTask>)ViewBag.CreatedByUser)
+                                {
+                                    if (item.StatusId != 6)
+                                    {
+                                        <tr>
+                                            <td hidden>
+                                                @*<input class="CreatedByID" value="@item.Id"/>*@
+                                                <input class="TaskID" value="@item.Id" />
+                                                <input hidden class="taskStatusId" value="@item.StatusId" />
+
+                                            </td>
+                                            <td>
+                                                @item.ArName
+
+                                            </td>
+
+                                            <td>
+                                                @if (item.StatusId == 1)
+                                                {
+                                                    <span class="badge badge-light-warning">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else if (item.StatusId == 2)
+                                                {
+                                                    <span class="badge badge-light-primary">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else if (item.StatusId == 3)
+                                                {
+                                                    <span class="badge badge-light-secondary">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else if (item.StatusId == 4)
+                                                {
+                                                    <span class="badge badge-light-success">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-light-danger">
+                                                        @item.TaskStatu.ArName
+                                                    </span>
+                                                }
+
+                                            </td>
+                                            <td>
+                                                @item.ERPUser.UserName
+                                            </td>
+
+                                            <td>
+                                                @item.CreatedDate
+                                            </td>
+                                            @if (item.SystemPage != null)
+                                            {
+                                                <td>
+                                                    <a href="javascript: void(0);" data-toggle="modal" data-target="#ShowTask" onclick="ShowTaskDetails(this,'BY','@item.SystemPage.ControllerName' ,@item.SelectedId)"><i class="mdi mdi-eye"></i></a>
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td>
+                                                    <a href="javascript: void(0);" data-toggle="modal" data-target="#ShowTask" onclick="ShowTaskDetails(this,'BY','' ,@item.SelectedId)"><i class="mdi mdi-eye"></i></a>
+                                                </td>
+                                            }
+
+
+                                            @*  <td>
+                                                    <div class="btn-group dropleft">
+                                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="mdi mdi-dots-horizontal"></i>
+                                                        </a>
+                                                        <div class="dropdown-menu">
+                                                            <!-- Dropdown menu links -->
+                                                            @if (ViewBag.TaskStatus != null)
+                                                            {
+                                                                foreach (var statu in (List<MyERP.Models.TaskStatu>)ViewBag.TaskStatus)
+                                                                {
+                                                                    <input hidden value="@statu.Id" />
+                                                                    <a href="javascript:void(0);" class="dropdown-item" onclick="changeStatue(@statu.Id,@item.Id)" style="min-width:25%;min-height:25%;">@statu.ArName</a>
+                                                                }
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </td>*@
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div> <!-- end card-box -->
+        </div> <!-- end col -->
+
+    </div>
+
+}
+
+<!-- start page title -->
+@if (ViewBag.ShowDashBoard == true && ViewBag.ShowDashBoardForUser == true)
+{
+    @*<div class="row">
+            <div class="col-12">
+                <div class="page-title-box">
+                    <div class="page-title-right">
+                        <ol class="breadcrumb m-0">
+                            <li class="breadcrumb-item"><a href="javascript: void(0);">Minton</a></li>
+                            <li class="breadcrumb-item active">Dashboard</li>
+                        </ol>
+                    </div>
+                    <h4 class="page-title">Welcome !</h4>
+                </div>
+            </div>
+        </div>*@
+    <!-- end page title -->
+
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card-box">
+                <div class="float-left" dir="ltr">
+                    <div style="display:inline;width:70px;height:70px;"><canvas width="70" height="70"></canvas><input data-plugin="knob" data-width="70" data-height="70" data-fgcolor="#1abc9c" data-bgcolor="#d1f2eb" value="@ViewBag.CustomersCount" data-skin="tron" data-angleoffset="0" data-readonly="true" data-thickness=".15" readonly="readonly" style="width: 39px; height: 23px; position: absolute; vertical-align: middle; margin-top: 23px; margin-left: -54px; border: 0px; background: none; font: bold 14px Arial; text-align: center; color: rgb(26, 188, 156); padding: 0px; -webkit-appearance: none;"></div>
+                </div>
+                <div class="text-right">
+                    <h3 class="mb-1"> @ViewBag.CustomersCount </h3>
+                    <p class="text-muted mb-1">@MyERP.Properties.Resources.NumberOfClients</p>
+                </div>
+            </div>
+        </div><!-- end col -->
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card-box">
+                <div class="float-left" dir="ltr">
+                    <div style="display:inline;width:70px;height:70px;"><canvas width="70" height="70"></canvas><input data-plugin="knob" data-width="70" data-height="70" data-fgcolor="#3bafda" data-bgcolor="#d8eff8" value="@ViewBag.PurchaseRequests" data-skin="tron" data-angleoffset="0" data-readonly="true" data-thickness=".15" readonly="readonly" style="width: 39px; height: 23px; position: absolute; vertical-align: middle; margin-top: 23px; margin-left: -54px; border: 0px; background: none; font: bold 14px Arial; text-align: center; color: rgb(59, 175, 218); padding: 0px; -webkit-appearance: none;"></div>
+                </div>
+                <div class="text-right">
+                    <h3 class="mb-1"> @ViewBag.PurchaseRequests </h3>
+                    <p class="text-muted mb-1">@MyERP.Properties.Resources.PurchaseOrders</p>
+                </div>
+            </div>
+        </div><!-- end col -->
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card-box">
+                <div class="float-left" dir="ltr">
+                    <div style="display:inline;width:70px;height:70px;"><canvas width="70" height="70"></canvas><input data-plugin="knob" data-width="70" data-height="70" data-fgcolor="#f672a7" data-bgcolor="#fde3ed" value="@ViewBag.VendorsCount" data-skin="tron" data-angleoffset="0" data-readonly="true" data-thickness=".15" readonly="readonly" style="width: 39px; height: 23px; position: absolute; vertical-align: middle; margin-top: 23px; margin-left: -54px; border: 0px; background: none; font: bold 14px Arial; text-align: center; color: rgb(246, 114, 167); padding: 0px; -webkit-appearance: none;"></div>
+                </div>
+                <div class="text-right">
+                    <h3 class="mb-1">  @ViewBag.VendorsCount</h3>
+                    <p class="text-muted mb-1">@MyERP.Properties.Resources.NumberOfSuppliers</p>
+                </div>
+            </div>
+        </div><!-- end col -->
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card-box">
+                <div class="float-left" dir="ltr">
+                    <div style="display:inline;width:70px;height:70px;"><canvas width="70" height="70"></canvas><input data-plugin="knob" data-width="70" data-height="70" data-fgcolor="#6c757d" data-bgcolor="#e2e3e5" value="@ViewBag.SalesInvoices" data-skin="tron" data-angleoffset="0" data-readonly="true" data-thickness=".15" readonly="readonly" style="width: 39px; height: 23px; position: absolute; vertical-align: middle; margin-top: 23px; margin-left: -54px; border: 0px; background: none; font: bold 14px Arial; text-align: center; color: rgb(108, 117, 125); padding: 0px; -webkit-appearance: none;"></div>
+                </div>
+                <div class="text-right">
+                    <h3 class="mb-1"> @ViewBag.SalesInvoices </h3>
+                    <p class="text-muted mb-1">@MyERP.Properties.Resources.SalesInvoices</p>
+                </div>
+            </div>
+        </div><!-- end col -->
+
+    </div>
+    <!-- end row -->
+
+
+    <div class="row">
+        <!--<div class="col-xl-4">
+            <div class="card-box">
+                <div class="dropdown float-right">
+                    <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Settings</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Download</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Upload</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Action</a>
+                    </div>
+                </div>
+
+                <h4 class="header-title">@MyERP.Properties.Resources.Profit</h4>
+
+                <div class="mt-3 text-center">
+                    <p class="text-muted font-15 font-family-secondary mb-0">
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-success"></i>@MyERP.Properties.Resources.Group1</span>
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-primary"></i>@MyERP.Properties.Resources.Group2</span>
+                    </p>
+
+                    <div id="sparkline1" class="mt-3"><canvas width="285" height="210" style="display: inline-block; width: 285.656px; height: 210px; vertical-align: top;"></canvas></div>
+
+                    <div class="row mt-3">
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Total</p>
+                            <h4> $56,214</h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Week</p>
+                            <h4><i class="fe-arrow-up text-success"></i> $840</h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Month</p>
+                            <h4><i class="fe-arrow-down text-danger"></i> $7,845</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>--> <!-- end card-box -->
+        <!--</div>--> <!-- end col -->
+
+        <div class="col-xl-6">
+            <div class="card-box">
+                <div class="dropdown float-right">
+                    <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Settings</a>
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Download</a>
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Upload</a>
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Action</a>
+                    </div>
+                </div>
+
+                <h4 class="header-title">@MyERP.Properties.Resources.WeeklySales</h4>
+
+                <div class="mt-3 text-center">
+                    <p class="text-muted font-15 font-family-secondary mb-0">
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-primary"></i> @MyERP.Properties.Resources.Profit</span>
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-light"></i> @MyERP.Properties.Resources.Sales</span>
+                    </p>
+
+                    <div id="sparkline2" class="text-center mt-3"><canvas width="213" height="210" style="display: inline-block; width: 213px; height: 210px; vertical-align: top;"></canvas></div>
+
+                    <div class="row mt-3">
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources._TotalSales</p>
+                            <h4 id="TotalSales">$8712</h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.TotalCost</p>
+                            <h4 id="TotalCost"><i class="fe-arrow-up text-success"></i> $523</h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.TotalProfit</p>
+                            <h4 id="TotalProfit"><i class="fe-arrow-down text-danger"></i> $965</h4>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- end card-box -->
+        </div> <!-- end col -->
+
+        <div class="col-xl-6">
+            <div class="card-box">
+                <div class="dropdown float-right">
+                    <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Settings</a>
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Download</a>
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Upload</a>
+                        <!-- item-->
+                        <a href="javascript:void(0);" class="dropdown-item">Action</a>
+                    </div>
+                </div>
+
+                <h4 class="header-title">@MyERP.Properties.Resources.DailySalesTotal</h4>
+
+                <div class="mt-3 text-center">
+                    <p class="text-muted font-15 font-family-secondary mb-0">
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-success"></i>نقدي</span>
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-primary"></i> آجل</span>
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-muted"></i> فيزا</span>
+                        <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-warning"></i> شبكة</span>
+                    </p>
+
+                    <div id="sparkline3" class="text-center mt-3"><canvas width="210" height="210" style="display: inline-block; width: 210px; height: 210px; vertical-align: top;"></canvas></div>
+
+                    <div class="row mt-3" id="PaymentMethodAmount">
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">نقدي</p>
+                            <h4 id="Method1"></h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">آجل</p>
+                            <h4 id="Method2">@*<i class="fe-arrow-down text-danger"></i>*@</h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">فيزا</p>
+                            <h4 id="Method3">@*<i class="fe-arrow-up text-success"></i>*@ </h4>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-muted font-15 mb-1 text-truncate">شبكة</p>
+                            <h4 id="Method4">@*<i class="fe-arrow-up text-success"></i>*@</h4>
+                        </div>
+                    </div>
+
+                </div>
+            </div> <!-- end card-box -->
+        </div> <!-- end col -->
+
+    </div>
+
+    <div id="NearlyExpiredPatches" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <label class="control-label">@MyERP.Properties.Resources.PatchNearlyExpired </label>
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="form-horizontal">
+
+                        <div class="modal-body">
+                            <label class="control-label">@MyERP.Properties.Resources.ThereAre @ViewBag.NearlyExpiredPatchesCount @MyERP.Properties.Resources.NearlyExpiredPatches</label>
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger waves-effect" data-dismiss="modal">@MyERP.Properties.Resources.Close</button>
+                    <button class="btn btn-success" onclick="showNearlyExpiredPatchesReport()">
+                        @MyERP.Properties.Resources.ViewReport
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div>
+
+    <!--<div class="row">
+        <div class="col-xl-4">
+            <div class="card-box">
+                <div class="dropdown float-right">
+                    <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Settings</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Download</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Upload</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Action</a>
+            </div>
+        </div>
+
+        <h4 class="header-title">@MyERP.Properties.Resources.Profit</h4>
+
+        <div class="mt-3 text-center">
+            <p class="text-muted font-15 font-family-secondary mb-0">
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-success"></i> @MyERP.Properties.Resources.Group1</span>
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-primary"></i> @MyERP.Properties.Resources.Group2</span>
+            </p>
+
+            <div id="sparkline1" class="mt-3"><canvas width="285" height="210" style="display: inline-block; width: 285.656px; height: 210px; vertical-align: top;"></canvas></div>
+
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Total</p>
+                    <h4> $56,214</h4>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Week</p>
+                    <h4><i class="fe-arrow-up text-success"></i> $840</h4>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Month</p>
+                    <h4><i class="fe-arrow-down text-danger"></i> $7,845</h4>
+                </div>
+            </div>
+        </div>
+    </div>--> <!-- end card-box -->
+    <!--</div>--> <!-- end col -->
+
+    <!--<div class="col-xl-4">
+        <div class="card-box">
+            <div class="dropdown float-right">
+                <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                    <i class="mdi mdi-dots-horizontal"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Settings</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Download</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Upload</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Action</a>
+            </div>
+        </div>
+
+        <h4 class="header-title">@MyERP.Properties.Resources.AnnualSales</h4>
+
+        <div class="mt-3 text-center">
+            <p class="text-muted font-15 font-family-secondary mb-0">
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-primary"></i> @MyERP.Properties.Resources.Profit</span>
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-light"></i> @MyERP.Properties.Resources.Sales</span>
+            </p>
+
+            <div id="sparkline2" class="text-center mt-3"><canvas width="213" height="210" style="display: inline-block; width: 213px; height: 210px; vertical-align: top;"></canvas></div>
+
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Total</p>
+                    <h4>$8712</h4>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Week</p>
+                    <h4><i class="fe-arrow-up text-success"></i> $523</h4>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Month</p>
+                    <h4><i class="fe-arrow-down text-danger"></i> $965</h4>
+                </div>
+            </div>
+
+        </div>
+    </div>--> <!-- end card-box -->
+    <!--</div>--> <!-- end col -->
+
+    <!--<div class="col-xl-4">
+        <div class="card-box">
+            <div class="dropdown float-right">
+                <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                    <i class="mdi mdi-dots-horizontal"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Settings</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Download</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Upload</a>-->
+    <!-- item-->
+    <!--<a href="javascript:void(0);" class="dropdown-item">Action</a>
+            </div>
+        </div>
+
+        <h4 class="header-title">@MyERP.Properties.Resources.WeeklySales</h4>
+
+        <div class="mt-3 text-center">
+            <p class="text-muted font-15 font-family-secondary mb-0">
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-success"></i> @MyERP.Properties.Resources.Group1</span>
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-primary"></i> @MyERP.Properties.Resources.Group2</span>
+                <span class="mx-2"><i class="mdi mdi-checkbox-blank-circle text-muted"></i> @MyERP.Properties.Resources.Group3</span>
+            </p>
+
+            <div id="sparkline3" class="text-center mt-3"><canvas width="210" height="210" style="display: inline-block; width: 210px; height: 210px; vertical-align: top;"></canvas></div>
+
+            <div class="row mt-3">
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Total</p>
+                    <h4> $12,365</h4>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Week</p>
+                    <h4><i class="fe-arrow-down text-danger"></i> $365</h4>
+                </div>
+                <div class="col-4">
+                    <p class="text-muted font-15 mb-1 text-truncate">@MyERP.Properties.Resources.Month</p>
+                    <h4><i class="fe-arrow-up text-success"></i> $8,501</h4>
+                </div>
+            </div>
+
+        </div>
+    </div>--> <!-- end card-box -->
+    <!--</div>--> <!-- end col -->
+
+    <!--</div>-->
+    <!-- end row -->
+
+    <!--<div class="row">
+
+        <div class="col-xl-6">
+            <div class="card-box">
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="row align-items-center">
+                            <div class="col-6 text-center">
+                                <h1 class="display-4"><i class="wi wi-day-sleet text-primary"></i></h1>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-muted">
+                                    <h2 class="mt-1"><b>32°</b></h2>
+                                    <p>Partly cloudy</p>
+                                    <p class=" mb-0">15km/h - 37%</p>
+                                </div>
+                            </div>
+                        </div>--><!-- End row -->
+                    <!--</div>
+                    <div class="col-md-5">
+                        <div class="row">
+                            <div class="col-4 text-center">
+                                <h4 class="text-muted mt-0">SAT</h4>
+                                <h3 class="my-3"><i class="wi wi-night-alt-cloudy text-primary"></i></h3>
+                                <h4 class="text-muted mb-0">30<i class="wi wi-degrees"></i></h4>
+                            </div>
+                            <div class="col-4 text-center">
+                                <h4 class="text-muted mt-0">SUN</h4>
+                                <h3 class="my-3"><i class="wi wi-day-sprinkle text-primary"></i></h3>
+                                <h4 class="text-muted mb-0">28<i class="wi wi-degrees"></i></h4>
+                            </div>
+                            <div class="col-4 text-center">
+                                <h4 class="text-muted mt-0">MON</h4>
+                                <h3 class="my-3"><i class="wi wi-hot text-primary"></i></h3>
+                                <h4 class="text-muted mb-0">33<i class="wi wi-degrees"></i></h4>
+                            </div>
+                        </div>--><!-- end row -->
+                    <!--</div>
+                </div>--><!-- end row -->
+            <!--</div>--><!-- cardbox -->
+            <!-- END Weather WIDGET 1 -->
+
+        <!--</div>--><!-- End col-xl-6 -->
+
+    <!--</div>-->
+
+    <!--<div class="row">
+        <div class="col-xl-4">
+            <div class="card-box">
+                <div class="dropdown float-right">
+                    <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Settings</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Download</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Upload</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Action</a>
+                    </div>
+                </div>
+                <h4 class="header-title">@MyERP.Properties.Resources.MonthlyProfitReport</h4>
+                <p class="text-muted">1 Mar - 31 Mar Showing Data</p>
+                <h2 class="mb-4"><i class="mdi mdi-currency-usd text-primary"></i>25,632.78</h2>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <p class="text-muted mb-1">@MyERP.Properties.Resources.Month</p>
+                        <h3 class="mt-0 font-20">$120,254 <small class="badge badge-light-success font-13">+15%</small></h3>
+                    </div>
+
+                    <div class="col-6">
+                        <p class="text-muted mb-1">@MyERP.Properties.Resources.PreviousMonth</p>
+                        <h3 class="mt-0 font-20">$98,741 <small class="badge badge-light-danger font-13">-5%</small></h3>
+                    </div>
+                </div>
+
+                <h5 class="font-16"><i class="mdi mdi-chart-donut text-primary"></i>@MyERP.Properties.Resources.WeeklyProfitReport</h5>
+
+                <div class="mt-5">
+                    <span data-plugin="peity-bar" data-colors="#3bafda,#ebeff2" data-width="100%" data-height="92" style="display: none;">5,3,9,6,5,9,7,3,5,2,9,7,2,1,3,5,2,9,7,2,5,3,9,6,5,9,7</span><svg class="peity" height="92" width="100%"><rect data-value="5" fill="#3bafda" x="1.0579851851851854" y="40.888888888888886" width="8.463881481481481" height="51.111111111111114"></rect><rect data-value="3" fill="#ebeff2" x="11.637837037037038" y="61.333333333333336" width="8.46388148148148" height="30.666666666666664"></rect><rect data-value="9" fill="#3bafda" x="22.21768888888889" y="0" width="8.46388148148148" height="92"></rect><rect data-value="6" fill="#ebeff2" x="32.79754074074074" y="30.66666666666667" width="8.463881481481472" height="61.33333333333333"></rect><rect data-value="5" fill="#3bafda" x="43.37739259259259" y="40.888888888888886" width="8.463881481481486" height="51.111111111111114"></rect><rect data-value="9" fill="#ebeff2" x="53.95724444444444" y="0" width="8.463881481481494" height="92"></rect><rect data-value="7" fill="#3bafda" x="64.53709629629628" y="20.444444444444443" width="8.463881481481508" height="71.55555555555556"></rect><rect data-value="3" fill="#ebeff2" x="75.11694814814815" y="61.333333333333336" width="8.46388148148148" height="30.666666666666664"></rect><rect data-value="5" fill="#3bafda" x="85.6968" y="40.888888888888886" width="8.463881481481494" height="51.111111111111114"></rect><rect data-value="2" fill="#ebeff2" x="96.27665185185185" y="71.55555555555556" width="8.46388148148148" height="20.444444444444443"></rect><rect data-value="9" fill="#3bafda" x="106.8565037037037" y="0" width="8.463881481481494" height="92"></rect><rect data-value="7" fill="#ebeff2" x="117.43635555555555" y="20.444444444444443" width="8.463881481481508" height="71.55555555555556"></rect><rect data-value="2" fill="#3bafda" x="128.0162074074074" y="71.55555555555556" width="8.463881481481508" height="20.444444444444443"></rect><rect data-value="1" fill="#ebeff2" x="138.59605925925928" y="81.77777777777777" width="8.46388148148148" height="10.222222222222229"></rect><rect data-value="3" fill="#3bafda" x="149.1759111111111" y="61.333333333333336" width="8.463881481481508" height="30.666666666666664"></rect><rect data-value="5" fill="#ebeff2" x="159.75576296296296" y="40.888888888888886" width="8.46388148148148" height="51.111111111111114"></rect><rect data-value="2" fill="#3bafda" x="170.33561481481485" y="71.55555555555556" width="8.463881481481451" height="20.444444444444443"></rect><rect data-value="9" fill="#ebeff2" x="180.9154666666667" y="0" width="8.463881481481451" height="92"></rect><rect data-value="7" fill="#3bafda" x="191.49531851851856" y="20.444444444444443" width="8.463881481481451" height="71.55555555555556"></rect><rect data-value="2" fill="#ebeff2" x="202.0751703703704" y="71.55555555555556" width="8.463881481481451" height="20.444444444444443"></rect><rect data-value="5" fill="#3bafda" x="212.65502222222224" y="40.888888888888886" width="8.463881481481451" height="51.111111111111114"></rect><rect data-value="3" fill="#ebeff2" x="223.2348740740741" y="61.333333333333336" width="8.463881481481451" height="30.666666666666664"></rect><rect data-value="9" fill="#3bafda" x="233.81472592592596" y="0" width="8.463881481481451" height="92"></rect><rect data-value="6" fill="#ebeff2" x="244.3945777777778" y="30.66666666666667" width="8.463881481481451" height="61.33333333333333"></rect><rect data-value="5" fill="#3bafda" x="254.97442962962964" y="40.888888888888886" width="8.463881481481451" height="51.111111111111114"></rect><rect data-value="9" fill="#ebeff2" x="265.5542814814815" y="0" width="8.463881481481451" height="92"></rect><rect data-value="7" fill="#3bafda" x="276.13413333333335" y="20.444444444444443" width="8.463881481481451" height="71.55555555555556"></rect></svg>
+                </div>
+
+            </div>--> <!-- end card-box -->
+        <!--</div>--> <!-- end col -->
+
+        <!--<div class="col-xl-8">
+            <div class="card-box">
+                <div class="dropdown float-right">
+                    <a href="#" class="dropdown-toggle arrow-none card-drop" data-toggle="dropdown" aria-expanded="false">
+                        <i class="mdi mdi-dots-horizontal"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Settings</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Download</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Upload</a>-->
+                        <!-- item-->
+                        <!--<a href="javascript:void(0);" class="dropdown-item">Action</a>
+                    </div>
+                </div>
+                <h4 class="header-title mb-3">Revenue History</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-borderless table-hover table-centered m-0">
+
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Marketplaces</th>
+                                <th>Date</th>
+                                <th>US Tax Hold</th>
+                                <th>Payouts</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <h5 class="m-0 font-weight-normal">Themes Market</h5>
+                                </td>
+
+                                <td>
+                                    Oct 15, 2018
+                                </td>
+
+                                <td>
+                                    $125.23
+                                </td>
+
+                                <td>
+                                    $5848.68
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-light-warning">Upcoming</span>
+                                </td>
+
+                                <td>
+                                    <a href="javascript: void(0);" class="btn btn-xs btn-secondary"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <h5 class="m-0 font-weight-normal">Freelance</h5>
+                                </td>
+
+                                <td>
+                                    Oct 12, 2018
+                                </td>
+
+                                <td>
+                                    $78.03
+                                </td>
+
+                                <td>
+                                    $1247.25
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-light-success">Paid</span>
+                                </td>
+
+                                <td>
+                                    <a href="javascript: void(0);" class="btn btn-xs btn-secondary"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <h5 class="m-0 font-weight-normal">Share Holding</h5>
+                                </td>
+
+                                <td>
+                                    Oct 10, 2018
+                                </td>
+
+                                <td>
+                                    $358.24
+                                </td>
+
+                                <td>
+                                    $815.89
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-light-success">Paid</span>
+                                </td>
+
+                                <td>
+                                    <a href="javascript: void(0);" class="btn btn-xs btn-secondary"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <h5 class="m-0 font-weight-normal">Envato's Affiliates</h5>
+                                </td>
+
+                                <td>
+                                    Oct 03, 2018
+                                </td>
+
+                                <td>
+                                    $18.78
+                                </td>
+
+                                <td>
+                                    $248.75
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-light-danger">Overdue</span>
+                                </td>
+
+                                <td>
+                                    <a href="javascript: void(0);" class="btn btn-xs btn-secondary"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <h5 class="m-0 font-weight-normal">Marketing Revenue</h5>
+                                </td>
+
+                                <td>
+                                    Sep 21, 2018
+                                </td>
+
+                                <td>
+                                    $185.36
+                                </td>
+
+                                <td>
+                                    $978.21
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-light-warning">Upcoming</span>
+                                </td>
+
+                                <td>
+                                    <a href="javascript: void(0);" class="btn btn-xs btn-secondary"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <h5 class="m-0 font-weight-normal">Advertise Revenue</h5>
+                                </td>
+
+                                <td>
+                                    Sep 15, 2018
+                                </td>
+
+                                <td>
+                                    $29.56
+                                </td>
+
+                                <td>
+                                    $358.10
+                                </td>
+
+                                <td>
+                                    <span class="badge badge-light-success">Paid</span>
+                                </td>
+
+                                <td>
+                                    <a href="javascript: void(0);" class="btn btn-xs btn-secondary"><i class="mdi mdi-pencil"></i></a>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>--> <!-- end .table-responsive-->
+            <!--</div>--> <!-- end card-box-->
+        <!--</div>--> <!-- end col -->
+
+    <!--</div>-->
+
+
+<div class="row">
+    <div class="col-xl-6">
+        <div class="card-box">
+            <h4 class="header-title mb-3">@MyERP.Properties.Resources.CustomerCurrentBalance</h4>
+
+            <div class="table-responsive">
+                <table class="table table-borderless table-hover table-centered m-0">
+
+                    <thead class="thead-light">
+                        <tr>
+                            <th>@MyERP.Properties.Resources.Customer</th>
+                            <th>@MyERP.Properties.Resources.Debit</th>
+                            <th>@MyERP.Properties.Resources.Credit</th>
+                            <th>@MyERP.Properties.Resources.View</th>
+                        </tr>
+                    </thead>
+                    <tbody id="TopCustomers">
+                    </tbody>
+                </table>
+            </div> <!-- end .table-responsive-->
+        </div> <!-- end card-box-->
+    </div> <!-- end col -->
+
+    <div class="col-xl-6">
+        <div class="card-box">
+            <h4 class="header-title mb-3">@MyERP.Properties.Resources.VendorCurrentBalance</h4>
+
+            <div class="table-responsive">
+                <table class="table table-borderless table-hover table-centered m-0">
+
+                    <thead class="thead-light">
+                        <tr>
+                            <th>@MyERP.Properties.Resources.Vendor</th>
+                            <th>@MyERP.Properties.Resources.Debit</th>
+                            <th>@MyERP.Properties.Resources.Credit</th>
+                            <th>@MyERP.Properties.Resources.View</th>
+                        </tr>
+                    </thead>
+                    <tbody id="TopVendors">
+                    </tbody>
+                </table>
+            </div> <!-- end .table-responsive-->
+        </div> <!-- end card-box-->
+    </div> <!-- end col -->
+
+
+</div>
+
+}
+
+@*<div class="row">
+    @if (ViewBag.ShowUserIcons == true)
+    {
+        { Html.RenderAction("ListView", "OccuredNotifications"); }
+    }
+</div>*@
+<!-- end row -->
+<!-- NewTask PopUP-->
+<div id="NewTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <label class="control-label col-sm-3" id="myModalLabel"> @MyERP.Properties.Resources.NewTask </label>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body">
+
+                <div class="form-horizontal needs-validation" role="form">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class=" col-sm-3 control-label" for="ArName">@MyERP.Properties.Resources.Task</label>
+                                    <div class="col-sm-6">
+                                        <input id="ArName" class="form-control" placeholder="اسم المهمة" required />
+                                        <div class="invalid-feedback">
+                                            اسم المهمة مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ErpUsers" class="control-label col-sm-3">المستخدم</label>
+                                    <div class="col-sm-6">
+                                        <select id="ErpUsers" class="form-control" required>
+                                            <!-- Ajax to get Data  -->
+                                        </select>
+                                        <div class="invalid-feedback">
+                                            المستخدم مطلوب
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-3" for="Notes">ملاحظات</label>
+                                    <div class="col-sm-6">
+                                        <textarea id="Notes" name="Notes" class="form-control" rows="5" cols="5"> </textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger waves-effect" data-dismiss="modal">Close</button>
+                <button class="btn btn-success" onclick="addEdit()">
+                    حفظ
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+
+<!-- ShowTaskDetails PopUP-->
+<div id="ShowTask" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <label class="control-label col-sm-3" id="myModalLabel"> تفاصيل المهمة </label>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body" id="ShowTaskBody">
+
+
+            </div>
+            @*<div class="modal-footer">
+                    <button type="button" class="btn btn-danger waves-effect" data-dismiss="modal">Close</button>
+                </div>*@
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+
+
+<script>
+    //--------- Variable Declaration ---------
+    let AssignTo = [];
+    let CreatedBy = [];
+    let TaskStatus = [];
+    let ERPUsers = [];
+    let nearlyExpiredPatchesCount = @ViewBag.NearlyExpiredPatchesCount;
+    //------------- OnReady ----------------------
+
+
+    GetTotalSalesAndProfitInWeek();
+    function GetTotalSalesAndProfitInWeek() {
+        $.get('/Home/GetTotalSalesAndProfitInWeek').done(function (r) {
+           // if (r) {
+            var val = [/*[70, 40], [50, 20],[80,60],[100,50]*/]
+            var TotalSales = 0;
+            var TotalCost = 0;
+            var TotalProfit = 0;
+                for (var i = 0; i < r.length; i++) {
+                    val.push([r[i].Sales, r[i].Profit])
+                    TotalSales += r[i].Sales ;
+                    TotalCost += r[i].TotalCostPrice ;
+                    TotalProfit += r[i].Profit;
+                }
+            $('#sparkline2').sparkline(val, { type: "bar", height: "210", barWidth: "15", barSpacing: "3", stackedBarColor: ["#3bafda", "#e3eaef"] })
+            $('#TotalSales').text(TotalSales);
+            $('#TotalCost').text(TotalCost);
+            $('#TotalProfit').text(TotalProfit);
+       // }
+        });
+    }
+    GetPaymentMethodAmountInDay();
+    function GetPaymentMethodAmountInDay() {
+        $.get('/Home/GetPaymentMethodAmountInDay').done(function (r) {
+            if (r.length) {
+                var val = []
+                for (var i = 0; i < r.length; i++) {
+                    val.push(r[i].Amount)
+                }
+                $("#sparkline3").sparkline(val/*[10, 20, 30, 40, 50]*/, { type: "pie", width: "210", height: "210", sliceColors: ["#e3eaef", "#3bafda", "#00b19d"/*, "#f1556c "*/, "#f7b84b "] })
+
+                $('#Method1').text(r[0].Amount);
+                $('#Method2').text(r[1].Amount);
+                $('#Method3').text(r[2].Amount);
+                $('#Method4').text(r[3].Amount);
+            }
+        });
+    }
+    GetCustomer_VendorCurrentBalance();
+    function GetCustomer_VendorCurrentBalance() {
+        $.get('/Home/GetCustomer_VendorCurrentBalance').done(function (r) {
+            if (r) {
+                var customer = r.customer;
+                var vendor = r.vendor;
+                for (var i = 0; i < customer.length; i++) {
+                    let tr = '<tr><td class="Customer" >' +
+                        customer[i].Customer + '</td> <td class="Debit">' +
+                        customer[i].Debit + '</td><td class="Credit">' +
+                        customer[i].Credit + '</td><td><a href="/Report/CustomerBalanceSheet?CustomerId=' +
+                        customer[i].CustomerId + '&showReport=true"><i class="mdi mdi-eye"></i></a></td></tr >';
+                    $('#TopCustomers').append(tr);
+                }
+                for (var i = 0; i < vendor.length; i++) {
+                    let tr = '<tr><td class="Vendor" >' +
+                        vendor[i].Vendor + '</td> <td class="Debit">' +
+                        vendor[i].Debit + '</td><td class="Credit">' +
+                        vendor[i].Credit + '</td><td><a href="/Report/VendorBalanceSheet?VendorId=' +
+                        vendor[i].VendorId + '&showReport=true"><i class="mdi mdi-eye"></i></a></td></tr >';
+                    $('#TopVendors').append(tr);
+                }
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        // to check if it redirected from Login
+        var wind = document.referrer;
+        if (wind.toLowerCase().includes("login") == true) {
+            // Nearly expired patches
+            if (nearlyExpiredPatchesCount > 0) {
+                $('#NearlyExpiredPatches').modal('show');
+            }
+        }
+         $.get('/Helper/GetUserTasks/').done(function (r) {
+            CreatedBy = r.CreatedByUser;
+            AssignTo = r.AssignedToUser;
+            TaskStatus = r.TaskStatus;
+        });
+
+        $.get('/Helper/GetERPUsers/').done(function (e) {
+            ERPUsers = e;
+        });
+
+        $("#syncBtn").on('click', function () {
+            $('#preloader, #status').fadeIn();
+
+            $.get('/Home/Sync').done(function (r) {
+                // console.log(r);
+                $('#preloader, #status').fadeOut();
+            });
+        });
+    });
+
+    //----------- Refresh AssignTo/CreatedBy Tasks -------
+    function Refresh(n) {
+        window.location.replace('/Home');
+        //$.get('/Helper/GetUserTasks/').done(function (r) {
+        //    CreatedBy = r.CreatedByUser;
+        //    AssignTo = r.AssignedToUser;
+        //    TaskStatus = r.TaskStatus;
+        //    let tr;
+        //    let Color;
+        //    let dropDown;
+        //    for (var i = 0; i < TaskStatus.length; i++) {
+        //        dropDown += '<input hidden value = "' + TaskStatus[i].Id + '" /> <a href="javascript: void (0); " class="dropdown - item" style="min - width: 25 %; min - height: 25 %; ">' + TaskStatus[i].ArName + '</a>';
+        //    }
+        //    if (n == "By") { // الموجهة منه
+        //        $('#CreatedByUser').empty();
+        //        for (var i = 0; i < CreatedBy.length; i++) {
+
+        //            if (CreatedBy[i].StatuId == 1) {
+        //                Color = "badge badge-light-warning";
+        //            }
+        //            else if (CreatedBy[i].StatuId == 2) {
+        //                Color = "badge badge-light-primary";
+        //            }
+        //            else if (CreatedBy[i].StatuId == 3) {
+        //                Color = "badge badge-light-secondary";
+        //            }
+        //            else if (CreatedBy[i].StatuId == 4) {
+        //                Color = "badge badge-light-success";
+        //            }
+        //            else {
+        //                Color = "badge badge-light-danger";
+        //            }
+
+        //            CreatedBy[i].CreatedDate = convertToJavaScriptDate(CreatedBy[i].CreatedDate);
+        //            // createdby
+        //            tr = '<tr><td hidden ><input class="TaskID" value="' + CreatedBy[i].Id + '"/></td><td>' + CreatedBy[i].ArName + '</td><td><span class="' + Color + '">' + CreatedBy[i].StatuName + '</span></td><td>' + CreatedBy[i].EmployeeName + '</td><td>' + CreatedBy[i].CreatedDate + '</td><td><a href="javascript: void(0);"><i class="mdi mdi-eye"></i></a></td><td><div class="btn-group dropleft"><a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="mdi mdi-dots-horizontal"></i></a><div class="dropdown-menu"> ' + dropDown + ' </div></div></td></tr>';
+
+        //            $('#CreatedByUser').append(tr);
+        //        }
+        //    }
+        //    else { //الموجهة له
+        //        $('#AssignedToUser').empty();
+        //        for (var i = 0; i < AssignTo.length; i++) { //AssignedToUser
+
+        //            if (AssignTo[i].StatuId == 1) {
+        //                Color = "badge badge-light-warning";
+        //            }
+        //            else if (AssignTo[i].StatuId == 2) {
+        //                Color = "badge badge-light-primary";
+        //            }
+        //            else if (AssignTo[i].StatuId == 3) {
+        //                Color = "badge badge-light-secondary";
+        //            }
+        //            else if (AssignTo[i].StatuId == 4) {
+        //                Color = "badge badge-light-success";
+        //            }
+        //            else {
+        //                Color = "badge badge-light-danger";
+        //            }
+
+        //            AssignTo[i].CreatedDate = convertToJavaScriptDate(AssignTo[i].CreatedDate);
+        //            //assigned to
+        //            tr = '<tr><td hidden ><input class="TaskID" value="' + AssignTo[i].Id + '"/></td><td>' + AssignTo[i].ArName + '</td><td><span class="' + Color + '">' + AssignTo[i].StatuName + '</span></td><td>' + AssignTo[i].EmployeeName + '</td><td>' + AssignTo[i].CreatedDate + '</td><td><a href="javascript: void(0);"><i class="mdi mdi-eye"></i></a></td></tr>';
+
+        //            $('#AssignedToUser').append(tr);
+        //        }
+        //    }
+        //});
+    }
+
+    //--------- for date Converting -------
+    function convertToJavaScriptDate(value) {
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes + ":" + seconds + ' ' + ampm;
+        return ((dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear()) + " " + strTime);
+    }
+
+    //------------ Add Task to Drow DropDown of PopUp + -------------
+    function AddTask(taskStatusId, s) {
+        //-- For ErpUsers in PopUp
+        $('#ErpUsers').empty();
+        //--  $('#ErpUsers').append('<option value="0"> اختر المستخدم </option>');
+        for (var e = 0; e < ERPUsers.length; e++) {
+            $('#ErpUsers').append($('<option>', {
+                value: ERPUsers[e].Id,
+                text: ERPUsers[e].UserName
+            }));
+        }
+
+        //-- For Status in <<<another>>> PopUp
+        $('#Status').empty();
+        //--  $('#Status').append('<option value="0"> اختر الحالة </option>');
+        for (var t = 0; t < TaskStatus.length; t++) {
+            // console.log(TaskStatus[t].Id,"TaskStatus[t].Id")
+
+            if (TaskStatus[t].Id == taskStatusId) {
+                var option = '<option selected value="' + taskStatusId + '">' + TaskStatus[t].ArName + '</option>';
+                $('#Status').append(option);
+                //$('#Status').append($('<option selected>', {
+                //    value: TaskStatus[t].Id,
+                //    text: TaskStatus[t].ArName
+                //}));
+            }
+            else {
+                if (s == "TO" && TaskStatus[t].Id != 6) {
+                    $('#Status').append($('<option>', {
+                        value: TaskStatus[t].Id,
+                        text: TaskStatus[t].ArName
+                    }));
+                }
+                else if (s == "BY") {
+                    $('#Status').append($('<option>', {
+                        value: TaskStatus[t].Id,
+                        text: TaskStatus[t].ArName
+                    }));
+                }
+
+            }
+        }
+
+        // For ErpUser in  <<<another>>> PopUp
+        $('#ErpUser').empty();
+        //--  $('#ErpUser').append('<option value="0"> اختر المستخدم </option>');
+        for (var e = 0; e < ERPUsers.length; e++) {
+            $('#ErpUser').append($('<option>', {
+                value: ERPUsers[e].Id,
+                text: ERPUsers[e].UserName
+            }));
+        }
+    }
+
+    //--------- To show Task details ----------
+    function ShowTaskDetails(t, s, controllerName, selectedId) { //CreatedBy
+        let taskId = $(t).closest('tr').find('.TaskID');
+        let taskStatusId = $(t).closest('tr').find('.taskStatusId').val();
+        // console.log("taskStatusId ", taskStatusId)
+        let showDoc = "";
+        if (controllerName)
+            showDoc = '<a href="/' + controllerName + '/AddEdit/' + selectedId + '" class="btn btn-success" target="_blank"> عرض المستند </a>'
+        if (s == 'BY') {
+            let Created = CreatedBy.filter(function (i) { return i.Id == taskId.val(); })[0];
+            // console.log(Created, "Created")
+            let note = Created.Notes ? Created.Notes : " ";
+            $('#ShowTaskBody').empty();
+            let div = '<div class="col-12"><div class="card"><div class="card-body"><div class="form-group row"><input hidden id="Code" value="' + Created.Code + '" /><input hidden id="CreatedDate" value="' + convertToJavaScriptDate(Created.CreatedDate) + '" /><input hidden id="Id" value="' + taskId.val() + '" /><label class=" col-sm-3 control-label" for="ArNameEdit">المهمة</label><div class="col-sm-6" ><input class="form-control" id="ArNameEdit" value="' + Created.ArName + '" readonly /></div></div><div class="form-group row"><label for="ErpUser" class="control-label col-sm-3">المستخدم</label><div class="col-sm-6"><select id="ErpUser" class="form-control" ></select></div></div><div class="form-group row"><label for="Status" class="control-label col-sm-3">الحالة</label><div class="col-sm-6"><select id="Status" class="form-control"></select></div></div><div class="form-group row"><label class="control-label col-sm-3" for="Note">ملاحظات</label><div class="col-sm-6"><textarea id="Note" name="Note" class="form-control" rows="5" cols="5">' + note + '</textarea></div></div><button type="button" class="btn btn-danger waves-effect" data-dismiss="modal">إغلاق</button><button style="margin: 10px;" class="btn btn-success" onclick="addEdit(this,' + taskId.val() + ')" > حفظ</button >' + showDoc + '</div></div></div>';
+            $('#ShowTaskBody').append(div);
+        }
+        else {//assign to
+            let assigned = AssignTo.filter(function (i) { return i.Id == taskId.val(); })[0];
+            // // console.log(assigned, "assigned")
+            let notes = assigned.Notes ? assigned.Notes : " ";
+            $('#ShowTaskBody').empty();
+            let div = '<div class="col-12"><div class="card"><div class="card-body"><div class="form-group row"><input hidden id="Code" value="' + assigned.Code + '" /><input hidden id="ErpUser" value="' + assigned.AssignedTo + '" /><input hidden id="CreatedDate" value="' + convertToJavaScriptDate(assigned.CreatedDate) + '" /><input hidden id="Id" value="' + taskId.val() + '" /><label class=" col-sm-3 control-label" for="ArName">المهمة</label><div class="col-sm-6" ><input class="form-control" id="ArNameEdit" value="' + assigned.ArName + '" readonly /></div></div><div class="form-group row"><label for="Status" class="control-label col-sm-3">الحالة</label><div class="col-sm-6"><select id="Status" class="form-control" ></select></div></div><div class="form-group row"><label class="control-label col-sm-3" for="Notes">ملاحظات</label><div class="col-sm-6"><textarea id="Note" readonly name="Notes" class="form-control" rows="5" cols="5">' + notes + '</textarea></div></div><button type="button" class="btn btn-danger waves-effect" data-dismiss="modal">إغلاق</button><button style="margin: 10px;" class="btn btn-success" onclick="addEdit(this,' + taskId.val() + ')"  > حفظ </button >' + showDoc + '</div></div></div>';
+            $('#ShowTaskBody').append(div);
+        }
+        AddTask(taskStatusId,s); // to make Sure that append occured first
+    }
+    function showMainDoc(controllerName, selectedId) {
+        window.open("/" + controllerName + "/AddEdit/" + selectedId, "_blank");
+    }
+    function addEdit(n, id) {
+
+        let valid = true;
+
+        if ($(".form-control:invalid").length > 0) {
+            $('.form-horizontal').addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $(".form-control:invalid").eq(0).offset().top - 80
+            }, 500);
+            console.log($(".form-control:invalid"));
+            valid = id > 0 ? true : false;
+        }
+
+        if (valid && confirm('@MyERP.Properties.Resources.AreYouSureYouWantToSave')) {
+            // $('#preloader, #status').fadeIn();
+
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/UserTask/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: id > 0 ? id : 0,
+                        Code: $('#Code').val(),
+                        CreatedDate: $('#CreatedDate').val(),
+                        ArName: id > 0 ? $('#ArNameEdit').val() : $('#ArName').val(),
+                        AssignedTo: id > 0 ? $('#ErpUser').val() : $('#ErpUsers').val(),
+                        StatusId: id > 0 ? $('#Status').val() : 1, //قيد الانتظار
+                        Notes: id > 0 ? $('#Note').val() : $('#Notes').val(),
+                        IsDeleted: false,
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+                        alert("@MyERP.Properties.Resources.Saved");
+                        $('#NewTask').hide();
+                        $('.modal-backdrop.show').css("opacity", "0"); //عشان احل مشكلة ال fadein
+                        //   $('#preloader, #status').fadeOut();
+                        Refresh(n); // بيفضل faded !!
+                        window.location.replace('/Home');
+                    }
+                    else {
+                        //  $('#preloader, #status').fadeOut();
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                    }
+                },
+                error: function (r) {
+                    //$('#preloader, #status').fadeOut();
+                        alert("@MyERP.Properties.Resources.NotSaved");
+                }
+            });
+        }
+    }
+
+    function showNearlyExpiredPatchesReport() {
+        window.open("/Report/NearlyExpiredPatches", "_blank");
+    }
+
+    /*function changeStatue(n, id) {
+        console.log(n,"n")
+        if (confirm('هل تريد تغيير الحالة؟')) {
+            $.ajax({
+                type: "POST", contentType: "application/json",
+                url: "/UserTask/AddEdit",
+                data:
+                    JSON.stringify({
+                        Id: id,
+                        StatusId: n,
+                        changeStatus: true
+                    }),
+                success: function (r) {
+                    if (r.success == "true") {
+                        alert("تم تغيير الحالة");
+                        window.location.replace('/Home');
+                    }
+                    else {
+                        alert("لم يتم تغيير الحالة!");
+                    }
+                },
+                error: function (r) {
+                    alert("لم يتم تغيير الحالة!");
+                }
+            });
+        }
+    }*/
+
+
+
+
+</script>

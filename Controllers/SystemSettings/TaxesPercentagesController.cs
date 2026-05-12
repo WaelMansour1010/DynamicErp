@@ -64,6 +64,10 @@ namespace MyERP.Controllers.SystemSettings
             {
                 return HttpNotFound();
             }
+            ViewBag.Next = QueryHelper.Next((int)id, "TaxesPercentage");
+            ViewBag.Previous = QueryHelper.Previous((int)id, "TaxesPercentage");
+            ViewBag.Last = QueryHelper.GetLast("TaxesPercentage");
+            ViewBag.First = QueryHelper.GetFirst("TaxesPercentage");
             ViewBag.DateFrom = taxesPercentage.DateFrom?.ToString("yyyy-MM-ddTHH:mm");
             ViewBag.DateTo = taxesPercentage.DateTo?.ToString("yyyy-MM-ddTHH:mm");
             QueryHelper.AddLog(new MyLog()
@@ -113,6 +117,8 @@ namespace MyERP.Controllers.SystemSettings
                 else
                     return RedirectToAction("Index");
             }
+            ViewBag.DateFrom = taxesPercentage.DateFrom?.ToString("yyyy-MM-ddTHH:mm");
+            ViewBag.DateTo = taxesPercentage.DateTo?.ToString("yyyy-MM-ddTHH:mm");
             return View(taxesPercentage);
         }
 

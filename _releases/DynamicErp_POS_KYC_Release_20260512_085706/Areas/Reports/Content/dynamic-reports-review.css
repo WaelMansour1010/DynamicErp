@@ -1,0 +1,134 @@
+.dr-rv-shell {
+    background: #f3f6f8;
+    color: #1f2933;
+    direction: rtl;
+    min-height: 100vh;
+    padding: 18px;
+}
+
+.dr-rv-header,
+.dr-rv-actions,
+.dr-rv-summary,
+.dr-rv-metadata,
+.dr-rv-cols,
+.dr-rv-params,
+.dr-rv-sample,
+.dr-rv-print-frame,
+.dr-rv-risk,
+.dr-rv-suggest {
+    background: #fff;
+    border: 1px solid #d7dde5;
+    border-radius: 8px;
+    margin: 12px auto;
+    max-width: 1180px;
+    padding: 16px;
+}
+
+.dr-rv-header {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.dr-rv-header h1 {
+    font-size: 24px;
+    margin: 0 0 8px;
+}
+
+.dr-rv-meta {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dr-rv-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.dr-rv-suggestion-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.dr-rv-summary {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.dr-rv-summary div {
+    background: #f3f6f8;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.dr-rv-summary strong {
+    color: #22577a;
+    display: block;
+    font-size: 22px;
+}
+
+.dr-rv-print-frame #drRvPrintFrame {
+    background: #fff;
+    border: 1px solid #d7dde5;
+    border-radius: 6px;
+    min-height: 320px;
+    width: 100%;
+}
+
+.dr-rv-check {
+    align-items: center;
+    border-radius: 6px;
+    display: flex;
+    gap: 8px;
+    margin: 6px 0;
+    padding: 8px 10px;
+}
+
+.dr-rv-row-error,
+.dr-rv-pill-error {
+    background: #fff1f1;
+    border: 1px solid #e0a2a2;
+    color: #8f1d1d;
+}
+
+.dr-rv-row-warning,
+.dr-rv-pill-warning {
+    background: #fff8df;
+    border: 1px solid #e1c76b;
+    color: #775f00;
+}
+
+.dr-rv-row-ok,
+.dr-rv-pill-info,
+.dr-rv-pill-ok {
+    background: #edf8f1;
+    border: 1px solid #9dcfac;
+    color: #1f6f3d;
+}
+
+.dr-rv-status-Draft { background: #eef2f7; color: #334155; }
+.dr-rv-status-NeedsMapping { background: #fff8df; color: #775f00; }
+.dr-rv-status-ValidationErrors { background: #fff1f1; color: #8f1d1d; }
+.dr-rv-status-ReadyForActivation { background: #e8f3fb; color: #22577a; }
+.dr-rv-status-Active { background: #edf8f1; color: #1f6f3d; }
+.dr-rv-status-Disabled { background: #f1f5f9; color: #64748b; }
+.dr-rv-status-Archived { background: #ece8f3; color: #5b3b82; }
+
+@media (max-width: 760px) {
+    .dr-rv-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .dr-rv-shell {
+        padding: 10px;
+    }
+}

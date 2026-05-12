@@ -1,0 +1,733 @@
+﻿@model MyERP.Models.PrepaidExpense
+@{
+    UICulture = Session["lang"] != null ? Session["lang"].ToString() : "ar";
+    ViewBag.Title = @MyERP.Properties.Resources.PrepaidExpenseDefinition;
+}
+
+
+@Html.AntiForgeryToken()
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box">
+            <div class="page-title-right">
+                <a class="btn btn-info" href="@Url.Action("Index")" role="button" style="float:left;">@MyERP.Properties.Resources.Back</a>
+            </div>
+            <div class="hed page-title">@MyERP.Properties.Resources.PrepaidExpenseDefinition :</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card-box">
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-horizontal needs-validation" role="form">
+                        <div class="card">
+                            <div class="card-body">
+                                @Html.AntiForgeryToken()
+                                @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                                @if (Model != null)
+                                {
+                                    @Html.HiddenFor(model => model.Id)
+                                    @Html.HiddenFor(model => model.UserId)
+                                    @Html.HiddenFor(model => model.IsDeleted)
+                                    @Html.HiddenFor(model => model.Image)
+                                }
+                                @*<h5 class="header-title">
+                                        @MyERP.Properties.Resources.MainData
+                                    </h5>*@
+
+                                @* Panel 1 *@
+
+                                <div id="collapse1">
+                                    <h5 class=" pb-3 header-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                                            @MyERP.Properties.Resources.MainData
+                                        </a>
+                                    </h5>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="form-group row">
+                                                <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.TransactionNo</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.DocumentNumber, new { htmlAttributes = new { @class = "form-control", @readonly = "readonly", placeholder = @MyERP.Properties.Resources.TransactionNo, required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                                <label class="control-label col-sm-2">@MyERP.Properties.Resources._TransactionDate</label>
+                                                <div class="col-sm-4">
+                                                    @Html.EditorFor(model => model.VoucherDate, new { htmlAttributes = new { @class = "form-control Gregorian", @type = "datetime-local", @required = "required" } })
+                                                    <div class="invalid-feedback">
+                                                        @MyERP.Properties.Resources.Required
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                                <div class="col-sm-4">
+                                                    <textarea id="Notes" name="Notes" class="form-control" rows="3" cols="3">@if (Model != null) { @Model.Notes; }</textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-horizontalDetail needs-validation" role="form">
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="ArName">@MyERP.Properties.Resources.ArName</label>
+                                    <div class="col-sm-4">
+                                        @Html.Editor("ArName", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ArName, @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="col-sm-2 control-label" for="EnName">@MyERP.Properties.Resources.EnName</label>
+                                    <div class="col-sm-4">
+                                        @Html.Editor("EnName", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.EnName } })
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="DepartmentId" class="control-label col-sm-2">@MyERP.Properties.Resources.Department</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DepartmentId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="EmployeeId" class="control-label col-sm-2">@MyERP.Properties.Resources.Employee</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("EmployeeId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="PrePaymentAccountId" class="control-label col-sm-2">@MyERP.Properties.Resources.PrePaymentAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("PrePaymentAccountId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="Value" class="control-label col-sm-2">@MyERP.Properties.Resources.Value</label>
+                                    <div class="col-sm-4">
+                                        @Html.Editor("Value", new { htmlAttributes = new { @class = "form-control money", placeholder = @MyERP.Properties.Resources.Value, @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ProofDate" class="control-label col-sm-2">@MyERP.Properties.Resources.ProofDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.Editor("ProofDate", new { htmlAttributes = new { @class = "form-control", placeholder = @MyERP.Properties.Resources.ProofDate, @required = "required", @type = "date" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="ExpenseAccount" class="control-label col-sm-2">@MyERP.Properties.Resources.ExpenseAccount</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ExpenseAccountId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class=" col-sm-2 control-label" for="Id">@MyERP.Properties.Resources.FromDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.Editor("FromDate", new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label class="control-label col-sm-2">@MyERP.Properties.Resources.ToDate</label>
+                                    <div class="col-sm-4">
+                                        @Html.Editor("ToDate", new { htmlAttributes = new { @class = "form-control Gregorian", @type = "date", @required = "required" } })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ExpenseTypeId" class="control-label col-sm-2">@MyERP.Properties.Resources.ExpenseType</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ExpenseTypeId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="DistributionTypeId" class="control-label col-sm-2">@MyERP.Properties.Resources.DistributionType</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("DistributionTypeId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="ProjectId" class="control-label col-sm-2">@MyERP.Properties.Resources.Project</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("ProjectId", null, MyERP.Properties.Resources.Select, htmlAttributes: new { @class = "form-control" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                    <label for="CostCenterId" class="control-label col-sm-2">@MyERP.Properties.Resources.CostCenter</label>
+                                    <div class="col-sm-4">
+                                        @Html.DropDownList("CostCenterId", null, htmlAttributes: new { @class = "form-control", @required = "required" })
+                                        <div class="invalid-feedback">
+                                            @MyERP.Properties.Resources.Required
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="control-label col-sm-2" for="Notes">@MyERP.Properties.Resources.Notes</label>
+                                    <div class="col-sm-4">
+                                        <textarea id="DetailNotes" name="Notes" class="form-control" rows="1" cols="1"> </textarea>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <button type="button" class="btn btn-success" onclick="AddToDetails()">
+                                            @MyERP.Properties.Resources.Add
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-------------- PrepaidExpenseDetails Table ---------------->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-centered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <td>
+                                                @MyERP.Properties.Resources.Department
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.ProofDate
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.ArName
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.EnName
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.ExpenseType
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.ExpensesAccount
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.PrePaymentAccount
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.Employee
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.Value
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.FromDate
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.ToDate
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.DistributionType
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.CostCenter
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.Project
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.Notes
+                                            </td>
+                                            <td>
+                                                @MyERP.Properties.Resources.Delete
+                                            </td>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="PrepaidExpenseDetails">
+                                        @if (Model != null)
+                                        {
+                                            foreach (var item in Model.PrepaidExpenseDetails)
+                                            {
+                                                <tr>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="checkbox" hidden class="IsSelectedProof" @Html.Raw(item.IsSelectedProof == true ? "checked" : "") />
+                                                        <input type="checkbox" hidden class="IsSelectedAmortization" @Html.Raw(item.IsSelectedAmortization == true ? "checked" : "") />
+                                                        <input type="text" class="ExpenseAmortizationId form-control tabledit-input form-control-sm" value="@item.ExpenseAmortizationId" hidden />
+                                                        <input type="text" class="ExpenseProofId form-control tabledit-input form-control-sm" value="@item.ExpenseProofId" hidden />
+                                                        <input type="text" class="DepartmentId form-control tabledit-input form-control-sm" value="@item.DepartmentId" hidden />
+                                                        <input type="text" class="ArName form-control tabledit-input form-control-sm" value="@item.ArName" hidden />
+                                                        <input type="text" class="EnName form-control tabledit-input form-control-sm" value="@item.EnName" hidden />
+                                                        <input type="text" class="Id form-control tabledit-input form-control-sm" value="@item.Id" hidden />
+                                                        <label class="DepartmentName control-label control-label">
+                                                            @item.Department.ArName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="date" class="ProofDate Gregorian form-control tabledit-input form-control-sm" value="@item.ProofDate.Value.ToString("yyyy-MM-dd")" disabled readonly />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <label class="ArNameTxt control-label control-label">
+                                                            @item.ArName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <label class="EnNameTxt control-label control-label">
+                                                            @item.EnName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="ExpenseTypeId form-control tabledit-input form-control-sm" value="@item.ExpenseTypeId" hidden />
+                                                        <label class="ExpenseTypeName control-label control-label">
+                                                            @(item.ExpenseTypeId==1? "موظف" : "حساب")
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="ExpenseAccountId form-control tabledit-input form-control-sm" value="@item.ExpenseAccountId" hidden />
+                                                        <label class="ExpenseAccountName control-label control-label">
+                                                            @item.ChartOfAccount.ArName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="PrePaymentAccountId form-control tabledit-input form-control-sm" value="@item.PrePaymentAccountId" hidden />
+                                                        <label class="PrePaymentAccountName control-label control-label">
+                                                            @item.ChartOfAccount1.ArName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="EmployeeId form-control tabledit-input form-control-sm" value="@item.EmployeeId" hidden />
+                                                        <label class="EmployeeName control-label control-label">
+                                                            @item.Employee.ArName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="number" step="any" class="Value form-control tabledit-input form-control-sm" value="@item.Value" disabled readonly />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="date" class="FromDate Gregorian form-control tabledit-input form-control-sm" value="@item.FromDate.Value.ToString("yyyy-MM-dd")" disabled readonly />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="date" class="ToDate Gregorian form-control tabledit-input form-control-sm" value="@item.ToDate.Value.ToString("yyyy-MM-dd")" disabled readonly />
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="DistributionTypeId form-control tabledit-input form-control-sm" value="@item.DistributionTypeId" hidden />
+                                                        <label class="DistributionTypeName control-label control-label">
+                                                            @(item.DistributionTypeId==1? "آلي" : "يدوي")
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="CostCenterId form-control tabledit-input form-control-sm" value="@item.CostCenterId" hidden />
+                                                        <label class="CostCenterName control-label control-label">
+                                                            @item.CostCenter.ArName
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="ProjectId form-control tabledit-input form-control-sm" value="@item.ProjectId" hidden />
+                                                        <label class="ProjectName control-label control-label">
+                                                            @(item.Project!=null?item.Project.ArName:"")
+                                                        </label>
+                                                    </td>
+                                                    <td class="tabledit-edit-mode">
+                                                        <input type="text" class="Notes form-control tabledit-input form-control-sm" value="@item.Notes" />
+                                                    </td>
+                                                    <td>
+                                                        <a href="javascript:void(0);" onclick="deleteElement(this)">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!------------------------------------------------------------------------------------>
+                    
+                </div>
+            </div>
+
+            <!---------------------------------------------- Saves Buttons ----------------------------------------------------------->
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-offset-2">
+                            @if (Model == null)
+                            {
+                                <button onclick="addEdit('new');" class="btn btn-success" id="newbtn">
+                                    @MyERP.Properties.Resources.SaveAndNew
+                                </button>
+                                <button onclick="addEdit();" class="btn btn-success" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                            }
+                            else if (Model.IsDeleted == false)
+                            {
+                                <button onclick="addEdit();" class="btn btn-success" id="save">
+                                    @MyERP.Properties.Resources.Save
+                                </button>
+                                <a class="btn btn-danger" href="@Url.Action("Index")" role="button">@MyERP.Properties.Resources.Back</a>
+                                <a href="javascript:void(0);" class="btn btn-danger" onclick="Delete(@Model.Id)" role="button">@MyERP.Properties.Resources.Delete</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!----------------------------------------------------------------------------------------------------------------------------------------->
+        </div>
+    </div>
+</div>
+
+<script>
+//--------------- Variables Declarations -------------------//
+
+//*********************************************************//
+//--------------- Ready Function -------------------//
+    $(document).ready(function () {
+        $('#VoucherDate').val('@ViewBag.VoucherDate');
+        $('#FromDate').val('@ViewBag.FromDate');
+        $('#ToDate').val('@ViewBag.ToDate');
+        $('#ProofDate').val('@ViewBag.ProofDate');
+
+        $.get('/Helper/GetOpenPeriodBeginningEnding').done(function (r) {
+            $("input[type|='datetime-local']").not('#FromDate,#ToDate').prop('min', r.PeriodStart).prop('max', r.PeriodEnd);
+        });
+        if ($('#Id').val() > 0) {
+            var code = $('#DocumentNumber').val();
+            $('#DocumentNumbers').val(code.replaceAll("-", ""))
+        }
+        else {
+            setDocNum();
+        }
+    });
+//*********************************************************//
+
+//--------------- Event Functions -------------------//
+
+    //*********************************************************//
+     //--------------- Other Functions -------------------//
+    function setDocNum() {
+        $.get('/PrepaidExpense/SetDocNum').done(function (r) {
+            $('#DocumentNumber').val(r);
+        });
+    }
+    function deleteElement(e) {
+        let tr = $(e).closest('tr');
+        e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        //if ($(tr).index() == 0 && $(tr).closest('tbody').children('tr').length == 1) {
+        //    $(tr).find("input").val('');
+        //    $(tr).find("label").text('');
+        //    $(tr).find('input, select').removeAttr('required');
+        //    $(tr).find('select').empty();
+        //    $(tr).find('.Add-Button').prop('hidden', false);
+        //    $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+        //}
+        //else if ($(tr).index() < $(tr).closest('tbody').children('tr').length - 1)
+        //    e.parentNode.parentNode.parentNode.removeChild(e.parentNode.parentNode);
+        //else if ($(tr).index() == $(tr).closest('tbody').children('tr').length - 1) {
+        //    $(tr).find("input").val('');
+        //    $(tr).find('input, select').removeAttr('required');
+        //    $(tr).find('select').empty();
+        //    $(tr).find("label").text('');
+        //    $(tr).find('.Add-Button').prop('hidden', false);
+        //    $(tr).find('.popupCell').attr('onclick', 'showSearchModal()');
+        //}
+    }
+    function convertToJavaScriptDate(value) {
+        if (value === null)
+            return null;
+        var pattern = /Date\(([^)]+)\)/;
+        var results = pattern.exec(value);
+        var dt = new Date(parseFloat(results[1]));
+        var month = (dt.getMonth() + 1) < 10 ? '0' + (dt.getMonth() + 1) : (dt.getMonth() + 1);
+        var day = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        var hours = dt.getHours();
+        var minutes = dt.getMinutes();
+        var seconds = dt.getSeconds();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        var strTime = hours + ':' + minutes /*+ ":" + seconds + ' ' + ampm*/;
+        return ((dt.getFullYear() + "-" + month + "-" + day) /*+ "T" + strTime*/);
+            }
+    function zeroPadded(val) {
+                if (val >= 10)
+                    return val;
+                else
+                    return '0' + val;
+    }
+    function AddToDetails() {
+        let valid = true;
+        if ($('.form-horizontalDetail').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontalDetail').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontalDetail').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        if (valid == true) {
+            var DepartmentId = $('#DepartmentId').val();
+            var DepartmentName = $('#DepartmentId option:selected').text();
+            var ArName = $('#ArName').val();
+            var EnName = $('#EnName').val();
+            var ExpenseTypeId = $('#ExpenseTypeId').val();
+            var ExpenseTypeName = $('#ExpenseTypeId option:selected').text();
+            var ProofDate = $('#ProofDate').val();
+            var FromDate = $('#FromDate').val();
+            var ToDate = $('#ToDate').val();
+            var ExpenseAccountId = $('#ExpenseAccountId').val();
+            var ExpenseAccountName = $('#ExpenseAccountId option:selected').text();
+            var PrePaymentAccountId = $('#PrePaymentAccountId').val();
+            var PrePaymentAccountName = $('#PrePaymentAccountId option:selected').text();
+            var Value = $('#Value').inputmask('unmaskedvalue');
+            var EmployeeId = $('#EmployeeId').val();
+            var EmployeeName = $('#EmployeeId option:selected').text();
+            var DistributionTypeId = $('#DistributionTypeId').val();
+            var DistributionTypeName = $('#DistributionTypeId option:selected').text();
+            var ProjectId = $('#ProjectId').val();
+            var ProjectName = $('#ProjectId').val() > 0 ? $('#ProjectId option:selected').text() : "";
+            var CostCenterId = $('#CostCenterId').val();
+            var CostCenterName = $('#CostCenterId option:selected').text();
+            var Notes = $('#DetailNotes').val();
+
+
+            let tr = '<tr><td class="tabledit-edit-mode"><input type="checkbox" hidden class="IsSelectedProof"/><input type="checkbox" hidden class="IsSelectedAmortization"/><input type="text" class="ExpenseAmortizationId form-control tabledit-input form-control-sm" hidden /><input type="text" class="ExpenseProofId form-control tabledit-input form-control-sm"  hidden /><input type = "text" class="DepartmentId form-control tabledit-input form-control-sm" value = "' +
+                DepartmentId + '" hidden /><input type="text" class="ArName form-control tabledit-input form-control-sm" value="' +
+                ArName + '" hidden /><input type = "text" class="EnName form-control tabledit-input form-control-sm" value = "' +
+                EnName + '" hidden /> <label class="DepartmentName control-label control-label">' +
+                DepartmentName + ' </label></td><td class="tabledit-edit-mode"><input type="date" class="ProofDate Gregorian form-control tabledit-input form-control-sm" value="' +
+                ProofDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><label class="ArNameTxt control-label control-label">' +
+                ArName + '</label></td><td class="tabledit-edit-mode"><label class="EnNameTxt control-label control-label">' +
+                EnName + '</label></td><td class="tabledit-edit-mode"><input type="text" class="ExpenseTypeId form-control tabledit-input form-control-sm" value="' +
+                ExpenseTypeId + '" hidden /><label class="ExpenseTypeName control-label control-label">' +
+                ExpenseTypeName + '</label></td><td class="tabledit-edit-mode"><input type="text" class="ExpenseAccountId form-control tabledit-input form-control-sm" value="' +
+                ExpenseAccountId + '" hidden /><label class="ExpenseAccountName control-label control-label">' +
+                ExpenseAccountName + '</label></td><td class="tabledit-edit-mode"><input type="text" class="PrePaymentAccountId form-control tabledit-input form-control-sm" value="' +
+                PrePaymentAccountId + '" hidden /><label class="PrePaymentAccountName control-label control-label">' +
+                PrePaymentAccountName + '</label></td><td class="tabledit-edit-mode"><input type="text" class="EmployeeId form-control tabledit-input form-control-sm" value="' +
+                EmployeeId + '" hidden /><label class="EmployeeName control-label control-label">' +
+                EmployeeName + '</label></td><td class="tabledit-edit-mode"><input type = "number" class="Value form-control tabledit-input form-control-sm" value = "' +
+                Value + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="date" class="FromDate Gregorian form-control tabledit-input form-control-sm" value="' +
+                FromDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="date" class="ToDate Gregorian form-control tabledit-input form-control-sm" value="' +
+                ToDate + '" disabled readonly /></td><td class="tabledit-edit-mode"><input type="text" class="DistributionTypeId form-control tabledit-input form-control-sm" value="' +
+                DistributionTypeId + '" hidden /><label class="DistributionTypeName control-label control-label">' +
+                DistributionTypeName + '</label></td><td class="tabledit-edit-mode"><input type = "text" class="CostCenterId form-control tabledit-input form-control-sm" value = "' +
+                CostCenterId + '" hidden /><label class="CostCenterName control-label control-label">' +
+                CostCenterName + '</label></td><td class="tabledit-edit-mode"><input type="text" class="ProjectId form-control tabledit-input form-control-sm" value="' +
+                ProjectId + '" hidden /><label class="ProjectName control-label control-label">' +
+                ProjectName + '</label></td><td class="tabledit-edit-mode"><input type="text" class="Notes form-control tabledit-input form-control-sm" value="' +
+                Notes + '" /></td><td><a href="javascript:void(0);" onclick="deleteElement(this)"><i class="fas fa-trash-alt"></i></a></td></tr>';
+            $('#PrepaidExpenseDetails').append(tr);
+
+            $('#DepartmentId').prop('selectedIndex', 0);
+            $('#DepartmentId').select2();
+            $('#ArName').val('');
+            $('#EnName').val('');
+            $('#ExpenseTypeId').prop('selectedIndex', 0);
+            $('#ExpenseTypeId').select2();
+            $('#ProofDate').val('@ViewBag.ProofDate');
+            $('#FromDate').val('@ViewBag.FromDate');
+            $('#ToDate').val('@ViewBag.ToDate');
+            $('#ExpenseAccountId').prop('selectedIndex', 0);
+            $('#ExpenseAccountId').select2();
+            $('#PrePaymentAccountId').prop('selectedIndex', 0);
+            $('#PrePaymentAccountId').select2();
+            $('#Value').val('');
+            $('#EmployeeId').prop('selectedIndex', 0);
+            $('#EmployeeId').select2();
+            $('#DistributionTypeId').prop('selectedIndex', 0);
+            $('#DistributionTypeId').select2();
+            $('#ProjectId').prop('selectedIndex', 0);
+            $('#ProjectId').select2();
+            $('#CostCenterId').prop('selectedIndex', 0);
+            $('#CostCenterId').select2();
+            $('#DetailNotes').val('');
+        }
+    }
+
+    //*********************************************************//
+    function addEdit(n) {
+        let valid = true;
+        if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
+            $('.form-horizontal').first().addClass('was-validated');
+            $('html, body').animate({
+                scrollTop: $('.form-horizontal').first().find(".form-control:invalid").eq(0).offset().top - 100
+            }, 500);
+            valid = false;
+            console.log($(".form-control:invalid"));
+        }
+        if ($('#PrepaidExpenseDetails tr').length == 0)
+        {
+            valid = false;
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AllDetailsRequired',
+                text: " ",
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                confirmButtonColor: '#3085d6'
+            });
+        }
+       
+        var PrepaidExpenseDetails = [];
+        if (valid) {
+            $('#PrepaidExpenseDetails tr').each(function () {
+                var td = $(this);
+                var PrepaidExpenseDetail = {
+                    MainDocId: $('#Id').val(),
+                    Id: td.find('.Id').val(),
+                    ArName: td.find('.ArName').val(),
+                    EnName: td.find('.EnName').val(),
+                    DepartmentId: td.find('.DepartmentId').val(),
+                    Value: td.find('.Value').val(),
+                    ProofDate: td.find('.ProofDate').val(),
+                    EmployeeId: td.find('.EmployeeId').val(),
+                    FromDate: td.find('.FromDate').val(),
+                    ToDate: td.find('.ToDate').val(),
+                    ExpenseTypeId: td.find('.ExpenseTypeId').val(),
+                    PrePaymentAccountId: td.find('.PrePaymentAccountId').val(),
+                    ExpenseAccountId: td.find('.ExpenseAccountId').val(),
+                    DistributionTypeId: td.find('.DistributionTypeId').val(),
+                    ProjectId: td.find('.ProjectId').val(),
+                    CostCenterId: td.find('.CostCenterId').val(),
+                    IsDeleted: false,
+                    IsActive: true,
+                    UserId: $('#UserId').val(),
+                    Notes: td.find('.Notes').val(),
+                    IsSelectedProof: td.find('.IsSelectedProof').prop('checked'),
+                    IsSelectedAmortization: td.find('.IsSelectedAmortization').prop('checked'),
+                    ExpenseAmortizationId: td.find('.ExpenseAmortizationId').val(),
+                    ExpenseProofId: td.find('.ExpenseProofId').val(),
+                };
+                PrepaidExpenseDetails.push(PrepaidExpenseDetail);
+            });
+
+        }
+
+        var PrepaidExpense = {
+            Id: $('#Id').val(),
+            DocumentNumber: $('#DocumentNumber').val(),
+            VoucherDate: $('#VoucherDate').val(),
+            IsDeleted: false,
+            IsActive: true,
+            UserId: $('#UserId').val(),
+            Notes: $('#Notes').val(),
+            Image: $('#Image').val(),
+            PrepaidExpenseDetails: PrepaidExpenseDetails,
+        }
+        if (valid) {
+            Swal.fire({
+                title: '@MyERP.Properties.Resources.AreYouSureYouWantToSave',
+                text: " ",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#preloader, #status').fadeIn();
+                    $('#newbtn').prop('disabled', true);
+                    $('#save').prop('disabled', true);
+                    $.ajax({
+                        type: "POST", contentType: "application/json",
+                        url: "/PrepaidExpense/AddEdit",
+                        data: JSON.stringify(PrepaidExpense),
+                        success: function (r) {
+                            if (r.success == true) {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.Saved',
+                                    text: " ",
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                                if (n == "new") {
+                                    window.location.replace("/PrepaidExpense/AddEdit");
+                                } else {
+                                    window.location.replace("/PrepaidExpense");
+                                }
+                            }
+                            else {
+                                Swal.fire({
+                                    title: '@MyERP.Properties.Resources.NotSaved !',
+                                    text: " ",
+                                    icon: 'error',
+                                    showCancelButton: false,
+                                    confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                    confirmButtonColor: '#3085d6'
+                                });
+                            }
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        },
+                        error: function (r) {
+                            Swal.fire({
+                                title: '@MyERP.Properties.Resources.NotSaved !',
+                                text: " ",
+                                icon: 'error',
+                                showCancelButton: false,
+                                confirmButtonText: '@MyERP.Properties.Resources.Ok',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            $('#preloader, #status').fadeOut();
+                            $('#newbtn').prop('disabled', false);
+                            $('#save').prop('disabled', false);
+                        }
+                    });
+                }
+                else { result.dismiss; }
+            });
+        }
+    }
+    function Delete(id) {
+        if (confirm('@MyERP.Properties.Resources.AreYouSureYouWantToDelete')) {
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+                    url: '/PrepaidExpense/Delete',
+                    type: 'POST',
+                    data: {
+                        "Id": id,
+                    },
+                    error: function (e) {
+                        $('#preloader, #status').fadeOut();
+                    },
+                    success: function (r) {
+                        if (r == 'true') {
+                            window.location.replace('/PrepaidExpense');
+                        }
+                    }
+                });
+        }
+    }
+
+</script>

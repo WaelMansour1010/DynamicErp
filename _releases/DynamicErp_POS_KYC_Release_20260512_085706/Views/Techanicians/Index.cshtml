@@ -1,0 +1,211 @@
+﻿
+
+<div style="text-align: left;padding-bottom: 23px;">
+</div>
+
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <div class="form-title">
+                        <input type="button" class="btn btn-info btnAdd" name="AddEdit" value="إضافة جديد"
+                               onclick="$('#preloader, #status').fadeIn();
+                                                    $.ajax(
+                                                        {
+                                                            url: '/Techanicians/AddEdit',
+                                                            type: 'Get',
+                                                            success: function (r) {
+
+                                                                $('.main-page').html(r);
+                                                                $('#preloader, #status').fadeOut();
+                                                            }
+                                                        });" style="float:left;">
+                        <h4>الفنيين :</h4>
+                    </div>
+                    @Html.Partial("~/Views/PartialViews/_SearchView.cshtml")
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-widget forms-panel">
+    <div class="forms">
+        <div class=" form-grids form-grids-right">
+            <div class="widget-shadow " data-example-id="basic-forms">
+                <div class="tables">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+
+                                <th>الكود</th>
+
+                                <th>الاسم</th>
+                                <th>رقم التليفون</th>
+                                <th>تعديل</th>
+                                <th>نشط</th>
+                                <th>حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailsBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.Partial("~/Views/PartialViews/_PagerView.cshtml")
+
+
+<script>
+
+    var pageNo = 1;
+
+    function LoadData() {
+        $('#preloader, #status').fadeIn();
+        $.ajax(
+            {
+                url: MainDomain + 'api/Techanicians/'+ pageNo + '/' + $('#ShowByPage').val() + '/' + $('.searchtxt').val(),
+                type: 'Get',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                },
+                error: function (e) {
+                    console.log(e);
+
+                },
+                success: function (r) {
+
+                    $('#detailsBody').html('');
+                    newHTML = '';
+
+                    lst = $.parseJSON(r.list);
+
+                    for (var i = 0; i < lst.length; i++) {
+                        newHTML += '<tr>' +
+
+                            '<td>' + CheckNullObject(lst[i].Code) + '</td>' +
+                            '<td>' + CheckNullObject(lst[i].ArName) + '</td>' +
+                            '<td>' + CheckNullObject(lst[i].Phone1) + '</td>' +
+                            '<td><a href="javascript:void(0);" onclick="$(\'#preloader\').fadeIn();' +
+                            '$.ajax(' +
+                            '{' +
+                            'url: \'/Techanicians/AddEdit/' + lst[i].Id + '\',' +
+                            'type: \'Get\',' +
+                            'beforeSend: function (xhr) {' +
+                            'xhr.setRequestHeader(\'Authorization\', \'Bearer ' + $("#userToken").val() + '\'' +
+                            ')},' +
+                            'success: function (r) {' +
+                            '$(\'.main-page\').html(r);' +
+                            '}' +
+                            '});"><i class="fa fa-edit"></i></a></td>' +
+                           '<td>\
+                            <label class="switch">\
+                            <input class="switch-input" type="checkbox" ' + (lst[i].IsActive ? 'Checked' : '') +'  onclick="ActivateFunc(' + lst[i].Id + ',\'@ViewContext.RouteData.Values["controller"].ToString()\')"/>\
+                            <span class="switch-label" data-on="نشط" data-off="غير نشط"></span>\
+                             <span class="switch-handle"></span> \
+                             </label ></td>'+
+                            '<td><a href="javascript:void(0);" onclick="DeleteFunc(' + lst[i].Id + ',\'@ViewContext.RouteData.Values["controller"].ToString()\')"><i class="fas fa-trash-alt"></i></a></td>' +
+                            '</tr>';
+                    }
+
+                    $('.pagination').html('');
+
+                    for (var i = 0; i < Math.ceil(r.count / $('#ShowByPage').val()); i++)
+                        $('.pagination').append('<li id="pg' + (i + 1) + '"><a href="javascript:void(0);" onclick="GoToPage(' + (i + 1) + ');">' + (i + 1) + '</a></li>');
+
+                    if (lst.length == 0)
+                        $('#detailsBody').append("<div style='text-align: center;position: absolute;width: 100%;'>لاتوجد بيانات</div>");
+
+                    $('#RowsCount').html(r.count);
+
+                    $('.pagination li').removeClass("active");
+
+                    $('#pg' + pageNo).addClass("active");
+
+                    $('#detailsBody').append(newHTML);
+
+                    $('#preloader, #status').fadeOut();
+                },
+                complete: function () {
+
+
+
+                }
+            });
+    }
+
+    LoadData();
+
+
+    function DeleteFunc(id, controllerName) {
+        if (confirm('هل تريد الحذف؟')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+
+                    url: MainDomain + 'api/' + controllerName + '/' + id + '?userId=1',
+                    type: 'DELETE',
+                    data: {
+                        "Id": id,
+
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                    },
+                    error: function (e) {
+
+
+                        
+                    },
+                    success: function (r) {
+
+                        back('@ViewContext.RouteData.Values["controller"].ToString()');
+
+                    }
+                });
+        }
+
+    }
+    function ActivateFunc(id, controllerName) {
+        if (confirm('هل تريد تغيير وضع التنشيط؟')) {
+
+            $('#preloader, #status').fadeIn();
+            $.ajax(
+                {
+
+                    url: MainDomain + 'api/' + controllerName + '/ActivateAsync/' + id,
+                    type: 'PUT',
+                    data: {
+                        "Id": id,
+                        "IsActive": false,
+
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + $("#userToken").val());
+                    },
+                    error: function (e) {
+
+
+                        
+                    },
+                    success: function (r) {
+
+                        back('@ViewContext.RouteData.Values["controller"].ToString()');
+
+                    }
+                });
+        }
+
+}
+
+</script>
+
+

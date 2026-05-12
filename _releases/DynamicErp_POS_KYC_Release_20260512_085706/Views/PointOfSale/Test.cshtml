@@ -1,0 +1,551 @@
+﻿@model MyERP.Models.SalesInvoice
+
+@{
+    ViewBag.Title = "Test";
+    Layout = "~/Views/Shared/_CashierLayout.cshtml";
+}
+
+@*<script src=" https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>*@
+@*<script src="~/assets/js/QRjs/qrcode2.js"></script>*@
+@*<script src="~/assets/js/QRjs/jquery.qrcode.min.js"></script>
+    <h2>Test</h2>
+
+    <div id="qrcode"></div>
+
+    <script>
+        //new QRCode(document.getElementById("qrcode"), "https://www.google.com.eg/");
+        $('#qrcode').qrcode("https://www.google.com.eg/");
+
+    </script>*@
+
+
+
+<!DOCTYPE html>
+<!--
+//
+// Star webPRNT Sample(Canvas Receipt)
+//
+// Version 1.2.0
+//
+// Copyright (C) 2012-2015 STAR MICRONICS CO., LTD. All Rights Reserved.
+//
+-->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Expires" content="86400">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Star webPRNT Sample(Canvas Receipt)</title>
+
+    <link href="~/assets/StarWebPrint/css/import.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="~/assets/StarWebPrint/style.css" media="screen">
+
+    <link href="~/assets/StarWebPrintcss/style_canvasreceipt.css" rel="stylesheet" type="text/css">
+    <script type='text/javascript' src='~/assets/StarWebPrint/js/StarWebPrintBuilder.js'></script>
+    <script type='text/javascript' src='~/assets/StarWebPrint/js/StarWebPrintTrader.js'></script>
+    <script src="~/assets/js/QRjs/jquery.qrcode.min.js"></script>
+    <script type='text/javascript'>
+
+
+        var cursor = 0;
+        var lineSpace = 0;
+        var leftPosition = 0;
+        var centerPosition = 0;
+        var rightPosition = 0;
+
+
+        function DrawLeftText(text) {
+            var canvas = document.getElementById('canvasPaper');
+
+            if (canvas.getContext) {
+                var context = canvas.getContext('2d');
+
+                context.textAlign = 'left';
+
+                context.fillText(text, leftPosition, cursor);
+
+                context.textAlign = 'start';
+            }
+        }
+
+        function DrawCenterText(text) {
+            var canvas = document.getElementById('canvasPaper');
+
+            if (canvas.getContext) {
+                var context = canvas.getContext('2d');
+
+                context.textAlign = 'center';
+
+                context.fillText(text, centerPosition, cursor);
+
+                context.textAlign = 'start';
+            }
+        }
+
+        function DrawRightText(text) {
+            var canvas = document.getElementById('canvasPaper');
+
+            if (canvas.getContext) {
+                var context = canvas.getContext('2d');
+
+                context.textAlign = 'right';
+
+                context.fillText(text, rightPosition, cursor);
+
+                context.textAlign = 'start';
+            }
+        }
+
+        function onDrawReceipt() {
+            switch (document.getElementById('paperWidth').value) {
+                case 'inch2':
+                    drawReceipt(28, 28, 384, 1);
+                    break;
+                case 'inch3DotImpact':
+                    drawReceipt(32, 32, 576, 1.5);
+                    break;
+                default:
+                    drawReceipt(32, 32, 576, 1.5);
+                    break;
+                case 'inch4':
+                    drawReceipt(48, 48, 832, 2);
+                    break;
+            }
+        }
+
+        function drawReceipt(fontSize, lineSpace, receiptWidth, logoScale) {
+            var canvas = document.getElementById('canvasPaper');
+
+            if (canvas.getContext) {
+                var context = canvas.getContext('2d');
+
+                context.clearRect(0, 0, canvas.width, canvas.height);
+
+                //      context.textAlign    = 'start';
+                context.textBaseline = 'top';
+
+                var font = '';
+
+                if (document.getElementById('italic').checked) font += 'italic ';
+
+                font += fontSize + 'px ';
+
+                font += document.getElementById('font').value;
+
+                context.font = font;
+
+                leftPosition = 0;
+                //      centerPosition =  canvas.width       / 2;
+                centerPosition = (canvas.width - 16) / 2;
+                //      rightPosition  =  canvas.width;
+                rightPosition = (canvas.width - 16);
+
+                //      cursor = 0;
+                cursor = 55 * logoScale; // ロゴが入るスペースを空けておく
+
+                //DrawRightText('TEL 9999-99-9999'); cursor += lineSpace;
+                cursor += lineSpace;
+                DrawLeftText('3107897100003'); DrawRightText(':الرقم الضريبي');
+                cursor += lineSpace;
+
+                DrawCenterText('#100'); DrawRightText(':الطلب');
+                cursor += lineSpace;
+                DrawLeftText('26/1/2023 12:00:00'); DrawRightText(':وقت الطباعة');
+                cursor += lineSpace;
+
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+
+                DrawLeftText('استلام');
+                cursor += lineSpace;
+                DrawCenterText('#110170'); DrawRightText(':فاتورة');
+                cursor += lineSpace;
+                DrawRightText('20/1/2023 10:00:00');
+                cursor += lineSpace;
+                DrawLeftText('المنشئ:'); DrawRightText('Mohammed abdullah');
+                cursor += lineSpace;
+                //DrawCenterText('Thank you for your coming.'); cursor += lineSpace;
+                //DrawCenterText("We hope you'll visit again."); cursor += lineSpace;
+
+                cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+                DrawLeftText('الصنف'); DrawCenterText('الكمية'); DrawRightText('السعر'); cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+
+               @if (Model != null && Model.SalesInvoiceDetails != null)
+               {
+                   foreach (var item in Model.SalesInvoiceDetails)
+                   {
+                <text>
+                DrawLeftText('@item.Item.ArName'); DrawCenterText('@item.Qty'); DrawRightText('@item.Price'); cursor += lineSpace;
+                DrawLeftText('@item.Item.EnName');
+                cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 1);     // Underline
+                </text>
+                       }
+                   }
+
+                /*DrawLeftText('تفاح'); DrawCenterText('3'); DrawRightText('$20.00'); cursor += lineSpace;
+                DrawLeftText('Apple');
+                cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 1);     // Underline
+
+                DrawLeftText('موز'); DrawCenterText('1'); DrawRightText('$30.00'); cursor += lineSpace;
+                DrawLeftText('Banana');
+                cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 1);     // Underline
+
+                DrawLeftText('عنب'); DrawCenterText('2'); DrawRightText('$40.00'); cursor += lineSpace;
+                DrawLeftText('Grape');
+                cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 1);     // Underline
+
+                DrawLeftText('ليمون'); DrawCenterText('4'); DrawRightText('$50.00'); cursor += lineSpace;
+                DrawLeftText('Lemon');
+                cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 1);     // Underline
+
+                DrawLeftText('برتقال'); DrawCenterText('6'); DrawRightText('$60.00'); cursor += lineSpace;
+                DrawLeftText('Orange');
+                cursor += lineSpace;
+                */
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+                DrawLeftText('Subtotal'); DrawCenterText('@Model.SalesInvoiceDetails.Select(a=>a.ItemId).Count()'); DrawRightText('@Model.NetTotal'); cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+
+                cursor += lineSpace;
+
+                DrawLeftText('المجموع الفرعي:'); DrawRightText('@Model.Total'); cursor += lineSpace;
+                DrawLeftText('رسم تقديم التبغ 100 %'); DrawRightText('@Model.SmokingTax'); cursor += lineSpace;
+                DrawLeftText('ضريبة القيمة المضافة 15 %'); DrawRightText('@Model.SalesTaxes'); cursor += lineSpace;
+                DrawLeftText('الإجمالي:'); DrawRightText('@Model.TotalAfterTaxes'); cursor += lineSpace;
+                DrawLeftText('المدفوع:'); DrawRightText('@Model.Paid'); cursor += lineSpace;
+
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+                DrawLeftText('عدد المنتجات:'); DrawCenterText('@Model.SalesInvoiceDetails.Select(a=>a.ItemId).Count()'); cursor += lineSpace;
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+
+                DrawCenterText('جميع أسعار المنتجات شاملة الضريبة'); cursor += lineSpace;
+                DrawCenterText("طريق تركى الأول - حي المحمدية"); cursor += lineSpace;
+
+                context.fillRect(0, cursor - 2, receiptWidth, 2);     // Underline
+                cursor += lineSpace;
+
+                $('#qrcode').qrcode("https://www.google.com.eg/");
+
+                // var _canvas = $('#qrcode canvas');
+
+                // var img = _canvas.get(0).toDataURL("image/png");
+                // var image0 = new Image();
+                // image0.src = img;//'/assets/StarWebPrint/img/StarLogo1.jpg' + '?' + new Date().getTime();
+                // console.log("_canvas : ", _canvas, " .. img : ", img, " .... image0 : ", image0);
+
+
+                // //var preview = document.getElementById("img_preview");
+                // //preview.appendChild(image0);
+
+                // image0.onload = function () {
+                //     //context.drawImage(image, canvas.width - image.width * logoScale, 0, image.width * logoScale, image.height * logoScale);
+                //     context.drawImage(image0, (canvas.width - image.width * logoScale) / 2, 0, image.width * logoScale, image.height * logoScale);
+
+                // }
+
+                //// //or
+                //// //var img = $(canvas)[0].toDataURL("image/png");
+                //// document.write('<img src="' + img + '"/>');
+
+
+
+                //DrawLeftText('Total'); DrawRightText('$210.00'); cursor += lineSpace;
+                //cursor += lineSpace;
+                //DrawLeftText('Received'); DrawRightText('$300.00'); cursor += lineSpace;
+                //DrawLeftText('Change'); DrawRightText('$90.00'); cursor += lineSpace;
+
+                //      alert('Cursor:' + cursor + ', ' + 'Canvas:' + canvas.height);
+
+                var image = new Image();
+                image.src = '/assets/StarWebPrint/img/StarLogo1.jpg' + '?' + new Date().getTime();
+                image.onload = function () {
+                    //context.drawImage(image, canvas.width - image.width * logoScale, 0, image.width * logoScale, image.height * logoScale);
+                    context.drawImage(image, (canvas.width - image.width * logoScale) / 2, 0, image.width * logoScale, image.height * logoScale);
+                }
+
+                image.onerror = function () {
+                    alert('Image file was not able to be loaded.');
+                }
+            }
+        }
+
+        function onResizeCanvas() {
+            var canvas = document.getElementById('canvasPaper');
+
+            if (canvas.getContext) {
+                var context = canvas.getContext('2d');
+                switch (document.getElementById('paperWidth').value) {
+                    case 'inch2':
+                        canvas.width = 400/*384*/;
+                        canvas.height = 1000 /*555*/;
+                        break;
+                    case 'inch3DotImpact':
+                        canvas.width = 576;
+                        canvas.height = 640;
+                        break;
+                    default:
+                        canvas.width = 576;
+                        canvas.height = 640;
+                        break;
+                    case 'inch4':
+                        canvas.width = 832;
+                        canvas.height = 952;
+                        break;
+                }
+                document.getElementById('canvasPaper').style.width = "700px";
+                onDrawReceipt();
+            }
+        }
+
+        function refocusFontSelectbox() {
+            var fontSelectbox = document.getElementById('font');
+            fontSelectbox.blur();
+            fontSelectbox.focus();
+        }
+
+        function refocusWidthSelectbox() {
+            var paperWidthSelectbox = document.getElementById('paperWidth');
+            paperWidthSelectbox.blur();
+            paperWidthSelectbox.focus();
+        }
+
+        function onSendMessage() {
+            showNowPrinting();
+
+            var url = document.getElementById('url').value;
+            var papertype = document.getElementById('papertype').value;
+            console.log("papertype : ", papertype)
+            var trader = new StarWebPrintTrader({ url: url, papertype: papertype });
+
+            trader.onReceive = function (response) {
+                hideNowPrinting();
+
+                var msg = '- onReceive -\n\n';
+
+                msg += 'TraderSuccess : [ ' + response.traderSuccess + ' ]\n';
+
+                //      msg += 'TraderCode : [ ' + response.traderCode + ' ]\n';
+
+                msg += 'TraderStatus : [ ' + response.traderStatus + ',\n';
+
+                if (trader.isCoverOpen({ traderStatus: response.traderStatus })) { msg += '\tCoverOpen,\n'; }
+                if (trader.isOffLine({ traderStatus: response.traderStatus })) { msg += '\tOffLine,\n'; }
+                if (trader.isCompulsionSwitchClose({ traderStatus: response.traderStatus })) { msg += '\tCompulsionSwitchClose,\n'; }
+                if (trader.isEtbCommandExecute({ traderStatus: response.traderStatus })) { msg += '\tEtbCommandExecute,\n'; }
+                if (trader.isHighTemperatureStop({ traderStatus: response.traderStatus })) { msg += '\tHighTemperatureStop,\n'; }
+                if (trader.isNonRecoverableError({ traderStatus: response.traderStatus })) { msg += '\tNonRecoverableError,\n'; }
+                if (trader.isAutoCutterError({ traderStatus: response.traderStatus })) { msg += '\tAutoCutterError,\n'; }
+                if (trader.isBlackMarkError({ traderStatus: response.traderStatus })) { msg += '\tBlackMarkError,\n'; }
+                if (trader.isPaperEnd({ traderStatus: response.traderStatus })) { msg += '\tPaperEnd,\n'; }
+                if (trader.isPaperNearEnd({ traderStatus: response.traderStatus })) { msg += '\tPaperNearEnd,\n'; }
+
+                msg += '\tEtbCounter = ' + trader.extractionEtbCounter({ traderStatus: response.traderStatus }).toString() + ' ]\n';
+
+                //      msg += 'Status : [ ' + response.status + ' ]\n';
+                //
+                //      msg += 'ResponseText : [ ' + response.responseText + ' ]\n';
+
+                alert(msg);
+            }
+
+            trader.onError = function (response) {
+                var msg = '- onError -\n\n';
+
+                msg += '\tStatus:' + response.status + '\n';
+
+                msg += '\tResponseText:' + response.responseText + '\n\n';
+
+                msg += 'Do you want to retry?\n';
+
+                var answer = confirm(msg);
+
+                if (answer) {
+                    onSendMessage();
+                }
+                else {
+                    hideNowPrinting();
+                }
+            }
+
+            try {
+                var canvas = document.getElementById('canvasPaper');
+
+                if (canvas.getContext) {
+                    var context = canvas.getContext('2d');
+
+                    var builder = new StarWebPrintBuilder();
+
+                    var request = '';
+
+                    request += builder.createInitializationElement();
+
+                    request += builder.createBitImageElement({ context: context, x: 0, y: 0, width: canvas.width, height: canvas.height });
+                    request += builder.createCutPaperElement({ feed: true });
+                    trader.sendMessage({ request: request });
+
+                }
+            }
+            catch (e) {
+                hideNowPrinting();
+
+                alert(e.message);
+
+
+            }
+        }
+        function nowLoading() {
+            document.getElementById('form').style.display = "block";
+            document.getElementById('overlay').style.display = "none";
+            document.getElementById('nowLoadingWrapper').style.display = "none";
+        }
+        function showNowPrinting() {
+            document.getElementById('overlay').style.display = "block";
+            document.getElementById('nowPrintingWrapper').style.display = "table";
+        }
+        function hideNowPrinting() {
+            document.getElementById('overlay').style.opacity = 0.0;
+            document.getElementById('overlay').style.transition = "all 0.3s";
+            intimer = setTimeout(function () {
+                document.getElementById('overlay').style.display = "none";
+                document.getElementById('overlay').style.opacity = 1;
+                clearTimeout(intimer);
+            }, 300);
+            document.getElementById('nowPrintingWrapper').style.display = "none";
+        }
+        window.onload = function () {
+            nowLoading();
+            onResizeCanvas();
+        }
+        // -->
+    </script>
+    <noscript>
+        Your browser does not support JavaScript!
+    </noscript>
+</head>
+
+<body>
+    <img src="data:image/png;base64,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">
+    <div id="overlay">
+        <div id="nowPrintingWrapper">
+            <section id="nowPrinting">
+                <h1>Now Printing</h1>
+                <p><img src="~/assets/StarWebPrint/images/icon_loading.gif" /></p>
+            </section>
+        </div>
+        <div id="nowLoadingWrapper">
+            <section id="nowLoading">
+                <h1>Now Loading</h1>
+                <p><img src="~/assets/StarWebPrint/images/icon_loading.gif" /></p>
+            </section>
+        </div>
+    </div>
+
+    <header id="global-header">
+        <h1><a href="~/assets/StarWebPrint/A001.html"><img src="~/assets/StarWebPrint/images/logo_01.png" alt="HOME" width="108" height="61"></a></h1>
+        <div id="sub-logo"><a href="http://www.star-m.jp/" target="_blank"><img src="~/assets/StarWebPrint/images/logo_02.png" alt="" width="120" height="13"></a></div>
+    </header>
+
+    <section class="btmMg20">
+        <h2 class="h2-tit-01 btmMg20">Canvas : Receipt</h2>
+    </section>
+
+    <form onsubmit='return false;' id="form">
+        <div class="container">
+            <div class="wrapper">
+                <div id="canvasBlock">
+                    <div id='canvasFrame'>
+                        <canvas id='canvasPaper' width='576' height='700' @*height='640'*@>
+                            Your browser does not support Canvas!
+                                <qrcode id="qrcode" model='model2' level='level_l' cell='3'>http://www.starmicronics.com/</qrcode>
+                        </canvas>
+                        @*<div id="qrcode"></div>*@
+                        <div id="img_preview"> </div>
+                    </div>
+                </div>
+            </div>
+            <div id="optionBlock">
+                <dl>
+                    <dt>Font</dt>
+                    <dd>
+                        :
+                        <select id='font' onchange='onDrawReceipt(); refocusFontSelectbox();'>
+                            <option selected='selected'>Arial</option>
+                            <option>Cambria</option>
+                            <option>Comic Sans MS</option>
+                            <option>Constantia</option>
+                            <option>Gabriola</option>
+                            <option>Georgia</option>
+                            <option>Segoe UI</option>
+                            <option>Fixedsys</option>
+                            <option>MS Serif</option>
+                        </select>
+                        &nbsp;<input id='italic' type='checkbox' onclick='onDrawReceipt()' />Italic
+                    </dd>
+                </dl>
+                <dl>
+                    <dt>Paper Width</dt>
+                    <dd>
+                        :
+                        <select id='paperWidth' onchange='onResizeCanvas(); refocusWidthSelectbox();'>
+                            <option value='inch2' selected='selected'>2 Inch</option>
+                            <option value='inch3'>3 Inch</option>
+                            <option value='inch4'>4 Inch</option>
+                        </select>
+                    </dd>
+                </dl>
+            </div>
+            <hr>
+            <footer>
+                <dl>
+                    <dt>URL</dt>
+                    <dd>
+                        :
+                        <input id="url" type="text" value="http://localhost:8001/StarWebPRNT/SendMessage" />
+                    </dd>
+                </dl>
+                <d1>
+                    <dt>Paper Type</dt>
+                    <dd>
+                        :
+                        <select id='papertype'>
+                            <option value='' selected='selected'>-</option>
+                            <option value='normal'>Normal</option>
+                            <option value='black_mark'>Black Mark</option>
+                            <option value='black_mark_and_detect_at_power_on'>Black Mark and Detect at Power On</option>
+                        </select>
+                    </dd>
+                    </dl>
+                    <input id="sendBtn" type="button" value="Send" onclick="onSendMessage()" />
+            </footer>
+        </div>
+    </form>
+
+    <div class="to_top">
+        <a href="#global-header">Go to top</a>
+    </div>
+    <footer id="global-footer" class="clearfix">
+        <a href="https://www.star-m.jp/starwebprnt-oml.html" target="_blank"><img src="~/assets/StarWebPrint/images/footer-logo.png" width="123" alt="" id="footer-logo"></a>
+        <img src="~/assets/StarWebPrint/images/footer-image.png" height="54" alt="" />
+    </footer>
+
+</body>
+</html>
+
+@*<style>
+        #canvasFrame {
+            position: relative
+        }
+        /* Make this a positioned parent */
+        #qrcode {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+        }
+
+    </style>*@
